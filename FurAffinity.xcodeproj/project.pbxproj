@@ -11,6 +11,7 @@
 		8716E7EE271C659C00C0BC4A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8716E7ED271C659C00C0BC4A /* ContentView.swift */; };
 		8716E7F0271C659D00C0BC4A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8716E7EF271C659D00C0BC4A /* Assets.xcassets */; };
 		8716E7F3271C659D00C0BC4A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8716E7F2271C659D00C0BC4A /* Preview Assets.xcassets */; };
+		8716E7FD271CB82F00C0BC4A /* FAPages in Frameworks */ = {isa = PBXBuildFile; productRef = 8716E7FC271CB82F00C0BC4A /* FAPages */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,6 +20,7 @@
 		8716E7ED271C659C00C0BC4A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		8716E7EF271C659D00C0BC4A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8716E7F2271C659D00C0BC4A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		8716E7FA271CB80400C0BC4A /* FAPages */ = {isa = PBXFileReference; lastKnownFileType = folder; path = FAPages; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -26,6 +28,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8716E7FD271CB82F00C0BC4A /* FAPages in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -35,8 +38,10 @@
 		8716E7DF271C659C00C0BC4A = {
 			isa = PBXGroup;
 			children = (
+				8716E7FA271CB80400C0BC4A /* FAPages */,
 				8716E7EA271C659C00C0BC4A /* FurAffinity */,
 				8716E7E9271C659C00C0BC4A /* Products */,
+				8716E7FB271CB82F00C0BC4A /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -67,6 +72,13 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
+		8716E7FB271CB82F00C0BC4A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -83,6 +95,9 @@
 			dependencies = (
 			);
 			name = FurAffinity;
+			packageProductDependencies = (
+				8716E7FC271CB82F00C0BC4A /* FAPages */,
+			);
 			productName = FurAffinity;
 			productReference = 8716E7E8271C659C00C0BC4A /* FurAffinity.app */;
 			productType = "com.apple.product-type.application";
@@ -343,6 +358,13 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8716E7FC271CB82F00C0BC4A /* FAPages */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FAPages;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 8716E7E0271C659C00C0BC4A /* Project object */;
 }
