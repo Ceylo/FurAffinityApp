@@ -9,5 +9,5 @@ import Foundation
 
 func htmlPath(_ filename: String) -> URL {
     Bundle.module
-        .url(forResource: filename, withExtension: "html", subdirectory: "Resources")!
+        .url(forResource: filename, withExtension: "html", subdirectory: "data")!
 }

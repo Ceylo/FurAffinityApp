@@ -21,7 +21,7 @@ let package = Package(
             name: "FAPagesTests",
             dependencies: ["FAPages"],
             resources: [
-                .copy("Resources"),
+                .copy("data"),
             ]),
     ]
 )
