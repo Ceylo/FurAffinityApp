@@ -10,8 +10,7 @@ import XCTest
 
 final class FAHomePageTests: XCTestCase {
     func testLoggedOutPage_parsedAsExpected() throws {
-        let loggedOutHtml = htmlPath("www.furaffinity.net-loggedout")
-        let data = try Data(contentsOf: loggedOutHtml)
+        let data = testData("www.furaffinity.net-loggedout.html")
         let page = FAHomePage(data: data)
         XCTAssertNotNil(page)
         XCTAssertNil(page?.username)
@@ -21,8 +20,7 @@ final class FAHomePageTests: XCTestCase {
     }
     
     func testLoggedInPage_parsedAsExpected() throws {
-        let loggedInHtml = htmlPath("www.furaffinity.net-loggedin")
-        let data = try Data(contentsOf: loggedInHtml)
+        let data = testData("www.furaffinity.net-loggedin.html")
         let page = FAHomePage(data: data)
         XCTAssertNotNil(page)
         XCTAssertEqual(page?.username, "furrycount")

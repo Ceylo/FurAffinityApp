@@ -10,8 +10,7 @@ import XCTest
 
 final class FASubmissionPageTests: XCTestCase {
     func testSubmissionData_isParsed() throws {
-        let loggedInHtml = htmlPath("www.furaffinity.net:view:44188741")
-        let data = try Data(contentsOf: loggedInHtml)
+        let data = testData("www.furaffinity.net:view:44188741.html")
         let page = FASubmissionPage(data: data)
         XCTAssertNotNil(page)
         

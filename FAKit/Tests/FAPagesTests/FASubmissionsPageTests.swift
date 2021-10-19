@@ -10,8 +10,7 @@ import XCTest
 
 final class FASubmissionsPageTests: XCTestCase {
     func testFirstSubmissionsPage_72SubmissionsParsed() throws {
-        let loggedInHtml = htmlPath("www.furaffinity.net:msg:submissions-firstpage")
-        let data = try Data(contentsOf: loggedInHtml)
+        let data = testData("www.furaffinity.net:msg:submissions-firstpage.html")
         let page = FASubmissionsPage(data: data)
         XCTAssertNotNil(page)
         XCTAssertEqual(page?.submissions.count, 72)
@@ -28,8 +27,7 @@ final class FASubmissionsPageTests: XCTestCase {
     }
     
     func testFirstSubmissionsPage_NextPageUrlParsed() throws {
-        let loggedInHtml = htmlPath("www.furaffinity.net:msg:submissions-firstpage")
-        let data = try Data(contentsOf: loggedInHtml)
+        let data = testData("www.furaffinity.net:msg:submissions-firstpage.html")
         let page = FASubmissionsPage(data: data)
         XCTAssertNotNil(page)
         XCTAssertNil(page?.previousPageUrl)
@@ -37,8 +35,7 @@ final class FASubmissionsPageTests: XCTestCase {
     }
     
     func testLastSubmissionsPage_PreviousPageUrlParsed() throws {
-        let loggedInHtml = htmlPath("www.furaffinity.net:msg:submissions-lastpage")
-        let data = try Data(contentsOf: loggedInHtml)
+        let data = testData("www.furaffinity.net:msg:submissions-lastpage.html")
         let page = FASubmissionsPage(data: data)
         XCTAssertNotNil(page)
         XCTAssertNil(page?.nextPageUrl)
@@ -46,8 +43,7 @@ final class FASubmissionsPageTests: XCTestCase {
     }
     
     func testMiddleSubmissionsPage_PreviousAndNextPageUrlsParsed() throws {
-        let loggedInHtml = htmlPath("www.furaffinity.net:msg:submissions-middlepage")
-        let data = try Data(contentsOf: loggedInHtml)
+        let data = testData("www.furaffinity.net:msg:submissions-middlepage.html")
         let page = FASubmissionsPage(data: data)
         XCTAssertNotNil(page)
         XCTAssertEqual(page?.nextPageUrl?.absoluteString, "https://www.furaffinity.net/msg/submissions/new~43704007@48/")
