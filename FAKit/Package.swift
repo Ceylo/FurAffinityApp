@@ -32,6 +32,9 @@ let package = Package(
             dependencies: ["FAPages"]),
         .testTarget(
             name: "FAKitTests",
-            dependencies: ["FAKit"]),
+            dependencies: ["FAKit"],
+            resources: [
+                .copy("data"),
+            ]),
     ]
 )

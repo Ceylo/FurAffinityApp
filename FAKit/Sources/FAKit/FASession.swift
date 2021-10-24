@@ -9,12 +9,15 @@ import Foundation
 import FAPages
 
 struct FASession {
+    let homePage: FAHomePage
+    
     init?(cookies: [HTTPCookie], dataSource: HTTPDataSource = URLSession.shared) async {
         guard let data = await dataSource.httpData(from: FAHomePage.url),
               let page = FAHomePage(data: data),
               page.username != nil
         else { return nil }
         
+        self.homePage = page
     }
 }
 
