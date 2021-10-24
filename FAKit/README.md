@@ -1,3 +1,6 @@
-# FAPages
+# FAKit
 
-A description of this package.
+## FAPages
+
+This module is dedicated to parsing FurAffinity.net pages and simply translates HTML data into Swift structures.
+

@@ -9,17 +9,17 @@ import SwiftSoup
 import Foundation
 
 public struct FAHomePage {
-    let url = URL(string: "https://www.furaffinity.net")!
-    var username: String?
-    var displayUsername: String?
-    var submissionsCount: Int?
-    var journalsCount: Int?
+    public static let url = URL(string: "https://www.furaffinity.net")!
+    public var username: String?
+    public var displayUsername: String?
+    public var submissionsCount: Int?
+    public var journalsCount: Int?
 }
 
 extension FAHomePage {
     public init?(data: Data) {
         guard let string = String(data: data, encoding: .utf8),
-              let doc = try? SwiftSoup.parse(string, self.url.absoluteString)
+              let doc = try? SwiftSoup.parse(string, Self.url.absoluteString)
         else {
             return nil
         }
