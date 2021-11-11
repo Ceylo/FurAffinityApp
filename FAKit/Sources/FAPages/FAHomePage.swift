@@ -8,7 +8,7 @@
 import SwiftSoup
 import Foundation
 
-public struct FAHomePage {
+public struct FAHomePage: Equatable {
     public static let url = URL(string: "https://www.furaffinity.net")!
     public var username: String?
     public var displayUsername: String?

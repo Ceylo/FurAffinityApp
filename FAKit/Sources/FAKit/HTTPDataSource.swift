@@ -8,6 +8,6 @@
 import Foundation
 
 public protocol HTTPDataSource {
-    func httpData(from url: URL) async -> Data?
+    func httpData(from url: URL, cookies: [HTTPCookie]?) async -> Data?
 }
 
