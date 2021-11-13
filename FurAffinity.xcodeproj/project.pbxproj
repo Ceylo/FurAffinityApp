@@ -21,6 +21,7 @@
 		8716E7EF271C659D00C0BC4A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8716E7F2271C659D00C0BC4A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		8761834C271F5E380021A051 /* FAKit */ = {isa = PBXFileReference; lastKnownFileType = folder; path = FAKit; sourceTree = "<group>"; };
+		877226B127400B7A00245DF0 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -38,6 +39,7 @@
 		8716E7DF271C659C00C0BC4A = {
 			isa = PBXGroup;
 			children = (
+				877226B127400B7A00245DF0 /* README.md */,
 				8761834C271F5E380021A051 /* FAKit */,
 				8716E7EA271C659C00C0BC4A /* FurAffinity */,
 				8716E7E9271C659C00C0BC4A /* Products */,
