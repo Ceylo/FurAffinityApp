@@ -19,8 +19,8 @@ struct ContentView: View {
         checkingConnection = false
     }
     
-    var body: some View {
-        VStack(spacing: 20) {
+    var center: some View {
+        VStack(spacing: 40) {
             if checkingConnection {
                 ProgressView("Checking connection…")
             } else {
@@ -33,10 +33,19 @@ struct ContentView: View {
                         }
                     }
                 } else {
-                    
-                    Button("Login") {
-                        showLoginView = true
+                    Label("Welcome Furry!", systemImage: "pawprint.fill")
+                        .font(.title)
+                    HStack(spacing: 20) {
+                        Button("Login with furaffinity.net") {
+                            showLoginView = true
+                        }
+                        .buttonStyle(.borderedProminent)
+                        
+                        Link("Register",
+                             destination: URL(string: "https://www.furaffinity.net/register")!)
+                            .buttonStyle(.bordered)
                     }
+                    
                 }
             }
         }
@@ -53,8 +62,17 @@ struct ContentView: View {
                     showLoginView = session == nil
                 }
         }
-
-
+    }
+    
+    var body: some View {
+        VStack {
+            Spacer()
+            center
+            Spacer()
+            Link("www.furaffinity.net",
+                 destination: URL(string: "https://www.furaffinity.net/")!)
+        }
+        .padding(.bottom)
     }
 }
 
