@@ -11,8 +11,7 @@ import FAPages
 public struct FASession: Equatable {
     public let username: String
     public let displayUsername: String
-    public let submissionsCount: Int
-    public let journalsCount: Int
+    private let cookies: [HTTPCookie]
     
     /// Initialize a FASession from the given session cookies.
     /// - Parameter cookies: The cookies for furaffinity.net after the user is logged
@@ -24,15 +23,12 @@ public struct FASession: Equatable {
         else { return nil }
         
         guard let username = page.username,
-              let displayUsername = page.displayUsername,
-              let submissionsCount = page.submissionsCount,
-              let journalsCount = page.journalsCount
+              let displayUsername = page.displayUsername
         else { return nil }
         
         self.username = username
         self.displayUsername = displayUsername
-        self.submissionsCount = submissionsCount
-        self.journalsCount = journalsCount
+        self.cookies = cookies
     }
 }
 
