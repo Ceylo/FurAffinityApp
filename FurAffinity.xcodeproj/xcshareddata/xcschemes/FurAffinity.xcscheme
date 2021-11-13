@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "8716E7E7271C659C00C0BC4A"
-               BuildableName = "FurAffinity.app"
+               BuildableName = "Fur Affinity.app"
                BlueprintName = "FurAffinity"
                ReferencedContainer = "container:FurAffinity.xcodeproj">
             </BuildableReference>
@@ -45,7 +45,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8716E7E7271C659C00C0BC4A"
-            BuildableName = "FurAffinity.app"
+            BuildableName = "Fur Affinity.app"
             BlueprintName = "FurAffinity"
             ReferencedContainer = "container:FurAffinity.xcodeproj">
          </BuildableReference>
@@ -62,7 +62,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8716E7E7271C659C00C0BC4A"
-            BuildableName = "FurAffinity.app"
+            BuildableName = "Fur Affinity.app"
             BlueprintName = "FurAffinity"
             ReferencedContainer = "container:FurAffinity.xcodeproj">
          </BuildableReference>
