@@ -6,12 +6,20 @@
 //
 
 import SwiftUI
+import FAKit
 
 @main
 struct FurAffinityApp: App {
+    @State private var session: FASession?
+    
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            if session == nil {
+                HomeView(session: $session)
+            } else {
+                Text("Submissions")
+                    .transition(.opacity.animation(.easeInOut))
+            }
         }
     }
 }

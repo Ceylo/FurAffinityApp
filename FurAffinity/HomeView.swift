@@ -10,7 +10,7 @@ import FAKit
 
 struct HomeView: View {
     @State private var checkingConnection = true
-    @State private var session: FASession?
+    @Binding var session: FASession?
     @State private var showLoginView = false
     
     func updateSession() async {
@@ -78,6 +78,6 @@ struct HomeView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        HomeView()
+        HomeView(session: .constant(nil))
     }
 }
