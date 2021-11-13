@@ -2,6 +2,15 @@
 ## Project Goals
 This project is written to be able to benefit from [furaffinity.net](https://www.furaffinity.net) content on iOS through a more friendly and native experience. It also serves as a learning project for the [technologies mentioned below](#technologies-and-requirements). It can also be useful to other people and is thus provided by the means of this opensource GitHub project.
 
+## Features
+
+- [ ] Submissions feed
+  - [ ] Submission dowbload
+  - [ ] Submission details & like
+  - [ ] Submission comments
+- [ ] Journals feed
+- [ ] Exploration
+
 ## Installation
 The [furaffinity.net](https://www.furaffinity.net) website hosts NSFW content in addition to SFW content. Although NSFW content is not displayed unless explicitly enabled in the Fur Affinity user account settings, this prevents such application from being distributed through the official App Store. Nervertheless it can still be used on your own device through sideloading, for instance with [AltStore](https://altstore.io) or, if you are a developer, [by installing the app on your device with Xcode](https://developer.apple.com/documentation/xcode/running-your-app-in-the-simulator-or-on-a-device).
 
