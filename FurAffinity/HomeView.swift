@@ -8,7 +8,7 @@
 import SwiftUI
 import FAKit
 
-struct ContentView: View {
+struct HomeView: View {
     @State private var checkingConnection = true
     @State private var session: FASession?
     @State private var showLoginView = false
@@ -78,6 +78,6 @@ struct ContentView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        HomeView()
     }
 }
