@@ -12,6 +12,8 @@
 		8716E7F0271C659D00C0BC4A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8716E7EF271C659D00C0BC4A /* Assets.xcassets */; };
 		8716E7F3271C659D00C0BC4A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8716E7F2271C659D00C0BC4A /* Preview Assets.xcassets */; };
 		8761834E271F5E570021A051 /* FAKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8761834D271F5E570021A051 /* FAKit */; };
+		877226B327402F9300245DF0 /* LoggedInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877226B227402F9300245DF0 /* LoggedInView.swift */; };
+		877226B52740361C00245DF0 /* SubmissionsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877226B42740361C00245DF0 /* SubmissionsListView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +24,8 @@
 		8716E7F2271C659D00C0BC4A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		8761834C271F5E380021A051 /* FAKit */ = {isa = PBXFileReference; lastKnownFileType = folder; path = FAKit; sourceTree = "<group>"; };
 		877226B127400B7A00245DF0 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		877226B227402F9300245DF0 /* LoggedInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggedInView.swift; sourceTree = "<group>"; };
+		877226B42740361C00245DF0 /* SubmissionsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionsListView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +64,8 @@
 			children = (
 				8716E7EB271C659C00C0BC4A /* FurAffinityApp.swift */,
 				8716E7ED271C659C00C0BC4A /* HomeView.swift */,
+				877226B227402F9300245DF0 /* LoggedInView.swift */,
+				877226B42740361C00245DF0 /* SubmissionsListView.swift */,
 				8716E7EF271C659D00C0BC4A /* Assets.xcassets */,
 				8716E7F1271C659D00C0BC4A /* Preview Content */,
 			);
@@ -155,6 +161,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				8716E7EE271C659C00C0BC4A /* HomeView.swift in Sources */,
+				877226B327402F9300245DF0 /* LoggedInView.swift in Sources */,
+				877226B52740361C00245DF0 /* SubmissionsListView.swift in Sources */,
 				8716E7EC271C659C00C0BC4A /* FurAffinityApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
