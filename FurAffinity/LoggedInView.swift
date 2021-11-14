@@ -6,8 +6,10 @@
 //
 
 import SwiftUI
+import FAKit
 
 struct LoggedInView: View {
+    @Binding var session: FASession
     @State private var selectedTab: Tab = .submissions
 
     enum Tab {
@@ -17,7 +19,7 @@ struct LoggedInView: View {
     var body: some View {
         VStack {
             TabView(selection: $selectedTab) {
-                SubmissionsListView()
+                SubmissionsListView(session: $session)
                     .tabItem {
                         Label("Submissions", systemImage: "rectangle.grid.2x2")
                     }
@@ -30,6 +32,6 @@ struct LoggedInView: View {
 
 struct LoggedInView_Previews: PreviewProvider {
     static var previews: some View {
-        LoggedInView()
+        LoggedInView(session: .constant(FASession(sampleUsername: "Demo")))
     }
 }

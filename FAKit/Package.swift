@@ -16,11 +16,12 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.3.3"),
+        .package(url: "https://github.com/sharplet/Regex.git", from: "2.1.1"),
     ],
     targets: [
         .target(
             name: "FAPages",
-            dependencies: ["SwiftSoup"]),
+            dependencies: ["SwiftSoup", "Regex"]),
         .testTarget(
             name: "FAPagesTests",
             dependencies: ["FAPages"],

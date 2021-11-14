@@ -17,7 +17,7 @@ struct FurAffinityApp: App {
             if session == nil {
                 HomeView(session: $session)
             } else {
-                LoggedInView()
+                LoggedInView(session: Binding($session)!)
                     .transition(.opacity.animation(.default))
             }
         }
