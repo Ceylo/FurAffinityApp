@@ -11,9 +11,20 @@ import Regex
 
 public struct FASubmissionsPage {
     public struct Submission: Equatable {
+        public init(sid: Int, url: URL, thumbnailUrl: URL, thumbnailWidthOnHeightRatio: Float, title: String, author: String, displayAuthor: String) {
+            self.sid = sid
+            self.url = url
+            self.thumbnailUrl = thumbnailUrl
+            self.thumbnailWidthOnHeightRatio = thumbnailWidthOnHeightRatio
+            self.title = title
+            self.author = author
+            self.displayAuthor = displayAuthor
+        }
+        
         public let sid: Int
         public let url: URL
         public let thumbnailUrl: URL
+        public let thumbnailWidthOnHeightRatio: Float
         public let title: String
         public let author: String
         public let displayAuthor: String
@@ -102,8 +113,14 @@ extension FASubmissionsPage.Submission {
             self.url = URL(string: "https://www.furaffinity.net/view/\(sid)/")!
             
             let thumbNodes = try node.select("figure b u a img")
-            guard let thumbSrc = try thumbNodes.first()?.attr("src") else { return nil }
+            guard let thumbSrc = try thumbNodes.first()?.attr("src"),
+                  let thumbWidthStr = try thumbNodes.first()?.attr("data-width"),
+                  let thumbHeightStr = try thumbNodes.first()?.attr("data-height"),
+                  let thumbWidth = Float(thumbWidthStr),
+                  let thumbHeight = Float(thumbHeightStr)
+            else { return nil }
             self.thumbnailUrl = URL(string: "https:\(thumbSrc)")!
+            self.thumbnailWidthOnHeightRatio = thumbWidth / thumbHeight
             
             let captionNodes = try node.select("figure figcaption label p a")
             self.title = try captionNodes[0].text()

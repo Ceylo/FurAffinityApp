@@ -9,22 +9,30 @@ import SwiftUI
 import FAKit
 
 struct LoggedInView: View {
-    @Binding var session: FASession
+    @Binding var session: FASession?
     @State private var selectedTab: Tab = .submissions
 
     enum Tab {
         case submissions
+        case settings
     }
     
     var body: some View {
         VStack {
             TabView(selection: $selectedTab) {
-                SubmissionsListView(session: $session)
-                    .tabItem {
-                        Label("Submissions", systemImage: "rectangle.grid.2x2")
-                    }
-                    .tag(Tab.submissions)
+                if session != nil {
+                    SubmissionsFeedView(session: Binding($session)!)
+                        .tabItem {
+                            Label("Submissions", systemImage: "rectangle.grid.2x2")
+                        }
+                        .tag(Tab.submissions)
+                }
                 
+                SettingsView(session: $session)
+                    .tabItem {
+                        Label("Settings", systemImage: "slider.horizontal.3")
+                    }
+                    .tag(Tab.settings)
             }
         }
     }
@@ -32,6 +40,6 @@ struct LoggedInView: View {
 
 struct LoggedInView_Previews: PreviewProvider {
     static var previews: some View {
-        LoggedInView(session: .constant(FASession(sampleUsername: "Demo")))
+        LoggedInView(session: .constant(OfflineFASession.default))
     }
 }

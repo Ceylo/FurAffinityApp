@@ -1,0 +1,62 @@
+//
+//  SubmissionFeedItemView.swift
+//  FurAffinity
+//
+//  Created by Ceylo on 14/11/2021.
+//
+
+import SwiftUI
+import FAPages
+import URLImage
+
+typealias Submission = FASubmissionsPage.Submission
+
+extension CGSize {
+    var maxDimension: CGFloat { max(width, height) }
+}
+
+struct SubmissionFeedItemView: View {
+    @Binding var submission: Submission
+    @Environment(\.displayScale) var displayScale: CGFloat
+    
+    var body: some View {
+        VStack(alignment: .leading) {
+            Tracker(name: submission.title)
+            
+            HStack(alignment: .firstTextBaseline) {
+                Text(submission.title)
+                    .font(.headline)
+                Spacer()
+                Text("by \(submission.displayAuthor)")
+            }
+            .padding([.leading, .trailing], 10)
+            .padding([.bottom, .top], 10)
+            
+            GeometryReader { geometry in
+                // AsyncImage sometimes remains in empty phase when used in a List…
+                URLImage(submission.bestThumbnailUrl(for: UInt( geometry.size.maxDimension))) { progress in
+                    EmptyView()
+                } failure: { error, retry in
+                    Centered {
+                        Text("Oops, image loading failed 😞")
+                        Text(error.localizedDescription)
+                            .font(.caption)
+                    }
+                } content: { image, info in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                }
+                
+            }
+            .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
+        }
+    }
+}
+
+struct SubmissionFeedItemView_Previews: PreviewProvider {
+    static var previews: some View {
+        SubmissionFeedItemView(submission: .constant(OfflineFASession.default.submissions[0]))
+            .preferredColorScheme(.dark)
+    }
+}
