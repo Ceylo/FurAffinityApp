@@ -16,7 +16,6 @@ extension FASubmissionsPage.Submission: Identifiable {
 struct SubmissionsFeedView: View {
     @Binding var session: FASession
     @State private var submissions = [FASubmissionsPage.Submission]()
-    @Environment(\.displayScale) var displayScale: CGFloat
 
     var body: some View {
         List($submissions) { $submission in

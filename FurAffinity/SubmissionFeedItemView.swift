@@ -17,7 +17,6 @@ extension CGSize {
 
 struct SubmissionFeedItemView: View {
     @Binding var submission: Submission
-    @Environment(\.displayScale) var displayScale: CGFloat
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
