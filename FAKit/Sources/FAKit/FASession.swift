@@ -25,12 +25,15 @@ open class FASession: Equatable {
         lhs.username == rhs.username
     }
     
-    open func submissions() async -> [FASubmissionsPage.Submission] {
+    open func submissionPreviews() async -> [FASubmissionPreview] {
         guard let data = await dataSource.httpData(from: FASubmissionsPage.url, cookies: cookies),
               let page = FASubmissionsPage(data: data)
         else { return [] }
         
-        return page.submissions.compactMap {$0}
+        return page.submissions.compactMap { submission in
+            guard let submission = submission else { return nil }
+            return FASubmissionPreview(submission)
+        }
     }
 }
 

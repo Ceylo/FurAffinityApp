@@ -7,17 +7,16 @@
 
 import Foundation
 import FAKit
-import FAPages
 
 class OfflineFASession: FASession {
-    let submissions: [FASubmissionsPage.Submission]
+    let submissionPreviews: [FASubmissionPreview]
     
-    public init(sampleUsername: String, submissions: [FASubmissionsPage.Submission] = []) {
-        self.submissions = submissions
+    public init(sampleUsername: String, submissions: [FASubmissionPreview] = []) {
+        self.submissionPreviews = submissions
         super.init(username: sampleUsername, displayUsername: sampleUsername, cookies: [], dataSource: URLSession.shared)
     }
     
-    override func submissions() async -> [FASubmissionsPage.Submission] { submissions }
+    override func submissionPreviews() async -> [FASubmissionPreview] { submissionPreviews }
 }
 
 extension OfflineFASession {

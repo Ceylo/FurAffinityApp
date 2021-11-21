@@ -28,32 +28,6 @@ public struct FASubmissionsPage {
         public let title: String
         public let author: String
         public let displayAuthor: String
-        
-        public enum ThumbnailSize: Int, CaseIterable {
-            case s50 = 50
-            case s75 = 75
-            case s100 = 100
-            case s120 = 120
-            case s200 = 200
-            case s300 = 300
-            case s320 = 320
-            case s400 = 400
-            case s600 = 600
-            case s800 = 800
-            case s1600 = 1600
-        }
-        
-        public func thumbnailUrl(at size: ThumbnailSize) -> URL {
-            URL(string: thumbnailUrl.absoluteString
-                    .replacingFirst(matching: "(.+)(@\\d+-)(.+)",
-                                    with: "$1\\@\(size.rawValue)-$3"))!
-        }
-        
-        public func bestThumbnailUrl(for size: UInt) -> URL {
-            let match = ThumbnailSize.allCases.first { $0.rawValue > size }
-            let size = match ?? ThumbnailSize.allCases.last!
-            return thumbnailUrl(at: size)
-        }
     }
     
     static public let url = URL(string: "https://www.furaffinity.net/msg/submissions/")!

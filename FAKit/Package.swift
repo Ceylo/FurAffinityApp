@@ -8,9 +8,6 @@ let package = Package(
     platforms: [.iOS(.v15), .macOS(.v12)],
     products: [
         .library(
-            name: "FAPages",
-            targets: ["FAPages"]),
-        .library(
             name: "FAKit",
             targets: ["FAKit"]),
     ],

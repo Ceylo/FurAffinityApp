@@ -6,29 +6,28 @@
 //
 
 import SwiftUI
-import FAPages
 import FAKit
 
-extension FASubmissionsPage.Submission: Identifiable {
+extension FASubmissionPreview: Identifiable {
     public var id: Int { sid }
 }
 
 struct SubmissionsFeedView: View {
     @EnvironmentObject var model: Model
-    @State private var submissions = [FASubmissionsPage.Submission]()
+    @State private var submissionPreviews = [FASubmissionPreview]()
 
     var body: some View {
-        List($submissions) { $submission in
+        List($submissionPreviews) { $submission in
             SubmissionFeedItemView(submission: $submission)
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 10, trailing: 0))
         }
         .listStyle(.plain)
         .task {
-            submissions = await model.session?.submissions() ?? []
+            submissionPreviews = await model.session?.submissionPreviews() ?? []
         }
         .refreshable {
-            submissions = await model.session?.submissions() ?? []
+            submissionPreviews = await model.session?.submissionPreviews() ?? []
         }
     }
 }

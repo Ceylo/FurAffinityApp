@@ -19,6 +19,7 @@ final class FASubmissionsPageTests: XCTestCase {
             .Submission(sid: 44196991,
                         url: URL(string: "https://www.furaffinity.net/view/44196991/")!,
                         thumbnailUrl: URL(string: "https://t.furaffinity.net/44196991@200-1634457867.jpg")!,
+                        thumbnailWidthOnHeightRatio: 0.9375,
                         title: "YCH Reminder! <3",
                         author: "annetpeas",
                         displayAuthor: "AnnetPeas")

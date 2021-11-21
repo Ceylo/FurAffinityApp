@@ -6,17 +6,15 @@
 //
 
 import SwiftUI
-import FAPages
+import FAKit
 import URLImage
-
-typealias Submission = FASubmissionsPage.Submission
 
 extension CGSize {
     var maxDimension: CGFloat { max(width, height) }
 }
 
 struct SubmissionFeedItemView: View {
-    @Binding var submission: Submission
+    @Binding var submission: FASubmissionPreview
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -56,7 +54,7 @@ struct SubmissionFeedItemView: View {
 
 struct SubmissionFeedItemView_Previews: PreviewProvider {
     static var previews: some View {
-        SubmissionFeedItemView(submission: .constant(OfflineFASession.default.submissions[0]))
+        SubmissionFeedItemView(submission: .constant(OfflineFASession.default.submissionPreviews[0]))
             .preferredColorScheme(.dark)
     }
 }
