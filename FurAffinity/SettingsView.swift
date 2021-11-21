@@ -9,14 +9,19 @@ import SwiftUI
 import FAKit
 
 struct SettingsView: View {
-    @Binding var session: FASession?
+    @EnvironmentObject var model: Model
     
     var body: some View {
         List {
-            Button("Disconnect from \(session?.displayUsername ?? "")", role: .destructive) {
-                Task {
-                    await FALoginView.logout()
-//                    session = await FALoginView.makeSession()
+            if let session = model.session {
+                Button("Disconnect from \(session.displayUsername)", role: .destructive) {
+                    Task {
+                        await FALoginView.logout()
+                        let newSession = await FALoginView.makeSession()
+                        DispatchQueue.main.async {
+                            model.session = newSession
+                        }
+                    }
                 }
             }
         }
@@ -25,6 +30,7 @@ struct SettingsView: View {
 
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
-        SettingsView(session: .constant(OfflineFASession.default))
+        SettingsView()
+            .environmentObject(Model.demo)
     }
 }

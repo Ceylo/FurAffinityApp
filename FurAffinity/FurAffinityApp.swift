@@ -10,14 +10,17 @@ import FAKit
 
 @main
 struct FurAffinityApp: App {
-    @State private var session: FASession?
+    @StateObject private var model = Model()
     
     var body: some Scene {
         WindowGroup {
-            if session == nil {
-                HomeView(session: $session)
+            if model.session == nil {
+                HomeView()
+                    .environmentObject(model)
+                    .transition(.opacity.animation(.default))
             } else {
-                LoggedInView(session: $session)
+                LoggedInView()
+                    .environmentObject(model)
                     .transition(.opacity.animation(.default))
             }
         }

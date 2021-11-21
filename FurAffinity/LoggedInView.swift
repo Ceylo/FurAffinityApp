@@ -9,7 +9,7 @@ import SwiftUI
 import FAKit
 
 struct LoggedInView: View {
-    @Binding var session: FASession?
+    @EnvironmentObject var model: Model
     @State private var selectedTab: Tab = .submissions
 
     enum Tab {
@@ -20,15 +20,15 @@ struct LoggedInView: View {
     var body: some View {
         VStack {
             TabView(selection: $selectedTab) {
-                if session != nil {
-                    SubmissionsFeedView(session: Binding($session)!)
+                if model.session != nil {
+                    SubmissionsFeedView()
                         .tabItem {
                             Label("Submissions", systemImage: "rectangle.grid.2x2")
                         }
                         .tag(Tab.submissions)
                 }
                 
-                SettingsView(session: $session)
+                SettingsView()
                     .tabItem {
                         Label("Settings", systemImage: "slider.horizontal.3")
                     }
@@ -40,6 +40,7 @@ struct LoggedInView: View {
 
 struct LoggedInView_Previews: PreviewProvider {
     static var previews: some View {
-        LoggedInView(session: .constant(OfflineFASession.default))
+        LoggedInView()
+            .environmentObject(Model.demo)
     }
 }

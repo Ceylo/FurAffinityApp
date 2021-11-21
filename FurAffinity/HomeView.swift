@@ -10,12 +10,16 @@ import FAKit
 
 struct HomeView: View {
     @State private var checkingConnection = true
-    @Binding var session: FASession?
+    @EnvironmentObject var model: Model
     @State private var showLoginView = false
+    @State private var localSession: FASession?
     
     func updateSession() async {
         checkingConnection = true
-        session = await FALoginView.makeSession()
+        let session = await FALoginView.makeSession()
+        DispatchQueue.main.async {
+            model.session = session
+        }
         checkingConnection = false
     }
     
@@ -24,15 +28,7 @@ struct HomeView: View {
             if checkingConnection {
                 ProgressView("Checking connection…")
             } else {
-                if let session = session {
-                    Text("Connected with user \(session.displayUsername)")
-                    Button("Logout") {
-                        Task {
-                            await FALoginView.logout()
-                            await updateSession()
-                        }
-                    }
-                } else {
+                if model.session == nil {
                     Label("Welcome Furry!", systemImage: "pawprint.fill")
                         .font(.title)
                     HStack(spacing: 20) {
@@ -45,7 +41,6 @@ struct HomeView: View {
                              destination: URL(string: "https://www.furaffinity.net/register")!)
                             .buttonStyle(.bordered)
                     }
-                    
                 }
             }
         }
@@ -57,9 +52,10 @@ struct HomeView: View {
                 await updateSession()
             }
         } content: {
-            FALoginView(session: $session)
-                .onChange(of: session) { newValue in
-                    showLoginView = session == nil
+            FALoginView(session: $localSession)
+                .onChange(of: localSession) { newValue in
+                    model.session = localSession
+                    showLoginView = model.session == nil
                 }
         }
     }
@@ -78,6 +74,7 @@ struct HomeView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        HomeView(session: .constant(nil))
+        HomeView()
+            .environmentObject(Model.demo)
     }
 }

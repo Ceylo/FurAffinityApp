@@ -59,3 +59,7 @@ extension OfflineFASession {
               displayAuthor: "Hiorou")
     ])
 }
+
+extension Model {
+    static let demo = Model(session: OfflineFASession.default)
+}

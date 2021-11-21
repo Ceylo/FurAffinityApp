@@ -14,7 +14,7 @@ extension FASubmissionsPage.Submission: Identifiable {
 }
 
 struct SubmissionsFeedView: View {
-    @Binding var session: FASession
+    @EnvironmentObject var model: Model
     @State private var submissions = [FASubmissionsPage.Submission]()
 
     var body: some View {
@@ -25,17 +25,18 @@ struct SubmissionsFeedView: View {
         }
         .listStyle(.plain)
         .task {
-            submissions = await session.submissions()
+            submissions = await model.session?.submissions() ?? []
         }
         .refreshable {
-            submissions = await session.submissions()
+            submissions = await model.session?.submissions() ?? []
         }
     }
 }
 
 struct SubmissionsFeedView_Previews: PreviewProvider {
     static var previews: some View {
-        SubmissionsFeedView(session: .constant(OfflineFASession.default))
+        SubmissionsFeedView()
+            .environmentObject(Model.demo)
             .preferredColorScheme(.dark)
     }
 }
