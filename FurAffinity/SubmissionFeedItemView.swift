@@ -20,14 +20,14 @@ struct SubmissionFeedItemView: View {
     @Environment(\.displayScale) var displayScale: CGFloat
     
     var body: some View {
-        VStack(alignment: .leading) {
-            Tracker(name: submission.title)
-            
+        VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
-                Text(submission.title)
+                Text("\(submission.displayAuthor)  ")
                     .font(.headline)
-                Spacer()
-                Text("by \(submission.displayAuthor)")
+                +
+                Text(submission.title)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
             }
             .padding([.leading, .trailing], 10)
             .padding([.bottom, .top], 10)
@@ -46,6 +46,7 @@ struct SubmissionFeedItemView: View {
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fit)
+                        .transition(.opacity.animation(.default.speed(2)))
                 }
                 
             }

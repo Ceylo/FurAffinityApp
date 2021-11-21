@@ -22,7 +22,7 @@ struct SubmissionsFeedView: View {
         List($submissions) { $submission in
             SubmissionFeedItemView(submission: $submission)
                 .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets())
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 10, trailing: 0))
         }
         .listStyle(.plain)
         .task {
