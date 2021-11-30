@@ -18,22 +18,20 @@ struct LoggedInView: View {
     }
     
     var body: some View {
-        VStack {
-            TabView(selection: $selectedTab) {
-                if model.session != nil {
-                    SubmissionsFeedView()
-                        .tabItem {
-                            Label("Submissions", systemImage: "rectangle.grid.2x2")
-                        }
-                        .tag(Tab.submissions)
-                }
-                
-                SettingsView()
+        TabView(selection: $selectedTab) {
+            if model.session != nil {
+                SubmissionsFeedView()
                     .tabItem {
-                        Label("Settings", systemImage: "slider.horizontal.3")
+                        Label("Submissions", systemImage: "rectangle.grid.2x2")
                     }
-                    .tag(Tab.settings)
+                    .tag(Tab.submissions)
             }
+            
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "slider.horizontal.3")
+                }
+                .tag(Tab.settings)
         }
     }
 }

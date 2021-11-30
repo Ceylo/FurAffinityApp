@@ -12,6 +12,11 @@
 		8716E7F0271C659D00C0BC4A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8716E7EF271C659D00C0BC4A /* Assets.xcassets */; };
 		8716E7F3271C659D00C0BC4A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8716E7F2271C659D00C0BC4A /* Preview Assets.xcassets */; };
 		8725335F274A70BB007FEF3B /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8725335E274A70BB007FEF3B /* Model.swift */; };
+		87253361274A9D91007FEF3B /* SubmissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87253360274A9D91007FEF3B /* SubmissionView.swift */; };
+		873E65F027528FC6009C8767 /* SubmissionControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E65EF27528FC6009C8767 /* SubmissionControlsView.swift */; };
+		873E65F227529866009C8767 /* SaveButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E65F127529866009C8767 /* SaveButton.swift */; };
+		873E66112752AAB2009C8767 /* ImageSaveHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E66102752AAB2009C8767 /* ImageSaveHandler.swift */; };
+		873E66182752C631009C8767 /* CircularProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E66172752C631009C8767 /* CircularProgress.swift */; };
 		8761834E271F5E570021A051 /* FAKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8761834D271F5E570021A051 /* FAKit */; };
 		877226B327402F9300245DF0 /* LoggedInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877226B227402F9300245DF0 /* LoggedInView.swift */; };
 		877226B52740361C00245DF0 /* SubmissionsFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877226B42740361C00245DF0 /* SubmissionsFeedView.swift */; };
@@ -31,6 +36,11 @@
 		8716E7EF271C659D00C0BC4A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8716E7F2271C659D00C0BC4A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		8725335E274A70BB007FEF3B /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
+		87253360274A9D91007FEF3B /* SubmissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionView.swift; sourceTree = "<group>"; };
+		873E65EF27528FC6009C8767 /* SubmissionControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionControlsView.swift; sourceTree = "<group>"; };
+		873E65F127529866009C8767 /* SaveButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveButton.swift; sourceTree = "<group>"; };
+		873E66102752AAB2009C8767 /* ImageSaveHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageSaveHandler.swift; sourceTree = "<group>"; };
+		873E66172752C631009C8767 /* CircularProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularProgress.swift; sourceTree = "<group>"; };
 		8761834C271F5E380021A051 /* FAKit */ = {isa = PBXFileReference; lastKnownFileType = folder; path = FAKit; sourceTree = "<group>"; };
 		877226B127400B7A00245DF0 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		877226B227402F9300245DF0 /* LoggedInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggedInView.swift; sourceTree = "<group>"; };
@@ -79,13 +89,17 @@
 			isa = PBXGroup;
 			children = (
 				87A1859F2745A83B00B10D2A /* Debugging.swift */,
-				87A185A12745A8A100B10D2A /* CenteredView.swift */,
+				87A4CA8B2756D17C009AA219 /* Helper Views */,
 				8725335E274A70BB007FEF3B /* Model.swift */,
 				8716E7EB271C659C00C0BC4A /* FurAffinityApp.swift */,
 				8716E7ED271C659C00C0BC4A /* HomeView.swift */,
 				877226B227402F9300245DF0 /* LoggedInView.swift */,
 				877226B42740361C00245DF0 /* SubmissionsFeedView.swift */,
 				8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */,
+				87253360274A9D91007FEF3B /* SubmissionView.swift */,
+				873E65EF27528FC6009C8767 /* SubmissionControlsView.swift */,
+				873E66102752AAB2009C8767 /* ImageSaveHandler.swift */,
+				873E65F127529866009C8767 /* SaveButton.swift */,
 				877929CF2744386E003AE828 /* FASession+CanvasPreview.swift */,
 				87A1859B27459FFE00B10D2A /* SettingsView.swift */,
 				8716E7EF271C659D00C0BC4A /* Assets.xcassets */,
@@ -107,6 +121,15 @@
 			children = (
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		87A4CA8B2756D17C009AA219 /* Helper Views */ = {
+			isa = PBXGroup;
+			children = (
+				87A185A12745A8A100B10D2A /* CenteredView.swift */,
+				873E66172752C631009C8767 /* CircularProgress.swift */,
+			);
+			path = "Helper Views";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -193,9 +216,14 @@
 				8799FAE22741672E0068A049 /* SubmissionFeedItemView.swift in Sources */,
 				8716E7EE271C659C00C0BC4A /* HomeView.swift in Sources */,
 				8725335F274A70BB007FEF3B /* Model.swift in Sources */,
+				873E66182752C631009C8767 /* CircularProgress.swift in Sources */,
+				873E65F027528FC6009C8767 /* SubmissionControlsView.swift in Sources */,
+				873E66112752AAB2009C8767 /* ImageSaveHandler.swift in Sources */,
 				877226B327402F9300245DF0 /* LoggedInView.swift in Sources */,
 				877929D02744386E003AE828 /* FASession+CanvasPreview.swift in Sources */,
+				873E65F227529866009C8767 /* SaveButton.swift in Sources */,
 				877226B52740361C00245DF0 /* SubmissionsFeedView.swift in Sources */,
+				87253361274A9D91007FEF3B /* SubmissionView.swift in Sources */,
 				8716E7EC271C659C00C0BC4A /* FurAffinityApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -330,10 +358,10 @@
 				DEVELOPMENT_TEAM = M466KPGY6A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Chosen images will be saved to the Photo Library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -361,10 +389,10 @@
 				DEVELOPMENT_TEAM = M466KPGY6A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Chosen images will be saved to the Photo Library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;

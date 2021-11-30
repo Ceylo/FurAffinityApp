@@ -35,6 +35,14 @@ open class FASession: Equatable {
             return FASubmissionPreview(submission)
         }
     }
+    
+    open func submission(for preview: FASubmissionPreview) async -> FASubmission? {
+        guard let data = await dataSource.httpData(from: preview.url, cookies: cookies),
+              let page = FASubmissionPage(data: data)
+        else { return nil }
+        
+        return FASubmission(page, url: preview.url)
+    }
 }
 
 extension FASession {

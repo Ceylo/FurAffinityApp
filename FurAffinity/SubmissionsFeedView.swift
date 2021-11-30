@@ -17,12 +17,17 @@ struct SubmissionsFeedView: View {
     @State private var submissionPreviews = [FASubmissionPreview]()
 
     var body: some View {
-        List($submissionPreviews) { $submission in
-            SubmissionFeedItemView(submission: $submission)
+        NavigationView {
+            List(submissionPreviews) { submission in
+                NavigationLink(destination: SubmissionView(model, preview: submission)) {
+                    SubmissionFeedItemView(submission: submission)
+                }
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 10, trailing: 0))
+            }
+            .listStyle(.plain)
+            .navigationBarTitleDisplayMode(.inline)
         }
-        .listStyle(.plain)
         .task {
             submissionPreviews = await model.session?.submissionPreviews() ?? []
         }
