@@ -46,6 +46,7 @@ struct SubmissionFeedItemView: View {
                     .aspectRatio(contentMode: .fit)
                     .transition(.opacity.animation(.default.speed(2)))
             }
+            .environment(\.urlImageOptions, URLImageOptions(loadOptions: [.loadImmediately, .loadOnAppear, .cancelOnDisappear]))
         }
         .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
     }
