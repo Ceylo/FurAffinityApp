@@ -4,11 +4,13 @@ This project is written to be able to benefit from [furaffinity.net](https://www
 
 ## Features
 
-- [ ] Submissions feed
-  - [ ] Submission dowbload
+- [x] Submissions feed
+  - [x] Submission download
   - [ ] Submission details & like
   - [ ] Submission comments
 - [ ] Journals feed
+- [ ] Messages reading
+- [ ] Notifications
 - [ ] Exploration
 
 ## Installation
