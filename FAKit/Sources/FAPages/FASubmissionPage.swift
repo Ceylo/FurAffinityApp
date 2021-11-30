@@ -20,17 +20,16 @@ public struct FASubmissionPage: Equatable {
 
 extension FASubmissionPage {
     public init?(data: Data) {
-        guard let string = String(data: data, encoding: .utf8),
-              let doc = try? SwiftSoup.parse(string)
-        else {
-            return nil
-        }
+        guard let doc = try? SwiftSoup.parse(String(decoding: data, as: UTF8.self))
+        else { return nil }
         
         let submissionContentQuery = "body div#main-window div#site-content div#submission_page div#columnpage div.submission-content"
         let imageQuery = submissionContentQuery + " div.submission-area img#submissionImg"
         guard let submissionImgNode = try? doc.select(imageQuery),
-              let previewStr = try? submissionImgNode.attr("data-preview-src"),
-              let fullViewStr = try? submissionImgNode.attr("data-fullview-src"),
+              let previewStr = try? submissionImgNode.attr("data-preview-src")
+                .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+              let fullViewStr = try? submissionImgNode.attr("data-fullview-src")
+                .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
               let previewUrl = URL(string: "https:" + previewStr),
               let fullViewUrl = URL(string: "https:" + fullViewStr)
         else { return nil }
