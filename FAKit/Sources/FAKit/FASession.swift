@@ -43,6 +43,41 @@ open class FASession: Equatable {
         
         return FASubmission(page, url: preview.url)
     }
+    
+    private var cachedAvatarUrls = [String: URL]()
+    private let avatarUrlRequestsQueue = DispatchQueue(label: "FASession.AvatarRequests", qos: .default)
+    open func avatarUrl(for user: String) async -> URL? {
+        await withCheckedContinuation { continuation in
+            avatarUrlRequestsQueue.async { [self] in
+                if let url = cachedAvatarUrls[user] {
+                    continuation.resume(returning: url)
+                    return
+                }
+                
+                guard let userpageUrl = FAUserPage.url(for: user) else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                
+                let sema = DispatchSemaphore(value: 0)
+                dataSource.httpData(from: userpageUrl, cookies: cookies) { data in
+                    guard let data = data,
+                          let page = FAUserPage(data: data),
+                          let avatarUrl = page.avatarUrl
+                    else {
+                        continuation.resume(returning: nil)
+                        sema.signal()
+                        return
+                    }
+                    
+                    cachedAvatarUrls[user] = avatarUrl
+                    continuation.resume(returning: avatarUrl)
+                    sema.signal()
+                }
+                sema.wait()
+            }
+        }
+    }
 }
 
 extension FASession {

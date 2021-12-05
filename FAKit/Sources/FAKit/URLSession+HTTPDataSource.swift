@@ -8,22 +8,30 @@
 import Foundation
 
 extension URLSession: HTTPDataSource {
-    public func httpData(from url: URL, cookies: [HTTPCookie]?) async -> Data? {
-        do {
-            if let cookies = cookies {
-                self.configuration.httpCookieStorage!
-                    .setCookies(cookies, for: url, mainDocumentURL: url)
+    public func httpData(from url: URL, cookies: [HTTPCookie]?, completionHandler: @escaping (Data?) -> Void) {
+        if let cookies = cookies {
+            self.configuration.httpCookieStorage!
+                .setCookies(cookies, for: url, mainDocumentURL: url)
+        }
+        print(#function, ":", url)
+        
+        self.dataTask(with: url) { data, response, error in
+            guard error == nil else {
+                completionHandler(nil)
+                return
             }
-            print(#function, ":", url)
-            let (dat, response) = try await self.data(from: url, delegate: nil)
+            
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode),
                   let mimeType = httpResponse.mimeType, mimeType == "text/html"
-            else { return nil }
+            else {
+                completionHandler(nil)
+                return
+            }
             
-            return dat
-        } catch {
-            return nil
+            completionHandler(data)
         }
+        .resume()
+        
     }
 }
