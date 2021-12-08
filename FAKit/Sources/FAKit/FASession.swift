@@ -46,10 +46,10 @@ open class FASession: Equatable {
     
     private let avatarUrlRequestsQueue = DispatchQueue(label: "FASession.AvatarRequests")
     private var cachedAvatarUrls = [String: URL]()
-    private var avatarUrlTask: Task<URL?, Never>?
+    private var avatarUrlTasks = [String: Task<URL?, Never>]()
     open func avatarUrl(for user: String) async -> URL? {
         let task = avatarUrlRequestsQueue.sync { () -> Task<URL?, Never> in
-            let previousTask = avatarUrlTask
+            let previousTask = avatarUrlTasks[user]
             let newTask = Task { () -> URL? in
                 _ = await previousTask?.result
                 if let url = cachedAvatarUrls[user] {
@@ -66,7 +66,7 @@ open class FASession: Equatable {
                 return avatarUrl
             }
             
-            avatarUrlTask = newTask
+            avatarUrlTasks[user] = newTask
             return newTask
             
         }
