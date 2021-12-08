@@ -5,8 +5,8 @@ import FAPages
 struct MockHTTPDataSource: HTTPDataSource {
     var dataForUrl = [URL : Data]()
     
-    func httpData(from url: URL, cookies: [HTTPCookie]?, completionHandler: @escaping (Data?) -> Void) {
-        completionHandler(dataForUrl[url])
+    func httpData(from url: URL, cookies: [HTTPCookie]?) async -> Data? {
+        dataForUrl[url]
     }
 }
 
