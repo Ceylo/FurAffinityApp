@@ -38,18 +38,54 @@ extension FASubmission {
 }
 
 struct SubmissionView: View {
+    @EnvironmentObject var model: Model
+    
     var preview: FASubmissionPreview
     var submissionProvider: () async -> FASubmission?
     var buttonsSize: CGFloat = 55
+    @State private var avatarUrl: URL?
     @State private var submission: FASubmission?
     @State private var fullResolutionImage: CGImage?
     @State private var description: AttributedString?
     
-    func header(submission: FASubmission) -> some View {
-        Text(submission.title)
-            .font(.headline)
-        .padding([.leading, .trailing], 10)
-        .padding([.bottom, .top], 10)
+    func header(submission: FASubmissionPreview) -> some View {
+        SubmissionHeaderView(author: submission.displayAuthor,
+                             title: submission.title,
+                             avatarUrl: avatarUrl)
+            .padding([.leading, .trailing], 10)
+            .padding([.bottom, .top], 10)
+            .task {
+                avatarUrl = await model.session?.avatarUrl(for: submission.author)
+            }
+    }
+    
+    func mainImage(submission: FASubmission) -> some View {
+        URLImage(submission.fullResolutionImageUrl) { progress in
+            Centered {
+                CircularProgress(progress: CGFloat(progress ?? 0))
+                    .frame(width: 100, height: 100)
+            }
+            .aspectRatio(CGFloat(preview.thumbnailWidthOnHeightRatio),
+                         contentMode: .fit)
+        } failure: { error, retry in
+            Centered {
+                Text("Oops, image loading failed 😞")
+                Text(error.localizedDescription)
+                    .font(.caption)
+            }
+        } content: { image, info in
+            image
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .transition(.opacity.animation(.default.speed(2)))
+                .onAppear {
+                    fullResolutionImage = info.cgImage
+                }
+        }
+        .overlay {
+            Rectangle()
+                .stroke(Color.borderOverlay, lineWidth: 1)
+        }
     }
     
     var body: some View {
@@ -57,30 +93,8 @@ struct SubmissionView: View {
             if let submission = submission {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {
-                        header(submission: submission)
-                        
-                        URLImage(submission.fullResolutionImageUrl) { progress in
-                            Centered {
-                                CircularProgress(progress: CGFloat(progress ?? 0))
-                                    .frame(width: 100, height: 100)
-                            }
-                            .aspectRatio(CGFloat(preview.thumbnailWidthOnHeightRatio),
-                                         contentMode: .fit)
-                        } failure: { error, retry in
-                            Centered {
-                                Text("Oops, image loading failed 😞")
-                                Text(error.localizedDescription)
-                                    .font(.caption)
-                            }
-                        } content: { image, info in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .transition(.opacity.animation(.default.speed(2)))
-                                .onAppear {
-                                    fullResolutionImage = info.cgImage
-                                }
-                        }
+                        header(submission: preview)
+                        mainImage(submission: submission)
                         
                         SubmissionControlsView(submissionUrl: submission.url, fullResolutionImage: fullResolutionImage, likeAction: nil)
                         
@@ -93,7 +107,6 @@ struct SubmissionView: View {
                 }
             }
         }
-        .navigationTitle(preview.displayAuthor)
         .navigationBarTitleDisplayMode(.inline)
         .task {
             submission = await submissionProvider()
@@ -115,5 +128,6 @@ struct SubmissionView_Previews: PreviewProvider {
         SubmissionView(preview: OfflineFASession.default.submissionPreviews[0],
                        submissionProvider: { FASubmission.demo })
             .preferredColorScheme(.dark)
+            .environmentObject(Model.demo)
     }
 }
