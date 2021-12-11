@@ -9,6 +9,7 @@ import SwiftUI
 import URLImage
 import FAKit
 import Foundation
+import Zoomable
 
 
 extension FASubmission {
@@ -45,8 +46,9 @@ struct SubmissionView: View {
     var buttonsSize: CGFloat = 55
     @State private var avatarUrl: URL?
     @State private var submission: FASubmission?
-    @State private var fullResolutionImage: CGImage?
+    @State private var fullResolutionCGImage: CGImage?
     @State private var description: AttributedString?
+    @State private var showZoomableSheet = false
     
     func header(submission: FASubmissionPreview) -> some View {
         SubmissionHeaderView(author: submission.displayAuthor,
@@ -79,7 +81,16 @@ struct SubmissionView: View {
                 .aspectRatio(contentMode: .fit)
                 .transition(.opacity.animation(.default.speed(2)))
                 .onAppear {
-                    fullResolutionImage = info.cgImage
+                    fullResolutionCGImage = info.cgImage
+                }
+                .sheet(isPresented: $showZoomableSheet) {
+                    Zoomable(allowZoomOutBeyondFit: false) {
+                        image
+                    }
+                    .ignoresSafeArea()
+                }
+                .onTapGesture {
+                    showZoomableSheet = true
                 }
         }
         .overlay {
@@ -96,7 +107,7 @@ struct SubmissionView: View {
                         header(submission: preview)
                         mainImage(submission: submission)
                         
-                        SubmissionControlsView(submissionUrl: submission.url, fullResolutionImage: fullResolutionImage, likeAction: nil)
+                        SubmissionControlsView(submissionUrl: submission.url, fullResolutionImage: fullResolutionCGImage, likeAction: nil)
                         
                         if let description = description {
                             Text(description)

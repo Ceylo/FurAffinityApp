@@ -27,6 +27,15 @@
           "revision": "4042f955f1fdff00ced85545e1eecdbf969b5cd0",
           "version": "3.1.1"
         }
+      },
+      {
+        "package": "Zoomable",
+        "repositoryURL": "https://github.com/Ceylo/Zoomable.git",
+        "state": {
+          "branch": null,
+          "revision": "0340851bf499db602b6e50550774c2279b231743",
+          "version": "1.0.0"
+        }
       }
     ]
   },

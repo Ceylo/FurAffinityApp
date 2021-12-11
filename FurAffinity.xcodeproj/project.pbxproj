@@ -27,6 +27,7 @@
 		87A1859C27459FFE00B10D2A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A1859B27459FFE00B10D2A /* SettingsView.swift */; };
 		87A185A02745A83B00B10D2A /* Debugging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A1859F2745A83B00B10D2A /* Debugging.swift */; };
 		87A185A22745A8A100B10D2A /* CenteredView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A185A12745A8A100B10D2A /* CenteredView.swift */; };
+		87C4D2B027653C3600C29A4B /* Zoomable in Frameworks */ = {isa = PBXBuildFile; productRef = 87C4D2AF27653C3600C29A4B /* Zoomable */; };
 		87F8FA342761347200CDD985 /* SubmissionHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA332761347200CDD985 /* SubmissionHeaderView.swift */; };
 		87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA3527613DD900CDD985 /* Extensions.swift */; };
 /* End PBXBuildFile section */
@@ -62,6 +63,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				877932AD2743186F004C43FD /* URLImage in Frameworks */,
+				87C4D2B027653C3600C29A4B /* Zoomable in Frameworks */,
 				877932AF2743186F004C43FD /* URLImageStore in Frameworks */,
 				8761834E271F5E570021A051 /* FAKit in Frameworks */,
 			);
@@ -158,6 +160,7 @@
 				8761834D271F5E570021A051 /* FAKit */,
 				877932AC2743186F004C43FD /* URLImage */,
 				877932AE2743186F004C43FD /* URLImageStore */,
+				87C4D2AF27653C3600C29A4B /* Zoomable */,
 			);
 			productName = FurAffinity;
 			productReference = 8716E7E8271C659C00C0BC4A /* Fur Affinity.app */;
@@ -189,6 +192,7 @@
 			mainGroup = 8716E7DF271C659C00C0BC4A;
 			packageReferences = (
 				877932AB2743186F004C43FD /* XCRemoteSwiftPackageReference "url-image" */,
+				87C4D2AE27653C3600C29A4B /* XCRemoteSwiftPackageReference "Zoomable" */,
 			);
 			productRefGroup = 8716E7E9271C659C00C0BC4A /* Products */;
 			projectDirPath = "";
@@ -449,6 +453,14 @@
 				minimumVersion = 3.0.0;
 			};
 		};
+		87C4D2AE27653C3600C29A4B /* XCRemoteSwiftPackageReference "Zoomable" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Ceylo/Zoomable.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -465,6 +477,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 877932AB2743186F004C43FD /* XCRemoteSwiftPackageReference "url-image" */;
 			productName = URLImageStore;
+		};
+		87C4D2AF27653C3600C29A4B /* Zoomable */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 87C4D2AE27653C3600C29A4B /* XCRemoteSwiftPackageReference "Zoomable" */;
+			productName = Zoomable;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
