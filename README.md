@@ -6,7 +6,8 @@ This project is written to be able to benefit from [furaffinity.net](https://www
 
 - [x] Submissions feed
   - [x] Submission download
-  - [ ] Submission details & like
+  - [ ] Submission details
+  - [ ] Submission like
   - [ ] Submission comments
 - [ ] Journals feed
 - [ ] Messages reading
@@ -14,7 +15,7 @@ This project is written to be able to benefit from [furaffinity.net](https://www
 - [ ] Exploration
 
 ## Installation
-The [furaffinity.net](https://www.furaffinity.net) website hosts NSFW content in addition to SFW content. Although NSFW content is not displayed unless explicitly enabled in the Fur Affinity user account settings, this prevents such application from being distributed through the official App Store. Nervertheless it can still be used on your own device through sideloading, for instance with [AltStore](https://altstore.io) or, if you are a developer, [by installing the app on your device with Xcode](https://developer.apple.com/documentation/xcode/running-your-app-in-the-simulator-or-on-a-device).
+The [furaffinity.net](https://www.furaffinity.net) website hosts NSFW content in addition to SFW content. This prevents such application from being distributed through the official App Store. Nervertheless it can still be used on your own device through sideloading, for instance with [AltStore](https://altstore.io) or, if you are a developer, [by installing the app on your device with Xcode](https://developer.apple.com/documentation/xcode/running-your-app-in-the-simulator-or-on-a-device).
 
 At this point no IPA is provided. This will change once the project becomes mature enough.
 
