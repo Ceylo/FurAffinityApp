@@ -54,8 +54,6 @@ struct SubmissionView: View {
         SubmissionHeaderView(author: submission.displayAuthor,
                              title: submission.title,
                              avatarUrl: avatarUrl)
-            .padding([.leading, .trailing], 10)
-            .padding([.bottom, .top], 10)
             .task {
                 avatarUrl = await model.session?.avatarUrl(for: submission.author)
             }
@@ -93,8 +91,9 @@ struct SubmissionView: View {
                     showZoomableSheet = true
                 }
         }
+        .cornerRadius(10)
         .overlay {
-            Rectangle()
+            RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.borderOverlay, lineWidth: 1)
         }
     }
@@ -112,9 +111,9 @@ struct SubmissionView: View {
                         if let description = description {
                             Text(description)
                                 .textSelection(.enabled)
-                                .padding()
                         }
                     }
+                    .padding(10)
                 }
             }
         }
