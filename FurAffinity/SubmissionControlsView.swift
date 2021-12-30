@@ -33,16 +33,17 @@ struct SubmissionControlsView: View {
             .frame(width: buttonsSize, height: buttonsSize)
             .disabled(fullResolutionImage == nil)
             
-            Button {
-                likeAction?()
-            } label: {
-                Image(systemName: "heart")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .padding()
+            if let likeAction = likeAction {
+                Button {
+                    likeAction()
+                } label: {
+                    Image(systemName: "heart")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .padding()
+                }
+                .frame(width: buttonsSize, height: buttonsSize)
             }
-            .frame(width: buttonsSize, height: buttonsSize)
-            .disabled(likeAction == nil)
             
             Spacer()
         }
@@ -52,7 +53,10 @@ struct SubmissionControlsView: View {
 struct SubmissionControlsView_Previews: PreviewProvider {
     static var previews: some View {
         SubmissionControlsView(submissionUrl: OfflineFASession.default.submissionPreviews[0].url,
-                               fullResolutionImage: UIImage(systemName: "checkmark")?.cgImage)
+                               fullResolutionImage: UIImage(systemName: "checkmark")?.cgImage,
+                               likeAction: {
+            print("I like it")
+        })
             .preferredColorScheme(.dark)
     }
 }
