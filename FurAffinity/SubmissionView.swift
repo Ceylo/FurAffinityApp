@@ -11,12 +11,23 @@ import FAKit
 import Foundation
 import Zoomable
 
+extension FASubmission.Theme {
+    init(style: UIUserInterfaceStyle) {
+        switch style {
+        case .unspecified, .dark:
+            self = .dark
+        case .light:
+            self = .light
+        @unknown default:
+            self = .dark
+        }
+    }
+}
 
 extension FASubmission {
     var attributedDescription: AttributedString? {
-        let html = htmlDescription
-            .replacingOccurrences(of: "href=\"/", with: "href=\"https://www.furaffinity.net/")
-        guard let data = html.data(using: .utf8),
+        let theme = FASubmission.Theme(style: UITraitCollection.current.userInterfaceStyle)
+        guard let data = htmlDescription(theme: theme).data(using: .utf8),
               let nsattrstr = try? NSAttributedString(
                 data: data,
                 options: [

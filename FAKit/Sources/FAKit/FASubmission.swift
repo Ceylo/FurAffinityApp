@@ -16,7 +16,21 @@ public struct FASubmission: Equatable {
     public let displayAuthor: String
     public let authorAvatarUrl: URL
     public let title: String
-    public let htmlDescription: String
+    
+    let htmlDescription: String
+    
+    public enum Theme {
+        case light
+        case dark
+    }
+    
+    public func htmlDescription(theme: Theme) -> String {
+        if theme == .light {
+            return htmlDescription.replacingOccurrences(of: "ui_theme_dark.css", with: "ui_theme_light.css")
+        } else {
+            return htmlDescription
+        }
+    }
     
     public init(url: URL, previewImageUrl: URL, fullResolutionImageUrl: URL, author: String, displayAuthor: String, authorAvatarUrl: URL, title: String, htmlDescription: String) {
         self.url = url
