@@ -109,8 +109,7 @@ struct SubmissionView: View {
                         SubmissionControlsView(submissionUrl: submission.url, fullResolutionImage: fullResolutionCGImage, likeAction: nil)
                         
                         if let description = description {
-                            Text(description)
-                                .textSelection(.enabled)
+                            TextView(text: description)
                         }
                     }
                     .padding(10)

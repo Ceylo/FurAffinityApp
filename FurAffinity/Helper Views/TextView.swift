@@ -1,0 +1,79 @@
+//
+//  TextView.swift
+//  FurAffinity
+//
+//  Created by Ceylo on 02/01/2022.
+//
+
+import SwiftUI
+
+struct TextView: View {
+    var text: AttributedString
+    
+    @State private var height: CGFloat = 0
+    
+    var body: some View {
+        TextViewImpl(text: text, neededHeight: $height)
+            .frame(height: height)
+    }
+    
+    struct TextViewImpl: UIViewRepresentable {
+        var text: AttributedString
+        @Binding var neededHeight: CGFloat
+        
+        func makeUIView(context: Context) -> UITextView {
+            let view = UITextView()
+            view.isEditable = false
+            view.isScrollEnabled = false
+            view.setContentCompressionResistancePriority(.fittingSizeLevel, for: .horizontal)
+            view.attributedText = NSAttributedString(text)
+            return view
+        }
+        
+        func updateUIView(_ uiView: UITextView, context: Context) {
+            let bounds = CGSize(width: uiView.bounds.width,
+                                height: CGFloat.greatestFiniteMagnitude)
+            let fittingSize = uiView.systemLayoutSizeFitting(bounds)
+            DispatchQueue.main.async {
+                neededHeight = fittingSize.height
+            }
+        }
+    }
+}
+
+
+
+struct TextView_Previews: PreviewProvider {
+    static var html: String {
+        "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n<html lang=\"en\" class=\"no-js\" xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n<meta charset=\"utf-8\" />\n<meta name=\"viewport\"           content=\"width=device-width, initial-scale=1.0\" />\n<link type=\"text/css\" rel=\"stylesheet\" href=\"/themes/beta/css/ui_theme_dark.css\" /></head>\n<body data-static-path=\"/themes/beta\">"
+        +
+        "<code class=\"bbcode bbcode_center\"><strong class=\"bbcode bbcode_b\"> Happy New Year, guys! <br> Let the New Year bring happiness and joy to every home, because each of you deserves all the best!<br> Love you all!!! </strong></code>\n<br> \n<br> \n<br> \n<br> \n<br> \n<br> Rudy © \n<a href=\"/user/ruddi\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20211231/ruddi.gif\" align=\"middle\" title=\"ruddi\" alt=\"ruddi\"></a>\n<br> Rigel Peyton © \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20211231/lil-maj.gif\" align=\"middle\" title=\"lil-Maj\" alt=\"lil-Maj\"></a> \n<br> Annet © \n<a href=\"/user/annetpeas\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20211231/annetpeas.gif\" align=\"middle\" title=\"annetpeas\" alt=\"annetpeas\"></a> \n<br> Seth © \n<a href=\"/user/longdanger\" class=\"iconusername\"><img src=\"https://a.furaffinity.net/20211231/longdanger.gif\" align=\"middle\" title=\"longdanger\" alt=\"longdanger\"></a>\n<br> \n<br> and Bulka © irl my pet cat \n<br> \n<br> \n<br> *******************************\n<br> * \n<a class=\"auto_link named_url\" href=\"http://ko-fi.com/J3J16KSH\">Feed me with coffee?</a>\n<br> * \n<a class=\"auto_link named_url\" href=\"https://www.furaffinity.net/gallery/annetpeas/\">My Gallery</a>\n<br> * \n<a class=\"auto_link named_url\" href=\"https://twitter.com/AnnetPeas_Art\">Twitter</a>"
+        +
+        "</body></html>"
+    }
+    
+    static var attributedString: AttributedString {
+        let data = html
+            .replacingOccurrences(of: "href=\"/", with: "href=\"https://www.furaffinity.net/")
+            .replacingOccurrences(of: "src=\"//", with: "src=\"https://")
+            .data(using: .utf8)!
+        let nsattrstr = try! NSAttributedString(
+            data: data,
+            options: [
+                .documentType: NSAttributedString.DocumentType.html,
+                .characterEncoding: NSNumber(value: String.Encoding.utf8.rawValue)
+            ],
+            documentAttributes: nil)
+        
+        return AttributedString(nsattrstr)
+    }
+    
+    static var previews: some View {
+        ScrollView {
+            TextView(text: attributedString)
+                .border(.yellow)
+        }
+        .border(.blue)
+        .preferredColorScheme(.dark)
+    }
+}

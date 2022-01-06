@@ -23,6 +23,7 @@
 		877929D02744386E003AE828 /* FASession+CanvasPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877929CF2744386E003AE828 /* FASession+CanvasPreview.swift */; };
 		877932AD2743186F004C43FD /* URLImage in Frameworks */ = {isa = PBXBuildFile; productRef = 877932AC2743186F004C43FD /* URLImage */; };
 		877932AF2743186F004C43FD /* URLImageStore in Frameworks */ = {isa = PBXBuildFile; productRef = 877932AE2743186F004C43FD /* URLImageStore */; };
+		879233D2278216DF0019AC44 /* TextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 879233D1278216DF0019AC44 /* TextView.swift */; };
 		8799FAE22741672E0068A049 /* SubmissionFeedItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */; };
 		87A1859C27459FFE00B10D2A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A1859B27459FFE00B10D2A /* SettingsView.swift */; };
 		87A185A02745A83B00B10D2A /* Debugging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A1859F2745A83B00B10D2A /* Debugging.swift */; };
@@ -49,6 +50,7 @@
 		877226B227402F9300245DF0 /* LoggedInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggedInView.swift; sourceTree = "<group>"; };
 		877226B42740361C00245DF0 /* SubmissionsFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionsFeedView.swift; sourceTree = "<group>"; };
 		877929CF2744386E003AE828 /* FASession+CanvasPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FASession+CanvasPreview.swift"; sourceTree = "<group>"; };
+		879233D1278216DF0019AC44 /* TextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextView.swift; sourceTree = "<group>"; };
 		8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionFeedItemView.swift; sourceTree = "<group>"; };
 		87A1859B27459FFE00B10D2A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		87A1859F2745A83B00B10D2A /* Debugging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Debugging.swift; sourceTree = "<group>"; };
@@ -136,6 +138,7 @@
 			children = (
 				87A185A12745A8A100B10D2A /* CenteredView.swift */,
 				873E66172752C631009C8767 /* CircularProgress.swift */,
+				879233D1278216DF0019AC44 /* TextView.swift */,
 			);
 			path = "Helper Views";
 			sourceTree = "<group>";
@@ -236,6 +239,7 @@
 				877226B52740361C00245DF0 /* SubmissionsFeedView.swift in Sources */,
 				87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */,
 				87253361274A9D91007FEF3B /* SubmissionView.swift in Sources */,
+				879233D2278216DF0019AC44 /* TextView.swift in Sources */,
 				8716E7EC271C659C00C0BC4A /* FurAffinityApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

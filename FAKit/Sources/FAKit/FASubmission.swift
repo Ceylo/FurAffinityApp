@@ -26,7 +26,26 @@ public struct FASubmission: Equatable {
         self.displayAuthor = displayAuthor
         self.authorAvatarUrl = authorAvatarUrl
         self.title = title
-        self.htmlDescription = htmlDescription
+        
+        let htmlDescriptionPrefix = """
+        <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+        <html lang="en" class="no-js" xmlns="http://www.w3.org/1999/xhtml">
+        <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <link type="text/css" rel="stylesheet" href="/themes/beta/css/ui_theme_dark.css" />
+        </head>
+        <body data-static-path="/themes/beta">
+            <div class="section-body">
+                <div class="submission-description user-submitted-links">
+        """
+        let htmlDescriptionSuffix = "</div></div></body></html>"
+        let correctedDescription = (htmlDescriptionPrefix + htmlDescription + htmlDescriptionSuffix)
+            .replacingOccurrences(of: "href=\"/", with: "href=\"https://www.furaffinity.net/")
+            .replacingOccurrences(of: "src=\"//", with: "src=\"https://")
+            .replacingOccurrences(of: "src=\"/", with: "src=\"https://www.furaffinity.net/")
+        
+        self.htmlDescription = correctedDescription
     }
 }
 
