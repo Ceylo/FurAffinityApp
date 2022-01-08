@@ -43,7 +43,7 @@ jobs:
         with:
           action: archive
           configuration: Release
-          destination: generic/platform=iOS
+          platform: iOS
           scheme: FurAffinity
           upload-logs: always
           verbosity: verbose
