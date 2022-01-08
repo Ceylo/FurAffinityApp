@@ -47,5 +47,3 @@ jobs:
           scheme: FurAffinity
           upload-logs: always
           verbosity: verbose
-          code-sign-certificate: $BUILD_CERTIFICATE_BASE64
-          code-sign-certificate-passphrase: $P12_PASSWORD
