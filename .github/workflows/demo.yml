@@ -41,6 +41,7 @@ jobs:
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
       - uses: mxcl/xcodebuild@v1
         with:
-          action: build
+          action: archive
           configuration: release
           platform: iOS
+          scheme: FurAffinity
