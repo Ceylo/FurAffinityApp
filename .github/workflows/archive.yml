@@ -1,16 +1,11 @@
-name: GitHub Actions Demo
+name: Generate IPA
 on: [push]
 jobs:
   Build-App:
     runs-on: macos-latest
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
         uses: actions/checkout@v2
-      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: find $(pwd) -name FurAffinity.xcodeproj
       - name: Install the Apple certificate and provisioning profile
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
@@ -41,9 +36,25 @@ jobs:
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
       - uses: mxcl/xcodebuild@v1
         with:
-          action: archive
-          configuration: Release
-          platform: iOS
-          scheme: FurAffinity
-          upload-logs: always
-          verbosity: verbose
+          action: none
+      - name: Archive App
+        run: |
+          git_hash=$(git rev-parse --short "$GITHUB_SHA")
+          qualified_app_name="FurAffinity-${GITHUB_REF_NAME}-${git_hash}"
+          export archive_path=/tmp/${qualified_app_name}.xcarchive
+          xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination generic/platform=iOS -configuration Release archive -archivePath "${archive_path}"
+          payload_dir="/tmp/${qualified_app_name}/ipa/Payload"
+          mkdir -p "${payload_dir}"
+          cp -Rp ${archive_path}/Products/Applications/* "${payload_dir}"
+          zip -r "FurAffinity-${GITHUB_REF_NAME}-${git_hash}.ipa" "${payload_dir}"
+      - uses: actions/upload-artifact@v2
+        with:
+          name: IPA
+          path: FurAffinity-*.ipa
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Xcode Archive
+          path: /tmp/*.xcarchive
+          if-no-files-found: error
+          
