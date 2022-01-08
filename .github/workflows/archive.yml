@@ -41,12 +41,11 @@ jobs:
         run: |
           git_hash=$(git rev-parse --short "$GITHUB_SHA")
           qualified_app_name="FurAffinity-${GITHUB_REF_NAME}-${git_hash}"
-          export archive_path=/tmp/${qualified_app_name}.xcarchive
+          archive_path=$(pwd)/${qualified_app_name}.xcarchive
           xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination generic/platform=iOS -configuration Release archive -archivePath "${archive_path}"
-          payload_dir="/tmp/${qualified_app_name}/ipa/Payload"
-          mkdir -p "${payload_dir}"
-          cp -Rp ${archive_path}/Products/Applications/* "${payload_dir}"
-          zip -r "FurAffinity-${GITHUB_REF_NAME}-${git_hash}.ipa" "${payload_dir}"
+          mkdir Payload
+          cp -Rp ${archive_path}/Products/Applications/* Payload/
+          zip -r "FurAffinity-${GITHUB_REF_NAME}-${git_hash}.ipa" Payload
       - uses: actions/upload-artifact@v2
         with:
           name: IPA
@@ -55,6 +54,6 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: Xcode Archive
-          path: /tmp/*.xcarchive
+          path: ./*.xcarchive
           if-no-files-found: error
           
