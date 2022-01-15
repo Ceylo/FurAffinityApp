@@ -64,7 +64,6 @@ jobs:
           path: ./*.xcarchive
           if-no-files-found: error
       - name: Create Release
-        uses: actions/checkout@v2
         uses: ncipollo/release-action@v1
         id: create_release
         with:
