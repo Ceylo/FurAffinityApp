@@ -1,10 +1,10 @@
-name: Generate IPA
+name: Create Release
 on:
   push:
     tags:
       - '*'
 jobs:
-  Create-Release:
+  Build-App:
     runs-on: macos-latest
     steps:
       - name: Check out repository code
@@ -59,7 +59,6 @@ jobs:
           name: Xcode Archive
           path: ./*.xcarchive
           if-no-files-found: error
-        - name: release
       - uses: actions/create-release@v1
         id: create_release
         with:
