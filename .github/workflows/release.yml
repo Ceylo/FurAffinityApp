@@ -6,6 +6,8 @@ on:
 jobs:
   Build-App:
     runs-on: macos-latest
+    permissions:
+      contents: write
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
@@ -49,17 +51,21 @@ jobs:
           mkdir Payload
           cp -Rp ${archive_path}/Products/Applications/* Payload/
           zip -r "FurAffinity-${GITHUB_REF_NAME}-${git_hash}.ipa" Payload
-      - uses: actions/upload-artifact@v2
+      - name: Upload IPA
+        uses: actions/upload-artifact@v2
         with:
           name: IPA
           path: FurAffinity-*.ipa
           if-no-files-found: error
-      - uses: actions/upload-artifact@v2
+      - name: Upload xcarchive
+        uses: actions/upload-artifact@v2
         with:
           name: Xcode Archive
           path: ./*.xcarchive
           if-no-files-found: error
-      - uses: actions/create-release@v1
+      - name: Create Release
+        uses: actions/checkout@v2
+        uses: ncipollo/release-action@v1
         id: create_release
         with:
           name: FurAffinity ${{ github.ref }}
