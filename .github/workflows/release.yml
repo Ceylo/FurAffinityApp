@@ -68,6 +68,8 @@ jobs:
         id: create_release
         with:
           name: FurAffinity ${{ github.ref_name }}
-          artifacts: FurAffinity-*.ipa
+          artifacts: FurAffinity-*.ipa,./*.xcarchive
           bodyFile: ReleaseNotes.md
           token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          artifactErrorsFailBuild: true
