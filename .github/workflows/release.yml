@@ -67,6 +67,6 @@ jobs:
         uses: ncipollo/release-action@v1
         id: create_release
         with:
-          name: FurAffinity ${{ github.ref }}
+          name: FurAffinity ${GITHUB_REF_NAME}
           artifacts: FurAffinity-*.ipa
           token: ${{ secrets.GITHUB_TOKEN }}
