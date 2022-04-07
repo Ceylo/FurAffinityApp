@@ -50,7 +50,8 @@ jobs:
           xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination generic/platform=iOS -configuration Release archive -archivePath "${archive_path}"
           mkdir Payload
           cp -Rp ${archive_path}/Products/Applications/* Payload/
-          zip -r "FurAffinity-${GITHUB_REF_NAME}-${git_hash}.ipa" Payload
+          zip -r "${qualified_app_name}.ipa" Payload
+          zip -r "${qualified_app_name}.xcarchive.zip" "${archive_path}"
       - name: Upload IPA
         uses: actions/upload-artifact@v2
         with:
@@ -68,7 +69,7 @@ jobs:
         id: create_release
         with:
           name: FurAffinity ${{ github.ref_name }}
-          artifacts: FurAffinity-*.ipa,./*.xcarchive
+          artifacts: FurAffinity-*.ipa,*.xcarchive.zip
           bodyFile: ReleaseNotes.md
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
