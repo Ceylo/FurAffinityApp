@@ -51,7 +51,7 @@ jobs:
           mkdir Payload
           cp -Rp ${archive_path}/Products/Applications/* Payload/
           zip -r "${qualified_app_name}.ipa" Payload
-          zip -r "${qualified_app_name}.xcarchive.zip" "${archive_path}"
+          zip -r "${qualified_app_name}.xcarchive.zip" "${qualified_app_name}.xcarchive"
       - name: Upload IPA
         uses: actions/upload-artifact@v2
         with:
