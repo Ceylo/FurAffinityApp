@@ -69,4 +69,5 @@ jobs:
         with:
           name: FurAffinity ${{ github.ref_name }}
           artifacts: FurAffinity-*.ipa
+          bodyFile: ReleaseNotes.md
           token: ${{ secrets.GITHUB_TOKEN }}
