@@ -9,27 +9,37 @@ import SwiftUI
 import FAKit
 
 struct NoteItemView: View {
+    @EnvironmentObject var model: Model
     var notePreview: FANotePreview
+    @State private var avatarUrl: URL?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack {
-                if notePreview.unread {
-                    Circle()
-                        .frame(width: 10, height: 10)
-                        .foregroundColor(.accentColor)
+        HStack {
+            AvatarView(avatarUrl: avatarUrl)
+                .frame(width: 32, height: 32)
+                .task {
+                    avatarUrl = await model.session?.avatarUrl(for: notePreview.author)
+                }
+            
+            VStack(alignment: .leading, spacing: 5) {
+                HStack {
+                    if notePreview.unread {
+                        Circle()
+                            .frame(width: 10, height: 10)
+                            .foregroundColor(.accentColor)
+                    }
+                    
+                    Text(notePreview.title)
                 }
                 
-                Text(notePreview.title)
+                HStack {
+                    Text("From " + notePreview.displayAuthor)
+                    Spacer()
+                    Text(notePreview.datetime)
+                }
+                .foregroundStyle(.secondary)
+                .font(.footnote)
             }
-            
-            HStack {
-                Text("From " + notePreview.displayAuthor)
-                Spacer()
-                Text(notePreview.datetime)
-            }
-            .foregroundStyle(.secondary)
-            .font(.footnote)
         }
     }
 }
@@ -39,5 +49,6 @@ struct NoteItemView_Previews: PreviewProvider {
         NoteItemView(notePreview: OfflineFASession.default.notePreviews[0])
             .previewLayout(.sizeThatFits)
             .preferredColorScheme(.dark)
+            .environmentObject(Model.demo)
     }
 }
