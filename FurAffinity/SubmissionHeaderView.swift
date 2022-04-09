@@ -17,6 +17,7 @@ struct SubmissionHeaderView: View {
     var body: some View {
         HStack {
             AvatarView(avatarUrl: avatarUrl)
+                .frame(width: 32, height: 32)
             
             VStack(alignment: .leading) {
                 Text(author)

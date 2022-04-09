@@ -32,7 +32,6 @@ struct AvatarView: View {
             }
         }
         .cornerRadius(5)
-        .frame(width: 32, height: 32)
         .overlay {
             RoundedRectangle(cornerRadius: 5)
                 .stroke(Color.borderOverlay.opacity(0.5), lineWidth: 1)
@@ -44,6 +43,7 @@ struct AvatarView: View {
 struct AvatarView_Previews: PreviewProvider {
     static var previews: some View {
         AvatarView(avatarUrl: URL(string: "https://a.furaffinity.net/20220409/furrycount.gif")!)
+            .frame(width: 32, height: 32)
             .padding()
             .previewLayout(.sizeThatFits)
             .preferredColorScheme(.dark)
