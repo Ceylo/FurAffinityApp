@@ -10,9 +10,11 @@ import FAKit
 
 class OfflineFASession: FASession {
     let submissionPreviews: [FASubmissionPreview]
+    let notePreviews: [FANotePreview]
     
-    public init(sampleUsername: String, submissions: [FASubmissionPreview] = []) {
+    public init(sampleUsername: String, submissions: [FASubmissionPreview] = [], notes: [FANotePreview] = []) {
         self.submissionPreviews = submissions
+        self.notePreviews = notes
         super.init(username: sampleUsername, displayUsername: sampleUsername, cookies: [], dataSource: URLSession.shared)
     }
     
@@ -21,6 +23,8 @@ class OfflineFASession: FASession {
     override func submission(for preview: FASubmissionPreview) async -> FASubmission? {
         FASubmission.demo
     }
+    
+    override func notePreviews() async -> [FANotePreview] { notePreviews }
 }
 
 extension OfflineFASession {
@@ -60,6 +64,13 @@ extension OfflineFASession {
               title: "Eorah Pg.205",
               author: "hiorou",
               displayAuthor: "Hiorou")
+    ], notes: [
+        .init(id: 129953494, author: "someuser", displayAuthor: "SomeUser", title: "Another message",
+              datetime: "Apr 7, 2022 12:09PM", unread: true,
+              noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953494/#message")!),
+        .init(id: 129953262, author: "someuser", displayAuthor: "SomeUser", title: "Title with some spéciäl çhãrāčtęrs",
+              datetime: "Apr 7, 2022 11:58AM", unread: false,
+              noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953262/#message")!)
     ])
 }
 

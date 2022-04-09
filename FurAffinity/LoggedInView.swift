@@ -14,6 +14,7 @@ struct LoggedInView: View {
 
     enum Tab {
         case submissions
+        case notes
         case settings
     }
     
@@ -25,6 +26,12 @@ struct LoggedInView: View {
                         Label("Submissions", systemImage: "rectangle.grid.2x2")
                     }
                     .tag(Tab.submissions)
+                
+                NotesView()
+                    .tabItem {
+                        Label("Notes", systemImage: "message")
+                    }
+                    .tag(Tab.notes)
             }
             
             SettingsView()
