@@ -35,9 +35,11 @@ extension String {
     }
     
     func using(theme: FATheme) -> String {
-        guard theme == .dark else { return self }
-
-        return replacingOccurrences(of: "ui_theme_dark.css", with: "ui_theme_light.css")
+        if theme == .light {
+            return replacingOccurrences(of: "ui_theme_dark.css", with: "ui_theme_light.css")
+        } else {
+            return self
+        }
     }
 }
 
