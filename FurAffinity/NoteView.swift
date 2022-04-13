@@ -17,36 +17,36 @@ struct NoteView: View {
     @State private var message: AttributedString?
     
     var body: some View {
-        VStack(alignment: .leading) {
-            VStack(alignment: .leading, spacing: 20) {
-                HStack {
-                    AvatarView(avatarUrl: avatarUrl)
-                        .task {
-                            avatarUrl = await model.session?.avatarUrl(for: notePreview.author)
-                        }
-                        .frame(width: 42, height: 42)
+        ScrollView {
+            VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 20) {
+                    HStack {
+                        AvatarView(avatarUrl: avatarUrl)
+                            .task {
+                                avatarUrl = await model.session?.avatarUrl(for: notePreview.author)
+                            }
+                            .frame(width: 42, height: 42)
+                        
+                        Text(notePreview.displayAuthor)
+                        Spacer()
+                        Text(notePreview.datetime)
+                            .foregroundStyle(.secondary)
+                            .font(.subheadline)
+                    }
                     
-                    Text(notePreview.displayAuthor)
-                    Spacer()
-                    Text(notePreview.datetime)
-                        .foregroundStyle(.secondary)
-                        .font(.subheadline)
+                    Text(notePreview.title)
+                        .font(.title2)
                 }
+                Divider()
                 
-                Text(notePreview.title)
-                    .font(.title2)
+                if let message = message {
+                    TextView(text: message)
+                    // for text view inset
+                        .padding(.horizontal, -5)
+                }
             }
-            Divider()
-            
-            if let message = message {
-                TextView(text: message)
-                // for text view inset
-                    .padding(.horizontal, -5)
-            }
-            
-            Spacer()
+            .padding()
         }
-        .padding()
         .task {
             if let note = await noteProvider() {
                 self.message = AttributedString(FAHTML: note.htmlMessage)
