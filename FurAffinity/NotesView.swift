@@ -30,10 +30,17 @@ struct NotesView: View {
     }
     
     var body: some View {
-        List(notePreviews) { preview in
-            NoteItemView(notePreview: preview)
+        NavigationView {
+            List(notePreviews) { preview in
+                NavigationLink(destination: NoteView(notePreview: preview, noteProvider: {
+                    await model.session?.note(for: preview)
+                })) {
+                    NoteItemView(notePreview: preview)
+                }
+            }
+            .listStyle(.plain)
+            .navigationBarTitleDisplayMode(.inline)
         }
-        .listStyle(.plain)
         .refreshable {
             await refresh()
         }

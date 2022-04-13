@@ -17,6 +17,7 @@
 		873E65F227529866009C8767 /* SaveButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E65F127529866009C8767 /* SaveButton.swift */; };
 		873E66112752AAB2009C8767 /* ImageSaveHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E66102752AAB2009C8767 /* ImageSaveHandler.swift */; };
 		873E66182752C631009C8767 /* CircularProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E66172752C631009C8767 /* CircularProgress.swift */; };
+		874D69BD2804D20600DF91E7 /* NoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 874D69BC2804D20600DF91E7 /* NoteView.swift */; };
 		8761834E271F5E570021A051 /* FAKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8761834D271F5E570021A051 /* FAKit */; };
 		877226B327402F9300245DF0 /* LoggedInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877226B227402F9300245DF0 /* LoggedInView.swift */; };
 		877226B52740361C00245DF0 /* SubmissionsFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877226B42740361C00245DF0 /* SubmissionsFeedView.swift */; };
@@ -49,6 +50,7 @@
 		873E65F127529866009C8767 /* SaveButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveButton.swift; sourceTree = "<group>"; };
 		873E66102752AAB2009C8767 /* ImageSaveHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageSaveHandler.swift; sourceTree = "<group>"; };
 		873E66172752C631009C8767 /* CircularProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularProgress.swift; sourceTree = "<group>"; };
+		874D69BC2804D20600DF91E7 /* NoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteView.swift; sourceTree = "<group>"; };
 		8761834C271F5E380021A051 /* FAKit */ = {isa = PBXFileReference; lastKnownFileType = folder; path = FAKit; sourceTree = "<group>"; };
 		877226B127400B7A00245DF0 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		877226B227402F9300245DF0 /* LoggedInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggedInView.swift; sourceTree = "<group>"; };
@@ -112,6 +114,7 @@
 				877226B227402F9300245DF0 /* LoggedInView.swift */,
 				877226B42740361C00245DF0 /* SubmissionsFeedView.swift */,
 				87E0E2B72801D967005207A8 /* NotesView.swift */,
+				874D69BC2804D20600DF91E7 /* NoteView.swift */,
 				87E0E2B92801DCDB005207A8 /* NoteItemView.swift */,
 				87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */,
 				8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */,
@@ -243,6 +246,7 @@
 				877929D02744386E003AE828 /* FASession+CanvasPreview.swift in Sources */,
 				873E65F227529866009C8767 /* SaveButton.swift in Sources */,
 				87F960CB2801EFF3000B30A3 /* AvatarView.swift in Sources */,
+				874D69BD2804D20600DF91E7 /* NoteView.swift in Sources */,
 				877226B52740361C00245DF0 /* SubmissionsFeedView.swift in Sources */,
 				87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */,
 				87253361274A9D91007FEF3B /* SubmissionView.swift in Sources */,

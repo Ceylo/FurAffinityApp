@@ -55,6 +55,14 @@ open class FASession: Equatable {
         }
     }
     
+    open func note(for preview: FANotePreview) async -> FANote? {
+        guard let data = await dataSource.httpData(from: preview.noteUrl, cookies: cookies),
+              let page = FANotePage(data: data)
+        else { return nil }
+        
+        return FANote(page)
+    }
+    
     private let avatarUrlRequestsQueue = DispatchQueue(label: "FASession.AvatarRequests")
     private var cachedAvatarUrls = [String: URL]()
     private var avatarUrlTasks = [String: Task<URL?, Never>]()

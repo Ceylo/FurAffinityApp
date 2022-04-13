@@ -16,21 +16,7 @@ public struct FASubmission: Equatable {
     public let displayAuthor: String
     public let authorAvatarUrl: URL
     public let title: String
-    
-    let htmlDescription: String
-    
-    public enum Theme {
-        case light
-        case dark
-    }
-    
-    public func htmlDescription(theme: Theme) -> String {
-        if theme == .light {
-            return htmlDescription.replacingOccurrences(of: "ui_theme_dark.css", with: "ui_theme_light.css")
-        } else {
-            return htmlDescription
-        }
-    }
+    public let htmlDescription: String
     
     public init(url: URL, previewImageUrl: URL, fullResolutionImageUrl: URL, author: String, displayAuthor: String, authorAvatarUrl: URL, title: String, htmlDescription: String) {
         self.url = url
@@ -40,26 +26,7 @@ public struct FASubmission: Equatable {
         self.displayAuthor = displayAuthor
         self.authorAvatarUrl = authorAvatarUrl
         self.title = title
-        
-        let htmlDescriptionPrefix = """
-        <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-        <html lang="en" class="no-js" xmlns="http://www.w3.org/1999/xhtml">
-        <head>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <link type="text/css" rel="stylesheet" href="/themes/beta/css/ui_theme_dark.css" />
-        </head>
-        <body data-static-path="/themes/beta">
-            <div class="section-body">
-                <div class="submission-description user-submitted-links">
-        """
-        let htmlDescriptionSuffix = "</div></div></body></html>"
-        let correctedDescription = (htmlDescriptionPrefix + htmlDescription + htmlDescriptionSuffix)
-            .replacingOccurrences(of: "href=\"/", with: "href=\"https://www.furaffinity.net/")
-            .replacingOccurrences(of: "src=\"//", with: "src=\"https://")
-            .replacingOccurrences(of: "src=\"/", with: "src=\"https://www.furaffinity.net/")
-        
-        self.htmlDescription = correctedDescription
+        self.htmlDescription = htmlDescription.selfContainedFAHtml
     }
 }
 

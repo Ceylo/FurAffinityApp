@@ -25,6 +25,10 @@ class OfflineFASession: FASession {
     }
     
     override func notePreviews() async -> [FANotePreview] { notePreviews }
+    
+    override func note(for preview: FANotePreview) async -> FANote? {
+        return FANote.demo
+    }
 }
 
 extension OfflineFASession {
@@ -91,4 +95,11 @@ extension FASubmission {
             title: "Spells and magic",
             htmlDescription: htmlDescription)
     }()
+}
+
+extension FANote {
+    static let demo = FANote(author: "someuser", displayAuthor: "SomeUser",
+                             title: "RE: Title with some spéciäl çhãrāčtęrs",
+                             datetime: "Apr 7th, 2022, 11:58 AM",
+                             htmlMessage: "Message with some spéciäl çhãrāčtęrs.\n<br> And a newline!")
 }

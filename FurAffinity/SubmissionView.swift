@@ -11,44 +11,6 @@ import FAKit
 import Foundation
 import Zoomable
 
-extension FASubmission.Theme {
-    init(style: UIUserInterfaceStyle) {
-        switch style {
-        case .unspecified, .dark:
-            self = .dark
-        case .light:
-            self = .light
-        @unknown default:
-            self = .dark
-        }
-    }
-}
-
-extension FASubmission {
-    var attributedDescription: AttributedString? {
-        let theme = FASubmission.Theme(style: UITraitCollection.current.userInterfaceStyle)
-        guard let data = htmlDescription(theme: theme).data(using: .utf8),
-              let nsattrstr = try? NSAttributedString(
-                data: data,
-                options: [
-                    .documentType: NSAttributedString.DocumentType.html,
-                    .characterEncoding: NSNumber(value: String.Encoding.utf8.rawValue)
-                ],
-                documentAttributes: nil)
-        else { return nil }
-        
-        return AttributedString(nsattrstr)
-            .transformingAttributes(\.foregroundColor) { foregroundColor in
-                if foregroundColor.value == nil {
-                    foregroundColor.value = .primary
-                }
-            }
-            .transformingAttributes(\.font) { font in
-                font.value = .body
-            }
-    }
-}
-
 struct SubmissionView: View {
     @EnvironmentObject var model: Model
     
@@ -130,7 +92,9 @@ struct SubmissionView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             submission = await submissionProvider()
-            description = submission?.attributedDescription
+            if let submission = submission {
+                description = AttributedString(FAHTML: submission.htmlDescription)
+            }
         }
     }
 }

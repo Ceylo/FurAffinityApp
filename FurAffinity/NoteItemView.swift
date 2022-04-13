@@ -16,7 +16,7 @@ struct NoteItemView: View {
     var body: some View {
         HStack {
             AvatarView(avatarUrl: avatarUrl)
-                .frame(width: 32, height: 32)
+                .frame(width: 42, height: 42)
                 .task {
                     avatarUrl = await model.session?.avatarUrl(for: notePreview.author)
                 }
@@ -30,15 +30,16 @@ struct NoteItemView: View {
                     }
                     
                     Text(notePreview.title)
+                        .font(.headline)
                 }
                 
                 HStack {
-                    Text("From " + notePreview.displayAuthor)
+                    Text(notePreview.displayAuthor)
                     Spacer()
                     Text(notePreview.datetime)
                 }
                 .foregroundStyle(.secondary)
-                .font(.footnote)
+                .font(.subheadline)
             }
         }
     }
