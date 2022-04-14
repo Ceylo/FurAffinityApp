@@ -15,8 +15,8 @@ struct TextView: View {
     var body: some View {
         GeometryReader { geometry in
             TextViewImpl(text: text, viewWidth: geometry.size.width, neededHeight: $height)
-                .frame(height: height)
         }
+        .frame(height: height)
     }
     
     struct TextViewImpl: UIViewRepresentable {
