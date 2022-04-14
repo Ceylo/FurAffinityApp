@@ -36,7 +36,7 @@ struct NoteItemView: View {
                 HStack {
                     Text(notePreview.displayAuthor)
                     Spacer()
-                    Text(notePreview.datetime)
+                    Text(notePreview.naturalDatetime)
                 }
                 .foregroundStyle(.secondary)
                 .font(.subheadline)

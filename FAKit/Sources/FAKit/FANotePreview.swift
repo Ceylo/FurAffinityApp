@@ -14,15 +14,17 @@ public struct FANotePreview: Equatable {
     public let displayAuthor: String
     public let title: String
     public let datetime: String
+    public let naturalDatetime: String
     public let unread: Bool
     public let noteUrl: URL
     
-    public init(id: Int, author: String, displayAuthor: String, title: String, datetime: String, unread: Bool, noteUrl: URL) {
+    public init(id: Int, author: String, displayAuthor: String, title: String, datetime: String, naturalDatetime: String, unread: Bool, noteUrl: URL) {
         self.id = id
         self.author = author
         self.displayAuthor = displayAuthor
         self.title = title
         self.datetime = datetime
+        self.naturalDatetime = naturalDatetime
         self.unread = unread
         self.noteUrl = noteUrl
     }
@@ -35,6 +37,7 @@ public extension FANotePreview {
                   displayAuthor: header.displayAuthor,
                   title: header.title,
                   datetime: header.datetime,
+                  naturalDatetime: header.naturalDatetime,
                   unread: header.unread,
                   noteUrl: header.noteUrl)
     }

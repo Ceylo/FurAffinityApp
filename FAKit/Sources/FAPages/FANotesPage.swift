@@ -15,6 +15,7 @@ public struct FANotesPage: Equatable {
         public let displayAuthor: String
         public let title: String
         public let datetime: String
+        public let naturalDatetime: String
         public let unread: Bool
         public let noteUrl: URL
     }
@@ -60,9 +61,10 @@ extension FANotesPage.NoteHeader {
         else { return nil }
         let displayAuthor = try authorNode.text()
         
-        let datetimeQuery = "div.note-list-sendgroup div.note-list-senddate span.popup_date"
-        let datetime = try node.select(datetimeQuery).attr("title")
+        let datetimeNode = try node.select("div.note-list-sendgroup div.note-list-senddate span.popup_date")
+        let datetime = try datetimeNode.attr("title")
+        let naturalDatetime = try datetimeNode.text()
         
-        self.init(id: id, author: author, displayAuthor: displayAuthor, title: noteTitle, datetime: datetime, unread: unread, noteUrl: noteUrl)
+        self.init(id: id, author: author, displayAuthor: displayAuthor, title: noteTitle, datetime: datetime, naturalDatetime: naturalDatetime, unread: unread, noteUrl: noteUrl)
     }
 }

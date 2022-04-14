@@ -15,6 +15,7 @@ struct NoteView: View {
     
     @State private var avatarUrl: URL?
     @State private var message: AttributedString?
+    @State private var showExactDatetime = false
     
     var body: some View {
         ScrollView {
@@ -29,9 +30,11 @@ struct NoteView: View {
                         
                         Text(notePreview.displayAuthor)
                         Spacer()
-                        Text(notePreview.datetime)
-                            .foregroundStyle(.secondary)
-                            .font(.subheadline)
+                        Button(showExactDatetime ? notePreview.datetime : notePreview.naturalDatetime) {
+                            showExactDatetime.toggle()
+                        }
+                        .foregroundStyle(.secondary)
+                        .font(.subheadline)
                     }
                     
                     Text(notePreview.title)
