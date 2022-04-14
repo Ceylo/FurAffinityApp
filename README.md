@@ -10,7 +10,7 @@ This project is written to be able to benefit from [furaffinity.net](https://www
   - [ ] Submission like
   - [ ] Submission comments
 - [ ] Journals feed
-- [ ] Messages reading
+- [x] Messages reading
 - [ ] Notifications
 - [ ] Exploration
 
