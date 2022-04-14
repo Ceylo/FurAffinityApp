@@ -17,6 +17,7 @@
 		873E65F227529866009C8767 /* SaveButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E65F127529866009C8767 /* SaveButton.swift */; };
 		873E66112752AAB2009C8767 /* ImageSaveHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E66102752AAB2009C8767 /* ImageSaveHandler.swift */; };
 		873E66182752C631009C8767 /* CircularProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E66172752C631009C8767 /* CircularProgress.swift */; };
+		874D69BD2804D20600DF91E7 /* NoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 874D69BC2804D20600DF91E7 /* NoteView.swift */; };
 		8761834E271F5E570021A051 /* FAKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8761834D271F5E570021A051 /* FAKit */; };
 		877226B327402F9300245DF0 /* LoggedInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877226B227402F9300245DF0 /* LoggedInView.swift */; };
 		877226B52740361C00245DF0 /* SubmissionsFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877226B42740361C00245DF0 /* SubmissionsFeedView.swift */; };
@@ -29,9 +30,12 @@
 		87A185A02745A83B00B10D2A /* Debugging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A1859F2745A83B00B10D2A /* Debugging.swift */; };
 		87A185A22745A8A100B10D2A /* CenteredView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A185A12745A8A100B10D2A /* CenteredView.swift */; };
 		87C4D2B027653C3600C29A4B /* Zoomable in Frameworks */ = {isa = PBXBuildFile; productRef = 87C4D2AF27653C3600C29A4B /* Zoomable */; };
+		87E0E2B82801D967005207A8 /* NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B72801D967005207A8 /* NotesView.swift */; };
+		87E0E2BA2801DCDB005207A8 /* NoteItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B92801DCDB005207A8 /* NoteItemView.swift */; };
 		87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */; };
 		87F8FA342761347200CDD985 /* SubmissionHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA332761347200CDD985 /* SubmissionHeaderView.swift */; };
 		87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA3527613DD900CDD985 /* Extensions.swift */; };
+		87F960CB2801EFF3000B30A3 /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F960CA2801EFF3000B30A3 /* AvatarView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -46,6 +50,7 @@
 		873E65F127529866009C8767 /* SaveButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveButton.swift; sourceTree = "<group>"; };
 		873E66102752AAB2009C8767 /* ImageSaveHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageSaveHandler.swift; sourceTree = "<group>"; };
 		873E66172752C631009C8767 /* CircularProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularProgress.swift; sourceTree = "<group>"; };
+		874D69BC2804D20600DF91E7 /* NoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteView.swift; sourceTree = "<group>"; };
 		8761834C271F5E380021A051 /* FAKit */ = {isa = PBXFileReference; lastKnownFileType = folder; path = FAKit; sourceTree = "<group>"; };
 		877226B127400B7A00245DF0 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		877226B227402F9300245DF0 /* LoggedInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggedInView.swift; sourceTree = "<group>"; };
@@ -56,9 +61,12 @@
 		87A1859B27459FFE00B10D2A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		87A1859F2745A83B00B10D2A /* Debugging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Debugging.swift; sourceTree = "<group>"; };
 		87A185A12745A8A100B10D2A /* CenteredView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CenteredView.swift; sourceTree = "<group>"; };
+		87E0E2B72801D967005207A8 /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
+		87E0E2B92801DCDB005207A8 /* NoteItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteItemView.swift; sourceTree = "<group>"; };
 		87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOverlay.swift; sourceTree = "<group>"; };
 		87F8FA332761347200CDD985 /* SubmissionHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionHeaderView.swift; sourceTree = "<group>"; };
 		87F8FA3527613DD900CDD985 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		87F960CA2801EFF3000B30A3 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,9 +113,13 @@
 				8716E7ED271C659C00C0BC4A /* HomeView.swift */,
 				877226B227402F9300245DF0 /* LoggedInView.swift */,
 				877226B42740361C00245DF0 /* SubmissionsFeedView.swift */,
+				87E0E2B72801D967005207A8 /* NotesView.swift */,
+				874D69BC2804D20600DF91E7 /* NoteView.swift */,
+				87E0E2B92801DCDB005207A8 /* NoteItemView.swift */,
 				87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */,
 				8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */,
 				87F8FA332761347200CDD985 /* SubmissionHeaderView.swift */,
+				87F960CA2801EFF3000B30A3 /* AvatarView.swift */,
 				87253360274A9D91007FEF3B /* SubmissionView.swift */,
 				873E65EF27528FC6009C8767 /* SubmissionControlsView.swift */,
 				873E66102752AAB2009C8767 /* ImageSaveHandler.swift */,
@@ -220,8 +232,10 @@
 			files = (
 				87A1859C27459FFE00B10D2A /* SettingsView.swift in Sources */,
 				87A185A02745A83B00B10D2A /* Debugging.swift in Sources */,
+				87E0E2B82801D967005207A8 /* NotesView.swift in Sources */,
 				87A185A22745A8A100B10D2A /* CenteredView.swift in Sources */,
 				8799FAE22741672E0068A049 /* SubmissionFeedItemView.swift in Sources */,
+				87E0E2BA2801DCDB005207A8 /* NoteItemView.swift in Sources */,
 				8716E7EE271C659C00C0BC4A /* HomeView.swift in Sources */,
 				87F8FA342761347200CDD985 /* SubmissionHeaderView.swift in Sources */,
 				8725335F274A70BB007FEF3B /* Model.swift in Sources */,
@@ -231,6 +245,8 @@
 				877226B327402F9300245DF0 /* LoggedInView.swift in Sources */,
 				877929D02744386E003AE828 /* FASession+CanvasPreview.swift in Sources */,
 				873E65F227529866009C8767 /* SaveButton.swift in Sources */,
+				87F960CB2801EFF3000B30A3 /* AvatarView.swift in Sources */,
+				874D69BD2804D20600DF91E7 /* NoteView.swift in Sources */,
 				877226B52740361C00245DF0 /* SubmissionsFeedView.swift in Sources */,
 				87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */,
 				87253361274A9D91007FEF3B /* SubmissionView.swift in Sources */,

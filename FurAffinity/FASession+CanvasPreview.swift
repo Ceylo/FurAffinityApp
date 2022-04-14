@@ -10,9 +10,11 @@ import FAKit
 
 class OfflineFASession: FASession {
     let submissionPreviews: [FASubmissionPreview]
+    let notePreviews: [FANotePreview]
     
-    public init(sampleUsername: String, submissions: [FASubmissionPreview] = []) {
+    public init(sampleUsername: String, submissions: [FASubmissionPreview] = [], notes: [FANotePreview] = []) {
         self.submissionPreviews = submissions
+        self.notePreviews = notes
         super.init(username: sampleUsername, displayUsername: sampleUsername, cookies: [], dataSource: URLSession.shared)
     }
     
@@ -20,6 +22,12 @@ class OfflineFASession: FASession {
     
     override func submission(for preview: FASubmissionPreview) async -> FASubmission? {
         FASubmission.demo
+    }
+    
+    override func notePreviews() async -> [FANotePreview] { notePreviews }
+    
+    override func note(for preview: FANotePreview) async -> FANote? {
+        return FANote.demo
     }
 }
 
@@ -60,6 +68,13 @@ extension OfflineFASession {
               title: "Eorah Pg.205",
               author: "hiorou",
               displayAuthor: "Hiorou")
+    ], notes: [
+        .init(id: 129953494, author: "someuser", displayAuthor: "SomeUser", title: "Another message",
+              datetime: "Apr 7, 2022 12:09PM", naturalDatetime: "an hour ago", unread: true,
+              noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953494/#message")!),
+        .init(id: 129953262, author: "someuser", displayAuthor: "SomeUser", title: "Title with some spéciäl çhãrāčtęrs",
+              datetime: "Apr 7, 2022 11:58AM", naturalDatetime: "an hour ago", unread: false,
+              noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953262/#message")!)
     ])
 }
 
@@ -80,4 +95,11 @@ extension FASubmission {
             title: "Spells and magic",
             htmlDescription: htmlDescription)
     }()
+}
+
+extension FANote {
+    static let demo = FANote(author: "someuser", displayAuthor: "SomeUser",
+                             title: "RE: Title with some spéciäl çhãrāčtęrs",
+                             datetime: "Apr 7th, 2022, 11:58 AM",
+                             htmlMessage: "Message with some spéciäl çhãrāčtęrs.\n<br> And a newline!")
 }

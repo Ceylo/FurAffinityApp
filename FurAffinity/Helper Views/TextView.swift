@@ -13,12 +13,15 @@ struct TextView: View {
     @State private var height: CGFloat = 0
     
     var body: some View {
-        TextViewImpl(text: text, neededHeight: $height)
-            .frame(height: height)
+        GeometryReader { geometry in
+            TextViewImpl(text: text, viewWidth: geometry.size.width, neededHeight: $height)
+        }
+        .frame(height: height)
     }
     
     struct TextViewImpl: UIViewRepresentable {
         var text: AttributedString
+        var viewWidth: CGFloat
         @Binding var neededHeight: CGFloat
         
         func makeUIView(context: Context) -> UITextView {
@@ -31,10 +34,11 @@ struct TextView: View {
         }
         
         func updateUIView(_ uiView: UITextView, context: Context) {
-            let bounds = CGSize(width: uiView.bounds.width,
-                                height: CGFloat.greatestFiniteMagnitude)
+            let bounds = CGSize(width: viewWidth,
+                                height: .greatestFiniteMagnitude)
             let fittingSize = uiView.systemLayoutSizeFitting(bounds)
-            DispatchQueue.main.async {
+            // Can't modify view during view update, hence async
+            Task {
                 neededHeight = fittingSize.height
             }
         }

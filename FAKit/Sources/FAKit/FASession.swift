@@ -11,8 +11,8 @@ import FAPages
 open class FASession: Equatable {
     public let username: String
     public let displayUsername: String
-    private let cookies: [HTTPCookie]
-    private let dataSource: HTTPDataSource
+    let cookies: [HTTPCookie]
+    let dataSource: HTTPDataSource
     
     public init(username: String, displayUsername: String, cookies: [HTTPCookie], dataSource: HTTPDataSource) {
         self.username = username
@@ -42,6 +42,25 @@ open class FASession: Equatable {
         else { return nil }
         
         return FASubmission(page, url: preview.url)
+    }
+    
+    open func notePreviews() async -> [FANotePreview] {
+        guard let data = await dataSource.httpData(from: FANotesPage.url, cookies: cookies),
+              let page = FANotesPage(data: data)
+        else { return [] }
+        
+        return page.noteHeaders.compactMap { header in
+            guard let header = header else { return nil }
+            return FANotePreview(header)
+        }
+    }
+    
+    open func note(for preview: FANotePreview) async -> FANote? {
+        guard let data = await dataSource.httpData(from: preview.noteUrl, cookies: cookies),
+              let page = FANotePage(data: data)
+        else { return nil }
+        
+        return FANote(page)
     }
     
     private let avatarUrlRequestsQueue = DispatchQueue(label: "FASession.AvatarRequests")
