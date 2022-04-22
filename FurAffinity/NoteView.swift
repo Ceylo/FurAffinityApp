@@ -55,12 +55,19 @@ struct NoteView: View {
                 self.message = AttributedString(FAHTML: note.htmlMessage)
             }
         }
+        .toolbar {
+            ToolbarItem {
+                Link(destination: notePreview.noteUrl) {
+                    Image(systemName: "safari")
+                }
+            }
+        }
     }
 }
 
 struct NoteView_Previews: PreviewProvider {
     static var previews: some View {
-        NoteView(notePreview: OfflineFASession.default.notePreviews[0], noteProvider: { FANote.demo })
+        NoteView(notePreview: OfflineFASession.default.notePreviews[1], noteProvider: { FANote.demo })
 //            .preferredColorScheme(.dark)
             .environmentObject(Model.demo)
     }
