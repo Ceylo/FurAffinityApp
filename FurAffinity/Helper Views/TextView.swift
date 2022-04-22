@@ -6,41 +6,18 @@
 //
 
 import SwiftUI
+import RepresentableKit
 
 struct TextView: View {
     var text: AttributedString
     
-    @State private var height: CGFloat = 0
-    
     var body: some View {
-        GeometryReader { geometry in
-            TextViewImpl(text: text, viewWidth: geometry.size.width, neededHeight: $height)
-        }
-        .frame(height: height)
-    }
-    
-    struct TextViewImpl: UIViewRepresentable {
-        var text: AttributedString
-        var viewWidth: CGFloat
-        @Binding var neededHeight: CGFloat
-        
-        func makeUIView(context: Context) -> UITextView {
+        UIViewAdaptor {
             let view = UITextView()
             view.isEditable = false
             view.isScrollEnabled = false
-            view.setContentCompressionResistancePriority(.fittingSizeLevel, for: .horizontal)
             view.attributedText = NSAttributedString(text)
             return view
-        }
-        
-        func updateUIView(_ uiView: UITextView, context: Context) {
-            let bounds = CGSize(width: viewWidth,
-                                height: .greatestFiniteMagnitude)
-            let fittingSize = uiView.systemLayoutSizeFitting(bounds)
-            // Can't modify view during view update, hence async
-            Task {
-                neededHeight = fittingSize.height
-            }
         }
     }
 }
