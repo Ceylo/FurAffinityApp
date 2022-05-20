@@ -1,9 +1,9 @@
 # Fur Affinity
 ## Preview
 
-https://user-images.githubusercontent.com/451334/168431337-1448038d-2aeb-4c27-aa19-55772806a353.mp4
+https://user-images.githubusercontent.com/451334/169599555-73412b68-0c0a-4909-b36d-2553502c3515.mp4
 
-Artists featured in this video with their consent: [Hyilpi](https://www.furaffinity.net/user/hyilpi/), [Terriniss](https://www.furaffinity.net/user/terriniss/), [tiaamaito](https://www.furaffinity.net/user/tiaamaito/), [RUdragon](https://www.furaffinity.net/user/rudragon/) and [Hiorou](https://www.furaffinity.net/user/hiorou/).
+Artists featured in this video with their consent: [Hyilpi](https://www.furaffinity.net/user/hyilpi/), [Terriniss](https://www.furaffinity.net/user/terriniss/), [tiaamaito](https://www.furaffinity.net/user/tiaamaito/) and [Hiorou](https://www.furaffinity.net/user/hiorou/).
 
 ## Project Goals
 This project is written to be able to benefit from [furaffinity.net](https://www.furaffinity.net) content on iOS through a more friendly and native experience. It also serves as a learning project for the [technologies mentioned below](#technologies-and-requirements). It can also be useful to other people and is thus provided by the means of this opensource GitHub project.
