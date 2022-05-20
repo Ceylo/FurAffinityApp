@@ -23,7 +23,10 @@ This project is written to be able to benefit from [furaffinity.net](https://www
 ## Installation
 The [furaffinity.net](https://www.furaffinity.net) website hosts NSFW content in addition to SFW content. This prevents such application from being distributed through the official App Store. Nervertheless it can still be used on your own device through sideloading, for instance with [AltStore](https://altstore.io) or, if you are a developer, [by installing the app on your device with Xcode](https://developer.apple.com/documentation/xcode/running-your-app-in-the-simulator-or-on-a-device).
 
-You can get the IPA file to install the app on your iPhone from current [releases](https://github.com/Ceylo/FurAffinityApp/releases).
+### Installation with AltStore
+- Follow [this FAQ](https://faq.altstore.io) to install AltStore on your iPhone if not already done. 
+- From your iPhone, go the [releases](https://github.com/Ceylo/FurAffinityApp/releases) page and download the latest IPA file.
+- Inside AltStore on your iPhone, go to "My Apps" tab, touch "+" icon in top left and select the IPA file you just downloaded.
 
 ## Can I trust this app?
 The application is unofficial so you may wonder if it's trying to steal your Fur Affinity account or some other personal information. The fact that you have access to the full source code lets you check how it works and specifically the fact that no password is ever known to the application. The app also does not try to use any personal information beyond what is stricly necessary to let the application run: it reads the submissions listed on your account to give you access to them in the app, etc.
