@@ -13,7 +13,7 @@
 
 https://user-images.githubusercontent.com/451334/169599555-73412b68-0c0a-4909-b36d-2553502c3515.mp4
 
-Artists featured in this video with their consent: [Hyilpi](https://www.furaffinity.net/user/hyilpi/), [Terriniss](https://www.furaffinity.net/user/terriniss/), [tiaamaito](https://www.furaffinity.net/user/tiaamaito/) and [Hiorou](https://www.furaffinity.net/user/hiorou/).
+Thank you [Hyilpi](https://www.furaffinity.net/user/hyilpi/), [Terriniss](https://www.furaffinity.net/user/terriniss/), [tiaamaito](https://www.furaffinity.net/user/tiaamaito/) and [Hiorou](https://www.furaffinity.net/user/hiorou/) for letting me use your art in the demo ❤️.
 
 ## Project Goals
 This project is written to be able to benefit from [furaffinity.net](https://www.furaffinity.net) content on iOS through a more friendly and native experience. It also serves as a learning project for the [technologies mentioned below](#technologies-and-requirements). It can also be useful to other people and is thus provided by the means of this opensource GitHub project.
