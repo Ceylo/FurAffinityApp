@@ -1,4 +1,14 @@
 # Fur Affinity
+- [Preview](#preview)
+- [Project Goals](#project-goals)
+- [Features](#features)
+- [Installation](#installation)
+  * [Installation with AltStore](#installation-with-altstore)
+- [Can I trust this app?](#can-i-trust-this-app)
+- [How does it get access to my account?](#how-does-it-get-access-to-my-account)
+- [Will I get banned from Fur Affinity for using this app?](#will-i-get-banned-from-fur-affinity-for-using-this-app)
+- [Technologies used and required iOS version](#technologies-used-and-required-ios-version)
+
 ## Preview
 
 https://user-images.githubusercontent.com/451334/169599555-73412b68-0c0a-4909-b36d-2553502c3515.mp4
@@ -39,6 +49,6 @@ The app displays furaffinity.net login webpage to let you enter account details.
 As of July 2020, Fur Affinity staff allows the use of the application as long as it does not make excessive requests to furaffinity.net. This goes against apps that download the full gallery of a user for instance, but not against this app which, from furaffinity.net's point of view, behave very similarly to a usual browsing experience.
 I have asked FA staff for an update on this in December 2021 but did not get any answer for now. By default I consider it is still fine.
 
-## Technologies and Requirements
+## Technologies used and required iOS version
 This project is fully written in Swift and is based on SwiftUI and Swift Concurrency.
 As such iOS 15 or later is required to run the app.
