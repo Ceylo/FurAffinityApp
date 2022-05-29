@@ -46,8 +46,7 @@ The application is unofficial so you may wonder if it's trying to steal your Fur
 The app displays furaffinity.net login webpage to let you enter account details. These are communicated by the web browser to furaffinity.net which will then create cookies that allow your session to remain active. The account details communication only happen between the web browser and furaffinity.net server, the app only has access to the created cookies. The application then reuses these cookies to make requests to furaffinity.net as if connected with your account.
 
 ## Will I get banned from Fur Affinity for using this app?
-As of July 2020, Fur Affinity staff allows the use of the application as long as it does not make excessive requests to furaffinity.net. This goes against apps that download the full gallery of a user for instance, but not against this app which, from furaffinity.net's point of view, behave very similarly to a usual browsing experience.
-I have asked FA staff for an update on this in December 2021 but did not get any answer for now. By default I consider it is still fine.
+As of May 2022, Fur Affinity staff allows the use of the application as long as it does not make excessive requests to furaffinity.net. This goes against apps that download the full gallery of a user for instance, but not against this app which, from furaffinity.net's point of view, behave very similarly to a usual browsing experience.
 
 ## Technologies used and required iOS version
 This project is fully written in Swift and is based on SwiftUI and Swift Concurrency.
