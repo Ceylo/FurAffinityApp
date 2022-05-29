@@ -10,15 +10,14 @@ import XCTest
 
 class FAUserPageTests: XCTestCase {
     func testUserPage_isParsed() throws {
-        let data = testData("www.furaffinity.net:user:annetpeas.html")
+        let data = testData("www.furaffinity.net:user:terriniss.html")
         let page = FAUserPage(data: data)
         XCTAssertNotNil(page)
         
         let expected = FAUserPage(
-            userName: "annetpeas",
-            displayName: "AnnetPeas",
-            avatarUrl: URL(string: "https://a.furaffinity.net/1638303195/annetpeas.gif")!)
+            userName: "terriniss",
+            displayName: "Terriniss",
+            avatarUrl: URL(string: "https://a.furaffinity.net/1616615925/terriniss.gif")!)
         XCTAssertEqual(page, expected)
     }
-
 }

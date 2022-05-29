@@ -31,7 +31,7 @@ extension FAUserPage {
         else { return nil }
         self.userName = username
         
-        let displayNameQuery = userpageContainerQuery + " div.username span"
+        let displayNameQuery = userpageContainerQuery + " div.username h2"
         guard let displayNameNode = try? doc.select(displayNameQuery).first(),
               let rawDisplayName = try? displayNameNode.text(),
               let displayName = rawDisplayName.substring(matching: "~(.+)")?.trimmingCharacters(in: .whitespacesAndNewlines)
