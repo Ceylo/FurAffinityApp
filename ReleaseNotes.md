@@ -1,2 +1,0 @@
-- Ability to list and read notes from inbox
-- Fixed a layout issue with text in submission details
