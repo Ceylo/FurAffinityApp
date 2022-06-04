@@ -1,0 +1,27 @@
+name: Build App
+on: [push]
+jobs:
+  Build-App:
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - uses: mxcl/xcodebuild@v1
+        with:
+          action: none
+      - name: Build App
+        run: |
+          xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 13' -configuration Release build
+      - name: Run Tests
+        run: |
+          git_hash=$(git rev-parse --short "$GITHUB_SHA")
+          qualified_app_name="FurAffinity-${GITHUB_REF_NAME}-${git_hash}"
+          results_path=$(pwd)/${qualified_app_name}.xcresult
+          xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 13' -resultBundlePath "${results_path}" test
+          zip -r "${qualified_app_name}.xcresult.zip" "${qualified_app_name}.xcresult"
+      - name: Upload Tests Results
+        uses: actions/upload-artifact@v2
+        with:
+          name: Xcode Test Results
+          path: ./*.xcresult
+          if-no-files-found: error
