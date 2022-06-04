@@ -2,7 +2,7 @@ name: Build App
 on: [push]
 jobs:
   Build-App:
-    runs-on: macos-latest
+    runs-on: macos-12
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
