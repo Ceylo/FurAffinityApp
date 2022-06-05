@@ -17,8 +17,7 @@ extension URLSession: HTTPDataSource {
             print(#function, ":", url)
             let (dat, response) = try await self.data(from: url, delegate: nil)
             guard let httpResponse = response as? HTTPURLResponse,
-                  (200...299).contains(httpResponse.statusCode),
-                  let mimeType = httpResponse.mimeType, mimeType == "text/html"
+                  (200...299).contains(httpResponse.statusCode)
             else { return nil }
             
             return dat

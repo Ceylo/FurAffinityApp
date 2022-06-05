@@ -7,7 +7,6 @@
 
 import SwiftUI
 import FAKit
-import Alamofire
 import Version
 
 struct Release: Decodable {
@@ -24,22 +23,22 @@ struct Release: Decodable {
     }
 }
 
+@MainActor
 class AppInformation: ObservableObject {
     let currentVersion = Bundle.main.version
     @Published var latestRelease: Release?
-    @Published var isUpToDate: Bool = true
+    @Published var isUpToDate: Bool?
 
     func fetch() {
         Task {
-            latestRelease = try await AF
-                .request("https://api.github.com/repos/Ceylo/FurAffinityApp/releases/latest")
-                .serializingDecodable(Release.self)
-                .response.result.get()
-            
-            if let latestVersion = latestRelease?.version {
-                isUpToDate = latestVersion <= currentVersion
+            let url = URL(string: "https://api.github.com/repos/Ceylo/FurAffinityApp/releases/latest")!
+            if let data = await URLSession.shared.httpData(from: url, cookies: nil) {
+                let release = try JSONDecoder().decode(Release.self, from: data)
+                isUpToDate = release.version <= currentVersion
+                latestRelease = release
             } else {
-                isUpToDate = true
+                latestRelease = nil
+                isUpToDate = nil
             }
         }
     }
@@ -48,10 +47,6 @@ class AppInformation: ObservableObject {
 struct SettingsView: View {
     @EnvironmentObject var model: Model
     @ObservedObject var appInfo = AppInformation()
-    
-    init() {
-        appInfo.fetch()
-    }
     
     var body: some View {
         Form {
@@ -64,7 +59,8 @@ struct SettingsView: View {
                          + (appInfo.latestRelease?.tag_name ?? "…"))
                     
                     if let latestRelease = appInfo.latestRelease,
-                       !appInfo.isUpToDate {
+                       let isUpToDate = appInfo.isUpToDate,
+                       !isUpToDate {
                         Text(latestRelease.body.trimmingCharacters(in: .newlines))
                             .font(.caption)
                         if let url = URL(string: latestRelease.html_url) {
@@ -88,6 +84,9 @@ struct SettingsView: View {
                     }
                 }
             }
+        }
+        .onAppear {
+            appInfo.fetch()
         }
     }
 }
