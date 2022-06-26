@@ -15,7 +15,7 @@ class OfflineFASession: FASession {
     public init(sampleUsername: String, submissions: [FASubmissionPreview] = [], notes: [FANotePreview] = []) {
         self.submissionPreviews = submissions
         self.notePreviews = notes
-        super.init(username: sampleUsername, displayUsername: sampleUsername, cookies: [], dataSource: URLSession.shared)
+        super.init(username: sampleUsername, displayUsername: sampleUsername, cookies: [], dataSource: URLSession.sharedForFARequests)
     }
     
     override func submissionPreviews() async -> [FASubmissionPreview] { submissionPreviews }

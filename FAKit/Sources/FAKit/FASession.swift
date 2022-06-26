@@ -98,7 +98,7 @@ extension FASession {
     /// Initialize a FASession from the given session cookies.
     /// - Parameter cookies: The cookies for furaffinity.net after the user is logged
     /// in through a usual web browser.
-    public convenience init?(cookies: [HTTPCookie], dataSource: HTTPDataSource = URLSession.shared) async {
+    public convenience init?(cookies: [HTTPCookie], dataSource: HTTPDataSource = URLSession.sharedForFARequests) async {
         guard cookies.map(\.name).contains("a"),
               let data = await dataSource.httpData(from: FAHomePage.url, cookies: cookies),
               let page = FAHomePage(data: data)
