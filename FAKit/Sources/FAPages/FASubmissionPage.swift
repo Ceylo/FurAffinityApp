@@ -55,6 +55,7 @@ extension FASubmissionPage {
         
         let authorQuery = submissionContainerQuery + " a"
         guard let authorNode = try? doc.select(authorQuery),
+              !authorNode.isEmpty(),
               let authorUrl = try? authorNode[0].attr("href"),
               let authorName = authorUrl.substring(matching: "/user/(.+)/"),
               let displayAuthorStr = try? authorNode[0].text()

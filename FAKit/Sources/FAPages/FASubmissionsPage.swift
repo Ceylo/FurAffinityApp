@@ -97,6 +97,7 @@ extension FASubmissionsPage.Submission {
             self.thumbnailWidthOnHeightRatio = thumbWidth / thumbHeight
             
             let captionNodes = try node.select("figure figcaption label p a")
+            guard captionNodes.count >= 2 else { return nil }
             self.title = try captionNodes[0].text()
             self.author = try captionNodes[1].attr("href")
                 .substring(matching: "/user/(.+)/")!

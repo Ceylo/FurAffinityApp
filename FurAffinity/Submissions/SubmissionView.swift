@@ -19,6 +19,7 @@ struct SubmissionView: View {
     var buttonsSize: CGFloat = 55
     @State private var avatarUrl: URL?
     @State private var submission: FASubmission?
+    @State private var submissionLoadingFailed = false
     @State private var fullResolutionCGImage: CGImage?
     @State private var description: AttributedString?
     @State private var showZoomableSheet = false
@@ -87,6 +88,19 @@ struct SubmissionView: View {
                     }
                     .padding(10)
                 }
+            } else if submissionLoadingFailed {
+                Centered {
+                    VStack(spacing: 20) {
+                        Text("Oops… submission loading failed.")
+                            .font(.headline)
+                        Text("You may have lost network connection, or furaffinity.net is experiencing an outage, or this submission doesn't exist anymore.")
+                            .font(.caption)
+                            .multilineTextAlignment(.center)
+                        
+                        Link(preview.url.description, destination: preview.url)
+                    }
+                    .padding()
+                }
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -94,6 +108,9 @@ struct SubmissionView: View {
             submission = await submissionProvider()
             if let submission = submission {
                 description = AttributedString(FAHTML: submission.htmlDescription)
+                submissionLoadingFailed = false
+            } else {
+                submissionLoadingFailed = true
             }
         }
     }
@@ -111,6 +128,11 @@ struct SubmissionView_Previews: PreviewProvider {
     static var previews: some View {
         SubmissionView(preview: OfflineFASession.default.submissionPreviews[0],
                        submissionProvider: { FASubmission.demo })
+            .preferredColorScheme(.dark)
+            .environmentObject(Model.demo)
+        
+        SubmissionView(preview: OfflineFASession.default.submissionPreviews[0],
+                       submissionProvider: { nil })
             .preferredColorScheme(.dark)
             .environmentObject(Model.demo)
     }
