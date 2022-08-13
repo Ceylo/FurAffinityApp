@@ -46,7 +46,7 @@ struct SubmissionsFeedView: View {
     
     func autorefreshIfNeeded() {
         let secondsSinceLastRefresh = -lastRefreshDate.timeIntervalSinceNow
-        guard secondsSinceLastRefresh > 60 else { return }
+        guard secondsSinceLastRefresh > 15 * 60 else { return }
         
         Task {
             await refresh(pulled: false, notify: true)
