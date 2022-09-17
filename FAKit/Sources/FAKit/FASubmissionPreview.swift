@@ -8,7 +8,7 @@
 import Foundation
 import FAPages
 
-public struct FASubmissionPreview: Equatable, Hashable {
+public struct FASubmissionPreview: Equatable, Hashable, Identifiable {
     public let sid: Int
     public let url: URL
     public let thumbnailUrl: URL
@@ -16,6 +16,7 @@ public struct FASubmissionPreview: Equatable, Hashable {
     public let title: String
     public let author: String
     public let displayAuthor: String
+    public var id: Int { sid }
     
     public init(sid: Int, url: URL, thumbnailUrl: URL, thumbnailWidthOnHeightRatio: Float, title: String, author: String, displayAuthor: String) {
         self.sid = sid
