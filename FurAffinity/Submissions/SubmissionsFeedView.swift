@@ -16,7 +16,6 @@ extension FASubmissionPreview: Identifiable {
 
 struct SubmissionsFeedView: View {
     @EnvironmentObject var model: Model
-    @State private var submissionPreviews = [FASubmissionPreview]()
     @State private var newSubmissionsCount: Int?
     @State private var lastRefreshDate: Date?
     @State private var collectionView: UICollectionView!
@@ -39,30 +38,27 @@ struct SubmissionsFeedView: View {
         }
     }
     
-    func refresh(pulled: Bool) async {
-        let latestSubmissions = await model.session?.submissionPreviews() ?? []
+    func refresh(pulled: Bool) async throws {
+        // The delay gives time for the pull-to-refresh to go back
+        // to its position and prevents interrupting animation
+        if pulled {
+            try await Task.sleep(nanoseconds: UInt64(0.5 * 1e9))
+        }
         
-        let newSubmissions = latestSubmissions
-            .filter { !submissionPreviews.contains($0) }
+        let visibleIndexPathBeforeRefresh = centerIndexPath()
+        let newSubmissionCount = try await model
+            .fetchNewSubmissionPreviews()
         lastRefreshDate = Date()
         
-        guard !newSubmissions.isEmpty else { return }
+        guard newSubmissionCount > 0 else { return }
         
-        if var index = centerIndexPath() {
-            index.row += newSubmissions.count
+        if var index = visibleIndexPathBeforeRefresh {
+            index.row += newSubmissionCount
             targetIndexPath = index
         }
         
-        // The new Task + sleep gives time for the pull-to-refresh to go back
-        // to its position and prevents interrupting animation
-        Task {
-            if pulled {
-                try await Task.sleep(nanoseconds: UInt64(0.5e9))
-            }
-            submissionPreviews.insert(contentsOf: newSubmissions, at: 0)
-            withAnimation {
-                newSubmissionsCount = newSubmissions.count
-            }
+        withAnimation {
+            newSubmissionsCount = newSubmissionCount
         }
     }
     
@@ -73,14 +69,14 @@ struct SubmissionsFeedView: View {
         }
         
         Task {
-            await refresh(pulled: false)
+            try await refresh(pulled: false)
         }
     }
     
     var body: some View {
         ScrollViewReader { proxy in
             NavigationView {
-                List(submissionPreviews) { submission in
+                List(model.submissionPreviews) { submission in
                     NavigationLink(destination: SubmissionView(model, preview: submission)) {
                         SubmissionFeedItemView(submission: submission)
                             .id(submission.sid)
@@ -103,11 +99,10 @@ struct SubmissionsFeedView: View {
                         .offset(y: 40)
                 }
                 .refreshable {
-                    await refresh(pulled: true)
+                    try? await refresh(pulled: true)
                 }
-                
             }
-            .onChange(of: submissionPreviews) { newValue in
+            .onChange(of: targetIndexPath) { newValue in
                 // Preserve currently visible submission after a pull to refresh
                 if let targetIndexPath {
                     // Async because at this point the backing UIView doesn't have the new items yet

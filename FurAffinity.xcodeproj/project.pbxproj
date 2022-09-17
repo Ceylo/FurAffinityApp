@@ -25,6 +25,9 @@
 		877932AD2743186F004C43FD /* URLImage in Frameworks */ = {isa = PBXBuildFile; productRef = 877932AC2743186F004C43FD /* URLImage */; };
 		877932AF2743186F004C43FD /* URLImageStore in Frameworks */ = {isa = PBXBuildFile; productRef = 877932AE2743186F004C43FD /* URLImageStore */; };
 		87815AC728D63F9B005AD03E /* View+Introspection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87815AC628D63F9B005AD03E /* View+Introspection.swift */; };
+		87815ACA28D651DA005AD03E /* Collections in Frameworks */ = {isa = PBXBuildFile; productRef = 87815AC928D651DA005AD03E /* Collections */; };
+		87815ACC28D651DA005AD03E /* DequeModule in Frameworks */ = {isa = PBXBuildFile; productRef = 87815ACB28D651DA005AD03E /* DequeModule */; };
+		87815ACE28D651DA005AD03E /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = 87815ACD28D651DA005AD03E /* OrderedCollections */; };
 		879233D2278216DF0019AC44 /* TextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 879233D1278216DF0019AC44 /* TextView.swift */; };
 		8799FAE22741672E0068A049 /* SubmissionFeedItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */; };
 		879BFAB928D5E97800BDFB43 /* Introspect in Frameworks */ = {isa = PBXBuildFile; productRef = 879BFAB828D5E97800BDFB43 /* Introspect */; };
@@ -79,10 +82,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				87815ACE28D651DA005AD03E /* OrderedCollections in Frameworks */,
 				877932AD2743186F004C43FD /* URLImage in Frameworks */,
 				87C1A0AD284B6E5400529F8C /* Version in Frameworks */,
+				87815ACA28D651DA005AD03E /* Collections in Frameworks */,
 				87C4D2B027653C3600C29A4B /* Zoomable in Frameworks */,
 				877932AF2743186F004C43FD /* URLImageStore in Frameworks */,
+				87815ACC28D651DA005AD03E /* DequeModule in Frameworks */,
 				879BFAB928D5E97800BDFB43 /* Introspect in Frameworks */,
 				8761834E271F5E570021A051 /* FAKit in Frameworks */,
 				87C87DB82813266E00CAA57B /* RepresentableKit in Frameworks */,
@@ -215,6 +221,9 @@
 				87C87DB72813266E00CAA57B /* RepresentableKit */,
 				87C1A0AC284B6E5400529F8C /* Version */,
 				879BFAB828D5E97800BDFB43 /* Introspect */,
+				87815AC928D651DA005AD03E /* Collections */,
+				87815ACB28D651DA005AD03E /* DequeModule */,
+				87815ACD28D651DA005AD03E /* OrderedCollections */,
 			);
 			productName = FurAffinity;
 			productReference = 8716E7E8271C659C00C0BC4A /* Fur Affinity.app */;
@@ -250,6 +259,7 @@
 				87C87DB62813266E00CAA57B /* XCRemoteSwiftPackageReference "RepresentableKit" */,
 				87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */,
 				879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
+				87815AC828D651DA005AD03E /* XCRemoteSwiftPackageReference "swift-collections" */,
 			);
 			productRefGroup = 8716E7E9271C659C00C0BC4A /* Products */;
 			projectDirPath = "";
@@ -517,6 +527,14 @@
 				minimumVersion = 3.0.0;
 			};
 		};
+		87815AC828D651DA005AD03E /* XCRemoteSwiftPackageReference "swift-collections" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-collections.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
 		879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/siteline/SwiftUI-Introspect.git";
@@ -565,6 +583,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 877932AB2743186F004C43FD /* XCRemoteSwiftPackageReference "url-image" */;
 			productName = URLImageStore;
+		};
+		87815AC928D651DA005AD03E /* Collections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 87815AC828D651DA005AD03E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = Collections;
+		};
+		87815ACB28D651DA005AD03E /* DequeModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 87815AC828D651DA005AD03E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = DequeModule;
+		};
+		87815ACD28D651DA005AD03E /* OrderedCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 87815AC828D651DA005AD03E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = OrderedCollections;
 		};
 		879BFAB828D5E97800BDFB43 /* Introspect */ = {
 			isa = XCSwiftPackageProductDependency;
