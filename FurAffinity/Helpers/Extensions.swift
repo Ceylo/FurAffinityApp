@@ -14,3 +14,9 @@ extension CGSize {
 extension Color {
     static let borderOverlay = Color("BorderOverlay")
 }
+
+extension CGPoint {
+    static func+(lhs: CGPoint, rhs: CGPoint) -> CGPoint {
+        .init(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
+    }
+}
