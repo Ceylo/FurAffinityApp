@@ -42,6 +42,7 @@ jobs:
       - uses: mxcl/xcodebuild@v1
         with:
           action: none
+          xcode: ^14
       - name: Archive App
         run: |
           git_hash=$(git rev-parse --short "$GITHUB_SHA")
