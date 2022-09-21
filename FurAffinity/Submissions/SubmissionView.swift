@@ -23,6 +23,7 @@ struct SubmissionView: View {
     @State private var fullResolutionCGImage: CGImage?
     @State private var description: AttributedString?
     @State private var showZoomableSheet = false
+    @State private var activity: NSUserActivity?
     
     func header(submission: FASubmissionPreview) -> some View {
         SubmissionHeaderView(author: submission.displayAuthor,
@@ -112,6 +113,19 @@ struct SubmissionView: View {
             } else {
                 submissionLoadingFailed = true
             }
+        }
+        .onAppear {
+            if activity == nil {
+                let activity = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
+                activity.title = preview.title
+                activity.webpageURL = preview.url
+                self.activity = activity
+            }
+            
+            activity?.becomeCurrent()
+        }
+        .onDisappear {
+            activity?.resignCurrent()
         }
     }
 }
