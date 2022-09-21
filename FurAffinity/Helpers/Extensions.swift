@@ -20,3 +20,9 @@ extension CGPoint {
         .init(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
     }
 }
+
+extension UIScrollView {
+    var reachedTop: Bool {
+        return contentOffset.y - adjustedContentInset.top <= 0
+    }
+}

@@ -10,13 +10,13 @@ import Introspect
 import UIKit
 
 extension View {
-    public func introspectCollectionView(customize: @escaping (UICollectionView) -> ()) -> some View {
+    public func introspectScrollViewOnList(customize: @escaping (UIScrollView) -> ()) -> some View {
         return inject(UIKitIntrospectionView(
             selector: { introspectionView in
                 guard let viewHost = Introspect.findViewHost(from: introspectionView) else {
                     return nil
                 }
-                return Introspect.previousSibling(containing: UICollectionView.self, from: viewHost)
+                return Introspect.previousSibling(containing: UIScrollView.self, from: viewHost)
             },
             customize: customize
         ))

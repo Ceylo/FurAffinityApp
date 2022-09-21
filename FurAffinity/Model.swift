@@ -11,11 +11,24 @@ import OrderedCollections
 
 @MainActor
 class Model: ObservableObject {
-    @Published var session: FASession?
+    @Published var session: FASession? {
+        didSet {
+            if session != nil {
+                assert(oldValue == nil, "Session set twice")
+            }
+            processNewSession()
+        }
+    }
     @Published var submissionPreviews = OrderedSet<FASubmissionPreview>()
+    public var lastFetchDate: Date?
+    
+    init(session: FASession? = nil) {
+        self.session = session
+    }
     
     func fetchNewSubmissionPreviews() async throws -> Int {
         let latestSubmissions = await session?.submissionPreviews() ?? []
+        lastFetchDate = Date()
         let newSubmissions = OrderedSet(latestSubmissions)
             .subtracting(submissionPreviews)
         
@@ -25,7 +38,15 @@ class Model: ObservableObject {
         return newSubmissions.count
     }
     
-    init(session: FASession? = nil) {
-        self.session = session
+    private func processNewSession() {
+        guard session != nil else {
+            lastFetchDate = nil
+            submissionPreviews.removeAll()
+            return
+        }
+        
+        Task {
+            try await fetchNewSubmissionPreviews()
+        }
     }
 }
