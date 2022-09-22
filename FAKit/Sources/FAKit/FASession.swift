@@ -44,6 +44,14 @@ open class FASession: Equatable {
         return FASubmission(page, url: preview.url)
     }
     
+    open func toggleFavorite(for submission: FASubmission) async -> FASubmission? {
+        guard let data = await dataSource.httpData(from: submission.favoriteUrl, cookies: cookies),
+              let page = FASubmissionPage(data: data)
+        else { return nil }
+        
+        return FASubmission(page, url: submission.url)
+    }
+    
     open func notePreviews() async -> [FANotePreview] {
         guard let data = await dataSource.httpData(from: FANotesPage.url, cookies: cookies),
               let page = FANotesPage(data: data)

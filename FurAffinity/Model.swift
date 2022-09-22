@@ -9,6 +9,10 @@ import SwiftUI
 import FAKit
 import OrderedCollections
 
+enum ModelError: Error {
+    case disconnected
+}
+
 @MainActor
 class Model: ObservableObject {
     static let autorefreshDelay: TimeInterval = 15 * 60
@@ -52,6 +56,18 @@ class Model: ObservableObject {
         notePreviews = OrderedSet(latestNotes)
         unreadNoteCount = notePreviews.filter { $0.unread }.count
         lastNotePreviewsFetchDate = Date()
+    }
+    
+    func toggleFavorite(for submission: FASubmission) async throws -> FASubmission? {
+        guard let session else {
+            throw ModelError.disconnected
+        }
+        
+        let updated = await session.toggleFavorite(for: submission)
+        if let updated {
+            assert(updated.isFavorite != submission.isFavorite)
+        }
+        return updated
     }
     
     private func processNewSession() {

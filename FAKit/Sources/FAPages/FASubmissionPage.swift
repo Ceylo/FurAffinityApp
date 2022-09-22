@@ -16,6 +16,8 @@ public struct FASubmissionPage: Equatable {
     public let authorAvatarUrl: URL
     public let title: String
     public let htmlDescription: String
+    public let isFavorite: Bool
+    public let favoriteUrl: URL
 }
 
 extension FASubmissionPage {
@@ -39,6 +41,17 @@ extension FASubmissionPage {
         
         self.previewImageUrl = previewUrl
         self.fullResolutionImageUrl = fullViewUrl
+        
+        let favoriteQuery = submissionContentQuery + " div.favorite-nav a.button"
+        guard let favoriteNode = try? doc.select(favoriteQuery),
+              let favoriteUrlNode = try? favoriteNode.first(where: { ["+Fav", "-Fav"].contains(try $0.text()) }),
+              let favoriteUrlStr = try? favoriteUrlNode.attr("href"),
+              let favoriteStatusStr = try? favoriteUrlNode.text(),
+              let favoriteUrl = URL(string: "https://www.furaffinity.net" + favoriteUrlStr)
+        else { return nil }
+        
+        self.favoriteUrl = favoriteUrl
+        self.isFavorite = favoriteStatusStr == "-Fav"
         
         let avatarQuery = submissionContentQuery + " section div.section-header div.submission-id-container div.submission-id-avatar img.avatar"
         guard let avatarNode = try? doc.select(avatarQuery),

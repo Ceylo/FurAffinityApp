@@ -22,7 +22,9 @@ final class FASubmissionPageTests: XCTestCase {
             displayAuthor: "AnnetPeas",
             authorAvatarUrl: URL(string: "https://a.furaffinity.net/1633245638/annetpeas.gif")!,
             title: "Spells and magic",
-            htmlDescription: htmlDescription)
+            htmlDescription: htmlDescription,
+            isFavorite: false,
+            favoriteUrl: URL(string: "https://www.furaffinity.net/fav/44188741/?key=00f2f5f4c1c7fbfac02147b73d670cac6423ab85")!)
         
         XCTAssertEqual(page, expected)
     }

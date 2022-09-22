@@ -81,7 +81,14 @@ struct SubmissionView: View {
                         header(submission: preview)
                         mainImage(submission: submission)
                         
-                        SubmissionControlsView(submissionUrl: submission.url, fullResolutionImage: fullResolutionCGImage, likeAction: nil)
+                        SubmissionControlsView(submissionUrl: submission.url,
+                                               fullResolutionImage: fullResolutionCGImage,
+                                               isFavorite: submission.isFavorite,
+                                               favoriteAction: {
+                            Task {
+                                self.submission = try await model.toggleFavorite(for: submission)
+                            }
+                        })
                         
                         if let description = description {
                             TextView(text: description)

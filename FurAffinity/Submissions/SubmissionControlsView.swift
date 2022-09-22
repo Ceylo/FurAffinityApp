@@ -10,7 +10,8 @@ import SwiftUI
 struct SubmissionControlsView: View {
     var submissionUrl: URL
     var fullResolutionImage: CGImage?
-    var likeAction: (() -> Void)?
+    var isFavorite: Bool
+    var favoriteAction: () -> Void
     
     private let buttonsSize: CGFloat = 55
     
@@ -32,8 +33,11 @@ struct SubmissionControlsView: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Spacer()
-            Link(destination: submissionUrl) {
-                Image(systemName: "safari")
+
+            Button {
+                favoriteAction()
+            } label: {
+                Image(systemName: isFavorite ? "heart.fill" : "heart")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .padding()
@@ -54,17 +58,13 @@ struct SubmissionControlsView: View {
             }
             .frame(width: buttonsSize, height: buttonsSize)
             
-            if let likeAction = likeAction {
-                Button {
-                    likeAction()
-                } label: {
-                    Image(systemName: "heart")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .padding()
-                }
-                .frame(width: buttonsSize, height: buttonsSize)
+            Link(destination: submissionUrl) {
+                Image(systemName: "safari")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .padding()
             }
+            .frame(width: buttonsSize, height: buttonsSize)
             
             Spacer()
         }
@@ -75,7 +75,8 @@ struct SubmissionControlsView_Previews: PreviewProvider {
     static var previews: some View {
         SubmissionControlsView(submissionUrl: OfflineFASession.default.submissionPreviews[0].url,
                                fullResolutionImage: UIImage(systemName: "checkmark")?.cgImage,
-                               likeAction: {
+                               isFavorite: false,
+                               favoriteAction: {
             print("I like it")
         })
             .preferredColorScheme(.dark)
