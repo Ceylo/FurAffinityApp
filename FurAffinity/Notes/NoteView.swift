@@ -16,6 +16,7 @@ struct NoteView: View {
     @State private var avatarUrl: URL?
     @State private var message: AttributedString?
     @State private var showExactDatetime = false
+    @State private var activity: NSUserActivity?
     
     var body: some View {
         ScrollView {
@@ -61,6 +62,19 @@ struct NoteView: View {
                     Image(systemName: "safari")
                 }
             }
+        }
+        .onAppear {
+            if activity == nil {
+                let activity = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
+                activity.title = notePreview.title
+                activity.webpageURL = notePreview.noteUrl
+                self.activity = activity
+            }
+            
+            activity?.becomeCurrent()
+        }
+        .onDisappear {
+            activity?.resignCurrent()
         }
     }
 }
