@@ -28,6 +28,7 @@ struct LoggedInView: View {
                     .tag(Tab.submissions)
                 
                 NotesView()
+                    .badge(model.unreadNoteCount)
                     .tabItem {
                         Label("Notes", systemImage: "message")
                     }

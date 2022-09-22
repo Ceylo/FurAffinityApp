@@ -50,6 +50,7 @@ class Model: ObservableObject {
     func fetchNewNotePreviews() async {
         let latestNotes = await session?.notePreviews() ?? []
         notePreviews = OrderedSet(latestNotes)
+        unreadNoteCount = notePreviews.filter { $0.unread }.count
         lastNotePreviewsFetchDate = Date()
     }
     
@@ -57,6 +58,9 @@ class Model: ObservableObject {
         guard session != nil else {
             lastSubmissionPreviewsFetchDate = nil
             submissionPreviews.removeAll()
+            lastNotePreviewsFetchDate = nil
+            notePreviews.removeAll()
+            unreadNoteCount = 0
             return
         }
         
