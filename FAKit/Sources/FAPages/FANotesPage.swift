@@ -26,6 +26,9 @@ public struct FANotesPage: Equatable {
 
 extension FANotesPage {
     public init?(data: Data) {
+        let state = FAPagesSignposter.beginInterval("All Notes Preview Parsing")
+        defer { FAPagesSignposter.endInterval("All Notes Preview Parsing", state) }
+        
         do {
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
             
@@ -39,11 +42,15 @@ extension FANotesPage {
             print(error)
             return nil
         }
+            
     }
 }
 
 extension FANotesPage.NoteHeader {
     init?(_ node: SwiftSoup.Element) throws {
+        let state = FAPagesSignposter.beginInterval("Note Preview Parsing")
+        defer { FAPagesSignposter.endInterval("Note Preview Parsing", state) }
+        
         let baseQuery = "div.note-list-subjectgroup div.note-list-subject-container a.notelink"
         let baseNode = try node.select(baseQuery)
         let unread = baseNode.hasClass("note-unread")

@@ -9,6 +9,9 @@ import Foundation
 
 extension URLSession: HTTPDataSource {
     public func httpData(from url: URL, cookies: [HTTPCookie]?) async -> Data? {
+        let state = FAKitSignposter.beginInterval("Network Requests", "\(url)")
+        defer { FAKitSignposter.endInterval("Network Requests", state) }
+
         do {
             if let cookies = cookies {
                 self.configuration.httpCookieStorage!

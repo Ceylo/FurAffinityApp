@@ -38,6 +38,9 @@ public struct FASubmissionsPage {
 
 extension FASubmissionsPage {
     public init?(data: Data) {
+        let state = FAPagesSignposter.beginInterval("All Submission Previews Parsing")
+        defer { FAPagesSignposter.endInterval("All Submission Previews Parsing", state) }
+        
         guard let string = String(data: data, encoding: .utf8),
               let doc = try? SwiftSoup.parse(string, Self.url.absoluteString)
         else {
@@ -78,6 +81,9 @@ extension FASubmissionsPage {
 
 extension FASubmissionsPage.Submission {
     init?(_ node: SwiftSoup.Element) {
+        let state = FAPagesSignposter.beginInterval("Submission Preview Parsing")
+        defer { FAPagesSignposter.endInterval("Submission Preview Parsing", state) }
+        
         do {
             let sidStr = try node.attr("id")
             guard sidStr.hasPrefix("sid-") else { return nil }

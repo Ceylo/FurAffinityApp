@@ -18,6 +18,9 @@ public struct FANotePage: Equatable {
 
 extension FANotePage {
     public init?(data: Data) {
+        let state = FAPagesSignposter.beginInterval("Note Parsing")
+        defer { FAPagesSignposter.endInterval("Note Parsing", state) }
+        
         do {
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
 

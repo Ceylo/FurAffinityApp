@@ -18,6 +18,9 @@ public struct FAHomePage: Equatable {
 
 extension FAHomePage {
     public init?(data: Data) {
+        let state = FAPagesSignposter.beginInterval("Home Parsing")
+        defer { FAPagesSignposter.endInterval("Home Parsing", state) }
+        
         guard let string = String(data: data, encoding: .utf8),
               let doc = try? SwiftSoup.parse(string, Self.url.absoluteString)
         else {

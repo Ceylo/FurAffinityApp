@@ -20,6 +20,9 @@ public struct FAUserPage: Equatable {
 
 extension FAUserPage {
     public init?(data: Data) {
+        let state = FAPagesSignposter.beginInterval("User Page Parsing")
+        defer { FAPagesSignposter.endInterval("User Page Parsing", state) }
+        
         guard let doc = try? SwiftSoup.parse(String(decoding: data, as: UTF8.self))
         else { return nil }
         
