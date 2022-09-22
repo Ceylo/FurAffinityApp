@@ -64,7 +64,7 @@ extension SubmissionsFeedView {
             try await Task.sleep(nanoseconds: UInt64(0.5 * 1e9))
         }
         
-        let newSubmissionCount = try await model
+        let newSubmissionCount = await model
             .fetchNewSubmissionPreviews()
         
         guard newSubmissionCount > 0 else { return }
@@ -77,9 +77,9 @@ extension SubmissionsFeedView {
     func autorefreshIfNeeded() {
         guard scrollView?.reachedTop ?? true else { return }
         
-        if let lastRefreshDate = model.lastFetchDate {
+        if let lastRefreshDate = model.lastSubmissionPreviewsFetchDate {
             let secondsSinceLastRefresh = -lastRefreshDate.timeIntervalSinceNow
-            guard secondsSinceLastRefresh > 15 * 60 else { return }
+            guard secondsSinceLastRefresh > Model.autorefreshDelay else { return }
         }
         
         Task {

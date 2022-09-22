@@ -12,17 +12,16 @@ extension FANotePreview: Identifiable {}
 
 struct NotesView: View {
     @EnvironmentObject var model: Model
-    @State private var notePreviews = [FANotePreview]()
-    @State private var lastRefreshDate = Date()
     
     func refresh() async {
-        notePreviews = await model.session?.notePreviews() ?? []
-        lastRefreshDate = Date()
+        await model.fetchNewNotePreviews()
     }
     
     func autorefreshIfNeeded() {
-        let secondsSinceLastRefresh = -lastRefreshDate.timeIntervalSinceNow
-        guard secondsSinceLastRefresh > 60 else { return }
+        if let lastRefreshDate = model.lastNotePreviewsFetchDate {
+            let secondsSinceLastRefresh = -lastRefreshDate.timeIntervalSinceNow
+            guard secondsSinceLastRefresh > Model.autorefreshDelay else { return }
+        }
         
         Task {
             await refresh()
@@ -31,7 +30,7 @@ struct NotesView: View {
     
     var body: some View {
         NavigationView {
-            List(notePreviews) { preview in
+            List(model.notePreviews) { preview in
                 NavigationLink(destination: NoteView(notePreview: preview, noteProvider: {
                     await model.session?.note(for: preview)
                 })) {
@@ -42,9 +41,6 @@ struct NotesView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
         .refreshable {
-            await refresh()
-        }
-        .task {
             await refresh()
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in

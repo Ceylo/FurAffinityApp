@@ -11,6 +11,8 @@ import OrderedCollections
 
 @MainActor
 class Model: ObservableObject {
+    static let autorefreshDelay: TimeInterval = 15 * 60
+    
     @Published var session: FASession? {
         didSet {
             if session != nil {
@@ -19,16 +21,23 @@ class Model: ObservableObject {
             processNewSession()
         }
     }
-    @Published var submissionPreviews = OrderedSet<FASubmissionPreview>()
-    public var lastFetchDate: Date?
+    @Published
+    public private (set) var submissionPreviews = OrderedSet<FASubmissionPreview>()
+    public private (set) var lastSubmissionPreviewsFetchDate: Date?
+    
+    @Published
+    private (set) var notePreviews = OrderedSet<FANotePreview>()
+    @Published
+    private (set) var unreadNoteCount = 0
+    public private (set) var lastNotePreviewsFetchDate: Date?
     
     init(session: FASession? = nil) {
         self.session = session
     }
     
-    func fetchNewSubmissionPreviews() async throws -> Int {
+    func fetchNewSubmissionPreviews() async -> Int {
         let latestSubmissions = await session?.submissionPreviews() ?? []
-        lastFetchDate = Date()
+        lastSubmissionPreviewsFetchDate = Date()
         let newSubmissions = OrderedSet(latestSubmissions)
             .subtracting(submissionPreviews)
         
@@ -38,15 +47,22 @@ class Model: ObservableObject {
         return newSubmissions.count
     }
     
+    func fetchNewNotePreviews() async {
+        let latestNotes = await session?.notePreviews() ?? []
+        notePreviews = OrderedSet(latestNotes)
+        lastNotePreviewsFetchDate = Date()
+    }
+    
     private func processNewSession() {
         guard session != nil else {
-            lastFetchDate = nil
+            lastSubmissionPreviewsFetchDate = nil
             submissionPreviews.removeAll()
             return
         }
         
         Task {
-            try await fetchNewSubmissionPreviews()
+            _ = await fetchNewSubmissionPreviews()
+            await fetchNewNotePreviews()
         }
     }
 }
