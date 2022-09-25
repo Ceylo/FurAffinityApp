@@ -39,7 +39,7 @@ extension FANotesPage {
             
             self.noteHeaders = try noteNodes.map { try NoteHeader($0) }
         } catch {
-            print(error)
+            FAPagesLogger.error("Decoding failure in \(#file): \(error)")
             return nil
         }
             
@@ -47,7 +47,7 @@ extension FANotesPage {
 }
 
 extension FANotesPage.NoteHeader {
-    init?(_ node: SwiftSoup.Element) throws {
+    init(_ node: SwiftSoup.Element) throws {
         let state = FAPagesSignposter.beginInterval("Note Preview Parsing")
         defer { FAPagesSignposter.endInterval("Note Preview Parsing", state) }
         
@@ -55,17 +55,17 @@ extension FANotesPage.NoteHeader {
         let baseNode = try node.select(baseQuery)
         let unread = baseNode.hasClass("note-unread")
         let noteUrlStr = try baseNode.attr("href")
-        guard let noteUrl = URL(string: FAHomePage.url.absoluteString + noteUrlStr) else { return nil }
+        guard let noteUrl = URL(string: FAHomePage.url.absoluteString + noteUrlStr) else { throw FAPagesError.parserFailureError() }
         
         let idStr = try node.select("div.note-list-selectgroup div.note-list-checkbox-desktop input").attr("value")
-        guard let id = Int(idStr) else { return nil }
+        guard let id = Int(idStr) else { throw FAPagesError.parserFailureError() }
         let noteTitle = try baseNode.select("div.note-list-subject").text()
         
         let authorQuery = "div.note-list-sendgroup div.note-list-sender-container div.note-list-sender div a"
         let authorNode = try node.select(authorQuery)
         guard let author = try authorNode.attr("href")
             .substring(matching: "/user/(.+)/")
-        else { return nil }
+        else { throw FAPagesError.parserFailureError() }
         let displayAuthor = try authorNode.text()
         
         let datetimeNode = try node.select("div.note-list-sendgroup div.note-list-senddate span.popup_date")

@@ -17,14 +17,18 @@ extension URLSession: HTTPDataSource {
                 self.configuration.httpCookieStorage!
                     .setCookies(cookies, for: url, mainDocumentURL: url)
             }
-            print(#function, ":", url)
-            let (dat, response) = try await self.data(from: url, delegate: nil)
+            FAKitLogger.debug("Requesting data from \(url, privacy: .public)")
+            let (data, response) = try await self.data(from: url, delegate: nil)
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode)
-            else { return nil }
+            else {
+                FAKitLogger.error("\(url, privacy: .public): request failed with response \(response, privacy: .public) and received data \(String(data: data, encoding: .utf8) ?? "<non-UTF8 data>").")
+                return nil
+            }
             
-            return dat
+            return data
         } catch {
+            FAKitLogger.error("\(url, privacy: .public): caught error: \(error)")
             return nil
         }
     }

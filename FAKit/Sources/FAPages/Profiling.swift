@@ -8,7 +8,13 @@
 import os
 import Foundation
 
-let FAPagesSignposter = OSSignposter(
-    subsystem: Bundle.main.bundleIdentifier!,
-    category: "FAPages"
-)
+let FAPagesLogger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FAPages")
+let FAPagesSignposter = OSSignposter(logger: FAPagesLogger)
+
+enum FAPagesError: Error {
+    case parserFailure(String, Int)
+    
+    static func parserFailureError(_ file: String = #file, _ line: Int = #line) -> FAPagesError {
+        .parserFailure(file, line)
+    }
+}

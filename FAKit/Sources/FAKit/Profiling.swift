@@ -8,7 +8,5 @@
 import Foundation
 import os
 
-let FAKitSignposter = OSSignposter(
-    subsystem: Bundle.main.bundleIdentifier!,
-    category: "FAKit"
-)
+let FAKitLogger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FAKit")
+let FAKitSignposter = OSSignposter(logger: FAKitLogger)
