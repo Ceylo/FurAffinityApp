@@ -7,6 +7,13 @@
 
 import Foundation
 import FAPages
+import Cache
+
+private extension Expiry {
+    static func days(_ days: Int) -> Expiry {
+        .seconds(TimeInterval(60 * 60 * 24 * days))
+    }
+}
 
 open class FASession: Equatable {
     public let username: String
@@ -19,6 +26,11 @@ open class FASession: Equatable {
         self.displayUsername = displayUsername
         self.cookies = cookies
         self.dataSource = dataSource
+        self.avatarUrlsCache = try! Storage(
+            diskConfig: DiskConfig(name: "AvatarURLs"),
+            memoryConfig: MemoryConfig(),
+            transformer: TransformerFactory.forCodable(ofType: URL.self)
+        )
     }
     
     public static func == (lhs: FASession, rhs: FASession) -> Bool {
@@ -72,14 +84,14 @@ open class FASession: Equatable {
     }
     
     private let avatarUrlRequestsQueue = DispatchQueue(label: "FASession.AvatarRequests")
-    private var cachedAvatarUrls = [String: URL]()
-    private var avatarUrlTasks = [String: Task<URL?, Never>]()
+    private var avatarUrlTasks = [String: Task<URL?, Error>]()
+    private let avatarUrlsCache: Storage<String, URL>
     open func avatarUrl(for user: String) async -> URL? {
-        let task = avatarUrlRequestsQueue.sync { () -> Task<URL?, Never> in
+        let task = avatarUrlRequestsQueue.sync { () -> Task<URL?, Error> in
             let previousTask = avatarUrlTasks[user]
             let newTask = Task { () -> URL? in
                 _ = await previousTask?.result
-                if let url = cachedAvatarUrls[user] {
+                if let url = try? avatarUrlsCache.object(forKey: user) {
                     return url
                 }
                 
@@ -89,7 +101,10 @@ open class FASession: Equatable {
                       let avatarUrl = page.avatarUrl
                 else { return nil }
                 
-                cachedAvatarUrls[user] = avatarUrl
+                let validDays = (7..<14).randomElement()!
+                let expiry = Expiry.days(validDays)
+                try avatarUrlsCache.setObject(avatarUrl, forKey: user, expiry: expiry)
+                FAKitLogger.debug("Cached url \(avatarUrl) for user \(user) for \(validDays) days")
                 return avatarUrl
             }
             
