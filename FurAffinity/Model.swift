@@ -19,6 +19,7 @@ class Model: ObservableObject {
     
     @Published var session: FASession? {
         didSet {
+            guard oldValue !== session else { return }
             if session != nil {
                 assert(oldValue == nil, "Session set twice")
             }

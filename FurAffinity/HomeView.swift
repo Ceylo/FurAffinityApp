@@ -16,10 +16,15 @@ struct HomeView: View {
     
     func updateSession() async {
         checkingConnection = true
-        let session = await FALoginView.makeSession()
-        DispatchQueue.main.async {
-            model.session = session
+        let session: FASession?
+
+        if let localSession {
+            session = localSession
+        } else {
+            session = await FALoginView.makeSession()
         }
+        
+        model.session = session
         checkingConnection = false
     }
     
@@ -54,8 +59,7 @@ struct HomeView: View {
         } content: {
             FALoginView(session: $localSession)
                 .onChange(of: localSession) { newValue in
-                    model.session = localSession
-                    showLoginView = model.session == nil
+                    showLoginView = localSession == nil
                 }
         }
     }

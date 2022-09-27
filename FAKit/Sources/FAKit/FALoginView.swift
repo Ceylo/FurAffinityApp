@@ -23,6 +23,7 @@ public struct FALoginView: View {
                 clearCookies: true)
             .onChange(of: cookies) { newCookies in
                 Task {
+                    guard session == nil else { return }
                     session = await FASession(cookies: cookies)
                 }
             }
