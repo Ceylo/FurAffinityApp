@@ -23,7 +23,7 @@ This project is written to be able to benefit from [furaffinity.net](https://www
 - [x] Submissions feed
   - [x] Submission download
   - [x] Submission details
-  - [ ] Submission like
+  - [x] Submission like
   - [ ] Submission comments
 - [ ] Journals feed
 - [x] Messages reading
