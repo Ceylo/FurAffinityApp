@@ -22,27 +22,20 @@ struct WebView: UIViewRepresentable {
     }
     
     static func defaultCookies() async -> [HTTPCookie] {
-        // cookie store is not thread safe, hance the continuation
-        return await withCheckedContinuation { continuation in
-            DispatchQueue.main.async {
-                WKWebsiteDataStore.default().httpCookieStore.getAllCookies { cookies in
-                    continuation.resume(returning: cookies)
-                }
-            }
+        let task = Task { @MainActor in
+            await WKWebsiteDataStore.default().httpCookieStore.allCookies()
         }
+        return try! await task.result.get()
     }
     
     static func clearCookies() async {
-        // using async store.allCookies() causes crash, hence the continuation
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            DispatchQueue.main.async {
-                let store = WKWebsiteDataStore.default().httpCookieStore
-                store.getAllCookies { cookies in
-                    cookies.forEach { store.delete($0) }
-                    continuation.resume()
-                }
+        let task = Task { @MainActor in
+            let store = WKWebsiteDataStore.default().httpCookieStore
+            for cookie in await store.allCookies() {
+                await store.deleteCookie(cookie)
             }
         }
+        return try! await task.result.get()
     }
     
     func makeUIView(context: Context) -> WKWebView {
