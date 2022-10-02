@@ -9,7 +9,7 @@ jobs:
       - uses: mxcl/xcodebuild@v1
         with:
           action: none
-          xcode: ^14
+          xcode: ^14.0
       - name: Build App
         run: |
           xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 13' -configuration Release build
