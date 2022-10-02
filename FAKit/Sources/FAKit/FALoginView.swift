@@ -8,10 +8,17 @@
 import SwiftUI
 import FAPages
 import WebKit
+import Cache
 
 public struct FALoginView: View {
     @Binding var session: FASession?
     @State private var cookies = [HTTPCookie]()
+    
+    static private let cookieCache: Storage<Int, [CodableHTTPCookie]> = try! Storage(
+        diskConfig: DiskConfig(name: "SessionCookies"),
+        memoryConfig: MemoryConfig(),
+        transformer: TransformerFactory.forCodable(ofType: [CodableHTTPCookie].self)
+    )
     
     public init(session: Binding<FASession?>) {
         self._session = session
@@ -24,18 +31,35 @@ public struct FALoginView: View {
             .onChange(of: cookies) { newCookies in
                 Task {
                     guard session == nil else { return }
-                    session = await FASession(cookies: cookies)
+                    session = await Self.makeSession(cookies: cookies)
                 }
             }
     }
     
-    public static func makeSession() async -> FASession? {
-        let cookies = await WebView.defaultCookies()
-        return await FASession(cookies: cookies)
+    public static func makeSession(cookies: [HTTPCookie]? = nil) async -> FASession? {
+        let actualCookies: [HTTPCookie]
+        if let cookies {
+            actualCookies = cookies
+        } else {
+            if let cookies = try? cookieCache.object(forKey: 0) {
+                actualCookies = cookies
+            } else {
+                actualCookies = await WebView.defaultCookies()
+            }
+        }
+        
+        let session = await FASession(cookies: actualCookies)
+        if session != nil {
+            let codableCookies = actualCookies.map { CodableHTTPCookie($0)! }
+            try! cookieCache.setObject(codableCookies, forKey: 0)
+        }
+        
+        return session
     }
     
     public static func logout() async {
         await WebView.clearCookies()
+        try! cookieCache.removeAll()
     }
 }
 
