@@ -37,7 +37,7 @@ struct SubmissionsFeedView: View {
                         .offset(y: 40)
                 }
                 .refreshable {
-                    try? await refresh(pulled: true)
+                    refresh(pulled: true)
                 }
             }
             .onChange(of: model.submissionPreviews) { newValue in
@@ -57,22 +57,24 @@ struct SubmissionsFeedView: View {
 
 // MARK: - Refresh
 extension SubmissionsFeedView {
-    func refresh(pulled: Bool) async throws {
+    func refresh(pulled: Bool) {
         targetScrollItemSid = model.submissionPreviews.first?.sid
         
-        // The delay gives time for the pull-to-refresh to go back
-        // to its position and prevents interrupting animation
-        if pulled {
-            try await Task.sleep(nanoseconds: UInt64(0.5 * 1e9))
-        }
-        
-        let newSubmissionCount = await model
-            .fetchNewSubmissionPreviews()
-        
-        guard newSubmissionCount > 0 else { return }
-                
-        withAnimation {
-            newSubmissionsCount = newSubmissionCount
+        Task {
+            // The delay gives time for the pull-to-refresh to go back
+            // to its position and prevents interrupting animation
+            if pulled {
+                try await Task.sleep(nanoseconds: UInt64(0.5 * 1e9))
+            }
+            
+            let newSubmissionCount = await model
+                .fetchNewSubmissionPreviews()
+            
+            guard newSubmissionCount > 0 else { return }
+            
+            withAnimation {
+                newSubmissionsCount = newSubmissionCount
+            }
         }
     }
     
@@ -84,9 +86,7 @@ extension SubmissionsFeedView {
             guard secondsSinceLastRefresh > Model.autorefreshDelay else { return }
         }
         
-        Task {
-            try await refresh(pulled: false)
-        }
+        refresh(pulled: false)
     }
 }
 
