@@ -37,7 +37,6 @@ struct SubmissionFeedItemView: View {
                             .stroke(Color.borderOverlay, lineWidth: 1)
                     }
             }
-            .environment(\.urlImageOptions, URLImageOptions(loadOptions: [.loadImmediately, .loadOnAppear, .cancelOnDisappear]))
         }
         .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
         .cornerRadius(10)

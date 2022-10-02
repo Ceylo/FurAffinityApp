@@ -25,7 +25,6 @@ struct AvatarView: View {
                         .resizable()
                         .transition(.opacity.animation(.default.speed(2)))
                 }
-                .environment(\.urlImageOptions, URLImageOptions(loadOptions: [.loadImmediately, .loadOnAppear, .cancelOnDisappear]))
             } else {
                 Rectangle()
                     .foregroundColor(.white.opacity(0.1))
