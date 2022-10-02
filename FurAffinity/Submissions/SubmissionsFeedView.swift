@@ -41,9 +41,11 @@ struct SubmissionsFeedView: View {
                 }
             }
             .onChange(of: model.submissionPreviews) { newValue in
-                if let targetSid = targetScrollItemSid {
-                    proxy.scrollTo(targetSid, anchor: .top)
-                    targetScrollItemSid = nil
+                Task { @MainActor in
+                    if let targetSid = targetScrollItemSid {
+                        proxy.scrollTo(targetSid, anchor: .top)
+                        targetScrollItemSid = nil
+                    }
                 }
             }
         }
