@@ -17,19 +17,6 @@ struct SubmissionControlsView: View {
     
     @StateObject private var imageSaveHandler = ImageSaveHandler()
     
-    func share() {
-        let activityVC = UIActivityViewController(activityItems: [submissionUrl],
-                                                  applicationActivities: nil)
-        
-        let window = UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .foregroundActive }
-            .compactMap { $0 as? UIWindowScene }.first?
-            .windows.first
-        
-        window?.rootViewController?
-            .present(activityVC, animated: true)
-    }
-    
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Spacer()
@@ -50,7 +37,9 @@ struct SubmissionControlsView: View {
             .frame(width: buttonsSize, height: buttonsSize)
             .disabled(fullResolutionImage == nil)
             
-            Button(action: share) {
+            Button {
+                share([submissionUrl])
+            } label: {
                 Image(systemName: "square.and.arrow.up")
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)

@@ -47,6 +47,7 @@ class AppInformation: ObservableObject {
 struct SettingsView: View {
     @EnvironmentObject var model: Model
     @ObservedObject var appInfo = AppInformation()
+    @State private var dumpingLogs = false
     
     var body: some View {
         Form {
@@ -69,6 +70,33 @@ struct SettingsView: View {
                         }
                     }
                 }
+            }
+            
+            Section("Logs") {
+                Button {
+                    dumpingLogs = true
+                    Task.detached {
+                        defer {
+                            Task { @MainActor in
+                                dumpingLogs = false
+                            }
+                        }
+                        if let fileUrl = try? getLogFile() {
+                            Task { @MainActor in
+                                share([fileUrl])
+                            }
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Text("Export Application Logs")
+                        Spacer()
+                        if dumpingLogs {
+                            ProgressView()
+                        }
+                    }
+                }
+                .disabled(dumpingLogs)
             }
             
             if let session = model.session {
