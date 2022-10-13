@@ -22,8 +22,8 @@ public struct FASubmissionPage: Equatable {
 
 extension FASubmissionPage {
     public init?(data: Data) {
-        let state = FAPagesSignposter.beginInterval("Submission Parsing")
-        defer { FAPagesSignposter.endInterval("Submission Parsing", state) }
+        let state = signposter.beginInterval("Submission Parsing")
+        defer { signposter.endInterval("Submission Parsing", state) }
         
         guard let doc = try? SwiftSoup.parse(String(decoding: data, as: UTF8.self))
         else { return nil }

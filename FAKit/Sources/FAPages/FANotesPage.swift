@@ -26,8 +26,8 @@ public struct FANotesPage: Equatable {
 
 extension FANotesPage {
     public init?(data: Data) {
-        let state = FAPagesSignposter.beginInterval("All Notes Preview Parsing")
-        defer { FAPagesSignposter.endInterval("All Notes Preview Parsing", state) }
+        let state = signposter.beginInterval("All Notes Preview Parsing")
+        defer { signposter.endInterval("All Notes Preview Parsing", state) }
         
         do {
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
@@ -39,7 +39,7 @@ extension FANotesPage {
             
             self.noteHeaders = try noteNodes.map { try NoteHeader($0) }
         } catch {
-            FAPagesLogger.error("Decoding failure in \(#file): \(error)")
+            logger.error("Decoding failure in \(#file): \(error)")
             return nil
         }
             
@@ -48,8 +48,8 @@ extension FANotesPage {
 
 extension FANotesPage.NoteHeader {
     init(_ node: SwiftSoup.Element) throws {
-        let state = FAPagesSignposter.beginInterval("Note Preview Parsing")
-        defer { FAPagesSignposter.endInterval("Note Preview Parsing", state) }
+        let state = signposter.beginInterval("Note Preview Parsing")
+        defer { signposter.endInterval("Note Preview Parsing", state) }
         
         let baseQuery = "div.note-list-subjectgroup div.note-list-subject-container a.notelink"
         let baseNode = try node.select(baseQuery)

@@ -81,7 +81,7 @@ struct SettingsView: View {
                                 dumpingLogs = false
                             }
                         }
-                        if let fileUrl = try? getLogFile() {
+                        if let fileUrl = try? generateLogFile() {
                             Task { @MainActor in
                                 share([fileUrl])
                             }

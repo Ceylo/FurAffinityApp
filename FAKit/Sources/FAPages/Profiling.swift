@@ -8,8 +8,8 @@
 import os
 import Foundation
 
-let FAPagesLogger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FAPages")
-let FAPagesSignposter = OSSignposter(logger: FAPagesLogger)
+let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FAPages")
+let signposter = OSSignposter(logger: logger)
 
 enum FAPagesError: Error {
     case parserFailure(String, Int)

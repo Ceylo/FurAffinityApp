@@ -8,6 +8,8 @@
 import Foundation
 import OSLog
 
+let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FA")
+
 extension OSLogEntryLog.Level: CustomStringConvertible {
     public var description: String {
         switch self {
@@ -22,7 +24,7 @@ extension OSLogEntryLog.Level: CustomStringConvertible {
     }
 }
 
-func getLogFile() throws -> URL {
+func generateLogFile() throws -> URL {
     let logStore = try OSLogStore(scope: .currentProcessIdentifier)
     let position = logStore.position(date: Date().addingTimeInterval(-300))
     let allEntries = try logStore.getEntries(at: position)

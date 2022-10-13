@@ -172,7 +172,6 @@
 			isa = PBXGroup;
 			children = (
 				87A1859B27459FFE00B10D2A /* SettingsView.swift */,
-				8733DDFA28F75B1A00CD8BCF /* Logs.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -186,6 +185,7 @@
 				873E66102752AAB2009C8767 /* ImageSaveHandler.swift */,
 				87815AC628D63F9B005AD03E /* View+Introspection.swift */,
 				8733DDFC28F75C1200CD8BCF /* Sharing.swift */,
+				8733DDFA28F75B1A00CD8BCF /* Logs.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";

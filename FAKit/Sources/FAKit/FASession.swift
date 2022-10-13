@@ -104,7 +104,7 @@ open class FASession: Equatable {
                 let validDays = (7..<14).randomElement()!
                 let expiry = Expiry.days(validDays)
                 try avatarUrlsCache.setObject(avatarUrl, forKey: user, expiry: expiry)
-                FAKitLogger.debug("Cached url \(avatarUrl) for user \(user) for \(validDays) days")
+                logger.debug("Cached url \(avatarUrl) for user \(user) for \(validDays) days")
                 return avatarUrl
             }
             
