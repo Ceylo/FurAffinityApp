@@ -41,40 +41,37 @@ extension FASubmissionsPage {
         let state = signposter.beginInterval("All Submission Previews Parsing")
         defer { signposter.endInterval("All Submission Previews Parsing", state) }
         
-        guard let string = String(data: data, encoding: .utf8),
-              let doc = try? SwiftSoup.parse(string, Self.url.absoluteString)
-        else {
+        do {
+            let string = try String(data: data, encoding: .utf8).unwrap()
+            let doc = try SwiftSoup.parse(string, Self.url.absoluteString)
+            
+            let itemsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div#messages-comments-submission div#messagecenter-submissions section figure"
+            let items = try doc.select(itemsQuery).array()
+            
+            self.submissions = items
+                .map { Submission($0) }
+            
+            let buttonsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div.aligncenter a"
+            let buttonItems = try doc.select(buttonsQuery).array()
+            let prevButton = try buttonItems.first { try $0.text().starts(with: "Prev") }
+            let nextButton = try buttonItems.first { try $0.text().starts(with: "Next") }
+            
+            if let prevButton = prevButton,
+               let href = try? prevButton.attr("href") {
+                self.previousPageUrl = URL(string: "https://www.furaffinity.net" + href)
+            } else {
+                self.previousPageUrl = nil
+            }
+            
+            if let nextButton = nextButton,
+               let href = try? nextButton.attr("href") {
+                self.nextPageUrl = URL(string: "https://www.furaffinity.net" + href)
+            } else {
+                self.nextPageUrl = nil
+            }
+        } catch {
+            logger.error("\(#file) - \(error)")
             return nil
-        }
-        
-        let itemsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div#messages-comments-submission div#messagecenter-submissions section figure"
-        guard let items = try? doc.select(itemsQuery).array() else {
-            return nil
-        }
-        
-        self.submissions = items
-            .map { Submission($0) }
-        
-        let buttonsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div.aligncenter a"
-        guard let buttonItems = try? doc.select(buttonsQuery).array() else {
-            return nil
-        }
-        
-        let prevButton = try? buttonItems.first { try $0.text().starts(with: "Prev") }
-        let nextButton = try? buttonItems.first { try $0.text().starts(with: "Next") }
-        
-        if let prevButton = prevButton,
-           let href = try? prevButton.attr("href") {
-            self.previousPageUrl = URL(string: "https://www.furaffinity.net" + href)
-        } else {
-            self.previousPageUrl = nil
-        }
-        
-        if let nextButton = nextButton,
-           let href = try? nextButton.attr("href") {
-            self.nextPageUrl = URL(string: "https://www.furaffinity.net" + href)
-        } else {
-            self.nextPageUrl = nil
         }
     }
 }
@@ -93,17 +90,19 @@ extension FASubmissionsPage.Submission {
             self.url = URL(string: "https://www.furaffinity.net/view/\(sid)/")!
             
             let thumbNodes = try node.select("figure b u a img")
-            guard let thumbSrc = try thumbNodes.first()?.attr("src"),
-                  let thumbWidthStr = try thumbNodes.first()?.attr("data-width"),
-                  let thumbHeightStr = try thumbNodes.first()?.attr("data-height"),
-                  let thumbWidth = Float(thumbWidthStr),
-                  let thumbHeight = Float(thumbHeightStr)
-            else { return nil }
+            let thumbSrc = try thumbNodes.first().unwrap().attr("src")
+            let thumbWidthStr = try thumbNodes.first().unwrap().attr("data-width")
+            let thumbHeightStr = try thumbNodes.first().unwrap().attr("data-height")
+            let thumbWidth = try Float(thumbWidthStr).unwrap()
+            let thumbHeight = try Float(thumbHeightStr).unwrap()
             self.thumbnailUrl = URL(string: "https:\(thumbSrc)")!
             self.thumbnailWidthOnHeightRatio = thumbWidth / thumbHeight
             
             let captionNodes = try node.select("figure figcaption label p a")
-            guard captionNodes.count >= 2 else { return nil }
+            guard captionNodes.count >= 2 else {
+                logger.error("\(#file) - invalid structure")
+                return nil
+            }
             self.title = try captionNodes[0].text()
             self.author = try captionNodes[1].attr("href")
                 .substring(matching: "/user/(.+)/")!

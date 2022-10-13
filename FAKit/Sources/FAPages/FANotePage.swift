@@ -36,11 +36,14 @@ extension FANotePage {
             
             self.author = author
             self.displayAuthor = try authorNode.select("strong").text()
-            self.htmlMessage = try noteContainerNode.select("div.section-body div.user-submitted-links").html()
-            self.datetime = try noteContainerNode.select("div.section-header div.message-center-note-information div.addresses span.popup_date").attr("title")
-
+            self.htmlMessage = try noteContainerNode
+                .select("div.section-body div.user-submitted-links")
+                .html()
+            self.datetime = try noteContainerNode
+                .select("div.section-header div.message-center-note-information div.addresses span.popup_date")
+                .attr("title")
         } catch {
-            print(error)
+            logger.error("\(#file) - \(error)")
             return nil
         }
     }
