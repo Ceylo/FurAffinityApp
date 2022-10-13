@@ -43,7 +43,7 @@ extension FANotePage {
                 .select("div.section-header div.message-center-note-information div.addresses span.popup_date")
                 .attr("title")
         } catch {
-            logger.error("\(#file) - \(error)")
+            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil
         }
     }

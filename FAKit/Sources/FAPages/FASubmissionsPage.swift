@@ -70,7 +70,7 @@ extension FASubmissionsPage {
                 self.nextPageUrl = nil
             }
         } catch {
-            logger.error("\(#file) - \(error)")
+            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil
         }
     }
@@ -100,7 +100,7 @@ extension FASubmissionsPage.Submission {
             
             let captionNodes = try node.select("figure figcaption label p a")
             guard captionNodes.count >= 2 else {
-                logger.error("\(#file) - invalid structure")
+                logger.error("\(#file, privacy: .public) - invalid structure")
                 return nil
             }
             self.title = try captionNodes[0].text()

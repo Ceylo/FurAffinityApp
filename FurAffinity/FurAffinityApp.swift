@@ -21,7 +21,7 @@ struct FurAffinityApp: App {
     
     init() {
         let device = UIDevice.current
-        logger.info("Launched FurAffinity \(Bundle.main.version) on \(device.systemName) \(device.systemVersion)")
+        logger.info("Launched FurAffinity \(Bundle.main.version, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public)")
     }
 
     var body: some Scene {

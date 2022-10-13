@@ -17,7 +17,7 @@ extension URLSession: HTTPDataSource {
                 self.configuration.httpCookieStorage!
                     .setCookies(cookies, for: url, mainDocumentURL: url)
             }
-            logger.debug("Requesting data from \(url, privacy: .public)")
+            logger.info("Requesting data from \(url, privacy: .public)")
             let (data, response) = try await self.data(from: url, delegate: nil)
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode)

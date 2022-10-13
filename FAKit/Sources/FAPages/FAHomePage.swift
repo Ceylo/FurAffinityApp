@@ -24,7 +24,7 @@ extension FAHomePage {
         guard let string = String(data: data, encoding: .utf8),
               let doc = try? SwiftSoup.parse(string, Self.url.absoluteString)
         else {
-            logger.error("\(#file) - failed decoding or parsing")
+            logger.error("\(#file, privacy: .public) - failed decoding or parsing")
             return nil
         }
         

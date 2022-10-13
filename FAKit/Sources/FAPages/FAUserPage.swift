@@ -44,7 +44,7 @@ extension FAUserPage {
             let avatarUrl = URL(string: "https:" + avatarUrlNode)
             self.avatarUrl = avatarUrl
         } catch {
-            logger.error("\(#file) - \(error)")
+            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil
         }
     }

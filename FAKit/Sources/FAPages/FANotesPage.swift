@@ -39,7 +39,7 @@ extension FANotesPage {
             
             self.noteHeaders = try noteNodes.map { try NoteHeader($0) }
         } catch {
-            logger.error("Decoding failure in \(#file): \(error)")
+            logger.error("Decoding failure in \(#file, privacy: .public): \(error, privacy: .public)")
             return nil
         }
             

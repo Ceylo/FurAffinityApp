@@ -45,7 +45,7 @@ open class FASession: Equatable {
         let previews = page.submissions
             .compactMap { $0 }
             .map { FASubmissionPreview($0) }
-        logger.debug("Got \(page.submissions.count) submission previews (\(previews.count) after filter)")
+        logger.info("Got \(page.submissions.count) submission previews (\(previews.count) after filter)")
         return previews
     }
     
@@ -74,7 +74,7 @@ open class FASession: Equatable {
             .compactMap { $0 }
             .map { FANotePreview($0) }
         
-        logger.debug("Got \(page.noteHeaders.count) note previews (\(headers.count) after filter)")
+        logger.info("Got \(page.noteHeaders.count) note previews (\(headers.count) after filter)")
         return headers
     }
     
@@ -107,7 +107,7 @@ open class FASession: Equatable {
                 let validDays = (7..<14).randomElement()!
                 let expiry = Expiry.days(validDays)
                 try avatarUrlsCache.setObject(avatarUrl, forKey: user, expiry: expiry)
-                logger.debug("Cached url \(avatarUrl) for user \(user) for \(validDays) days")
+                logger.info("Cached url \(avatarUrl, privacy: .public) for user \(user, privacy: .public) for \(validDays) days")
                 return avatarUrl
             }
             
@@ -133,7 +133,7 @@ extension FASession {
         guard let username = page.username,
               let displayUsername = page.displayUsername
         else {
-            logger.error("\(#file) - missing user")
+            logger.error("\(#file, privacy: .public) - missing user")
             return nil
         }
         

@@ -77,7 +77,7 @@ extension FASubmissionPage {
             let htmlContent = try descriptionNode.html()
             self.htmlDescription = htmlContent
         } catch {
-            logger.error("\(#file) - \(error)")
+            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil
         }
     }
