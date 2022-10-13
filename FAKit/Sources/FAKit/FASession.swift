@@ -42,10 +42,11 @@ open class FASession: Equatable {
               let page = FASubmissionsPage(data: data)
         else { return [] }
         
-        return page.submissions.compactMap { submission in
-            guard let submission = submission else { return nil }
-            return FASubmissionPreview(submission)
-        }
+        let previews = page.submissions
+            .compactMap { $0 }
+            .map { FASubmissionPreview($0) }
+        logger.debug("Got \(page.submissions.count) submission previews (\(previews.count) after filter)")
+        return previews
     }
     
     open func submission(for preview: FASubmissionPreview) async -> FASubmission? {
@@ -69,10 +70,12 @@ open class FASession: Equatable {
               let page = FANotesPage(data: data)
         else { return [] }
         
-        return page.noteHeaders.compactMap { header in
-            guard let header = header else { return nil }
-            return FANotePreview(header)
-        }
+        let headers = page.noteHeaders
+            .compactMap { $0 }
+            .map { FANotePreview($0) }
+        
+        logger.debug("Got \(page.noteHeaders.count) note previews (\(headers.count) after filter)")
+        return headers
     }
     
     open func note(for preview: FANotePreview) async -> FANote? {
@@ -129,7 +132,10 @@ extension FASession {
         
         guard let username = page.username,
               let displayUsername = page.displayUsername
-        else { return nil }
+        else {
+            logger.error("\(#file) - missing user")
+            return nil
+        }
         
         self.init(username: username,
                   displayUsername: displayUsername,
