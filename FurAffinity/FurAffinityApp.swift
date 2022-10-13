@@ -18,6 +18,11 @@ struct FurAffinityApp: App {
         let fields = URLSessionConfiguration.httpHeadersForFARequests
         return .init(urlRequestConfiguration: .init(allHTTPHeaderFields: fields))
     }()
+    
+    init() {
+        let device = UIDevice.current
+        logger.info("Launched FurAffinity \(Bundle.main.version) on \(device.systemName) \(device.systemVersion)")
+    }
 
     var body: some Scene {
         WindowGroup {
