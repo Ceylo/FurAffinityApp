@@ -8,7 +8,7 @@
 import Foundation
 import FAPages
 
-public struct FASubmissionPreview: Equatable, Hashable, Identifiable {
+public struct FASubmissionPreview: Equatable, Identifiable {
     public let sid: Int
     public let url: URL
     public let thumbnailUrl: URL

@@ -7,7 +7,6 @@
 
 import SwiftUI
 import FAKit
-import OrderedCollections
 
 enum ModelError: Error {
     case disconnected
@@ -27,11 +26,11 @@ class Model: ObservableObject {
         }
     }
     @Published
-    public private (set) var submissionPreviews = OrderedSet<FASubmissionPreview>()
+    public private (set) var submissionPreviews = [FASubmissionPreview]()
     public private (set) var lastSubmissionPreviewsFetchDate: Date?
     
     @Published
-    private (set) var notePreviews = OrderedSet<FANotePreview>()
+    private (set) var notePreviews = [FANotePreview]()
     @Published
     private (set) var unreadNoteCount = 0
     public private (set) var lastNotePreviewsFetchDate: Date?
@@ -43,18 +42,19 @@ class Model: ObservableObject {
     func fetchNewSubmissionPreviews() async -> Int {
         let latestSubmissions = await session?.submissionPreviews() ?? []
         lastSubmissionPreviewsFetchDate = Date()
-        let newSubmissions = OrderedSet(latestSubmissions)
-            .subtracting(submissionPreviews)
+        let lastKnownSid = submissionPreviews.first?.sid ?? 0
+        // We take advantage of the fact that submission IDs are always increasing
+        // to know which one are new.
+        let newSubmissions = latestSubmissions.filter { $0.sid > lastKnownSid }
         
         if !newSubmissions.isEmpty {
-            submissionPreviews = OrderedSet(newSubmissions).union(submissionPreviews)
+            submissionPreviews = newSubmissions + submissionPreviews
         }
         return newSubmissions.count
     }
     
     func fetchNewNotePreviews() async {
-        let latestNotes = await session?.notePreviews() ?? []
-        notePreviews = OrderedSet(latestNotes)
+        notePreviews = await session?.notePreviews() ?? []
         unreadNoteCount = notePreviews.filter { $0.unread }.count
         lastNotePreviewsFetchDate = Date()
     }
