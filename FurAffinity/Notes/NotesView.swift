@@ -30,15 +30,27 @@ struct NotesView: View {
     
     var body: some View {
         NavigationView {
-            List(model.notePreviews) { preview in
-                NavigationLink(destination: NoteView(notePreview: preview, noteProvider: {
-                    await model.session?.note(for: preview)
-                })) {
-                    NoteItemView(notePreview: preview)
+            if let notes = model.notePreviews {
+                List(notes) { preview in
+                    NavigationLink(destination: NoteView(notePreview: preview, noteProvider: {
+                        await model.session?.note(for: preview)
+                    })) {
+                        NoteItemView(notePreview: preview)
+                    }
+                }
+                .listStyle(.plain)
+                .navigationBarTitleDisplayMode(.inline)
+                .swap(when: notes.isEmpty) {
+                    VStack(spacing: 10) {
+                        Text("It's a bit empty in here.")
+                            .font(.headline)
+                        Text("Messages from your inbox in [www.furaffinity.net/msg/pms/](https://www.furaffinity.net/controls/switchbox/inbox/) will be displayed here.")
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding()
                 }
             }
-            .listStyle(.plain)
-            .navigationBarTitleDisplayMode(.inline)
         }
         .refreshable {
             await refresh()
@@ -51,8 +63,13 @@ struct NotesView: View {
 
 struct NotesView_Previews: PreviewProvider {
     static var previews: some View {
-        NotesView()
-            .environmentObject(Model.demo)
-            .preferredColorScheme(.dark)
+        Group {
+            NotesView()
+                .environmentObject(Model.demo)
+            
+            NotesView()
+                .environmentObject(Model.empty)
+        }
+        .preferredColorScheme(.dark)
     }
 }

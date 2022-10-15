@@ -33,7 +33,9 @@ class Model: ObservableObject {
     public private (set) var lastSubmissionPreviewsFetchDate: Date?
     
     @Published
-    private (set) var notePreviews = [FANotePreview]()
+    /// nil until a fetch actually happened
+    /// After a fetch it contains all found notes, or an empty array if none was found
+    private (set) var notePreviews: [FANotePreview]?
     @Published
     private (set) var unreadNoteCount = 0
     public private (set) var lastNotePreviewsFetchDate: Date?
@@ -64,8 +66,14 @@ class Model: ObservableObject {
     }
     
     func fetchNewNotePreviews() async {
-        notePreviews = await session?.notePreviews() ?? []
-        unreadNoteCount = notePreviews.filter { $0.unread }.count
+        guard let session else {
+            logger.error("Tried to fetch notes with no active session, skipping")
+            return
+        }
+        
+        let fetchedNotes = await session.notePreviews()
+        notePreviews = fetchedNotes
+        unreadNoteCount = fetchedNotes.filter { $0.unread }.count
         lastNotePreviewsFetchDate = Date()
     }
     
@@ -86,7 +94,7 @@ class Model: ObservableObject {
             lastSubmissionPreviewsFetchDate = nil
             submissionPreviews = nil
             lastNotePreviewsFetchDate = nil
-            notePreviews.removeAll()
+            notePreviews = nil
             unreadNoteCount = 0
             return
         }
