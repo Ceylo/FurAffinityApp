@@ -25,8 +25,11 @@ class Model: ObservableObject {
             processNewSession()
         }
     }
+    
     @Published
-    public private (set) var submissionPreviews = [FASubmissionPreview]()
+    /// nil until a fetch actually happened
+    /// After a fetch it contains all found submissions, or an empty array if none was found
+    public private (set) var submissionPreviews: [FASubmissionPreview]?
     public private (set) var lastSubmissionPreviewsFetchDate: Date?
     
     @Published
@@ -40,15 +43,22 @@ class Model: ObservableObject {
     }
     
     func fetchNewSubmissionPreviews() async -> Int {
-        let latestSubmissions = await session?.submissionPreviews() ?? []
+        guard let session else {
+            logger.error("Tried to fetch submissions with no active session, skipping")
+            return 0
+        }
+        
+        let latestSubmissions = await session.submissionPreviews()
         lastSubmissionPreviewsFetchDate = Date()
-        let lastKnownSid = submissionPreviews.first?.sid ?? 0
+        let lastKnownSid = submissionPreviews?.first?.sid ?? 0
         // We take advantage of the fact that submission IDs are always increasing
         // to know which one are new.
         let newSubmissions = latestSubmissions.filter { $0.sid > lastKnownSid }
         
         if !newSubmissions.isEmpty {
-            submissionPreviews = newSubmissions + submissionPreviews
+            submissionPreviews = newSubmissions + (submissionPreviews ?? [])
+        } else if submissionPreviews == nil {
+            submissionPreviews = []
         }
         return newSubmissions.count
     }
@@ -74,7 +84,7 @@ class Model: ObservableObject {
     private func processNewSession() {
         guard session != nil else {
             lastSubmissionPreviewsFetchDate = nil
-            submissionPreviews.removeAll()
+            submissionPreviews = nil
             lastNotePreviewsFetchDate = nil
             notePreviews.removeAll()
             unreadNoteCount = 0

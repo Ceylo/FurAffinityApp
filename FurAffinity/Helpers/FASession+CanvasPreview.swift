@@ -76,10 +76,13 @@ extension OfflineFASession {
               datetime: "Apr 7, 2022 11:58AM", naturalDatetime: "an hour ago", unread: false,
               noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953262/#message")!)
     ])
+    
+    static let empty = OfflineFASession(sampleUsername: "Demo User", submissions: [])
 }
 
 extension Model {
     static let demo = Model(session: OfflineFASession.default)
+    static let empty = Model(session: OfflineFASession.empty)
 }
 
 extension FASubmission {

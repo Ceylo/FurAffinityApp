@@ -19,25 +19,37 @@ struct SubmissionsFeedView: View {
     var body: some View {
         ScrollViewReader { proxy in
             NavigationView {
-                List(model.submissionPreviews) { submission in
-                    NavigationLink(destination: SubmissionView(model, preview: submission)) {
-                        SubmissionFeedItemView(submission: submission)
-                            .id(submission.sid)
+                if let previews = model.submissionPreviews {
+                    List(previews) { submission in
+                        NavigationLink(destination: SubmissionView(model, preview: submission)) {
+                            SubmissionFeedItemView(submission: submission)
+                                .id(submission.sid)
+                        }
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                     }
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                }
-                .introspectScrollViewOnList { scrollView in
-                    self.scrollView = scrollView
-                }
-                .listStyle(.plain)
-                .navigationBarTitleDisplayMode(.inline)
-                .overlay(alignment: .top) {
-                    NotificationOverlay(itemCount: $newSubmissionsCount)
-                        .offset(y: 40)
-                }
-                .refreshable {
-                    refresh(pulled: true)
+                    .introspectScrollViewOnList { scrollView in
+                        self.scrollView = scrollView
+                    }
+                    .listStyle(.plain)
+                    .navigationBarTitleDisplayMode(.inline)
+                    .overlay(alignment: .top) {
+                        NotificationOverlay(itemCount: $newSubmissionsCount)
+                            .offset(y: 40)
+                    }
+                    .refreshable {
+                        refresh(pulled: true)
+                    }
+                    .swap(when: previews.isEmpty) {
+                        VStack(spacing: 10) {
+                            Text("It's a bit empty in here.")
+                                .font(.headline)
+                            Text("Watch artists and wait for them to post new art. Submissions from [www.furaffinity.net/msg/submissions/](https://www.furaffinity.net/msg/submissions/) will be displayed here.")
+                                .multilineTextAlignment(.center)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding()
+                    }
                 }
             }
             .onChange(of: model.submissionPreviews) { newValue in
@@ -58,7 +70,7 @@ struct SubmissionsFeedView: View {
 // MARK: - Refresh
 extension SubmissionsFeedView {
     func refresh(pulled: Bool) {
-        targetScrollItemSid = model.submissionPreviews.first?.sid
+        targetScrollItemSid = model.submissionPreviews?.first?.sid
         
         Task {
             // The delay gives time for the pull-to-refresh to go back
@@ -93,8 +105,12 @@ extension SubmissionsFeedView {
 // MARK: -
 struct SubmissionsFeedView_Previews: PreviewProvider {
     static var previews: some View {
-        SubmissionsFeedView()
-            .environmentObject(Model.demo)
-            .preferredColorScheme(.dark)
+        Group {
+            SubmissionsFeedView()
+                .environmentObject(Model.demo)
+            SubmissionsFeedView()
+                .environmentObject(Model.empty)
+        }
+        .preferredColorScheme(.dark)
     }
 }
