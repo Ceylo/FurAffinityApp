@@ -93,6 +93,8 @@ struct SubmissionView: View {
                         if let description = description {
                             TextView(text: description)
                         }
+                        
+                        SubmissionCommentsView(comments: submission.comments)
                     }
                     .padding(10)
                 }

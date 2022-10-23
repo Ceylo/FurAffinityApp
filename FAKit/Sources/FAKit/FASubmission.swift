@@ -67,7 +67,7 @@ extension FASubmission.Comment {
                   displayAuthor: comment.displayAuthor,
                   authorAvatarUrl: comment.authorAvatarUrl,
                   datetime: comment.datetime,
-                  htmlMessage: comment.htmlMessage,
+                  htmlMessage: comment.htmlMessage.selfContainedFAHtml,
                   answers: [])
     }
     
@@ -86,8 +86,8 @@ extension FASubmission {
                     in graph: UnweightedGraph<Int>,
                     index: [Int: FASubmissionPage.Comment]) -> [Comment] {
         let children = graph.edgesForVertex(comment.cid)!
-            .filter { $0.u == comment.cid }
-            .map { $0.v }
+            .filter { $0.u == graph.indexOfVertex(comment.cid)! }
+            .map { graph.vertexAtIndex($0.v) }
         
         return children
             .map { (Comment(index[$0]!), index[$0]!) }

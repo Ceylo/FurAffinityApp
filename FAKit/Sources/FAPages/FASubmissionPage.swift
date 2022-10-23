@@ -87,7 +87,7 @@ extension FASubmissionPage {
             self.htmlDescription = htmlContent
             
             let commentNodes = try submissionContentNode.select("div.comments-list div#comments-submission div.comment_container")
-            self.comments = try commentNodes.map { try Comment($0) }
+            self.comments = try commentNodes.compactMap { try Comment($0) }
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil
@@ -96,7 +96,13 @@ extension FASubmissionPage {
 }
 
 extension FASubmissionPage.Comment {
-    init(_ node: SwiftSoup.Element) throws {
+    init?(_ node: SwiftSoup.Element) throws {
+        if let hiddenNode = try? node.select("div.base div.body strong").first() {
+            let message = try? hiddenNode.text()
+            logger.warning("Skipping comment due to: \(message ?? "")")
+            return nil
+        }
+        
         let tableNode = try node.select("div.base div.header div.name div.table")
         let authorUrlString = try tableNode.select("div.avatar-mobile a").attr("href")
         let author = try authorUrlString.substring(matching: "/user/(.+)/").unwrap()
