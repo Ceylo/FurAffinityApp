@@ -24,7 +24,7 @@ struct NotificationOverlay: View {
     func badge(_ count: Int) -> some View {
         Text("\(count) new submissions")
             .font(.headline)
-            .foregroundColor(.white)
+            .foregroundColor(Color.primary)
             .padding(.horizontal, 20)
             .padding(.vertical, 10)
             .background(.thinMaterial)
@@ -53,7 +53,7 @@ struct NotificationOverlay_Previews: PreviewProvider {
     static var previews: some View {
         NotificationOverlay(itemCount: .constant(12))
             .padding()
-            .background(.blue)
+            .background(.yellow)
             .previewLayout(.sizeThatFits)
     }
 }
