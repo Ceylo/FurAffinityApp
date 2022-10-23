@@ -15,6 +15,7 @@ let package = Package(
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.3.3"),
         .package(url: "https://github.com/sharplet/Regex.git", from: "2.1.1"),
         .package(url: "https://github.com/hyperoslo/Cache.git", from: "6.0.0"),
+        .package(url: "https://github.com/davecom/SwiftGraph.git", from: "3.1.0")
     ],
     targets: [
         .target(
@@ -28,7 +29,7 @@ let package = Package(
             ]),
         .target(
             name: "FAKit",
-            dependencies: ["FAPages", "Cache"]),
+            dependencies: ["FAPages", "Cache", "SwiftGraph"]),
         .testTarget(
             name: "FAKitTests",
             dependencies: ["FAKit"],
