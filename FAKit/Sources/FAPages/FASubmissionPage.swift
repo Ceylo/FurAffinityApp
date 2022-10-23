@@ -18,17 +18,17 @@ public struct FASubmissionPage: Equatable {
     public let htmlDescription: String
     public let isFavorite: Bool
     public let favoriteUrl: URL
-    public let comments: [FASubmissionComment]
-}
-
-public struct FASubmissionComment: Equatable {
-    public let cid: Int
-    public let parentCid: Int?
-    public let author: String
-    public let displayAuthor: String
-    public let authorAvatarUrl: URL
-    public let datetime: String
-    public let htmlMessage: String
+    public let comments: [Comment]
+    
+    public struct Comment: Equatable {
+        public let cid: Int
+        public let parentCid: Int?
+        public let author: String
+        public let displayAuthor: String
+        public let authorAvatarUrl: URL
+        public let datetime: String
+        public let htmlMessage: String
+    }
 }
 
 extension FASubmissionPage {
@@ -87,7 +87,7 @@ extension FASubmissionPage {
             self.htmlDescription = htmlContent
             
             let commentNodes = try submissionContentNode.select("div.comments-list div#comments-submission div.comment_container")
-            self.comments = try commentNodes.map { try FASubmissionComment($0) }
+            self.comments = try commentNodes.map { try Comment($0) }
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil
@@ -95,13 +95,13 @@ extension FASubmissionPage {
     }
 }
 
-extension FASubmissionComment {
+extension FASubmissionPage.Comment {
     init(_ node: SwiftSoup.Element) throws {
         let tableNode = try node.select("div.base div.header div.name div.table")
         let authorUrlString = try tableNode.select("div.avatar-mobile a").attr("href")
         let author = try authorUrlString.substring(matching: "/user/(.+)/").unwrap()
         let authorAvatarUrlString = try tableNode.select("div.avatar-mobile a img.comment_useravatar").attr("src")
-        let authorAvatarUrl = try URL(string: "https" + authorAvatarUrlString).unwrap()
+        let authorAvatarUrl = try URL(string: "https:" + authorAvatarUrlString).unwrap()
         let displayAuthor = try tableNode.select("div.cell a.inline strong.comment_username h3").text()
         let floatRightNode = try tableNode.select("div.cell div.floatright")
         let rawCidString = try floatRightNode.select("a.comment-link").attr("href")
