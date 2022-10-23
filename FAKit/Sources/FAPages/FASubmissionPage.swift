@@ -18,6 +18,17 @@ public struct FASubmissionPage: Equatable {
     public let htmlDescription: String
     public let isFavorite: Bool
     public let favoriteUrl: URL
+    public let comments: [FASubmissionComment]
+}
+
+public struct FASubmissionComment: Equatable {
+    public let cid: Int
+    public let parentCid: Int?
+    public let author: String
+    public let displayAuthor: String
+    public let authorAvatarUrl: URL
+    public let datetime: String
+    public let htmlMessage: String
 }
 
 extension FASubmissionPage {
@@ -74,9 +85,35 @@ extension FASubmissionPage {
             let descriptionNode = try submissionContentNode.select(descriptionQuery)
             let htmlContent = try descriptionNode.html()
             self.htmlDescription = htmlContent
+            
+            let commentNodes = try submissionContentNode.select("div.comments-list div#comments-submission div.comment_container")
+            self.comments = try commentNodes.map { try FASubmissionComment($0) }
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil
         }
+    }
+}
+
+extension FASubmissionComment {
+    init(_ node: SwiftSoup.Element) throws {
+        let tableNode = try node.select("div.base div.header div.name div.table")
+        let authorUrlString = try tableNode.select("div.avatar-mobile a").attr("href")
+        let author = try authorUrlString.substring(matching: "/user/(.+)/").unwrap()
+        let authorAvatarUrlString = try tableNode.select("div.avatar-mobile a img.comment_useravatar").attr("src")
+        let authorAvatarUrl = try URL(string: "https" + authorAvatarUrlString).unwrap()
+        let displayAuthor = try tableNode.select("div.cell a.inline strong.comment_username h3").text()
+        let floatRightNode = try tableNode.select("div.cell div.floatright")
+        let rawCidString = try floatRightNode.select("a.comment-link").attr("href")
+        let cid = try Int(rawCidString.substring(matching: "#cid:(.+)").unwrap()).unwrap()
+        let rawParentCidString = try? floatRightNode.select("a.comment-parent").attr("href")
+        let parentCid = try rawParentCidString.flatMap { Int(try $0.substring(matching: "#cid:(.+)").unwrap()) }
+        let datetime = try tableNode.select("div.cell div.comment-date span.popup_date").text()
+        let htmlMessage = try node.select("div.base div.header div.comment_text").text()
+        
+        self.init(cid: cid, parentCid: parentCid,
+                  author: author, displayAuthor: displayAuthor,
+                  authorAvatarUrl: authorAvatarUrl, datetime: datetime,
+                  htmlMessage: htmlMessage)
     }
 }
