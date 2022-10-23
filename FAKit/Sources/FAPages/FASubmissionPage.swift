@@ -106,10 +106,10 @@ extension FASubmissionComment {
         let floatRightNode = try tableNode.select("div.cell div.floatright")
         let rawCidString = try floatRightNode.select("a.comment-link").attr("href")
         let cid = try Int(rawCidString.substring(matching: "#cid:(.+)").unwrap()).unwrap()
-        let rawParentCidString = try? floatRightNode.select("a.comment-parent").attr("href")
+        let rawParentCidString = try? floatRightNode.select("a.comment-parent").first().unwrap().attr("href")
         let parentCid = try rawParentCidString.flatMap { Int(try $0.substring(matching: "#cid:(.+)").unwrap()) }
         let datetime = try tableNode.select("div.cell div.comment-date span.popup_date").text()
-        let htmlMessage = try node.select("div.base div.header div.comment_text").text()
+        let htmlMessage = try node.select("div.base div.comment_text").first().unwrap().html()
         
         self.init(cid: cid, parentCid: parentCid,
                   author: author, displayAuthor: displayAuthor,
