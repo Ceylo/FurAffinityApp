@@ -103,9 +103,15 @@ struct SubmissionView: View {
                     VStack(spacing: 20) {
                         Text("Oops… submission loading failed.")
                             .font(.headline)
-                        Text("You may have lost network connection, or furaffinity.net is experiencing an outage, or this submission doesn't exist anymore.")
+                        Text("""
+Here are some possible reasons:
+- Network connection was lost
+- furaffinity.net is experiencing an outage
+- The submission doesn't exist anymore
+- The submission contains data that could not be loaded
+""")
                             .font(.caption)
-                            .multilineTextAlignment(.center)
+                            .multilineTextAlignment(.leading)
                         
                         Link(preview.url.description, destination: preview.url)
                     }
