@@ -97,13 +97,12 @@ extension FASubmissionPage {
 
 extension FASubmissionPage.Comment {
     init?(_ node: SwiftSoup.Element) throws {
-        if let hiddenNode = try? node.select("div.base div.body strong").first() {
-            let message = try? hiddenNode.text()
-            logger.warning("Skipping comment due to: \(message ?? "")")
+        let tableNode = try node.select("div.base div.header div.name div.table")
+        guard !tableNode.isEmpty() else {
+            let html = try? node.html()
+            logger.warning("Skipping comment: \(html ?? "", privacy: .public)")
             return nil
         }
-        
-        let tableNode = try node.select("div.base div.header div.name div.table")
         let authorUrlString = try tableNode.select("div.avatar-mobile a").attr("href")
         let author = try authorUrlString.substring(matching: "/user/(.+)/").unwrap()
         let authorAvatarUrlString = try tableNode.select("div.avatar-mobile a img.comment_useravatar").attr("src")
