@@ -67,7 +67,7 @@ extension FASubmission.Comment {
                   displayAuthor: comment.displayAuthor,
                   authorAvatarUrl: comment.authorAvatarUrl,
                   datetime: comment.datetime,
-                  htmlMessage: comment.htmlMessage.selfContainedFAHtml,
+                  htmlMessage: comment.htmlMessage.selfContainedFAHtmlComment,
                   answers: [])
     }
     

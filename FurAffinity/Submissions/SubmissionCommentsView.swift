@@ -16,7 +16,7 @@ struct SubmissionCommentsView: View {
     var comments: [FASubmission.Comment]
     
     func commentViews(for comments: [FASubmission.Comment], indent: Bool) -> some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 5) {
             ForEach(comments) { comment in
                 SubmissionCommentView(comment: comment)
                 AnyView(commentViews(for: comment.answers, indent: true))
