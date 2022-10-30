@@ -24,7 +24,7 @@ This project is written to be able to benefit from [furaffinity.net](https://www
   - [x] Submission download
   - [x] Submission details
   - [x] Submission like
-  - [ ] Submission comments
+  - [x] Submission comments (read only)
 - [ ] Journals feed
 - [x] Messages reading
 - [ ] Notifications
