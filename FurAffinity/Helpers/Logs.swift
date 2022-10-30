@@ -26,7 +26,7 @@ extension OSLogEntryLog.Level: CustomStringConvertible {
 
 func generateLogFile() throws -> URL {
     let logStore = try OSLogStore(scope: .currentProcessIdentifier)
-    let position = logStore.position(date: Date().addingTimeInterval(-300))
+    let position = logStore.position(date: Date().addingTimeInterval(-900))
     let allEntries = try logStore.getEntries(at: position)
     let subsystem = Bundle.main.bundleIdentifier!
     let logs = allEntries
