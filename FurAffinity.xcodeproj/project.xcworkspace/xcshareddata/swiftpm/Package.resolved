@@ -20,15 +20,6 @@
         }
       },
       {
-        "package": "RepresentableKit",
-        "repositoryURL": "https://github.com/yumemi-inc/RepresentableKit.git",
-        "state": {
-          "branch": null,
-          "revision": "77b5ea15838c7f28464d4b01540b7dac8f74ec9c",
-          "version": "0.1.2"
-        }
-      },
-      {
         "package": "SwiftGraph",
         "repositoryURL": "https://github.com/davecom/SwiftGraph.git",
         "state": {

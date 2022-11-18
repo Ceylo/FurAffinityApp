@@ -38,7 +38,6 @@
 		87A185A22745A8A100B10D2A /* CenteredView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A185A12745A8A100B10D2A /* CenteredView.swift */; };
 		87C1A0AD284B6E5400529F8C /* Version in Frameworks */ = {isa = PBXBuildFile; productRef = 87C1A0AC284B6E5400529F8C /* Version */; };
 		87C4D2B027653C3600C29A4B /* Zoomable in Frameworks */ = {isa = PBXBuildFile; productRef = 87C4D2AF27653C3600C29A4B /* Zoomable */; };
-		87C87DB82813266E00CAA57B /* RepresentableKit in Frameworks */ = {isa = PBXBuildFile; productRef = 87C87DB72813266E00CAA57B /* RepresentableKit */; };
 		87E0E2B82801D967005207A8 /* NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B72801D967005207A8 /* NotesView.swift */; };
 		87E0E2BA2801DCDB005207A8 /* NoteItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B92801DCDB005207A8 /* NoteItemView.swift */; };
 		87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */; };
@@ -95,7 +94,6 @@
 				877932AF2743186F004C43FD /* URLImageStore in Frameworks */,
 				879BFAB928D5E97800BDFB43 /* Introspect in Frameworks */,
 				8761834E271F5E570021A051 /* FAKit in Frameworks */,
-				87C87DB82813266E00CAA57B /* RepresentableKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -227,7 +225,6 @@
 				877932AC2743186F004C43FD /* URLImage */,
 				877932AE2743186F004C43FD /* URLImageStore */,
 				87C4D2AF27653C3600C29A4B /* Zoomable */,
-				87C87DB72813266E00CAA57B /* RepresentableKit */,
 				87C1A0AC284B6E5400529F8C /* Version */,
 				879BFAB828D5E97800BDFB43 /* Introspect */,
 			);
@@ -262,7 +259,6 @@
 			packageReferences = (
 				877932AB2743186F004C43FD /* XCRemoteSwiftPackageReference "url-image" */,
 				87C4D2AE27653C3600C29A4B /* XCRemoteSwiftPackageReference "Zoomable" */,
-				87C87DB62813266E00CAA57B /* XCRemoteSwiftPackageReference "RepresentableKit" */,
 				87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */,
 				879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
 			);
@@ -561,14 +557,6 @@
 				minimumVersion = 1.0.0;
 			};
 		};
-		87C87DB62813266E00CAA57B /* XCRemoteSwiftPackageReference "RepresentableKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/yumemi-inc/RepresentableKit.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.1.2;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -600,11 +588,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 87C4D2AE27653C3600C29A4B /* XCRemoteSwiftPackageReference "Zoomable" */;
 			productName = Zoomable;
-		};
-		87C87DB72813266E00CAA57B /* RepresentableKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 87C87DB62813266E00CAA57B /* XCRemoteSwiftPackageReference "RepresentableKit" */;
-			productName = RepresentableKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
