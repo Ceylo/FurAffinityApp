@@ -25,22 +25,21 @@ extension FAUserPage {
         
         do {
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
+            let navHeaderNode = try doc.select("body div#main-window div#site-content userpage-nav-header")
             
-            let userpageContainerQuery = "body div#main-window div#site-content div#user-profile div.user-profile-main div div.userpage-flex-container"
-            
-            let usernameQuery = userpageContainerQuery + " div.user-nav-avatar-mobile a"
-            let usernameNode = try doc.select(usernameQuery).attr("href")
-            let username = usernameNode.substring(matching: "\\/user\\/(.+)\\/")
+            let navAvatarNode = try navHeaderNode.select("userpage-nav-avatar a")
+            let username = try navAvatarNode
+                .attr("href")
+                .substring(matching: "\\/user\\/(.+)\\/")
             self.userName = username
             
-            let displayNameQuery = userpageContainerQuery + " div.username h2"
-            let displayNameNode = try doc.select(displayNameQuery).first().unwrap()
+            let displayNameQuery = "userpage-nav-user-details h1 username"
+            let displayNameNode = try navHeaderNode.select(displayNameQuery).first().unwrap()
             let rawDisplayName = try displayNameNode.text()
             let displayName = rawDisplayName.substring(matching: "~(.+)")?.trimmingCharacters(in: .whitespacesAndNewlines)
             self.displayName = displayName
             
-            let avatarUrlQuery = userpageContainerQuery + " div.user-nav-avatar-mobile a img.user-nav-avatar"
-            let avatarUrlNode = try doc.select(avatarUrlQuery).attr("src")
+            let avatarUrlNode = try navAvatarNode.select("img").attr("src")
             let avatarUrl = URL(string: "https:" + avatarUrlNode)
             self.avatarUrl = avatarUrl
         } catch {
