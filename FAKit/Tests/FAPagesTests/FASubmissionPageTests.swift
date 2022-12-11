@@ -16,10 +16,10 @@ final class FASubmissionPageTests: XCTestCase {
         
         let htmlDescription = #"""
 YCH for 
-<a href="/user/lil-maj" class="iconusername"><img src="//a.furaffinity.net/20221023/lil-maj.gif" align="middle" title="lil-maj" alt="lil-maj">&nbsp;lil-maj</a> 
+<a href="/user/lil-maj" class="iconusername"><img src="//a.furaffinity.net/20221211/lil-maj.gif" align="middle" title="lil-maj" alt="lil-maj">&nbsp;lil-maj</a> 
 <br> 
 <br> Cody © 
-<a href="/user/lil-maj" class="iconusername"><img src="//a.furaffinity.net/20221023/lil-maj.gif" align="middle" title="lil-Maj" alt="lil-Maj">&nbsp;lil-Maj</a>
+<a href="/user/lil-maj" class="iconusername"><img src="//a.furaffinity.net/20221211/lil-maj.gif" align="middle" title="lil-Maj" alt="lil-Maj">&nbsp;lil-Maj</a>
 <br> 
 <br> 
 <br> 
@@ -38,18 +38,18 @@ YCH for
             fullResolutionImageUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1665402309/1665402309.annetpeas_the_hookah_fa.png")!,
             author: "annetpeas",
             displayAuthor: "AnnetPeas",
-            authorAvatarUrl: URL(string: "https://a.furaffinity.net/1663186682/annetpeas.gif")!,
+            authorAvatarUrl: URL(string: "https://a.furaffinity.net/1670079651/annetpeas.gif")!,
             title: "The hookah",
             htmlDescription: htmlDescription,
             isFavorite: false,
-            favoriteUrl: URL(string: "https://www.furaffinity.net/fav/49338772/?key=c9f6a9b5ebbcc70acdfbaa835433bef60167fcee")!,
+            favoriteUrl: URL(string: "https://www.furaffinity.net/fav/49338772/?key=57af11f57cd9a0d97575839f1ae07d2a775ae5af")!,
             comments: [])
         
         XCTAssertEqual(page, expected)
     }
     
     func testSubmissionPageWithHiddenComment_isParsed() throws {
-        let data = testData("www.furaffinity.net:view:48519387-comment-hidden.html")
+        let data = testData("www.furaffinity.net:view:49917619-comment-hidden.html")
         let page = FASubmissionPage(data: data)
         XCTAssertNotNil(page)
         XCTAssertEqual(11, page?.comments.count)
