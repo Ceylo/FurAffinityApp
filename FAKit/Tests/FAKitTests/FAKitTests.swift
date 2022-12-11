@@ -11,9 +11,9 @@ struct MockHTTPDataSource: HTTPDataSource {
 }
 
 final class FAKitTests: XCTestCase {
-    func testExample() async throws {
+    func testLoggedOut() async throws {
         let mock = MockHTTPDataSource(dataForUrl: [
-            FAHomePage.url: testData("www.furaffinity.net-loggedout.html")
+            FAHomePage.url: testData("www.furaffinity.net:loggedout.html")
         ])
         
         let session = await FASession(cookies: [], dataSource: mock)
