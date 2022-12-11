@@ -22,7 +22,7 @@ public struct FASubmissionPage: Equatable {
     
     public struct Comment: Equatable {
         public let cid: Int
-        public let parentCid: Int?
+        public let indentation: Int
         public let author: String
         public let displayAuthor: String
         public let authorAvatarUrl: URL
@@ -97,26 +97,27 @@ extension FASubmissionPage {
 
 extension FASubmissionPage.Comment {
     init?(_ node: SwiftSoup.Element) throws {
-        let tableNode = try node.select("div.base div.header div.name div.table")
-        guard !tableNode.isEmpty() else {
+        let usernameNode = try node.select("comment-container div.comment-content comment-username")
+        guard !usernameNode.isEmpty() else {
             let html = try? node.html()
             logger.warning("Skipping comment: \(html ?? "", privacy: .public)")
             return nil
         }
-        let authorUrlString = try tableNode.select("div.avatar-mobile a").attr("href")
-        let author = try authorUrlString.substring(matching: "/user/(.+)/").unwrap()
-        let authorAvatarUrlString = try tableNode.select("div.avatar-mobile a img.comment_useravatar").attr("src")
-        let authorAvatarUrl = try URL(string: "https:" + authorAvatarUrlString).unwrap()
-        let displayAuthor = try tableNode.select("div.cell a.inline strong.comment_username h3").text()
-        let floatRightNode = try tableNode.select("div.cell div.floatright")
-        let rawCidString = try floatRightNode.select("a.comment-link").attr("href")
-        let cid = try Int(rawCidString.substring(matching: "#cid:(.+)").unwrap()).unwrap()
-        let rawParentCidString = try? floatRightNode.select("a.comment-parent").first().unwrap().attr("href")
-        let parentCid = try rawParentCidString.flatMap { Int(try $0.substring(matching: "#cid:(.+)").unwrap()) }
-        let datetime = try tableNode.select("div.cell div.comment-date span.popup_date").text()
-        let htmlMessage = try node.select("div.base div.comment_text").first().unwrap().html()
         
-        self.init(cid: cid, parentCid: parentCid,
+        let widthStr = try node.attr("style").substring(matching: "width:(.+)%").unwrap()
+        let indentation = try 100 - Int(widthStr).unwrap()
+        let authorNode = try node.select("comment-container div.avatar a")
+        let author = try authorNode.attr("href").substring(matching: "/user/(.+)/").unwrap()
+        let authorAvatarUrlString = try authorNode.select("img").attr("src")
+        let authorAvatarUrl = try URL(string: "https:" + authorAvatarUrlString).unwrap()
+        let displayAuthorQuery = "comment-container div.comment-content comment-username a.inline strong.comment_username"
+        let displayAuthor = try node.select(displayAuthorQuery).text()
+        let rawCidString = try node.select("a").attr("id")
+        let cid = try Int(rawCidString.substring(matching: "cid:(.+)").unwrap()).unwrap()
+        let datetime = try node.select("comment-container div.comment-content comment-date span.popup_date").text()
+        let htmlMessage = try node.select("comment-container div.comment-content comment-user-text div.user-submitted-links").first().unwrap().html()
+        
+        self.init(cid: cid, indentation: indentation,
                   author: author, displayAuthor: displayAuthor,
                   authorAvatarUrl: authorAvatarUrl, datetime: datetime,
                   htmlMessage: htmlMessage)

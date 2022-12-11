@@ -8,6 +8,7 @@
 import Foundation
 import FAPages
 import SwiftGraph
+import OrderedCollections
 
 public struct FASubmission: Equatable {
     public let url: URL
@@ -83,8 +84,8 @@ extension FASubmission.Comment {
 
 extension FASubmission {
     static func childrenOf(comment: FASubmissionPage.Comment,
-                    in graph: UnweightedGraph<Int>,
-                    index: [Int: FASubmissionPage.Comment]) -> [Comment] {
+                           in graph: UnweightedGraph<Int>,
+                           index: [Int: FASubmissionPage.Comment]) -> [Comment] {
         let children = graph.edgesForVertex(comment.cid)!
             .filter { $0.u == graph.indexOfVertex(comment.cid)! }
             .map { graph.vertexAtIndex($0.v) }
@@ -103,12 +104,24 @@ extension FASubmission {
             .map { ($0.cid, $0) })
         let graph = UnweightedGraph<Int>()
         var rootCommentIDs = [Int]()
+        var lastCidAtIndentation = OrderedDictionary<Int, Int>()
+        
         comments.forEach { _ = graph.addVertex($0.cid) }
         for comment in comments {
-            if let parentId = comment.parentCid {
-                graph.addEdge(from: parentId, to: comment.cid, directed: true)
-            } else {
+            lastCidAtIndentation[comment.indentation] = comment.cid
+            lastCidAtIndentation.removeAll { (indentation: Int, cid: Int) in
+                indentation > comment.indentation
+            }
+            
+            if comment.indentation == 0 {
                 rootCommentIDs.append(comment.cid)
+            } else if let parentCid = lastCidAtIndentation.reversed().first(where: { (indentation: Int, cid: Int) in
+                indentation < comment.indentation
+            }) {
+                graph.addEdge(from: parentCid.value, to: comment.cid, directed: true)
+            } else {
+                logger.error("\(String(describing: comment)) doesn't have any parent and is not a root")
+                assertionFailure()
             }
         }
         
