@@ -94,6 +94,8 @@ open class FASession: Equatable {
             let previousTask = avatarUrlTasks[user]
             let newTask = Task { () -> URL? in
                 _ = await previousTask?.result
+                try avatarUrlsCache.removeExpiredObjects()
+                
                 if let url = try? avatarUrlsCache.object(forKey: user) {
                     return url
                 }
