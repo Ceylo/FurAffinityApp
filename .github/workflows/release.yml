@@ -3,7 +3,7 @@ on:
   push:
     tags:
       - '*'
-  workflow_dispatch
+on: workflow_dispatch
 jobs:
   Build-App:
     runs-on: macos-12
