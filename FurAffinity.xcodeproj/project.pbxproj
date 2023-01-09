@@ -31,7 +31,6 @@
 		877932AF2743186F004C43FD /* URLImageStore in Frameworks */ = {isa = PBXBuildFile; productRef = 877932AE2743186F004C43FD /* URLImageStore */; };
 		87815AC728D63F9B005AD03E /* View+Introspection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87815AC628D63F9B005AD03E /* View+Introspection.swift */; };
 		878B0B85296C9F9300A08685 /* AppCenterAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 878B0B84296C9F9300A08685 /* AppCenterAnalytics */; };
-		878B0B87296C9F9300A08685 /* AppCenterCrashes in Frameworks */ = {isa = PBXBuildFile; productRef = 878B0B86296C9F9300A08685 /* AppCenterCrashes */; };
 		878B0B89296CA00700A08685 /* Analytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878B0B88296CA00700A08685 /* Analytics.swift */; };
 		879233D2278216DF0019AC44 /* TextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 879233D1278216DF0019AC44 /* TextView.swift */; };
 		8799FAE22741672E0068A049 /* SubmissionFeedItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */; };
@@ -96,7 +95,6 @@
 				877932AD2743186F004C43FD /* URLImage in Frameworks */,
 				878B0B85296C9F9300A08685 /* AppCenterAnalytics in Frameworks */,
 				87C1A0AD284B6E5400529F8C /* Version in Frameworks */,
-				878B0B87296C9F9300A08685 /* AppCenterCrashes in Frameworks */,
 				87C4D2B027653C3600C29A4B /* Zoomable in Frameworks */,
 				877932AF2743186F004C43FD /* URLImageStore in Frameworks */,
 				879BFAB928D5E97800BDFB43 /* Introspect in Frameworks */,
@@ -237,7 +235,6 @@
 				87C1A0AC284B6E5400529F8C /* Version */,
 				879BFAB828D5E97800BDFB43 /* Introspect */,
 				878B0B84296C9F9300A08685 /* AppCenterAnalytics */,
-				878B0B86296C9F9300A08685 /* AppCenterCrashes */,
 			);
 			productName = FurAffinity;
 			productReference = 8716E7E8271C659C00C0BC4A /* Fur Affinity.app */;
@@ -599,11 +596,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 878B0B83296C9F9300A08685 /* XCRemoteSwiftPackageReference "appcenter-sdk-apple" */;
 			productName = AppCenterAnalytics;
-		};
-		878B0B86296C9F9300A08685 /* AppCenterCrashes */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 878B0B83296C9F9300A08685 /* XCRemoteSwiftPackageReference "appcenter-sdk-apple" */;
-			productName = AppCenterCrashes;
 		};
 		879BFAB828D5E97800BDFB43 /* Introspect */ = {
 			isa = XCSwiftPackageProductDependency;
