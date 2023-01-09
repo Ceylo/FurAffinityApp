@@ -30,6 +30,9 @@
 		877932AD2743186F004C43FD /* URLImage in Frameworks */ = {isa = PBXBuildFile; productRef = 877932AC2743186F004C43FD /* URLImage */; };
 		877932AF2743186F004C43FD /* URLImageStore in Frameworks */ = {isa = PBXBuildFile; productRef = 877932AE2743186F004C43FD /* URLImageStore */; };
 		87815AC728D63F9B005AD03E /* View+Introspection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87815AC628D63F9B005AD03E /* View+Introspection.swift */; };
+		878B0B85296C9F9300A08685 /* AppCenterAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 878B0B84296C9F9300A08685 /* AppCenterAnalytics */; };
+		878B0B87296C9F9300A08685 /* AppCenterCrashes in Frameworks */ = {isa = PBXBuildFile; productRef = 878B0B86296C9F9300A08685 /* AppCenterCrashes */; };
+		878B0B89296CA00700A08685 /* Analytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878B0B88296CA00700A08685 /* Analytics.swift */; };
 		879233D2278216DF0019AC44 /* TextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 879233D1278216DF0019AC44 /* TextView.swift */; };
 		8799FAE22741672E0068A049 /* SubmissionFeedItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */; };
 		879BFAB928D5E97800BDFB43 /* Introspect in Frameworks */ = {isa = PBXBuildFile; productRef = 879BFAB828D5E97800BDFB43 /* Introspect */; };
@@ -70,6 +73,7 @@
 		877226B42740361C00245DF0 /* SubmissionsFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionsFeedView.swift; sourceTree = "<group>"; };
 		877929CF2744386E003AE828 /* FASession+CanvasPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FASession+CanvasPreview.swift"; sourceTree = "<group>"; };
 		87815AC628D63F9B005AD03E /* View+Introspection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Introspection.swift"; sourceTree = "<group>"; };
+		878B0B88296CA00700A08685 /* Analytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Analytics.swift; sourceTree = "<group>"; };
 		879233D1278216DF0019AC44 /* TextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextView.swift; sourceTree = "<group>"; };
 		8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionFeedItemView.swift; sourceTree = "<group>"; };
 		87A1859B27459FFE00B10D2A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -89,7 +93,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				877932AD2743186F004C43FD /* URLImage in Frameworks */,
+				878B0B85296C9F9300A08685 /* AppCenterAnalytics in Frameworks */,
 				87C1A0AD284B6E5400529F8C /* Version in Frameworks */,
+				878B0B87296C9F9300A08685 /* AppCenterCrashes in Frameworks */,
 				87C4D2B027653C3600C29A4B /* Zoomable in Frameworks */,
 				877932AF2743186F004C43FD /* URLImageStore in Frameworks */,
 				879BFAB928D5E97800BDFB43 /* Introspect in Frameworks */,
@@ -123,6 +129,7 @@
 			children = (
 				8725335E274A70BB007FEF3B /* Model.swift */,
 				8716E7EB271C659C00C0BC4A /* FurAffinityApp.swift */,
+				878B0B88296CA00700A08685 /* Analytics.swift */,
 				8716E7ED271C659C00C0BC4A /* HomeView.swift */,
 				877226B227402F9300245DF0 /* LoggedInView.swift */,
 				875DD46E2843D1C300F3E5D9 /* Helpers */,
@@ -227,6 +234,8 @@
 				87C4D2AF27653C3600C29A4B /* Zoomable */,
 				87C1A0AC284B6E5400529F8C /* Version */,
 				879BFAB828D5E97800BDFB43 /* Introspect */,
+				878B0B84296C9F9300A08685 /* AppCenterAnalytics */,
+				878B0B86296C9F9300A08685 /* AppCenterCrashes */,
 			);
 			productName = FurAffinity;
 			productReference = 8716E7E8271C659C00C0BC4A /* Fur Affinity.app */;
@@ -261,6 +270,7 @@
 				87C4D2AE27653C3600C29A4B /* XCRemoteSwiftPackageReference "Zoomable" */,
 				87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */,
 				879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
+				878B0B83296C9F9300A08685 /* XCRemoteSwiftPackageReference "appcenter-sdk-apple" */,
 			);
 			productRefGroup = 8716E7E9271C659C00C0BC4A /* Products */;
 			projectDirPath = "";
@@ -312,6 +322,7 @@
 				877226B52740361C00245DF0 /* SubmissionsFeedView.swift in Sources */,
 				87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */,
 				87253361274A9D91007FEF3B /* SubmissionView.swift in Sources */,
+				878B0B89296CA00700A08685 /* Analytics.swift in Sources */,
 				8733DDFD28F75C1200CD8BCF /* Sharing.swift in Sources */,
 				87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */,
 				879233D2278216DF0019AC44 /* TextView.swift in Sources */,
@@ -533,6 +544,14 @@
 				minimumVersion = 3.0.0;
 			};
 		};
+		878B0B83296C9F9300A08685 /* XCRemoteSwiftPackageReference "appcenter-sdk-apple" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/microsoft/appcenter-sdk-apple.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
 		879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/siteline/SwiftUI-Introspect.git";
@@ -573,6 +592,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 877932AB2743186F004C43FD /* XCRemoteSwiftPackageReference "url-image" */;
 			productName = URLImageStore;
+		};
+		878B0B84296C9F9300A08685 /* AppCenterAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 878B0B83296C9F9300A08685 /* XCRemoteSwiftPackageReference "appcenter-sdk-apple" */;
+			productName = AppCenterAnalytics;
+		};
+		878B0B86296C9F9300A08685 /* AppCenterCrashes */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 878B0B83296C9F9300A08685 /* XCRemoteSwiftPackageReference "appcenter-sdk-apple" */;
+			productName = AppCenterCrashes;
 		};
 		879BFAB828D5E97800BDFB43 /* Introspect */ = {
 			isa = XCSwiftPackageProductDependency;
