@@ -8,6 +8,7 @@
 - [How does it get access to my account?](#how-does-it-get-access-to-my-account)
 - [Will I get banned from Fur Affinity for using this app?](#will-i-get-banned-from-fur-affinity-for-using-this-app)
 - [Technologies used and required iOS version](#technologies-used-and-required-ios-version)
+- [Privacy policy](#privacy-policy)
 
 ## Preview
 
@@ -51,3 +52,6 @@ As of May 2022, Fur Affinity staff allows the use of the application as long as 
 ## Technologies used and required iOS version
 This project is fully written in Swift and is based on SwiftUI and Swift Concurrency.
 As such iOS 15 or later is required to run the app.
+
+## Privacy policy
+See the [Privacy Policy](Privacy%20Policy.md) page.
