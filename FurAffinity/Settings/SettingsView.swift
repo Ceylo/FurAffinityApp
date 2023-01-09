@@ -53,6 +53,7 @@ struct SettingsView: View {
         Form {
             Section("App information") {
                 Link("Website", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp")!)
+                Link("Privacy policy", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/blob/main/Privacy%20Policy.md")!)
                 Link("Feature request & bug report", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/issues")!)
                 Text("Current version: " + appInfo.currentVersion.description)
                 VStack(alignment: .leading, spacing: 10) {
