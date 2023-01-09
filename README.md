@@ -54,4 +54,4 @@ This project is fully written in Swift and is based on SwiftUI and Swift Concurr
 As such iOS 15 or later is required to run the app.
 
 ## Privacy policy
-See the [Privacy Policy](Privacy Policy.md) page.
+See the [Privacy Policy](Privacy%20Policy.md) page.
