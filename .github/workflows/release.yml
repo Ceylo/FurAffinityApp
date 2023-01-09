@@ -1,8 +1,9 @@
 name: Create Release
 on:
-  push:
+  - push:
     tags:
       - '*'
+  - workflow_dispatch
 jobs:
   Build-App:
     runs-on: macos-12
