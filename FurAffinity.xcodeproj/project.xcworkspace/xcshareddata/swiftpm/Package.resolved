@@ -2,12 +2,30 @@
   "object": {
     "pins": [
       {
+        "package": "AppCenter",
+        "repositoryURL": "https://github.com/microsoft/appcenter-sdk-apple.git",
+        "state": {
+          "branch": null,
+          "revision": "88e65475ffd3a7cf2bbde07df9e62159a1fd60a8",
+          "version": "5.0.0"
+        }
+      },
+      {
         "package": "Cache",
         "repositoryURL": "https://github.com/hyperoslo/Cache.git",
         "state": {
           "branch": null,
           "revision": "c7f4d633049c3bd649a353bad36f6c17e9df085f",
           "version": "6.0.0"
+        }
+      },
+      {
+        "package": "PLCrashReporter",
+        "repositoryURL": "https://github.com/microsoft/PLCrashReporter.git",
+        "state": {
+          "branch": null,
+          "revision": "b1a342da19ed9b3af61ea2efa7656c2af30aeb7c",
+          "version": "1.11.0"
         }
       },
       {
