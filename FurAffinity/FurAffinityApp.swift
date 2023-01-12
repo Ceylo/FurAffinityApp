@@ -24,7 +24,9 @@ struct FurAffinityApp: App {
     init() {
         let device = UIDevice.current
         logger.info("Launched FurAffinity \(Bundle.main.version, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public)")
+#if !targetEnvironment(simulator)
         AppCenter.start(withAppSecret: Secrets.appCenterApiKey, services: [Analytics.self])
+#endif
     }
 
     var body: some Scene {
