@@ -14,6 +14,7 @@ public struct FANotePage: Equatable {
     public let title: String
     public let datetime: String
     public let htmlMessage: String
+    public let answerKey: String
 }
 
 extension FANotePage {
@@ -42,6 +43,9 @@ extension FANotePage {
             self.datetime = try noteContainerNode
                 .select("div.section-header div.message-center-note-information div.addresses span.popup_date")
                 .attr("title")
+            
+            let keyNode = try doc.select("form#note-form input[name=\"key\"]")
+            self.answerKey = try keyNode.attr("value")
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil
