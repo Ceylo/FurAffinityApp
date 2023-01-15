@@ -35,7 +35,8 @@ struct SubmissionsFeedView: View {
                     .navigationBarTitleDisplayMode(.inline)
                     .overlay(alignment: .topTrailing) {
                         SubmissionsFeedActionView()
-                            .padding(.trailing, 18)
+                            .padding(.trailing, 20)
+                            .padding(.top, 6)
                     }
                     .refreshable {
                         refresh(pulled: true)

@@ -20,8 +20,9 @@ struct SubmissionsFeedActionView: View {
             }
         } label: {
             Text("…")
+                .font(.headline)
                 .foregroundColor(.primary)
-                .padding(5)
+                .padding(7.5)
                 .offset(y: -4)
                 .background(.thinMaterial)
                 .clipShape(Circle())
