@@ -16,6 +16,10 @@ private extension Expiry {
 }
 
 open class FASession: Equatable {
+    enum Error: String, Swift.Error {
+        case requestFailure
+    }
+    
     public let username: String
     public let displayUsername: String
     let cookies: [HTTPCookie]
@@ -57,6 +61,18 @@ open class FASession: Equatable {
         return FASubmission(page, url: preview.url)
     }
     
+    open func nukeSubmissions() async throws {
+        let url = URL(string: "https://www.furaffinity.net/msg/submissions/new@72/")!
+        let params: [URLQueryItem] = [
+            .init(name: "messagecenter-action", value: "nuke_notifications"),
+        ]
+        
+        guard let data = await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params),
+              FASubmissionsPage(data: data) != nil else {
+            throw Error.requestFailure
+        }
+    }
+    
     open func toggleFavorite(for submission: FASubmission) async -> FASubmission? {
         guard let data = await dataSource.httpData(from: submission.favoriteUrl, cookies: cookies),
               let page = FASubmissionPage(data: data)
@@ -87,10 +103,10 @@ open class FASession: Equatable {
     }
     
     private let avatarUrlRequestsQueue = DispatchQueue(label: "FASession.AvatarRequests")
-    private var avatarUrlTasks = [String: Task<URL?, Error>]()
+    private var avatarUrlTasks = [String: Task<URL?, Swift.Error>]()
     private let avatarUrlsCache: Storage<String, URL>
     open func avatarUrl(for user: String) async -> URL? {
-        let task = avatarUrlRequestsQueue.sync { () -> Task<URL?, Error> in
+        let task = avatarUrlRequestsQueue.sync { () -> Task<URL?, Swift.Error> in
             let previousTask = avatarUrlTasks[user]
             let newTask = Task { () -> URL? in
                 _ = await previousTask?.result

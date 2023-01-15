@@ -37,6 +37,10 @@ struct SubmissionsFeedView: View {
                         NotificationOverlay(itemCount: $newSubmissionsCount)
                             .offset(y: 40)
                     }
+                    .overlay(alignment: .topTrailing) {
+                        SubmissionsFeedActionView()
+                            .padding(.trailing, 18)
+                    }
                     .refreshable {
                         refresh(pulled: true)
                     }

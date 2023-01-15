@@ -65,6 +65,21 @@ class Model: ObservableObject {
         return newSubmissions.count
     }
     
+    func nukeAllSubmissions() async {
+        guard let session else {
+            logger.error("Tried to nuke submissions with no active session, skipping")
+            return
+        }
+        
+        do {
+            try await session.nukeSubmissions()
+            lastSubmissionPreviewsFetchDate = Date()
+            submissionPreviews = []
+        } catch {
+            logger.error("Failed nuking submissions: \(error, privacy: .public)")
+        }
+    }
+    
     func fetchNewNotePreviews() async {
         guard let session else {
             logger.error("Tried to fetch notes with no active session, skipping")
