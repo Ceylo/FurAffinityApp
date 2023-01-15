@@ -23,13 +23,13 @@ struct NotificationOverlay: View {
     
     func badge(_ count: Int) -> some View {
         Text("\(count) new submissions")
-            .font(.headline)
+            .font(.callout)
             .foregroundColor(Color.primary)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
             .background(.thinMaterial)
-            .cornerRadius(15)
-            .shadow(color: .black.opacity(0.5) , radius: 5, x: 0, y: 0)
+            .cornerRadius(16)
+            .shadow(color: .black.opacity(0.33) , radius: 5, x: 0, y: 0)
     }
     
     var body: some View {
