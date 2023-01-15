@@ -33,10 +33,6 @@ struct SubmissionsFeedView: View {
                     }
                     .listStyle(.plain)
                     .navigationBarTitleDisplayMode(.inline)
-                    .overlay(alignment: .top) {
-                        NotificationOverlay(itemCount: $newSubmissionsCount)
-                            .offset(y: 40)
-                    }
                     .overlay(alignment: .topTrailing) {
                         SubmissionsFeedActionView()
                             .padding(.trailing, 18)
@@ -45,12 +41,18 @@ struct SubmissionsFeedView: View {
                         refresh(pulled: true)
                     }
                     .swap(when: previews.isEmpty) {
-                        VStack(spacing: 10) {
-                            Text("It's a bit empty in here.")
-                                .font(.headline)
-                            Text("Watch artists and wait for them to post new art. Submissions from [www.furaffinity.net/msg/submissions/](https://www.furaffinity.net/msg/submissions/) will be displayed here.")
-                                .multilineTextAlignment(.center)
-                                .foregroundColor(.secondary)
+                        VStack(spacing: 20) {
+                            VStack(spacing: 10) {
+                                Text("It's a bit empty in here.")
+                                    .font(.headline)
+                                Text("Watch artists and wait for them to post new art. Submissions from [www.furaffinity.net/msg/submissions/](https://www.furaffinity.net/msg/submissions/) will be displayed here.")
+                                    .multilineTextAlignment(.center)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Button("Refresh") {
+                                refresh(pulled: true)
+                            }
                         }
                         .padding()
                     }
@@ -63,6 +65,10 @@ struct SubmissionsFeedView: View {
                         targetScrollItemSid = nil
                     }
                 }
+            }
+            .overlay(alignment: .top) {
+                NotificationOverlay(itemCount: $newSubmissionsCount)
+                    .offset(y: 40)
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
@@ -85,8 +91,6 @@ extension SubmissionsFeedView {
             
             let newSubmissionCount = await model
                 .fetchNewSubmissionPreviews()
-            
-            guard newSubmissionCount > 0 else { return }
             
             withAnimation {
                 newSubmissionsCount = newSubmissionCount

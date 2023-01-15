@@ -22,7 +22,7 @@ struct NotificationOverlay: View {
     var dismissAfter: TimeInterval = 3.0
     
     func badge(_ count: Int) -> some View {
-        Text("\(count) new submissions")
+        Text(count > 0 ? "\(count) new submissions" : "No new submission")
             .font(.callout)
             .foregroundColor(Color.primary)
             .padding(.horizontal, 16)
