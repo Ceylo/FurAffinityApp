@@ -7,6 +7,7 @@
 
 import SwiftUI
 import FAKit
+import Combine
 
 enum ModelError: Error {
     case disconnected
@@ -29,8 +30,8 @@ class Model: ObservableObject {
     @Published
     /// nil until a fetch actually happened
     /// After a fetch it contains all found submissions, or an empty array if none was found
-    public private (set) var submissionPreviews: [FASubmissionPreview]?
-    public private (set) var lastSubmissionPreviewsFetchDate: Date?
+    private (set) var submissionPreviews: [FASubmissionPreview]?
+    private (set) var lastSubmissionPreviewsFetchDate: Date?
     
     @Published
     /// nil until a fetch actually happened
@@ -38,10 +39,19 @@ class Model: ObservableObject {
     private (set) var notePreviews: [FANotePreview]?
     @Published
     private (set) var unreadNoteCount = 0
-    public private (set) var lastNotePreviewsFetchDate: Date?
+    private (set) var lastNotePreviewsFetchDate: Date?
     
+    @Published
+    private (set) var appInfo = AppInformation()
+    private var lastAppInfoUpdate: Date?
+
+    private var subscriptions = Set<AnyCancellable>()
     init(session: FASession? = nil) {
         self.session = session
+        appInfo.objectWillChange.sink {
+            self.objectWillChange.send()
+        }
+        .store(in: &subscriptions)
     }
     
     func fetchNewSubmissionPreviews() async -> Int {
@@ -63,6 +73,21 @@ class Model: ObservableObject {
             submissionPreviews = []
         }
         return newSubmissions.count
+    }
+    
+    func nukeAllSubmissions() async {
+        guard let session else {
+            logger.error("Tried to nuke submissions with no active session, skipping")
+            return
+        }
+        
+        do {
+            try await session.nukeSubmissions()
+            lastSubmissionPreviewsFetchDate = Date()
+            submissionPreviews = []
+        } catch {
+            logger.error("Failed nuking submissions: \(error, privacy: .public)")
+        }
     }
     
     func fetchNewNotePreviews() async {
@@ -89,6 +114,16 @@ class Model: ObservableObject {
         return updated
     }
     
+    func updateAppInfoIfNeeded() {
+        if let lastAppInfoUpdate {
+            let secondsSinceLastRefresh = -lastAppInfoUpdate.timeIntervalSinceNow
+            guard secondsSinceLastRefresh > Self.autorefreshDelay else { return }
+        }
+        
+        appInfo.fetch()
+        lastAppInfoUpdate = Date()
+    }
+    
     private func processNewSession() {
         guard session != nil else {
             lastSubmissionPreviewsFetchDate = nil
@@ -102,6 +137,7 @@ class Model: ObservableObject {
         Task {
             _ = await fetchNewSubmissionPreviews()
             await fetchNewNotePreviews()
+            updateAppInfoIfNeeded()
         }
     }
 }

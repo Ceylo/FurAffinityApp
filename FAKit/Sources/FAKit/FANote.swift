@@ -14,19 +14,22 @@ public struct FANote: Equatable {
     public let title: String
     public let datetime: String
     public let htmlMessage: String
+    public let answerKey: String
     
-    public init(author: String, displayAuthor: String, title: String, datetime: String, htmlMessage: String) {
+    public init(author: String, displayAuthor: String, title: String, datetime: String, htmlMessage: String, answerKey: String) {
         self.author = author
         self.displayAuthor = displayAuthor
         self.title = title
         self.datetime = datetime
         self.htmlMessage = htmlMessage.selfContainedFAHtml
+        self.answerKey = answerKey
     }
 }
 
 public extension FANote {
     init(_ notePage: FANotePage) {
         self.init(author: notePage.author, displayAuthor: notePage.displayAuthor,
-                  title: notePage.title, datetime: notePage.datetime, htmlMessage: notePage.htmlMessage)
+                  title: notePage.title, datetime: notePage.datetime,
+                  htmlMessage: notePage.htmlMessage, answerKey: notePage.answerKey)
     }
 }

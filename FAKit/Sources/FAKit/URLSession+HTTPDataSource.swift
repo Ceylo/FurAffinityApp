@@ -8,7 +8,33 @@
 import Foundation
 
 extension URLSession: HTTPDataSource {
-    public func httpData(from url: URL, cookies: [HTTPCookie]?) async -> Data? {
+    private func request(with url: URL, method: HTTPMethod, parameters: [URLQueryItem]) -> URLRequest {
+        
+        var request: URLRequest
+        let urlWithParams = url.appending(queryItems: parameters)
+        
+        switch method {
+        case .GET:
+            request = URLRequest(url: urlWithParams)
+            request.httpMethod = "GET"
+        case .POST:
+            request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            if let query = urlWithParams.query() {
+                print(query)
+                request.httpBody = query.data(using: .utf8)
+            }
+        }
+        return request
+    }
+    
+    public func httpData(
+        from url: URL,
+        cookies: [HTTPCookie]?,
+        method: HTTPMethod,
+        parameters: [URLQueryItem]
+    ) async -> Data? {
         let state = signposter.beginInterval("Network Requests", "\(url)")
         defer { signposter.endInterval("Network Requests", state) }
 
@@ -17,8 +43,10 @@ extension URLSession: HTTPDataSource {
                 self.configuration.httpCookieStorage!
                     .setCookies(cookies, for: url, mainDocumentURL: url)
             }
-            logger.info("Requesting data from \(url, privacy: .public)")
-            let (data, response) = try await self.data(from: url, delegate: nil)
+            let request = request(with: url, method: method, parameters: parameters)
+            
+            logger.info("Requesting data from \(url, privacy: .public) with method \(method)")
+            let (data, response) = try await self.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode)
             else {

@@ -7,46 +7,9 @@
 
 import SwiftUI
 import FAKit
-import Version
-
-struct Release: Decodable {
-    let html_url: String
-    let draft: Bool
-    let prerelease: Bool
-    let published_at: String
-    let tag_name: String
-    let name: String
-    let body: String
-    
-    var version: Version {
-        Version(tolerant: tag_name) ?? .null
-    }
-}
-
-@MainActor
-class AppInformation: ObservableObject {
-    let currentVersion = Bundle.main.version
-    @Published var latestRelease: Release?
-    @Published var isUpToDate: Bool?
-
-    func fetch() {
-        Task {
-            let url = URL(string: "https://api.github.com/repos/Ceylo/FurAffinityApp/releases/latest")!
-            if let data = await URLSession.shared.httpData(from: url, cookies: nil) {
-                let release = try JSONDecoder().decode(Release.self, from: data)
-                isUpToDate = release.version <= currentVersion
-                latestRelease = release
-            } else {
-                latestRelease = nil
-                isUpToDate = nil
-            }
-        }
-    }
-}
 
 struct SettingsView: View {
     @EnvironmentObject var model: Model
-    @ObservedObject var appInfo = AppInformation()
     @State private var dumpingLogs = false
     
     var body: some View {
@@ -55,20 +18,20 @@ struct SettingsView: View {
                 Link("Website", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp")!)
                 Link("Privacy policy", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/blob/main/Privacy%20Policy.md")!)
                 Link("Feature request & bug report", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/issues")!)
-                Text("Current version: " + appInfo.currentVersion.description)
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Latest available version: "
-                         + (appInfo.latestRelease?.tag_name ?? "…"))
-                    
-                    if let latestRelease = appInfo.latestRelease,
-                       let isUpToDate = appInfo.isUpToDate,
-                       !isUpToDate {
-                        Text(latestRelease.body.trimmingCharacters(in: .newlines))
-                            .font(.caption)
-                        if let url = URL(string: latestRelease.html_url) {
-                            Link("Get " + latestRelease.name, destination: url)
-                                .padding(.bottom, 5)
+                Text("Current version: " + model.appInfo.currentVersion.description)
+                Text("Latest available version: "
+                     + (model.appInfo.latestRelease?.tag_name ?? "…"))
+                
+                if let latestRelease = model.appInfo.latestRelease,
+                   let isUpToDate = model.appInfo.isUpToDate,
+                   !isUpToDate {
+                    Text(latestRelease.body.trimmingCharacters(in: .newlines))
+                        .font(.caption)
+                    if let url = URL(string: latestRelease.html_url) {
+                        Link(destination: url) {
+                            Label("Get " + latestRelease.name, systemImage: "square.and.arrow.down")
                         }
+                        .padding(.bottom, 5)
                     }
                 }
             }
@@ -114,8 +77,8 @@ struct SettingsView: View {
                 }
             }
         }
-        .onAppear {
-            appInfo.fetch()
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            model.updateAppInfoIfNeeded()
         }
     }
 }

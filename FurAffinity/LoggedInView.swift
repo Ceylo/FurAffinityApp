@@ -36,6 +36,7 @@ struct LoggedInView: View {
             }
             
             SettingsView()
+                .badge(model.appInfo.isUpToDate ?? true ? nil : " ")
                 .tabItem {
                     Label("Settings", systemImage: "slider.horizontal.3")
                 }

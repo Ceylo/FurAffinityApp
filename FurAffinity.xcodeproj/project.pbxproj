@@ -46,6 +46,8 @@
 		87F8FA342761347200CDD985 /* SubmissionHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA332761347200CDD985 /* SubmissionHeaderView.swift */; };
 		87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA3527613DD900CDD985 /* Extensions.swift */; };
 		87F960CB2801EFF3000B30A3 /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F960CA2801EFF3000B30A3 /* AvatarView.swift */; };
+		87FE0DA72974609E005713DB /* SubmissionsFeedActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FE0DA62974609E005713DB /* SubmissionsFeedActionView.swift */; };
+		87FE0DA929747C0C005713DB /* AppInformation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FE0DA829747C0C005713DB /* AppInformation.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -85,6 +87,8 @@
 		87F8FA332761347200CDD985 /* SubmissionHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionHeaderView.swift; sourceTree = "<group>"; };
 		87F8FA3527613DD900CDD985 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		87F960CA2801EFF3000B30A3 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
+		87FE0DA62974609E005713DB /* SubmissionsFeedActionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionsFeedActionView.swift; sourceTree = "<group>"; };
+		87FE0DA829747C0C005713DB /* AppInformation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInformation.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -155,6 +159,7 @@
 			isa = PBXGroup;
 			children = (
 				877226B42740361C00245DF0 /* SubmissionsFeedView.swift */,
+				87FE0DA62974609E005713DB /* SubmissionsFeedActionView.swift */,
 				8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */,
 				87F8FA332761347200CDD985 /* SubmissionHeaderView.swift */,
 				87253360274A9D91007FEF3B /* SubmissionView.swift */,
@@ -193,6 +198,7 @@
 				87815AC628D63F9B005AD03E /* View+Introspection.swift */,
 				8733DDFC28F75C1200CD8BCF /* Sharing.swift */,
 				8733DDFA28F75B1A00CD8BCF /* Logs.swift */,
+				87FE0DA829747C0C005713DB /* AppInformation.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -309,6 +315,7 @@
 				8716E7EE271C659C00C0BC4A /* HomeView.swift in Sources */,
 				87F8FA342761347200CDD985 /* SubmissionHeaderView.swift in Sources */,
 				8725335F274A70BB007FEF3B /* Model.swift in Sources */,
+				87FE0DA72974609E005713DB /* SubmissionsFeedActionView.swift in Sources */,
 				873E66182752C631009C8767 /* CircularProgress.swift in Sources */,
 				87815AC728D63F9B005AD03E /* View+Introspection.swift in Sources */,
 				8733DDFB28F75B1A00CD8BCF /* Logs.swift in Sources */,
@@ -319,6 +326,7 @@
 				877929D02744386E003AE828 /* FASession+CanvasPreview.swift in Sources */,
 				873E65F227529866009C8767 /* SaveButton.swift in Sources */,
 				87F960CB2801EFF3000B30A3 /* AvatarView.swift in Sources */,
+				87FE0DA929747C0C005713DB /* AppInformation.swift in Sources */,
 				874D69BD2804D20600DF91E7 /* NoteView.swift in Sources */,
 				877226B52740361C00245DF0 /* SubmissionsFeedView.swift in Sources */,
 				87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */,
@@ -471,19 +479,22 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4.1;
+				MARKETING_VERSION = 1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = ceylo.FurAffinityApp;
 				PRODUCT_NAME = "Fur Affinity";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -506,18 +517,21 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4.1;
+				MARKETING_VERSION = 1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = ceylo.FurAffinityApp;
 				PRODUCT_NAME = "Fur Affinity";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
