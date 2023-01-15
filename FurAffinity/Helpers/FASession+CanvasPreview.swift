@@ -24,6 +24,10 @@ class OfflineFASession: FASession {
         FASubmission.demo
     }
     
+    override func nukeSubmissions() async throws {
+        print(#function)
+    }
+    
     override func notePreviews() async -> [FANotePreview] { notePreviews }
     
     override func note(for preview: FANotePreview) async -> FANote? {
