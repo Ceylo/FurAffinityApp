@@ -9,9 +9,9 @@ import XCTest
 @testable import FAPages
 
 final class FASubmissionsPageTests: XCTestCase {
-    func testFirstSubmissionsPage_72SubmissionsParsed() throws {
+    func testFirstSubmissionsPage_72SubmissionsParsed() async throws {
         let data = testData("www.furaffinity.net:msg:submissions-firstpage.html")
-        let page = FASubmissionsPage(data: data)
+        let page = await FASubmissionsPage(data: data)
         XCTAssertNotNil(page)
         XCTAssertEqual(page?.submissions.count, 72)
         
@@ -27,25 +27,25 @@ final class FASubmissionsPageTests: XCTestCase {
         
     }
     
-    func testFirstSubmissionsPage_NextPageUrlParsed() throws {
+    func testFirstSubmissionsPage_NextPageUrlParsed() async throws {
         let data = testData("www.furaffinity.net:msg:submissions-firstpage.html")
-        let page = FASubmissionsPage(data: data)
+        let page = await FASubmissionsPage(data: data)
         XCTAssertNotNil(page)
         XCTAssertNil(page?.previousPageUrl)
         XCTAssertEqual(page?.nextPageUrl?.absoluteString, "https://www.furaffinity.net/msg/submissions/new~49867956@72/")
     }
     
-    func testLastSubmissionsPage_PreviousPageUrlParsed() throws {
+    func testLastSubmissionsPage_PreviousPageUrlParsed() async throws {
         let data = testData("www.furaffinity.net:msg:submissions-lastpage.html")
-        let page = FASubmissionsPage(data: data)
+        let page = await FASubmissionsPage(data: data)
         XCTAssertNotNil(page)
         XCTAssertNil(page?.nextPageUrl)
         XCTAssertEqual(page?.previousPageUrl?.absoluteString, "https://www.furaffinity.net/msg/submissions/new~36003843@72/")
     }
     
-    func testMiddleSubmissionsPage_PreviousAndNextPageUrlsParsed() throws {
+    func testMiddleSubmissionsPage_PreviousAndNextPageUrlsParsed() async throws {
         let data = testData("www.furaffinity.net:msg:submissions-middlepage.html")
-        let page = FASubmissionsPage(data: data)
+        let page = await FASubmissionsPage(data: data)
         XCTAssertNotNil(page)
         XCTAssertEqual(page?.nextPageUrl?.absoluteString, "https://www.furaffinity.net/msg/submissions/new~49522964@72/")
         XCTAssertEqual(page?.previousPageUrl?.absoluteString, "https://www.furaffinity.net/msg/submissions/new~50170538@72/")

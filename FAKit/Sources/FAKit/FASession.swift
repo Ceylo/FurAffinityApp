@@ -43,7 +43,7 @@ open class FASession: Equatable {
     
     open func submissionPreviews() async -> [FASubmissionPreview] {
         guard let data = await dataSource.httpData(from: FASubmissionsPage.url, cookies: cookies),
-              let page = FASubmissionsPage(data: data)
+              let page = await FASubmissionsPage(data: data)
         else { return [] }
         
         let previews = page.submissions
@@ -68,7 +68,7 @@ open class FASession: Equatable {
         ]
         
         guard let data = await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params),
-              FASubmissionsPage(data: data) != nil else {
+              await FASubmissionsPage(data: data) != nil else {
             throw Error.requestFailure
         }
     }
@@ -83,7 +83,7 @@ open class FASession: Equatable {
     
     open func notePreviews() async -> [FANotePreview] {
         guard let data = await dataSource.httpData(from: FANotesPage.url, cookies: cookies),
-              let page = FANotesPage(data: data)
+              let page = await FANotesPage(data: data)
         else { return [] }
         
         let headers = page.noteHeaders

@@ -25,7 +25,7 @@ public struct FANotesPage: Equatable {
 }
 
 extension FANotesPage {
-    public init?(data: Data) {
+    public init?(data: Data) async {
         let state = signposter.beginInterval("All Notes Preview Parsing")
         defer { signposter.endInterval("All Notes Preview Parsing", state) }
         
@@ -37,7 +37,18 @@ extension FANotesPage {
             let notesQuery = notesContainerQuery + " div.note-list-container"
             let noteNodes = try doc.select(notesQuery)
             
-            self.noteHeaders = try noteNodes.map { try NoteHeader($0) }
+            self.noteHeaders = try await withThrowingTaskGroup(of: (Int, NoteHeader).self) { group in
+                for (offset, node) in noteNodes.enumerated() {
+                    group.addTask {
+                        (offset, try NoteHeader(node))
+                    }
+                }
+                
+                return try await group
+                    .reduce(into: [NoteHeader?](repeating: nil, count: noteNodes.count),
+                            { $0[$1.0] = $1.1})
+                as! [NoteHeader]
+            }
         } catch {
             logger.error("Decoding failure in \(#file, privacy: .public): \(error, privacy: .public)")
             return nil

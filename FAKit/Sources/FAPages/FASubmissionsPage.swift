@@ -37,7 +37,7 @@ public struct FASubmissionsPage {
 }
 
 extension FASubmissionsPage {
-    public init?(data: Data) {
+    public init?(data: Data) async {
         let state = signposter.beginInterval("All Submission Previews Parsing")
         defer { signposter.endInterval("All Submission Previews Parsing", state) }
         
@@ -48,8 +48,17 @@ extension FASubmissionsPage {
             let itemsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div#messages-comments-submission div#messagecenter-submissions section figure"
             let items = try doc.select(itemsQuery).array()
             
-            self.submissions = items
-                .map { Submission($0) }
+            async let submissions = withThrowingTaskGroup(of: (Int, Submission?).self) { group in
+                for (offset, item) in items.enumerated() {
+                    group.addTask {
+                        (offset, Submission(item))
+                    }
+                }
+                
+                return try await group
+                    .reduce(into: [Submission?](repeating: nil, count: items.count),
+                            { $0[$1.0] = $1.1})
+            }
             
             let buttonsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div.aligncenter a"
             let buttonItems = try doc.select(buttonsQuery).array()
@@ -69,6 +78,8 @@ extension FASubmissionsPage {
             } else {
                 self.nextPageUrl = nil
             }
+            
+            self.submissions = try await submissions
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil
