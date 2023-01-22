@@ -474,7 +474,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"FurAffinity/Preview Content\"";
-				DEVELOPMENT_TEAM = 5C7J346JPA;
+				DEVELOPMENT_TEAM = 3BF75NMSEQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Chosen images will be saved to the Photo Library.";
@@ -512,7 +512,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"FurAffinity/Preview Content\"";
-				DEVELOPMENT_TEAM = 5C7J346JPA;
+				DEVELOPMENT_TEAM = 3BF75NMSEQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Chosen images will be saved to the Photo Library.";
