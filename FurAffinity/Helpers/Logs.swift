@@ -9,6 +9,7 @@ import Foundation
 import OSLog
 
 let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FA")
+let signposter = OSSignposter(logger: logger)
 
 extension OSLogEntryLog.Level: CustomStringConvertible {
     public var description: String {
