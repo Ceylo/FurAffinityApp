@@ -73,6 +73,16 @@ struct SubmissionView: View {
         }
     }
     
+    func loadSubmission() async {
+        submission = await submissionProvider()
+        if let submission = submission {
+            description = AttributedString(FAHTML: submission.htmlDescription)
+            submissionLoadingFailed = false
+        } else {
+            submissionLoadingFailed = true
+        }
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             if let submission = submission {
@@ -98,6 +108,11 @@ struct SubmissionView: View {
                     }
                     .padding(10)
                 }
+                .refreshable {
+                    Task {
+                        await loadSubmission()
+                    }
+                }
             } else if submissionLoadingFailed {
                 Centered {
                     VStack(spacing: 20) {
@@ -121,13 +136,7 @@ Here are some possible reasons:
         }
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            submission = await submissionProvider()
-            if let submission = submission {
-                description = AttributedString(FAHTML: submission.htmlDescription)
-                submissionLoadingFailed = false
-            } else {
-                submissionLoadingFailed = true
-            }
+            await loadSubmission()
         }
         .onAppear {
             if activity == nil {
