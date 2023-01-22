@@ -42,7 +42,8 @@ struct SwipeView<FrontView: View, BackView: View>: View {
             
             frontContent()
                 .offset(offset)
-                .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
+            // minimumDistance 30 to prevent drag gesture from breaking scroll
+                .gesture(DragGesture(minimumDistance: 30, coordinateSpace: .local)
                     .onChanged { gesture in
                         offset.width = min(0, gesture.translation.width)
                         
