@@ -12,6 +12,7 @@ struct SubmissionControlsView: View {
     var fullResolutionImage: CGImage?
     var isFavorite: Bool
     var favoriteAction: () -> Void
+    var replyAction: () -> Void
     
     private let buttonsSize: CGFloat = 55
     
@@ -55,6 +56,16 @@ struct SubmissionControlsView: View {
             }
             .frame(width: buttonsSize, height: buttonsSize)
             
+            Button {
+                replyAction()
+            } label: {
+                Image(systemName: "arrowshape.turn.up.left")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .padding()
+            }
+            .frame(width: buttonsSize, height: buttonsSize)
+            
             Spacer()
         }
     }
@@ -67,6 +78,8 @@ struct SubmissionControlsView_Previews: PreviewProvider {
                                isFavorite: false,
                                favoriteAction: {
             print("I like it")
+        }, replyAction: {
+            print("Reply")
         })
             .preferredColorScheme(.dark)
     }

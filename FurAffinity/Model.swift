@@ -89,6 +89,13 @@ class Model: ObservableObject {
             logger.error("Failed nuking submissions: \(error, privacy: .public)")
         }
     }
+    func postComment(on submission: FASubmission, replytoCid: Int?, contents: String) async throws -> FASubmission? {
+        guard let session else {
+            throw ModelError.disconnected
+        }
+        
+        return await session.postComment(on: submission, replytoCid: replytoCid, contents: contents)
+    }
     
     func fetchNewNotePreviews() async {
         guard let session else {

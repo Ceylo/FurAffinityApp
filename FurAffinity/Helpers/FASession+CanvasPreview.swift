@@ -89,6 +89,18 @@ extension Model {
     static let empty = Model(session: OfflineFASession.empty)
 }
 
+extension FASubmissionPreview {
+    static let demo = FASubmissionPreview(
+        sid: 44648356,
+        url: URL(string: "https://www.furaffinity.net/view/44648356/")!,
+        thumbnailUrl: URL(string: "https://t.furaffinity.net/44648356@200-1637084699.jpg")!,
+        thumbnailWidthOnHeightRatio: 0.998574972,
+        title: "Commission open NOW!",
+        author: "hiorou",
+        displayAuthor: "Hiorou"
+    )
+}
+
 extension FASubmission {
     static let demo: FASubmission = {
         let htmlDescription = "YCH for \n<a href=\"/user/mikazukihellfire\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20211017/mikazukihellfire.gif\" align=\"middle\" title=\"MikazukiHellfire\" alt=\"MikazukiHellfire\">&nbsp;MikazukiHellfire</a>\n<br> \n<br> Medea © \n<a href=\"/user/mikazukihellfire\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20211017/mikazukihellfire.gif\" align=\"middle\" title=\"MikazukiHellfire\" alt=\"MikazukiHellfire\">&nbsp;MikazukiHellfire</a>\n<br> \n<br> \n<br> \n<br> \n<br> *******************************\n<br> * \n<a class=\"auto_link named_url\" href=\"http://ko-fi.com/J3J16KSH\">Feed me with coffee?</a>\n<br> * \n<a class=\"auto_link named_url\" href=\"https://www.furaffinity.net/gallery/annetpeas/\">My Gallery</a>\n<br> * \n<a class=\"auto_link named_url\" href=\"https://twitter.com/AnnetPeas_Art\">Twitter</a>"

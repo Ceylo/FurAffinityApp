@@ -13,6 +13,7 @@
 		8716E7F3271C659D00C0BC4A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8716E7F2271C659D00C0BC4A /* Preview Assets.xcassets */; };
 		8725335F274A70BB007FEF3B /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8725335E274A70BB007FEF3B /* Model.swift */; };
 		87253361274A9D91007FEF3B /* SubmissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87253360274A9D91007FEF3B /* SubmissionView.swift */; };
+		87292E45297DD3FB00BE39B8 /* SubmissionLoadingFailedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87292E44297DD3FB00BE39B8 /* SubmissionLoadingFailedView.swift */; };
 		8733DDFB28F75B1A00CD8BCF /* Logs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8733DDFA28F75B1A00CD8BCF /* Logs.swift */; };
 		8733DDFD28F75C1200CD8BCF /* Sharing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8733DDFC28F75C1200CD8BCF /* Sharing.swift */; };
 		8733DDFF28FAD58D00CD8BCF /* SwapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8733DDFE28FAD58D00CD8BCF /* SwapView.swift */; };
@@ -21,6 +22,8 @@
 		873E66112752AAB2009C8767 /* ImageSaveHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E66102752AAB2009C8767 /* ImageSaveHandler.swift */; };
 		873E66182752C631009C8767 /* CircularProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E66172752C631009C8767 /* CircularProgress.swift */; };
 		874D69BD2804D20600DF91E7 /* NoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 874D69BC2804D20600DF91E7 /* NoteView.swift */; };
+		87566B82297DC71600FD3199 /* CommentEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87566B81297DC71600FD3199 /* CommentEditor.swift */; };
+		87566B84297DD02300FD3199 /* SubmissionMainImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87566B83297DD02300FD3199 /* SubmissionMainImage.swift */; };
 		8761834E271F5E570021A051 /* FAKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8761834D271F5E570021A051 /* FAKit */; };
 		87642B02297D846400FE2E17 /* SwipeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87642B01297D846400FE2E17 /* SwipeView.swift */; };
 		8766005829055FBC00C7A998 /* SubmissionCommentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8766005729055FBC00C7A998 /* SubmissionCommentsView.swift */; };
@@ -59,6 +62,7 @@
 		8716E7F2271C659D00C0BC4A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		8725335E274A70BB007FEF3B /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
 		87253360274A9D91007FEF3B /* SubmissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionView.swift; sourceTree = "<group>"; };
+		87292E44297DD3FB00BE39B8 /* SubmissionLoadingFailedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionLoadingFailedView.swift; sourceTree = "<group>"; };
 		8733DDFA28F75B1A00CD8BCF /* Logs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logs.swift; sourceTree = "<group>"; };
 		8733DDFC28F75C1200CD8BCF /* Sharing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sharing.swift; sourceTree = "<group>"; };
 		8733DDFE28FAD58D00CD8BCF /* SwapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwapView.swift; sourceTree = "<group>"; };
@@ -67,6 +71,8 @@
 		873E66102752AAB2009C8767 /* ImageSaveHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageSaveHandler.swift; sourceTree = "<group>"; };
 		873E66172752C631009C8767 /* CircularProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularProgress.swift; sourceTree = "<group>"; };
 		874D69BC2804D20600DF91E7 /* NoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteView.swift; sourceTree = "<group>"; };
+		87566B81297DC71600FD3199 /* CommentEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentEditor.swift; sourceTree = "<group>"; };
+		87566B83297DD02300FD3199 /* SubmissionMainImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionMainImage.swift; sourceTree = "<group>"; };
 		8761834C271F5E380021A051 /* FAKit */ = {isa = PBXFileReference; lastKnownFileType = folder; path = FAKit; sourceTree = "<group>"; };
 		87642B01297D846400FE2E17 /* SwipeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeView.swift; sourceTree = "<group>"; };
 		8766005729055FBC00C7A998 /* SubmissionCommentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionCommentsView.swift; sourceTree = "<group>"; };
@@ -165,6 +171,9 @@
 				8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */,
 				87F8FA332761347200CDD985 /* SubmissionHeaderView.swift */,
 				87253360274A9D91007FEF3B /* SubmissionView.swift */,
+				87292E44297DD3FB00BE39B8 /* SubmissionLoadingFailedView.swift */,
+				87566B83297DD02300FD3199 /* SubmissionMainImage.swift */,
+				87566B81297DC71600FD3199 /* CommentEditor.swift */,
 				8766005729055FBC00C7A998 /* SubmissionCommentsView.swift */,
 				87660059290568DB00C7A998 /* SubmissionCommentView.swift */,
 				873E65EF27528FC6009C8767 /* SubmissionControlsView.swift */,
@@ -321,12 +330,14 @@
 				87FE0DA72974609E005713DB /* SubmissionsFeedActionView.swift in Sources */,
 				873E66182752C631009C8767 /* CircularProgress.swift in Sources */,
 				87815AC728D63F9B005AD03E /* View+Introspection.swift in Sources */,
+				87292E45297DD3FB00BE39B8 /* SubmissionLoadingFailedView.swift in Sources */,
 				8733DDFB28F75B1A00CD8BCF /* Logs.swift in Sources */,
 				878B0B912970B18C00A08685 /* Secrets.swift in Sources */,
 				873E65F027528FC6009C8767 /* SubmissionControlsView.swift in Sources */,
 				873E66112752AAB2009C8767 /* ImageSaveHandler.swift in Sources */,
 				877226B327402F9300245DF0 /* LoggedInView.swift in Sources */,
 				877929D02744386E003AE828 /* FASession+CanvasPreview.swift in Sources */,
+				87566B84297DD02300FD3199 /* SubmissionMainImage.swift in Sources */,
 				873E65F227529866009C8767 /* SaveButton.swift in Sources */,
 				87F960CB2801EFF3000B30A3 /* AvatarView.swift in Sources */,
 				87FE0DA929747C0C005713DB /* AppInformation.swift in Sources */,
@@ -337,6 +348,7 @@
 				87253361274A9D91007FEF3B /* SubmissionView.swift in Sources */,
 				8733DDFD28F75C1200CD8BCF /* Sharing.swift in Sources */,
 				87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */,
+				87566B82297DC71600FD3199 /* CommentEditor.swift in Sources */,
 				879233D2278216DF0019AC44 /* TextView.swift in Sources */,
 				8716E7EC271C659C00C0BC4A /* FurAffinityApp.swift in Sources */,
 				8733DDFF28FAD58D00CD8BCF /* SwapView.swift in Sources */,

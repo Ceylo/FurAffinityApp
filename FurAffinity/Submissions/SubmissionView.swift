@@ -16,14 +16,18 @@ struct SubmissionView: View {
     
     var preview: FASubmissionPreview
     var submissionProvider: () async -> FASubmission?
-    var buttonsSize: CGFloat = 55
     @State private var avatarUrl: URL?
     @State private var submission: FASubmission?
     @State private var submissionLoadingFailed = false
     @State private var fullResolutionCGImage: CGImage?
     @State private var description: AttributedString?
-    @State private var showZoomableSheet = false
     @State private var activity: NSUserActivity?
+    
+    struct ReplySession {
+        let submission: FASubmission
+        let parentCid: Int?
+    }
+    @State private var replySession: ReplySession?
     
     func header(submission: FASubmissionPreview) -> some View {
         SubmissionHeaderView(author: submission.displayAuthor,
@@ -34,77 +38,45 @@ struct SubmissionView: View {
             }
     }
     
-    func mainImage(submission: FASubmission) -> some View {
-        URLImage(submission.fullResolutionImageUrl) { progress in
-            Centered {
-                CircularProgress(progress: CGFloat(progress ?? 0))
-                    .frame(width: 100, height: 100)
-            }
-            .aspectRatio(CGFloat(preview.thumbnailWidthOnHeightRatio),
-                         contentMode: .fit)
-        } failure: { error, retry in
-            Centered {
-                Text("Oops, image loading failed 😞")
-                Text(error.localizedDescription)
-                    .font(.caption)
-            }
-        } content: { image, info in
-            image
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .transition(.opacity.animation(.default.speed(2)))
-                .onAppear {
-                    fullResolutionCGImage = info.cgImage
-                }
-                .sheet(isPresented: $showZoomableSheet) {
-                    Zoomable(allowZoomOutBeyondFit: false) {
-                        image
-                    }
-                    .ignoresSafeArea()
-                }
-                .onTapGesture {
-                    showZoomableSheet = true
-                }
-        }
-        .cornerRadius(10)
-        .overlay {
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.borderOverlay, lineWidth: 1)
-        }
-    }
-    
-    func loadSubmission() async {
-        submission = await submissionProvider()
-        if let submission = submission {
-            description = AttributedString(FAHTML: submission.htmlDescription)
-            submissionLoadingFailed = false
-        } else {
-            submissionLoadingFailed = true
-        }
-    }
-    
-    var body: some View {
-        GeometryReader { geometry in
-            if let submission = submission {
+    func loadingSucceededView(_ submission: FASubmission) -> some View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {
                         header(submission: preview)
-                        mainImage(submission: submission)
-                        
-                        SubmissionControlsView(submissionUrl: submission.url,
+                SubmissionMainImage(
+                    widthOnHeightRatio: preview.thumbnailWidthOnHeightRatio,
+                    fullResolutionImageUrl: submission.fullResolutionImageUrl,
+                    fullResolutionCGImage: $fullResolutionCGImage
+                )
+                
+                SubmissionControlsView(
+                    submissionUrl: submission.url,
                                                fullResolutionImage: fullResolutionCGImage,
                                                isFavorite: submission.isFavorite,
                                                favoriteAction: {
                             Task {
                                 self.submission = try await model.toggleFavorite(for: submission)
                             }
-                        })
+                    }, replyAction: {
+                        replySession = .init(
+                            submission: submission,
+                            parentCid: nil
+                        )
+                    }
+                )
                         
                         if let description = description {
                             TextView(text: description)
                         }
                         
-                        SubmissionCommentsView(comments: submission.comments)
+                SubmissionCommentsView(
+                    comments: submission.comments,
+                    replyAction: { cid in
+                        replySession = .init(
+                            submission: submission,
+                            parentCid: cid
+                        )
+                    }
+                )
                     }
                     .padding(10)
                 }
@@ -113,25 +85,27 @@ struct SubmissionView: View {
                         await loadSubmission()
                     }
                 }
-            } else if submissionLoadingFailed {
-                Centered {
-                    VStack(spacing: 20) {
-                        Text("Oops… submission loading failed.")
-                            .font(.headline)
-                        Text("""
-Here are some possible reasons:
-- Network connection was lost
-- furaffinity.net is experiencing an outage
-- The submission doesn't exist anymore
-- The submission contains data that could not be loaded
-""")
-                            .font(.caption)
-                            .multilineTextAlignment(.leading)
+        .sheet(isPresented: showCommentEditor) {
+            commentEditor
+        }
+    }
                         
-                        Link(preview.url.description, destination: preview.url)
+    private func loadSubmission() async {
+        submission = await submissionProvider()
+        if let submission = submission {
+            description = AttributedString(FAHTML: submission.htmlDescription)
+            submissionLoadingFailed = false
+        } else {
+            submissionLoadingFailed = true
                     }
-                    .padding()
                 }
+    
+    var body: some View {
+        ZStack {
+            if let submission = submission {
+                loadingSucceededView(submission)
+            } else if submissionLoadingFailed {
+                SubmissionLoadingFailedView(preview: preview)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -154,6 +128,40 @@ Here are some possible reasons:
     }
 }
 
+// MARK: - Comment replies
+extension SubmissionView {
+    var showCommentEditor: Binding<Bool> {
+        .init {
+            replySession != nil
+        } set: { value in
+            if value {
+                fatalError()
+            } else {
+                replySession = nil
+            }
+        }
+    }
+    
+    private var commentEditor: some View {
+        guard let replySession else {
+            fatalError()
+        }
+        
+        return CommentEditor { text in
+            if let text {
+                Task {
+                    self.submission = try await model
+                        .postComment(on: replySession.submission,
+                                     replytoCid: replySession.parentCid,
+                                     contents: text)
+                }
+            }
+            self.replySession = nil
+        }
+    }
+}
+
+// MARK: -
 extension SubmissionView {
     init(_ model: Model, preview: FASubmissionPreview) {
         self.init(preview: preview) {

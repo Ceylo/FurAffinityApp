@@ -10,9 +10,11 @@ import FAKit
 
 struct SubmissionCommentView: View {
     var comment: FASubmission.Comment
+    var replyAction: (_ cid: Int) -> Void
+    
     @State private var htmlMessage: AttributedString?
     
-    var body: some View {
+    var commentView: some View {
         HStack(alignment: .top) {
             AvatarView(avatarUrl: comment.authorAvatarUrl)
                 .frame(width: 32, height: 32)
@@ -30,10 +32,25 @@ struct SubmissionCommentView: View {
                 }
                 htmlMessage.flatMap {
                     TextView(text: $0)
-                        .padding(-5)
+                        .padding(.vertical, -5)
                         .zIndex(-1)
                 }
             }
+        }
+    }
+    
+    var body: some View {
+        SwipeView(backgroundColor: .orange) {
+            commentView
+                .background(Color(uiColor: .systemBackground))
+        } backContent: {
+            Image(systemName: "arrowshape.turn.up.left")
+                .foregroundColor(.white)
+                .padding(.trailing)
+                .padding(.leading)
+                .frame(maxHeight: .infinity)
+        } onAction: {
+            replyAction(comment.cid)
         }
         .task {
             htmlMessage = AttributedString(FAHTML: comment.htmlMessage)
@@ -43,6 +60,11 @@ struct SubmissionCommentView: View {
 
 struct SubmissionCommentView_Previews: PreviewProvider {
     static var previews: some View {
-        SubmissionCommentView(comment: FASubmission.demo.comments[0])
+        SubmissionCommentView(
+            comment: FASubmission.demo.comments[0],
+            replyAction: { cid in
+                print("Reply to cid \(cid)")
+            }
+        )
     }
 }

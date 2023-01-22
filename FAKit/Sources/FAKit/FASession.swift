@@ -73,6 +73,23 @@ open class FASession: Equatable {
         }
     }
     
+    open func postComment(on submission: FASubmission, replytoCid: Int?, contents: String) async -> FASubmission? {
+        let replyToValue = replytoCid.flatMap { "\($0)" } ?? ""
+        let params: [URLQueryItem] = [
+            .init(name: "f", value: "0"),
+            .init(name: "action", value: replytoCid != nil ? "replyto" : "reply"),
+            .init(name: "replyto", value: replyToValue),
+            .init(name: "reply", value: contents),
+            .init(name: "submit", value: "Post Comment")
+        ]
+        
+        guard let data = await dataSource.httpData(from: submission.url, cookies: cookies, method: .POST, parameters: params),
+              let page = FASubmissionPage(data: data)
+        else { return nil }
+        
+        return FASubmission(page, url: submission.url)
+    }
+    
     open func toggleFavorite(for submission: FASubmission) async -> FASubmission? {
         guard let data = await dataSource.httpData(from: submission.favoriteUrl, cookies: cookies),
               let page = FASubmissionPage(data: data)
