@@ -6,6 +6,11 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
+      - name: Update Secrets
+        env:
+          BUNDLE_ID: ${{ secrets.BUNDLE_ID }}
+        run: |
+          sed -i "" "s/PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;/PRODUCT_BUNDLE_IDENTIFIER = ${BUNDLE_ID};/" "FurAffinity.xcodeproj/project.pbxproj"
       - uses: mxcl/xcodebuild@v1
         with:
           action: none

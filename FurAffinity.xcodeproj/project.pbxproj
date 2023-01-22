@@ -489,7 +489,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.5;
-				PRODUCT_BUNDLE_IDENTIFIER = ceylo.FurAffinityApp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;
 				PRODUCT_NAME = "Fur Affinity";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -527,7 +527,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.5;
-				PRODUCT_BUNDLE_IDENTIFIER = ceylo.FurAffinityApp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;
 				PRODUCT_NAME = "Fur Affinity";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

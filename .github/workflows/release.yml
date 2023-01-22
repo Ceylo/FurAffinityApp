@@ -39,10 +39,13 @@ jobs:
           # apply provisioning profile
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
-      - name: Update Secrets.xcconfig
+      - name: Update Secrets
         env:
           APPCENTER_API_KEY: ${{ secrets.APPCENTER_API_KEY }}
-        run: sed -i "" "s/appCenterApiKey = \"Your App Secret\"/appCenterApiKey = \"${APPCENTER_API_KEY}\"/" "FurAffinity/Secrets.swift"
+          BUNDLE_ID: ${{ secrets.BUNDLE_ID }}
+        run: |
+          sed -i "" "s/appCenterApiKey = \"Your App Secret\"/appCenterApiKey = \"${APPCENTER_API_KEY}\"/" "FurAffinity/Secrets.swift"
+          sed -i "" "s/PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;/PRODUCT_BUNDLE_IDENTIFIER = ${BUNDLE_ID};/" "FurAffinity.xcodeproj/project.pbxproj"
       - uses: mxcl/xcodebuild@v1
         with:
           action: none
