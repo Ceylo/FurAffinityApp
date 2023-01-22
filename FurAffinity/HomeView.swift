@@ -69,8 +69,12 @@ struct HomeView: View {
             Spacer()
             center
             Spacer()
-            Link("www.furaffinity.net",
-                 destination: URL(string: "https://www.furaffinity.net/")!)
+            HStack {
+                Link("www.furaffinity.net",
+                     destination: URL(string: "https://www.furaffinity.net/")!)
+                Text("—")
+                Link("App Privacy Policy", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/blob/main/Privacy%20Policy.md")!)
+            }
         }
         .padding(.bottom)
     }
