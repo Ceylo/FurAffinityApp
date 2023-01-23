@@ -39,9 +39,9 @@ struct SubmissionView: View {
     }
     
     func loadingSucceededView(_ submission: FASubmission) -> some View {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 10) {
-                        header(submission: preview)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 10) {
+                header(submission: preview)
                 SubmissionMainImage(
                     widthOnHeightRatio: preview.thumbnailWidthOnHeightRatio,
                     fullResolutionImageUrl: submission.fullResolutionImageUrl,
@@ -50,12 +50,12 @@ struct SubmissionView: View {
                 
                 SubmissionControlsView(
                     submissionUrl: submission.url,
-                                               fullResolutionImage: fullResolutionCGImage,
-                                               isFavorite: submission.isFavorite,
-                                               favoriteAction: {
-                            Task {
-                                self.submission = try await model.toggleFavorite(for: submission)
-                            }
+                    fullResolutionImage: fullResolutionCGImage,
+                    isFavorite: submission.isFavorite,
+                    favoriteAction: {
+                        Task {
+                            self.submission = try await model.toggleFavorite(for: submission)
+                        }
                     }, replyAction: {
                         replySession = .init(
                             submission: submission,
@@ -63,11 +63,11 @@ struct SubmissionView: View {
                         )
                     }
                 )
-                        
-                        if let description = description {
-                            TextView(text: description)
-                        }
-                        
+                
+                if let description = description {
+                    TextView(text: description)
+                }
+                
                 SubmissionCommentsView(
                     comments: submission.comments,
                     replyAction: { cid in
@@ -77,19 +77,19 @@ struct SubmissionView: View {
                         )
                     }
                 )
-                    }
-                    .padding(10)
-                }
-                .refreshable {
-                    Task {
-                        await loadSubmission()
-                    }
-                }
+            }
+            .padding(10)
+        }
+        .refreshable {
+            Task {
+                await loadSubmission()
+            }
+        }
         .sheet(isPresented: showCommentEditor) {
             commentEditor
         }
     }
-                        
+    
     private func loadSubmission() async {
         submission = await submissionProvider()
         if let submission = submission {
@@ -97,8 +97,8 @@ struct SubmissionView: View {
             submissionLoadingFailed = false
         } else {
             submissionLoadingFailed = true
-                    }
-                }
+        }
+    }
     
     var body: some View {
         ZStack {
