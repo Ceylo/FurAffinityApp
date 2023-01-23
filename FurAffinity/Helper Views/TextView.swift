@@ -10,7 +10,12 @@ import SwiftUI
 struct TextView: View {
     var text: AttributedString
     
-    @State private var height: CGFloat = 0
+    @State private var height: CGFloat
+    
+    init(text: AttributedString, initialHeight: CGFloat = 0) {
+        self.text = text
+        self._height = State(initialValue: initialHeight)
+    }
     
     var body: some View {
         GeometryReader { geometry in

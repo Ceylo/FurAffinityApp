@@ -65,7 +65,7 @@ struct SubmissionView: View {
                 )
                 
                 if let description = description {
-                    TextView(text: description)
+                    TextView(text: description, initialHeight: 300)
                 }
                 
                 SubmissionCommentsView(

@@ -31,7 +31,7 @@ struct SubmissionCommentView: View {
                         .foregroundColor(.secondary)
                 }
                 htmlMessage.flatMap {
-                    TextView(text: $0)
+                    TextView(text: $0, initialHeight: 32)
                         .padding(.vertical, -5)
                         .zIndex(-1)
                 }
