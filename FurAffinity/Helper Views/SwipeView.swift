@@ -36,9 +36,14 @@ struct SwipeView<FrontView: View, BackView: View>: View {
         ZStack {
             HStack {
                 Spacer()
-                backContent()
+                    .frame(width: 10)
+                
+                HStack {
+                    Spacer()
+                    backContent()
+                }
+                .background(backgroundColor)
             }
-            .background(backgroundColor)
             
             frontContent()
                 .offset(offset)
@@ -99,7 +104,7 @@ struct SwipeView<FrontView: View, BackView: View>: View {
 
 struct SwipeView_Previews: PreviewProvider {
     static var previews: some View {
-        SwipeView(backgroundColor: .orange) {
+        SwipeView(backgroundColor: .blue) {
             HStack {
                 Spacer()
                 Text("Swipe me")
@@ -111,5 +116,6 @@ struct SwipeView_Previews: PreviewProvider {
         } onAction: {
             print("action!")
         }
+        .padding()
     }
 }
