@@ -25,14 +25,14 @@ This project is written to be able to benefit from [furaffinity.net](https://www
   - [x] Submission download
   - [x] Submission details
   - [x] Submission like
-  - [x] Submission comments (read only)
+  - [x] Submission comments (read & write)
 - [ ] Journals feed
-- [x] Messages reading
+- [x] Notes reading
 - [ ] Notifications
 - [ ] Exploration
 
 ## Installation
-The [furaffinity.net](https://www.furaffinity.net) website hosts NSFW content in addition to SFW content. This prevents such application from being distributed through the official App Store. Nervertheless it can still be used on your own device through sideloading (manual installation through a .ipa file), for instance with [AltStore](https://altstore.io) or, if you are a developer, [by installing the app on your device with Xcode](https://developer.apple.com/documentation/xcode/running-your-app-in-the-simulator-or-on-a-device). In the future installation may become simpler thanks to [new EU regulations forcing Apple to allow sideloading](https://www.theverge.com/2022/3/25/22996248/apple-sideloading-apps-store-third-party-eu-dma-requirement).
+The [furaffinity.net](https://www.furaffinity.net) website hosts NSFW content in addition to SFW content. This prevents such application from being distributed through the official App Store. Nervertheless it can still be used on your own device through sideloading (manual installation through a .ipa file), for instance with [AltStore](https://altstore.io) or, if you are a developer, [by installing the app on your device with Xcode](https://developer.apple.com/documentation/xcode/running-your-app-in-simulator-or-on-a-device). In the future installation may become simpler thanks to [new EU regulations forcing Apple to allow sideloading](https://www.theverge.com/2022/3/25/22996248/apple-sideloading-apps-store-third-party-eu-dma-requirement).
 
 ### Installation with AltStore
 [AltStore](https://altstore.io) is an application on iPhone that can install applications to your device without needing approval from Apple. To do so, it interacts with a program named AltServer installed on your Windows or macOS computer.
@@ -47,11 +47,11 @@ The application is unofficial so you may wonder if it's trying to steal your Fur
 The app displays furaffinity.net login webpage to let you enter account details. These are communicated by the web browser to furaffinity.net which will then create cookies that allow your session to remain active. The account details communication only happen between the web browser and furaffinity.net server, the app only has access to the created cookies. The application then reuses these cookies to make requests to furaffinity.net as if connected with your account.
 
 ## Will I get banned from Fur Affinity for using this app?
-As of May 2022, Fur Affinity staff allows the use of the application as long as it does not make excessive requests to furaffinity.net. This goes against apps that download the full gallery of a user for instance, but not against this app which, from furaffinity.net's point of view, behave very similarly to a usual browsing experience.
+As of May 2022, Fur Affinity staff allows the use of the application as long as it does not make excessive requests to furaffinity.net. This goes against apps that download the full gallery of a user for instance, but not against this app which, from furaffinity.net's point of view, behaves very similarly to a usual web browsing experience.
 
 ## Technologies used and required iOS version
-This project is fully written in Swift and is based on SwiftUI and Swift Concurrency.
-As such iOS 15 or later is required to run the app.
+This project is fully written in Swift and is based on SwiftUI, Swift Concurrency and other APIs introduced in iOS 16.
+As such iOS 16 or later is required to run the app.
 
 ## Privacy policy
 See the [Privacy Policy](Privacy%20Policy.md) page.
