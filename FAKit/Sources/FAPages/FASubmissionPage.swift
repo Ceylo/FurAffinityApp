@@ -11,6 +11,7 @@ import SwiftSoup
 public struct FASubmissionPage: Equatable {
     public let previewImageUrl: URL
     public let fullResolutionImageUrl: URL
+    public let widthOnHeightRatio: Float
     public let author: String
     public let displayAuthor: String
     public let authorAvatarUrl: URL
@@ -38,8 +39,15 @@ extension FASubmissionPage {
             defer { signposter.endInterval("Submission Parsing", state) }
             
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
-            let submissionContentQuery = "body div#main-window div#site-content div#submission_page div#columnpage div.submission-content"
-            let submissionContentNode = try doc.select(submissionContentQuery)
+            let columnPageQuery = "body div#main-window div#site-content div#submission_page div#columnpage"
+            let columnPageNode = try doc.select(columnPageQuery)
+            let submissionInfoNodes = try columnPageNode.select("div.submission-sidebar section.info div")
+            let sizeRowNode = try submissionInfoNodes.first(where: { try $0.text().starts(with: "Size") }).unwrap()
+            let sizeText = try sizeRowNode.select("span").text()
+            let groups = try #/(\d+) x (\d+)/#.wholeMatch(in: sizeText).unwrap()
+            self.widthOnHeightRatio = try Float(groups.1).unwrap() / Float(groups.2).unwrap()
+            
+            let submissionContentNode = try columnPageNode.select("div.submission-content")
             let submissionImgNode = try submissionContentNode.select("div.submission-area img#submissionImg")
             
             let previewStr = try submissionImgNode.attr("data-preview-src")

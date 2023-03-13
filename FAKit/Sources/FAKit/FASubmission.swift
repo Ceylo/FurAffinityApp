@@ -14,6 +14,7 @@ public struct FASubmission: Equatable {
     public let url: URL
     public let previewImageUrl: URL
     public let fullResolutionImageUrl: URL
+    public let widthOnHeightRatio: Float
     public let author: String
     public let displayAuthor: String
     public let authorAvatarUrl: URL
@@ -24,7 +25,8 @@ public struct FASubmission: Equatable {
     public let comments: [Comment]
     
     public init(url: URL, previewImageUrl: URL,
-                fullResolutionImageUrl: URL, author: String,
+                fullResolutionImageUrl: URL,
+                widthOnHeightRatio: Float, author: String,
                 displayAuthor: String, authorAvatarUrl: URL,
                 title: String, htmlDescription: String,
                 isFavorite: Bool, favoriteUrl: URL,
@@ -32,6 +34,7 @@ public struct FASubmission: Equatable {
         self.url = url
         self.previewImageUrl = previewImageUrl
         self.fullResolutionImageUrl = fullResolutionImageUrl
+        self.widthOnHeightRatio = widthOnHeightRatio
         self.author = author
         self.displayAuthor = displayAuthor
         self.authorAvatarUrl = authorAvatarUrl
@@ -136,6 +139,7 @@ extension FASubmission {
         self.init(url: url,
                   previewImageUrl: page.previewImageUrl,
                   fullResolutionImageUrl: page.fullResolutionImageUrl,
+                  widthOnHeightRatio: page.widthOnHeightRatio,
                   author: page.author,
                   displayAuthor: page.displayAuthor,
                   authorAvatarUrl: page.authorAvatarUrl,

@@ -36,6 +36,7 @@ YCH for
         let expected = FASubmissionPage(
             previewImageUrl: URL(string: "https://t.furaffinity.net/49338772@600-1665402309.jpg")!,
             fullResolutionImageUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1665402309/1665402309.annetpeas_the_hookah_fa.png")!,
+            widthOnHeightRatio: 1217 / 1280,
             author: "annetpeas",
             displayAuthor: "AnnetPeas",
             authorAvatarUrl: URL(string: "https://a.furaffinity.net/1670079651/annetpeas.gif")!,
