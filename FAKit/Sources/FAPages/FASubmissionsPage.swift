@@ -7,7 +7,6 @@
 
 import Foundation
 import SwiftSoup
-import Regex
 
 public struct FASubmissionsPage {
     public struct Submission: Equatable {

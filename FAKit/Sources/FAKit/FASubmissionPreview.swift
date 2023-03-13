@@ -57,9 +57,10 @@ public extension FASubmissionPreview {
     }
     
     func thumbnailUrl(at size: ThumbnailSize) -> URL {
-        URL(string: thumbnailUrl.absoluteString
-                .replacingFirst(matching: "(.+)(@\\d+-)(.+)",
-                                with: "$1\\@\(size.rawValue)-$3"))!
+        let regex = #/(.+@)(\d+)(-.+)/#
+        let newUrl = thumbnailUrl.absoluteString
+            .replacing(regex) { $0.1 + "\(size.rawValue)" + $0.3 }
+        return URL(string: newUrl)!
     }
     
     func bestThumbnailUrl(for size: UInt) -> URL {

@@ -13,7 +13,6 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.3.3"),
-        .package(url: "https://github.com/sharplet/Regex.git", from: "2.1.1"),
         .package(url: "https://github.com/hyperoslo/Cache.git", from: "6.0.0"),
         .package(url: "https://github.com/davecom/SwiftGraph.git", from: "3.1.0"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.0.4"),
@@ -21,7 +20,7 @@ let package = Package(
     targets: [
         .target(
             name: "FAPages",
-            dependencies: ["SwiftSoup", "Regex"]),
+            dependencies: ["SwiftSoup"]),
         .testTarget(
             name: "FAPagesTests",
             dependencies: ["FAPages"],
