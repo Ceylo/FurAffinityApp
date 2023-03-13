@@ -29,13 +29,15 @@ struct NotesView: View {
     }
     
     var body: some View {
-        NavigationView {
+        Group {
             if let notes = model.notePreviews {
                 List(notes) { preview in
-                    NavigationLink(destination: NoteView(notePreview: preview, noteProvider: {
-                        await model.session?.note(for: preview)
-                    })) {
-                        NoteItemView(notePreview: preview)
+                    HStack {
+                        NavigationLink(destination: NoteView(notePreview: preview, noteProvider: {
+                            await model.session?.note(for: preview)
+                        })) {
+                            NoteItemView(notePreview: preview)
+                        }
                     }
                 }
                 .listStyle(.plain)

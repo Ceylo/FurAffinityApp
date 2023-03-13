@@ -18,7 +18,7 @@ struct SubmissionsFeedView: View {
     
     var body: some View {
         ScrollViewReader { proxy in
-            NavigationView {
+            Group {
                 if let previews = model.submissionPreviews {
                     List(previews) { submission in
                         NavigationLink(destination: SubmissionView(url: submission.url)) {

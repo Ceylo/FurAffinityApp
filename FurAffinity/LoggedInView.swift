@@ -21,18 +21,22 @@ struct LoggedInView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             if model.session != nil {
-                SubmissionsFeedView()
-                    .tabItem {
-                        Label("Submissions", systemImage: "rectangle.grid.2x2")
-                    }
-                    .tag(Tab.submissions)
+                NavigationStack {
+                    SubmissionsFeedView()
+                }
+                .tabItem {
+                    Label("Submissions", systemImage: "rectangle.grid.2x2")
+                }
+                .tag(Tab.submissions)
                 
-                NotesView()
-                    .badge(model.unreadNoteCount)
-                    .tabItem {
-                        Label("Notes", systemImage: "message")
-                    }
-                    .tag(Tab.notes)
+                NavigationStack {
+                    NotesView()
+                }
+                .badge(model.unreadNoteCount)
+                .tabItem {
+                    Label("Notes", systemImage: "message")
+                }
+                .tag(Tab.notes)
             }
             
             SettingsView()
