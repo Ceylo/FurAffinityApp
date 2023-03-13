@@ -9,7 +9,7 @@ import SwiftUI
 import FAKit
 
 struct SubmissionLoadingFailedView: View {
-    var preview: FASubmissionPreview
+    var url: URL
     
     var body: some View {
         Centered {
@@ -26,7 +26,7 @@ struct SubmissionLoadingFailedView: View {
                 .font(.caption)
                 .multilineTextAlignment(.leading)
                 
-                Link(preview.url.description, destination: preview.url)
+                Link(url.description, destination: url)
             }
             .padding()
         }
@@ -35,6 +35,6 @@ struct SubmissionLoadingFailedView: View {
 
 struct SubmissionLoadingFailedView_Previews: PreviewProvider {
     static var previews: some View {
-        SubmissionLoadingFailedView(preview: .demo)
+        SubmissionLoadingFailedView(url: FASubmissionPreview.demo.url)
     }
 }

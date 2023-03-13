@@ -54,11 +54,15 @@ open class FASession: Equatable {
     }
     
     open func submission(for preview: FASubmissionPreview) async -> FASubmission? {
-        guard let data = await dataSource.httpData(from: preview.url, cookies: cookies),
+        await submission(for: preview.url)
+    }
+    
+    open func submission(for url: URL) async -> FASubmission? {
+        guard let data = await dataSource.httpData(from: url, cookies: cookies),
               let page = FASubmissionPage(data: data)
         else { return nil }
         
-        return FASubmission(page, url: preview.url)
+        return FASubmission(page, url: url)
     }
     
     open func nukeSubmissions() async throws {

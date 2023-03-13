@@ -21,7 +21,7 @@ struct SubmissionsFeedView: View {
             NavigationView {
                 if let previews = model.submissionPreviews {
                     List(previews) { submission in
-                        NavigationLink(destination: SubmissionView(model, preview: submission)) {
+                        NavigationLink(destination: SubmissionView(url: submission.url)) {
                             SubmissionFeedItemView(submission: submission)
                                 .id(submission.sid)
                         }

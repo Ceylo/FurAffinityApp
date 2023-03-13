@@ -14,8 +14,7 @@ import Zoomable
 struct SubmissionView: View {
     @EnvironmentObject var model: Model
     
-    var preview: FASubmissionPreview
-    var submissionProvider: () async -> FASubmission?
+    var url: URL
     @State private var avatarUrl: URL?
     @State private var submission: FASubmission?
     @State private var submissionLoadingFailed = false
@@ -29,7 +28,7 @@ struct SubmissionView: View {
     }
     @State private var replySession: ReplySession?
     
-    func header(submission: FASubmissionPreview) -> some View {
+    func header(submission: FASubmission) -> some View {
         SubmissionHeaderView(author: submission.displayAuthor,
                              title: submission.title,
                              avatarUrl: avatarUrl)
@@ -41,9 +40,9 @@ struct SubmissionView: View {
     func loadingSucceededView(_ submission: FASubmission) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
-                header(submission: preview)
+                header(submission: submission)
                 SubmissionMainImage(
-                    widthOnHeightRatio: preview.thumbnailWidthOnHeightRatio,
+                    widthOnHeightRatio: submission.widthOnHeightRatio,
                     fullResolutionImageUrl: submission.fullResolutionImageUrl,
                     fullResolutionCGImage: $fullResolutionCGImage
                 )
@@ -91,7 +90,7 @@ struct SubmissionView: View {
     }
     
     private func loadSubmission() async {
-        submission = await submissionProvider()
+        submission = await model.session?.submission(for: url)
         if let submission = submission {
             description = AttributedString(FAHTML: submission.htmlDescription)
             submissionLoadingFailed = false
@@ -105,7 +104,7 @@ struct SubmissionView: View {
             if let submission = submission {
                 loadingSucceededView(submission)
             } else if submissionLoadingFailed {
-                SubmissionLoadingFailedView(preview: preview)
+                SubmissionLoadingFailedView(url: url)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -115,8 +114,7 @@ struct SubmissionView: View {
         .onAppear {
             if activity == nil {
                 let activity = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
-                activity.title = preview.title
-                activity.webpageURL = preview.url
+                activity.webpageURL = url
                 self.activity = activity
             }
             
@@ -161,24 +159,9 @@ extension SubmissionView {
     }
 }
 
-// MARK: -
-extension SubmissionView {
-    init(_ model: Model, preview: FASubmissionPreview) {
-        self.init(preview: preview) {
-            await model.session?.submission(for: preview)
-        }
-    }
-}
-
 struct SubmissionView_Previews: PreviewProvider {
     static var previews: some View {
-        SubmissionView(preview: OfflineFASession.default.submissionPreviews[0],
-                       submissionProvider: { FASubmission.demo })
-            .preferredColorScheme(.dark)
-            .environmentObject(Model.demo)
-        
-        SubmissionView(preview: OfflineFASession.default.submissionPreviews[0],
-                       submissionProvider: { nil })
+        SubmissionView(url: FASubmissionPreview.demo.url)
             .preferredColorScheme(.dark)
             .environmentObject(Model.demo)
     }
