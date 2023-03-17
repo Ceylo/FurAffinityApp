@@ -19,53 +19,51 @@ struct SubmissionsFeedView: View {
     
     var body: some View {
         ScrollViewReader { proxy in
-            Group {
+            NavigationStack(path: $navigationStack) {
                 if let previews = model.submissionPreviews {
-                    NavigationStack(path: $navigationStack) {
-                        List(previews) { submission in
-                            NavigationLink(value: FAURL(with: submission.url)) {
-                                SubmissionFeedItemView(submission: submission)
-                                    .id(submission.sid)
-                            }
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    List(previews) { submission in
+                        NavigationLink(value: FAURL(with: submission.url)) {
+                            SubmissionFeedItemView(submission: submission)
+                                .id(submission.sid)
                         }
-                        .navigationDestination(for: FAURL.self) { nav in
-                            switch nav {
-                            case let .submission(url):
-                                SubmissionView(url: url)
-                            }
-                        }
-                        .introspectScrollViewOnList { scrollView in
-                            self.scrollView = scrollView
-                        }
-                        .listStyle(.plain)
-                        .navigationBarTitleDisplayMode(.inline)
-                        .overlay(alignment: .topTrailing) {
-                            SubmissionsFeedActionView()
-                                .padding(.trailing, 20)
-                                .padding(.top, 6)
-                        }
-                        .refreshable {
-                            refresh(pulled: true)
-                        }
-                        .swap(when: previews.isEmpty) {
-                            VStack(spacing: 20) {
-                                VStack(spacing: 10) {
-                                    Text("It's a bit empty in here.")
-                                        .font(.headline)
-                                    Text("Watch artists and wait for them to post new art. Submissions from [www.furaffinity.net/msg/submissions/](https://www.furaffinity.net/msg/submissions/) will be displayed here.")
-                                        .multilineTextAlignment(.center)
-                                        .foregroundColor(.secondary)
-                                }
-                                
-                                Button("Refresh") {
-                                    refresh(pulled: true)
-                                }
-                            }
-                            .padding()
-                        }
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                     }
+                    .introspectScrollViewOnList { scrollView in
+                        self.scrollView = scrollView
+                    }
+                    .listStyle(.plain)
+                    .navigationBarTitleDisplayMode(.inline)
+                    .overlay(alignment: .topTrailing) {
+                        SubmissionsFeedActionView()
+                            .padding(.trailing, 20)
+                            .padding(.top, 6)
+                    }
+                    .refreshable {
+                        refresh(pulled: true)
+                    }
+                    .swap(when: previews.isEmpty) {
+                        VStack(spacing: 20) {
+                            VStack(spacing: 10) {
+                                Text("It's a bit empty in here.")
+                                    .font(.headline)
+                                Text("Watch artists and wait for them to post new art. Submissions from [www.furaffinity.net/msg/submissions/](https://www.furaffinity.net/msg/submissions/) will be displayed here.")
+                                    .multilineTextAlignment(.center)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Button("Refresh") {
+                                refresh(pulled: true)
+                            }
+                        }
+                        .padding()
+                    }
+                }
+            }
+            .navigationDestination(for: FAURL.self) { nav in
+                switch nav {
+                case let .submission(url):
+                    SubmissionView(url: url)
                 }
             }
             .onChange(of: model.submissionPreviews) { newValue in
@@ -80,9 +78,9 @@ struct SubmissionsFeedView: View {
                 NotificationOverlay(itemCount: $newSubmissionsCount)
                     .offset(y: 40)
             }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            autorefreshIfNeeded()
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                autorefreshIfNeeded()
+            }
         }
     }
 }
