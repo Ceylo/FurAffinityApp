@@ -81,7 +81,7 @@ struct SubmissionView: View {
         }
         .refreshable {
             Task {
-                await loadSubmission()
+                await loadSubmission(forceReload: true)
             }
         }
         .sheet(isPresented: showCommentEditor) {
@@ -90,7 +90,11 @@ struct SubmissionView: View {
         .navigationTitle(submission.title)
     }
     
-    private func loadSubmission() async {
+    private func loadSubmission(forceReload: Bool) async {
+        guard submission == nil || forceReload else {
+            return
+        }
+        
         submission = await model.session?.submission(for: url)
         if let submission = submission {
             description = AttributedString(FAHTML: submission.htmlDescription)?
@@ -111,7 +115,7 @@ struct SubmissionView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            await loadSubmission()
+            await loadSubmission(forceReload: false)
         }
         .onAppear {
             if activity == nil {

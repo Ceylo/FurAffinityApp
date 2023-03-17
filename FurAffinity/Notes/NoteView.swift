@@ -18,7 +18,11 @@ struct NoteView: View {
     @State private var showExactDatetime = false
     @State private var activity: NSUserActivity?
     
-    func loadNote() async {
+    func loadNote(forceReload: Bool) async {
+        guard note == nil || forceReload else {
+            return
+        }
+        
         note = await model.session?.note(for: url)
         if let note {
             avatarUrl = await model.session?.avatarUrl(for: note.author)
@@ -61,7 +65,7 @@ struct NoteView: View {
             }
         }
         .task {
-            await loadNote()
+            await loadNote(forceReload: false)
         }
         .toolbar {
             ToolbarItem {
