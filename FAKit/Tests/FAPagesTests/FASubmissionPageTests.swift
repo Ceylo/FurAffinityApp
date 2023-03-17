@@ -41,6 +41,8 @@ YCH for
             displayAuthor: "AnnetPeas",
             authorAvatarUrl: URL(string: "https://a.furaffinity.net/1670079651/annetpeas.gif")!,
             title: "The hookah",
+            datetime: "Oct 10, 2022 08:45 AM",
+            naturalDatetime: "2 months ago",
             htmlDescription: htmlDescription,
             isFavorite: false,
             favoriteUrl: URL(string: "https://www.furaffinity.net/fav/49338772/?key=57af11f57cd9a0d97575839f1ae07d2a775ae5af")!,

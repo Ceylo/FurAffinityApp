@@ -13,6 +13,7 @@ struct SubmissionHeaderView: View {
     var author: String
     var title: String
     var avatarUrl: URL?
+    var datetime: String?
     
     var body: some View {
         HStack {
@@ -20,8 +21,16 @@ struct SubmissionHeaderView: View {
                 .frame(width: 32, height: 32)
             
             VStack(alignment: .leading) {
-                Text(author)
-                    .font(.headline)
+                HStack(alignment: .firstTextBaseline) {
+                    Text(author)
+                        .font(.headline)
+                    Spacer()
+                    if let datetime {
+                        Text(datetime)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 
                 Text(title)
                     .font(.subheadline)
@@ -33,7 +42,7 @@ struct SubmissionHeaderView: View {
 
 struct SubmissionHeaderView_Previews: PreviewProvider {
     static var previews: some View {
-        SubmissionHeaderView(author: "The Author", title: "Great Content", avatarUrl: nil)
+        SubmissionHeaderView(author: "The Author", title: "Great Content", avatarUrl: nil, datetime: "1h ago")
             .previewLayout(.sizeThatFits)
             .preferredColorScheme(.dark)
             

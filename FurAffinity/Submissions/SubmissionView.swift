@@ -31,7 +31,8 @@ struct SubmissionView: View {
     func header(submission: FASubmission) -> some View {
         SubmissionHeaderView(author: submission.displayAuthor,
                              title: submission.title,
-                             avatarUrl: avatarUrl)
+                             avatarUrl: avatarUrl,
+                             datetime: submission.naturalDatetime)
             .task {
                 avatarUrl = await model.session?.avatarUrl(for: submission.author)
             }

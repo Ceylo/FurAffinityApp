@@ -19,6 +19,8 @@ public struct FASubmission: Equatable {
     public let displayAuthor: String
     public let authorAvatarUrl: URL
     public let title: String
+    public let datetime: String
+    public let naturalDatetime: String
     public let htmlDescription: String
     public let isFavorite: Bool
     public let favoriteUrl: URL
@@ -28,7 +30,10 @@ public struct FASubmission: Equatable {
                 fullResolutionImageUrl: URL,
                 widthOnHeightRatio: Float, author: String,
                 displayAuthor: String, authorAvatarUrl: URL,
-                title: String, htmlDescription: String,
+                title: String,
+                datetime: String,
+                naturalDatetime: String,
+                htmlDescription: String,
                 isFavorite: Bool, favoriteUrl: URL,
                 comments: [Comment]) {
         self.url = url
@@ -39,6 +44,8 @@ public struct FASubmission: Equatable {
         self.displayAuthor = displayAuthor
         self.authorAvatarUrl = authorAvatarUrl
         self.title = title
+        self.datetime = datetime
+        self.naturalDatetime = naturalDatetime
         self.htmlDescription = htmlDescription.selfContainedFAHtml
         self.isFavorite = isFavorite
         self.favoriteUrl = favoriteUrl
@@ -144,6 +151,8 @@ extension FASubmission {
                   displayAuthor: page.displayAuthor,
                   authorAvatarUrl: page.authorAvatarUrl,
                   title: page.title,
+                  datetime: page.datetime,
+                  naturalDatetime: page.naturalDatetime,
                   htmlDescription: page.htmlDescription,
                   isFavorite: page.isFavorite,
                   favoriteUrl: page.favoriteUrl,

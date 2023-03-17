@@ -16,6 +16,8 @@ public struct FASubmissionPage: Equatable {
     public let displayAuthor: String
     public let authorAvatarUrl: URL
     public let title: String
+    public let datetime: String
+    public let naturalDatetime: String
     public let htmlDescription: String
     public let isFavorite: Bool
     public let favoriteUrl: URL
@@ -83,6 +85,10 @@ extension FASubmissionPage {
             let submissionContainerNode = try submissionContentNode.select(submissionContainerQuery)
             let titleNode = try submissionContainerNode.select("div.submission-title h2 p")
             self.title = try titleNode.text()
+            
+            let dateNode = try submissionContainerNode.select("strong span.popup_date")
+            self.datetime = try dateNode.attr("title")
+            self.naturalDatetime = try dateNode.text()
             
             let authorNode = try submissionContainerNode.select("a").first().unwrap()
             let authorUrl = try authorNode.attr("href")
