@@ -24,14 +24,36 @@ class OfflineFASession: FASession {
         FASubmission.demo
     }
     
+    override func submission(for url: URL) async -> FASubmission? {
+        FASubmission.demo
+    }
+    
     override func nukeSubmissions() async throws {
         print(#function)
+    }
+    
+    override func postComment(on submission: FASubmission, replytoCid: Int?, contents: String) async -> FASubmission? {
+        print(#function)
+        return submission
+    }
+    
+    override func toggleFavorite(for submission: FASubmission) async -> FASubmission? {
+        print(#function)
+        return submission
     }
     
     override func notePreviews() async -> [FANotePreview] { notePreviews }
     
     override func note(for preview: FANotePreview) async -> FANote? {
-        return FANote.demo
+        FANote.demo
+    }
+    
+    override func note(for url: URL) async -> FANote? {
+        FANote.demo
+    }
+    
+    override func avatarUrl(for user: String) async -> URL? {
+        nil
     }
 }
 
