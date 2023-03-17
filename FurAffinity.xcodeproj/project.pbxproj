@@ -36,6 +36,10 @@
 		87815AC728D63F9B005AD03E /* View+Introspection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87815AC628D63F9B005AD03E /* View+Introspection.swift */; };
 		878B0B85296C9F9300A08685 /* AppCenterAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 878B0B84296C9F9300A08685 /* AppCenterAnalytics */; };
 		878B0B912970B18C00A08685 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878B0B902970B18C00A08685 /* Secrets.swift */; };
+		8791D5FB29C4CBBA003FDBBE /* FAURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8791D5FA29C4CBBA003FDBBE /* FAURL.swift */; };
+		8791D60329C4D627003FDBBE /* FAURLTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8791D60229C4D627003FDBBE /* FAURLTests.swift */; };
+		8791D60B29C4D7B9003FDBBE /* AppCenterAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8791D60A29C4D7B9003FDBBE /* AppCenterAnalytics */; };
+		8791D60D29C4DCE6003FDBBE /* InAppNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8791D60C29C4DCE6003FDBBE /* InAppNavigation.swift */; };
 		879233D2278216DF0019AC44 /* TextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 879233D1278216DF0019AC44 /* TextView.swift */; };
 		8799FAE22741672E0068A049 /* SubmissionFeedItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */; };
 		879BFAB928D5E97800BDFB43 /* Introspect in Frameworks */ = {isa = PBXBuildFile; productRef = 879BFAB828D5E97800BDFB43 /* Introspect */; };
@@ -54,12 +58,23 @@
 		87FE0DA929747C0C005713DB /* AppInformation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FE0DA829747C0C005713DB /* AppInformation.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		8791D60429C4D627003FDBBE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8716E7E0271C659C00C0BC4A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8716E7E7271C659C00C0BC4A;
+			remoteInfo = FurAffinity;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		8716E7E8271C659C00C0BC4A /* Fur Affinity.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Fur Affinity.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8716E7EB271C659C00C0BC4A /* FurAffinityApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FurAffinityApp.swift; sourceTree = "<group>"; };
 		8716E7ED271C659C00C0BC4A /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		8716E7EF271C659D00C0BC4A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8716E7F2271C659D00C0BC4A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		871C66DE29B8C36700A2B2C2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		871C66DF29B8CA9200A2B2C2 /* SubmissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionView.swift; sourceTree = "<group>"; };
 		8725335E274A70BB007FEF3B /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
 		87292E44297DD3FB00BE39B8 /* SubmissionLoadingFailedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionLoadingFailedView.swift; sourceTree = "<group>"; };
@@ -84,6 +99,10 @@
 		87815AC628D63F9B005AD03E /* View+Introspection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Introspection.swift"; sourceTree = "<group>"; };
 		878B0B8A296CA5B200A08685 /* Privacy Policy.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Privacy Policy.md"; sourceTree = "<group>"; };
 		878B0B902970B18C00A08685 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
+		8791D5FA29C4CBBA003FDBBE /* FAURL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FAURL.swift; sourceTree = "<group>"; };
+		8791D60029C4D627003FDBBE /* FurAffinityTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FurAffinityTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8791D60229C4D627003FDBBE /* FAURLTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FAURLTests.swift; sourceTree = "<group>"; };
+		8791D60C29C4DCE6003FDBBE /* InAppNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppNavigation.swift; sourceTree = "<group>"; };
 		879233D1278216DF0019AC44 /* TextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextView.swift; sourceTree = "<group>"; };
 		8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionFeedItemView.swift; sourceTree = "<group>"; };
 		87A1859B27459FFE00B10D2A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -114,6 +133,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8791D5FD29C4D627003FDBBE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8791D60B29C4D7B9003FDBBE /* AppCenterAnalytics in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -124,7 +151,9 @@
 				878B0B8A296CA5B200A08685 /* Privacy Policy.md */,
 				8761834C271F5E380021A051 /* FAKit */,
 				8716E7EA271C659C00C0BC4A /* FurAffinity */,
+				8791D60129C4D627003FDBBE /* FurAffinityTests */,
 				8716E7E9271C659C00C0BC4A /* Products */,
+				8791D60929C4D7B9003FDBBE /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -132,6 +161,7 @@
 			isa = PBXGroup;
 			children = (
 				8716E7E8271C659C00C0BC4A /* Fur Affinity.app */,
+				8791D60029C4D627003FDBBE /* FurAffinityTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -139,6 +169,7 @@
 		8716E7EA271C659C00C0BC4A /* FurAffinity */ = {
 			isa = PBXGroup;
 			children = (
+				871C66DE29B8C36700A2B2C2 /* Info.plist */,
 				8725335E274A70BB007FEF3B /* Model.swift */,
 				8716E7EB271C659C00C0BC4A /* FurAffinityApp.swift */,
 				878B0B902970B18C00A08685 /* Secrets.swift */,
@@ -210,8 +241,25 @@
 				8733DDFC28F75C1200CD8BCF /* Sharing.swift */,
 				8733DDFA28F75B1A00CD8BCF /* Logs.swift */,
 				87FE0DA829747C0C005713DB /* AppInformation.swift */,
+				8791D5FA29C4CBBA003FDBBE /* FAURL.swift */,
+				8791D60C29C4DCE6003FDBBE /* InAppNavigation.swift */,
 			);
 			path = Helpers;
+			sourceTree = "<group>";
+		};
+		8791D60129C4D627003FDBBE /* FurAffinityTests */ = {
+			isa = PBXGroup;
+			children = (
+				8791D60229C4D627003FDBBE /* FAURLTests.swift */,
+			);
+			path = FurAffinityTests;
+			sourceTree = "<group>";
+		};
+		8791D60929C4D7B9003FDBBE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		87A4CA8B2756D17C009AA219 /* Helper Views */ = {
@@ -258,6 +306,27 @@
 			productReference = 8716E7E8271C659C00C0BC4A /* Fur Affinity.app */;
 			productType = "com.apple.product-type.application";
 		};
+		8791D5FF29C4D627003FDBBE /* FurAffinityTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8791D60629C4D627003FDBBE /* Build configuration list for PBXNativeTarget "FurAffinityTests" */;
+			buildPhases = (
+				8791D5FC29C4D627003FDBBE /* Sources */,
+				8791D5FD29C4D627003FDBBE /* Frameworks */,
+				8791D5FE29C4D627003FDBBE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8791D60529C4D627003FDBBE /* PBXTargetDependency */,
+			);
+			name = FurAffinityTests;
+			packageProductDependencies = (
+				8791D60A29C4D7B9003FDBBE /* AppCenterAnalytics */,
+			);
+			productName = FurAffinityTests;
+			productReference = 8791D60029C4D627003FDBBE /* FurAffinityTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -265,12 +334,16 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1300;
+				LastSwiftUpdateCheck = 1420;
 				LastUpgradeCheck = 1300;
 				TargetAttributes = {
 					8716E7E7271C659C00C0BC4A = {
 						CreatedOnToolsVersion = 13.0;
 						LastSwiftMigration = 1420;
+					};
+					8791D5FF29C4D627003FDBBE = {
+						CreatedOnToolsVersion = 14.2;
+						TestTargetID = 8716E7E7271C659C00C0BC4A;
 					};
 				};
 			};
@@ -295,6 +368,7 @@
 			projectRoot = "";
 			targets = (
 				8716E7E7271C659C00C0BC4A /* FurAffinity */,
+				8791D5FF29C4D627003FDBBE /* FurAffinityTests */,
 			);
 		};
 /* End PBXProject section */
@@ -309,6 +383,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8791D5FE29C4D627003FDBBE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -318,6 +399,7 @@
 			files = (
 				8766005829055FBC00C7A998 /* SubmissionCommentsView.swift in Sources */,
 				87A1859C27459FFE00B10D2A /* SettingsView.swift in Sources */,
+				8791D60D29C4DCE6003FDBBE /* InAppNavigation.swift in Sources */,
 				87A185A02745A83B00B10D2A /* Debugging.swift in Sources */,
 				87E0E2B82801D967005207A8 /* NotesView.swift in Sources */,
 				87A185A22745A8A100B10D2A /* CenteredView.swift in Sources */,
@@ -351,11 +433,28 @@
 				87566B82297DC71600FD3199 /* CommentEditor.swift in Sources */,
 				879233D2278216DF0019AC44 /* TextView.swift in Sources */,
 				8716E7EC271C659C00C0BC4A /* FurAffinityApp.swift in Sources */,
+				8791D5FB29C4CBBA003FDBBE /* FAURL.swift in Sources */,
 				8733DDFF28FAD58D00CD8BCF /* SwapView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8791D5FC29C4D627003FDBBE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8791D60329C4D627003FDBBE /* FAURLTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		8791D60529C4D627003FDBBE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8716E7E7271C659C00C0BC4A /* FurAffinity */;
+			targetProxy = 8791D60429C4D627003FDBBE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		8716E7F4271C659D00C0BC4A /* Debug */ = {
@@ -489,6 +588,7 @@
 				DEVELOPMENT_TEAM = 3BF75NMSEQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FurAffinity/Info.plist;
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Chosen images will be saved to the Photo Library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -527,6 +627,7 @@
 				DEVELOPMENT_TEAM = 3BF75NMSEQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FurAffinity/Info.plist;
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Chosen images will be saved to the Photo Library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -551,6 +652,46 @@
 			};
 			name = Release;
 		};
+		8791D60729C4D627003FDBBE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3BF75NMSEQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ceylo.FurAffinityTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Fur Affinity.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Fur Affinity";
+			};
+			name = Debug;
+		};
+		8791D60829C4D627003FDBBE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3BF75NMSEQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ceylo.FurAffinityTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Fur Affinity.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Fur Affinity";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -568,6 +709,15 @@
 			buildConfigurations = (
 				8716E7F7271C659D00C0BC4A /* Debug */,
 				8716E7F8271C659D00C0BC4A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8791D60629C4D627003FDBBE /* Build configuration list for PBXNativeTarget "FurAffinityTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8791D60729C4D627003FDBBE /* Debug */,
+				8791D60829C4D627003FDBBE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -633,6 +783,11 @@
 			productName = URLImageStore;
 		};
 		878B0B84296C9F9300A08685 /* AppCenterAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 878B0B83296C9F9300A08685 /* XCRemoteSwiftPackageReference "appcenter-sdk-apple" */;
+			productName = AppCenterAnalytics;
+		};
+		8791D60A29C4D7B9003FDBBE /* AppCenterAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 878B0B83296C9F9300A08685 /* XCRemoteSwiftPackageReference "appcenter-sdk-apple" */;
 			productName = AppCenterAnalytics;

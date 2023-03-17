@@ -48,6 +48,17 @@
                ReferencedContainer = "container:FAKit">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "8791D5FF29C4D627003FDBBE"
+               BuildableName = "FurAffinityTests.xctest"
+               BlueprintName = "FurAffinityTests"
+               ReferencedContainer = "container:FurAffinity.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

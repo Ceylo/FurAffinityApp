@@ -22,7 +22,7 @@ extension AttributedString {
                 documentAttributes: nil)
         else { return nil }
         
-        let attr = AttributedString(nsattrstr)
+        self = AttributedString(nsattrstr)
             .transformingAttributes(\.foregroundColor) { foregroundColor in
                 if foregroundColor.value == nil {
                     foregroundColor.value = .primary
@@ -31,7 +31,5 @@ extension AttributedString {
             .transformingAttributes(\.font) { font in
                 font.value = .body
             }
-        
-        self.init(NSAttributedString(attr))
     }
 }

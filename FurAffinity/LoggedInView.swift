@@ -11,6 +11,7 @@ import FAKit
 struct LoggedInView: View {
     @EnvironmentObject var model: Model
     @State private var selectedTab: Tab = .submissions
+    @State private var submissionsNavigationStack = NavigationPath()
 
     enum Tab {
         case submissions
@@ -21,8 +22,8 @@ struct LoggedInView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             if model.session != nil {
-                NavigationStack {
-                    SubmissionsFeedView()
+                NavigationStack(path: $submissionsNavigationStack) {
+                    SubmissionsFeedView(navigationStack: $submissionsNavigationStack)
                 }
                 .tabItem {
                     Label("Submissions", systemImage: "rectangle.grid.2x2")
@@ -45,6 +46,20 @@ struct LoggedInView: View {
                     Label("Settings", systemImage: "slider.horizontal.3")
                 }
                 .tag(Tab.settings)
+        }
+        .onOpenURL { url in
+            guard let match = FAURL(with: url) else {
+                return
+            }
+            
+            switch selectedTab {
+            case .submissions:
+                submissionsNavigationStack.append(match)
+            case .notes:
+                fatalError("Not supported yet")
+            case .settings:
+                fatalError("Internal inconsistency")
+            }
         }
     }
 }

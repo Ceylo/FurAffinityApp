@@ -92,7 +92,8 @@ struct SubmissionView: View {
     private func loadSubmission() async {
         submission = await model.session?.submission(for: url)
         if let submission = submission {
-            description = AttributedString(FAHTML: submission.htmlDescription)
+            description = AttributedString(FAHTML: submission.htmlDescription)?
+                .convertingLinksForInAppNavigation()
             submissionLoadingFailed = false
         } else {
             submissionLoadingFailed = true

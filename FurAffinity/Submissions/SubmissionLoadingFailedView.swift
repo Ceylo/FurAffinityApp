@@ -22,6 +22,7 @@ struct SubmissionLoadingFailedView: View {
     - furaffinity.net is experiencing an outage
     - The submission doesn't exist anymore
     - The submission contains data that could not be loaded
+    - Viewing this submission is prevented by your rating settings
     """)
                 .font(.caption)
                 .multilineTextAlignment(.leading)

@@ -26,3 +26,13 @@ extension UIScrollView {
         return contentOffset.y - adjustedContentInset.top <= 0
     }
 }
+
+extension URL {
+    func replacingScheme(with newScheme: String) -> URL? {
+        guard var components = URLComponents(url: self, resolvingAgainstBaseURL: false) else {
+            return nil
+        }
+        components.scheme = newScheme
+        return components.url
+    }
+}
