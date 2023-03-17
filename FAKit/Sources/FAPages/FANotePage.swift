@@ -13,6 +13,7 @@ public struct FANotePage: Equatable {
     public let displayAuthor: String
     public let title: String
     public let datetime: String
+    public let naturalDatetime: String
     public let htmlMessage: String
     public let answerKey: String
 }
@@ -40,9 +41,10 @@ extension FANotePage {
             self.htmlMessage = try noteContainerNode
                 .select("div.section-body div.user-submitted-links")
                 .html()
-            self.datetime = try noteContainerNode
+            let dateNode = try noteContainerNode
                 .select("div.section-header div.message-center-note-information div.addresses span.popup_date")
-                .attr("title")
+            self.datetime = try dateNode.attr("title")
+            self.naturalDatetime = try dateNode.text()
             
             let keyNode = try doc.select("form#note-form input[name=\"key\"]")
             self.answerKey = try keyNode.attr("value")
