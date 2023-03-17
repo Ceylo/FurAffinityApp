@@ -12,6 +12,7 @@ struct LoggedInView: View {
     @EnvironmentObject var model: Model
     @State private var selectedTab: Tab = .submissions
     @State private var submissionsNavigationStack = NavigationPath()
+    @State private var notesNavigationStack = NavigationPath()
 
     enum Tab {
         case submissions
@@ -30,8 +31,8 @@ struct LoggedInView: View {
                 }
                 .tag(Tab.submissions)
                 
-                NavigationStack {
-                    NotesView()
+                NavigationStack(path: $notesNavigationStack) {
+                    NotesView(navigationStack: $notesNavigationStack)
                 }
                 .badge(model.unreadNoteCount)
                 .tabItem {
@@ -56,7 +57,7 @@ struct LoggedInView: View {
             case .submissions:
                 submissionsNavigationStack.append(match)
             case .notes:
-                fatalError("Not supported yet")
+                notesNavigationStack.append(match)
             case .settings:
                 fatalError("Internal inconsistency")
             }

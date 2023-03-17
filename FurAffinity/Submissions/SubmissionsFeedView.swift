@@ -64,6 +64,8 @@ struct SubmissionsFeedView: View {
                 switch nav {
                 case let .submission(url):
                     SubmissionView(url: url)
+                case let .note(url):
+                    NoteView(url: url)
                 }
             }
             .onChange(of: model.submissionPreviews) { newValue in

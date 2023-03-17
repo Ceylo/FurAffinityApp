@@ -116,7 +116,11 @@ open class FASession: Equatable {
     }
     
     open func note(for preview: FANotePreview) async -> FANote? {
-        guard let data = await dataSource.httpData(from: preview.noteUrl, cookies: cookies),
+        await note(for: preview.noteUrl)
+    }
+    
+    open func note(for url: URL) async -> FANote? {
+        guard let data = await dataSource.httpData(from: url, cookies: cookies),
               let page = FANotePage(data: data)
         else { return nil }
         

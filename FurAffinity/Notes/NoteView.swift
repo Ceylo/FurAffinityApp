@@ -9,56 +9,62 @@ import SwiftUI
 import FAKit
 
 struct NoteView: View {
-    var notePreview: FANotePreview
-    var noteProvider: () async -> FANote?
+    var url: URL
     @EnvironmentObject var model: Model
     
+    @State private var note: FANote?
     @State private var avatarUrl: URL?
     @State private var message: AttributedString?
     @State private var showExactDatetime = false
     @State private var activity: NSUserActivity?
     
+    func loadNote() async {
+        note = await model.session?.note(for: url)
+        if let note {
+            avatarUrl = await model.session?.avatarUrl(for: note.author)
+            message = AttributedString(FAHTML: note.htmlMessage)?
+                .convertingLinksForInAppNavigation()
+        }
+    }
+    
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading) {
-                VStack(alignment: .leading, spacing: 20) {
-                    HStack {
-                        AvatarView(avatarUrl: avatarUrl)
-                            .task {
-                                avatarUrl = await model.session?.avatarUrl(for: notePreview.author)
+            if let note {
+                VStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 20) {
+                        HStack {
+                            AvatarView(avatarUrl: avatarUrl)
+                                .frame(width: 42, height: 42)
+                            
+                            Text(note.displayAuthor)
+                            Spacer()
+                            Button(showExactDatetime ? note.datetime : note.naturalDatetime) {
+                                showExactDatetime.toggle()
                             }
-                            .frame(width: 42, height: 42)
-                        
-                        Text(notePreview.displayAuthor)
-                        Spacer()
-                        Button(showExactDatetime ? notePreview.datetime : notePreview.naturalDatetime) {
-                            showExactDatetime.toggle()
+                            .foregroundStyle(.secondary)
+                            .font(.subheadline)
                         }
-                        .foregroundStyle(.secondary)
-                        .font(.subheadline)
+                        
+                        Text(note.title)
+                            .font(.title2)
                     }
+                    Divider()
                     
-                    Text(notePreview.title)
-                        .font(.title2)
+                    if let message = message {
+                        TextView(text: message)
+                        // for text view inset
+                            .padding(.horizontal, -5)
+                    }
                 }
-                Divider()
-                
-                if let message = message {
-                    TextView(text: message)
-                    // for text view inset
-                        .padding(.horizontal, -5)
-                }
+                .padding()
             }
-            .padding()
         }
         .task {
-            if let note = await noteProvider() {
-                self.message = AttributedString(FAHTML: note.htmlMessage)
-            }
+            await loadNote()
         }
         .toolbar {
             ToolbarItem {
-                Link(destination: notePreview.noteUrl) {
+                Link(destination: url) {
                     Image(systemName: "safari")
                 }
             }
@@ -66,8 +72,7 @@ struct NoteView: View {
         .onAppear {
             if activity == nil {
                 let activity = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
-                activity.title = notePreview.title
-                activity.webpageURL = notePreview.noteUrl
+                activity.webpageURL = url
                 self.activity = activity
             }
             
@@ -81,7 +86,7 @@ struct NoteView: View {
 
 struct NoteView_Previews: PreviewProvider {
     static var previews: some View {
-        NoteView(notePreview: OfflineFASession.default.notePreviews[1], noteProvider: { FANote.demo })
+        NoteView(url: OfflineFASession.default.notePreviews[1].noteUrl)
 //            .preferredColorScheme(.dark)
             .environmentObject(Model.demo)
     }
