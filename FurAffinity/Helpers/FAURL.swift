@@ -9,6 +9,7 @@ import Foundation
 
 enum FAURL: Hashable {
     case submission(url: URL)
+    case note(url: URL)
 //    case user(url: URL)
 }
 
@@ -24,14 +25,18 @@ extension FAURL {
             return nil
         }
         
-        // https://www.furaffinity.net/user/xxx
         // https://www.furaffinity.net/view/nnn/
+        // https://www.furaffinity.net/msg/pms/n/nnn/#message
+        // https://www.furaffinity.net/user/xxx
         let submissionRegex = #//view/\d+/#
+        let noteRegex = #//msg/pms/\d+/\d+/#
 //        let userRegex = #//user/.+/#
         
         switch components.path {
         case submissionRegex:
             self = .submission(url: url)
+        case noteRegex:
+            self = .note(url: url)
 //        case userRegex:
 //            self = .user(url: url)
         default:
