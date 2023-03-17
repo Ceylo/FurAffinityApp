@@ -41,6 +41,8 @@ struct NotesView: View {
                 }
                 .listStyle(.plain)
                 .navigationBarTitleDisplayMode(.inline)
+                .navigationTitle("Notes")
+                .toolbar(.hidden, for: .navigationBar)
                 .navigationDestination(for: FAURL.self) { nav in
                     switch nav {
                     case let .submission(url):

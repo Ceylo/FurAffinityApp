@@ -68,6 +68,8 @@ struct SubmissionsFeedView: View {
                     NoteView(url: url)
                 }
             }
+            .navigationTitle("Submissions")
+            .toolbar(.hidden, for: .navigationBar)
             .onChange(of: model.submissionPreviews) { newValue in
                 Task { @MainActor in
                     if let targetSid = targetScrollItemSid {

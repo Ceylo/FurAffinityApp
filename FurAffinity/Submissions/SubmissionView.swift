@@ -87,6 +87,7 @@ struct SubmissionView: View {
         .sheet(isPresented: showCommentEditor) {
             commentEditor
         }
+        .navigationTitle(submission.title)
     }
     
     private func loadSubmission() async {
