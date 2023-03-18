@@ -39,6 +39,10 @@ struct SubmissionsFeedView: View {
                             .padding(.trailing, 20)
                             .padding(.top, 6)
                     }
+                    // Toolbar needs to be setup before refresh control…
+                    // https://stackoverflow.com/a/64700545/869385
+                    .navigationTitle("Submissions")
+                    .toolbar(.hidden, for: .navigationBar)
                     .refreshable {
                         refresh(pulled: true)
                     }
@@ -68,8 +72,6 @@ struct SubmissionsFeedView: View {
                     NoteView(url: url)
                 }
             }
-            .navigationTitle("Submissions")
-            .toolbar(.hidden, for: .navigationBar)
             .onChange(of: model.submissionPreviews) { newValue in
                 Task { @MainActor in
                     if let targetSid = targetScrollItemSid {
