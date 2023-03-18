@@ -57,15 +57,17 @@ public struct FASubmission: Equatable {
         public let displayAuthor: String
         public let authorAvatarUrl: URL
         public let datetime: String
+        public let naturalDatetime: String
         public let htmlMessage: String
         public let answers: [Comment]
         
         public init(cid: Int, displayAuthor: String, authorAvatarUrl: URL, datetime: String,
-                    htmlMessage: String, answers: [FASubmission.Comment]) {
+                    naturalDatetime: String, htmlMessage: String, answers: [FASubmission.Comment]) {
             self.cid = cid
             self.displayAuthor = displayAuthor
             self.authorAvatarUrl = authorAvatarUrl
             self.datetime = datetime
+            self.naturalDatetime = naturalDatetime
             self.htmlMessage = htmlMessage
             self.answers = answers
         }
@@ -78,6 +80,7 @@ extension FASubmission.Comment {
                   displayAuthor: comment.displayAuthor,
                   authorAvatarUrl: comment.authorAvatarUrl,
                   datetime: comment.datetime,
+                  naturalDatetime: comment.naturalDatetime,
                   htmlMessage: comment.htmlMessage.selfContainedFAHtmlComment,
                   answers: [])
     }
@@ -87,6 +90,7 @@ extension FASubmission.Comment {
                   displayAuthor: displayAuthor,
                   authorAvatarUrl: authorAvatarUrl,
                   datetime: datetime,
+                  naturalDatetime: naturalDatetime,
                   htmlMessage: htmlMessage,
                   answers: answers)
     }

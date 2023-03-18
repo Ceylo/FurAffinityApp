@@ -32,7 +32,8 @@ struct SubmissionView: View {
         SubmissionHeaderView(author: submission.displayAuthor,
                              title: submission.title,
                              avatarUrl: avatarUrl,
-                             datetime: submission.naturalDatetime)
+                             datetime: .init(submission.datetime,
+                                             submission.naturalDatetime))
             .task {
                 avatarUrl = await model.session?.avatarUrl(for: submission.author)
             }

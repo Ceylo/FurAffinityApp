@@ -13,7 +13,7 @@ extension FASubmissionPage.Comment {
     init(cid: Int, indentation: Int) {
         self.init(
             cid: cid, indentation: indentation, author: "t", displayAuthor: "T",
-            authorAvatarUrl: URL(string: "https://some.url/")!, datetime: "Today", htmlMessage: "Msg"
+            authorAvatarUrl: URL(string: "https://some.url/")!, datetime: "Aug 12, 2022 04:08 AM", naturalDatetime: "Today", htmlMessage: "Msg"
         )
     }
 }

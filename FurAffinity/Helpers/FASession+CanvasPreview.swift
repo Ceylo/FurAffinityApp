@@ -128,12 +128,16 @@ extension FASubmission {
         let htmlDescription = "YCH for \n<a href=\"/user/mikazukihellfire\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20211017/mikazukihellfire.gif\" align=\"middle\" title=\"MikazukiHellfire\" alt=\"MikazukiHellfire\">&nbsp;MikazukiHellfire</a>\n<br> \n<br> Medea © \n<a href=\"/user/mikazukihellfire\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20211017/mikazukihellfire.gif\" align=\"middle\" title=\"MikazukiHellfire\" alt=\"MikazukiHellfire\">&nbsp;MikazukiHellfire</a>\n<br> \n<br> \n<br> \n<br> \n<br> *******************************\n<br> * \n<a class=\"auto_link named_url\" href=\"http://ko-fi.com/J3J16KSH\">Feed me with coffee?</a>\n<br> * \n<a class=\"auto_link named_url\" href=\"https://www.furaffinity.net/gallery/annetpeas/\">My Gallery</a>\n<br> * \n<a class=\"auto_link named_url\" href=\"https://twitter.com/AnnetPeas_Art\">Twitter</a>"
         let terrinissAvatarUrl = URL(string: "https://a.furaffinity.net/1616615925/terriniss.gif")!
         let comments: [FASubmission.Comment] = [
-            .init(cid: 166652793, displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "2 months ago", htmlMessage: "BID HERE \n<br> Moon".selfContainedFAHtmlComment, answers: [
-                .init(cid: 166653891, displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "2 months ago", htmlMessage: "SakuraSlowly (DA) - SB".selfContainedFAHtmlComment, answers: [
-                    .init(cid: 166658565, displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "2 months ago", htmlMessage: "DeathPanda21 (da) - 55$".selfContainedFAHtmlComment, answers: [])
-                ])
-            ]),
-            .init(cid: 166653340, displayAuthor: "RuruDasPippen", authorAvatarUrl: URL(string: "https://a.furaffinity.net/1643948243/rurudaspippen.gif")!, datetime: "2 months ago", htmlMessage: "Look at the babies!".selfContainedFAHtmlComment, answers: [])
+            .init(cid: 166652793, displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "2 months ago",
+                  htmlMessage: "BID HERE \n<br> Moon".selfContainedFAHtmlComment, answers: [
+                    .init(cid: 166653891, displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 11, 2022 10:58 PM", naturalDatetime: "2 months ago",
+                          htmlMessage: "SakuraSlowly (DA) - SB".selfContainedFAHtmlComment, answers: [
+                            .init(cid: 166658565, displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 12, 2022 05:16 AM", naturalDatetime: "2 months ago",
+                                  htmlMessage: "DeathPanda21 (da) - 55$".selfContainedFAHtmlComment, answers: [])
+                          ])
+                  ]),
+            .init(cid: 166653340, displayAuthor: "RuruDasPippen", authorAvatarUrl: URL(string: "https://a.furaffinity.net/1643948243/rurudaspippen.gif")!,
+                  datetime: "Aug 11, 2022 10:23 PM", naturalDatetime: "2 months ago", htmlMessage: "Look at the babies!".selfContainedFAHtmlComment, answers: [])
         ]
         
         return FASubmission(

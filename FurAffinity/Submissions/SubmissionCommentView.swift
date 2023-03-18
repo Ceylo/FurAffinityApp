@@ -26,9 +26,8 @@ struct SubmissionCommentView: View {
                         .font(.subheadline)
                         .bold()
                     Spacer()
-                    Text(comment.datetime)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    DateTimeButton(datetime: comment.datetime,
+                                   naturalDatetime: comment.naturalDatetime)
                 }
                 htmlMessage.flatMap {
                     TextView(text: $0, initialHeight: 32)

@@ -36,7 +36,8 @@ struct NoteItemView: View {
                 HStack {
                     Text(notePreview.displayAuthor)
                     Spacer()
-                    Text(notePreview.naturalDatetime)
+                    DateTimeButton(datetime: notePreview.datetime,
+                                   naturalDatetime: notePreview.naturalDatetime)
                 }
                 .foregroundStyle(.secondary)
                 .font(.subheadline)

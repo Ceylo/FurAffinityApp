@@ -30,6 +30,7 @@ public struct FASubmissionPage: Equatable {
         public let displayAuthor: String
         public let authorAvatarUrl: URL
         public let datetime: String
+        public let naturalDatetime: String
         public let htmlMessage: String
     }
 }
@@ -128,12 +129,14 @@ extension FASubmissionPage.Comment {
         let displayAuthor = try node.select(displayAuthorQuery).text()
         let rawCidString = try node.select("a").attr("id")
         let cid = try Int(rawCidString.substring(matching: "cid:(.+)").unwrap()).unwrap()
-        let datetime = try node.select("comment-container div.comment-content comment-date span.popup_date").text()
+        let datetimeNode = try node.select("comment-container div.comment-content comment-date span.popup_date")
+        let naturalDatetime = try datetimeNode.text()
+        let datetime = try datetimeNode.attr("title")
         let htmlMessage = try node.select("comment-container div.comment-content comment-user-text div.user-submitted-links").first().unwrap().html()
         
         self.init(cid: cid, indentation: indentation,
                   author: author, displayAuthor: displayAuthor,
                   authorAvatarUrl: authorAvatarUrl, datetime: datetime,
-                  htmlMessage: htmlMessage)
+                  naturalDatetime: naturalDatetime, htmlMessage: htmlMessage)
     }
 }

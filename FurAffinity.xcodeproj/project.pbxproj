@@ -51,6 +51,7 @@
 		87E0E2B82801D967005207A8 /* NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B72801D967005207A8 /* NotesView.swift */; };
 		87E0E2BA2801DCDB005207A8 /* NoteItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B92801DCDB005207A8 /* NoteItemView.swift */; };
 		87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */; };
+		87F5EE8F29C5D9DD00649C5B /* DateTimeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */; };
 		87F8FA342761347200CDD985 /* SubmissionHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA332761347200CDD985 /* SubmissionHeaderView.swift */; };
 		87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA3527613DD900CDD985 /* Extensions.swift */; };
 		87F960CB2801EFF3000B30A3 /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F960CA2801EFF3000B30A3 /* AvatarView.swift */; };
@@ -111,6 +112,7 @@
 		87E0E2B72801D967005207A8 /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
 		87E0E2B92801DCDB005207A8 /* NoteItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteItemView.swift; sourceTree = "<group>"; };
 		87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOverlay.swift; sourceTree = "<group>"; };
+		87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateTimeButton.swift; sourceTree = "<group>"; };
 		87F8FA332761347200CDD985 /* SubmissionHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionHeaderView.swift; sourceTree = "<group>"; };
 		87F8FA3527613DD900CDD985 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		87F960CA2801EFF3000B30A3 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
@@ -273,6 +275,7 @@
 				873E65F127529866009C8767 /* SaveButton.swift */,
 				8733DDFE28FAD58D00CD8BCF /* SwapView.swift */,
 				87642B01297D846400FE2E17 /* SwipeView.swift */,
+				87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */,
 			);
 			path = "Helper Views";
 			sourceTree = "<group>";
@@ -413,6 +416,7 @@
 				873E66182752C631009C8767 /* CircularProgress.swift in Sources */,
 				87815AC728D63F9B005AD03E /* View+Introspection.swift in Sources */,
 				87292E45297DD3FB00BE39B8 /* SubmissionLoadingFailedView.swift in Sources */,
+				87F5EE8F29C5D9DD00649C5B /* DateTimeButton.swift in Sources */,
 				8733DDFB28F75B1A00CD8BCF /* Logs.swift in Sources */,
 				878B0B912970B18C00A08685 /* Secrets.swift in Sources */,
 				873E65F027528FC6009C8767 /* SubmissionControlsView.swift in Sources */,

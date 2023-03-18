@@ -15,7 +15,6 @@ struct NoteView: View {
     @State private var note: FANote?
     @State private var avatarUrl: URL?
     @State private var message: AttributedString?
-    @State private var showExactDatetime = false
     @State private var activity: NSUserActivity?
     
     func loadNote(forceReload: Bool) async {
@@ -42,11 +41,8 @@ struct NoteView: View {
                             
                             Text(note.displayAuthor)
                             Spacer()
-                            Button(showExactDatetime ? note.datetime : note.naturalDatetime) {
-                                showExactDatetime.toggle()
-                            }
-                            .foregroundStyle(.secondary)
-                            .font(.subheadline)
+                            DateTimeButton(datetime: note.datetime,
+                                           naturalDatetime: note.naturalDatetime)
                         }
                         
                         Text(note.title)
