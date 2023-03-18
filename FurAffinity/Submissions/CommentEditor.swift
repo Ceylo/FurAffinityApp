@@ -25,6 +25,7 @@ struct CommentEditor: View {
                 .disabled(text.isEmpty)
             }
             .padding()
+            .font(.title3)
             
             Divider()
             TextEditor(text: $text)
@@ -32,6 +33,7 @@ struct CommentEditor: View {
                 .onAppear {
                     editorHasFocus = true
                 }
+                .padding(.horizontal)
         }
     }
 }
