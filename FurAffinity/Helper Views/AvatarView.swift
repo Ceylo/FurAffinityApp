@@ -13,7 +13,7 @@ struct AvatarView: View {
     
     var body: some View {
         ZStack {
-            if let avatarUrl = avatarUrl {
+            if let avatarUrl {
                 URLImage(avatarUrl) { progress in
                     Rectangle()
                         .foregroundColor(.white.opacity(0.1))

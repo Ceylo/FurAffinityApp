@@ -54,6 +54,7 @@ public struct FASubmission: Equatable {
     
     public struct Comment: Equatable {
         public let cid: Int
+        public let author: String
         public let displayAuthor: String
         public let authorAvatarUrl: URL
         public let datetime: String
@@ -61,9 +62,10 @@ public struct FASubmission: Equatable {
         public let htmlMessage: String
         public let answers: [Comment]
         
-        public init(cid: Int, displayAuthor: String, authorAvatarUrl: URL, datetime: String,
+        public init(cid: Int, author: String, displayAuthor: String, authorAvatarUrl: URL, datetime: String,
                     naturalDatetime: String, htmlMessage: String, answers: [FASubmission.Comment]) {
             self.cid = cid
+            self.author = author
             self.displayAuthor = displayAuthor
             self.authorAvatarUrl = authorAvatarUrl
             self.datetime = datetime
@@ -77,6 +79,7 @@ public struct FASubmission: Equatable {
 extension FASubmission.Comment {
     init(_ comment: FASubmissionPage.Comment) {
         self.init(cid: comment.cid,
+                  author: comment.author,
                   displayAuthor: comment.displayAuthor,
                   authorAvatarUrl: comment.authorAvatarUrl,
                   datetime: comment.datetime,
@@ -87,6 +90,7 @@ extension FASubmission.Comment {
     
     func withAnswers(_ answers: [Self]) -> Self {
         Self.init(cid: cid,
+                  author: author,
                   displayAuthor: displayAuthor,
                   authorAvatarUrl: authorAvatarUrl,
                   datetime: datetime,

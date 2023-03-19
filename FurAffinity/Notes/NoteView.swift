@@ -36,10 +36,13 @@ struct NoteView: View {
                 VStack(alignment: .leading) {
                     VStack(alignment: .leading, spacing: 20) {
                         HStack {
-                            AvatarView(avatarUrl: avatarUrl)
-                                .frame(width: 42, height: 42)
-                            
-                            Text(note.displayAuthor)
+                            OptionalLink(destination: inAppUserUrl(for: note.author)) {
+                                AvatarView(avatarUrl: avatarUrl)
+                                    .frame(width: 42, height: 42)
+                                
+                                Text(note.displayAuthor)
+                                    .foregroundColor(.primary)
+                            }
                             Spacer()
                             DateTimeButton(datetime: note.datetime,
                                            naturalDatetime: note.naturalDatetime)

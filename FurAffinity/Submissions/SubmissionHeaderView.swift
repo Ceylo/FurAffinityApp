@@ -10,7 +10,8 @@ import FAKit
 import URLImage
 
 struct SubmissionHeaderView: View {
-    var author: String
+    var username: String
+    var displayName: String
     var title: String
     var avatarUrl: URL?
     
@@ -27,13 +28,18 @@ struct SubmissionHeaderView: View {
     
     var body: some View {
         HStack {
-            AvatarView(avatarUrl: avatarUrl)
-                .frame(width: 32, height: 32)
+            OptionalLink(destination: inAppUserUrl(for: username)) {
+                AvatarView(avatarUrl: avatarUrl)
+                    .frame(width: 32, height: 32)
+            }
             
             VStack(alignment: .leading) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(author)
-                        .font(.headline)
+                    OptionalLink(destination: inAppUserUrl(for: username)) {
+                        Text(displayName)
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                    }
                     Spacer()
                     if let datetime {
                         DateTimeButton(datetime: datetime.datetime,
@@ -51,7 +57,8 @@ struct SubmissionHeaderView: View {
 
 struct SubmissionHeaderView_Previews: PreviewProvider {
     static var previews: some View {
-        SubmissionHeaderView(author: "The Author", title: "Great Content",
+        SubmissionHeaderView(username: "author",
+                             displayName: "The Author", title: "Great Content",
                              avatarUrl: nil,
                              datetime: .init("Apr 7th, 2022, 11:58 AM",
                                              "8 months ago"))

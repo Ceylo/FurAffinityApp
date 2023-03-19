@@ -16,9 +16,11 @@ struct SubmissionCommentView: View {
     
     var commentView: some View {
         HStack(alignment: .top) {
-            AvatarView(avatarUrl: comment.authorAvatarUrl)
-                .frame(width: 32, height: 32)
-                .padding(.top, 5)
+            OptionalLink(destination: inAppUserUrl(for: comment.author)) {
+                AvatarView(avatarUrl: comment.authorAvatarUrl)
+                    .frame(width: 32, height: 32)
+                    .padding(.top, 5)
+            }
             
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .firstTextBaseline) {

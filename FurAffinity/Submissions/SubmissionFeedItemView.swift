@@ -44,7 +44,8 @@ struct SubmissionFeedItemView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SubmissionHeaderView(author: submission.displayAuthor,
+            SubmissionHeaderView(username: submission.author,
+                                 displayName: submission.displayAuthor,
                                  title: submission.title,
                                  avatarUrl: avatarUrl)
                 .task {

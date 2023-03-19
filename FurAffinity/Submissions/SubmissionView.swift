@@ -29,7 +29,8 @@ struct SubmissionView: View {
     @State private var replySession: ReplySession?
     
     func header(submission: FASubmission) -> some View {
-        SubmissionHeaderView(author: submission.displayAuthor,
+        SubmissionHeaderView(username: submission.author,
+                             displayName: submission.displayAuthor,
                              title: submission.title,
                              avatarUrl: avatarUrl,
                              datetime: .init(submission.datetime,

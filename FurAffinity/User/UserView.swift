@@ -32,11 +32,18 @@ struct UserView: View {
             if let user {
                 VStack(alignment: .leading) {
                     GeometryReader { geometry in
-                        URLImage(user.bannerUrl) { image, info in
+                        URLImage(user.bannerUrl) { progress in
+                            Rectangle()
+                                .foregroundColor(.white.opacity(0.1))
+                        } failure: { error, retry in
+                            Image(systemName: "questionmark")
+                                .resizable()
+                        } content: { image, info in
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                                 .frame(width: geometry.size.width, alignment: .leading)
+                                .transition(.opacity.animation(.default.speed(2)))
                         }
                     }
                     .frame(height: 100)
@@ -57,12 +64,10 @@ struct UserView: View {
                 }
                 .navigationTitle(user.displayName)
                 .navigationBarTitleDisplayMode(.inline)
-            } else {
-                ProgressView()
-                    .task {
-                        await loadUser(forceReload: false)
-                    }
             }
+        }
+        .task {
+            await loadUser(forceReload: false)
         }
         .refreshable {
             Task {
