@@ -127,34 +127,40 @@ open class FASession: Equatable {
         return FANote(page)
     }
     
+    open func user(for username: String) async -> FAUser? {
+        guard let userpageUrl = FAUser.url(for: username),
+              let data = await dataSource.httpData(from: userpageUrl, cookies: cookies),
+              let page = FAUserPage(data: data) else {
+            return nil
+        }
+        return FAUser(page)
+    }
+    
     private let avatarUrlRequestsQueue = DispatchQueue(label: "FASession.AvatarRequests")
     private var avatarUrlTasks = [String: Task<URL?, Swift.Error>]()
     private let avatarUrlsCache: Storage<String, URL>
-    open func avatarUrl(for user: String) async -> URL? {
+    open func avatarUrl(for username: String) async -> URL? {
         let task = avatarUrlRequestsQueue.sync { () -> Task<URL?, Swift.Error> in
-            let previousTask = avatarUrlTasks[user]
+            let previousTask = avatarUrlTasks[username]
             let newTask = Task { () -> URL? in
                 _ = await previousTask?.result
                 try avatarUrlsCache.removeExpiredObjects()
                 
-                if let url = try? avatarUrlsCache.object(forKey: user) {
+                if let url = try? avatarUrlsCache.object(forKey: username) {
                     return url
                 }
                 
-                guard let userpageUrl = FAUserPage.url(for: user),
-                      let data = await dataSource.httpData(from: userpageUrl, cookies: cookies),
-                      let page = FAUserPage(data: data),
-                      let avatarUrl = page.avatarUrl
+                guard let user = await user(for: username)
                 else { return nil }
                 
                 let validDays = (7..<14).randomElement()!
                 let expiry = Expiry.days(validDays)
-                try avatarUrlsCache.setObject(avatarUrl, forKey: user, expiry: expiry)
-                logger.info("Cached url \(avatarUrl, privacy: .public) for user \(user, privacy: .public) for \(validDays) days")
-                return avatarUrl
+                try avatarUrlsCache.setObject(user.avatarUrl, forKey: username, expiry: expiry)
+                logger.info("Cached url \(user.avatarUrl, privacy: .public) for user \(username, privacy: .public) for \(validDays) days")
+                return user.avatarUrl
             }
             
-            avatarUrlTasks[user] = newTask
+            avatarUrlTasks[username] = newTask
             return newTask
             
         }

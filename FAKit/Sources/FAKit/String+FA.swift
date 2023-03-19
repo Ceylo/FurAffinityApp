@@ -9,7 +9,13 @@ import Foundation
 import UIKit
 
 extension String {
-    var selfContainedFAHtml: String {
+    private var fixingLinks: String {
+        self.replacingOccurrences(of: "href=\"/", with: "href=\"https://www.furaffinity.net/")
+            .replacingOccurrences(of: "src=\"//", with: "src=\"https://")
+            .replacingOccurrences(of: "src=\"/", with: "src=\"https://www.furaffinity.net/")
+    }
+    
+    public var selfContainedFAHtmlSubmission: String {
         let htmlPrefix = """
         <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
         <html lang="en" class="no-js" xmlns="http://www.w3.org/1999/xhtml">
@@ -24,9 +30,7 @@ extension String {
         """
         let htmlSuffix = "</div></div></body></html>"
         return (htmlPrefix + self + htmlSuffix)
-            .replacingOccurrences(of: "href=\"/", with: "href=\"https://www.furaffinity.net/")
-            .replacingOccurrences(of: "src=\"//", with: "src=\"https://")
-            .replacingOccurrences(of: "src=\"/", with: "src=\"https://www.furaffinity.net/")
+            .fixingLinks
     }
     
     public var selfContainedFAHtmlComment: String {
@@ -39,8 +43,10 @@ extension String {
     </head>
     <body>\(self)</body>
 </html>
-"""
+""".fixingLinks
     }
+    
+    public var selfContainedFAHtmlUserDescription: String { selfContainedFAHtmlComment }
 
     enum FATheme {
         case light

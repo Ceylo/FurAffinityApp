@@ -65,7 +65,7 @@ struct SubmissionView: View {
                     }
                 )
                 
-                if let description = description {
+                if let description {
                     TextView(text: description, initialHeight: 300)
                 }
                 

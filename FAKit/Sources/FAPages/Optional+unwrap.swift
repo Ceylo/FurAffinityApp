@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension Optional {
+public extension Optional {
     enum Error: Swift.Error {
         case empty(String)
     }

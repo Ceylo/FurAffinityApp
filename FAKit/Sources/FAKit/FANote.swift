@@ -24,7 +24,7 @@ public struct FANote: Equatable {
         self.title = title
         self.datetime = datetime
         self.naturalDatetime = naturalDatetime
-        self.htmlMessage = htmlMessage.selfContainedFAHtml
+        self.htmlMessage = htmlMessage.selfContainedFAHtmlSubmission
         self.answerKey = answerKey
     }
 }

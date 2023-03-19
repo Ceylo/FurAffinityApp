@@ -9,13 +9,11 @@ import SwiftSoup
 import Foundation
 
 public struct FAUserPage: Equatable {
-    public var userName: String?
-    public var displayName: String?
-    public var avatarUrl: URL?
-    
-    public static func url(for username: String) -> URL? {
-        URL(string: "https://www.furaffinity.net/user/\(username)/")
-    }
+    public let userName: String
+    public let displayName: String
+    public let avatarUrl: URL
+    public let bannerUrl: URL
+    public let htmlDescription: String
 }
 
 extension FAUserPage {
@@ -25,23 +23,38 @@ extension FAUserPage {
         
         do {
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
-            let navHeaderNode = try doc.select("body div#main-window div#site-content userpage-nav-header")
+            let mainWindowNode = try doc.select("body div#main-window")
+            let navHeaderNode = try mainWindowNode.select("div#site-content userpage-nav-header")
             
             let navAvatarNode = try navHeaderNode.select("userpage-nav-avatar a")
             let username = try navAvatarNode
                 .attr("href")
                 .substring(matching: "\\/user\\/(.+)\\/")
+                .unwrap()
             self.userName = username
             
             let displayNameQuery = "userpage-nav-user-details h1 username"
             let displayNameNode = try navHeaderNode.select(displayNameQuery).first().unwrap()
             let rawDisplayName = try displayNameNode.text()
-            let displayName = rawDisplayName.substring(matching: "~(.+)")?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let displayName = try rawDisplayName
+                .substring(matching: "~(.+)").unwrap()
+                .trimmingCharacters(in: .whitespacesAndNewlines)
             self.displayName = displayName
             
             let avatarUrlNode = try navAvatarNode.select("img").attr("src")
-            let avatarUrl = URL(string: "https:" + avatarUrlNode)
-            self.avatarUrl = avatarUrl
+            self.avatarUrl = try URL(string: "https:" + avatarUrlNode).unwrap()
+            
+            let bannerNode = try mainWindowNode.select("div#header a img")
+            let bannerStringUrl = try bannerNode.attr("src")
+            if bannerStringUrl.starts(with: "//") {
+                self.bannerUrl = try URL(string: "https:" + bannerStringUrl).unwrap()
+            } else {
+                self.bannerUrl = FAHomePage.url.appending(path: bannerStringUrl)
+            }
+            
+            let descriptionQuery = "div#site-content div#page-userpage section.userpage-layout-profile div.userpage-layout-profile-container div.userpage-profile"
+            let descriptionNode = try mainWindowNode.select(descriptionQuery)
+            self.htmlDescription = try descriptionNode.html()
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil

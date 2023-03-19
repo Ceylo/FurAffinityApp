@@ -46,7 +46,7 @@ public struct FASubmission: Equatable {
         self.title = title
         self.datetime = datetime
         self.naturalDatetime = naturalDatetime
-        self.htmlDescription = htmlDescription.selfContainedFAHtml
+        self.htmlDescription = htmlDescription.selfContainedFAHtmlSubmission
         self.isFavorite = isFavorite
         self.favoriteUrl = favoriteUrl
         self.comments = comments

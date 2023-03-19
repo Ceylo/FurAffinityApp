@@ -13,10 +13,12 @@ struct LoggedInView: View {
     @State private var selectedTab: Tab = .submissions
     @State private var submissionsNavigationStack = NavigationPath()
     @State private var notesNavigationStack = NavigationPath()
+    @State private var userpageNavigationStack = NavigationPath()
 
     enum Tab {
         case submissions
         case notes
+        case userpage
         case settings
     }
     
@@ -39,6 +41,14 @@ struct LoggedInView: View {
                     Label("Notes", systemImage: "message")
                 }
                 .tag(Tab.notes)
+                
+                NavigationStack(path: $userpageNavigationStack) {
+                    CurentUserView(navigationStack: $userpageNavigationStack)
+                }
+                .tabItem {
+                    Label("Profile", systemImage: "person.crop.circle")
+                }
+                .tag(Tab.userpage)
             }
             
             SettingsView()
@@ -58,6 +68,8 @@ struct LoggedInView: View {
                 submissionsNavigationStack.append(match)
             case .notes:
                 notesNavigationStack.append(match)
+            case .userpage:
+                userpageNavigationStack.append(match)
             case .settings:
                 fatalError("Internal inconsistency")
             }
