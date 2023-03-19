@@ -44,12 +44,7 @@ struct NotesView: View {
                 .navigationTitle("Notes")
                 .toolbar(.hidden, for: .navigationBar)
                 .navigationDestination(for: FAURL.self) { nav in
-                    switch nav {
-                    case let .submission(url):
-                        SubmissionView(url: url)
-                    case let .note(url):
-                        NoteView(url: url)
-                    }
+                    view(for: nav)
                 }
                 .swap(when: notes.isEmpty) {
                     VStack(spacing: 10) {

@@ -128,8 +128,14 @@ open class FASession: Equatable {
     }
     
     open func user(for username: String) async -> FAUser? {
-        guard let userpageUrl = FAUser.url(for: username),
-              let data = await dataSource.httpData(from: userpageUrl, cookies: cookies),
+        guard let userpageUrl = FAUser.url(for: username) else {
+            return nil
+        }
+        return await user(for: userpageUrl)
+    }
+    
+    open func user(for url: URL) async -> FAUser? {
+        guard let data = await dataSource.httpData(from: url, cookies: cookies),
               let page = FAUserPage(data: data) else {
             return nil
         }

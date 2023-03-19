@@ -10,7 +10,7 @@ import Foundation
 enum FAURL: Hashable {
     case submission(url: URL)
     case note(url: URL)
-//    case user(url: URL)
+    case user(url: URL)
 }
 
 fileprivate func ~=(regex: Regex<Substring>, str: String) -> Bool {
@@ -30,15 +30,15 @@ extension FAURL {
         // https://www.furaffinity.net/user/xxx
         let submissionRegex = #//view/\d+/#
         let noteRegex = #//msg/pms/\d+/\d+/#
-//        let userRegex = #//user/.+/#
+        let userRegex = #//user/.+/#
         
         switch components.path {
         case submissionRegex:
             self = .submission(url: url)
         case noteRegex:
             self = .note(url: url)
-//        case userRegex:
-//            self = .user(url: url)
+        case userRegex:
+            self = .user(url: url)
         default:
             return nil
         }

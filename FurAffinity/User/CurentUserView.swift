@@ -13,11 +13,20 @@ struct CurentUserView: View {
     @Binding var navigationStack: NavigationPath
     
     var body: some View {
-        if let username = model.session?.username {
-            UserView(username: username)
-        } else {
-            Text("Oops… invalid session")
+        Group {
+            if let username = model.session?.username,
+               let url = FAUser.url(for: username) {
+                NavigationStack(path: $navigationStack) {
+                    UserView(url: url)
+                }
+                .navigationDestination(for: FAURL.self) { nav in
+                    view(for: nav)
+                }
+            } else {
+                Text("Oops… invalid session")
+            }
         }
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 

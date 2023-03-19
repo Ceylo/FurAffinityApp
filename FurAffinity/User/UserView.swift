@@ -10,7 +10,7 @@ import FAKit
 import URLImage
 
 struct UserView: View {
-    var username: String
+    var url: URL
     @EnvironmentObject var model: Model
     @State private var user: FAUser?
     @State private var description: AttributedString?
@@ -19,7 +19,7 @@ struct UserView: View {
         guard let session = model.session else { return }
         guard user == nil || forceReload else { return }
         
-        user = await session.user(for: session.username)
+        user = await session.user(for: url)
         
         if let user {
             description = AttributedString(FAHTML: user.htmlDescription)?
@@ -55,6 +55,8 @@ struct UserView: View {
                     }
                     .padding(.horizontal)
                 }
+                .navigationTitle(user.displayName)
+                .navigationBarTitleDisplayMode(.inline)
             } else {
                 ProgressView()
                     .task {
@@ -67,12 +69,19 @@ struct UserView: View {
                 await loadUser(forceReload: true)
             }
         }
+        .toolbar {
+            ToolbarItem {
+                Link(destination: url) {
+                    Image(systemName: "safari")
+                }
+            }
+        }
     }
 }
 
 struct UserView_Previews: PreviewProvider {
     static var previews: some View {
-        UserView(username: "terriniss")
+        UserView(url: FAUser.url(for: "terriniss")!)
             .environmentObject(Model.demo)
 //            .preferredColorScheme(.dark)
     }

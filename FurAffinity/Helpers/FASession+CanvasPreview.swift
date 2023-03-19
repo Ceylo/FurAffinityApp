@@ -22,6 +22,10 @@ class OfflineFASession: FASession {
         FAUser.demo
     }
     
+    override func user(for url: URL) async -> FAUser? {
+        FAUser.demo
+    }
+    
     override func submissionPreviews() async -> [FASubmissionPreview] { submissionPreviews }
     
     override func submission(for preview: FASubmissionPreview) async -> FASubmission? {
@@ -62,7 +66,7 @@ class OfflineFASession: FASession {
 }
 
 extension OfflineFASession {
-    static let `default` = OfflineFASession(sampleUsername: "Demo User", submissions: [
+    static let `default` = OfflineFASession(sampleUsername: "DemoUser", submissions: [
         .init(sid: 44648356,
               url: URL(string: "https://www.furaffinity.net/view/44648356/")!,
               thumbnailUrl: URL(string: "https://t.furaffinity.net/44648356@200-1637084699.jpg")!,

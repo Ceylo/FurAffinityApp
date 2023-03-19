@@ -65,12 +65,7 @@ struct SubmissionsFeedView: View {
                 }
             }
             .navigationDestination(for: FAURL.self) { nav in
-                switch nav {
-                case let .submission(url):
-                    SubmissionView(url: url)
-                case let .note(url):
-                    NoteView(url: url)
-                }
+                view(for: nav)
             }
             .onChange(of: model.submissionPreviews) { newValue in
                 Task { @MainActor in

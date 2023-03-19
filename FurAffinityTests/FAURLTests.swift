@@ -9,9 +9,14 @@ import XCTest
 @testable import Fur_Affinity
 
 final class FAURLTests: XCTestCase {
-    func testNotMatching() throws {
+    func testNotMatching() {
+        let url = URL(string: "https://www.patreon.com/")!
+        XCTAssertEqual(FAURL(with: url), nil)
+    }
+    
+    func testMatchingUser() {
         let userUrl = URL(string: "https://www.furaffinity.net/user/xyz")!
-        XCTAssertEqual(FAURL(with: userUrl), nil)
+        XCTAssertEqual(FAURL(with: userUrl), .user(url: userUrl))
     }
     
     func testMatchingSubmission() {

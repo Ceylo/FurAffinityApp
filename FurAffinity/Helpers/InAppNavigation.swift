@@ -5,7 +5,7 @@
 //  Created by Ceylo on 17/03/2023.
 //
 
-import Foundation
+import SwiftUI
 
 let appNavigationScheme = "furaffinity-app-navigation"
 
@@ -16,5 +16,17 @@ extension AttributedString {
                 link.value = url.replacingScheme(with: appNavigationScheme)
             }
         }
+    }
+}
+
+@ViewBuilder
+func view(for url: FAURL) -> some View {
+    switch url {
+    case let .submission(url):
+        SubmissionView(url: url)
+    case let .note(url):
+        NoteView(url: url)
+    case let .user(url):
+        UserView(url: url)
     }
 }
