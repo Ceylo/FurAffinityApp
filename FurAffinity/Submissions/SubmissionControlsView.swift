@@ -48,14 +48,6 @@ struct SubmissionControlsView: View {
             }
             .frame(width: buttonsSize, height: buttonsSize)
             
-            Link(destination: submissionUrl) {
-                Image(systemName: "safari")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .padding()
-            }
-            .frame(width: buttonsSize, height: buttonsSize)
-            
             Button {
                 replyAction()
             } label: {

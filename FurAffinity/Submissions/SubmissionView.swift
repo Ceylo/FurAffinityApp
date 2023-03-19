@@ -119,6 +119,13 @@ struct SubmissionView: View {
         .task {
             await loadSubmission(forceReload: false)
         }
+        .toolbar {
+            ToolbarItem {
+                Link(destination: url) {
+                    Image(systemName: "safari")
+                }
+            }
+        }
         .onAppear {
             if activity == nil {
                 let activity = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
