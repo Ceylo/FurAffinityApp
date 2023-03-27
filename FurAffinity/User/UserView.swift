@@ -12,6 +12,7 @@ import URLImage
 struct UserView: View {
     var url: URL
     @EnvironmentObject var model: Model
+    @State private var loadingFailed = false
     @State private var user: FAUser?
     @State private var description: AttributedString?
     private let bannerHeight = 100.0
@@ -26,48 +27,55 @@ struct UserView: View {
             description = AttributedString(FAHTML: user.htmlDescription)?
                 .convertingLinksForInAppNavigation()
         }
+        loadingFailed = user == nil
+    }
+    
+    func view(for user: FAUser) -> some View {
+        VStack(alignment: .leading) {
+            GeometryReader { geometry in
+                URLImage(user.bannerUrl) { progress in
+                    Rectangle()
+                        .foregroundColor(.white.opacity(0.1))
+                } failure: { error, retry in
+                    Image(systemName: "questionmark")
+                        .resizable()
+                } content: { image, info in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geometry.size.width,
+                               height: bannerHeight,
+                               alignment: .leading)
+                        .clipped()
+                        .transition(.opacity.animation(.default.speed(2)))
+                }
+            }
+            .frame(height: bannerHeight)
+            
+            VStack(alignment: .leading) {
+                HStack {
+                    AvatarView(avatarUrl: user.avatarUrl)
+                        .frame(width: 32, height: 32)
+                    Text(user.displayName)
+                        .font(.title)
+                }
+                
+                if let description {
+                    TextView(text: description, initialHeight: 300)
+                }
+            }
+            .padding(.horizontal)
+        }
+        .navigationTitle(user.displayName)
+        .navigationBarTitleDisplayMode(.inline)
     }
     
     var body: some View {
         ScrollView {
             if let user {
-                VStack(alignment: .leading) {
-                    GeometryReader { geometry in
-                        URLImage(user.bannerUrl) { progress in
-                            Rectangle()
-                                .foregroundColor(.white.opacity(0.1))
-                        } failure: { error, retry in
-                            Image(systemName: "questionmark")
-                                .resizable()
-                        } content: { image, info in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: geometry.size.width,
-                                       height: bannerHeight,
-                                       alignment: .leading)
-                                .clipped()
-                                .transition(.opacity.animation(.default.speed(2)))
-                        }
-                    }
-                    .frame(height: bannerHeight)
-                    
-                    VStack(alignment: .leading) {
-                        HStack {
-                            AvatarView(avatarUrl: user.avatarUrl)
-                                .frame(width: 32, height: 32)
-                            Text(user.displayName)
-                                .font(.title)
-                        }
-                        
-                        if let description {
-                            TextView(text: description, initialHeight: 300)
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-                .navigationTitle(user.displayName)
-                .navigationBarTitleDisplayMode(.inline)
+                view(for: user)
+            } else if loadingFailed {
+                LoadingFailedView(url: url)
             }
         }
         .task {
