@@ -113,7 +113,7 @@ struct SubmissionView: View {
             if let submission = submission {
                 loadingSucceededView(submission)
             } else if submissionLoadingFailed {
-                SubmissionLoadingFailedView(url: url)
+                LoadingFailedView(url: url)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
