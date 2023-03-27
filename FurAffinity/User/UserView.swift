@@ -14,6 +14,7 @@ struct UserView: View {
     @EnvironmentObject var model: Model
     @State private var user: FAUser?
     @State private var description: AttributedString?
+    private let bannerHeight = 100.0
     
     private func loadUser(forceReload: Bool) async {
         guard let session = model.session else { return }
@@ -42,11 +43,14 @@ struct UserView: View {
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                                .frame(width: geometry.size.width, alignment: .leading)
+                                .frame(width: geometry.size.width,
+                                       height: bannerHeight,
+                                       alignment: .leading)
+                                .clipped()
                                 .transition(.opacity.animation(.default.speed(2)))
                         }
                     }
-                    .frame(height: 100)
+                    .frame(height: bannerHeight)
                     
                     VStack(alignment: .leading) {
                         HStack {
