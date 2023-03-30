@@ -2,143 +2,71 @@
 //  SubmissionView.swift
 //  FurAffinity
 //
-//  Created by Ceylo on 21/11/2021.
+//  Created by Ceylo on 30/03/2023.
 //
 
 import SwiftUI
-import URLImage
 import FAKit
-import Foundation
-import Zoomable
 
 struct SubmissionView: View {
-    @EnvironmentObject var model: Model
-    
-    var url: URL
-    @State private var avatarUrl: URL?
-    @State private var submission: FASubmission?
-    @State private var submissionLoadingFailed = false
-    @State private var fullResolutionCGImage: CGImage?
-    @State private var description: AttributedString?
-    @State private var activity: NSUserActivity?
+    var submission: FASubmission
+    var avatarUrl: URL?
+    var description: AttributedString?
+    var favoriteAction: () -> Void
+    var replyAction: (_ parentCid: Int?, _ text: String) -> Void
     
     struct ReplySession {
-        let submission: FASubmission
         let parentCid: Int?
     }
     @State private var replySession: ReplySession?
+    @State private var fullResolutionCGImage: CGImage?
     
-    func header(submission: FASubmission) -> some View {
-        SubmissionHeaderView(username: submission.author,
-                             displayName: submission.displayAuthor,
-                             title: submission.title,
-                             avatarUrl: avatarUrl,
-                             datetime: .init(submission.datetime,
-                                             submission.naturalDatetime))
-            .task {
-                avatarUrl = await model.session?.avatarUrl(for: submission.author)
-            }
+    var header: some View {
+        SubmissionHeaderView(
+            username: submission.author,
+            displayName: submission.displayAuthor,
+            title: submission.title,
+            avatarUrl: avatarUrl,
+            datetime: .init(submission.datetime,
+                            submission.naturalDatetime)
+        )
     }
     
-    func loadingSucceededView(_ submission: FASubmission) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 10) {
-                header(submission: submission)
-                SubmissionMainImage(
-                    widthOnHeightRatio: submission.widthOnHeightRatio,
-                    fullResolutionImageUrl: submission.fullResolutionImageUrl,
-                    fullResolutionCGImage: $fullResolutionCGImage
-                )
-                
-                SubmissionControlsView(
-                    submissionUrl: submission.url,
-                    fullResolutionImage: fullResolutionCGImage,
-                    isFavorite: submission.isFavorite,
-                    favoriteAction: {
-                        Task {
-                            self.submission = try await model.toggleFavorite(for: submission)
-                        }
-                    }, replyAction: {
-                        replySession = .init(
-                            submission: submission,
-                            parentCid: nil
-                        )
-                    }
-                )
-                
-                if let description {
-                    TextView(text: description, initialHeight: 300)
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            header
+            SubmissionMainImage(
+                widthOnHeightRatio: submission.widthOnHeightRatio,
+                fullResolutionImageUrl: submission.fullResolutionImageUrl,
+                fullResolutionCGImage: $fullResolutionCGImage
+            )
+            
+            SubmissionControlsView(
+                submissionUrl: submission.url,
+                fullResolutionImage: fullResolutionCGImage,
+                isFavorite: submission.isFavorite,
+                favoriteAction: favoriteAction,
+                replyAction: {
+                    replySession = .init(parentCid: nil)
                 }
-                
-                SubmissionCommentsView(
-                    comments: submission.comments,
-                    replyAction: { cid in
-                        replySession = .init(
-                            submission: submission,
-                            parentCid: cid
-                        )
-                    }
-                )
+            )
+            
+            if let description {
+                TextView(text: description, initialHeight: 300)
             }
-            .padding(10)
+            
+            SubmissionCommentsView(
+                comments: submission.comments,
+                replyAction: { cid in
+                    replySession = .init(parentCid: cid)
+                }
+            )
         }
-        .refreshable {
-            Task {
-                await loadSubmission(forceReload: true)
-            }
-        }
+        .padding(10)
         .sheet(isPresented: showCommentEditor) {
             commentEditor
         }
         .navigationTitle(submission.title)
-    }
-    
-    private func loadSubmission(forceReload: Bool) async {
-        guard submission == nil || forceReload else {
-            return
-        }
-        
-        submission = await model.session?.submission(for: url)
-        if let submission = submission {
-            description = AttributedString(FAHTML: submission.htmlDescription)?
-                .convertingLinksForInAppNavigation()
-            submissionLoadingFailed = false
-        } else {
-            submissionLoadingFailed = true
-        }
-    }
-    
-    var body: some View {
-        ZStack {
-            if let submission = submission {
-                loadingSucceededView(submission)
-            } else if submissionLoadingFailed {
-                LoadingFailedView(url: url)
-            }
-        }
-        .navigationBarTitleDisplayMode(.inline)
-        .task {
-            await loadSubmission(forceReload: false)
-        }
-        .toolbar {
-            ToolbarItem {
-                Link(destination: url) {
-                    Image(systemName: "safari")
-                }
-            }
-        }
-        .onAppear {
-            if activity == nil {
-                let activity = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
-                activity.webpageURL = url
-                self.activity = activity
-            }
-            
-            activity?.becomeCurrent()
-        }
-        .onDisappear {
-            activity?.resignCurrent()
-        }
     }
 }
 
@@ -163,12 +91,7 @@ extension SubmissionView {
         
         return CommentEditor { text in
             if let text {
-                Task {
-                    self.submission = try await model
-                        .postComment(on: replySession.submission,
-                                     replytoCid: replySession.parentCid,
-                                     contents: text)
-                }
+                replyAction(replySession.parentCid, text)
             }
             self.replySession = nil
         }
@@ -177,8 +100,12 @@ extension SubmissionView {
 
 struct SubmissionView_Previews: PreviewProvider {
     static var previews: some View {
-        SubmissionView(url: FASubmissionPreview.demo.url)
-            .preferredColorScheme(.dark)
-            .environmentObject(Model.demo)
+        ScrollView {
+            SubmissionView(
+                submission: FASubmission.demo,
+                favoriteAction: {},
+                replyAction: { parentCid,text in }
+            )
+        }
     }
 }

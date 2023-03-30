@@ -38,7 +38,7 @@ func inAppUserUrl(for username: String) -> URL? {
 func view(for url: FAURL) -> some View {
     switch url {
     case let .submission(url):
-        SubmissionView(url: url)
+        RemoteSubmissionView(url: url)
     case let .note(url):
         NoteView(url: url)
     case let .user(url):
