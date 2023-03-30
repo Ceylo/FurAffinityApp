@@ -17,7 +17,7 @@ struct CurentUserView: View {
             if let username = model.session?.username,
                let url = FAUser.url(for: username) {
                 NavigationStack(path: $navigationStack) {
-                    UserView(url: url)
+                    RemoteUserView(url: url)
                 }
                 .navigationDestination(for: FAURL.self) { nav in
                     view(for: nav)

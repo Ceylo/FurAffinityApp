@@ -42,6 +42,6 @@ func view(for url: FAURL) -> some View {
     case let .note(url):
         NoteView(url: url)
     case let .user(url):
-        UserView(url: url)
+        RemoteUserView(url: url)
     }
 }
