@@ -12,14 +12,13 @@ import UIKit
 
 struct SubmissionsFeedView: View {
     @EnvironmentObject var model: Model
-    @Binding var navigationStack: NavigationPath
     @State private var newSubmissionsCount: Int?
     @State private var scrollView: UIScrollView?
     @State private var targetScrollItemSid: Int?
     
     var body: some View {
         ScrollViewReader { proxy in
-            NavigationStack(path: $navigationStack) {
+            Group {
                 if let previews = model.submissionPreviews {
                     List(previews) { submission in
                         NavigationLink(value: FAURL(with: submission.url)) {
@@ -63,9 +62,6 @@ struct SubmissionsFeedView: View {
                         .padding()
                     }
                 }
-            }
-            .navigationDestination(for: FAURL.self) { nav in
-                view(for: nav)
             }
             .onChange(of: model.submissionPreviews) { newValue in
                 Task { @MainActor in

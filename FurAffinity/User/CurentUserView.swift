@@ -10,18 +10,12 @@ import FAKit
 
 struct CurentUserView: View {
     @EnvironmentObject var model: Model
-    @Binding var navigationStack: NavigationPath
     
     var body: some View {
         Group {
             if let username = model.session?.username,
                let url = FAUser.url(for: username) {
-                NavigationStack(path: $navigationStack) {
-                    RemoteUserView(url: url)
-                }
-                .navigationDestination(for: FAURL.self) { nav in
-                    view(for: nav)
-                }
+                RemoteUserView(url: url)
             } else {
                 Text("Oops… invalid session")
             }
@@ -33,7 +27,7 @@ struct CurentUserView: View {
 
 struct CurentUserView_Previews: PreviewProvider {
     static var previews: some View {
-        CurentUserView(navigationStack: .constant(.init()))
+        CurentUserView()
             .environmentObject(Model.demo)
     }
 }

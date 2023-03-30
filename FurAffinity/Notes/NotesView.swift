@@ -12,7 +12,6 @@ extension FANotePreview: Identifiable {}
 
 struct NotesView: View {
     @EnvironmentObject var model: Model
-    @Binding var navigationStack: NavigationPath
     
     func refresh() async {
         await model.fetchNewNotePreviews()
@@ -30,7 +29,7 @@ struct NotesView: View {
     }
     
     var body: some View {
-        NavigationStack(path: $navigationStack) {
+        Group {
             if let notes = model.notePreviews {
                 List(notes) { preview in
                     HStack {
@@ -43,9 +42,6 @@ struct NotesView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .navigationTitle("Notes")
                 .toolbar(.hidden, for: .navigationBar)
-                .navigationDestination(for: FAURL.self) { nav in
-                    view(for: nav)
-                }
                 .swap(when: notes.isEmpty) {
                     VStack(spacing: 10) {
                         Text("It's a bit empty in here.")
@@ -70,10 +66,10 @@ struct NotesView: View {
 struct NotesView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            NotesView(navigationStack: .constant(.init()))
+            NotesView()
                 .environmentObject(Model.demo)
             
-            NotesView(navigationStack: .constant(.init()))
+            NotesView()
                 .environmentObject(Model.empty)
         }
         .preferredColorScheme(.dark)

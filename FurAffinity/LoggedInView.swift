@@ -26,7 +26,10 @@ struct LoggedInView: View {
         TabView(selection: $selectedTab) {
             if model.session != nil {
                 NavigationStack(path: $submissionsNavigationStack) {
-                    SubmissionsFeedView(navigationStack: $submissionsNavigationStack)
+                    SubmissionsFeedView()
+                        .navigationDestination(for: FAURL.self) { nav in
+                            view(for: nav)
+                        }
                 }
                 .tabItem {
                     Label("Submissions", systemImage: "rectangle.grid.2x2")
@@ -34,7 +37,10 @@ struct LoggedInView: View {
                 .tag(Tab.submissions)
                 
                 NavigationStack(path: $notesNavigationStack) {
-                    NotesView(navigationStack: $notesNavigationStack)
+                    NotesView()
+                        .navigationDestination(for: FAURL.self) { nav in
+                            view(for: nav)
+                        }
                 }
                 .badge(model.unreadNoteCount)
                 .tabItem {
@@ -43,7 +49,10 @@ struct LoggedInView: View {
                 .tag(Tab.notes)
                 
                 NavigationStack(path: $userpageNavigationStack) {
-                    CurentUserView(navigationStack: $userpageNavigationStack)
+                    CurentUserView()
+                        .navigationDestination(for: FAURL.self) { nav in
+                            view(for: nav)
+                        }
                 }
                 .tabItem {
                     Label("Profile", systemImage: "person.crop.circle")
