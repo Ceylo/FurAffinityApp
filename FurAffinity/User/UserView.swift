@@ -52,7 +52,6 @@ struct UserView: View {
             .padding(.horizontal)
         }
         .navigationTitle(user.displayName)
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

@@ -27,6 +27,7 @@ struct CurentUserView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
