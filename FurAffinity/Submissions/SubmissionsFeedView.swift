@@ -119,9 +119,9 @@ extension SubmissionsFeedView {
 struct SubmissionsFeedView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            SubmissionsFeedView(navigationStack: .constant(NavigationPath()))
+            SubmissionsFeedView()
                 .environmentObject(Model.demo)
-            SubmissionsFeedView(navigationStack: .constant(NavigationPath()))
+            SubmissionsFeedView()
                 .environmentObject(Model.empty)
         }
         .preferredColorScheme(.dark)
