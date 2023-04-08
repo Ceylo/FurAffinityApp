@@ -54,7 +54,8 @@ struct SubmissionCommentView: View {
             replyAction(comment.cid)
         }
         .task {
-            htmlMessage = AttributedString(FAHTML: comment.htmlMessage)
+            htmlMessage = AttributedString(FAHTML: comment.htmlMessage)?
+                .convertingLinksForInAppNavigation()
         }
     }
 }
