@@ -36,19 +36,7 @@ extension FANotesPage {
             
             let notesQuery = notesContainerQuery + " div.note-list-container"
             let noteNodes = try doc.select(notesQuery)
-            
-            self.noteHeaders = try await withThrowingTaskGroup(of: (Int, NoteHeader).self) { group in
-                for (offset, node) in noteNodes.enumerated() {
-                    group.addTask {
-                        (offset, try NoteHeader(node))
-                    }
-                }
-                
-                return try await group
-                    .reduce(into: [NoteHeader?](repeating: nil, count: noteNodes.count),
-                            { $0[$1.0] = $1.1})
-                as! [NoteHeader]
-            }
+            self.noteHeaders = try await noteNodes.parallelMap { try NoteHeader($0) }            
         } catch {
             logger.error("Decoding failure in \(#file, privacy: .public): \(error, privacy: .public)")
             return nil

@@ -47,18 +47,7 @@ extension FASubmissionsPage {
             let itemsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div#messages-comments-submission div#messagecenter-submissions section figure"
             let items = try doc.select(itemsQuery).array()
             
-            async let submissions = withThrowingTaskGroup(of: (Int, Submission?).self) { group in
-                for (offset, item) in items.enumerated() {
-                    group.addTask {
-                        (offset, Submission(item))
-                    }
-                }
-                
-                return try await group
-                    .reduce(into: [Submission?](repeating: nil, count: items.count),
-                            { $0[$1.0] = $1.1})
-            }
-            
+            async let submissions = items.parallelMap { Submission($0) }
             let buttonsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div.aligncenter a"
             let buttonItems = try doc.select(buttonsQuery).array()
             let prevButton = try buttonItems.first { try $0.text().starts(with: "Prev") }
@@ -78,7 +67,7 @@ extension FASubmissionsPage {
                 self.nextPageUrl = nil
             }
             
-            self.submissions = try await submissions
+            self.submissions = await submissions
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil
