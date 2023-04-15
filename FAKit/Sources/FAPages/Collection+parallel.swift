@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  Collection+parallel.swift
 //  
 //
 //  Created by Ceylo on 15/04/2023.
