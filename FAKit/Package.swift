@@ -12,7 +12,7 @@ let package = Package(
             targets: ["FAKit"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.3.3"),
+        .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.5.3"),
         .package(url: "https://github.com/hyperoslo/Cache.git", from: "6.0.0"),
         .package(url: "https://github.com/davecom/SwiftGraph.git", from: "3.1.0"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.0.4"),
