@@ -28,4 +28,9 @@ final class FAURLTests: XCTestCase {
         let noteUrl = URL(string: "https://www.furaffinity.net/msg/pms/1/234/#message")!
         XCTAssertEqual(FAURL(with: noteUrl), .note(url: noteUrl))
     }
+    
+    func testMatchingJournal() {
+        let journalUrl = URL(string: "https://www.furaffinity.net/journal/10516170/")!
+        XCTAssertEqual(FAURL(with: journalUrl), .journal(url: journalUrl))
+    }
 }

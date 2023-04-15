@@ -11,10 +11,15 @@ import FAKit
 class OfflineFASession: FASession {
     let submissionPreviews: [FASubmissionPreview]
     let notePreviews: [FANotePreview]
+    let notificationPreviews: [FANotificationPreview]
     
-    public init(sampleUsername: String, submissions: [FASubmissionPreview] = [], notes: [FANotePreview] = []) {
+    public init(sampleUsername: String,
+                submissions: [FASubmissionPreview],
+                notes: [FANotePreview],
+                notifications: [FANotificationPreview]) {
         self.submissionPreviews = submissions
         self.notePreviews = notes
+        self.notificationPreviews = notifications
         super.init(username: sampleUsername, displayUsername: sampleUsername, cookies: [], dataSource: URLSession.sharedForFARequests)
     }
     
@@ -58,6 +63,10 @@ class OfflineFASession: FASession {
     
     override func note(for url: URL) async -> FANote? {
         FANote.demo
+    }
+    
+    override func notificationPreviews() async -> [FANotificationPreview] {
+        notificationPreviews
     }
     
     override func avatarUrl(for user: String) async -> URL? {
@@ -109,9 +118,35 @@ extension OfflineFASession {
         .init(id: 129953262, author: "someuser", displayAuthor: "SomeUser", title: "Title with some spéciäl çhãrāčtęrs",
               datetime: "Apr 7, 2022 11:58AM", naturalDatetime: "an hour ago", unread: false,
               noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953262/#message")!)
+    ], notifications: [
+        .journal(
+            .init(id: 10526001, author: "holt-odium", displayAuthor: "Holt-Odium", title: "📝 3 Slots are available",
+              datetime: "on Apr 14, 2023 08:23 PM", naturalDatetime: "18 hours ago",
+              journalUrl: URL(string: "https://www.furaffinity.net/journal/10526001/")!)
+        ),
+        .journal(
+            .init(id: 10521084, author: "holt-odium", displayAuthor: "Holt-Odium", title: "Sketch commission are open (115$)",
+              datetime: "on Apr 8, 2023 07:00 PM", naturalDatetime: "a week ago",
+              journalUrl: URL(string: "https://www.furaffinity.net/journal/10521084/")!)
+        ),
+        .journal(
+            .init(id: 10516170, author: "rudragon", displayAuthor: "RUdragon", title: "UPGRADES ARE OPEN!!! 5",
+              datetime: "on Apr 2, 2023 11:59 PM", naturalDatetime: "12 days ago",
+              journalUrl: URL(string: "https://www.furaffinity.net/journal/10516170/")!)
+        ),
+        .journal(
+            .init(id: 10512063, author: "ishiru", displayAuthor: "Ishiru", title: "30 minutes before end of auction",
+              datetime: "on Mar 29, 2023 03:33 PM", naturalDatetime: "17 days ago",
+              journalUrl: URL(string: "https://www.furaffinity.net/journal/10512063/")!)
+        ),
+        .journal(
+            .init(id: 10511753, author: "ishiru", displayAuthor: "Ishiru", title: "one day left",
+              datetime: "on Mar 29, 2023 07:42 AM", naturalDatetime: "17 days ago",
+              journalUrl: URL(string: "https://www.furaffinity.net/journal/10511753/")!)
+        ),
     ])
     
-    static let empty = OfflineFASession(sampleUsername: "Demo User", submissions: [])
+    static let empty = OfflineFASession(sampleUsername: "Demo User", submissions: [], notes: [], notifications: [])
 }
 
 extension Model {

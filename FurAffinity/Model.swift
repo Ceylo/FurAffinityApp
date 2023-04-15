@@ -40,6 +40,13 @@ class Model: ObservableObject {
     @Published
     private (set) var unreadNoteCount = 0
     private (set) var lastNotePreviewsFetchDate: Date?
+
+    @Published
+    /// nil until a fetch actually happened
+    /// After a fetch it contains all found notifications, or an empty array if none was found
+    private (set) var notificationPreviews: [FANotificationPreview]?
+    @Published
+    private (set) var lastNotificationPreviewsFetchDate: Date?
     
     @Published
     private (set) var appInfo = AppInformation()
@@ -52,6 +59,8 @@ class Model: ObservableObject {
             self.objectWillChange.send()
         }
         .store(in: &subscriptions)
+        
+        processNewSession()
     }
     
     func fetchNewSubmissionPreviews() async -> Int {
@@ -109,6 +118,17 @@ class Model: ObservableObject {
         lastNotePreviewsFetchDate = Date()
     }
     
+    func fetchNotificationPreviews() async {
+        guard let session else {
+            logger.error("Tried to fetch notifications with no active session, skipping")
+            return
+        }
+        
+        let fetched = await session.notificationPreviews()
+        notificationPreviews = fetched
+        lastNotificationPreviewsFetchDate = Date()
+    }
+    
     func toggleFavorite(for submission: FASubmission) async throws -> FASubmission? {
         guard let session else {
             throw ModelError.disconnected
@@ -138,12 +158,15 @@ class Model: ObservableObject {
             lastNotePreviewsFetchDate = nil
             notePreviews = nil
             unreadNoteCount = 0
+            notificationPreviews = nil
+            lastNotificationPreviewsFetchDate = nil
             return
         }
         
         Task {
             _ = await fetchNewSubmissionPreviews()
             await fetchNewNotePreviews()
+            await fetchNotificationPreviews()
             updateAppInfoIfNeeded()
         }
     }

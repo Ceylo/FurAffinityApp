@@ -13,11 +13,13 @@ struct LoggedInView: View {
     @State private var selectedTab: Tab = .submissions
     @State private var submissionsNavigationStack = NavigationPath()
     @State private var notesNavigationStack = NavigationPath()
+    @State private var notificationsNavigationStack = NavigationPath()
     @State private var userpageNavigationStack = NavigationPath()
 
     enum Tab {
         case submissions
         case notes
+        case notifications
         case userpage
         case settings
     }
@@ -48,6 +50,17 @@ struct LoggedInView: View {
                 }
                 .tag(Tab.notes)
                 
+                NavigationStack(path: $notificationsNavigationStack) {
+                    RemoteNotificationsView()
+                        .navigationDestination(for: FAURL.self) { nav in
+                            view(for: nav)
+                        }
+                }
+                .tabItem {
+                    Label("Notifications", systemImage: "bell")
+                }
+                .tag(Tab.notifications)
+                
                 NavigationStack(path: $userpageNavigationStack) {
                     CurentUserView()
                         .navigationDestination(for: FAURL.self) { nav in
@@ -77,6 +90,8 @@ struct LoggedInView: View {
                 submissionsNavigationStack.append(match)
             case .notes:
                 notesNavigationStack.append(match)
+            case .notifications:
+                notificationsNavigationStack.append(match)
             case .userpage:
                 userpageNavigationStack.append(match)
             case .settings:

@@ -52,6 +52,8 @@ struct NotesView: View {
                     }
                     .padding()
                 }
+            } else {
+                ProgressView()
             }
         }
         .refreshable {

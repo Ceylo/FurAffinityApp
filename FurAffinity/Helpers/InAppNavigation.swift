@@ -41,6 +41,8 @@ func view(for url: FAURL) -> some View {
         RemoteSubmissionView(url: url)
     case let .note(url):
         NoteView(url: url)
+    case let .journal(url):
+        Text(url.description)
     case let .user(url):
         RemoteUserView(url: url)
     }

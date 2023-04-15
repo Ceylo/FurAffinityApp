@@ -17,6 +17,7 @@
 		8733DDFB28F75B1A00CD8BCF /* Logs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8733DDFA28F75B1A00CD8BCF /* Logs.swift */; };
 		8733DDFD28F75C1200CD8BCF /* Sharing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8733DDFC28F75C1200CD8BCF /* Sharing.swift */; };
 		8733DDFF28FAD58D00CD8BCF /* SwapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8733DDFE28FAD58D00CD8BCF /* SwapView.swift */; };
+		873B2D1929EB2A0F00FA5F58 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873B2D1829EB2A0F00FA5F58 /* NotificationsView.swift */; };
 		873E65F027528FC6009C8767 /* SubmissionControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E65EF27528FC6009C8767 /* SubmissionControlsView.swift */; };
 		873E65F227529866009C8767 /* SaveButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E65F127529866009C8767 /* SaveButton.swift */; };
 		873E66112752AAB2009C8767 /* ImageSaveHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E66102752AAB2009C8767 /* ImageSaveHandler.swift */; };
@@ -56,6 +57,8 @@
 		87E0E2B82801D967005207A8 /* NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B72801D967005207A8 /* NotesView.swift */; };
 		87E0E2BA2801DCDB005207A8 /* NoteItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B92801DCDB005207A8 /* NoteItemView.swift */; };
 		87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */; };
+		87EAA2DB29EB4F1800677446 /* RemoteNotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87EAA2DA29EB4F1800677446 /* RemoteNotificationsView.swift */; };
+		87EAA2DD29EB4F3700677446 /* JournalNotificationItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87EAA2DC29EB4F3700677446 /* JournalNotificationItemView.swift */; };
 		87F5EE8F29C5D9DD00649C5B /* DateTimeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */; };
 		87F8FA342761347200CDD985 /* SubmissionHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA332761347200CDD985 /* SubmissionHeaderView.swift */; };
 		87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA3527613DD900CDD985 /* Extensions.swift */; };
@@ -87,6 +90,7 @@
 		8733DDFA28F75B1A00CD8BCF /* Logs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logs.swift; sourceTree = "<group>"; };
 		8733DDFC28F75C1200CD8BCF /* Sharing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sharing.swift; sourceTree = "<group>"; };
 		8733DDFE28FAD58D00CD8BCF /* SwapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwapView.swift; sourceTree = "<group>"; };
+		873B2D1829EB2A0F00FA5F58 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		873E65EF27528FC6009C8767 /* SubmissionControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionControlsView.swift; sourceTree = "<group>"; };
 		873E65F127529866009C8767 /* SaveButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveButton.swift; sourceTree = "<group>"; };
 		873E66102752AAB2009C8767 /* ImageSaveHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageSaveHandler.swift; sourceTree = "<group>"; };
@@ -122,6 +126,8 @@
 		87E0E2B72801D967005207A8 /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
 		87E0E2B92801DCDB005207A8 /* NoteItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteItemView.swift; sourceTree = "<group>"; };
 		87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOverlay.swift; sourceTree = "<group>"; };
+		87EAA2DA29EB4F1800677446 /* RemoteNotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteNotificationsView.swift; sourceTree = "<group>"; };
+		87EAA2DC29EB4F3700677446 /* JournalNotificationItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalNotificationItemView.swift; sourceTree = "<group>"; };
 		87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateTimeButton.swift; sourceTree = "<group>"; };
 		87F8FA332761347200CDD985 /* SubmissionHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionHeaderView.swift; sourceTree = "<group>"; };
 		87F8FA3527613DD900CDD985 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
@@ -191,6 +197,7 @@
 				87A4CA8B2756D17C009AA219 /* Helper Views */,
 				875DD46B2843D0AC00F3E5D9 /* Submissions */,
 				875DD46C2843D0B800F3E5D9 /* Notes */,
+				873B2D1729EB26DC00FA5F58 /* Notifications */,
 				87A9C33F29C788230001D1D6 /* User */,
 				875DD46D2843D15D00F3E5D9 /* Settings */,
 				8716E7EF271C659D00C0BC4A /* Assets.xcassets */,
@@ -205,6 +212,16 @@
 				8716E7F2271C659D00C0BC4A /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		873B2D1729EB26DC00FA5F58 /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+				87EAA2DA29EB4F1800677446 /* RemoteNotificationsView.swift */,
+				873B2D1829EB2A0F00FA5F58 /* NotificationsView.swift */,
+				87EAA2DC29EB4F3700677446 /* JournalNotificationItemView.swift */,
+			);
+			path = Notifications;
 			sourceTree = "<group>";
 		};
 		875DD46B2843D0AC00F3E5D9 /* Submissions */ = {
@@ -430,6 +447,7 @@
 				87E0E2B82801D967005207A8 /* NotesView.swift in Sources */,
 				87A185A22745A8A100B10D2A /* CenteredView.swift in Sources */,
 				8799FAE22741672E0068A049 /* SubmissionFeedItemView.swift in Sources */,
+				87EAA2DD29EB4F3700677446 /* JournalNotificationItemView.swift in Sources */,
 				87E0E2BA2801DCDB005207A8 /* NoteItemView.swift in Sources */,
 				8766005A290568DB00C7A998 /* SubmissionCommentView.swift in Sources */,
 				8716E7EE271C659C00C0BC4A /* HomeView.swift in Sources */,
@@ -442,6 +460,7 @@
 				87815AC728D63F9B005AD03E /* View+Introspection.swift in Sources */,
 				87292E45297DD3FB00BE39B8 /* LoadingFailedView.swift in Sources */,
 				87F5EE8F29C5D9DD00649C5B /* DateTimeButton.swift in Sources */,
+				87EAA2DB29EB4F1800677446 /* RemoteNotificationsView.swift in Sources */,
 				8733DDFB28F75B1A00CD8BCF /* Logs.swift in Sources */,
 				878B0B912970B18C00A08685 /* Secrets.swift in Sources */,
 				873E65F027528FC6009C8767 /* SubmissionControlsView.swift in Sources */,
@@ -449,6 +468,7 @@
 				873E66112752AAB2009C8767 /* ImageSaveHandler.swift in Sources */,
 				877226B327402F9300245DF0 /* LoggedInView.swift in Sources */,
 				877929D02744386E003AE828 /* FASession+CanvasPreview.swift in Sources */,
+				873B2D1929EB2A0F00FA5F58 /* NotificationsView.swift in Sources */,
 				87566B84297DD02300FD3199 /* SubmissionMainImage.swift in Sources */,
 				87D4B92029C7BAC600DBD8B4 /* OptionalLink.swift in Sources */,
 				873E65F227529866009C8767 /* SaveButton.swift in Sources */,

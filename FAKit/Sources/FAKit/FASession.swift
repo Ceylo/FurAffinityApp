@@ -127,6 +127,19 @@ open class FASession: Equatable {
         return FANote(page)
     }
     
+    open func notificationPreviews() async -> [FANotificationPreview] {
+        guard let data = await dataSource.httpData(from: FANotificationsPage.url, cookies: cookies),
+              let page = await FANotificationsPage(data: data)
+        else { return [] }
+        
+        let headers = page.headers
+            .compactMap { $0 }
+            .map { FANotificationPreview($0) }
+        
+        logger.info("Got \(page.headers.count) notification previews (\(headers.count) after filter)")
+        return headers
+    }
+    
     open func user(for username: String) async -> FAUser? {
         guard let userpageUrl = FAUser.url(for: username) else {
             return nil
