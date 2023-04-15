@@ -85,7 +85,8 @@ struct SwipeView<FrontView: View, BackView: View>: View {
                     [CHHapticPattern.Key.event: [
                         CHHapticPattern.Key.eventType: CHHapticEvent.EventType.hapticTransient,
                         CHHapticPattern.Key.time: CHHapticTimeImmediate,
-                        CHHapticPattern.Key.eventDuration: 1.0]
+                        CHHapticPattern.Key.eventDuration: 1.0
+                    ] as [CHHapticPattern.Key : Any]
                     ]
                 ]
             ]
