@@ -66,14 +66,14 @@ extension FASubmissionsPage {
             
             if let prevButton = prevButton,
                let href = try? prevButton.attr("href") {
-                self.previousPageUrl = URL(string: "https://www.furaffinity.net" + href)
+                self.previousPageUrl = try URL(unsafeString: "https://www.furaffinity.net" + href)
             } else {
                 self.previousPageUrl = nil
             }
             
             if let nextButton = nextButton,
                let href = try? nextButton.attr("href") {
-                self.nextPageUrl = URL(string: "https://www.furaffinity.net" + href)
+                self.nextPageUrl = try URL(unsafeString: "https://www.furaffinity.net" + href)
             } else {
                 self.nextPageUrl = nil
             }
@@ -105,7 +105,7 @@ extension FASubmissionsPage.Submission {
             let thumbHeightStr = try thumbNodes.first().unwrap().attr("data-height")
             let thumbWidth = try Float(thumbWidthStr).unwrap()
             let thumbHeight = try Float(thumbHeightStr).unwrap()
-            self.thumbnailUrl = URL(string: "https:\(thumbSrc)")!
+            self.thumbnailUrl = try URL(unsafeString: "https:\(thumbSrc)")
             self.thumbnailWidthOnHeightRatio = thumbWidth / thumbHeight
             
             let captionNodes = try node.select("figure figcaption label p a")

@@ -25,7 +25,7 @@ public struct FAUser: Equatable {
     }
     
     public static func url(for username: String) -> URL? {
-        URL(string: "https://www.furaffinity.net/user/\(username)/")
+        try? URL(unsafeString: "https://www.furaffinity.net/user/\(username)/")
     }
 }
 

@@ -54,13 +54,9 @@ extension FASubmissionPage {
             let submissionImgNode = try submissionContentNode.select("div.submission-area img#submissionImg")
             
             let previewStr = try submissionImgNode.attr("data-preview-src")
-                .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
-                .unwrap()
             let fullViewStr = try submissionImgNode.attr("data-fullview-src")
-                .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
-                .unwrap()
-            let previewUrl = try URL(string: "https:" + previewStr).unwrap()
-            let fullViewUrl = try URL(string: "https:" + fullViewStr).unwrap()
+            let previewUrl = try URL(unsafeString: "https:" + previewStr)
+            let fullViewUrl = try URL(unsafeString: "https:" + fullViewStr)
             
             self.previewImageUrl = previewUrl
             self.fullResolutionImageUrl = fullViewUrl
@@ -72,13 +68,13 @@ extension FASubmissionPage {
             
             let favoriteUrlStr = try favoriteUrlNode.attr("href")
             let favoriteStatusStr = try favoriteUrlNode.text()
-            self.favoriteUrl = try URL(string: "https://www.furaffinity.net" + favoriteUrlStr).unwrap()
+            self.favoriteUrl = try URL(unsafeString: "https://www.furaffinity.net" + favoriteUrlStr)
             self.isFavorite = favoriteStatusStr == "-Fav"
             
             let avatarQuery = "section div.section-header div.submission-id-container div.submission-id-avatar img.avatar"
             let avatarNode = try submissionContentNode.select(avatarQuery)
             let avatarStr = try avatarNode.attr("src")
-            let avatarUrl = try URL(string: "https:" + avatarStr).unwrap()
+            let avatarUrl = try URL(unsafeString: "https:" + avatarStr)
             
             self.authorAvatarUrl = avatarUrl
             
@@ -124,7 +120,7 @@ extension FASubmissionPage.Comment {
         let authorNode = try node.select("comment-container div.avatar a")
         let author = try authorNode.attr("href").substring(matching: "/user/(.+)/").unwrap()
         let authorAvatarUrlString = try authorNode.select("img").attr("src")
-        let authorAvatarUrl = try URL(string: "https:" + authorAvatarUrlString).unwrap()
+        let authorAvatarUrl = try URL(unsafeString: "https:" + authorAvatarUrlString)
         let displayAuthorQuery = "comment-container div.comment-content comment-username a.inline strong.comment_username"
         let displayAuthor = try node.select(displayAuthorQuery).text()
         let rawCidString = try node.select("a").attr("id")

@@ -66,7 +66,7 @@ extension FANotesPage.NoteHeader {
         let baseNode = try node.select(baseQuery)
         let unread = baseNode.hasClass("note-unread")
         let noteUrlStr = try baseNode.attr("href")
-        guard let noteUrl = URL(string: FAHomePage.url.absoluteString + noteUrlStr) else { throw FAPagesError.parserFailureError() }
+        let noteUrl = try URL(unsafeString: FAHomePage.url.absoluteString + noteUrlStr)
         
         let idStr = try node.select("div.note-list-selectgroup div.note-list-checkbox-desktop input").attr("value")
         guard let id = Int(idStr) else { throw FAPagesError.parserFailureError() }

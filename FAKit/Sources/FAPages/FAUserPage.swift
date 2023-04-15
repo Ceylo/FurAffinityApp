@@ -42,12 +42,12 @@ extension FAUserPage {
             self.displayName = displayName
             
             let avatarUrlNode = try navAvatarNode.select("img").attr("src")
-            self.avatarUrl = try URL(string: "https:" + avatarUrlNode).unwrap()
+            self.avatarUrl = try URL(unsafeString: "https:" + avatarUrlNode)
             
             let bannerNode = try mainWindowNode.select("div#header a img")
             let bannerStringUrl = try bannerNode.attr("src")
             if bannerStringUrl.starts(with: "//") {
-                self.bannerUrl = try URL(string: "https:" + bannerStringUrl).unwrap()
+                self.bannerUrl = try URL(unsafeString: "https:" + bannerStringUrl)
             } else {
                 self.bannerUrl = FAHomePage.url.appending(path: bannerStringUrl)
             }
