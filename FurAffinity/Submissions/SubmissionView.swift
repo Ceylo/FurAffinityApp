@@ -55,7 +55,7 @@ struct SubmissionView: View {
                 TextView(text: description, initialHeight: 300)
             }
             
-            SubmissionCommentsView(
+            CommentsView(
                 comments: submission.comments,
                 replyAction: { cid in
                     replySession = .init(parentCid: cid)

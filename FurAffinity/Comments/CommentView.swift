@@ -8,7 +8,7 @@
 import SwiftUI
 import FAKit
 
-struct SubmissionCommentView: View {
+struct CommentView: View {
     var comment: FAComment
     var replyAction: (_ cid: Int) -> Void
     
@@ -60,10 +60,10 @@ struct SubmissionCommentView: View {
     }
 }
 
-struct SubmissionCommentView_Previews: PreviewProvider {
+struct CommentView_Previews: PreviewProvider {
     static var previews: some View {
-        SubmissionCommentView(
-            comment: FASubmission.demo.comments[0],
+        CommentView(
+            comment: FAComment.demo[0],
             replyAction: { cid in
                 print("Reply to cid \(cid)")
             }

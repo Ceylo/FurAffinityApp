@@ -12,14 +12,14 @@ extension FAComment: Identifiable {
     public var id: Int { cid }
 }
 
-struct SubmissionCommentsView: View {
+struct CommentsView: View {
     var comments: [FAComment]
     var replyAction: (_ cid: Int) -> Void
     
     func commentViews(for comments: [FAComment], indent: Bool) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             ForEach(comments) { comment in
-                SubmissionCommentView(comment: comment) { cid in
+                CommentView(comment: comment) { cid in
                     replyAction(cid)
                 }
                 AnyView(commentViews(for: comment.answers, indent: true))
@@ -39,11 +39,11 @@ struct SubmissionCommentsView: View {
     }
 }
 
-struct SubmissionCommentsView_Previews: PreviewProvider {
+struct CommentsView_Previews: PreviewProvider {
     static var previews: some View {
         ScrollView {
-            SubmissionCommentsView(
-                comments: FASubmission.demo.comments,
+            CommentsView(
+                comments: FAComment.demo,
                 replyAction: { cid in
                     print("Reply to cid \(cid)")
                 }
