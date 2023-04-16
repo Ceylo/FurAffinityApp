@@ -56,11 +56,17 @@ struct RemoteSubmissionView: View {
     }
     
     var body: some View {
-        ScrollView {
+        Group {
             if let submission {
-                loadingSucceededView(submission)
+                ScrollView {
+                    loadingSucceededView(submission)
+                }
             } else if submissionLoadingFailed {
-                LoadingFailedView(url: url)
+                ScrollView {
+                    LoadingFailedView(url: url)
+                }
+            } else {
+                ProgressView()
             }
         }
         .refreshable {

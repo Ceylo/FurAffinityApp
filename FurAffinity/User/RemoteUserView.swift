@@ -30,11 +30,17 @@ struct RemoteUserView: View {
     }
     
     var body: some View {
-        ScrollView {
+        Group {
             if let user {
-                UserView(user: user, description: description)
+                ScrollView {
+                    UserView(user: user, description: description)
+                }
             } else if loadingFailed {
-                LoadingFailedView(url: url)
+                ScrollView {
+                    LoadingFailedView(url: url)
+                }
+            } else {
+                ProgressView()
             }
         }
         .task {
