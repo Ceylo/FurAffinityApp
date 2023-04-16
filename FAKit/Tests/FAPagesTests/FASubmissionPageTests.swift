@@ -63,7 +63,7 @@ YCH for
         let page = FASubmissionPage(data: data)
         XCTAssertNotNil(page)
         let terrinissAvatarUrl = URL(string: "https://a.furaffinity.net/1616615925/terriniss.gif")!
-        let expected: [FASubmissionPage.Comment] = [
+        let expected: [FAPageComment] = [
             .init(cid: 166652793, indentation: 0, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
                   datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "3 months ago", htmlMessage: "BID HERE \n<br> Moon"),
             .init(cid: 166653891, indentation: 3, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,

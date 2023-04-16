@@ -77,7 +77,7 @@ public struct FASubmission: Equatable {
 }
 
 extension FASubmission.Comment {
-    init(_ comment: FASubmissionPage.Comment) {
+    init(_ comment: FAPageComment) {
         self.init(cid: comment.cid,
                   author: comment.author,
                   displayAuthor: comment.displayAuthor,
@@ -101,9 +101,9 @@ extension FASubmission.Comment {
 }
 
 extension FASubmission {
-    static func childrenOf(comment: FASubmissionPage.Comment,
+    static func childrenOf(comment: FAPageComment,
                            in graph: UnweightedGraph<Int>,
-                           index: [Int: FASubmissionPage.Comment]) -> [Comment] {
+                           index: [Int: FAPageComment]) -> [Comment] {
         let children = graph.edgesForVertex(comment.cid)!
             .filter { $0.u == graph.indexOfVertex(comment.cid)! }
             .map { graph.vertexAtIndex($0.v) }
@@ -117,7 +117,7 @@ extension FASubmission {
             }
     }
     
-    static func buildCommentsTree(_ comments: [FASubmissionPage.Comment]) -> [Comment] {
+    static func buildCommentsTree(_ comments: [FAPageComment]) -> [Comment] {
         let commentsIndex = Dictionary(uniqueKeysWithValues: comments
             .map { ($0.cid, $0) })
         let graph = UnweightedGraph<Int>()

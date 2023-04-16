@@ -9,7 +9,7 @@ import XCTest
 @testable import FAKit
 @testable import FAPages
 
-extension FASubmissionPage.Comment {
+extension FAPageComment {
     init(cid: Int, indentation: Int) {
         self.init(
             cid: cid, indentation: indentation, author: "t", displayAuthor: "T",
