@@ -8,15 +8,15 @@
 import SwiftUI
 import FAKit
 
-extension FASubmission.Comment: Identifiable {
+extension FAComment: Identifiable {
     public var id: Int { cid }
 }
 
 struct SubmissionCommentsView: View {
-    var comments: [FASubmission.Comment]
+    var comments: [FAComment]
     var replyAction: (_ cid: Int) -> Void
     
-    func commentViews(for comments: [FASubmission.Comment], indent: Bool) -> some View {
+    func commentViews(for comments: [FAComment], indent: Bool) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             ForEach(comments) { comment in
                 SubmissionCommentView(comment: comment) { cid in

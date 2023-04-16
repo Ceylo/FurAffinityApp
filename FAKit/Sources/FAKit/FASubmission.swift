@@ -7,8 +7,6 @@
 
 import Foundation
 import FAPages
-import SwiftGraph
-import OrderedCollections
 
 public struct FASubmission: Equatable {
     public let url: URL
@@ -24,7 +22,7 @@ public struct FASubmission: Equatable {
     public let htmlDescription: String
     public let isFavorite: Bool
     public let favoriteUrl: URL
-    public let comments: [Comment]
+    public let comments: [FAComment]
     
     public init(url: URL, previewImageUrl: URL,
                 fullResolutionImageUrl: URL,
@@ -35,7 +33,7 @@ public struct FASubmission: Equatable {
                 naturalDatetime: String,
                 htmlDescription: String,
                 isFavorite: Bool, favoriteUrl: URL,
-                comments: [Comment]) {
+                comments: [FAComment]) {
         self.url = url
         self.previewImageUrl = previewImageUrl
         self.fullResolutionImageUrl = fullResolutionImageUrl
@@ -51,105 +49,9 @@ public struct FASubmission: Equatable {
         self.favoriteUrl = favoriteUrl
         self.comments = comments
     }
-    
-    public struct Comment: Equatable {
-        public let cid: Int
-        public let author: String
-        public let displayAuthor: String
-        public let authorAvatarUrl: URL
-        public let datetime: String
-        public let naturalDatetime: String
-        public let htmlMessage: String
-        public let answers: [Comment]
-        
-        public init(cid: Int, author: String, displayAuthor: String, authorAvatarUrl: URL, datetime: String,
-                    naturalDatetime: String, htmlMessage: String, answers: [FASubmission.Comment]) {
-            self.cid = cid
-            self.author = author
-            self.displayAuthor = displayAuthor
-            self.authorAvatarUrl = authorAvatarUrl
-            self.datetime = datetime
-            self.naturalDatetime = naturalDatetime
-            self.htmlMessage = htmlMessage
-            self.answers = answers
-        }
-    }
-}
-
-extension FASubmission.Comment {
-    init(_ comment: FAPageComment) {
-        self.init(cid: comment.cid,
-                  author: comment.author,
-                  displayAuthor: comment.displayAuthor,
-                  authorAvatarUrl: comment.authorAvatarUrl,
-                  datetime: comment.datetime,
-                  naturalDatetime: comment.naturalDatetime,
-                  htmlMessage: comment.htmlMessage.selfContainedFAHtmlComment,
-                  answers: [])
-    }
-    
-    func withAnswers(_ answers: [Self]) -> Self {
-        Self.init(cid: cid,
-                  author: author,
-                  displayAuthor: displayAuthor,
-                  authorAvatarUrl: authorAvatarUrl,
-                  datetime: datetime,
-                  naturalDatetime: naturalDatetime,
-                  htmlMessage: htmlMessage,
-                  answers: answers)
-    }
 }
 
 extension FASubmission {
-    static func childrenOf(comment: FAPageComment,
-                           in graph: UnweightedGraph<Int>,
-                           index: [Int: FAPageComment]) -> [Comment] {
-        let children = graph.edgesForVertex(comment.cid)!
-            .filter { $0.u == graph.indexOfVertex(comment.cid)! }
-            .map { graph.vertexAtIndex($0.v) }
-        
-        return children
-            .map { (Comment(index[$0]!), index[$0]!) }
-            .map { comment, rawComment in
-                comment.withAnswers(
-                    childrenOf(comment: rawComment, in: graph, index: index)
-                )
-            }
-    }
-    
-    static func buildCommentsTree(_ comments: [FAPageComment]) -> [Comment] {
-        let commentsIndex = Dictionary(uniqueKeysWithValues: comments
-            .map { ($0.cid, $0) })
-        let graph = UnweightedGraph<Int>()
-        var rootCommentIDs = [Int]()
-        var lastCidAtIndentation = OrderedDictionary<Int, Int>()
-        
-        comments.forEach { _ = graph.addVertex($0.cid) }
-        for comment in comments {
-            lastCidAtIndentation[comment.indentation] = comment.cid
-            lastCidAtIndentation.removeAll { (indentation: Int, cid: Int) in
-                indentation > comment.indentation
-            }
-            
-            if comment.indentation == 0 {
-                rootCommentIDs.append(comment.cid)
-            } else if let parentCid = lastCidAtIndentation.reversed().first(where: { (indentation: Int, cid: Int) in
-                indentation < comment.indentation
-            }) {
-                graph.addEdge(from: parentCid.value, to: comment.cid, directed: true)
-            } else {
-                logger.error("\(String(describing: comment)) doesn't have any parent and is not a root")
-                assertionFailure()
-            }
-        }
-        
-        return rootCommentIDs.map { cid in
-            Comment(commentsIndex[cid]!)
-                .withAnswers(childrenOf(comment: commentsIndex[cid]!,
-                                        in: graph, index: commentsIndex))
-        }
-    }
-    
     init(_ page: FASubmissionPage, url: URL) {
         self.init(url: url,
                   previewImageUrl: page.previewImageUrl,
@@ -164,6 +66,6 @@ extension FASubmission {
                   htmlDescription: page.htmlDescription,
                   isFavorite: page.isFavorite,
                   favoriteUrl: page.favoriteUrl,
-                  comments: Self.buildCommentsTree(page.comments))
+                  comments: FAComment.buildCommentsTree(page.comments))
     }
 }

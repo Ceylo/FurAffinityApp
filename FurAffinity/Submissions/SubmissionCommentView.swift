@@ -9,7 +9,7 @@ import SwiftUI
 import FAKit
 
 struct SubmissionCommentView: View {
-    var comment: FASubmission.Comment
+    var comment: FAComment
     var replyAction: (_ cid: Int) -> Void
     
     @State private var htmlMessage: AttributedString?

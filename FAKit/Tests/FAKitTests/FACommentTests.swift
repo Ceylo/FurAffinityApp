@@ -1,5 +1,5 @@
 //
-//  FASubmissionTests.swift
+//  FACommentTests.swift
 //  
 //
 //  Created by Ceylo on 01/12/2022.
@@ -18,41 +18,41 @@ extension FAPageComment {
     }
 }
 
-class FASubmissionTests: XCTestCase {
+class FACommentTests: XCTestCase {
     func testBuildCommentsTree_emptyListGivesEmptyTree() {
-        let tree = FASubmission.buildCommentsTree([])
+        let tree = FAComment.buildCommentsTree([])
         XCTAssertEqual(tree, [])
     }
     
     func testBuildCommentsTree_onlyRootsGivesFlatTree() {
-        let tree = FASubmission.buildCommentsTree([
+        let tree = FAComment.buildCommentsTree([
             .init(cid: 166652793, indentation: 0),
             .init(cid: 166653891, indentation: 0),
             .init(cid: 166658565, indentation: 0),
         ])
         XCTAssertEqual(tree, [
-            FASubmission.Comment(.init(cid: 166652793, indentation: 0)),
-            FASubmission.Comment(.init(cid: 166653891, indentation: 0)),
-            FASubmission.Comment(.init(cid: 166658565, indentation: 0)),
+            FAComment(.init(cid: 166652793, indentation: 0)),
+            FAComment(.init(cid: 166653891, indentation: 0)),
+            FAComment(.init(cid: 166658565, indentation: 0)),
         ])
     }
     func testBuildCommentsTree_simpleHierarchy() {
-        let tree = FASubmission.buildCommentsTree([
+        let tree = FAComment.buildCommentsTree([
             .init(cid: 166652793, indentation: 0),
             .init(cid: 166653891, indentation: 3),
             .init(cid: 166658565, indentation: 6),
         ])
         XCTAssertEqual(tree, [
-            FASubmission.Comment(.init(cid: 166652793, indentation: 0)).withAnswers([
-                FASubmission.Comment(.init(cid: 166653891, indentation: 3)).withAnswers([
-                    FASubmission.Comment(.init(cid: 166658565, indentation: 6))
+            FAComment(.init(cid: 166652793, indentation: 0)).withAnswers([
+                FAComment(.init(cid: 166653891, indentation: 3)).withAnswers([
+                    FAComment(.init(cid: 166658565, indentation: 6))
                 ]),
             ]),
         ])
     }
     
     func testBuildCommentsTree_complexHierarchy() {
-        let tree = FASubmission.buildCommentsTree([
+        let tree = FAComment.buildCommentsTree([
             .init(cid: 166652793, indentation: 0),
             .init(cid: 166653891, indentation: 3),
             .init(cid: 166658565, indentation: 6),
@@ -62,16 +62,16 @@ class FASubmissionTests: XCTestCase {
             .init(cid: 166656182, indentation: 0),
         ])
         XCTAssertEqual(tree, [
-            FASubmission.Comment(.init(cid: 166652793, indentation: 0)).withAnswers([
-                FASubmission.Comment(.init(cid: 166653891, indentation: 3)).withAnswers([
-                    FASubmission.Comment(.init(cid: 166658565, indentation: 6))
+            FAComment(.init(cid: 166652793, indentation: 0)).withAnswers([
+                FAComment(.init(cid: 166653891, indentation: 3)).withAnswers([
+                    FAComment(.init(cid: 166658565, indentation: 6))
                 ]),
-                FASubmission.Comment(.init(cid: 166663244, indentation: 3)),
-                FASubmission.Comment(.init(cid: 166652794, indentation: 3)).withAnswers([
-                    FASubmission.Comment(.init(cid: 166658865, indentation: 6))
+                FAComment(.init(cid: 166663244, indentation: 3)),
+                FAComment(.init(cid: 166652794, indentation: 3)).withAnswers([
+                    FAComment(.init(cid: 166658865, indentation: 6))
                 ]),
             ]),
-            FASubmission.Comment(.init(cid: 166656182, indentation: 0)),
+            FAComment(.init(cid: 166656182, indentation: 0)),
         ])
     }
 }
