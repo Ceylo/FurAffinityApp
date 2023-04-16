@@ -166,22 +166,25 @@ extension FASubmissionPreview {
     )
 }
 
+extension FAComment {
+    private static let terrinissAvatarUrl = URL(string: "https://a.furaffinity.net/1616615925/terriniss.gif")!
+    static let demo: [FAComment] = [
+        .init(cid: 166652793, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "2 months ago",
+              htmlMessage: "BID HERE \n<br> Moon".selfContainedFAHtmlComment, answers: [
+                .init(cid: 166653891, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 11, 2022 10:58 PM", naturalDatetime: "2 months ago",
+                      htmlMessage: "SakuraSlowly (DA) - SB".selfContainedFAHtmlComment, answers: [
+                        .init(cid: 166658565, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 12, 2022 05:16 AM", naturalDatetime: "2 months ago",
+                              htmlMessage: "DeathPanda21 (da) - 55$".selfContainedFAHtmlComment, answers: [])
+                      ])
+              ]),
+        .init(cid: 166653340, author: "rurudaspippen", displayAuthor: "RuruDasPippen", authorAvatarUrl: URL(string: "https://a.furaffinity.net/1643948243/rurudaspippen.gif")!,
+              datetime: "Aug 11, 2022 10:23 PM", naturalDatetime: "2 months ago", htmlMessage: "Look at the babies!".selfContainedFAHtmlComment, answers: [])
+    ]
+}
+
 extension FASubmission {
     static let demo: FASubmission = {
         let htmlDescription = "YCH for \n<a href=\"/user/mikazukihellfire\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20211017/mikazukihellfire.gif\" align=\"middle\" title=\"MikazukiHellfire\" alt=\"MikazukiHellfire\">&nbsp;MikazukiHellfire</a>\n<br> \n<br> Medea © \n<a href=\"/user/mikazukihellfire\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20211017/mikazukihellfire.gif\" align=\"middle\" title=\"MikazukiHellfire\" alt=\"MikazukiHellfire\">&nbsp;MikazukiHellfire</a>\n<br> \n<br> \n<br> \n<br> \n<br> *******************************\n<br> * \n<a class=\"auto_link named_url\" href=\"http://ko-fi.com/J3J16KSH\">Feed me with coffee?</a>\n<br> * \n<a class=\"auto_link named_url\" href=\"https://www.furaffinity.net/gallery/annetpeas/\">My Gallery</a>\n<br> * \n<a class=\"auto_link named_url\" href=\"https://twitter.com/AnnetPeas_Art\">Twitter</a>"
-        let terrinissAvatarUrl = URL(string: "https://a.furaffinity.net/1616615925/terriniss.gif")!
-        let comments: [FASubmission.Comment] = [
-            .init(cid: 166652793, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "2 months ago",
-                  htmlMessage: "BID HERE \n<br> Moon".selfContainedFAHtmlComment, answers: [
-                    .init(cid: 166653891, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 11, 2022 10:58 PM", naturalDatetime: "2 months ago",
-                          htmlMessage: "SakuraSlowly (DA) - SB".selfContainedFAHtmlComment, answers: [
-                            .init(cid: 166658565, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 12, 2022 05:16 AM", naturalDatetime: "2 months ago",
-                                  htmlMessage: "DeathPanda21 (da) - 55$".selfContainedFAHtmlComment, answers: [])
-                          ])
-                  ]),
-            .init(cid: 166653340, author: "rurudaspippen", displayAuthor: "RuruDasPippen", authorAvatarUrl: URL(string: "https://a.furaffinity.net/1643948243/rurudaspippen.gif")!,
-                  datetime: "Aug 11, 2022 10:23 PM", naturalDatetime: "2 months ago", htmlMessage: "Look at the babies!".selfContainedFAHtmlComment, answers: [])
-        ]
         
         return FASubmission(
             url: URL(string: "https://www.furaffinity.net/view/44188741/")!,
@@ -197,7 +200,26 @@ extension FASubmission {
             htmlDescription: htmlDescription,
             isFavorite: false,
             favoriteUrl: URL(string: "https://www.furaffinity.net/fav/44188741/?key=00f2f5f4c1c7fbfac02147b73d670cac6423ab85")!,
-            comments: comments)
+            comments: FAComment.demo)
+    }()
+}
+
+extension FAJournal {
+    static let demo: FAJournal = {
+        let htmlDescription = """
+what you will need to get one.\n<br> - if you got a sketch you can get an upgrade.\n<br> -comment on this Journal to get in line(ill work down the line and work in that order)\n<br> -make sure you have the funds to get a spot.\n<br> -if you have one more then one sketch you can have 3 at the most i can upgrade ( make sure you have the funds if your doing more then one)\n<br> -ill note you to get the ref and info to upgrade your pic. the farther your in line the longer will take to get to you, so PLZ try put aside the funds till i get to you in line.\n<br> -you will be paying $75 or more depending on what you want done.\n<br> for just you OC and no BG will $75 per OC.\n<br> BG and or extra stuff added will be $100 more or less.\n<br> \n<br> after this will go back to sketches then back to upgrades.\n<br> \n<br> depending on how much the person asks could take me more or less time to get to the next one in line.\n<br> so PLZ wait for not to get your info.\n<br> \n<br> GOOD LUCK TO EVERYONE.\n<br> \n<br> \n<br> 1. \n<a href=\"/user/fukothenimbat\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20230416/fukothenimbat.gif\" align=\"middle\" title=\"fukothenimbat\" alt=\"fukothenimbat\">&nbsp;fukothenimbat</a>\n<br> \n<br> 2. \n<a href=\"/user/zacharywulf\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20230416/zacharywulf.gif\" align=\"middle\" title=\"zacharywulf\" alt=\"zacharywulf\">&nbsp;zacharywulf</a>\n<br> \n<br> 3. \n<a href=\"/user/leacrea\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20230416/leacrea.gif\" align=\"middle\" title=\"leacrea\" alt=\"leacrea\">&nbsp;leacrea</a>\n<br> \n<br> 4. \n<a href=\"/user/thegrapedemon\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20230416/thegrapedemon.gif\" align=\"middle\" title=\"thegrapedemon\" alt=\"thegrapedemon\">&nbsp;thegrapedemon</a>\n<br> \n<br> 5. \n<a href=\"/user/shadoweddraco\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20230416/shadoweddraco.gif\" align=\"middle\" title=\"shadoweddraco\" alt=\"shadoweddraco\">&nbsp;shadoweddraco</a>\n<br> \n<br> for not this will be the last one then going back to sketches then maybe open one more then back to one more upgrade but will see how things go.
+"""
+        
+        return FAJournal(
+            url: URL(string: "https://www.furaffinity.net/journal/10516170/")!,
+            author: "rudragon",
+            displayAuthor: "RUdragon",
+            authorAvatarUrl: URL(string: "https://a.furaffinity.net/1424255659/rudragon.gif")!,
+            title: "UPGRADES ARE OPEN!!! 5",
+            datetime: "Apr 2, 2023 11:59 PM",
+            naturalDatetime: "2 weeks ago",
+            htmlDescription: htmlDescription,
+            comments: FAComment.demo)
     }()
 }
 
