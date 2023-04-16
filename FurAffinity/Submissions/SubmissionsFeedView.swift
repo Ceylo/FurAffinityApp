@@ -29,7 +29,9 @@ struct SubmissionsFeedView: View {
                         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                     }
                     .introspectScrollViewOnList { scrollView in
-                        self.scrollView = scrollView
+                        Task {
+                            self.scrollView = scrollView
+                        }
                     }
                     .listStyle(.plain)
                     .navigationBarTitleDisplayMode(.inline)
