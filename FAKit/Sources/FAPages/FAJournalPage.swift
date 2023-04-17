@@ -56,7 +56,7 @@ extension FAJournalPage {
             self.naturalDatetime = try datetimeNode.text()
             
             self.htmlDescription = try sectionNode.select(
-                "div.journal-body-theme div.journal-item div.journal-content-container div.journal-content"
+                "div.journal-body-theme div.journal-item"
             ).html()
             
             let commentNodes = try siteContentNode.select(
