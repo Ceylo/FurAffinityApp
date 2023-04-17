@@ -33,8 +33,8 @@ struct NoteView: View {
     var body: some View {
         ScrollView {
             if let note {
-                VStack(alignment: .leading) {
-                    VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 0) {
+                    VStack(alignment: .leading) {
                         HStack {
                             OptionalLink(destination: inAppUserUrl(for: note.author)) {
                                 AvatarView(avatarUrl: avatarUrl)
@@ -52,6 +52,7 @@ struct NoteView: View {
                             .font(.title2)
                     }
                     Divider()
+                        .padding(.vertical, 5)
                     
                     if let message = message {
                         TextView(text: message)
