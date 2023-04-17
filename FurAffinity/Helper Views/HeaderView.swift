@@ -1,5 +1,5 @@
 //
-//  SubmissionHeaderView.swift
+//  HeaderView.swift
 //  FurAffinity
 //
 //  Created by Ceylo on 08/12/2021.
@@ -9,7 +9,7 @@ import SwiftUI
 import FAKit
 import URLImage
 
-struct SubmissionHeaderView: View {
+struct HeaderView: View {
     var username: String
     var displayName: String
     var title: String
@@ -57,7 +57,7 @@ struct SubmissionHeaderView: View {
 
 struct SubmissionHeaderView_Previews: PreviewProvider {
     static var previews: some View {
-        SubmissionHeaderView(username: "author",
+        HeaderView(username: "author",
                              displayName: "The Author", title: "Great Content",
                              avatarUrl: nil,
                              datetime: .init("Apr 7th, 2022, 11:58 AM",

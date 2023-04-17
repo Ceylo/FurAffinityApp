@@ -60,7 +60,7 @@
 		87EAA2DB29EB4F1800677446 /* RemoteNotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87EAA2DA29EB4F1800677446 /* RemoteNotificationsView.swift */; };
 		87EAA2DD29EB4F3700677446 /* JournalNotificationItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87EAA2DC29EB4F3700677446 /* JournalNotificationItemView.swift */; };
 		87F5EE8F29C5D9DD00649C5B /* DateTimeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */; };
-		87F8FA342761347200CDD985 /* SubmissionHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA332761347200CDD985 /* SubmissionHeaderView.swift */; };
+		87F8FA342761347200CDD985 /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA332761347200CDD985 /* HeaderView.swift */; };
 		87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA3527613DD900CDD985 /* Extensions.swift */; };
 		87F960CB2801EFF3000B30A3 /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F960CA2801EFF3000B30A3 /* AvatarView.swift */; };
 		87FE0DA72974609E005713DB /* SubmissionsFeedActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FE0DA62974609E005713DB /* SubmissionsFeedActionView.swift */; };
@@ -129,7 +129,7 @@
 		87EAA2DA29EB4F1800677446 /* RemoteNotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteNotificationsView.swift; sourceTree = "<group>"; };
 		87EAA2DC29EB4F3700677446 /* JournalNotificationItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalNotificationItemView.swift; sourceTree = "<group>"; };
 		87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateTimeButton.swift; sourceTree = "<group>"; };
-		87F8FA332761347200CDD985 /* SubmissionHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionHeaderView.swift; sourceTree = "<group>"; };
+		87F8FA332761347200CDD985 /* HeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
 		87F8FA3527613DD900CDD985 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		87F960CA2801EFF3000B30A3 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
 		87FE0DA62974609E005713DB /* SubmissionsFeedActionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionsFeedActionView.swift; sourceTree = "<group>"; };
@@ -231,7 +231,6 @@
 				877226B42740361C00245DF0 /* SubmissionsFeedView.swift */,
 				87FE0DA62974609E005713DB /* SubmissionsFeedActionView.swift */,
 				8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */,
-				87F8FA332761347200CDD985 /* SubmissionHeaderView.swift */,
 				871C66DF29B8CA9200A2B2C2 /* RemoteSubmissionView.swift */,
 				8773058229D5FB8E004F8019 /* SubmissionView.swift */,
 				87566B83297DD02300FD3199 /* SubmissionMainImage.swift */,
@@ -314,6 +313,7 @@
 				87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */,
 				87D4B91F29C7BAC600DBD8B4 /* OptionalLink.swift */,
 				87292E44297DD3FB00BE39B8 /* LoadingFailedView.swift */,
+				87F8FA332761347200CDD985 /* HeaderView.swift */,
 			);
 			path = "Helper Views";
 			sourceTree = "<group>";
@@ -460,7 +460,7 @@
 				8766005A290568DB00C7A998 /* CommentView.swift in Sources */,
 				8716E7EE271C659C00C0BC4A /* HomeView.swift in Sources */,
 				87A9C34129C788350001D1D6 /* CurentUserView.swift in Sources */,
-				87F8FA342761347200CDD985 /* SubmissionHeaderView.swift in Sources */,
+				87F8FA342761347200CDD985 /* HeaderView.swift in Sources */,
 				8725335F274A70BB007FEF3B /* Model.swift in Sources */,
 				87A9C34329C788A00001D1D6 /* RemoteUserView.swift in Sources */,
 				87FE0DA72974609E005713DB /* SubmissionsFeedActionView.swift in Sources */,
