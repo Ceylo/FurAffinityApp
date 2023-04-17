@@ -77,6 +77,18 @@ open class FASession: Equatable {
         }
     }
     
+    open func journal(for preview: FAJournalNotificationPreview) async -> FAJournal? {
+        await journal(for: preview.journalUrl)
+    }
+    
+    open func journal(for url: URL) async -> FAJournal? {
+        guard let data = await dataSource.httpData(from: url, cookies: cookies),
+              let page = FAJournalPage(data: data)
+        else { return nil }
+        
+        return FAJournal(page, url: url)
+    }
+    
     open func postComment(on submission: FASubmission, replytoCid: Int?, contents: String) async -> FASubmission? {
         let replyToValue = replytoCid.flatMap { "\($0)" } ?? ""
         let params: [URLQueryItem] = [
