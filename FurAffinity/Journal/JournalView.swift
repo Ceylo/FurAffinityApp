@@ -19,7 +19,7 @@ struct JournalView: View {
     @State private var replySession: ReplySession?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 0) {
             HeaderView(
                 username: journal.author,
                 displayName: journal.displayAuthor,
@@ -28,7 +28,9 @@ struct JournalView: View {
                 datetime: .init(journal.datetime,
                                 journal.naturalDatetime)
             )
-            
+            Divider()
+                .padding(.vertical, 5)
+
             if let description {
                 TextView(text: description, initialHeight: 300)
             }
@@ -39,6 +41,7 @@ struct JournalView: View {
                     replySession = .init(parentCid: nil)
                 }
             )
+            .padding(.bottom, 10)
             
             CommentsView(
                 comments: journal.comments,
