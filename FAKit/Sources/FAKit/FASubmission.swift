@@ -52,7 +52,7 @@ public struct FASubmission: Equatable {
 }
 
 extension FASubmission {
-    init(_ page: FASubmissionPage, url: URL) {
+    public init(_ page: FASubmissionPage, url: URL) {
         self.init(url: url,
                   previewImageUrl: page.previewImageUrl,
                   fullResolutionImageUrl: page.fullResolutionImageUrl,

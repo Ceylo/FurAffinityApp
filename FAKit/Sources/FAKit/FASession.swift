@@ -89,21 +89,21 @@ open class FASession: Equatable {
         return FAJournal(page, url: url)
     }
     
-    open func postComment(on submission: FASubmission, replytoCid: Int?, contents: String) async -> FASubmission? {
+    open func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async -> C? {
         let replyToValue = replytoCid.flatMap { "\($0)" } ?? ""
         let params: [URLQueryItem] = [
-            .init(name: "f", value: "0"),
+            .init(name: "f", value: "0"), // Not needed for all commentable types but doesn't harm
             .init(name: "action", value: replytoCid != nil ? "replyto" : "reply"),
             .init(name: "replyto", value: replyToValue),
             .init(name: "reply", value: contents),
             .init(name: "submit", value: "Post Comment")
         ]
         
-        guard let data = await dataSource.httpData(from: submission.url, cookies: cookies, method: .POST, parameters: params),
-              let page = FASubmissionPage(data: data)
+        guard let data = await dataSource.httpData(from: commentable.url, cookies: cookies, method: .POST, parameters: params),
+              let page = C.PageType(data: data)
         else { return nil }
         
-        return FASubmission(page, url: submission.url)
+        return C(page, url: commentable.url)
     }
     
     open func toggleFavorite(for submission: FASubmission) async -> FASubmission? {

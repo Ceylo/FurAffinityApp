@@ -39,7 +39,7 @@ public struct FAJournal: Equatable {
 }
 
 extension FAJournal {
-    init(_ page: FAJournalPage, url: URL) {
+    public init(_ page: FAJournalPage, url: URL) {
         self.init(url: url,
                   author: page.author,
                   displayAuthor: page.displayAuthor,

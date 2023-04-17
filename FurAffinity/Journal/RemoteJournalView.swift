@@ -34,12 +34,12 @@ struct RemoteJournalView: View {
                 ScrollView {
                     JournalView(journal: journal, description: description,
                                 replyAction: { parentCid, text in
-//                        Task {
-//                            self.submission = try await model
-//                                .postComment(on: submission,
-//                                             replytoCid: parentCid,
-//                                             contents: text)
-//                        }
+                        Task {
+                            self.journal = try await model
+                                .postComment(on: journal,
+                                             replytoCid: parentCid,
+                                             contents: text)
+                        }
                     })
                 }
             } else if loadingFailed {

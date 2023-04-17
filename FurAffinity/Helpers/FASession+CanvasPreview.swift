@@ -45,9 +45,9 @@ class OfflineFASession: FASession {
         print(#function)
     }
     
-    override func postComment(on submission: FASubmission, replytoCid: Int?, contents: String) async -> FASubmission? {
+    override func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async -> C? {
         print(#function)
-        return submission
+        return commentable
     }
     
     override func toggleFavorite(for submission: FASubmission) async -> FASubmission? {
