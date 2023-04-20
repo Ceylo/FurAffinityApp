@@ -13,10 +13,7 @@ struct JournalView: View {
     var description: AttributedString?
     var replyAction: (_ parentCid: Int?, _ text: String) -> Void
     
-    struct ReplySession {
-        let parentCid: Int?
-    }
-    @State private var replySession: ReplySession?
+    @State private var replySession: Commenting.ReplySession?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -51,39 +48,8 @@ struct JournalView: View {
             )
         }
         .padding(10)
-        .sheet(isPresented: showCommentEditor) {
-            commentEditor
-        }
+        .commentSheet(on: $replySession, replyAction)
         .navigationTitle(journal.title)
-    }
-}
-
-// MARK: - Comment replies
-// TODO: Factorize with SubmissionView
-extension JournalView {
-    var showCommentEditor: Binding<Bool> {
-        .init {
-            replySession != nil
-        } set: { value in
-            if value {
-                fatalError()
-            } else {
-                replySession = nil
-            }
-        }
-    }
-    
-    private var commentEditor: some View {
-        guard let replySession else {
-            fatalError()
-        }
-        
-        return CommentEditor { text in
-            if let text {
-                replyAction(replySession.parentCid, text)
-            }
-            self.replySession = nil
-        }
     }
 }
 

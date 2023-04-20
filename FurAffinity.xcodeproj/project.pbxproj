@@ -42,6 +42,7 @@
 		87815AC728D63F9B005AD03E /* View+Introspection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87815AC628D63F9B005AD03E /* View+Introspection.swift */; };
 		878B0B85296C9F9300A08685 /* AppCenterAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 878B0B84296C9F9300A08685 /* AppCenterAnalytics */; };
 		878B0B912970B18C00A08685 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878B0B902970B18C00A08685 /* Secrets.swift */; };
+		87919B2329F1CED6006FC2D6 /* Commenting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87919B2229F1CED6006FC2D6 /* Commenting.swift */; };
 		8791D5FB29C4CBBA003FDBBE /* FAURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8791D5FA29C4CBBA003FDBBE /* FAURL.swift */; };
 		8791D60329C4D627003FDBBE /* FAURLTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8791D60229C4D627003FDBBE /* FAURLTests.swift */; };
 		8791D60B29C4D7B9003FDBBE /* AppCenterAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8791D60A29C4D7B9003FDBBE /* AppCenterAnalytics */; };
@@ -117,6 +118,7 @@
 		87815AC628D63F9B005AD03E /* View+Introspection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Introspection.swift"; sourceTree = "<group>"; };
 		878B0B8A296CA5B200A08685 /* Privacy Policy.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Privacy Policy.md"; sourceTree = "<group>"; };
 		878B0B902970B18C00A08685 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
+		87919B2229F1CED6006FC2D6 /* Commenting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Commenting.swift; sourceTree = "<group>"; };
 		8791D5FA29C4CBBA003FDBBE /* FAURL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FAURL.swift; sourceTree = "<group>"; };
 		8791D60029C4D627003FDBBE /* FurAffinityTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FurAffinityTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8791D60229C4D627003FDBBE /* FAURLTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FAURLTests.swift; sourceTree = "<group>"; };
@@ -298,6 +300,7 @@
 				87566B81297DC71600FD3199 /* CommentEditor.swift */,
 				8766005729055FBC00C7A998 /* CommentsView.swift */,
 				87660059290568DB00C7A998 /* CommentView.swift */,
+				87919B2229F1CED6006FC2D6 /* Commenting.swift */,
 			);
 			path = Comments;
 			sourceTree = "<group>";
@@ -493,6 +496,7 @@
 				878B0B912970B18C00A08685 /* Secrets.swift in Sources */,
 				873E65F027528FC6009C8767 /* SubmissionControlsView.swift in Sources */,
 				871C66E029B8CA9200A2B2C2 /* RemoteSubmissionView.swift in Sources */,
+				87919B2329F1CED6006FC2D6 /* Commenting.swift in Sources */,
 				873E66112752AAB2009C8767 /* ImageSaveHandler.swift in Sources */,
 				877226B327402F9300245DF0 /* LoggedInView.swift in Sources */,
 				877929D02744386E003AE828 /* FASession+CanvasPreview.swift in Sources */,

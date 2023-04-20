@@ -18,7 +18,7 @@ struct SubmissionView: View {
     struct ReplySession {
         let parentCid: Int?
     }
-    @State private var replySession: ReplySession?
+    @State private var replySession: Commenting.ReplySession?
     @State private var fullResolutionCGImage: CGImage?
     
     var header: some View {
@@ -63,38 +63,8 @@ struct SubmissionView: View {
             )
         }
         .padding(10)
-        .sheet(isPresented: showCommentEditor) {
-            commentEditor
-        }
+        .commentSheet(on: $replySession, replyAction)
         .navigationTitle(submission.title)
-    }
-}
-
-// MARK: - Comment replies
-extension SubmissionView {
-    var showCommentEditor: Binding<Bool> {
-        .init {
-            replySession != nil
-        } set: { value in
-            if value {
-                fatalError()
-            } else {
-                replySession = nil
-            }
-        }
-    }
-    
-    private var commentEditor: some View {
-        guard let replySession else {
-            fatalError()
-        }
-        
-        return CommentEditor { text in
-            if let text {
-                replyAction(replySession.parentCid, text)
-            }
-            self.replySession = nil
-        }
     }
 }
 
