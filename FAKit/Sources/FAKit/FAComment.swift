@@ -105,3 +105,17 @@ extension FAComment {
         }
     }
 }
+
+extension [FAComment] {
+    public func recursiveFirst(where predicate: (FAComment) -> Bool) -> FAComment? {
+        for comment in self {
+            if predicate(comment) {
+                return comment
+            } else if let subcomment = comment.answers.recursiveFirst(where: predicate) {
+                return subcomment
+            }
+        }
+        
+        return nil
+    }
+}

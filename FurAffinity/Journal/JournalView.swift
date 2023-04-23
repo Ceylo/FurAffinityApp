@@ -35,7 +35,7 @@ struct JournalView: View {
             JournalControlsView(
                 journalUrl: journal.url,
                 replyAction: {
-                    replySession = .init(parentCid: nil)
+                    replySession = .init(parentCid: nil, among: [])
                 }
             )
             .padding(.bottom, 10)
@@ -43,7 +43,7 @@ struct JournalView: View {
             CommentsView(
                 comments: journal.comments,
                 replyAction: { cid in
-                    replySession = .init(parentCid: cid)
+                    replySession = .init(parentCid: cid, among: journal.comments)
                 }
             )
         }

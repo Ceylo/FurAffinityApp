@@ -47,7 +47,7 @@ struct SubmissionView: View {
                 isFavorite: submission.isFavorite,
                 favoriteAction: favoriteAction,
                 replyAction: {
-                    replySession = .init(parentCid: nil)
+                    replySession = .init(parentCid: nil, among: [])
                 }
             )
             
@@ -58,7 +58,7 @@ struct SubmissionView: View {
             CommentsView(
                 comments: submission.comments,
                 replyAction: { cid in
-                    replySession = .init(parentCid: cid)
+                    replySession = .init(parentCid: cid, among: submission.comments)
                 }
             )
         }

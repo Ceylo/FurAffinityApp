@@ -7,10 +7,19 @@
 
 import Foundation
 import SwiftUI
+import FAKit
 
 struct Commenting: ViewModifier {
     struct ReplySession {
         let parentCid: Int?
+        let parentComment: FAComment?
+        
+        init(parentCid: Int?, among comments: [FAComment]) {
+            self.parentCid = parentCid
+            self.parentComment = parentCid.flatMap { cid in
+                comments.recursiveFirst { $0.cid == cid }
+            }
+        }
     }
 
     @Binding var replySession: ReplySession?
@@ -41,7 +50,10 @@ struct Commenting: ViewModifier {
             fatalError()
         }
         
-        return CommentEditor(text: $commentText) { action in
+        return CommentEditor(
+            text: $commentText,
+            parentComment: replySession.parentComment
+        ) { action in
             if case .submit = action, !commentText.isEmpty {
                 replyAction(replySession.parentCid, commentText)
                 // Preserve user text unless submitted

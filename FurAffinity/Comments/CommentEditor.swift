@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import FAKit
 
 struct CommentEditor: View {
     enum Action {
@@ -14,11 +15,12 @@ struct CommentEditor: View {
     }
     
     @Binding var text: String
+    var parentComment: FAComment?
     var handler: (_ action: Action) -> Void
     @FocusState private var editorHasFocus: Bool
     
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             HStack {
                 Button("Cancel") {
                     handler(.cancel)
@@ -33,19 +35,32 @@ struct CommentEditor: View {
             .font(.title3)
             
             Divider()
-            TextEditor(text: $text)
-                .focused($editorHasFocus)
-                .onAppear {
-                    editorHasFocus = true
+            
+            ScrollView {
+                VStack(spacing: 0) {
+                    if let parentComment {
+                        CommentView(comment: parentComment)
+                            .allowsHitTesting(false)
+                            .padding()
+                        Divider()
+                    }
+                    
+                    TextEditor(text: $text)
+                        .focused($editorHasFocus)
+                        .onAppear {
+                            editorHasFocus = true
+                        }
+                        .padding()
+                        .scrollDisabled(true)
                 }
-                .padding(.horizontal)
+            }
         }
     }
 }
 
 struct CommentEditor_Previews: PreviewProvider {
     static var previews: some View {
-        CommentEditor(text: .constant("Hello")) { contents in
+        CommentEditor(text: .constant("Hello"), parentComment: FAComment.demo[0]) { contents in
             print(contents as Any)
         }
         .border(.red)
