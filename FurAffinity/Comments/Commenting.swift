@@ -15,6 +15,7 @@ struct Commenting: ViewModifier {
 
     @Binding var replySession: ReplySession?
     var replyAction: (_ parentCid: Int?, _ text: String) -> Void
+    @State private var commentText: String = ""
     
     func body(content: Content) -> some View {
         content
@@ -40,10 +41,13 @@ struct Commenting: ViewModifier {
             fatalError()
         }
         
-        return CommentEditor { text in
-            if let text {
-                replyAction(replySession.parentCid, text)
+        return CommentEditor(text: $commentText) { action in
+            if case .submit = action, !commentText.isEmpty {
+                replyAction(replySession.parentCid, commentText)
+                // Preserve user text unless submitted
+                commentText = ""
             }
+            
             self.replySession = nil
         }
     }

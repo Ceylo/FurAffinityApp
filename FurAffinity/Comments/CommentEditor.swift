@@ -8,19 +8,24 @@
 import SwiftUI
 
 struct CommentEditor: View {
-    var submit: (_ text: String?) -> Void
-    @State private var text = ""
+    enum Action {
+        case submit
+        case cancel
+    }
+    
+    @Binding var text: String
+    var handler: (_ action: Action) -> Void
     @FocusState private var editorHasFocus: Bool
     
     var body: some View {
         VStack {
             HStack {
                 Button("Cancel") {
-                    submit(nil)
+                    handler(.cancel)
                 }
                 Spacer()
                 Button("Submit") {
-                    submit(text)
+                    handler(.submit)
                 }
                 .disabled(text.isEmpty)
             }
@@ -40,7 +45,7 @@ struct CommentEditor: View {
 
 struct CommentEditor_Previews: PreviewProvider {
     static var previews: some View {
-        CommentEditor { contents in
+        CommentEditor(text: .constant("Hello")) { contents in
             print(contents as Any)
         }
         .border(.red)
