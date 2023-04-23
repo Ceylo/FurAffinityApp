@@ -19,7 +19,7 @@ struct CommentsView: View {
     func commentViews(for comments: [FAComment], indent: Bool) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             ForEach(comments) { comment in
-                CommentView(comment: comment) { cid in
+                SwipeableCommentView(comment: comment) { cid in
                     replyAction(cid)
                 }
                 AnyView(commentViews(for: comment.answers, indent: true))

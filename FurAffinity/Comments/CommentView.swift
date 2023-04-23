@@ -1,8 +1,8 @@
 //
-//  SubmissionCommentView.swift
+//  CommentView.swift
 //  FurAffinity
 //
-//  Created by Ceylo on 23/10/2022.
+//  Created by Ceylo on 23/04/2023.
 //
 
 import SwiftUI
@@ -10,11 +10,9 @@ import FAKit
 
 struct CommentView: View {
     var comment: FAComment
-    var replyAction: (_ cid: Int) -> Void
-    
     @State private var htmlMessage: AttributedString?
     
-    var commentView: some View {
+    var body: some View {
         HStack(alignment: .top) {
             OptionalLink(destination: inAppUserUrl(for: comment.author)) {
                 AvatarView(avatarUrl: comment.authorAvatarUrl)
@@ -38,21 +36,6 @@ struct CommentView: View {
                 }
             }
         }
-    }
-    
-    var body: some View {
-        SwipeView(backgroundColor: .orange) {
-            commentView
-                .background(Color(uiColor: .systemBackground))
-        } backContent: {
-            Image(systemName: "arrowshape.turn.up.left")
-                .foregroundColor(.white)
-                .padding(.trailing)
-                .padding(.leading)
-                .frame(maxHeight: .infinity)
-        } onAction: {
-            replyAction(comment.cid)
-        }
         .task {
             htmlMessage = AttributedString(FAHTML: comment.htmlMessage)?
                 .convertingLinksForInAppNavigation()
@@ -62,11 +45,6 @@ struct CommentView: View {
 
 struct CommentView_Previews: PreviewProvider {
     static var previews: some View {
-        CommentView(
-            comment: FAComment.demo[0],
-            replyAction: { cid in
-                print("Reply to cid \(cid)")
-            }
-        )
+        CommentView(comment: FAComment.demo[0])
     }
 }
