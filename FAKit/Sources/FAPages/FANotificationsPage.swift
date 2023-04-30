@@ -19,8 +19,19 @@ public struct FANotificationsPage: Equatable {
         public let journalUrl: URL
     }
     
+    public struct SubmissionCommentHeader: Equatable {
+        public let cid: Int
+        public let author: String
+        public let displayAuthor: String
+        public let submissionTitle: String
+        public let datetime: String
+        public let naturalDatetime: String
+        public let submissionUrl: URL
+    }
+    
     public enum Header: Equatable {
         case journal(JournalHeader)
+        case submissionComment(SubmissionCommentHeader)
     }
     
     public static let url = URL(string: "https://www.furaffinity.net/msg/others/")!
@@ -35,12 +46,20 @@ extension FANotificationsPage {
         do {
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
             
-            let journalsQuery = "body div#main-window div#site-content div#messagecenter-other div#columnpage div.submission-content form#messages-form section#messages-journals ul.message-stream li div.table"
-            let journalNodes = try doc.select(journalsQuery)
+            let notificationsQuery = "body div#main-window div#site-content div#messagecenter-other div#columnpage div.submission-content form#messages-form"
+            let notificationsNode = try doc.select(notificationsQuery)
+            let submissionCommentNodes = try notificationsNode.select("section#messages-comments-submission div.section-body ul.message-stream li")
+            let journalNodes = try notificationsNode.select("section#messages-journals ul.message-stream li div.table")
+
+            async let submissionCommentHeaders = submissionCommentNodes
+                .parallelMap { try SubmissionCommentHeader($0) }
+                .map { Header.submissionComment($0) }
             
-            self.headers = try await journalNodes
+            async let journalHeaders = journalNodes
                 .parallelMap { try JournalHeader($0) }
-                .map { .journal($0) }
+                .map { Header.journal($0) }
+            
+            self.headers = try await submissionCommentHeaders + journalHeaders
         } catch {
             logger.error("Decoding failure in \(#file, privacy: .public): \(error, privacy: .public)")
             return nil
@@ -72,5 +91,30 @@ extension FANotificationsPage.JournalHeader {
         let naturalDatetime = try datetimeNode.text()
         
         self.init(id: id, author: author, displayAuthor: displayAuthor, title: title, datetime: datetime, naturalDatetime: naturalDatetime, journalUrl: url)
+    }
+}
+
+extension FANotificationsPage.SubmissionCommentHeader {
+    init(_ node: SwiftSoup.Element) throws {
+        let state = signposter.beginInterval("Submission Comment Preview Parsing")
+        defer { signposter.endInterval("Submission Comment Preview Parsing", state) }
+        
+        let datetimeNode = try node.select("div span.popup_date")
+        let datetime = try datetimeNode.attr("title")
+        let naturalDatetime = try datetimeNode.text()
+        
+        let authorNode = try node.select("> a")
+        let author = try authorNode.attr("href")
+            .substring(matching: "/user/(.+)/")
+            .unwrap()
+        let displayAuthor = try authorNode.text()
+        
+        let commentTargetNode = try node.select("strong i a")
+        let title = try commentTargetNode.text()
+        let urlStr = try commentTargetNode.attr("href")
+        let cid = try Int(urlStr.substring(matching: "/view/\\d+/#cid:(\\d+)").unwrap()).unwrap()
+        let url = try URL(unsafeString: FAHomePage.url.absoluteString + urlStr)
+        
+        self.init(cid: cid, author: author, displayAuthor: displayAuthor, submissionTitle: title, datetime: datetime, naturalDatetime: naturalDatetime, submissionUrl: url)
     }
 }

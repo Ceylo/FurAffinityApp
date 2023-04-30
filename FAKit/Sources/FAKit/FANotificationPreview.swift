@@ -11,12 +11,25 @@ import FAPages
 public enum FANotificationPreview: Equatable, Hashable, Identifiable {
     public var id: Int {
         switch self {
+        case let .submissionComment(comment):
+            return comment.cid
         case let .journal(journal):
             return journal.id
         }
     }
     
+    case submissionComment(FASubmissionCommentNotificationPreview)
     case journal(FAJournalNotificationPreview)
+}
+
+public struct FASubmissionCommentNotificationPreview: Equatable, Hashable {
+    public let cid: Int
+    public let author: String
+    public let displayAuthor: String
+    public let submissionTitle: String
+    public let datetime: String
+    public let naturalDatetime: String
+    public let submissionUrl: URL
 }
 
 public struct FAJournalNotificationPreview: Equatable, Hashable {
@@ -42,6 +55,16 @@ public struct FAJournalNotificationPreview: Equatable, Hashable {
 public extension FANotificationPreview {
     init(_ header: FANotificationsPage.Header) {
         switch header {
+        case let .submissionComment(comment):
+            self = .submissionComment(
+                .init(cid: comment.cid,
+                      author: comment.author,
+                      displayAuthor: comment.displayAuthor,
+                      submissionTitle: comment.submissionTitle,
+                      datetime: comment.datetime,
+                      naturalDatetime: comment.naturalDatetime,
+                      submissionUrl: comment.submissionUrl)
+            )
         case let .journal(journal):
             self = .journal(
                 .init(id: journal.id,
