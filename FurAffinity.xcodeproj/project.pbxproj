@@ -208,6 +208,7 @@
 				875DD46E2843D1C300F3E5D9 /* Helpers */,
 				87A4CA8B2756D17C009AA219 /* Helper Views */,
 				877FD54B29EC90B600230996 /* Comments */,
+				877C8A9B2A0042D000B2F02B /* SubmissionsFeed */,
 				875DD46B2843D0AC00F3E5D9 /* Submissions */,
 				875DD46C2843D0B800F3E5D9 /* Notes */,
 				873B2D1729EB26DC00FA5F58 /* Notifications */,
@@ -253,9 +254,6 @@
 		875DD46B2843D0AC00F3E5D9 /* Submissions */ = {
 			isa = PBXGroup;
 			children = (
-				877226B42740361C00245DF0 /* SubmissionsFeedView.swift */,
-				87FE0DA62974609E005713DB /* SubmissionsFeedActionView.swift */,
-				8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */,
 				871C66DF29B8CA9200A2B2C2 /* RemoteSubmissionView.swift */,
 				8773058229D5FB8E004F8019 /* SubmissionView.swift */,
 				87566B83297DD02300FD3199 /* SubmissionMainImage.swift */,
@@ -297,6 +295,16 @@
 				8791D60C29C4DCE6003FDBBE /* InAppNavigation.swift */,
 			);
 			path = Helpers;
+			sourceTree = "<group>";
+		};
+		877C8A9B2A0042D000B2F02B /* SubmissionsFeed */ = {
+			isa = PBXGroup;
+			children = (
+				877226B42740361C00245DF0 /* SubmissionsFeedView.swift */,
+				87FE0DA62974609E005713DB /* SubmissionsFeedActionView.swift */,
+				8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */,
+			);
+			path = SubmissionsFeed;
 			sourceTree = "<group>";
 		};
 		877FD54B29EC90B600230996 /* Comments */ = {
