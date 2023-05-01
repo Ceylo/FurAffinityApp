@@ -41,12 +41,15 @@ class Model: ObservableObject {
     private (set) var unreadNoteCount = 0
     private (set) var lastNotePreviewsFetchDate: Date?
 
-    @Published
+    struct NotificationPreviews {
+        let submissionComments: [FASubmissionCommentNotificationPreview]
+        let journals: [FAJournalNotificationPreview]
+    }
+    
     /// nil until a fetch actually happened
     /// After a fetch it contains all found notifications, or an empty array if none was found
-    private (set) var notificationPreviews: [FANotificationPreview]?
-    @Published
-    private (set) var lastNotificationPreviewsFetchDate: Date?
+    @Published private (set) var notificationPreviews: NotificationPreviews?
+    @Published private (set) var lastNotificationPreviewsFetchDate: Date?
     
     @Published
     private (set) var appInfo = AppInformation()
@@ -125,7 +128,10 @@ class Model: ObservableObject {
         }
         
         let fetched = await session.notificationPreviews()
-        notificationPreviews = fetched
+        notificationPreviews = .init(
+            submissionComments: fetched.0,
+            journals: fetched.1
+        )
         lastNotificationPreviewsFetchDate = Date()
     }
     

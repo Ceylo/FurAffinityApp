@@ -28,7 +28,10 @@ struct RemoteNotificationsView: View {
     var body: some View {
         Group {
             if let notifications = model.notificationPreviews {
-                NotificationsView(notifications: notifications)
+                NotificationsView(
+                    submissionCommentNotifications: notifications.submissionComments,
+                    journalNotifications: notifications.journals
+                )
             } else {
                 ProgressView()
             }

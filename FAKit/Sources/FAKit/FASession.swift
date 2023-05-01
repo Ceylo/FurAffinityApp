@@ -139,17 +139,23 @@ open class FASession: Equatable {
         return FANote(page)
     }
     
-    open func notificationPreviews() async -> [FANotificationPreview] {
+    public typealias NotificationPreviews = (
+        submissionComments: [FASubmissionCommentNotificationPreview],
+        journals: [FAJournalNotificationPreview]
+    )
+    open func notificationPreviews() async -> NotificationPreviews {
         guard let data = await dataSource.httpData(from: FANotificationsPage.url, cookies: cookies),
               let page = await FANotificationsPage(data: data)
-        else { return [] }
+        else { return ([], []) }
         
-        let headers = page.headers
-            .compactMap { $0 }
-            .map { FANotificationPreview($0) }
+        let submissionCommentHeaders = page.submissionCommentHeaders
+            .map { FASubmissionCommentNotificationPreview($0) }
+        let journalHeaders = page.journalHeaders
+            .map { FAJournalNotificationPreview($0) }
         
-        logger.info("Got \(page.headers.count) notification previews (\(headers.count) after filter)")
-        return headers
+        let notificationCount = page.submissionCommentHeaders.count + page.journalHeaders.count
+        logger.info("Got \(notificationCount) notification previews")
+        return (submissionCommentHeaders, journalHeaders)
     }
     
     open func user(for username: String) async -> FAUser? {

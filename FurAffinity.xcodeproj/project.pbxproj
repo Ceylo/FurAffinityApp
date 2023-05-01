@@ -56,6 +56,7 @@
 		87A185A22745A8A100B10D2A /* CenteredView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A185A12745A8A100B10D2A /* CenteredView.swift */; };
 		87A9C34129C788350001D1D6 /* CurentUserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A9C34029C788350001D1D6 /* CurentUserView.swift */; };
 		87A9C34329C788A00001D1D6 /* RemoteUserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A9C34229C788A00001D1D6 /* RemoteUserView.swift */; };
+		87C13F8729FF0A89001C7CB2 /* SubmissionCommentNotificationItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C13F8629FF0A89001C7CB2 /* SubmissionCommentNotificationItemView.swift */; };
 		87C1A0AD284B6E5400529F8C /* Version in Frameworks */ = {isa = PBXBuildFile; productRef = 87C1A0AC284B6E5400529F8C /* Version */; };
 		87C4D2B027653C3600C29A4B /* Zoomable in Frameworks */ = {isa = PBXBuildFile; productRef = 87C4D2AF27653C3600C29A4B /* Zoomable */; };
 		87D4B92029C7BAC600DBD8B4 /* OptionalLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D4B91F29C7BAC600DBD8B4 /* OptionalLink.swift */; };
@@ -132,6 +133,7 @@
 		87A185A12745A8A100B10D2A /* CenteredView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CenteredView.swift; sourceTree = "<group>"; };
 		87A9C34029C788350001D1D6 /* CurentUserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurentUserView.swift; sourceTree = "<group>"; };
 		87A9C34229C788A00001D1D6 /* RemoteUserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteUserView.swift; sourceTree = "<group>"; };
+		87C13F8629FF0A89001C7CB2 /* SubmissionCommentNotificationItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionCommentNotificationItemView.swift; sourceTree = "<group>"; };
 		87D4B91F29C7BAC600DBD8B4 /* OptionalLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionalLink.swift; sourceTree = "<group>"; };
 		87E0E2B72801D967005207A8 /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
 		87E0E2B92801DCDB005207A8 /* NoteItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteItemView.swift; sourceTree = "<group>"; };
@@ -231,6 +233,7 @@
 			children = (
 				87EAA2DA29EB4F1800677446 /* RemoteNotificationsView.swift */,
 				873B2D1829EB2A0F00FA5F58 /* NotificationsView.swift */,
+				87C13F8629FF0A89001C7CB2 /* SubmissionCommentNotificationItemView.swift */,
 				87EAA2DC29EB4F3700677446 /* JournalNotificationItemView.swift */,
 			);
 			path = Notifications;
@@ -502,6 +505,7 @@
 				871C66E029B8CA9200A2B2C2 /* RemoteSubmissionView.swift in Sources */,
 				87919B2329F1CED6006FC2D6 /* Commenting.swift in Sources */,
 				873E66112752AAB2009C8767 /* ImageSaveHandler.swift in Sources */,
+				87C13F8729FF0A89001C7CB2 /* SubmissionCommentNotificationItemView.swift in Sources */,
 				877226B327402F9300245DF0 /* LoggedInView.swift in Sources */,
 				877929D02744386E003AE828 /* FASession+CanvasPreview.swift in Sources */,
 				877FD54D29EC939E00230996 /* JournalControlsView.swift in Sources */,

@@ -9,16 +9,6 @@ import Foundation
 import SwiftSoup
 
 public struct FANotificationsPage: Equatable {
-    public struct JournalHeader: Equatable {
-        public let id: Int
-        public let author: String
-        public let displayAuthor: String
-        public let title: String
-        public let datetime: String
-        public let naturalDatetime: String
-        public let journalUrl: URL
-    }
-    
     public struct SubmissionCommentHeader: Equatable {
         public let cid: Int
         public let author: String
@@ -29,13 +19,19 @@ public struct FANotificationsPage: Equatable {
         public let submissionUrl: URL
     }
     
-    public enum Header: Equatable {
-        case journal(JournalHeader)
-        case submissionComment(SubmissionCommentHeader)
+    public struct JournalHeader: Equatable {
+        public let id: Int
+        public let author: String
+        public let displayAuthor: String
+        public let title: String
+        public let datetime: String
+        public let naturalDatetime: String
+        public let journalUrl: URL
     }
     
     public static let url = URL(string: "https://www.furaffinity.net/msg/others/")!
-    public let headers: [Header]
+    public let submissionCommentHeaders: [SubmissionCommentHeader]
+    public let journalHeaders: [JournalHeader]
 }
 
 extension FANotificationsPage {
@@ -53,13 +49,12 @@ extension FANotificationsPage {
 
             async let submissionCommentHeaders = submissionCommentNodes
                 .parallelMap { try SubmissionCommentHeader($0) }
-                .map { Header.submissionComment($0) }
             
             async let journalHeaders = journalNodes
                 .parallelMap { try JournalHeader($0) }
-                .map { Header.journal($0) }
             
-            self.headers = try await submissionCommentHeaders + journalHeaders
+            self.submissionCommentHeaders = try await submissionCommentHeaders
+            self.journalHeaders = try await journalHeaders
         } catch {
             logger.error("Decoding failure in \(#file, privacy: .public): \(error, privacy: .public)")
             return nil
