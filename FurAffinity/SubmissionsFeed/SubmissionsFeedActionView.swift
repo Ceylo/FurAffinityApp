@@ -19,26 +19,10 @@ struct SubmissionsFeedActionView: View {
                 Label("Nuke All Submissions", systemImage: "trash")
             }
         } label: {
-            Text("…")
-                .font(.headline)
-                .foregroundColor(.primary)
-                .padding(7.5)
-                .offset(y: -4)
-                .background(.thinMaterial)
-                .clipShape(Circle())
+            ActionControl()
         }
-        .alert("Nuke All Submissions", isPresented: $showNukeAlert) {
-            Button("Cancel", role: .cancel) {
-                showNukeAlert = false
-            }
-            Button("Nuke", role: .destructive) {
-                Task {
-                    await model.nukeAllSubmissions()
-                    showNukeAlert = false
-                }
-            }
-        } message: {
-            Text("All submission notifications will be removed from your FurAffinity account and from this feed.")
+        .nukeAlert("Submissions", "submission notifications", show: $showNukeAlert) {
+            await model.nukeAllSubmissions()
         }
     }
 }
