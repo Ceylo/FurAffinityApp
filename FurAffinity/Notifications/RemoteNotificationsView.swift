@@ -40,6 +40,12 @@ struct RemoteNotificationsView: View {
                         Task {
                             await model.deleteJournalNotifications(items)
                         }
+                    },
+                    onNukeSubmissionComments: {
+                        await model.nukeAllSubmissionCommentNotifications()
+                    },
+                    onNukeJournals: {
+                        await model.nukeAllJournalNotifications()
                     }
                 )
             } else {

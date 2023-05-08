@@ -24,19 +24,11 @@ class OfflineFASession: FASession {
         super.init(username: sampleUsername, displayUsername: sampleUsername, cookies: [], dataSource: URLSession.sharedForFARequests)
     }
     
-    override func user(for username: String) async -> FAUser? {
-        FAUser.demo
-    }
-    
     override func user(for url: URL) async -> FAUser? {
         FAUser.demo
     }
     
     override func submissionPreviews() async -> [FASubmissionPreview] { submissionPreviews }
-    
-    override func submission(for preview: FASubmissionPreview) async -> FASubmission? {
-        FASubmission.demo
-    }
     
     override func submission(for url: URL) async -> FASubmission? {
         FASubmission.demo
@@ -58,10 +50,6 @@ class OfflineFASession: FASession {
     
     override func notePreviews() async -> [FANotePreview] { notePreviews }
     
-    override func note(for preview: FANotePreview) async -> FANote? {
-        FANote.demo
-    }
-    
     override func note(for url: URL) async -> FANote? {
         FANote.demo
     }
@@ -75,6 +63,14 @@ class OfflineFASession: FASession {
     }
     
     override func deleteJournalNotifications(_ notifications: [FAJournalNotificationPreview]) async -> NotificationPreviews {
+        notificationPreviews
+    }
+    
+    override func nukeAllSubmissionCommentNotifications() async -> NotificationPreviews {
+        notificationPreviews
+    }
+    
+    override func nukeAllJournalNotifications() async -> NotificationPreviews {
         notificationPreviews
     }
     

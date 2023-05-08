@@ -174,6 +174,19 @@ class Model: ObservableObject {
         }
     }
     
+    func nukeAllSubmissionCommentNotifications() async {
+        await fetchNotificationPreviews { session in
+            await session.nukeAllSubmissionCommentNotifications()
+        }
+    }
+    
+    func nukeAllJournalNotifications() async {
+        await fetchNotificationPreviews { session in
+            await session.nukeAllJournalNotifications()
+        }
+    }
+    
+    
     private func fetchNotificationPreviews(fetcher: (_ session: FASession) async -> FASession.NotificationPreviews) async {
         guard let session else {
             logger.error("Tried to fetch notifications with no active session, skipping")

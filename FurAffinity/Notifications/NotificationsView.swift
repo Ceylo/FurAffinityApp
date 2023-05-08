@@ -65,6 +65,9 @@ struct NotificationsView: View {
     var onDeleteSubmissionCommentNotifications: (_ items: [FASubmissionCommentNotificationPreview]) -> Void
     var onDeleteJournalNotifications: (_ items: [FAJournalNotificationPreview]) -> Void
     
+    var onNukeSubmissionComments: () async -> Void
+    var onNukeJournals: () async -> Void
+    
     var noNotification: Bool {
         submissionCommentNotifications.isEmpty && journalNotifications.isEmpty
     }
@@ -87,6 +90,13 @@ struct NotificationsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("Notifications")
         .toolbar(.hidden, for: .navigationBar)
+        .overlay(alignment: .topTrailing) {
+            NotificationsActionView(
+                nukeSubmissionCommentsAction: onNukeSubmissionComments,
+                nukeJournalsAction: onNukeJournals
+            )
+            .padding(.trailing, 20)
+        }
         .swap(when: noNotification) {
             VStack(spacing: 10) {
                 Text("It's a bit empty in here.")
@@ -109,7 +119,9 @@ struct NotificationsView_Previews: PreviewProvider {
                 submissionCommentNotifications: notificationPreviews.submissionComments,
                 journalNotifications: notificationPreviews.journals,
                 onDeleteSubmissionCommentNotifications: { _ in },
-                onDeleteJournalNotifications: { _ in }
+                onDeleteJournalNotifications: { _ in },
+                onNukeSubmissionComments: {},
+                onNukeJournals: {}
             )
             .environmentObject(Model.demo)
             
@@ -117,7 +129,9 @@ struct NotificationsView_Previews: PreviewProvider {
                 submissionCommentNotifications: [],
                 journalNotifications: [],
                 onDeleteSubmissionCommentNotifications: { _ in },
-                onDeleteJournalNotifications: { _ in }
+                onDeleteJournalNotifications: { _ in },
+                onNukeSubmissionComments: {},
+                onNukeJournals: {}
             )
             .environmentObject(Model.empty)
         }

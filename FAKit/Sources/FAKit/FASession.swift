@@ -41,6 +41,7 @@ open class FASession: Equatable {
         lhs.username == rhs.username
     }
     
+    // MARK: - Submissions feed
     open func submissionPreviews() async -> [FASubmissionPreview] {
         guard let data = await dataSource.httpData(from: FASubmissionsPage.url, cookies: cookies),
               let page = await FASubmissionsPage(data: data)
@@ -51,18 +52,6 @@ open class FASession: Equatable {
             .map { FASubmissionPreview($0) }
         logger.info("Got \(page.submissions.count) submission previews (\(previews.count) after filter)")
         return previews
-    }
-    
-    open func submission(for preview: FASubmissionPreview) async -> FASubmission? {
-        await submission(for: preview.url)
-    }
-    
-    open func submission(for url: URL) async -> FASubmission? {
-        guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = FASubmissionPage(data: data)
-        else { return nil }
-        
-        return FASubmission(page, url: url)
     }
     
     open func nukeSubmissions() async throws {
@@ -77,16 +66,25 @@ open class FASession: Equatable {
         }
     }
     
-    open func journal(for preview: FAJournalNotificationPreview) async -> FAJournal? {
-        await journal(for: preview.journalUrl)
+    // MARK: - Submissions
+    public func submission(for preview: FASubmissionPreview) async -> FASubmission? {
+        await submission(for: preview.url)
     }
     
-    open func journal(for url: URL) async -> FAJournal? {
+    open func submission(for url: URL) async -> FASubmission? {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = FAJournalPage(data: data)
+              let page = FASubmissionPage(data: data)
         else { return nil }
         
-        return FAJournal(page, url: url)
+        return FASubmission(page, url: url)
+    }
+    
+    open func toggleFavorite(for submission: FASubmission) async -> FASubmission? {
+        guard let data = await dataSource.httpData(from: submission.favoriteUrl, cookies: cookies),
+              let page = FASubmissionPage(data: data)
+        else { return nil }
+        
+        return FASubmission(page, url: submission.url)
     }
     
     open func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async -> C? {
@@ -106,14 +104,20 @@ open class FASession: Equatable {
         return C(page, url: commentable.url)
     }
     
-    open func toggleFavorite(for submission: FASubmission) async -> FASubmission? {
-        guard let data = await dataSource.httpData(from: submission.favoriteUrl, cookies: cookies),
-              let page = FASubmissionPage(data: data)
-        else { return nil }
-        
-        return FASubmission(page, url: submission.url)
+    // MARK: - Journals
+    public func journal(for preview: FAJournalNotificationPreview) async -> FAJournal? {
+        await journal(for: preview.journalUrl)
     }
     
+    open func journal(for url: URL) async -> FAJournal? {
+        guard let data = await dataSource.httpData(from: url, cookies: cookies),
+              let page = FAJournalPage(data: data)
+        else { return nil }
+        
+        return FAJournal(page, url: url)
+    }
+    
+    // MARK: - Notes
     open func notePreviews() async -> [FANotePreview] {
         guard let data = await dataSource.httpData(from: FANotesPage.url, cookies: cookies),
               let page = await FANotesPage(data: data)
@@ -127,7 +131,7 @@ open class FASession: Equatable {
         return headers
     }
     
-    open func note(for preview: FANotePreview) async -> FANote? {
+    public func note(for preview: FANotePreview) async -> FANote? {
         await note(for: preview.noteUrl)
     }
     
@@ -139,6 +143,7 @@ open class FASession: Equatable {
         return FANote(page)
     }
     
+    // MARK: - Notifications
     public typealias NotificationPreviews = (
         submissionComments: [FASubmissionCommentNotificationPreview],
         journals: [FAJournalNotificationPreview]
@@ -149,23 +154,31 @@ open class FASession: Equatable {
     }
     
     open func deleteSubmissionCommentNotifications(_ notifications: [FASubmissionCommentNotificationPreview]) async -> NotificationPreviews {
-        let params: [URLQueryItem] = [
-            .init(name: "remove-submission-comments", value: "Remove Selected Comments"),
+        await notificationPreviews(method: .POST, parameters: [
+            URLQueryItem(name: "remove-submission-comments", value: "Remove Selected Comments"),
         ] + notifications.map {
             URLQueryItem(name: "comments-submissions[]", value: "\($0.cid)")
-        }
-        
-        return await notificationPreviews(method: .POST, parameters: params)
+        })
     }
     
     open func deleteJournalNotifications(_ notifications: [FAJournalNotificationPreview]) async -> NotificationPreviews {
-        let params: [URLQueryItem] = [
-            .init(name: "remove-journals", value: "Remove Selected Journals"),
+        await notificationPreviews(method: .POST, parameters: [
+            URLQueryItem(name: "remove-journals", value: "Remove Selected Journals"),
         ] + notifications.map {
             URLQueryItem(name: "journals[]", value: "\($0.id)")
-        }
-        
-        return await notificationPreviews(method: .POST, parameters: params)
+        })
+    }
+    
+    open func nukeAllSubmissionCommentNotifications() async -> NotificationPreviews {
+        await notificationPreviews(method: .POST, parameters: [
+            URLQueryItem(name: "nuke-submission-comments", value: "Nuke Submission Comments")
+        ])
+    }
+    
+    open func nukeAllJournalNotifications() async -> NotificationPreviews {
+        await notificationPreviews(method: .POST, parameters: [
+            URLQueryItem(name: "nuke-journals", value: "Nuke Journals")
+        ])
     }
     
     private func notificationPreviews(method: HTTPMethod, parameters: [URLQueryItem]) async -> NotificationPreviews {
@@ -183,7 +196,8 @@ open class FASession: Equatable {
         return (submissionCommentHeaders, journalHeaders)
     }
     
-    open func user(for username: String) async -> FAUser? {
+    // MARK: - Users & avatar
+    public func user(for username: String) async -> FAUser? {
         guard let userpageUrl = FAUser.url(for: username) else {
             return nil
         }
