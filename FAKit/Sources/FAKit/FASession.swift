@@ -143,8 +143,33 @@ open class FASession: Equatable {
         submissionComments: [FASubmissionCommentNotificationPreview],
         journals: [FAJournalNotificationPreview]
     )
+    
     open func notificationPreviews() async -> NotificationPreviews {
-        guard let data = await dataSource.httpData(from: FANotificationsPage.url, cookies: cookies),
+        await notificationPreviews(method: .GET, parameters: [])
+    }
+    
+    open func deleteSubmissionCommentNotifications(_ notifications: [FASubmissionCommentNotificationPreview]) async -> NotificationPreviews {
+        let params: [URLQueryItem] = [
+            .init(name: "remove-submission-comments", value: "Remove Selected Comments"),
+        ] + notifications.map {
+            URLQueryItem(name: "comments-submissions[]", value: "\($0.cid)")
+        }
+        
+        return await notificationPreviews(method: .POST, parameters: params)
+    }
+    
+    open func deleteJournalNotifications(_ notifications: [FAJournalNotificationPreview]) async -> NotificationPreviews {
+        let params: [URLQueryItem] = [
+            .init(name: "remove-journals", value: "Remove Selected Journals"),
+        ] + notifications.map {
+            URLQueryItem(name: "journals[]", value: "\($0.id)")
+        }
+        
+        return await notificationPreviews(method: .POST, parameters: params)
+    }
+    
+    private func notificationPreviews(method: HTTPMethod, parameters: [URLQueryItem]) async -> NotificationPreviews {
+        guard let data = await dataSource.httpData(from: FANotificationsPage.url, cookies: cookies, method: method, parameters: parameters),
               let page = await FANotificationsPage(data: data)
         else { return ([], []) }
         

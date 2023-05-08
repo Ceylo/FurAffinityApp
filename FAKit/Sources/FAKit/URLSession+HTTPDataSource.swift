@@ -22,7 +22,7 @@ extension URLSession: HTTPDataSource {
             request.httpMethod = "POST"
             request.cachePolicy = .reloadIgnoringLocalCacheData
             if let query = urlWithParams.query() {
-                print(query)
+                logger.debug("\(query)")
                 request.httpBody = query.data(using: .utf8)
             }
         }

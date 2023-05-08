@@ -16,6 +16,7 @@ struct ListedSection<T: FANavigable & Identifiable, ItemView: View> : View {
     var title: String
     var list: [T]
     @ViewBuilder var itemViewProvider: (T) -> ItemView
+    var onDelete: (_ items: [T]) -> Void
     
     var body: some View {
         if !list.isEmpty {
@@ -27,7 +28,11 @@ struct ListedSection<T: FANavigable & Identifiable, ItemView: View> : View {
                         }
                     }
                 }
-            }  header: {
+                .onDelete { indexSet in
+                    let items = indexSet.map { list[$0] }
+                    onDelete(items)
+                }
+            } header: {
                 Text(title)
                     .font(.title2)
             }
@@ -36,10 +41,13 @@ struct ListedSection<T: FANavigable & Identifiable, ItemView: View> : View {
 }
 
 extension ListedSection {
-    init(_ title: String, _ list: [T], @ViewBuilder itemViewProvider: @escaping (T) -> ItemView) {
+    init(_ title: String, _ list: [T],
+         @ViewBuilder itemViewProvider: @escaping (T) -> ItemView,
+         onDelete: @escaping (_ items: [T]) -> Void) {
         self.title = title
         self.list = list
         self.itemViewProvider = itemViewProvider
+        self.onDelete = onDelete
     }
 }
 
@@ -54,6 +62,8 @@ extension FAJournalNotificationPreview: FANavigable {
 struct NotificationsView: View {
     var submissionCommentNotifications: [FASubmissionCommentNotificationPreview]
     var journalNotifications: [FAJournalNotificationPreview]
+    var onDeleteSubmissionCommentNotifications: (_ items: [FASubmissionCommentNotificationPreview]) -> Void
+    var onDeleteJournalNotifications: (_ items: [FAJournalNotificationPreview]) -> Void
     
     var noNotification: Bool {
         submissionCommentNotifications.isEmpty && journalNotifications.isEmpty
@@ -63,10 +73,14 @@ struct NotificationsView: View {
         List {
             ListedSection("Submission Comments", submissionCommentNotifications) { item in
                 SubmissionCommentNotificationItemView(submissionComment: item)
+            } onDelete: { items in
+                onDeleteSubmissionCommentNotifications(items)
             }
             
             ListedSection("Journals", journalNotifications) { item in
                 JournalNotificationItemView(journal: item)
+            } onDelete: { items in
+                onDeleteJournalNotifications(items)
             }
         }
         .listStyle(.plain)
@@ -93,13 +107,17 @@ struct NotificationsView_Previews: PreviewProvider {
         Group {
             NotificationsView(
                 submissionCommentNotifications: notificationPreviews.submissionComments,
-                journalNotifications: notificationPreviews.journals
+                journalNotifications: notificationPreviews.journals,
+                onDeleteSubmissionCommentNotifications: { _ in },
+                onDeleteJournalNotifications: { _ in }
             )
             .environmentObject(Model.demo)
             
             NotificationsView(
                 submissionCommentNotifications: [],
-                journalNotifications: []
+                journalNotifications: [],
+                onDeleteSubmissionCommentNotifications: { _ in },
+                onDeleteJournalNotifications: { _ in }
             )
             .environmentObject(Model.empty)
         }

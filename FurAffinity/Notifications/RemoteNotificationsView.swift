@@ -30,7 +30,17 @@ struct RemoteNotificationsView: View {
             if let notifications = model.notificationPreviews {
                 NotificationsView(
                     submissionCommentNotifications: notifications.submissionComments,
-                    journalNotifications: notifications.journals
+                    journalNotifications: notifications.journals,
+                    onDeleteSubmissionCommentNotifications: { items in
+                        Task {
+                            await model.deleteSubmissionCommentNotifications(items)
+                        }
+                    },
+                    onDeleteJournalNotifications: { items in
+                        Task {
+                            await model.deleteJournalNotifications(items)
+                        }
+                    }
                 )
             } else {
                 ProgressView()

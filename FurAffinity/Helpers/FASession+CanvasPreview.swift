@@ -70,6 +70,14 @@ class OfflineFASession: FASession {
         notificationPreviews
     }
     
+    override func deleteSubmissionCommentNotifications(_ notifications: [FASubmissionCommentNotificationPreview]) async -> NotificationPreviews {
+        notificationPreviews
+    }
+    
+    override func deleteJournalNotifications(_ notifications: [FAJournalNotificationPreview]) async -> NotificationPreviews {
+        notificationPreviews
+    }
+    
     override func avatarUrl(for user: String) async -> URL? {
         nil
     }

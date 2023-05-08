@@ -66,6 +66,37 @@ class Model: ObservableObject {
         processNewSession()
     }
     
+    func updateAppInfoIfNeeded() {
+        if let lastAppInfoUpdate {
+            let secondsSinceLastRefresh = -lastAppInfoUpdate.timeIntervalSinceNow
+            guard secondsSinceLastRefresh > Self.autorefreshDelay else { return }
+        }
+        
+        appInfo.fetch()
+        lastAppInfoUpdate = Date()
+    }
+    
+    private func processNewSession() {
+        guard session != nil else {
+            lastSubmissionPreviewsFetchDate = nil
+            submissionPreviews = nil
+            lastNotePreviewsFetchDate = nil
+            notePreviews = nil
+            unreadNoteCount = 0
+            notificationPreviews = nil
+            lastNotificationPreviewsFetchDate = nil
+            return
+        }
+        
+        Task {
+            _ = await fetchNewSubmissionPreviews()
+            await fetchNewNotePreviews()
+            await fetchNotificationPreviews()
+            updateAppInfoIfNeeded()
+        }
+    }
+    
+    // MARK: - Submissions feed
     func fetchNewSubmissionPreviews() async -> Int {
         guard let session else {
             logger.error("Tried to fetch submissions with no active session, skipping")
@@ -101,6 +132,8 @@ class Model: ObservableObject {
             logger.error("Failed nuking submissions: \(error, privacy: .public)")
         }
     }
+    
+    // MARK: - Commentable
     func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async throws -> C? {
         guard let session else {
             throw ModelError.disconnected
@@ -109,6 +142,7 @@ class Model: ObservableObject {
         return await session.postComment(on: commentable, replytoCid: replytoCid, contents: contents)
     }
     
+    // MARK: - Notes
     func fetchNewNotePreviews() async {
         guard let session else {
             logger.error("Tried to fetch notes with no active session, skipping")
@@ -121,20 +155,40 @@ class Model: ObservableObject {
         lastNotePreviewsFetchDate = Date()
     }
     
+    // MARK: - Notifications feed
     func fetchNotificationPreviews() async {
+        await fetchNotificationPreviews { session in
+            await session.notificationPreviews()
+        }
+    }
+    
+    func deleteSubmissionCommentNotifications(_ notifications: [FASubmissionCommentNotificationPreview]) async {
+        await fetchNotificationPreviews { session in
+            await session.deleteSubmissionCommentNotifications(notifications)
+        }
+    }
+    
+    func deleteJournalNotifications(_ notifications: [FAJournalNotificationPreview]) async {
+        await fetchNotificationPreviews { session in
+            await session.deleteJournalNotifications(notifications)
+        }
+    }
+    
+    private func fetchNotificationPreviews(fetcher: (_ session: FASession) async -> FASession.NotificationPreviews) async {
         guard let session else {
             logger.error("Tried to fetch notifications with no active session, skipping")
             return
         }
         
-        let fetched = await session.notificationPreviews()
+        let fetched = await fetcher(session)
         notificationPreviews = .init(
-            submissionComments: fetched.0,
-            journals: fetched.1
+            submissionComments: fetched.submissionComments,
+            journals: fetched.journals
         )
         lastNotificationPreviewsFetchDate = Date()
     }
     
+    // MARK: - Submission
     func toggleFavorite(for submission: FASubmission) async throws -> FASubmission? {
         guard let session else {
             throw ModelError.disconnected
@@ -145,35 +199,5 @@ class Model: ObservableObject {
             assert(updated.isFavorite != submission.isFavorite)
         }
         return updated
-    }
-    
-    func updateAppInfoIfNeeded() {
-        if let lastAppInfoUpdate {
-            let secondsSinceLastRefresh = -lastAppInfoUpdate.timeIntervalSinceNow
-            guard secondsSinceLastRefresh > Self.autorefreshDelay else { return }
-        }
-        
-        appInfo.fetch()
-        lastAppInfoUpdate = Date()
-    }
-    
-    private func processNewSession() {
-        guard session != nil else {
-            lastSubmissionPreviewsFetchDate = nil
-            submissionPreviews = nil
-            lastNotePreviewsFetchDate = nil
-            notePreviews = nil
-            unreadNoteCount = 0
-            notificationPreviews = nil
-            lastNotificationPreviewsFetchDate = nil
-            return
-        }
-        
-        Task {
-            _ = await fetchNewSubmissionPreviews()
-            await fetchNewNotePreviews()
-            await fetchNotificationPreviews()
-            updateAppInfoIfNeeded()
-        }
     }
 }
