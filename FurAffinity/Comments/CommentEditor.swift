@@ -36,22 +36,24 @@ struct CommentEditor: View {
             
             Divider()
             
-            ScrollView {
-                VStack(spacing: 0) {
-                    if let parentComment {
-                        CommentView(comment: parentComment)
-                            .allowsHitTesting(false)
-                            .padding()
-                        Divider()
-                    }
-                    
-                    TextEditor(text: $text)
-                        .focused($editorHasFocus)
-                        .frame(minHeight: 20)
-                        .onAppear {
-                            editorHasFocus = true
+            GeometryReader { geometry in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        if let parentComment {
+                            CommentView(comment: parentComment)
+                                .allowsHitTesting(false)
+                                .padding()
+                            Divider()
                         }
-                        .padding()
+                        
+                        TextEditor(text: $text)
+                            .focused($editorHasFocus)
+                            .onAppear {
+                                editorHasFocus = true
+                            }
+                            .padding()
+                    }
+                    .frame(minHeight: geometry.size.height)
                 }
             }
         }
