@@ -47,11 +47,11 @@ struct CommentEditor: View {
                     
                     TextEditor(text: $text)
                         .focused($editorHasFocus)
+                        .frame(minHeight: 20)
                         .onAppear {
                             editorHasFocus = true
                         }
                         .padding()
-                        .scrollDisabled(true)
                 }
             }
         }
