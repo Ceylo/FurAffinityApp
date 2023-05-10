@@ -89,15 +89,15 @@ class Model: ObservableObject {
         }
         
         Task {
-            _ = await fetchNewSubmissionPreviews()
-            await fetchNewNotePreviews()
+            _ = await fetchSubmissionPreviews()
+            await fetchNotePreviews()
             await fetchNotificationPreviews()
             updateAppInfoIfNeeded()
         }
     }
     
     // MARK: - Submissions feed
-    func fetchNewSubmissionPreviews() async -> Int {
+    func fetchSubmissionPreviews() async -> Int {
         guard let session else {
             logger.error("Tried to fetch submissions with no active session, skipping")
             return 0
@@ -143,7 +143,7 @@ class Model: ObservableObject {
     }
     
     // MARK: - Notes
-    func fetchNewNotePreviews() async {
+    func fetchNotePreviews() async {
         guard let session else {
             logger.error("Tried to fetch notes with no active session, skipping")
             return

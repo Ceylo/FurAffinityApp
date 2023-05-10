@@ -14,7 +14,7 @@ struct NotesView: View {
     @EnvironmentObject var model: Model
     
     func refresh() async {
-        await model.fetchNewNotePreviews()
+        await model.fetchNotePreviews()
     }
     
     func autorefreshIfNeeded() {

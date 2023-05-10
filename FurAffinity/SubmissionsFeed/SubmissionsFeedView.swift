@@ -107,7 +107,7 @@ extension SubmissionsFeedView {
             }
             
             let newSubmissionCount = await model
-                .fetchNewSubmissionPreviews()
+                .fetchSubmissionPreviews()
             
             withAnimation {
                 newSubmissionsCount = newSubmissionCount
