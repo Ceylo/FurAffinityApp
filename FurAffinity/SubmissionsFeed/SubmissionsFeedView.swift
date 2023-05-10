@@ -15,6 +15,7 @@ struct SubmissionsFeedView: View {
     @State private var newSubmissionsCount: Int?
     @State private var scrollView: UIScrollView?
     @State private var targetScrollItemSid: Int?
+    @State private var currentViewIsDisplayed = false
     
     var body: some View {
         ScrollViewReader { proxy in
@@ -80,6 +81,15 @@ struct SubmissionsFeedView: View {
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 autorefreshIfNeeded()
             }
+            // Relying on this to know if the view is displayed doesn't always work
+            // in the general case, hopefully this view is used in a TabView
+            // which calls these modifiers as expected!
+            .onAppear {
+                currentViewIsDisplayed = true
+            }
+            .onDisappear {
+                currentViewIsDisplayed = false
+            }
         }
     }
 }
@@ -107,6 +117,7 @@ extension SubmissionsFeedView {
     
     func autorefreshIfNeeded() {
         guard scrollView?.reachedTop ?? true else { return }
+        guard currentViewIsDisplayed else { return }
         
         if let lastRefreshDate = model.lastSubmissionPreviewsFetchDate {
             let secondsSinceLastRefresh = -lastRefreshDate.timeIntervalSinceNow
