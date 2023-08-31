@@ -14,14 +14,16 @@ public struct FAUser: Equatable {
     public let avatarUrl: URL
     public let bannerUrl: URL
     public let htmlDescription: String
+    public let shouts: [FAComment]
     
     public init(userName: String, displayName: String, avatarUrl: URL, bannerUrl: URL,
-                htmlDescription: String) {
+                htmlDescription: String, shouts: [FAComment]) {
         self.userName = userName
         self.displayName = displayName
         self.avatarUrl = avatarUrl
         self.bannerUrl = bannerUrl
         self.htmlDescription = htmlDescription.selfContainedFAHtmlUserDescription
+        self.shouts = shouts
     }
     
     public static func url(for username: String) -> URL? {
@@ -36,7 +38,8 @@ public extension FAUser {
             displayName: page.displayName,
             avatarUrl: page.avatarUrl,
             bannerUrl: page.bannerUrl,
-            htmlDescription: page.htmlDescription
+            htmlDescription: page.htmlDescription,
+            shouts: page.shouts.map(FAComment.init)
         )
     }
 }

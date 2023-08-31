@@ -15,27 +15,31 @@ struct UserView: View {
     
     private let bannerHeight = 100.0
     
-    var body: some View {
-        VStack(alignment: .leading) {
-            GeometryReader { geometry in
-                URLImage(user.bannerUrl) { progress in
-                    Rectangle()
-                        .foregroundColor(.white.opacity(0.1))
-                } failure: { error, retry in
-                    Image(systemName: "questionmark")
-                        .resizable()
-                } content: { image, info in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: geometry.size.width,
-                               height: bannerHeight,
-                               alignment: .leading)
-                        .clipped()
-                        .transition(.opacity.animation(.default.speed(2)))
-                }
+    var banner: some View {
+        GeometryReader { geometry in
+            URLImage(user.bannerUrl) { progress in
+                Rectangle()
+                    .foregroundColor(.white.opacity(0.1))
+            } failure: { error, retry in
+                Image(systemName: "questionmark")
+                    .resizable()
+            } content: { image, info in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: geometry.size.width,
+                           height: bannerHeight,
+                           alignment: .leading)
+                    .clipped()
+                    .transition(.opacity.animation(.default.speed(2)))
             }
-            .frame(height: bannerHeight)
+        }
+        .frame(height: bannerHeight)
+    }
+    
+    var body: some View {
+        LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
+            banner
             
             VStack(alignment: .leading) {
                 HStack {
@@ -50,6 +54,19 @@ struct UserView: View {
                 }
             }
             .padding(.horizontal)
+            
+            Section {
+                CommentsView(comments: user.shouts)
+                    .padding()
+            } header: {
+                HStack {
+                    Text("Shouts")
+                        .font(.callout)
+                    Spacer()
+                }
+                .padding(10)
+                .background(.regularMaterial)
+            }
         }
         .navigationTitle(user.displayName)
     }

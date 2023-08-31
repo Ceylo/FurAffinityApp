@@ -55,12 +55,18 @@ struct SubmissionView: View {
                 TextView(text: description, initialHeight: 300)
             }
             
-            CommentsView(
-                comments: submission.comments,
-                replyAction: { cid in
-                    replySession = .init(parentCid: cid, among: submission.comments)
+            if !submission.comments.isEmpty {
+                VStack {
+                    Text("Comments")
+                        .font(.headline)
+                    CommentsView(
+                        comments: submission.comments,
+                        replyAction: { cid in
+                            replySession = .init(parentCid: cid, among: submission.comments)
+                        }
+                    )
                 }
-            )
+            }
         }
         .padding(10)
         .commentSheet(on: $replySession, replyAction)

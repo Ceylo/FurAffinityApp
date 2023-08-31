@@ -245,6 +245,22 @@ extension FAUser {
         displayName: "Demo",
         avatarUrl: URL(string: "https://a.furaffinity.net/20230319/furrycount.gif")!,
         bannerUrl: URL(string: "https://www.furaffinity.net/themes/beta/img/banners/logo/fa-banner-winter.jpg")!,
-        htmlDescription: htmlDescription
+        htmlDescription: htmlDescription,
+        shouts: [
+            FAComment(
+                cid: 54569442, author: "sadisticss", displayAuthor: "Sadisticss",
+                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1692639963/sadisticss.gif")!,
+                datetime: "Jul 29, 2023 10:16 PM", naturalDatetime: "a month ago",
+                htmlMessage: "Hola, dear! U have nice gallery &lt;3",
+                answers: []
+            ),
+            FAComment(
+                cid: 53766730, author: "mostevilpupper", displayAuthor: "MostEvilPupper",
+                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1670117631/mostevilpupper.gif")!,
+                datetime: "Dec 6, 2022 03:46 AM", naturalDatetime: "9 months ago",
+                htmlMessage: "An absolutely amazing artist",
+                answers: []
+            )
+        ]
     )
 }

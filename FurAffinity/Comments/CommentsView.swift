@@ -14,13 +14,17 @@ extension FAComment: Identifiable {
 
 struct CommentsView: View {
     var comments: [FAComment]
-    var replyAction: (_ cid: Int) -> Void
+    var replyAction: ((_ cid: Int) -> Void)?
     
     func commentViews(for comments: [FAComment], indent: Bool) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             ForEach(comments) { comment in
-                SwipeableCommentView(comment: comment) { cid in
-                    replyAction(cid)
+                if let replyAction {
+                    SwipeableCommentView(comment: comment) { cid in
+                        replyAction(cid)
+                    }
+                } else {
+                    CommentView(comment: comment)
                 }
                 AnyView(commentViews(for: comment.answers, indent: true))
             }
@@ -31,8 +35,6 @@ struct CommentsView: View {
     var body: some View {
         VStack(alignment: .leading) {
             if !comments.isEmpty {
-                Text("Comments:")
-                    .font(.headline)
                 commentViews(for: comments, indent: false)
             }
         }

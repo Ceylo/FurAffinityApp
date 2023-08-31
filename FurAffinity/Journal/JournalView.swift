@@ -40,12 +40,18 @@ struct JournalView: View {
             )
             .padding(.bottom, 10)
             
-            CommentsView(
-                comments: journal.comments,
-                replyAction: { cid in
-                    replySession = .init(parentCid: cid, among: journal.comments)
+            if !journal.comments.isEmpty {
+                VStack {
+                    Text("Comments")
+                        .font(.headline)
+                    CommentsView(
+                        comments: journal.comments,
+                        replyAction: { cid in
+                            replySession = .init(parentCid: cid, among: journal.comments)
+                        }
+                    )
                 }
-            )
+            }
         }
         .padding(10)
         .commentSheet(on: $replySession, replyAction)
