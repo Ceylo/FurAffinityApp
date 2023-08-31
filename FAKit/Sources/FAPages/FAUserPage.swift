@@ -14,6 +14,7 @@ public struct FAUserPage: Equatable {
     public let avatarUrl: URL
     public let bannerUrl: URL
     public let htmlDescription: String
+    public let shouts: [FAPageComment]
 }
 
 extension FAUserPage {
@@ -55,6 +56,10 @@ extension FAUserPage {
             let descriptionQuery = "div#site-content div#page-userpage section.userpage-layout-profile div.userpage-layout-profile-container div.userpage-profile"
             let descriptionNode = try mainWindowNode.select(descriptionQuery)
             self.htmlDescription = try descriptionNode.html()
+            
+            let shoutsQuery = "div#site-content div#page-userpage section.userpage-right-column div.userpage-section-right div.comment_container"
+            let shoutsNodes = try mainWindowNode.select(shoutsQuery)
+            self.shouts = try shoutsNodes.compactMap { try FAPageComment($0, type: .shout) }
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil

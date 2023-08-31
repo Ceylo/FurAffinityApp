@@ -87,7 +87,7 @@ extension FASubmissionPage {
             self.htmlDescription = htmlContent
             
             let commentNodes = try submissionContentNode.select("div.comments-list div#comments-submission div.comment_container")
-            self.comments = try commentNodes.compactMap { try FAPageComment($0) }
+            self.comments = try commentNodes.compactMap { try FAPageComment($0, type: .comment) }
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil
