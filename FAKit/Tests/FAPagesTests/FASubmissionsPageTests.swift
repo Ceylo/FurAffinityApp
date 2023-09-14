@@ -24,7 +24,6 @@ final class FASubmissionsPageTests: XCTestCase {
                         author: "holt-odium",
                         displayAuthor: "Holt-Odium")
         XCTAssertEqual(submission, page?.submissions[0])
-        
     }
     
     func testFirstSubmissionsPage_NextPageUrlParsed() async throws {

@@ -97,7 +97,7 @@ extension FASubmissionsPage.Submission {
             self.thumbnailUrl = try URL(unsafeString: "https:\(thumbSrc)")
             self.thumbnailWidthOnHeightRatio = thumbWidth / thumbHeight
             
-            let captionNodes = try node.select("figure figcaption label p a")
+            let captionNodes = try node.select("figcaption p a")
             guard captionNodes.count >= 2 else {
                 logger.error("\(#file, privacy: .public) - invalid structure")
                 return nil

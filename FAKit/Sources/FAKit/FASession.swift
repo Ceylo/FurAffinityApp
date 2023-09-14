@@ -66,6 +66,21 @@ open class FASession: Equatable {
         }
     }
     
+    // MARK: - User gallery
+    open func galleryPreviews(for user: String) async -> FAUserGallery? {
+        await gallery(for: FAUserGalleryPage.url(for: user))
+    }
+    
+    open func gallery(for url: URL) async -> FAUserGallery? {
+        guard let data = await dataSource.httpData(from: url, cookies: cookies),
+              let page = await FAUserGalleryPage(data: data)
+        else { return nil }
+        
+        let gallery = FAUserGallery(page)
+        logger.info("Got \(page.previews.count) submission previews (\(gallery.previews.count) after filter)")
+        return gallery
+    }
+    
     // MARK: - Submissions
     public func submission(for preview: FASubmissionPreview) async -> FASubmission? {
         await submission(for: preview.url)
