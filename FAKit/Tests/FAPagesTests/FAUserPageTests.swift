@@ -93,7 +93,7 @@ class FAUserPageTests: XCTestCase {
         ]
         
         let expected = FAUserPage(
-            userName: "terriniss",
+            name: "terriniss",
             displayName: "Terriniss",
             avatarUrl: URL(string: "https://a.furaffinity.net/1616615925/terriniss.gif")!,
             bannerUrl: URL(string: "https://www.furaffinity.net/themes/beta/img/banners/logo/fa-banner-summer.jpg")!,

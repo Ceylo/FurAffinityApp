@@ -241,7 +241,7 @@ extension FAUser {
 """.selfContainedFAHtmlSubmission
     
     static let demo = FAUser(
-        userName: "demo",
+        name: "demo",
         displayName: "Demo",
         avatarUrl: URL(string: "https://a.furaffinity.net/20230319/furrycount.gif")!,
         bannerUrl: URL(string: "https://www.furaffinity.net/themes/beta/img/banners/logo/fa-banner-winter.jpg")!,

@@ -9,16 +9,16 @@ import Foundation
 import FAPages
 
 public struct FAUser: Equatable {
-    public let userName: String
+    public let name: String
     public let displayName: String
     public let avatarUrl: URL
     public let bannerUrl: URL
     public let htmlDescription: String
     public let shouts: [FAComment]
     
-    public init(userName: String, displayName: String, avatarUrl: URL, bannerUrl: URL,
+    public init(name: String, displayName: String, avatarUrl: URL, bannerUrl: URL,
                 htmlDescription: String, shouts: [FAComment]) {
-        self.userName = userName
+        self.name = name
         self.displayName = displayName
         self.avatarUrl = avatarUrl
         self.bannerUrl = bannerUrl
@@ -34,7 +34,7 @@ public struct FAUser: Equatable {
 public extension FAUser {
     init(_ page: FAUserPage) {
         self.init(
-            userName: page.userName,
+            name: page.name,
             displayName: page.displayName,
             avatarUrl: page.avatarUrl,
             bannerUrl: page.bannerUrl,

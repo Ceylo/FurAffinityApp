@@ -9,7 +9,7 @@ import SwiftSoup
 import Foundation
 
 public struct FAUserPage: Equatable {
-    public let userName: String
+    public let name: String
     public let displayName: String
     public let avatarUrl: URL
     public let bannerUrl: URL
@@ -32,7 +32,7 @@ extension FAUserPage {
                 .attr("href")
                 .substring(matching: "\\/user\\/(.+)\\/")
                 .unwrap()
-            self.userName = username
+            self.name = username
             
             let displayNameQuery = "userpage-nav-user-details h1 username"
             let displayNameNode = try navHeaderNode.select(displayNameQuery).first().unwrap()
