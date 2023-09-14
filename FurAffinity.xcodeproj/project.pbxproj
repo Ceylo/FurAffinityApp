@@ -62,6 +62,8 @@
 		87C13F8729FF0A89001C7CB2 /* SubmissionCommentNotificationItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C13F8629FF0A89001C7CB2 /* SubmissionCommentNotificationItemView.swift */; };
 		87C1A0AD284B6E5400529F8C /* Version in Frameworks */ = {isa = PBXBuildFile; productRef = 87C1A0AC284B6E5400529F8C /* Version */; };
 		87C4D2B027653C3600C29A4B /* Zoomable in Frameworks */ = {isa = PBXBuildFile; productRef = 87C4D2AF27653C3600C29A4B /* Zoomable */; };
+		87C94A542AA893BA0049CA81 /* UserGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C94A532AA893BA0049CA81 /* UserGalleryView.swift */; };
+		87C94A562AA897E50049CA81 /* RemoteUserGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C94A552AA897E50049CA81 /* RemoteUserGalleryView.swift */; };
 		87D4B92029C7BAC600DBD8B4 /* OptionalLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D4B91F29C7BAC600DBD8B4 /* OptionalLink.swift */; };
 		87E0E2B82801D967005207A8 /* NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B72801D967005207A8 /* NotesView.swift */; };
 		87E0E2BA2801DCDB005207A8 /* NoteItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B92801DCDB005207A8 /* NoteItemView.swift */; };
@@ -140,6 +142,8 @@
 		87A9C34029C788350001D1D6 /* CurentUserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurentUserView.swift; sourceTree = "<group>"; };
 		87A9C34229C788A00001D1D6 /* RemoteUserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteUserView.swift; sourceTree = "<group>"; };
 		87C13F8629FF0A89001C7CB2 /* SubmissionCommentNotificationItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionCommentNotificationItemView.swift; sourceTree = "<group>"; };
+		87C94A532AA893BA0049CA81 /* UserGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserGalleryView.swift; sourceTree = "<group>"; };
+		87C94A552AA897E50049CA81 /* RemoteUserGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteUserGalleryView.swift; sourceTree = "<group>"; };
 		87D4B91F29C7BAC600DBD8B4 /* OptionalLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionalLink.swift; sourceTree = "<group>"; };
 		87E0E2B72801D967005207A8 /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
 		87E0E2B92801DCDB005207A8 /* NoteItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteItemView.swift; sourceTree = "<group>"; };
@@ -368,6 +372,8 @@
 				87A9C34029C788350001D1D6 /* CurentUserView.swift */,
 				87A9C34229C788A00001D1D6 /* RemoteUserView.swift */,
 				876C137229D5F8E3001EB05B /* UserView.swift */,
+				87C94A552AA897E50049CA81 /* RemoteUserGalleryView.swift */,
+				87C94A532AA893BA0049CA81 /* UserGalleryView.swift */,
 			);
 			path = User;
 			sourceTree = "<group>";
@@ -543,8 +549,10 @@
 				8733DDFD28F75C1200CD8BCF /* Sharing.swift in Sources */,
 				87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */,
 				87566B82297DC71600FD3199 /* CommentEditor.swift in Sources */,
+				87C94A542AA893BA0049CA81 /* UserGalleryView.swift in Sources */,
 				879233D2278216DF0019AC44 /* TextView.swift in Sources */,
 				8716E7EC271C659C00C0BC4A /* FurAffinityApp.swift in Sources */,
+				87C94A562AA897E50049CA81 /* RemoteUserGalleryView.swift in Sources */,
 				8791D5FB29C4CBBA003FDBBE /* FAURL.swift in Sources */,
 				8773058329D5FB8E004F8019 /* SubmissionView.swift in Sources */,
 				8733DDFF28FAD58D00CD8BCF /* SwapView.swift in Sources */,

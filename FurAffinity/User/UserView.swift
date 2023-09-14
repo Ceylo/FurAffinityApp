@@ -9,6 +9,35 @@ import SwiftUI
 import FAKit
 import URLImage
 
+private enum Control: Int, CaseIterable, Identifiable {
+    var id: Int { rawValue }
+
+    case gallery
+}
+
+extension Control {
+    var title: String {
+        switch self {
+        case .gallery: return "Gallery"
+        }
+    }
+    
+    var image: String {
+        switch self {
+        case .gallery:
+            return "rectangle.grid.2x2"
+        }
+    }
+    
+    func destinationUrl(for user: String) -> URL {
+        switch self {
+        case .gallery:
+            return FAUserGallery.url(for: user)
+                .convertedForInAppNavigation
+        }
+    }
+}
+
 struct UserView: View {
     var user: FAUser
     var description: AttributedString?
@@ -37,6 +66,21 @@ struct UserView: View {
         .frame(height: bannerHeight)
     }
     
+    var controls: some View {
+        ScrollView(.horizontal) {
+            HStack {
+                ForEach(Control.allCases) { control in
+                    Link(destination: control.destinationUrl(for: user.name)) {
+                        Text(control.title)
+                            .font(.headline)
+                            .padding(10)
+                    }
+                }
+            }
+        }
+        .background(.regularMaterial)
+    }
+    
     var body: some View {
         LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
             banner
@@ -49,11 +93,15 @@ struct UserView: View {
                         .font(.title)
                 }
                 
+                controls
+                    .padding(.horizontal, -15)
+                
                 if let description {
                     TextView(text: description, initialHeight: 300)
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 15)
+            .padding(.top, 5)
             
             Section {
                 CommentsView(comments: user.shouts)

@@ -45,5 +45,7 @@ func view(for url: FAURL) -> some View {
         RemoteJournalView(url: url)
     case let .user(url):
         RemoteUserView(url: url)
+    case let .gallery(url):
+        RemoteUserGalleryView(url: url)
     }
 }

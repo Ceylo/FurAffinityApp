@@ -12,6 +12,7 @@ enum FAURL: Hashable {
     case note(url: URL)
     case journal(url: URL)
     case user(url: URL)
+    case gallery(url: URL)
 }
 
 fileprivate func ~=(regex: Regex<Substring>, str: String) -> Bool {
@@ -26,14 +27,11 @@ extension FAURL {
             return nil
         }
         
-        // https://www.furaffinity.net/view/nnn/
-        // https://www.furaffinity.net/msg/pms/n/nnn/#message
-        // https://www.furaffinity.net/journal/nnn/
-        // https://www.furaffinity.net/user/xxx
-        let submissionRegex = #//view/\d+/#
-        let noteRegex = #//msg/pms/\d+/\d+/#
-        let journalRegex = #//journal/\d+/#
-        let userRegex = #//user/.+/#
+        let submissionRegex = #//view/\d+/#  // https://www.furaffinity.net/view/nnn/
+        let noteRegex = #//msg/pms/\d+/\d+/# // https://www.furaffinity.net/msg/pms/n/nnn/#message
+        let journalRegex = #//journal/\d+/#  // https://www.furaffinity.net/journal/nnn/
+        let userRegex = #//user/.+/#         // https://www.furaffinity.net/user/xxx
+        let galleryRegex = #//gallery/.+/#   // https://www.furaffinity.net/gallery/xxx
         
         switch components.path {
         case submissionRegex:
@@ -44,6 +42,8 @@ extension FAURL {
             self = .journal(url: url)
         case userRegex:
             self = .user(url: url)
+        case galleryRegex:
+            self = .gallery(url: url)
         default:
             return nil
         }

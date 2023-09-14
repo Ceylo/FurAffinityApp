@@ -5,6 +5,7 @@
 //  Created by Ceylo on 06/09/2023.
 //
 
+import Foundation
 import FAPages
 
 public struct FAUserGallery {
@@ -14,6 +15,10 @@ public struct FAUserGallery {
     public init(displayAuthor: String, previews: [FASubmissionPreview]) {
         self.displayAuthor = displayAuthor
         self.previews = previews
+    }
+    
+    public static func url(for user: String) -> URL {
+        FAUserGalleryPage.url(for: user)
     }
 }
 
