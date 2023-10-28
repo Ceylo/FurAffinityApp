@@ -32,7 +32,7 @@ extension Control {
     func destinationUrl(for user: String) -> URL {
         switch self {
         case .gallery:
-            return FAUserGallery.url(for: user)
+            return FAURLs.galleryUrl(for: user)
                 .convertedForInAppNavigation
         }
     }

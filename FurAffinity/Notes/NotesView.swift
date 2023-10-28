@@ -46,7 +46,7 @@ struct NotesView: View {
                     VStack(spacing: 10) {
                         Text("It's a bit empty in here.")
                             .font(.headline)
-                        Text("Messages from your inbox in [www.furaffinity.net/msg/pms/](https://www.furaffinity.net/controls/switchbox/inbox/) will be displayed here.")
+                        Text("Messages from [\(FAURLs.notesInboxUrl.schemelessDisplayString)](\(FAURLs.notesInboxUrl)) will be displayed here.")
                             .multilineTextAlignment(.center)
                             .foregroundColor(.secondary)
                     }

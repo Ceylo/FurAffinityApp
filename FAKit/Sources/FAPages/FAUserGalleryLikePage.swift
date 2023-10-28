@@ -1,5 +1,5 @@
 //
-//  FAUserGalleryPage.swift
+//  FAUserGalleryLikePage.swift
 //  
 //
 //  Created by Ceylo on 31/08/2023.
@@ -8,16 +8,12 @@
 import Foundation
 import SwiftSoup
 
-public struct FAUserGalleryPage {
+public struct FAUserGalleryLikePage {
     public let previews: [FASubmissionsPage.Submission?]
     public let displayAuthor: String
-    
-    public static func url(for user: String) -> URL {
-        URL(string: "https://www.furaffinity.net/gallery/\(user)/")!
-    }
 }
 
-extension FAUserGalleryPage {
+extension FAUserGalleryLikePage {
     public init?(data: Data) async {
         let state = signposter.beginInterval("User Gallery Parsing")
         defer { signposter.endInterval("User Gallery Parsing", state) }

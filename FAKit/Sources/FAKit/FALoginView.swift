@@ -25,7 +25,7 @@ public struct FALoginView: View {
     }
     
     public var body: some View {
-        WebView(initialUrl: FAHomePage.url.appendingPathComponent("login"),
+        WebView(initialUrl: FAURLs.homeUrl.appendingPathComponent("login"),
                 cookies: $cookies,
                 clearCookies: true)
             .onChange(of: cookies) { newCookies in

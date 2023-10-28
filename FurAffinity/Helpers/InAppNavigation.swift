@@ -31,7 +31,7 @@ extension AttributedString {
 }
 
 func inAppUserUrl(for username: String) -> URL? {
-    FAUser.url(for: username)?.convertedForInAppNavigation
+    FAURLs.userpageUrl(for: username)?.convertedForInAppNavigation
 }
 
 @ViewBuilder

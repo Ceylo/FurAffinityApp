@@ -9,7 +9,6 @@ import SwiftSoup
 import Foundation
 
 public struct FAHomePage: Equatable {
-    public static let url = URL(string: "https://www.furaffinity.net")!
     public var username: String?
     public var displayUsername: String?
     public var submissionsCount: Int?
@@ -17,12 +16,12 @@ public struct FAHomePage: Equatable {
 }
 
 extension FAHomePage {
-    public init?(data: Data) {
+    public init?(data: Data, baseUri: URL) {
         let state = signposter.beginInterval("Home Parsing")
         defer { signposter.endInterval("Home Parsing", state) }
         
         guard let string = String(data: data, encoding: .utf8),
-              let doc = try? SwiftSoup.parse(string, Self.url.absoluteString)
+              let doc = try? SwiftSoup.parse(string, baseUri.absoluteString)
         else {
             logger.error("\(#file, privacy: .public) - failed decoding or parsing")
             return nil

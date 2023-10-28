@@ -1,5 +1,5 @@
 //
-//  FAUserGallery.swift
+//  FAUserGalleryLike.swift
 //  
 //
 //  Created by Ceylo on 06/09/2023.
@@ -8,7 +8,8 @@
 import Foundation
 import FAPages
 
-public struct FAUserGallery {
+/// The representation for a gallery-like page (gallery, scraps, favorites)
+public struct FAUserGalleryLike {
     public let displayAuthor: String
     public let previews: [FASubmissionPreview]
     
@@ -16,14 +17,10 @@ public struct FAUserGallery {
         self.displayAuthor = displayAuthor
         self.previews = previews
     }
-    
-    public static func url(for user: String) -> URL {
-        FAUserGalleryPage.url(for: user)
-    }
 }
 
-extension FAUserGallery {
-    public init(_ page: FAUserGalleryPage) {
+extension FAUserGalleryLike {
+    public init(_ page: FAUserGalleryLikePage) {
         self.init(
             displayAuthor: page.displayAuthor,
             previews: page.previews

@@ -63,7 +63,7 @@ struct RemoteUserView: View {
 
 struct RemoteUserView_Previews: PreviewProvider {
     static var previews: some View {
-        RemoteUserView(url: FAUser.url(for: "terriniss")!)
+        RemoteUserView(url: FAURLs.userpageUrl(for: "terriniss")!)
             .environmentObject(Model.demo)
 //            .preferredColorScheme(.dark)
     }

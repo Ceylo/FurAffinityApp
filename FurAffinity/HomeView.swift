@@ -43,7 +43,7 @@ struct HomeView: View {
                         .buttonStyle(.borderedProminent)
                         
                         Link("Register",
-                             destination: URL(string: "https://www.furaffinity.net/register")!)
+                             destination: FAURLs.signupUrl)
                             .buttonStyle(.bordered)
                     }
                 }
@@ -70,8 +70,7 @@ struct HomeView: View {
             center
             Spacer()
             HStack {
-                Link("www.furaffinity.net",
-                     destination: URL(string: "https://www.furaffinity.net/")!)
+                Link(FAURLs.homeUrl.schemelessDisplayString, destination: FAURLs.homeUrl)
                 Text("—")
                 Link("App Privacy Policy", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/blob/main/Privacy%20Policy.md")!)
             }

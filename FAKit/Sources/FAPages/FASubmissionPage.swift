@@ -57,7 +57,7 @@ extension FASubmissionPage {
             
             let favoriteUrlStr = try favoriteUrlNode.attr("href")
             let favoriteStatusStr = try favoriteUrlNode.text()
-            self.favoriteUrl = try URL(unsafeString: "https://www.furaffinity.net" + favoriteUrlStr)
+            self.favoriteUrl = try URL(unsafeString: FAURLs.homeUrl.absoluteString + favoriteUrlStr)
             self.isFavorite = favoriteStatusStr == "-Fav"
             
             let avatarQuery = "section div.section-header div.submission-id-container div.submission-id-avatar img.avatar"

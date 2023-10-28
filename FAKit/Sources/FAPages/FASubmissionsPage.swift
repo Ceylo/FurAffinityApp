@@ -29,20 +29,19 @@ public struct FASubmissionsPage {
         public let displayAuthor: String
     }
     
-    static public let url = URL(string: "https://www.furaffinity.net/msg/submissions/")!
     public let submissions: [Submission?]
     public let nextPageUrl: URL?
     public let previousPageUrl: URL?
 }
 
 extension FASubmissionsPage {
-    public init?(data: Data) async {
+    public init?(data: Data, baseUri: URL) async {
         let state = signposter.beginInterval("All Submission Previews Parsing")
         defer { signposter.endInterval("All Submission Previews Parsing", state) }
         
         do {
             let string = try String(data: data, encoding: .utf8).unwrap()
-            let doc = try SwiftSoup.parse(string, Self.url.absoluteString)
+            let doc = try SwiftSoup.parse(string, baseUri.absoluteString)
             
             let itemsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div#messages-comments-submission div#messagecenter-submissions section figure"
             let items = try doc.select(itemsQuery).array()
@@ -55,14 +54,14 @@ extension FASubmissionsPage {
             
             if let prevButton = prevButton,
                let href = try? prevButton.attr("href") {
-                self.previousPageUrl = try URL(unsafeString: "https://www.furaffinity.net" + href)
+                self.previousPageUrl = try URL(unsafeString: FAURLs.homeUrl.absoluteString + href)
             } else {
                 self.previousPageUrl = nil
             }
             
             if let nextButton = nextButton,
                let href = try? nextButton.attr("href") {
-                self.nextPageUrl = try URL(unsafeString: "https://www.furaffinity.net" + href)
+                self.nextPageUrl = try URL(unsafeString: FAURLs.homeUrl.absoluteString + href)
             } else {
                 self.nextPageUrl = nil
             }
@@ -86,7 +85,7 @@ extension FASubmissionsPage.Submission {
             let index = sidStr.index(sidStr.startIndex, offsetBy: 4)
             let sid = Int(String(sidStr[index...]))!
             self.sid = sid
-            self.url = URL(string: "https://www.furaffinity.net/view/\(sid)/")!
+            self.url = FAURLs.submissionUrl(sid: sid)
             
             let thumbNodes = try node.select("figure b u a img")
             let thumbSrc = try thumbNodes.first().unwrap().attr("src")

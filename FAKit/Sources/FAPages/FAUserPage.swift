@@ -50,7 +50,7 @@ extension FAUserPage {
             if bannerStringUrl.starts(with: "//") {
                 self.bannerUrl = try URL(unsafeString: "https:" + bannerStringUrl)
             } else {
-                self.bannerUrl = FAHomePage.url.appending(path: bannerStringUrl)
+                self.bannerUrl = FAURLs.homeUrl.appending(path: bannerStringUrl)
             }
             
             let descriptionQuery = "div#site-content div#page-userpage section.userpage-layout-profile div.userpage-layout-profile-container div.userpage-profile"

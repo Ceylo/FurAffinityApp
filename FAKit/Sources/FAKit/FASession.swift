@@ -43,8 +43,9 @@ open class FASession: Equatable {
     
     // MARK: - Submissions feed
     open func submissionPreviews() async -> [FASubmissionPreview] {
-        guard let data = await dataSource.httpData(from: FASubmissionsPage.url, cookies: cookies),
-              let page = await FASubmissionsPage(data: data)
+        let url = FAURLs.latest72SubmissionsUrl
+        guard let data = await dataSource.httpData(from: url, cookies: cookies),
+              let page = await FASubmissionsPage(data: data, baseUri: url)
         else { return [] }
         
         let previews = page.submissions
@@ -55,28 +56,28 @@ open class FASession: Equatable {
     }
     
     open func nukeSubmissions() async throws {
-        let url = URL(string: "https://www.furaffinity.net/msg/submissions/new@72/")!
+        let url = FAURLs.latest72SubmissionsUrl
         let params: [URLQueryItem] = [
             .init(name: "messagecenter-action", value: "nuke_notifications"),
         ]
         
         guard let data = await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params),
-              await FASubmissionsPage(data: data) != nil else {
+              await FASubmissionsPage(data: data, baseUri: url) != nil else {
             throw Error.requestFailure
         }
     }
     
     // MARK: - User gallery
-    open func galleryPreviews(for user: String) async -> FAUserGallery? {
-        await gallery(for: FAUserGalleryPage.url(for: user))
+    open func galleryLikePreviews(for user: String) async -> FAUserGalleryLike? {
+        await galleryLike(for: FAURLs.galleryUrl(for: user))
     }
     
-    open func gallery(for url: URL) async -> FAUserGallery? {
+    open func galleryLike(for url: URL) async -> FAUserGalleryLike? {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = await FAUserGalleryPage(data: data)
+              let page = await FAUserGalleryLikePage(data: data)
         else { return nil }
         
-        let gallery = FAUserGallery(page)
+        let gallery = FAUserGalleryLike(page)
         logger.info("Got \(page.previews.count) submission previews (\(gallery.previews.count) after filter)")
         return gallery
     }
@@ -134,7 +135,7 @@ open class FASession: Equatable {
     
     // MARK: - Notes
     open func notePreviews() async -> [FANotePreview] {
-        guard let data = await dataSource.httpData(from: FANotesPage.url, cookies: cookies),
+        guard let data = await dataSource.httpData(from: FAURLs.notesInboxUrl, cookies: cookies),
               let page = await FANotesPage(data: data)
         else { return [] }
         
@@ -197,7 +198,7 @@ open class FASession: Equatable {
     }
     
     private func notificationPreviews(method: HTTPMethod, parameters: [URLQueryItem]) async -> NotificationPreviews {
-        guard let data = await dataSource.httpData(from: FANotificationsPage.url, cookies: cookies, method: method, parameters: parameters),
+        guard let data = await dataSource.httpData(from: FAURLs.notificationsUrl, cookies: cookies, method: method, parameters: parameters),
               let page = await FANotificationsPage(data: data)
         else { return ([], []) }
         
@@ -213,7 +214,7 @@ open class FASession: Equatable {
     
     // MARK: - Users & avatar
     public func user(for username: String) async -> FAUser? {
-        guard let userpageUrl = FAUser.url(for: username) else {
+        guard let userpageUrl = FAURLs.userpageUrl(for: username) else {
             return nil
         }
         return await user(for: userpageUrl)
@@ -266,8 +267,8 @@ extension FASession {
     /// in through a usual web browser.
     public convenience init?(cookies: [HTTPCookie], dataSource: HTTPDataSource = URLSession.sharedForFARequests) async {
         guard cookies.map(\.name).contains("a"),
-              let data = await dataSource.httpData(from: FAHomePage.url, cookies: cookies),
-              let page = FAHomePage(data: data)
+              let data = await dataSource.httpData(from: FAURLs.homeUrl, cookies: cookies),
+              let page = FAHomePage(data: data, baseUri: FAURLs.homeUrl)
         else { return nil }
         
         guard let username = page.username,

@@ -11,7 +11,7 @@ import XCTest
 final class FAHomePageTests: XCTestCase {
     func testLoggedOutPage_parsedAsExpected() throws {
         let data = testData("www.furaffinity.net:loggedout.html")
-        let page = FAHomePage(data: data)
+        let page = FAHomePage(data: data, baseUri: FAURLs.homeUrl)
         XCTAssertNotNil(page)
         XCTAssertNil(page?.username)
         XCTAssertNil(page?.displayUsername)
@@ -21,7 +21,7 @@ final class FAHomePageTests: XCTestCase {
     
     func testLoggedInPage_parsedAsExpected() throws {
         let data = testData("www.furaffinity.net:loggedin.html")
-        let page = FAHomePage(data: data)
+        let page = FAHomePage(data: data, baseUri: FAURLs.homeUrl)
         XCTAssertNotNil(page)
         XCTAssertEqual(page?.username, "furrycount")
         XCTAssertEqual(page?.displayUsername, "Furrycount")

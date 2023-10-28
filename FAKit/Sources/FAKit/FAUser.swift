@@ -25,10 +25,6 @@ public struct FAUser: Equatable {
         self.htmlDescription = htmlDescription.selfContainedFAHtmlUserDescription
         self.shouts = shouts
     }
-    
-    public static func url(for username: String) -> URL? {
-        try? URL(unsafeString: "https://www.furaffinity.net/user/\(username)/")
-    }
 }
 
 public extension FAUser {

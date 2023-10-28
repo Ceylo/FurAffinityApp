@@ -29,7 +29,6 @@ public struct FANotificationsPage: Equatable {
         public let journalUrl: URL
     }
     
-    public static let url = URL(string: "https://www.furaffinity.net/msg/others/")!
     public let submissionCommentHeaders: [SubmissionCommentHeader]
     public let journalHeaders: [JournalHeader]
 }
@@ -70,7 +69,7 @@ extension FANotificationsPage.JournalHeader {
         
         let baseNode = try node.select("div.user-submitted-links")
         let urlStr = try baseNode.select("a").first().unwrap().attr("href")
-        let url = try URL(unsafeString: FAHomePage.url.absoluteString + urlStr)
+        let url = try URL(unsafeString: FAURLs.homeUrl.absoluteString + urlStr)
         
         let id = try Int(urlStr.substring(matching: "/journal/(\\d+)/").unwrap()).unwrap()
         let title = try baseNode.select("a strong.journal_subject").text()
@@ -108,7 +107,7 @@ extension FANotificationsPage.SubmissionCommentHeader {
         let title = try commentTargetNode.text()
         let urlStr = try commentTargetNode.attr("href")
         let cid = try Int(urlStr.substring(matching: "/view/\\d+/#cid:(\\d+)").unwrap()).unwrap()
-        let url = try URL(unsafeString: FAHomePage.url.absoluteString + urlStr)
+        let url = try URL(unsafeString: FAURLs.homeUrl.absoluteString + urlStr)
         
         self.init(cid: cid, author: author, displayAuthor: displayAuthor, submissionTitle: title, datetime: datetime, naturalDatetime: naturalDatetime, submissionUrl: url)
     }

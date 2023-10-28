@@ -20,7 +20,6 @@ public struct FANotesPage: Equatable {
         public let noteUrl: URL
     }
     
-    public static let url = URL(string: "https://www.furaffinity.net/controls/switchbox/inbox/")!
     public let noteHeaders: [NoteHeader?]
 }
 
@@ -54,7 +53,7 @@ extension FANotesPage.NoteHeader {
         let baseNode = try node.select(baseQuery)
         let unread = baseNode.hasClass("note-unread")
         let noteUrlStr = try baseNode.attr("href")
-        let noteUrl = try URL(unsafeString: FAHomePage.url.absoluteString + noteUrlStr)
+        let noteUrl = try URL(unsafeString: FAURLs.homeUrl.absoluteString + noteUrlStr)
         
         let idStr = try node.select("div.note-list-selectgroup div.note-list-checkbox-desktop input").attr("value")
         guard let id = Int(idStr) else { throw FAPagesError.parserFailureError() }

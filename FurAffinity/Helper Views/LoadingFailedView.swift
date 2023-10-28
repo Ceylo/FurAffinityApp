@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import FAKit
 
 struct LoadingFailedView: View {
     var url: URL
@@ -39,6 +40,6 @@ struct LoadingFailedView: View {
 
 struct LoadingFailedView_Previews: PreviewProvider {
     static var previews: some View {
-        LoadingFailedView(url: URL(string: "https://www.furaffinity.net/")!)
+        LoadingFailedView(url: FAURLs.homeUrl)
     }
 }

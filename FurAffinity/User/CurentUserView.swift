@@ -14,7 +14,7 @@ struct CurentUserView: View {
     var body: some View {
         Group {
             if let username = model.session?.username,
-               let url = FAUser.url(for: username) {
+               let url = FAURLs.userpageUrl(for: username) {
                 RemoteUserView(url: url)
             } else {
                 Text("Oops… invalid session")

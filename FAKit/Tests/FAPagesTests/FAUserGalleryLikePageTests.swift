@@ -1,5 +1,5 @@
 //
-//  FAUserGalleryPageTests.swift
+//  FAUserGalleryLikePageTests.swift
 //  
 //
 //  Created by Ceylo on 31/08/2023.
@@ -8,10 +8,10 @@
 import XCTest
 @testable import FAPages
 
-final class FAUserGalleryPageTests: XCTestCase {
+final class FAUserGalleryLikePageTests: XCTestCase {
     func testFirstGalleryPage_72itemsParsed() async throws {
         let data = testData("www.furaffinity.net:gallery:tiaamaito:.html")
-        let asyncPage = await FAUserGalleryPage(data: data)
+        let asyncPage = await FAUserGalleryLikePage(data: data)
         let page = try XCTUnwrap(asyncPage)
         XCTAssertEqual(page.previews.count, 72)
         XCTAssertEqual(page.displayAuthor, "tiaamaito")
@@ -29,7 +29,7 @@ final class FAUserGalleryPageTests: XCTestCase {
     
     func testEmptyGalleryPage_parsedWithNoContent() async throws {
         let data = testData("www.furaffinity.net:gallery:furrycount:.html")
-        let asyncPage = await FAUserGalleryPage(data: data)
+        let asyncPage = await FAUserGalleryLikePage(data: data)
         let page = try XCTUnwrap(asyncPage)
         XCTAssertEqual(page.previews.count, 0)
         XCTAssertEqual(page.displayAuthor, "Furrycount")
