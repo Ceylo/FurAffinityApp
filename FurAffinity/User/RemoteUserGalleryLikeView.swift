@@ -1,5 +1,5 @@
 //
-//  RemoteUserGalleryView.swift
+//  RemoteUserGalleryLikeView.swift
 //  FurAffinity
 //
 //  Created by Ceylo on 06/09/2023.
@@ -8,15 +8,17 @@
 import SwiftUI
 import FAKit
 
-struct RemoteUserGalleryView: View {
+struct RemoteUserGalleryLikeView: View {
+    var galleryDisplayType: String
     var url: URL
     @EnvironmentObject var model: Model
-    @State private var gallery: FAUserGallery?
+    @State private var gallery: FAUserGalleryLike?
     
     var body: some View {
         Group {
             if let gallery {
-                UserGalleryView(
+                UserGalleryLikeView(
+                    galleryDisplayType: galleryDisplayType,
                     gallery: gallery,
                     onPullToRefresh: {
                         refresh()
@@ -33,14 +35,15 @@ struct RemoteUserGalleryView: View {
     
     func refresh() {
         Task {
-            gallery = await model.session?.gallery(for: url)
+            gallery = await model.session?.galleryLike(for: url)
         }
     }
 }
 
-struct RemoteUserGalleryView_Previews: PreviewProvider {
+struct RemoteUserGalleryLikeView_Previews: PreviewProvider {
     static var previews: some View {
-        RemoteUserGalleryView(
+        RemoteUserGalleryLikeView(
+            galleryDisplayType: "gallery",
             url: URL(string: "https://www.furaffinity.net/gallery/tiaamaito/")!
         )
         .environmentObject(Model.demo)

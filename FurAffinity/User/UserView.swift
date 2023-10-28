@@ -13,19 +13,16 @@ private enum Control: Int, CaseIterable, Identifiable {
     var id: Int { rawValue }
 
     case gallery
+    case scraps
+    case favorites
 }
 
 extension Control {
     var title: String {
         switch self {
         case .gallery: return "Gallery"
-        }
-    }
-    
-    var image: String {
-        switch self {
-        case .gallery:
-            return "rectangle.grid.2x2"
+        case .scraps: return "Scraps"
+        case .favorites: return "Favs"
         }
     }
     
@@ -33,6 +30,12 @@ extension Control {
         switch self {
         case .gallery:
             return FAURLs.galleryUrl(for: user)
+                .convertedForInAppNavigation
+        case .scraps:
+            return FAURLs.scrapsUrl(for: user)
+                .convertedForInAppNavigation
+        case .favorites:
+            return FAURLs.favoritesUrl(for: user)
                 .convertedForInAppNavigation
         }
     }
@@ -68,7 +71,7 @@ struct UserView: View {
     
     var controls: some View {
         ScrollView(.horizontal) {
-            HStack {
+            HStack(spacing: 0) {
                 ForEach(Control.allCases) { control in
                     Link(destination: control.destinationUrl(for: user.name)) {
                         Text(control.title)
@@ -85,7 +88,7 @@ struct UserView: View {
         LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
             banner
             
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 0) {
                 HStack {
                     AvatarView(avatarUrl: user.avatarUrl)
                         .frame(width: 32, height: 32)
@@ -95,6 +98,7 @@ struct UserView: View {
                 
                 controls
                     .padding(.horizontal, -15)
+                    .padding(.vertical, 5)
                 
                 if let description {
                     TextView(text: description, initialHeight: 300)

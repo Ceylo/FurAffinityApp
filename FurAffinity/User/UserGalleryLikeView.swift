@@ -1,5 +1,5 @@
 //
-//  UserGalleryView.swift
+//  UserGalleryLikeView.swift
 //  FurAffinity
 //
 //  Created by Ceylo on 06/09/2023.
@@ -8,15 +8,16 @@
 import SwiftUI
 import FAKit
 
-struct UserGalleryView: View {
-    var gallery: FAUserGallery
+struct UserGalleryLikeView: View {
+    var galleryDisplayType: String
+    var gallery: FAUserGalleryLike
     var onPullToRefresh: () -> Void
     
     var body: some View {
         ScrollViewReader { proxy in
             List(gallery.previews) { preview in
                 NavigationLink(value: FAURL(with: preview.url)) {
-                    SubmissionFeedItemView(submission: preview)
+                    SubmissionFeedItemView<TitledHeaderView>(submission: preview)
                         .id(preview.sid)
                 }
                 .listRowSeparator(.hidden)
@@ -26,7 +27,7 @@ struct UserGalleryView: View {
             .navigationBarTitleDisplayMode(.inline)
             // Toolbar needs to be setup before refresh control…
             // https://stackoverflow.com/a/64700545/869385
-            .navigationTitle("\(gallery.displayAuthor)'s gallery'")
+            .navigationTitle("\(gallery.displayAuthor)'s \(galleryDisplayType)")
             .refreshable {
                 onPullToRefresh()
             }
@@ -35,7 +36,7 @@ struct UserGalleryView: View {
                     VStack(spacing: 10) {
                         Text("It's a bit empty in here.")
                             .font(.headline)
-                        Text("It looks like \(gallery.displayAuthor) hasn't shared any art yet.")
+                        Text("There's nothing to see in \(gallery.displayAuthor)'s \(galleryDisplayType) yet.")
                             .multilineTextAlignment(.center)
                             .foregroundColor(.secondary)
                     }
@@ -51,16 +52,18 @@ struct UserGalleryView: View {
 }
 
 // MARK: -
-struct UserGalleryView_Previews: PreviewProvider {
+struct UserGalleryLikeView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            UserGalleryView(
+            UserGalleryLikeView(
+                galleryDisplayType: "favorites",
                 gallery: .init(displayAuthor: "Some User", previews: OfflineFASession.default.submissionPreviews),
                 onPullToRefresh: {}
             )
             .environmentObject(Model.demo)
             
-            UserGalleryView(
+            UserGalleryLikeView(
+                galleryDisplayType: "favorites",
                 gallery: .init(displayAuthor: "Some User", previews: []),
                 onPullToRefresh: {}
             )

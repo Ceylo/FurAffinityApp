@@ -22,7 +22,7 @@ struct SubmissionView: View {
     @State private var fullResolutionCGImage: CGImage?
     
     var header: some View {
-        HeaderView(
+        AuthoredHeaderView(
             username: submission.author,
             displayName: submission.displayAuthor,
             title: submission.title,

@@ -17,7 +17,7 @@ struct JournalView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HeaderView(
+            AuthoredHeaderView(
                 username: journal.author,
                 displayName: journal.displayAuthor,
                 title: journal.title,

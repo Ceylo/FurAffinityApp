@@ -9,22 +9,12 @@ import SwiftUI
 import FAKit
 import URLImage
 
-struct HeaderView: View {
+struct AuthoredHeaderView: View {
     var username: String
     var displayName: String
     var title: String
     var avatarUrl: URL?
-    
-    struct FullDatetime {
-        var datetime: String
-        var naturalDatetime: String
-        
-        init(_ datetime: String, _ naturalDatetime: String) {
-            self.datetime = datetime
-            self.naturalDatetime = naturalDatetime
-        }
-    }
-    var datetime: FullDatetime?
+    var datetime: DatetimePair?
     
     var body: some View {
         HStack {
@@ -55,15 +45,28 @@ struct HeaderView: View {
     }
 }
 
-struct SubmissionHeaderView_Previews: PreviewProvider {
+extension AuthoredHeaderView: SubmissionHeaderView {
+    init(preview: FAKit.FASubmissionPreview, avatarUrl: URL?) {
+        self.init(
+            username: preview.author,
+            displayName: preview.displayAuthor,
+            title: preview.title,
+            avatarUrl: avatarUrl
+        )
+    }
+}
+
+struct SubmissionAuthoredHeaderView_Previews: PreviewProvider {
     static var previews: some View {
-        HeaderView(username: "author",
-                             displayName: "The Author", title: "Great Content",
-                             avatarUrl: nil,
-                             datetime: .init("Apr 7th, 2022, 11:58 AM",
-                                             "8 months ago"))
+        AuthoredHeaderView(
+            username: "author",
+            displayName: "The Author", title: "Great Content",
+            avatarUrl: nil,
+            datetime: .init("Apr 7th, 2022, 11:58 AM",
+                            "8 months ago")
+        )
         .previewLayout(.sizeThatFits)
-            .preferredColorScheme(.dark)
-            
+        .preferredColorScheme(.dark)
+        
     }
 }
