@@ -12,30 +12,16 @@ struct RemoteUserGalleryLikeView: View {
     var galleryDisplayType: String
     var url: URL
     @EnvironmentObject var model: Model
-    @State private var gallery: FAUserGalleryLike?
     
     var body: some View {
-        Group {
-            if let gallery {
-                UserGalleryLikeView(
-                    galleryDisplayType: galleryDisplayType,
-                    gallery: gallery,
-                    onPullToRefresh: {
-                        refresh()
-                    }
-                )
-            } else {
-                ProgressView()
-            }
-        }
-        .task {
-            refresh()
-        }
-    }
-    
-    func refresh() {
-        Task {
-            gallery = await model.session?.galleryLike(for: url)
+        RemoteView(url: url, contentsLoader: {
+            await model.session?.galleryLike(for: url)
+        }) { gallery, refresh in
+            UserGalleryLikeView(
+                galleryDisplayType: galleryDisplayType,
+                gallery: gallery,
+                onPullToRefresh: refresh
+            )
         }
     }
 }

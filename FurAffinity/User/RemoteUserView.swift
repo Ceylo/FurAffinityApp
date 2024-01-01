@@ -12,50 +12,23 @@ import URLImage
 struct RemoteUserView: View {
     var url: URL
     @EnvironmentObject var model: Model
-    @State private var loadingFailed = false
-    @State private var user: FAUser?
     @State private var description: AttributedString?
     
-    private func loadUser(forceReload: Bool) async {
-        guard let session = model.session else { return }
-        guard user == nil || forceReload else { return }
+    private func loadUser() async -> FAUser? {
+        guard let session = model.session else { return nil }
         
-        user = await session.user(for: url)
-        
+        let user = await session.user(for: url)
         if let user {
             description = AttributedString(FAHTML: user.htmlDescription)?
                 .convertingLinksForInAppNavigation()
         }
-        loadingFailed = user == nil
+        return user
     }
     
     var body: some View {
-        Group {
-            if let user {
-                ScrollView {
-                    UserView(user: user, description: description)
-                }
-            } else if loadingFailed {
-                ScrollView {
-                    LoadingFailedView(url: url)
-                }
-            } else {
-                ProgressView()
-            }
-        }
-        .task {
-            await loadUser(forceReload: false)
-        }
-        .refreshable {
-            Task {
-                await loadUser(forceReload: true)
-            }
-        }
-        .toolbar {
-            ToolbarItem {
-                Link(destination: url) {
-                    Image(systemName: "safari")
-                }
+        RemoteView(url: url, contentsLoader: loadUser) { user, refreshHandler in
+            ScrollView {
+                UserView(user: user, description: $description)
             }
         }
     }

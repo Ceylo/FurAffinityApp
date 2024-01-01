@@ -43,7 +43,7 @@ extension Control {
 
 struct UserView: View {
     var user: FAUser
-    var description: AttributedString?
+    var description: Binding<AttributedString?>
     
     private let bannerHeight = 100.0
     
@@ -100,7 +100,7 @@ struct UserView: View {
                     .padding(.horizontal, -15)
                     .padding(.vertical, 5)
                 
-                if let description {
+                if let description = description.wrappedValue {
                     TextView(text: description, initialHeight: 300)
                 }
             }
@@ -131,7 +131,7 @@ struct UserView_Previews: PreviewProvider {
                 FAHTML: FAUser.demo.htmlDescription
             )?.convertingLinksForInAppNavigation()
             UserView(user: FAUser.demo,
-                     description: description)
+                     description: .constant(description))
         }
     }
 }
