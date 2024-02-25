@@ -51,8 +51,8 @@ extension FANotificationsPage {
                     do {
                         return try SubmissionCommentHeader(node)
                     } catch {
-                        let html = String(describing: try? node.html())
-                        logger.error("Failed decoding comment header: \(html)")
+                        let html = (try? node.html()) ?? ""
+                        logger.error("Failed decoding comment header. Error: \(error). Generated while parsing: \(html)")
                         return nil
                     }
                 }
@@ -63,8 +63,8 @@ extension FANotificationsPage {
                     do {
                         return try JournalHeader(node)
                     } catch {
-                        let html = String(describing: try? node.html())
-                        logger.error("Failed decoding journal header: \(html)")
+                        let html = (try? node.html()) ?? ""
+                        logger.error("Failed decoding journal header. Error: \(error). Generated while parsing: \(html)")
                         return nil
                     }
                 }
