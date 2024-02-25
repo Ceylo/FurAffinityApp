@@ -163,12 +163,26 @@ class Model: ObservableObject {
     }
     
     func deleteSubmissionCommentNotifications(_ notifications: [FASubmissionCommentNotificationPreview]) async {
+        notificationPreviews = notificationPreviews.map { oldNotifications in
+            NotificationPreviews(
+                submissionComments: oldNotifications.submissionComments.filter { !notifications.contains($0) },
+                journals: oldNotifications.journals
+            )
+        }
+        
         await fetchNotificationPreviews { session in
             await session.deleteSubmissionCommentNotifications(notifications)
         }
     }
     
     func deleteJournalNotifications(_ notifications: [FAJournalNotificationPreview]) async {
+        notificationPreviews = notificationPreviews.map { oldNotifications in
+            NotificationPreviews(
+                submissionComments: oldNotifications.submissionComments,
+                journals: oldNotifications.journals.filter { !notifications.contains($0) }
+            )
+        }
+        
         await fetchNotificationPreviews { session in
             await session.deleteJournalNotifications(notifications)
         }
