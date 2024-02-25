@@ -47,13 +47,31 @@ extension FANotificationsPage {
             let journalNodes = try notificationsNode.select("section#messages-journals ul.message-stream li div.table")
 
             async let submissionCommentHeaders = submissionCommentNodes
-                .parallelMap { try SubmissionCommentHeader($0) }
+                .parallelMap { node in
+                    do {
+                        return try SubmissionCommentHeader(node)
+                    } catch {
+                        let html = String(describing: try? node.html())
+                        logger.error("Failed decoding comment header: \(html)")
+                        return nil
+                    }
+                }
+                .compactMap { $0 }
             
             async let journalHeaders = journalNodes
-                .parallelMap { try JournalHeader($0) }
+                .parallelMap { node in
+                    do {
+                        return try JournalHeader(node)
+                    } catch {
+                        let html = String(describing: try? node.html())
+                        logger.error("Failed decoding journal header: \(html)")
+                        return nil
+                    }
+                }
+                .compactMap { $0 }
             
-            self.submissionCommentHeaders = try await submissionCommentHeaders
-            self.journalHeaders = try await journalHeaders
+            self.submissionCommentHeaders = await submissionCommentHeaders
+            self.journalHeaders = await journalHeaders
         } catch {
             logger.error("Decoding failure in \(#file, privacy: .public): \(error, privacy: .public)")
             return nil
