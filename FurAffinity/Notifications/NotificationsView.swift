@@ -101,7 +101,7 @@ struct NotificationsView: View {
             VStack(spacing: 10) {
                 Text("It's a bit empty in here.")
                     .font(.headline)
-                Text("Notifications from [\(FAURLs.notificationsUrl.schemelessDisplayString)](\(FAURLs.notificationsUrl)) will be displayed here.")
+                Text(markdown: "Notifications from [\(FAURLs.notificationsUrl.schemelessDisplayString)](\(FAURLs.notificationsUrl)) will be displayed here.")
                     .multilineTextAlignment(.center)
                     .foregroundColor(.secondary)
             }
