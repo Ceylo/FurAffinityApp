@@ -30,11 +30,12 @@ struct TextView: View {
         @Binding var neededHeight: CGFloat
         
         func makeUIView(context: Context) -> UITextView {
-            let view = UITextView()
+            let view = UITextView(usingTextLayoutManager: true)
             view.isEditable = false
             view.isScrollEnabled = false
             view.setContentCompressionResistancePriority(.fittingSizeLevel, for: .horizontal)
             view.attributedText = NSAttributedString(text)
+            view.linkTextAttributes = [:]
             return view
         }
         
