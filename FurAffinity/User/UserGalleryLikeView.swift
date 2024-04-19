@@ -11,10 +11,20 @@ import FAKit
 struct UserGalleryLikeView: View {
     var galleryDisplayType: String
     var gallery: FAUserGalleryLike
-    var onPullToRefresh: () -> Void
     
     var body: some View {
-        ScrollViewReader { proxy in
+        if gallery.previews.isEmpty {
+            ScrollView {
+                VStack(spacing: 10) {
+                    Text("It's a bit empty in here.")
+                        .font(.headline)
+                    Text("There's nothing to see in \(gallery.displayAuthor)'s \(galleryDisplayType) yet.")
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.secondary)
+                }
+                .padding()
+            }
+        } else {
             List(gallery.previews) { preview in
                 NavigationLink(value: FAURL(with: preview.url)) {
                     SubmissionFeedItemView<TitledHeaderView>(submission: preview)
@@ -28,25 +38,6 @@ struct UserGalleryLikeView: View {
             // Toolbar needs to be setup before refresh control…
             // https://stackoverflow.com/a/64700545/869385
             .navigationTitle("\(gallery.displayAuthor)'s \(galleryDisplayType)")
-            .refreshable {
-                onPullToRefresh()
-            }
-            .swap(when: gallery.previews.isEmpty) {
-                VStack(spacing: 20) {
-                    VStack(spacing: 10) {
-                        Text("It's a bit empty in here.")
-                            .font(.headline)
-                        Text("There's nothing to see in \(gallery.displayAuthor)'s \(galleryDisplayType) yet.")
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Button("Refresh") {
-                        onPullToRefresh()
-                    }
-                }
-                .padding()
-            }
         }
     }
 }
@@ -57,15 +48,13 @@ struct UserGalleryLikeView_Previews: PreviewProvider {
         Group {
             UserGalleryLikeView(
                 galleryDisplayType: "favorites",
-                gallery: .init(displayAuthor: "Some User", previews: OfflineFASession.default.submissionPreviews),
-                onPullToRefresh: {}
+                gallery: .init(displayAuthor: "Some User", previews: OfflineFASession.default.submissionPreviews)
             )
             .environmentObject(Model.demo)
             
             UserGalleryLikeView(
                 galleryDisplayType: "favorites",
-                gallery: .init(displayAuthor: "Some User", previews: []),
-                onPullToRefresh: {}
+                gallery: .init(displayAuthor: "Some User", previews: [])
             )
             .environmentObject(Model.empty)
         }

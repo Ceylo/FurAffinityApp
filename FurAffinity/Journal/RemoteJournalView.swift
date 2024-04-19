@@ -12,57 +12,27 @@ import URLImage
 struct RemoteJournalView: View {
     var url: URL
     @EnvironmentObject var model: Model
-    @State private var loadingFailed = false
-    @State private var journal: FAJournal?
-    @State private var description: AttributedString?
     
-    private func load(forceReload: Bool) async {
-        guard let session = model.session else { return }
-        guard journal == nil || forceReload else { return }
-        
-        journal = await session.journal(for: url)
-        if let journal {
-            description = AttributedString(FAHTML: journal.htmlDescription)?
-                .convertingLinksForInAppNavigation()
-        }
-        loadingFailed = journal == nil
+    private func load() async -> JournalViewModel? {
+        await model.session?
+            .journal(for: url)
+            .flatMap { JournalViewModel($0) }
     }
     
     var body: some View {
-        Group {
-            if let journal {
-                ScrollView {
-                    JournalView(journal: journal, description: description,
-                                replyAction: { parentCid, text in
-                        Task {
-                            self.journal = try await model
-                                .postComment(on: journal,
-                                             replytoCid: parentCid,
-                                             contents: text)
-                        }
-                    })
-                }
-            } else if loadingFailed {
-                ScrollView {
-                    LoadingFailedView(url: url)
-                }
-            } else {
-                ProgressView()
-            }
-        }
-        .task {
-            await load(forceReload: false)
-        }
-        .refreshable {
-            Task {
-                await load(forceReload: true)
-            }
-        }
-        .toolbar {
-            ToolbarItem {
-                Link(destination: url) {
-                    Image(systemName: "safari")
-                }
+        RemoteView(url: url, contentsLoader: load) { journalData, updateHandler in
+            ScrollView {
+                JournalView(journal: journalData,
+                            replyAction: { parentCid, text in
+                    Task {
+                        let contents = try? await model
+                            .postComment(on: journalData.journal,
+                                         replytoCid: parentCid,
+                                         contents: text)
+                            .flatMap { JournalViewModel($0) }
+                        updateHandler.update(with: contents)
+                    }
+                })
             }
         }
     }

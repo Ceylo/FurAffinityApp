@@ -16,11 +16,10 @@ struct RemoteUserGalleryLikeView: View {
     var body: some View {
         RemoteView(url: url, contentsLoader: {
             await model.session?.galleryLike(for: url)
-        }) { gallery, refresh in
+        }) { gallery, _ in
             UserGalleryLikeView(
                 galleryDisplayType: galleryDisplayType,
-                gallery: gallery,
-                onPullToRefresh: refresh
+                gallery: gallery
             )
         }
     }

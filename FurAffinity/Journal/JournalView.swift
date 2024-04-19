@@ -7,47 +7,59 @@
 
 import SwiftUI
 import FAKit
+import Combine
+
+struct JournalViewModel {
+    var journal: FAJournal
+    var attributedDescription: AttributedString
+}
+
+extension JournalViewModel {
+    init(_ journal: FAJournal) {
+        let description = AttributedString(FAHTML: journal.htmlDescription)?
+            .convertingLinksForInAppNavigation()
+        self.init(journal: journal, attributedDescription: description ?? "Failed loading contents")
+    }
+}
 
 struct JournalView: View {
-    var journal: FAJournal
-    var description: AttributedString?
+    var journal: JournalViewModel
     var replyAction: (_ parentCid: Int?, _ text: String) -> Void
     
+    private var faJournal: FAJournal { journal.journal }
     @State private var replySession: Commenting.ReplySession?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             AuthoredHeaderView(
-                username: journal.author,
-                displayName: journal.displayAuthor,
-                title: journal.title,
-                avatarUrl: journal.authorAvatarUrl,
-                datetime: .init(journal.datetime,
-                                journal.naturalDatetime)
+                username: faJournal.author,
+                displayName: faJournal.displayAuthor,
+                title: faJournal.title,
+                avatarUrl: faJournal.authorAvatarUrl,
+                datetime: .init(faJournal.datetime,
+                                faJournal.naturalDatetime)
             )
             Divider()
                 .padding(.vertical, 5)
 
-            if let description {
-                TextView(text: description, initialHeight: 300)
-            }
+            TextView(text: journal.attributedDescription, initialHeight: 300)
             
             JournalControlsView(
-                journalUrl: journal.url,
+                journalUrl: faJournal.url,
                 replyAction: {
                     replySession = .init(parentCid: nil, among: [])
                 }
             )
             .padding(.bottom, 10)
             
-            if !journal.comments.isEmpty {
+            if !faJournal.comments.isEmpty {
                 VStack {
                     Text("Comments")
                         .font(.headline)
                     CommentsView(
-                        comments: journal.comments,
+                        comments: faJournal.comments,
                         replyAction: { cid in
-                            replySession = .init(parentCid: cid, among: journal.comments)
+                            replySession = .init(parentCid: cid, among: faJournal.comments)
                         }
                     )
                 }
@@ -55,7 +67,7 @@ struct JournalView: View {
         }
         .padding(10)
         .commentSheet(on: $replySession, replyAction)
-        .navigationTitle(journal.title)
+        .navigationTitle(faJournal.title)
     }
 }
 
@@ -63,9 +75,7 @@ struct JournalView_Previews: PreviewProvider {
     static var previews: some View {
         ScrollView {
             JournalView(
-                journal: FAJournal.demo,
-                description: AttributedString(FAHTML: FAJournal.demo.htmlDescription)?
-                    .convertingLinksForInAppNavigation(),
+                journal: JournalViewModel(FAJournal.demo),
                 replyAction: { parentCid,text in }
             )
         }

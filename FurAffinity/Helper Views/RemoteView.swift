@@ -7,14 +7,24 @@
 
 import SwiftUI
 
+protocol UpdateHandler<Contents> {
+    associatedtype Contents
+    
+    @MainActor
+    func update(with contents: Contents?)
+}
+
 /// `RemoteView` provides common behavior for remotely loaded content, such as:
 /// - displaying a progress until content becomes available
 /// - allowing pull to refresh
 /// - giving web access to the content
-struct RemoteView<Contents, ContentsView: View>: View {
+struct RemoteView<Contents, ContentsView: View>: View, UpdateHandler {
     var url: URL
     var contentsLoader: () async -> Contents?
-    var contentsViewBuilder: (_ contents: Contents, _ refreshHandler: @escaping () -> Void) -> ContentsView
+    var contentsViewBuilder: (
+        _ contents: Contents,
+        _ updateHandler: any UpdateHandler<Contents>
+    ) -> ContentsView
     
     private enum ContentsState {
         case loaded(Contents)
@@ -27,7 +37,7 @@ struct RemoteView<Contents, ContentsView: View>: View {
             if let contentsState {
                 switch contentsState {
                 case .loaded(let contents):
-                    contentsViewBuilder(contents, refresh)
+                    contentsViewBuilder(contents, self)
                 case .failed:
                     ScrollView {
                         LoadingFailedView(url: url)
@@ -42,11 +52,11 @@ struct RemoteView<Contents, ContentsView: View>: View {
         }
         .task {
             if contentsState == nil {
-                refresh()
+                await update()
             }
         }
         .refreshable {
-            refresh()
+            await update()
         }
         .toolbar {
             ToolbarItem {
@@ -57,13 +67,17 @@ struct RemoteView<Contents, ContentsView: View>: View {
         }
     }
     
-    func refresh() {
-        Task {
-            if let contents = await contentsLoader() {
-                self.contentsState = .loaded(contents)
-            } else {
-                self.contentsState = .failed
-            }
+    func update() async {
+        let contents = await contentsLoader()
+        await update(with: contents)
+    }
+
+    @MainActor
+    func update(with contents: Contents?) {
+        if let contents {
+            self.contentsState = .loaded(contents)
+        } else {
+            self.contentsState = .failed
         }
     }
 }

@@ -26,7 +26,7 @@ struct RemoteUserView: View {
     }
     
     var body: some View {
-        RemoteView(url: url, contentsLoader: loadUser) { user, refreshHandler in
+        RemoteView(url: url, contentsLoader: loadUser) { user, _ in
             ScrollView {
                 UserView(user: user, description: $description)
             }
