@@ -35,7 +35,10 @@ struct TextView: View {
             view.isScrollEnabled = false
             view.setContentCompressionResistancePriority(.fittingSizeLevel, for: .horizontal)
             view.attributedText = NSAttributedString(text)
-            view.linkTextAttributes = [:]
+            view.linkTextAttributes = [
+                .underlineStyle : NSNumber(value: NSUnderlineStyle.single.union(.patternDot).union(.byWord).rawValue),
+                .underlineColor : UIColor(white: 0.5, alpha: 0.8),
+            ]
             return view
         }
         
