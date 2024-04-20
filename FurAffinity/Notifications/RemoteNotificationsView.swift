@@ -32,14 +32,10 @@ struct RemoteNotificationsView: View {
                     submissionCommentNotifications: notifications.submissionComments,
                     journalNotifications: notifications.journals,
                     onDeleteSubmissionCommentNotifications: { items in
-                        Task {
-                            await model.deleteSubmissionCommentNotifications(items)
-                        }
+                        model.deleteSubmissionCommentNotifications(items)
                     },
                     onDeleteJournalNotifications: { items in
-                        Task {
-                            await model.deleteJournalNotifications(items)
-                        }
+                        model.deleteJournalNotifications(items)
                     },
                     onNukeSubmissionComments: {
                         await model.nukeAllSubmissionCommentNotifications()

@@ -162,7 +162,7 @@ class Model: ObservableObject {
         }
     }
     
-    func deleteSubmissionCommentNotifications(_ notifications: [FASubmissionCommentNotificationPreview]) async {
+    func deleteSubmissionCommentNotifications(_ notifications: [FASubmissionCommentNotificationPreview]) {
         notificationPreviews = notificationPreviews.map { oldNotifications in
             NotificationPreviews(
                 submissionComments: oldNotifications.submissionComments.filter { !notifications.contains($0) },
@@ -170,12 +170,14 @@ class Model: ObservableObject {
             )
         }
         
-        await fetchNotificationPreviews { session in
-            await session.deleteSubmissionCommentNotifications(notifications)
+        Task {
+            await fetchNotificationPreviews { session in
+                await session.deleteSubmissionCommentNotifications(notifications)
+            }
         }
     }
     
-    func deleteJournalNotifications(_ notifications: [FAJournalNotificationPreview]) async {
+    func deleteJournalNotifications(_ notifications: [FAJournalNotificationPreview]) {
         notificationPreviews = notificationPreviews.map { oldNotifications in
             NotificationPreviews(
                 submissionComments: oldNotifications.submissionComments,
@@ -183,8 +185,10 @@ class Model: ObservableObject {
             )
         }
         
-        await fetchNotificationPreviews { session in
-            await session.deleteJournalNotifications(notifications)
+        Task {
+            await fetchNotificationPreviews { session in
+                await session.deleteJournalNotifications(notifications)
+            }
         }
     }
     
