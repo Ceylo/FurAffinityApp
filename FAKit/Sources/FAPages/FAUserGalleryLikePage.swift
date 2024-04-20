@@ -19,7 +19,7 @@ extension FAUserGalleryLikePage {
         defer { signposter.endInterval("User Gallery Parsing", state) }
         
         do {
-            let string = try String(data: data, encoding: .utf8).unwrap()
+            let string = String(decoding: data, as: UTF8.self)
             let doc = try SwiftSoup.parse(string)
             
             let siteContentNode = try doc.select(
