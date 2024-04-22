@@ -160,10 +160,17 @@ open class FASession: Equatable {
     }
     
     // MARK: - Notifications
-    public typealias NotificationPreviews = (
-        submissionComments: [FANotificationPreview],
-        journals: [FANotificationPreview]
-    )
+    public struct NotificationPreviews {
+        public let submissionComments: [FANotificationPreview]
+        public let journals: [FANotificationPreview]
+        
+        public init(submissionComments: [FANotificationPreview], journals: [FANotificationPreview]) {
+            self.submissionComments = submissionComments
+            self.journals = journals
+        }
+        
+        public static let empty = Self.init(submissionComments: [], journals: [])
+    }
     
     open func notificationPreviews() async -> NotificationPreviews {
         await notificationPreviews(method: .GET, parameters: [])
@@ -200,7 +207,7 @@ open class FASession: Equatable {
     private func notificationPreviews(method: HTTPMethod, parameters: [URLQueryItem]) async -> NotificationPreviews {
         guard let data = await dataSource.httpData(from: FAURLs.notificationsUrl, cookies: cookies, method: method, parameters: parameters),
               let page = await FANotificationsPage(data: data)
-        else { return ([], []) }
+        else { return .empty }
         
         let submissionCommentHeaders = page.submissionCommentHeaders
             .map { FANotificationPreview($0) }
@@ -209,7 +216,7 @@ open class FASession: Equatable {
         
         let notificationCount = page.submissionCommentHeaders.count + page.journalHeaders.count
         logger.info("Got \(notificationCount) notification previews")
-        return (submissionCommentHeaders, journalHeaders)
+        return .init(submissionComments: submissionCommentHeaders, journals: journalHeaders)
     }
     
     // MARK: - Users & avatar

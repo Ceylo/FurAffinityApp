@@ -123,14 +123,14 @@ extension OfflineFASession {
         .init(id: 129953262, author: "someuser", displayAuthor: "SomeUser", title: "Title with some spéciäl çhãrāčtęrs",
               datetime: "Apr 7, 2022 11:58AM", naturalDatetime: "an hour ago", unread: false,
               noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953262/#message")!)
-    ], notifications: ([
+    ], notifications: .init(submissionComments: [
             .init(id: 172177443, author: "furrycount", displayAuthor: "Furrycount", title: "FurAffinity iOS App 1.3 Update",
                   datetime: "on Apr 30, 2023 09:50 PM", naturalDatetime: "a few seconds ago",
                   url: URL(string: "https://www.furaffinity.net/view/49215481/#cid:172177443")!),
             .init(id: 172177425, author: "furrycount", displayAuthor: "Furrycount", title: "FurAffinity iOS App 1.3 Update",
                   datetime: "on Apr 30, 2023 09:49 PM", naturalDatetime: "a minute ago",
                   url: URL(string: "https://www.furaffinity.net/view/49215481/#cid:172177425")!)
-        ], [
+    ], journals: [
             .init(id: 10526001, author: "holt-odium", displayAuthor: "Holt-Odium", title: "📝 3 Slots are available",
               datetime: "on Apr 14, 2023 08:23 PM", naturalDatetime: "18 hours ago",
               url: URL(string: "https://www.furaffinity.net/journal/10526001/")!),
@@ -149,7 +149,7 @@ extension OfflineFASession {
         ])
     )
     
-    static let empty = OfflineFASession(sampleUsername: "Demo User", submissions: [], notes: [], notifications: ([], []))
+    static let empty = OfflineFASession(sampleUsername: "Demo User", submissions: [], notes: [], notifications: .empty)
 }
 
 extension Model {
