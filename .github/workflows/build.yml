@@ -1,5 +1,5 @@
 name: Build App
-on: [push]
+on: [push, workflow_dispatch]
 jobs:
   Build-App:
     runs-on: macos-14
