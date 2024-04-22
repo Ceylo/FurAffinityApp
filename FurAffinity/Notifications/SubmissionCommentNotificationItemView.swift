@@ -10,7 +10,7 @@ import FAKit
 
 struct SubmissionCommentNotificationItemView: View {
     @EnvironmentObject var model: Model
-    var submissionComment: FASubmissionCommentNotificationPreview
+    var submissionComment: FANotificationPreview
     @State private var avatarUrl: URL?
     
     var body: some View {
@@ -33,7 +33,7 @@ struct SubmissionCommentNotificationItemView: View {
                 HStack(spacing: 0) {
                     Text("On ")
                         .foregroundStyle(.secondary)
-                    Text(submissionComment.submissionTitle)
+                    Text(submissionComment.title)
                 }
                 .font(.subheadline)
             }
@@ -42,7 +42,7 @@ struct SubmissionCommentNotificationItemView: View {
 }
 
 struct SubmissionCommentNotificationItemView_Previews: PreviewProvider {
-    static var submissionComment: FASubmissionCommentNotificationPreview {
+    static var submissionComment: FANotificationPreview {
         let previews = OfflineFASession.default.notificationPreviews
         return previews.submissionComments.first!
     }

@@ -10,7 +10,7 @@ import FAKit
 
 struct JournalNotificationItemView: View {
     @EnvironmentObject var model: Model
-    var journal: FAJournalNotificationPreview
+    var journal: FANotificationPreview
     @State private var avatarUrl: URL?
     
     var body: some View {
@@ -41,7 +41,7 @@ struct JournalNotificationItemView: View {
 }
 
 struct JournalNotificationItemView_Previews: PreviewProvider {
-    static var journal: FAJournalNotificationPreview {
+    static var journal: FANotificationPreview {
         let previews = OfflineFASession.default.notificationPreviews
         return previews.journals.first!
     }

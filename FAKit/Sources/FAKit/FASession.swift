@@ -121,8 +121,8 @@ open class FASession: Equatable {
     }
     
     // MARK: - Journals
-    public func journal(for preview: FAJournalNotificationPreview) async -> FAJournal? {
-        await journal(for: preview.journalUrl)
+    public func journal(for preview: FANotificationPreview) async -> FAJournal? {
+        await journal(for: preview.url)
     }
     
     open func journal(for url: URL) async -> FAJournal? {
@@ -161,23 +161,23 @@ open class FASession: Equatable {
     
     // MARK: - Notifications
     public typealias NotificationPreviews = (
-        submissionComments: [FASubmissionCommentNotificationPreview],
-        journals: [FAJournalNotificationPreview]
+        submissionComments: [FANotificationPreview],
+        journals: [FANotificationPreview]
     )
     
     open func notificationPreviews() async -> NotificationPreviews {
         await notificationPreviews(method: .GET, parameters: [])
     }
     
-    open func deleteSubmissionCommentNotifications(_ notifications: [FASubmissionCommentNotificationPreview]) async -> NotificationPreviews {
+    open func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) async -> NotificationPreviews {
         await notificationPreviews(method: .POST, parameters: [
             URLQueryItem(name: "remove-submission-comments", value: "Remove Selected Comments"),
         ] + notifications.map {
-            URLQueryItem(name: "comments-submissions[]", value: "\($0.cid)")
+            URLQueryItem(name: "comments-submissions[]", value: "\($0.id)")
         })
     }
     
-    open func deleteJournalNotifications(_ notifications: [FAJournalNotificationPreview]) async -> NotificationPreviews {
+    open func deleteJournalNotifications(_ notifications: [FANotificationPreview]) async -> NotificationPreviews {
         await notificationPreviews(method: .POST, parameters: [
             URLQueryItem(name: "remove-journals", value: "Remove Selected Journals"),
         ] + notifications.map {
@@ -203,9 +203,9 @@ open class FASession: Equatable {
         else { return ([], []) }
         
         let submissionCommentHeaders = page.submissionCommentHeaders
-            .map { FASubmissionCommentNotificationPreview($0) }
+            .map { FANotificationPreview($0) }
         let journalHeaders = page.journalHeaders
-            .map { FAJournalNotificationPreview($0) }
+            .map { FANotificationPreview($0) }
         
         let notificationCount = page.submissionCommentHeaders.count + page.journalHeaders.count
         logger.info("Got \(notificationCount) notification previews")

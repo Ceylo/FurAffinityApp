@@ -58,11 +58,11 @@ class OfflineFASession: FASession {
         notificationPreviews
     }
     
-    override func deleteSubmissionCommentNotifications(_ notifications: [FASubmissionCommentNotificationPreview]) async -> NotificationPreviews {
+    override func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) async -> NotificationPreviews {
         notificationPreviews
     }
     
-    override func deleteJournalNotifications(_ notifications: [FAJournalNotificationPreview]) async -> NotificationPreviews {
+    override func deleteJournalNotifications(_ notifications: [FANotificationPreview]) async -> NotificationPreviews {
         notificationPreviews
     }
     
@@ -124,28 +124,28 @@ extension OfflineFASession {
               datetime: "Apr 7, 2022 11:58AM", naturalDatetime: "an hour ago", unread: false,
               noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953262/#message")!)
     ], notifications: ([
-            .init(cid: 172177443, author: "furrycount", displayAuthor: "Furrycount", submissionTitle: "FurAffinity iOS App 1.3 Update",
+            .init(id: 172177443, author: "furrycount", displayAuthor: "Furrycount", title: "FurAffinity iOS App 1.3 Update",
                   datetime: "on Apr 30, 2023 09:50 PM", naturalDatetime: "a few seconds ago",
-                  submissionUrl: URL(string: "https://www.furaffinity.net/view/49215481/#cid:172177443")!),
-            .init(cid: 172177425, author: "furrycount", displayAuthor: "Furrycount", submissionTitle: "FurAffinity iOS App 1.3 Update",
+                  url: URL(string: "https://www.furaffinity.net/view/49215481/#cid:172177443")!),
+            .init(id: 172177425, author: "furrycount", displayAuthor: "Furrycount", title: "FurAffinity iOS App 1.3 Update",
                   datetime: "on Apr 30, 2023 09:49 PM", naturalDatetime: "a minute ago",
-                  submissionUrl: URL(string: "https://www.furaffinity.net/view/49215481/#cid:172177425")!)
+                  url: URL(string: "https://www.furaffinity.net/view/49215481/#cid:172177425")!)
         ], [
             .init(id: 10526001, author: "holt-odium", displayAuthor: "Holt-Odium", title: "📝 3 Slots are available",
               datetime: "on Apr 14, 2023 08:23 PM", naturalDatetime: "18 hours ago",
-              journalUrl: URL(string: "https://www.furaffinity.net/journal/10526001/")!),
+              url: URL(string: "https://www.furaffinity.net/journal/10526001/")!),
             .init(id: 10521084, author: "holt-odium", displayAuthor: "Holt-Odium", title: "Sketch commission are open (115$)",
               datetime: "on Apr 8, 2023 07:00 PM", naturalDatetime: "a week ago",
-              journalUrl: URL(string: "https://www.furaffinity.net/journal/10521084/")!),
+              url: URL(string: "https://www.furaffinity.net/journal/10521084/")!),
             .init(id: 10516170, author: "rudragon", displayAuthor: "RUdragon", title: "UPGRADES ARE OPEN!!! 5",
               datetime: "on Apr 2, 2023 11:59 PM", naturalDatetime: "12 days ago",
-              journalUrl: URL(string: "https://www.furaffinity.net/journal/10516170/")!),
+              url: URL(string: "https://www.furaffinity.net/journal/10516170/")!),
             .init(id: 10512063, author: "ishiru", displayAuthor: "Ishiru", title: "30 minutes before end of auction",
               datetime: "on Mar 29, 2023 03:33 PM", naturalDatetime: "17 days ago",
-              journalUrl: URL(string: "https://www.furaffinity.net/journal/10512063/")!),
+              url: URL(string: "https://www.furaffinity.net/journal/10512063/")!),
             .init(id: 10511753, author: "ishiru", displayAuthor: "Ishiru", title: "one day left",
               datetime: "on Mar 29, 2023 07:42 AM", naturalDatetime: "17 days ago",
-              journalUrl: URL(string: "https://www.furaffinity.net/journal/10511753/")!)
+              url: URL(string: "https://www.furaffinity.net/journal/10511753/")!)
         ])
     )
     

@@ -51,19 +51,13 @@ extension ListedSection {
     }
 }
 
-extension FASubmissionCommentNotificationPreview: FANavigable {
-    var url: URL { submissionUrl }
-}
-
-extension FAJournalNotificationPreview: FANavigable {
-    var url: URL { journalUrl }
-}
+extension FANotificationPreview: FANavigable {}
 
 struct NotificationsView: View {
-    var submissionCommentNotifications: [FASubmissionCommentNotificationPreview]
-    var journalNotifications: [FAJournalNotificationPreview]
-    var onDeleteSubmissionCommentNotifications: (_ items: [FASubmissionCommentNotificationPreview]) -> Void
-    var onDeleteJournalNotifications: (_ items: [FAJournalNotificationPreview]) -> Void
+    var submissionCommentNotifications: [FANotificationPreview]
+    var journalNotifications: [FANotificationPreview]
+    var onDeleteSubmissionCommentNotifications: (_ items: [FANotificationPreview]) -> Void
+    var onDeleteJournalNotifications: (_ items: [FANotificationPreview]) -> Void
     
     var onNukeSubmissionComments: () async -> Void
     var onNukeJournals: () async -> Void

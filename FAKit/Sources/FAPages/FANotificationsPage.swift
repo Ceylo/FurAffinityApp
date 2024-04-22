@@ -9,28 +9,18 @@ import Foundation
 import SwiftSoup
 
 public struct FANotificationsPage: Equatable {
-    public struct SubmissionCommentHeader: Equatable {
-        public let cid: Int
-        public let author: String
-        public let displayAuthor: String
-        public let submissionTitle: String
-        public let datetime: String
-        public let naturalDatetime: String
-        public let submissionUrl: URL
-    }
-    
-    public struct JournalHeader: Equatable {
+    public struct Header: Equatable {
         public let id: Int
         public let author: String
         public let displayAuthor: String
         public let title: String
         public let datetime: String
         public let naturalDatetime: String
-        public let journalUrl: URL
+        public let url: URL
     }
     
-    public let submissionCommentHeaders: [SubmissionCommentHeader]
-    public let journalHeaders: [JournalHeader]
+    public let submissionCommentHeaders: [Header]
+    public let journalHeaders: [Header]
 }
 
 extension FANotificationsPage {
@@ -49,7 +39,7 @@ extension FANotificationsPage {
             async let submissionCommentHeaders = submissionCommentNodes
                 .parallelMap { node in
                     do {
-                        return try SubmissionCommentHeader(node)
+                        return try Header.submissionComment(node)
                     } catch {
                         let html = (try? node.html()) ?? ""
                         logger.error("Failed decoding comment header. Error: \(error). Generated while parsing: \(html)")
@@ -61,7 +51,7 @@ extension FANotificationsPage {
             async let journalHeaders = journalNodes
                 .parallelMap { node in
                     do {
-                        return try JournalHeader(node)
+                        return try Header.journal(node)
                     } catch {
                         let html = (try? node.html()) ?? ""
                         logger.error("Failed decoding journal header. Error: \(error). Generated while parsing: \(html)")
@@ -80,8 +70,8 @@ extension FANotificationsPage {
     }
 }
 
-extension FANotificationsPage.JournalHeader {
-    init(_ node: SwiftSoup.Element) throws {
+extension FANotificationsPage.Header {
+    static func journal(_ node: SwiftSoup.Element) throws -> Self {
         let state = signposter.beginInterval("Journal Preview Parsing")
         defer { signposter.endInterval("Journal Preview Parsing", state) }
         
@@ -102,12 +92,10 @@ extension FANotificationsPage.JournalHeader {
         let datetime = try datetimeNode.attr("title")
         let naturalDatetime = try datetimeNode.text()
         
-        self.init(id: id, author: author, displayAuthor: displayAuthor, title: title, datetime: datetime, naturalDatetime: naturalDatetime, journalUrl: url)
+        return .init(id: id, author: author, displayAuthor: displayAuthor, title: title, datetime: datetime, naturalDatetime: naturalDatetime, url: url)
     }
-}
-
-extension FANotificationsPage.SubmissionCommentHeader {
-    init(_ node: SwiftSoup.Element) throws {
+    
+    static func submissionComment(_ node: SwiftSoup.Element) throws -> Self {
         let state = signposter.beginInterval("Submission Comment Preview Parsing")
         defer { signposter.endInterval("Submission Comment Preview Parsing", state) }
         
@@ -127,6 +115,6 @@ extension FANotificationsPage.SubmissionCommentHeader {
         let cid = try Int(urlStr.substring(matching: "/view/\\d+/#cid:(\\d+)").unwrap()).unwrap()
         let url = try URL(unsafeString: FAURLs.homeUrl.absoluteString + urlStr)
         
-        self.init(cid: cid, author: author, displayAuthor: displayAuthor, submissionTitle: title, datetime: datetime, naturalDatetime: naturalDatetime, submissionUrl: url)
+        return .init(id: cid, author: author, displayAuthor: displayAuthor, title: title, datetime: datetime, naturalDatetime: naturalDatetime, url: url)
     }
 }

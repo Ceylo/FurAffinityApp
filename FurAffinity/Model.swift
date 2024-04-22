@@ -42,8 +42,8 @@ class Model: ObservableObject {
     private (set) var lastNotePreviewsFetchDate: Date?
 
     struct NotificationPreviews {
-        let submissionComments: [FASubmissionCommentNotificationPreview]
-        let journals: [FAJournalNotificationPreview]
+        let submissionComments: [FANotificationPreview]
+        let journals: [FANotificationPreview]
     }
     
     /// nil until a fetch actually happened
@@ -162,7 +162,7 @@ class Model: ObservableObject {
         }
     }
     
-    func deleteSubmissionCommentNotifications(_ notifications: [FASubmissionCommentNotificationPreview]) {
+    func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) {
         notificationPreviews = notificationPreviews.map { oldNotifications in
             NotificationPreviews(
                 submissionComments: oldNotifications.submissionComments.filter { !notifications.contains($0) },
@@ -177,7 +177,7 @@ class Model: ObservableObject {
         }
     }
     
-    func deleteJournalNotifications(_ notifications: [FAJournalNotificationPreview]) {
+    func deleteJournalNotifications(_ notifications: [FANotificationPreview]) {
         notificationPreviews = notificationPreviews.map { oldNotifications in
             NotificationPreviews(
                 submissionComments: oldNotifications.submissionComments,
