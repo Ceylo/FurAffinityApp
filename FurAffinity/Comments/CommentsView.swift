@@ -20,8 +20,13 @@ struct CommentsView: View {
         VStack(alignment: .leading, spacing: 5) {
             ForEach(comments) { comment in
                 if let replyAction {
-                    SwipeableCommentView(comment: comment) { cid in
-                        replyAction(cid)
+                    switch comment {
+                    case .hidden:
+                        CommentView(comment: comment)
+                    case .visible:
+                        SwipeableCommentView(comment: comment) { cid in
+                            replyAction(cid)
+                        }
                     }
                 } else {
                     CommentView(comment: comment)
@@ -45,7 +50,7 @@ struct CommentsView_Previews: PreviewProvider {
     static var previews: some View {
         ScrollView {
             CommentsView(
-                comments: FAComment.demo,
+                comments: FAComment.demoHidden,
                 replyAction: { cid in
                     print("Reply to cid \(cid)")
                 }

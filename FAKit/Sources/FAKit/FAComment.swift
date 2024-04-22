@@ -10,7 +10,12 @@ import FAPages
 import SwiftGraph
 import OrderedCollections
 
-public struct FAComment: Equatable {
+public enum FAComment: Equatable {
+    case visible(FAVisibleComment)
+    case hidden(FAHiddenComment)
+}
+
+public struct FAVisibleComment: Equatable {
     public let cid: Int
     public let author: String
     public let displayAuthor: String
@@ -33,27 +38,98 @@ public struct FAComment: Equatable {
     }
 }
 
+public struct FAHiddenComment: Equatable {
+    public let cid: Int
+    public let htmlMessage: String
+    public let answers: [FAComment]
+    
+    public init(cid: Int, htmlMessage: String, answers: [FAComment]) {
+        self.cid = cid
+        self.htmlMessage = htmlMessage
+        self.answers = answers
+    }
+}
+
 extension FAComment {
+    public var cid: Int {
+        switch self {
+        case let .visible(comment):
+            comment.cid
+        case let .hidden(comment):
+            comment.cid
+        }
+    }
+    
+    public var htmlMessage: String {
+        switch self {
+        case let .visible(comment):
+            comment.htmlMessage
+        case let .hidden(comment):
+            comment.htmlMessage
+        }
+    }
+    
+    public var answers: [FAComment] {
+        switch self {
+        case let .visible(comment):
+            comment.answers
+        case let .hidden(comment):
+            comment.answers
+        }
+    }
+}
+
+extension FAComment {
+    init(_ comment: FAVisiblePageComment) {
+        self = .visible(.init(
+            cid: comment.cid,
+            author: comment.author,
+            displayAuthor: comment.displayAuthor,
+            authorAvatarUrl: comment.authorAvatarUrl,
+            datetime: comment.datetime,
+            naturalDatetime: comment.naturalDatetime,
+            htmlMessage: comment.htmlMessage.selfContainedFAHtmlComment,
+            answers: []
+        ))
+    }
+    
+    init(_ comment: FAHiddenPageComment) {
+        self = .hidden(.init(
+            cid: comment.cid,
+            htmlMessage: comment.htmlMessage.selfContainedFAHtmlComment,
+            answers: []
+        ))
+    }
+    
     init(_ comment: FAPageComment) {
-        self.init(cid: comment.cid,
-                  author: comment.author,
-                  displayAuthor: comment.displayAuthor,
-                  authorAvatarUrl: comment.authorAvatarUrl,
-                  datetime: comment.datetime,
-                  naturalDatetime: comment.naturalDatetime,
-                  htmlMessage: comment.htmlMessage.selfContainedFAHtmlComment,
-                  answers: [])
+        switch comment {
+        case let .visible(comment):
+            self.init(comment)
+        case let .hidden(comment):
+            self.init(comment)
+        }
     }
     
     func withAnswers(_ answers: [Self]) -> Self {
-        Self.init(cid: cid,
-                  author: author,
-                  displayAuthor: displayAuthor,
-                  authorAvatarUrl: authorAvatarUrl,
-                  datetime: datetime,
-                  naturalDatetime: naturalDatetime,
-                  htmlMessage: htmlMessage,
-                  answers: answers)
+        switch self {
+        case let .visible(comment):
+            return .visible(.init(
+                cid: comment.cid,
+                author: comment.author,
+                displayAuthor: comment.displayAuthor,
+                authorAvatarUrl: comment.authorAvatarUrl,
+                datetime: comment.datetime,
+                naturalDatetime: comment.naturalDatetime,
+                htmlMessage: comment.htmlMessage,
+                answers: answers
+            ))
+        case let .hidden(comment):
+            return .hidden(.init(
+                cid: comment.cid,
+                htmlMessage: comment.htmlMessage,
+                answers: answers
+            ))
+        }
     }
     
     static func childrenOf(comment: FAPageComment,

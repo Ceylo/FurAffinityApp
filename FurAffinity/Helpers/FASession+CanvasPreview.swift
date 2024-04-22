@@ -172,16 +172,34 @@ extension FASubmissionPreview {
 extension FAComment {
     private static let terrinissAvatarUrl = URL(string: "https://a.furaffinity.net/1616615925/terriniss.gif")!
     static let demo: [FAComment] = [
-        .init(cid: 166652793, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "2 months ago",
-              htmlMessage: "BID HERE \n<br> Moon".selfContainedFAHtmlComment, answers: [
-                .init(cid: 166653891, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 11, 2022 10:58 PM", naturalDatetime: "2 months ago",
-                      htmlMessage: "SakuraSlowly (DA) - SB".selfContainedFAHtmlComment, answers: [
-                        .init(cid: 166658565, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 12, 2022 05:16 AM", naturalDatetime: "2 months ago",
-                              htmlMessage: "DeathPanda21 (da) - 55$".selfContainedFAHtmlComment, answers: [])
-                      ])
-              ]),
-        .init(cid: 166653340, author: "rurudaspippen", displayAuthor: "RuruDasPippen", authorAvatarUrl: URL(string: "https://a.furaffinity.net/1643948243/rurudaspippen.gif")!,
-              datetime: "Aug 11, 2022 10:23 PM", naturalDatetime: "2 months ago", htmlMessage: "Look at the babies!".selfContainedFAHtmlComment, answers: [])
+        .visible(.init(
+            cid: 166652793, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "2 months ago",
+            htmlMessage: "BID HERE \n<br> Moon".selfContainedFAHtmlComment, answers: [
+                .visible(.init(
+                    cid: 166653891, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 11, 2022 10:58 PM", naturalDatetime: "2 months ago",
+                    htmlMessage: "SakuraSlowly (DA) - SB".selfContainedFAHtmlComment, answers: [
+                        .visible(.init(
+                            cid: 166658565, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 12, 2022 05:16 AM", naturalDatetime: "2 months ago",
+                            htmlMessage: "DeathPanda21 (da) - 55$".selfContainedFAHtmlComment, answers: [])
+                        )]))
+            ])),
+        .visible(.init(
+            cid: 166653340, author: "rurudaspippen", displayAuthor: "RuruDasPippen", authorAvatarUrl: URL(string: "https://a.furaffinity.net/1643948243/rurudaspippen.gif")!,
+              datetime: "Aug 11, 2022 10:23 PM", naturalDatetime: "2 months ago", htmlMessage: "Look at the babies!".selfContainedFAHtmlComment, answers: []
+        ))
+    ]
+    
+    static let demoHidden: [FAComment] = [
+        .hidden(.init(
+            cid: 171145030,
+            htmlMessage: "[deleted]".selfContainedFAHtmlComment,
+            answers: [
+                .visible(.init(
+                    cid: 166653340, author: "rurudaspippen", displayAuthor: "RuruDasPippen", authorAvatarUrl: URL(string: "https://a.furaffinity.net/1643948243/rurudaspippen.gif")!,
+                      datetime: "Aug 11, 2022 10:23 PM", naturalDatetime: "2 months ago", htmlMessage: "Look at the babies!".selfContainedFAHtmlComment, answers: []
+                ))
+            ]
+        ))
     ]
 }
 
@@ -247,20 +265,20 @@ extension FAUser {
         bannerUrl: URL(string: "https://www.furaffinity.net/themes/beta/img/banners/logo/fa-banner-winter.jpg")!,
         htmlDescription: htmlDescription,
         shouts: [
-            FAComment(
+            .visible(.init(
                 cid: 54569442, author: "sadisticss", displayAuthor: "Sadisticss",
                 authorAvatarUrl: URL(string: "https://a.furaffinity.net/1692639963/sadisticss.gif")!,
                 datetime: "Jul 29, 2023 10:16 PM", naturalDatetime: "a month ago",
                 htmlMessage: "Hola, dear! U have nice gallery &lt;3",
                 answers: []
-            ),
-            FAComment(
+            )),
+            .visible(.init(
                 cid: 53766730, author: "mostevilpupper", displayAuthor: "MostEvilPupper",
                 authorAvatarUrl: URL(string: "https://a.furaffinity.net/1670117631/mostevilpupper.gif")!,
                 datetime: "Dec 6, 2022 03:46 AM", naturalDatetime: "9 months ago",
                 htmlMessage: "An absolutely amazing artist",
                 answers: []
-            )
+            ))
         ]
     )
 }
