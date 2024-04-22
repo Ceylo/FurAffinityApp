@@ -46,10 +46,10 @@ func view(for url: FAURL) -> some View {
     case let .user(url):
         RemoteUserView(url: url)
     case let .gallery(url):
-        RemoteUserGalleryLikeView(galleryDisplayType: "gallery", url: url)
+        RemoteUserGalleryLikeView(galleryType: .gallery, url: url)
     case let .scraps(url):
-        RemoteUserGalleryLikeView(galleryDisplayType: "scraps", url: url)
+        RemoteUserGalleryLikeView(galleryType: .scraps, url: url)
     case let .favorites(url):
-        RemoteUserGalleryLikeView(galleryDisplayType: "favorites", url: url)
+        RemoteUserGalleryLikeView(galleryType: .favorites, url: url)
     }
 }

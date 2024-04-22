@@ -8,37 +8,53 @@
 import SwiftUI
 import FAKit
 
+enum GalleryType {
+    case gallery
+    case scraps
+    case favorites
+    
+    var shouldDisplayAuthor: Bool {
+        self == .favorites
+    }
+}
+
 struct UserGalleryLikeView: View {
-    var galleryDisplayType: String
+    var galleryType: GalleryType
     var gallery: FAUserGalleryLike
     
     var body: some View {
-        if gallery.previews.isEmpty {
-            ScrollView {
-                VStack(spacing: 10) {
-                    Text("It's a bit empty in here.")
-                        .font(.headline)
-                    Text("There's nothing to see in \(gallery.displayAuthor)'s \(galleryDisplayType) yet.")
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.secondary)
+        Group {
+            if gallery.previews.isEmpty {
+                ScrollView {
+                    VStack(spacing: 10) {
+                        Text("It's a bit empty in here.")
+                            .font(.headline)
+                        Text("There's nothing to see in \(gallery.displayAuthor)'s \(galleryType) yet.")
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding()
                 }
-                .padding()
-            }
-        } else {
-            List(gallery.previews) { preview in
-                NavigationLink(value: FAURL(with: preview.url)) {
-                    SubmissionFeedItemView<TitledHeaderView>(submission: preview)
-                        .id(preview.sid)
+            } else {
+                List(gallery.previews) { preview in
+                    NavigationLink(value: FAURL(with: preview.url)) {
+                        if galleryType.shouldDisplayAuthor {
+                            SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
+                        } else {
+                            SubmissionFeedItemView<TitledHeaderView>(submission: preview)
+                        }
+                    }
+                    .id(preview.sid)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                 }
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listStyle(.plain)
             }
-            .listStyle(.plain)
-            .navigationBarTitleDisplayMode(.inline)
-            // Toolbar needs to be setup before refresh control…
-            // https://stackoverflow.com/a/64700545/869385
-            .navigationTitle("\(gallery.displayAuthor)'s \(galleryDisplayType)")
         }
+        .navigationBarTitleDisplayMode(.inline)
+        // Toolbar needs to be setup before refresh control…
+        // https://stackoverflow.com/a/64700545/869385
+        .navigationTitle("\(gallery.displayAuthor)'s \(galleryType)")
     }
 }
 
@@ -47,13 +63,13 @@ struct UserGalleryLikeView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
             UserGalleryLikeView(
-                galleryDisplayType: "favorites",
+                galleryType: .favorites,
                 gallery: .init(displayAuthor: "Some User", previews: OfflineFASession.default.submissionPreviews)
             )
             .environmentObject(Model.demo)
             
             UserGalleryLikeView(
-                galleryDisplayType: "favorites",
+                galleryType: .favorites,
                 gallery: .init(displayAuthor: "Some User", previews: [])
             )
             .environmentObject(Model.empty)

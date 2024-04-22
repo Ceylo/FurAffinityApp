@@ -9,7 +9,7 @@ import SwiftUI
 import FAKit
 
 struct RemoteUserGalleryLikeView: View {
-    var galleryDisplayType: String
+    var galleryType: GalleryType
     var url: URL
     @EnvironmentObject var model: Model
     
@@ -18,7 +18,7 @@ struct RemoteUserGalleryLikeView: View {
             await model.session?.galleryLike(for: url)
         }) { gallery, _ in
             UserGalleryLikeView(
-                galleryDisplayType: galleryDisplayType,
+                galleryType: galleryType,
                 gallery: gallery
             )
         }
@@ -28,7 +28,7 @@ struct RemoteUserGalleryLikeView: View {
 struct RemoteUserGalleryLikeView_Previews: PreviewProvider {
     static var previews: some View {
         RemoteUserGalleryLikeView(
-            galleryDisplayType: "gallery",
+            galleryType: .gallery,
             url: URL(string: "https://www.furaffinity.net/gallery/tiaamaito/")!
         )
         .environmentObject(Model.demo)

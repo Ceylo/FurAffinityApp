@@ -25,8 +25,7 @@ extension FAUserGalleryLikePage {
             let siteContentNode = try doc.select(
                 "html body div#main-window div#site-content"
             )
-            
-            let itemsQuery = "div#page-galleryscraps div.content section.gallery-section div.section-body div.submission-list section#gallery-gallery figure"
+            let itemsQuery = "section.gallery-section div.section-body section figure"
             let items = try siteContentNode.select(itemsQuery).array()
             async let previews = items.parallelMap { FASubmissionsPage.Submission($0) }
             
