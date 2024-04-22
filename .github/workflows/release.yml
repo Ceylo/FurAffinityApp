@@ -62,13 +62,13 @@ jobs:
           zip -r "${qualified_app_name}.ipa" Payload
           zip -r "${qualified_app_name}.xcarchive.zip" "${qualified_app_name}.xcarchive"
       - name: Upload IPA
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: IPA
           path: FurAffinity-*.ipa
           if-no-files-found: error
       - name: Upload xcarchive
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: Xcode Archive
           path: ./*.xcarchive
