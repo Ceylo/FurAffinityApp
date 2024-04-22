@@ -17,18 +17,23 @@ https://user-images.githubusercontent.com/451334/169599555-73412b68-0c0a-4909-b3
 Thank you [Hyilpi](https://www.furaffinity.net/user/hyilpi/), [Terriniss](https://www.furaffinity.net/user/terriniss/), [tiaamaito](https://www.furaffinity.net/user/tiaamaito/) and [Hiorou](https://www.furaffinity.net/user/hiorou/) for letting me use your art in the demo ❤️.
 
 ## Project Goals
-This project is written to be able to benefit from [furaffinity.net](https://www.furaffinity.net) content on iOS through a more friendly and native experience. It also serves as a learning project for the [technologies mentioned below](#technologies-and-requirements). It can also be useful to other people and is thus provided by the means of this opensource GitHub project.
+This project is written to be able to benefit from [furaffinity.net](https://www.furaffinity.net) content on iOS through a more friendly and native experience. It also serves as a learning project for the [technologies mentioned later](#technologies-and-requirements). It can also be useful to other people and is thus provided by the means of this opensource GitHub project.
 
 ## Features
 
 - [x] Submissions feed
-  - [x] Submission download
-  - [x] Submission details
-  - [x] Submission like
-  - [x] Submission comments (read & write)
-- [ ] Journals feed
-- [x] Notes reading
-- [ ] Notifications
+- [x] Notifications feed (journals, submission comments & journal comments)
+- [x] Notes (read only)
+- [x] In-app navigation for any submission and journal
+  - [x] Submission download & fav
+  - [x] Description
+  - [x] Sharing and [Hand-Off](https://support.apple.com/en-gb/HT209455) support
+  - [x] Comments (read & write)
+- [x] User profile browsing:
+  - [x] Main description
+  - [x] Shouts
+  - [x] Gallery, scraps and favorites
+- [ ] iOS notifications
 - [ ] Exploration
 
 ## Installation
