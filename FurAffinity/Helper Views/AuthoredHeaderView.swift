@@ -17,10 +17,10 @@ struct AuthoredHeaderView: View {
     var datetime: DatetimePair?
     
     var body: some View {
-        HStack {
+        HStack(alignment: .top) {
             OptionalLink(destination: inAppUserUrl(for: username)) {
                 AvatarView(avatarUrl: avatarUrl)
-                    .frame(width: 32, height: 32)
+                    .frame(width: 42, height: 42)
             }
             
             VStack(alignment: .leading) {
@@ -60,7 +60,7 @@ struct SubmissionAuthoredHeaderView_Previews: PreviewProvider {
     static var previews: some View {
         AuthoredHeaderView(
             username: "author",
-            displayName: "The Author", title: "Great Content",
+            displayName: "The Author", title: "Great Content but with very very very very long description",
             avatarUrl: nil,
             datetime: .init("Apr 7th, 2022, 11:58 AM",
                             "8 months ago")
