@@ -162,14 +162,24 @@ open class FASession: Equatable {
     // MARK: - Notifications
     public struct NotificationPreviews {
         public let submissionComments: [FANotificationPreview]
+        public let journalComments: [FANotificationPreview]
         public let journals: [FANotificationPreview]
         
-        public init(submissionComments: [FANotificationPreview], journals: [FANotificationPreview]) {
+        public init(
+            submissionComments: [FANotificationPreview],
+            journalComments: [FANotificationPreview],
+            journals: [FANotificationPreview]
+        ) {
             self.submissionComments = submissionComments
+            self.journalComments = journalComments
             self.journals = journals
         }
         
-        public static let empty = Self.init(submissionComments: [], journals: [])
+        public init() {
+            self.submissionComments = []
+            self.journalComments = []
+            self.journals = []
+        }
     }
     
     open func notificationPreviews() async -> NotificationPreviews {
@@ -207,16 +217,23 @@ open class FASession: Equatable {
     private func notificationPreviews(method: HTTPMethod, parameters: [URLQueryItem]) async -> NotificationPreviews {
         guard let data = await dataSource.httpData(from: FAURLs.notificationsUrl, cookies: cookies, method: method, parameters: parameters),
               let page = await FANotificationsPage(data: data)
-        else { return .empty }
+        else { return .init() }
+        
+        let notificationCount = page.submissionCommentHeaders.count + page.journalCommentHeaders.count + page.journalHeaders.count
+        logger.info("Got \(notificationCount) notification previews")
         
         let submissionCommentHeaders = page.submissionCommentHeaders
             .map { FANotificationPreview($0) }
+        let journalCommentHeaders = page.journalCommentHeaders
+            .map { FANotificationPreview($0) }
         let journalHeaders = page.journalHeaders
             .map { FANotificationPreview($0) }
-        
-        let notificationCount = page.submissionCommentHeaders.count + page.journalHeaders.count
-        logger.info("Got \(notificationCount) notification previews")
-        return .init(submissionComments: submissionCommentHeaders, journals: journalHeaders)
+
+        return .init(
+            submissionComments: submissionCommentHeaders,
+            journalComments: journalCommentHeaders,
+            journals: journalHeaders
+        )
     }
     
     // MARK: - Users & avatar

@@ -130,6 +130,10 @@ extension OfflineFASession {
             .init(id: 172177425, author: "furrycount", displayAuthor: "Furrycount", title: "FurAffinity iOS App 1.3 Update",
                   datetime: "on Apr 30, 2023 09:49 PM", naturalDatetime: "a minute ago",
                   url: URL(string: "https://www.furaffinity.net/view/49215481/#cid:172177425")!)
+    ], journalComments: [
+        .init(id: 60479543, author: "ceylo", displayAuthor: "Ceylo", title: "Test",
+              datetime: "on Apr 22, 2024 02:11 PM", naturalDatetime: "couple of minutes ago",
+              url: URL(string: "https://www.furaffinity.net/journal/10528107/#cid:60479543")!)
     ], journals: [
             .init(id: 10526001, author: "holt-odium", displayAuthor: "Holt-Odium", title: "📝 3 Slots are available",
               datetime: "on Apr 14, 2023 08:23 PM", naturalDatetime: "18 hours ago",
@@ -149,7 +153,7 @@ extension OfflineFASession {
         ])
     )
     
-    static let empty = OfflineFASession(sampleUsername: "Demo User", submissions: [], notes: [], notifications: .empty)
+    static let empty = OfflineFASession(sampleUsername: "Demo User", submissions: [], notes: [], notifications: .init())
 }
 
 extension Model {

@@ -54,8 +54,7 @@ extension ListedSection {
 extension FANotificationPreview: FANavigable {}
 
 struct NotificationsView: View {
-    var submissionCommentNotifications: [FANotificationPreview]
-    var journalNotifications: [FANotificationPreview]
+    var notifications: FASession.NotificationPreviews
     var onDeleteSubmissionCommentNotifications: (_ items: [FANotificationPreview]) -> Void
     var onDeleteJournalNotifications: (_ items: [FANotificationPreview]) -> Void
     
@@ -63,18 +62,24 @@ struct NotificationsView: View {
     var onNukeJournals: () async -> Void
     
     var noNotification: Bool {
-        submissionCommentNotifications.isEmpty && journalNotifications.isEmpty
+        notifications.submissionComments.isEmpty && notifications.journalComments.isEmpty && notifications.journals.isEmpty
     }
     
     var body: some View {
         List {
-            ListedSection("Submission Comments", submissionCommentNotifications) { item in
+            ListedSection("Submission Comments", notifications.submissionComments) { item in
                 SubmissionCommentNotificationItemView(submissionComment: item)
             } onDelete: { items in
                 onDeleteSubmissionCommentNotifications(items)
             }
             
-            ListedSection("Journals", journalNotifications) { item in
+            ListedSection("Journal Comments", notifications.journalComments) { item in
+                SubmissionCommentNotificationItemView(submissionComment: item)
+            } onDelete: { items in
+                fatalError("Not implemented")
+            }
+            
+            ListedSection("Journals", notifications.journals) { item in
                 JournalNotificationItemView(journal: item)
             } onDelete: { items in
                 onDeleteJournalNotifications(items)
@@ -110,8 +115,7 @@ struct NotificationsView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
             NotificationsView(
-                submissionCommentNotifications: notificationPreviews.submissionComments,
-                journalNotifications: notificationPreviews.journals,
+                notifications: notificationPreviews,
                 onDeleteSubmissionCommentNotifications: { _ in },
                 onDeleteJournalNotifications: { _ in },
                 onNukeSubmissionComments: {},
@@ -120,8 +124,7 @@ struct NotificationsView_Previews: PreviewProvider {
             .environmentObject(Model.demo)
             
             NotificationsView(
-                submissionCommentNotifications: [],
-                journalNotifications: [],
+                notifications: .init(),
                 onDeleteSubmissionCommentNotifications: { _ in },
                 onDeleteJournalNotifications: { _ in },
                 onNukeSubmissionComments: {},

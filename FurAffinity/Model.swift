@@ -40,15 +40,10 @@ class Model: ObservableObject {
     @Published
     private (set) var unreadNoteCount = 0
     private (set) var lastNotePreviewsFetchDate: Date?
-
-    struct NotificationPreviews {
-        let submissionComments: [FANotificationPreview]
-        let journals: [FANotificationPreview]
-    }
     
     /// nil until a fetch actually happened
     /// After a fetch it contains all found notifications, or an empty array if none was found
-    @Published private (set) var notificationPreviews: NotificationPreviews?
+    @Published private (set) var notificationPreviews: FASession.NotificationPreviews?
     @Published private (set) var lastNotificationPreviewsFetchDate: Date?
     
     @Published
@@ -164,8 +159,9 @@ class Model: ObservableObject {
     
     func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) {
         notificationPreviews = notificationPreviews.map { oldNotifications in
-            NotificationPreviews(
+            FASession.NotificationPreviews(
                 submissionComments: oldNotifications.submissionComments.filter { !notifications.contains($0) },
+                journalComments: oldNotifications.journalComments,
                 journals: oldNotifications.journals
             )
         }
@@ -179,8 +175,9 @@ class Model: ObservableObject {
     
     func deleteJournalNotifications(_ notifications: [FANotificationPreview]) {
         notificationPreviews = notificationPreviews.map { oldNotifications in
-            NotificationPreviews(
+            FASession.NotificationPreviews(
                 submissionComments: oldNotifications.submissionComments,
+                journalComments: oldNotifications.journalComments,
                 journals: oldNotifications.journals.filter { !notifications.contains($0) }
             )
         }
@@ -211,11 +208,7 @@ class Model: ObservableObject {
             return
         }
         
-        let fetched = await fetcher(session)
-        notificationPreviews = .init(
-            submissionComments: fetched.submissionComments,
-            journals: fetched.journals
-        )
+        notificationPreviews = await fetcher(session)
         lastNotificationPreviewsFetchDate = Date()
     }
     

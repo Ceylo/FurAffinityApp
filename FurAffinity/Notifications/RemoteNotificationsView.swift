@@ -29,8 +29,7 @@ struct RemoteNotificationsView: View {
         Group {
             if let notifications = model.notificationPreviews {
                 NotificationsView(
-                    submissionCommentNotifications: notifications.submissionComments,
-                    journalNotifications: notifications.journals,
+                    notifications: notifications,
                     onDeleteSubmissionCommentNotifications: { items in
                         model.deleteSubmissionCommentNotifications(items)
                     },
