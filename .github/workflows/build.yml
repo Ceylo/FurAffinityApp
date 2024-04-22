@@ -2,19 +2,19 @@ name: Build App
 on: [push]
 jobs:
   Build-App:
-    runs-on: macos-12
+    runs-on: macos-14
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Update Secrets
         env:
           BUNDLE_ID: ${{ secrets.BUNDLE_ID }}
         run: |
           sed -i "" "s/PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;/PRODUCT_BUNDLE_IDENTIFIER = ${BUNDLE_ID};/" "FurAffinity.xcodeproj/project.pbxproj"
-      - uses: mxcl/xcodebuild@v1
+      - uses: mxcl/xcodebuild@v2
         with:
           action: none
-          xcode: 14.2
+          xcode: 15.3
       - name: Build App
         run: |
           xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 13' -configuration Release build
