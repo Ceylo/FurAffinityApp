@@ -56,6 +56,7 @@ extension FANotificationPreview: FANavigable {}
 struct NotificationsView: View {
     var notifications: FASession.NotificationPreviews
     var onDeleteSubmissionCommentNotifications: (_ items: [FANotificationPreview]) -> Void
+    var onDeleteJournalCommentNotifications: (_ items: [FANotificationPreview]) -> Void
     var onDeleteJournalNotifications: (_ items: [FANotificationPreview]) -> Void
     
     var onNukeSubmissionComments: () async -> Void
@@ -76,7 +77,7 @@ struct NotificationsView: View {
             ListedSection("Journal Comments", notifications.journalComments) { item in
                 SubmissionCommentNotificationItemView(submissionComment: item)
             } onDelete: { items in
-                fatalError("Not implemented")
+                onDeleteJournalCommentNotifications(items)
             }
             
             ListedSection("Journals", notifications.journals) { item in
@@ -117,6 +118,7 @@ struct NotificationsView_Previews: PreviewProvider {
             NotificationsView(
                 notifications: notificationPreviews,
                 onDeleteSubmissionCommentNotifications: { _ in },
+                onDeleteJournalCommentNotifications: { _ in },
                 onDeleteJournalNotifications: { _ in },
                 onNukeSubmissionComments: {},
                 onNukeJournals: {}
@@ -126,6 +128,7 @@ struct NotificationsView_Previews: PreviewProvider {
             NotificationsView(
                 notifications: .init(),
                 onDeleteSubmissionCommentNotifications: { _ in },
+                onDeleteJournalCommentNotifications: { _ in },
                 onDeleteJournalNotifications: { _ in },
                 onNukeSubmissionComments: {},
                 onNukeJournals: {}

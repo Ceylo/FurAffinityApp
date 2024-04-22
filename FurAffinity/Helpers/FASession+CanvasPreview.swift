@@ -62,6 +62,10 @@ class OfflineFASession: FASession {
         notificationPreviews
     }
     
+    override func deleteJournalCommentNotifications(_ notifications: [FANotificationPreview]) async -> NotificationPreviews {
+        notificationPreviews
+    }
+    
     override func deleteJournalNotifications(_ notifications: [FANotificationPreview]) async -> NotificationPreviews {
         notificationPreviews
     }

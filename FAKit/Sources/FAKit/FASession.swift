@@ -194,6 +194,14 @@ open class FASession: Equatable {
         })
     }
     
+    open func deleteJournalCommentNotifications(_ notifications: [FANotificationPreview]) async -> NotificationPreviews {
+        await notificationPreviews(method: .POST, parameters: [
+            URLQueryItem(name: "remove-journal-comments", value: "Remove Selected Comments"),
+        ] + notifications.map {
+            URLQueryItem(name: "comments-journals[]", value: "\($0.id)")
+        })
+    }
+    
     open func deleteJournalNotifications(_ notifications: [FANotificationPreview]) async -> NotificationPreviews {
         await notificationPreviews(method: .POST, parameters: [
             URLQueryItem(name: "remove-journals", value: "Remove Selected Journals"),

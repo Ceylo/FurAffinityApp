@@ -30,12 +30,9 @@ struct RemoteNotificationsView: View {
             if let notifications = model.notificationPreviews {
                 NotificationsView(
                     notifications: notifications,
-                    onDeleteSubmissionCommentNotifications: { items in
-                        model.deleteSubmissionCommentNotifications(items)
-                    },
-                    onDeleteJournalNotifications: { items in
-                        model.deleteJournalNotifications(items)
-                    },
+                    onDeleteSubmissionCommentNotifications: model.deleteSubmissionCommentNotifications,
+                    onDeleteJournalCommentNotifications: model.deleteJournalCommentNotifications,
+                    onDeleteJournalNotifications: model.deleteJournalNotifications,
                     onNukeSubmissionComments: {
                         await model.nukeAllSubmissionCommentNotifications()
                     },
