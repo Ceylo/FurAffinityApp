@@ -14,7 +14,7 @@ struct SubmissionCommentNotificationItemView: View {
     @State private var avatarUrl: URL?
     
     var body: some View {
-        HStack {
+        HStack(alignment: .top) {
             AvatarView(avatarUrl: avatarUrl)
                 .frame(width: 42, height: 42)
                 .task {
@@ -30,10 +30,12 @@ struct SubmissionCommentNotificationItemView: View {
                                    naturalDatetime: submissionComment.naturalDatetime)
                 }
                 
-                HStack(spacing: 0) {
-                    Text("On ")
-                        .foregroundStyle(.secondary)
-                    Text(submissionComment.title)
+                HStack(alignment: .firstTextBaseline, spacing: 0) {
+                    let text = AttributedString("On ") 
+                        .transformingAttributes(\.foregroundColor, { $0.value = .secondary })
+                    + AttributedString(submissionComment.title)
+                    
+                    Text(text)
                 }
                 .font(.subheadline)
             }
@@ -43,8 +45,15 @@ struct SubmissionCommentNotificationItemView: View {
 
 struct SubmissionCommentNotificationItemView_Previews: PreviewProvider {
     static var submissionComment: FANotificationPreview {
-        let previews = OfflineFASession.default.notificationPreviews
-        return previews.submissionComments.first!
+        .init(
+            id: 172177443,
+            author: "someuser",
+            displayAuthor: "Some User",
+            title: "A user provided title but that is actually too long to fit one one line",
+            datetime: "on Apr 30, 2023 09:50 PM",
+            naturalDatetime: "a few seconds ago",
+            url: URL(string: "https://www.furaffinity.net/view/49215481/#cid:172177443")!
+        )
     }
     
     static var previews: some View {

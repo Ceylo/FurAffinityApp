@@ -14,7 +14,7 @@ struct NoteItemView: View {
     @State private var avatarUrl: URL?
     
     var body: some View {
-        HStack {
+        HStack(alignment: .top) {
             AvatarView(avatarUrl: avatarUrl)
                 .frame(width: 42, height: 42)
                 .task {
