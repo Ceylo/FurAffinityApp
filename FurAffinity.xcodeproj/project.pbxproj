@@ -738,7 +738,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.7;
+				MARKETING_VERSION = 1.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;
 				PRODUCT_NAME = "Fur Affinity";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -777,7 +777,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.7;
+				MARKETING_VERSION = 1.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;
 				PRODUCT_NAME = "Fur Affinity";
 				PROVISIONING_PROFILE_SPECIFIER = "";
