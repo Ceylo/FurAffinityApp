@@ -9,17 +9,25 @@ import SwiftUI
 
 struct NotificationsActionView: View {
     var nukeSubmissionCommentsAction: () async -> Void
+    var nukeJournalCommentsAction: () async -> Void
     var nukeJournalsAction: () async -> Void
     
-    @State private var showNukeSubCommentsAlert = false
+    @State private var showNukeSubmissionCommentsAlert = false
+    @State private var showNukeJournalCommentsAlert = false
     @State private var showNukeJournalsAlert = false
     
     var body: some View {
         Menu {
             Button(role: .destructive) {
-                showNukeSubCommentsAlert = true
+                showNukeSubmissionCommentsAlert = true
             } label: {
                 Label("Nuke All Submission Comments", systemImage: "trash")
+            }
+            
+            Button(role: .destructive) {
+                showNukeJournalCommentsAlert = true
+            } label: {
+                Label("Nuke All Journal Comments", systemImage: "trash")
             }
             
             Button(role: .destructive) {
@@ -31,12 +39,16 @@ struct NotificationsActionView: View {
             ActionControl()
         }
         .nukeAlert("Submission Comments", "submission comment notifications",
-                   show: $showNukeSubCommentsAlert) {
+                   show: $showNukeSubmissionCommentsAlert) {
             await nukeSubmissionCommentsAction()
         }
-        .nukeAlert("Journals", "journal notifications", show: $showNukeJournalsAlert) {
-            await nukeJournalsAction()
-        }
+       .nukeAlert("Journal Comments", "journal comment notifications",
+                  show: $showNukeJournalCommentsAlert) {
+           await nukeJournalCommentsAction()
+       }
+      .nukeAlert("Journals", "journal notifications", show: $showNukeJournalsAlert) {
+          await nukeJournalsAction()
+      }
     }
 }
 
@@ -44,6 +56,7 @@ struct NotificationsActionView_Previews: PreviewProvider {
     static var previews: some View {
         NotificationsActionView(
             nukeSubmissionCommentsAction: {},
+            nukeJournalCommentsAction: {},
             nukeJournalsAction: { }
         )
     }

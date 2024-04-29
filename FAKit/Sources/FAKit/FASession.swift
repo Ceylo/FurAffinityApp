@@ -216,6 +216,12 @@ open class FASession: Equatable {
         ])
     }
     
+    open func nukeAllJournalCommentNotifications() async -> NotificationPreviews {
+        await notificationPreviews(method: .POST, parameters: [
+            URLQueryItem(name: "nuke-journal-comments", value: "Nuke Journal Comments")
+        ])
+    }
+    
     open func nukeAllJournalNotifications() async -> NotificationPreviews {
         await notificationPreviews(method: .POST, parameters: [
             URLQueryItem(name: "nuke-journals", value: "Nuke Journals")

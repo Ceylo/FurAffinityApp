@@ -33,12 +33,9 @@ struct RemoteNotificationsView: View {
                     onDeleteSubmissionCommentNotifications: model.deleteSubmissionCommentNotifications,
                     onDeleteJournalCommentNotifications: model.deleteJournalCommentNotifications,
                     onDeleteJournalNotifications: model.deleteJournalNotifications,
-                    onNukeSubmissionComments: {
-                        await model.nukeAllSubmissionCommentNotifications()
-                    },
-                    onNukeJournals: {
-                        await model.nukeAllJournalNotifications()
-                    }
+                    onNukeSubmissionComments: model.nukeAllSubmissionCommentNotifications,
+                    onNukeJournalComments: model.nukeAllJournalCommentNotifications,
+                    onNukeJournals: model.nukeAllJournalNotifications
                 )
             } else {
                 ProgressView()

@@ -211,6 +211,12 @@ class Model: ObservableObject {
         }
     }
     
+    func nukeAllJournalCommentNotifications() async {
+        await fetchNotificationPreviews { session in
+            await session.nukeAllJournalCommentNotifications()
+        }
+    }
+    
     func nukeAllJournalNotifications() async {
         await fetchNotificationPreviews { session in
             await session.nukeAllJournalNotifications()

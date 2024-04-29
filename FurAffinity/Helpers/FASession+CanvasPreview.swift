@@ -74,6 +74,10 @@ class OfflineFASession: FASession {
         notificationPreviews
     }
     
+    override func nukeAllJournalCommentNotifications() async -> NotificationPreviews {
+        notificationPreviews
+    }
+    
     override func nukeAllJournalNotifications() async -> NotificationPreviews {
         notificationPreviews
     }

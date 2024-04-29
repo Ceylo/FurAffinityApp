@@ -60,6 +60,7 @@ struct NotificationsView: View {
     var onDeleteJournalNotifications: (_ items: [FANotificationPreview]) -> Void
     
     var onNukeSubmissionComments: () async -> Void
+    var onNukeJournalComments: () async -> Void
     var onNukeJournals: () async -> Void
     
     var noNotification: Bool {
@@ -93,6 +94,7 @@ struct NotificationsView: View {
         .overlay(alignment: .topTrailing) {
             NotificationsActionView(
                 nukeSubmissionCommentsAction: onNukeSubmissionComments,
+                nukeJournalCommentsAction: onNukeJournalComments,
                 nukeJournalsAction: onNukeJournals
             )
             .padding(.trailing, 20)
@@ -121,6 +123,7 @@ struct NotificationsView_Previews: PreviewProvider {
                 onDeleteJournalCommentNotifications: { _ in },
                 onDeleteJournalNotifications: { _ in },
                 onNukeSubmissionComments: {},
+                onNukeJournalComments: {},
                 onNukeJournals: {}
             )
             .environmentObject(Model.demo)
@@ -131,6 +134,7 @@ struct NotificationsView_Previews: PreviewProvider {
                 onDeleteJournalCommentNotifications: { _ in },
                 onDeleteJournalNotifications: { _ in },
                 onNukeSubmissionComments: {},
+                onNukeJournalComments: {},
                 onNukeJournals: {}
             )
             .environmentObject(Model.empty)
