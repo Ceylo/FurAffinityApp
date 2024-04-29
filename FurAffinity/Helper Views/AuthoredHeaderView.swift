@@ -20,7 +20,7 @@ struct AuthoredHeaderView: View {
         HStack(alignment: .top) {
             OptionalLink(destination: inAppUserUrl(for: username)) {
                 AvatarView(avatarUrl: avatarUrl)
-                    .frame(width: 42, height: 42)
+                    .frame(width: 38, height: 38)
             }
             
             VStack(alignment: .leading) {
