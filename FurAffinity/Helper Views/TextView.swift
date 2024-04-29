@@ -39,6 +39,7 @@ struct TextView: View {
                 .underlineStyle : NSNumber(value: NSUnderlineStyle.single.union(.patternDot).union(.byWord).rawValue),
                 .underlineColor : UIColor(white: 0.5, alpha: 0.8),
             ]
+            view.backgroundColor = nil
             return view
         }
         
