@@ -12,6 +12,7 @@ struct CommentView: View {
     var comment: FAComment
     @State private var htmlMessage: AttributedString?
     @Environment(\.colorScheme) var colorScheme
+    private let avatarSize = 42.0
     
     var overlayStyle: some ShapeStyle {
         switch colorScheme {
@@ -28,7 +29,7 @@ struct CommentView: View {
         htmlMessage.flatMap { text in
             TextView(text: text, initialHeight: 32)
                 .padding(.vertical, -5)
-                .padding(.horizontal, 0)
+                .padding(.horizontal, 1)
                 .zIndex(-1)
                 .overlay(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 10)
@@ -41,8 +42,7 @@ struct CommentView: View {
         HStack(alignment: .top) {
             OptionalLink(destination: inAppUserUrl(for: comment.author)) {
                 AvatarView(avatarUrl: comment.authorAvatarUrl)
-                    .frame(width: 32, height: 32)
-                    .padding(.top, 5)
+                    .frame(width: avatarSize, height: avatarSize)
             }
             
             VStack(alignment: .leading, spacing: 5) {
@@ -62,7 +62,7 @@ struct CommentView: View {
     func commentView(_ comment: FAHiddenComment) -> some View {
         HStack(alignment: .top) {
             AvatarView(avatarUrl: nil)
-                .frame(width: 32, height: 32)
+                .frame(width: avatarSize, height: avatarSize)
                 .padding(.top, 5)
             
             VStack(alignment: .leading, spacing: 0) {
