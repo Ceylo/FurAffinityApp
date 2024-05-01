@@ -28,7 +28,6 @@ struct CommentView: View {
     var textBubble: some View {
         htmlMessage.flatMap { text in
             TextView(text: text, initialHeight: 32)
-                .padding(.vertical, -5)
                 .padding(.horizontal, 1)
                 .zIndex(-1)
                 .overlay(alignment: .leading) {
@@ -68,7 +67,6 @@ struct CommentView: View {
             VStack(alignment: .leading, spacing: 0) {
                 htmlMessage.flatMap {
                     TextView(text: $0, initialHeight: 32)
-                        .padding(.vertical, -5)
                         .zIndex(-1)
                 }
             }

@@ -22,6 +22,7 @@ struct TextView: View {
             TextViewImpl(text: text, viewWidth: geometry.size.width, neededHeight: $height)
         }
         .frame(height: height)
+        .padding(.vertical, -5)
     }
     
     struct TextViewImpl: UIViewRepresentable {
