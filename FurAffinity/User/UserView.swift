@@ -70,6 +70,22 @@ struct UserView: View {
         .frame(height: bannerHeight)
     }
     
+    private struct WatchControlStyle: LabelStyle {
+        func makeBody(configuration: Configuration) -> some View {
+            HStack(spacing: 5) {
+                configuration.icon
+                configuration.title
+            }
+            .font(.callout)
+            .padding(5)
+            .background {
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke()
+            }
+            .foregroundStyle(Color.accentColor)
+        }
+    }
+    
     var watchControl: some View {
         Group {
             if let watchData = user.watchData {
@@ -79,14 +95,10 @@ struct UserView: View {
                         watchData.watching ? "Unwatch" : "Watch",
                         systemImage: watchData.watching ? "bookmark.fill": "bookmark"
                     )
-                    .padding(5)
-                    .background {
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke()
-                    }
-                    .tint(.accentColor)
-                    .font(.callout)
+                    .labelStyle(WatchControlStyle())
                 }
+                // 🫠 https://forums.developer.apple.com/forums/thread/747558
+                .buttonStyle(BorderlessButtonStyle())
             }
         }
     }
@@ -107,58 +119,54 @@ struct UserView: View {
     }
     
     var body: some View {
-        LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
-            banner
-            
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    AvatarView(avatarUrl: user.avatarUrl)
-                        .frame(width: 32, height: 32)
-                    Text(user.displayName)
-                        .font(.title)
-                    watchControl
+        List {
+            Group {
+                banner
+                
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        AvatarView(avatarUrl: user.avatarUrl)
+                            .frame(width: 32, height: 32)
+                        Text(user.displayName)
+                            .font(.title)
+                        watchControl
+                    }
+                    
+                    controls
+                        .padding(.horizontal, -15)
+                        .padding(.vertical, 5)
+                    
+                    if let description = description.wrappedValue {
+                        TextView(text: description, initialHeight: 300)
+                    }
                 }
+                .padding(.horizontal, 15)
+                .padding(.top, 5)
                 
-                controls
-                    .padding(.horizontal, -15)
-                    .padding(.vertical, 5)
-                
-                if let description = description.wrappedValue {
-                    TextView(text: description, initialHeight: 300)
+                Section {
+                    CommentsView(comments: user.shouts)
+                } header: {
+                    SectionHeader(text: "Shouts")
                 }
             }
-            .padding(.horizontal, 15)
-            .padding(.top, 5)
-            
-            Section {
-                CommentsView(comments: user.shouts)
-                    .padding()
-            } header: {
-                HStack {
-                    Text("Shouts")
-                        .font(.callout)
-                    Spacer()
-                }
-                .padding(10)
-                .background(.regularMaterial)
-            }
+            .listRowSeparator(.hidden)
+            .listRowInsets(.init())
         }
         .navigationTitle(user.displayName)
+        .listStyle(.plain)
     }
 }
 
 struct UserView_Previews: PreviewProvider {
     static var previews: some View {
-        ScrollView {
-            let description = AttributedString(
-                FAHTML: FAUser.demo.htmlDescription
-            )?.convertingLinksForInAppNavigation()
-            UserView(
-                user: FAUser.demo,
-                description: .constant(description),
-                toggleWatchAction: {}
-            )
-        }
-//        .preferredColorScheme(.dark)
+        let description = AttributedString(
+            FAHTML: FAUser.demo.htmlDescription
+        )?.convertingLinksForInAppNavigation()
+        UserView(
+            user: FAUser.demo,
+            description: .constant(description),
+            toggleWatchAction: {}
+        )
+        //        .preferredColorScheme(.dark)
     }
 }

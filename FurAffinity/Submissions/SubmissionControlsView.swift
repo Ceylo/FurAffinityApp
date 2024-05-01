@@ -60,6 +60,8 @@ struct SubmissionControlsView: View {
             
             Spacer()
         }
+        // 🫠 https://forums.developer.apple.com/forums/thread/747558
+        .buttonStyle(BorderlessButtonStyle())
     }
 }
 

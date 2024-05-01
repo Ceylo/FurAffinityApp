@@ -21,19 +21,17 @@ struct RemoteJournalView: View {
     
     var body: some View {
         RemoteView(url: url, contentsLoader: load) { journalData, updateHandler in
-            ScrollView {
-                JournalView(journal: journalData,
-                            replyAction: { parentCid, text in
-                    Task {
-                        let contents = try? await model
-                            .postComment(on: journalData.journal,
-                                         replytoCid: parentCid,
-                                         contents: text)
-                            .flatMap { JournalViewModel($0) }
-                        updateHandler.update(with: contents)
-                    }
-                })
-            }
+            JournalView(journal: journalData,
+                        replyAction: { parentCid, text in
+                Task {
+                    let contents = try? await model
+                        .postComment(on: journalData.journal,
+                                     replytoCid: parentCid,
+                                     contents: text)
+                        .flatMap { JournalViewModel($0) }
+                    updateHandler.update(with: contents)
+                }
+            })
         }
     }
 }

@@ -58,9 +58,7 @@ struct RemoteSubmissionView: View {
     var body: some View {
         Group {
             if let submission {
-                ScrollView {
-                    loadingSucceededView(submission)
-                }
+                loadingSucceededView(submission)
             } else if submissionLoadingFailed {
                 ScrollView {
                     LoadingFailedView(url: url)
@@ -102,7 +100,7 @@ struct RemoteSubmissionView: View {
 struct RemoteSubmissionView_Previews: PreviewProvider {
     static var previews: some View {
         RemoteSubmissionView(url: FASubmissionPreview.demo.url)
-            .preferredColorScheme(.dark)
+//            .preferredColorScheme(.dark)
             .environmentObject(Model.demo)
     }
 }

@@ -33,55 +33,62 @@ struct SubmissionView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            header
-            SubmissionMainImage(
-                widthOnHeightRatio: submission.widthOnHeightRatio,
-                fullResolutionImageUrl: submission.fullResolutionImageUrl,
-                fullResolutionCGImage: $fullResolutionCGImage
-            )
-            
-            SubmissionControlsView(
-                submissionUrl: submission.url,
-                fullResolutionImage: fullResolutionCGImage,
-                isFavorite: submission.isFavorite,
-                favoriteAction: favoriteAction,
-                replyAction: {
-                    replySession = .init(parentCid: nil, among: [])
-                }
-            )
-            
-            if let description {
-                TextView(text: description, initialHeight: 300)
-            }
-            
-            if !submission.comments.isEmpty {
-                VStack {
-                    Text("Comments")
-                        .font(.headline)
-                    CommentsView(
-                        comments: submission.comments,
-                        replyAction: { cid in
-                            replySession = .init(parentCid: cid, among: submission.comments)
+        List {
+            Group {
+                Group {
+                    header
+                    SubmissionMainImage(
+                        widthOnHeightRatio: submission.widthOnHeightRatio,
+                        fullResolutionImageUrl: submission.fullResolutionImageUrl,
+                        fullResolutionCGImage: $fullResolutionCGImage
+                    )
+                    
+                    SubmissionControlsView(
+                        submissionUrl: submission.url,
+                        fullResolutionImage: fullResolutionCGImage,
+                        isFavorite: submission.isFavorite,
+                        favoriteAction: favoriteAction,
+                        replyAction: {
+                            replySession = .init(parentCid: nil, among: [])
                         }
                     )
+                    .foregroundStyle(Color.accentColor)
+                    
+                    if let description {
+                        TextView(text: description, initialHeight: 300)
+                    }
+                }
+                .padding(.horizontal, 10)
+                
+                if !submission.comments.isEmpty {
+                    Section {
+                        CommentsView(
+                            comments: submission.comments,
+                            replyAction: { cid in
+                                replySession = .init(parentCid: cid, among: submission.comments)
+                            }
+                        )
+                        
+                    } header: {
+                        SectionHeader(text: "Comments")
+                    }
                 }
             }
+            .listRowSeparator(.hidden)
+            .listRowInsets(.init(top: 5, leading: 0, bottom: 5, trailing: 0))
         }
-        .padding(10)
         .commentSheet(on: $replySession, replyAction)
         .navigationTitle(submission.title)
+        .listStyle(.plain)
     }
 }
 
 struct SubmissionView_Previews: PreviewProvider {
     static var previews: some View {
-        ScrollView {
-            SubmissionView(
-                submission: FASubmission.demo,
-                favoriteAction: {},
-                replyAction: { parentCid,text in }
-            )
-        }
+        SubmissionView(
+            submission: FASubmission.demo,
+            favoriteAction: {},
+            replyAction: { parentCid,text in }
+        )
     }
 }

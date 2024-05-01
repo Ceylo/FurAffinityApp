@@ -16,46 +16,53 @@ struct CommentsView: View {
     var comments: [FAComment]
     var replyAction: ((_ cid: Int) -> Void)?
     
-    func commentViews(for comments: [FAComment], indent: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            ForEach(comments) { comment in
-                if let replyAction {
-                    switch comment {
-                    case .hidden:
-                        CommentView(comment: comment)
-                    case .visible:
-                        SwipeableCommentView(comment: comment) { cid in
-                            replyAction(cid)
-                        }
+    func visitComment(_ comment: FAComment, indentation: Int) -> some View {
+        Group {
+            if let replyAction, case .visible = comment {
+                CommentView(comment: comment)
+                    .swipeActions(edge: .trailing) {
+                        Button(action: { replyAction(comment.cid) },
+                               label: {
+                            Label("Reply", systemImage: "arrowshape.turn.up.left")
+                        })
+                        .tint(.orange)
                     }
-                } else {
-                    CommentView(comment: comment)
-                }
-                AnyView(commentViews(for: comment.answers, indent: true))
+            } else {
+                CommentView(comment: comment)
             }
         }
-        .padding(.leading, indent ? 10 : 0)
+        .listRowSeparator(.hidden)
+        .listRowInsets(.init(
+            top: 5,
+            leading: Double(10 * indentation),
+            bottom: 5,
+            trailing: 0
+        ))
+        .padding(.horizontal, 10)
+    }
+    
+    func visitComments(_ comments: [FAComment], indentation: Int) -> some View {
+        ForEach(comments) { comment in
+            visitComment(comment, indentation: indentation)
+            AnyView(visitComments(comment.answers, indentation: indentation + 1))
+        }
     }
     
     var body: some View {
-        VStack(alignment: .leading) {
-            if !comments.isEmpty {
-                commentViews(for: comments, indent: false)
-            }
-        }
+        visitComments(comments, indentation: 0)
     }
 }
 
 struct CommentsView_Previews: PreviewProvider {
     static var previews: some View {
-        ScrollView {
+        List {
             CommentsView(
-                comments: FAComment.demoHidden,
+                comments: FAComment.demo,
                 replyAction: { cid in
                     print("Reply to cid \(cid)")
                 }
             )
-            .padding()
         }
+        .listStyle(.plain)
     }
 }
