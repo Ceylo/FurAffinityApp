@@ -17,6 +17,8 @@ struct OptionalLink<Wrapped>: View where Wrapped: View {
             Link(destination: destination) {
                 subview()
             }
+            // 🫠 https://forums.developer.apple.com/forums/thread/747558
+            .buttonStyle(BorderlessButtonStyle())
         } else {
             subview()
         }

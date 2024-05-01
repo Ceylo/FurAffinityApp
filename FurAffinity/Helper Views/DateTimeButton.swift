@@ -18,6 +18,8 @@ struct DateTimeButton: View {
         }
         .foregroundStyle(.secondary)
         .font(.subheadline)
+        // 🫠 https://forums.developer.apple.com/forums/thread/747558
+        .buttonStyle(BorderlessButtonStyle())
     }
 }
 
