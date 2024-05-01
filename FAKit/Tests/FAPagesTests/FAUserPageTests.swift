@@ -98,7 +98,8 @@ class FAUserPageTests: XCTestCase {
             avatarUrl: URL(string: "https://a.furaffinity.net/1616615925/terriniss.gif")!,
             bannerUrl: URL(string: "https://www.furaffinity.net/themes/beta/img/banners/logo/fa-banner-summer.jpg")!,
             htmlDescription: htmlDescription,
-            shouts: shouts
+            shouts: shouts,
+            watchData: .init(watchUrl: URL(string: "https://www.furaffinity.net/unwatch/terriniss/?key=ddd2287c2443f340915dcaf5eb08a3e3f360165b")!)
         )
         XCTAssertEqual(page, expected)
     }

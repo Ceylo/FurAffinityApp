@@ -266,6 +266,16 @@ open class FASession: Equatable {
         return FAUser(page)
     }
     
+    open func toggleWatch(for user: FAUser) async -> FAUser? {
+        guard let watchData = user.watchData else {
+            logger.error("Tried to toggle watch on user \(user.name) without watch data")
+            return user
+        }
+        
+        _ = await dataSource.httpData(from: watchData.watchUrl, cookies: cookies)
+        return await self.user(for: user.name)
+    }
+    
     private let avatarUrlRequestsQueue = DispatchQueue(label: "FASession.AvatarRequests")
     private var avatarUrlTasks = [String: Task<URL?, Swift.Error>]()
     private let avatarUrlsCache: Storage<String, URL>

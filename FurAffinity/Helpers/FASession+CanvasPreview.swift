@@ -28,6 +28,10 @@ class OfflineFASession: FASession {
         FAUser.demo
     }
     
+    override func toggleWatch(for user: FAUser) async -> FAUser? {
+        user
+    }
+    
     override func submissionPreviews() async -> [FASubmissionPreview] { submissionPreviews }
     
     override func submission(for url: URL) async -> FASubmission? {
@@ -291,6 +295,7 @@ extension FAUser {
                 htmlMessage: "An absolutely amazing artist",
                 answers: []
             ))
-        ]
+        ],
+        watchData: WatchData(watchUrl: URL(string: "https://www.furaffinity.net/watch/furrycount/?key=c11e718bd61ecbfad8750b76135052f90ea84026")!)
     )
 }

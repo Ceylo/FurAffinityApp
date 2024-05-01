@@ -26,9 +26,18 @@ struct RemoteUserView: View {
     }
     
     var body: some View {
-        RemoteView(url: url, contentsLoader: loadUser) { user, _ in
+        RemoteView(url: url, contentsLoader: loadUser) { user, updateHandler in
             ScrollView {
-                UserView(user: user, description: $description)
+                UserView(
+                    user: user,
+                    description: $description,
+                    toggleWatchAction: {
+                        Task {
+                            let updatedUser = await model.session?.toggleWatch(for: user)
+                            updateHandler.update(with: updatedUser)
+                        }
+                    }
+                )
             }
         }
     }

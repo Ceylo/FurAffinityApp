@@ -15,6 +15,19 @@ public struct FAUserPage: Equatable {
     public let bannerUrl: URL
     public let htmlDescription: String
     public let shouts: [FAPageComment]
+    
+    public struct WatchData: Equatable {
+        public let watchUrl: URL
+        public var watching: Bool {
+            watchUrl.path().starts(with: "/unwatch/")
+        }
+        
+        public init(watchUrl: URL) {
+            self.watchUrl = watchUrl
+        }
+    }
+    /// Unavailable when parsing your own user page
+    public let watchData: WatchData?
 }
 
 extension FAUserPage {
@@ -60,6 +73,14 @@ extension FAUserPage {
             let shoutsQuery = "div#site-content div#page-userpage section.userpage-right-column div.userpage-section-right div.comment_container"
             let shoutsNodes = try mainWindowNode.select(shoutsQuery)
             self.shouts = try shoutsNodes.compactMap { try FAPageComment($0, type: .shout) }
+            
+            if let watchButtonNode = try navHeaderNode.select("userpage-nav-interface-buttons a.button").first() {
+                let watchLink = try watchButtonNode.attr("href")
+                let watchUrl = try URL(string: FAURLs.homeUrl.absoluteString + watchLink).unwrap()
+                self.watchData = WatchData(watchUrl: watchUrl)
+            } else {
+                self.watchData = nil
+            }
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil

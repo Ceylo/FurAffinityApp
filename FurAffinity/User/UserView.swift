@@ -44,6 +44,7 @@ extension Control {
 struct UserView: View {
     var user: FAUser
     var description: Binding<AttributedString?>
+    var toggleWatchAction: () -> Void
     
     private let bannerHeight = 100.0
     
@@ -67,6 +68,27 @@ struct UserView: View {
             }
         }
         .frame(height: bannerHeight)
+    }
+    
+    var watchControl: some View {
+        Group {
+            if let watchData = user.watchData {
+                Spacer()
+                Button(action: toggleWatchAction) {
+                    Label(
+                        watchData.watching ? "Unwatch" : "Watch",
+                        systemImage: watchData.watching ? "bookmark.fill": "bookmark"
+                    )
+                    .padding(5)
+                    .background {
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke()
+                    }
+                    .tint(.accentColor)
+                    .font(.callout)
+                }
+            }
+        }
     }
     
     var controls: some View {
@@ -94,6 +116,7 @@ struct UserView: View {
                         .frame(width: 32, height: 32)
                     Text(user.displayName)
                         .font(.title)
+                    watchControl
                 }
                 
                 controls
@@ -130,8 +153,12 @@ struct UserView_Previews: PreviewProvider {
             let description = AttributedString(
                 FAHTML: FAUser.demo.htmlDescription
             )?.convertingLinksForInAppNavigation()
-            UserView(user: FAUser.demo,
-                     description: .constant(description))
+            UserView(
+                user: FAUser.demo,
+                description: .constant(description),
+                toggleWatchAction: {}
+            )
         }
+//        .preferredColorScheme(.dark)
     }
 }
