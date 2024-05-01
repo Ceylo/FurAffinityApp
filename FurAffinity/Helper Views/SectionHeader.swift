@@ -17,7 +17,6 @@ struct SectionHeader: View {
             Spacer()
         }
         .padding(10)
-        .background(.regularMaterial)
     }
 }
 
