@@ -29,8 +29,7 @@ struct CommentView: View {
         htmlMessage.flatMap { text in
             TextView(text: text, initialHeight: 32)
                 .padding(.horizontal, 1)
-                .zIndex(-1)
-                .overlay(alignment: .leading) {
+                .background {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(overlayStyle)
                 }
