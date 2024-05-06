@@ -19,7 +19,7 @@ public struct FASubmission: Equatable {
     public let title: String
     public let datetime: String
     public let naturalDatetime: String
-    public let htmlDescription: String
+    public let description: AttributedString
     public let isFavorite: Bool
     public let favoriteUrl: URL
     public let comments: [FAComment]
@@ -31,7 +31,7 @@ public struct FASubmission: Equatable {
                 title: String,
                 datetime: String,
                 naturalDatetime: String,
-                htmlDescription: String,
+                description: AttributedString,
                 isFavorite: Bool, favoriteUrl: URL,
                 comments: [FAComment]) {
         self.url = url
@@ -44,7 +44,7 @@ public struct FASubmission: Equatable {
         self.title = title
         self.datetime = datetime
         self.naturalDatetime = naturalDatetime
-        self.htmlDescription = htmlDescription.selfContainedFAHtmlSubmission
+        self.description = description
         self.isFavorite = isFavorite
         self.favoriteUrl = favoriteUrl
         self.comments = comments
@@ -64,7 +64,7 @@ extension FASubmission {
             title: page.title,
             datetime: page.datetime,
             naturalDatetime: page.naturalDatetime,
-            htmlDescription: page.htmlDescription,
+            description: AttributedString(FAHTML: page.htmlDescription.selfContainedFAHtmlSubmission),
             isFavorite: page.isFavorite,
             favoriteUrl: page.favoriteUrl,
             comments: FAComment.buildCommentsTree(page.comments)

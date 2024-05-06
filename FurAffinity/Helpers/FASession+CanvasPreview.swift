@@ -234,7 +234,7 @@ extension FASubmission {
             title: "Spells and magic",
             datetime: "Oct 16, 2021 04:15 PM",
             naturalDatetime: "a year ago",
-            htmlDescription: htmlDescription,
+            description: try! AttributedString(FAHTML: htmlDescription.selfContainedFAHtmlSubmission),
             isFavorite: false,
             favoriteUrl: URL(string: "https://www.furaffinity.net/fav/44188741/?key=00f2f5f4c1c7fbfac02147b73d670cac6423ab85")!,
             comments: FAComment.demo)

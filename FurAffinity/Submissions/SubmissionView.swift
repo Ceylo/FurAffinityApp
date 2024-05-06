@@ -11,7 +11,6 @@ import FAKit
 struct SubmissionView: View {
     var submission: FASubmission
     var avatarUrl: URL?
-    var description: AttributedString?
     var favoriteAction: () -> Void
     var replyAction: (_ parentCid: Int?, _ text: String) -> Void
     
@@ -54,9 +53,10 @@ struct SubmissionView: View {
                     )
                     .foregroundStyle(Color.accentColor)
                     
-                    if let description {
-                        HTMLView(text: description, initialHeight: 300)
-                    }
+                    HTMLView(
+                        text: submission.description.convertingLinksForInAppNavigation(),
+                        initialHeight: 300
+                    )
                 }
                 .padding(.horizontal, 10)
                 

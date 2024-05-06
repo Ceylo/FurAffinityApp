@@ -15,7 +15,6 @@ struct RemoteSubmissionView: View {
     @State private var avatarUrl: URL?
     @State private var submission: FASubmission?
     @State private var submissionLoadingFailed = false
-    @State private var description: AttributedString?
     @State private var activity: NSUserActivity?
     
     private func loadSubmission(forceReload: Bool) async {
@@ -26,9 +25,6 @@ struct RemoteSubmissionView: View {
         submission = await model.session?.submission(for: url)
         if let submission {
             avatarUrl = await model.session?.avatarUrl(for: submission.author)
-            
-            description = try? AttributedString(FAHTML: submission.htmlDescription)
-                .convertingLinksForInAppNavigation()
             submissionLoadingFailed = false
         } else {
             submissionLoadingFailed = true
@@ -39,7 +35,6 @@ struct RemoteSubmissionView: View {
         SubmissionView(
             submission: submission,
             avatarUrl: avatarUrl,
-            description: description,
             favoriteAction: {
                 Task {
                     self.submission = try await model.toggleFavorite(for: submission)
