@@ -44,7 +44,7 @@ struct JournalView: View {
                     Divider()
                         .padding(.vertical, 5)
                     
-                    TextView(text: journal.attributedDescription, initialHeight: 300)
+                    HTMLView(text: journal.attributedDescription, initialHeight: 300)
                     
                     JournalControlsView(
                         journalUrl: faJournal.url,

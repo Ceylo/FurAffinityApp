@@ -27,7 +27,7 @@ struct CommentView: View {
     
     var textBubble: some View {
         htmlMessage.flatMap { text in
-            TextView(text: text, initialHeight: 32)
+            HTMLView(text: text, initialHeight: 32)
                 .padding(.horizontal, 1)
                 .background {
                     RoundedRectangle(cornerRadius: 10)
@@ -65,7 +65,7 @@ struct CommentView: View {
             
             VStack(alignment: .leading, spacing: 0) {
                 htmlMessage.flatMap {
-                    TextView(text: $0, initialHeight: 32)
+                    HTMLView(text: $0, initialHeight: 32)
                         .zIndex(-1)
                 }
             }

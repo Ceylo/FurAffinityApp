@@ -55,7 +55,7 @@ struct SubmissionView: View {
                     .foregroundStyle(Color.accentColor)
                     
                     if let description {
-                        TextView(text: description, initialHeight: 300)
+                        HTMLView(text: description, initialHeight: 300)
                     }
                 }
                 .padding(.horizontal, 10)

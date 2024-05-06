@@ -55,7 +55,7 @@ struct NoteView: View {
                         .padding(.vertical, 5)
                     
                     if let message = message {
-                        TextView(text: message)
+                        HTMLView(text: message)
                         // for text view inset
                             .padding(.horizontal, -5)
                     }

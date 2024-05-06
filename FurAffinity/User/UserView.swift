@@ -137,7 +137,7 @@ struct UserView: View {
                         .padding(.vertical, 5)
                     
                     if let description = description.wrappedValue {
-                        TextView(text: description, initialHeight: 300)
+                        HTMLView(text: description, initialHeight: 300)
                     }
                 }
                 .padding(.horizontal, 15)

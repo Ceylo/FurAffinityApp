@@ -1,5 +1,5 @@
 //
-//  TextView.swift
+//  HTMLView.swift
 //  FurAffinity
 //
 //  Created by Ceylo on 02/01/2022.
@@ -7,7 +7,14 @@
 
 import SwiftUI
 
-struct TextView: View {
+// Rendering HTML is a pain…
+// - WKWebView embeds a UIScrollView and cannot size itself based on its contents
+// - Text(attributedString) is unable to render some CSS/image attachments
+// - UITextView autosizing is unable to wrap contents and will
+// clip some contents if it cannot fit its ideal size.
+//
+// so we use UITextView with manual sizing, which unfortunately has to be asynchronous
+struct HTMLView: View {
     var text: AttributedString
     
     @State private var height: CGFloat
@@ -22,7 +29,6 @@ struct TextView: View {
             TextViewImpl(text: text, viewWidth: geometry.size.width, neededHeight: $height)
         }
         .frame(height: height)
-        .padding(.vertical, -5)
     }
     
     struct TextViewImpl: UIViewRepresentable {
@@ -41,18 +47,20 @@ struct TextView: View {
                 .underlineColor : UIColor(white: 0.5, alpha: 0.8),
             ]
             view.backgroundColor = nil
-            return view
-        }
-        
-        func updateUIView(_ uiView: UITextView, context: Context) {
+            view.textContainerInset = .init(top: 3, left: 3, bottom: 3, right: 0)
+            
             let bounds = CGSize(width: viewWidth,
                                 height: .greatestFiniteMagnitude)
-            let fittingSize = uiView.systemLayoutSizeFitting(bounds)
+            let fittingSize = view.systemLayoutSizeFitting(bounds)
             // Can't modify view during view update, hence async
             Task {
                 neededHeight = fittingSize.height
             }
+            
+            return view
         }
+        
+        func updateUIView(_ uiView: UITextView, context: Context) {}
     }
 }
 
@@ -85,7 +93,7 @@ struct TextView_Previews: PreviewProvider {
     
     static var previews: some View {
         ScrollView {
-            TextView(text: attributedString)
+            HTMLView(text: attributedString)
                 .border(.yellow)
         }
         .border(.blue)
