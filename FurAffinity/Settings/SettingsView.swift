@@ -46,9 +46,7 @@ struct SettingsView: View {
                             }
                         }
                         if let fileUrl = try? generateLogFile() {
-                            Task { @MainActor in
-                                share([fileUrl])
-                            }
+                            await share([fileUrl])
                         }
                     }
                 } label: {

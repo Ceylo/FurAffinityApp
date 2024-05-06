@@ -7,6 +7,7 @@
 
 import UIKit
 
+@MainActor
 func share(_ items: [Any]) {
     let activityVC = UIActivityViewController(activityItems: items,
                                               applicationActivities: nil)
