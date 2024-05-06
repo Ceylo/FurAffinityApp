@@ -22,30 +22,30 @@ public struct FAVisibleComment: Equatable {
     public let authorAvatarUrl: URL
     public let datetime: String
     public let naturalDatetime: String
-    public let htmlMessage: String
+    public let message: AttributedString
     public let answers: [FAComment]
     
     public init(cid: Int, author: String, displayAuthor: String, authorAvatarUrl: URL, datetime: String,
-                naturalDatetime: String, htmlMessage: String, answers: [FAComment]) {
+                naturalDatetime: String, message: AttributedString, answers: [FAComment]) {
         self.cid = cid
         self.author = author
         self.displayAuthor = displayAuthor
         self.authorAvatarUrl = authorAvatarUrl
         self.datetime = datetime
         self.naturalDatetime = naturalDatetime
-        self.htmlMessage = htmlMessage
+        self.message = message
         self.answers = answers
     }
 }
 
 public struct FAHiddenComment: Equatable {
     public let cid: Int
-    public let htmlMessage: String
+    public let message: AttributedString
     public let answers: [FAComment]
     
-    public init(cid: Int, htmlMessage: String, answers: [FAComment]) {
+    public init(cid: Int, message: AttributedString, answers: [FAComment]) {
         self.cid = cid
-        self.htmlMessage = htmlMessage
+        self.message = message
         self.answers = answers
     }
 }
@@ -60,12 +60,12 @@ extension FAComment {
         }
     }
     
-    public var htmlMessage: String {
+    public var message: AttributedString {
         switch self {
         case let .visible(comment):
-            comment.htmlMessage
+            comment.message
         case let .hidden(comment):
-            comment.htmlMessage
+            comment.message
         }
     }
     
@@ -80,33 +80,33 @@ extension FAComment {
 }
 
 extension FAComment {
-    init(_ comment: FAVisiblePageComment) {
-        self = .visible(.init(
+    init(_ comment: FAVisiblePageComment) throws {
+        self = try .visible(.init(
             cid: comment.cid,
             author: comment.author,
             displayAuthor: comment.displayAuthor,
             authorAvatarUrl: comment.authorAvatarUrl,
             datetime: comment.datetime,
             naturalDatetime: comment.naturalDatetime,
-            htmlMessage: comment.htmlMessage.selfContainedFAHtmlComment,
+            message: AttributedString(FAHTML: comment.htmlMessage.selfContainedFAHtmlComment),
             answers: []
         ))
     }
     
-    init(_ comment: FAHiddenPageComment) {
-        self = .hidden(.init(
+    init(_ comment: FAHiddenPageComment) throws {
+        self = try .hidden(.init(
             cid: comment.cid,
-            htmlMessage: comment.htmlMessage.selfContainedFAHtmlComment,
+            message: AttributedString(FAHTML: comment.htmlMessage.selfContainedFAHtmlComment),
             answers: []
         ))
     }
     
-    init(_ comment: FAPageComment) {
+    init(_ comment: FAPageComment) throws {
         switch comment {
         case let .visible(comment):
-            self.init(comment)
+            try self.init(comment)
         case let .hidden(comment):
-            self.init(comment)
+            try self.init(comment)
         }
     }
     
@@ -120,13 +120,13 @@ extension FAComment {
                 authorAvatarUrl: comment.authorAvatarUrl,
                 datetime: comment.datetime,
                 naturalDatetime: comment.naturalDatetime,
-                htmlMessage: comment.htmlMessage,
+                message: comment.message,
                 answers: answers
             ))
         case let .hidden(comment):
             return .hidden(.init(
                 cid: comment.cid,
-                htmlMessage: comment.htmlMessage,
+                message: comment.message,
                 answers: answers
             ))
         }
@@ -134,21 +134,21 @@ extension FAComment {
     
     static func childrenOf(comment: FAPageComment,
                            in graph: UnweightedGraph<Int>,
-                           index: [Int: FAPageComment]) -> [FAComment] {
+                           index: [Int: FAPageComment]) throws -> [FAComment] {
         let children = graph.edgesForVertex(comment.cid)!
             .filter { $0.u == graph.indexOfVertex(comment.cid)! }
             .map { graph.vertexAtIndex($0.v) }
         
-        return children
-            .map { (FAComment(index[$0]!), index[$0]!) }
+        return try children
+            .map { (try FAComment(index[$0]!), index[$0]!) }
             .map { comment, rawComment in
                 comment.withAnswers(
-                    childrenOf(comment: rawComment, in: graph, index: index)
+                    try childrenOf(comment: rawComment, in: graph, index: index)
                 )
             }
     }
     
-    static func buildCommentsTree(_ comments: [FAPageComment]) -> [FAComment] {
+    static func buildCommentsTree(_ comments: [FAPageComment]) throws -> [FAComment] {
         let commentsIndex = Dictionary(uniqueKeysWithValues: comments
             .map { ($0.cid, $0) })
         let graph = UnweightedGraph<Int>()
@@ -174,8 +174,8 @@ extension FAComment {
             }
         }
         
-        return rootCommentIDs.map { cid in
-            FAComment(commentsIndex[cid]!)
+        return try rootCommentIDs.map { cid in
+            try FAComment(commentsIndex[cid]!)
                 .withAnswers(childrenOf(comment: commentsIndex[cid]!,
                                         in: graph, index: commentsIndex))
         }

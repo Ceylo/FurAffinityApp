@@ -52,20 +52,22 @@ public struct FASubmission: Equatable {
 }
 
 extension FASubmission {
-    public init(_ page: FASubmissionPage, url: URL) {
-        self.init(url: url,
-                  previewImageUrl: page.previewImageUrl,
-                  fullResolutionImageUrl: page.fullResolutionImageUrl,
-                  widthOnHeightRatio: page.widthOnHeightRatio,
-                  author: page.author,
-                  displayAuthor: page.displayAuthor,
-                  authorAvatarUrl: page.authorAvatarUrl,
-                  title: page.title,
-                  datetime: page.datetime,
-                  naturalDatetime: page.naturalDatetime,
-                  htmlDescription: page.htmlDescription,
-                  isFavorite: page.isFavorite,
-                  favoriteUrl: page.favoriteUrl,
-                  comments: FAComment.buildCommentsTree(page.comments))
+    public init(_ page: FASubmissionPage, url: URL) throws {
+        try self.init(
+            url: url,
+            previewImageUrl: page.previewImageUrl,
+            fullResolutionImageUrl: page.fullResolutionImageUrl,
+            widthOnHeightRatio: page.widthOnHeightRatio,
+            author: page.author,
+            displayAuthor: page.displayAuthor,
+            authorAvatarUrl: page.authorAvatarUrl,
+            title: page.title,
+            datetime: page.datetime,
+            naturalDatetime: page.naturalDatetime,
+            htmlDescription: page.htmlDescription,
+            isFavorite: page.isFavorite,
+            favoriteUrl: page.favoriteUrl,
+            comments: FAComment.buildCommentsTree(page.comments)
+        )
     }
 }

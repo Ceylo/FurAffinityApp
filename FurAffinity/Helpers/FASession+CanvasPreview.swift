@@ -187,32 +187,32 @@ extension FASubmissionPreview {
 
 extension FAComment {
     private static let terrinissAvatarUrl = URL(string: "https://a.furaffinity.net/1616615925/terriniss.gif")!
-    static let demo: [FAComment] = [
+    static let demo: [FAComment] = try! [
         .visible(.init(
             cid: 166652793, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "2 months ago",
-            htmlMessage: "BID HERE \n<br> Moon".selfContainedFAHtmlComment, answers: [
+            message: .init(FAHTML: "BID HERE \n<br> Moon".selfContainedFAHtmlComment), answers: [
                 .visible(.init(
                     cid: 166653891, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 11, 2022 10:58 PM", naturalDatetime: "2 months ago",
-                    htmlMessage: "SakuraSlowly (DA) - SB".selfContainedFAHtmlComment, answers: [
+                    message: .init(FAHTML: "SakuraSlowly (DA) - SB".selfContainedFAHtmlComment), answers: [
                         .visible(.init(
                             cid: 166658565, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 12, 2022 05:16 AM", naturalDatetime: "2 months ago",
-                            htmlMessage: "DeathPanda21 (da) - 55$".selfContainedFAHtmlComment, answers: [])
+                            message: .init(FAHTML: "DeathPanda21 (da) - 55$".selfContainedFAHtmlComment), answers: [])
                         )]))
             ])),
         .visible(.init(
             cid: 166653340, author: "rurudaspippen", displayAuthor: "RuruDasPippen", authorAvatarUrl: URL(string: "https://a.furaffinity.net/1643948243/rurudaspippen.gif")!,
-              datetime: "Aug 11, 2022 10:23 PM", naturalDatetime: "2 months ago", htmlMessage: "Look at the babies!".selfContainedFAHtmlComment, answers: []
+            datetime: "Aug 11, 2022 10:23 PM", naturalDatetime: "2 months ago", message: .init(FAHTML: "Look at the babies!".selfContainedFAHtmlComment), answers: []
         ))
     ]
     
-    static let demoHidden: [FAComment] = [
+    static let demoHidden: [FAComment] = try! [
         .hidden(.init(
             cid: 171145030,
-            htmlMessage: "[deleted]".selfContainedFAHtmlComment,
+            message: .init(FAHTML: "[deleted]".selfContainedFAHtmlComment),
             answers: [
                 .visible(.init(
                     cid: 166653340, author: "rurudaspippen", displayAuthor: "RuruDasPippen", authorAvatarUrl: URL(string: "https://a.furaffinity.net/1643948243/rurudaspippen.gif")!,
-                      datetime: "Aug 11, 2022 10:23 PM", naturalDatetime: "2 months ago", htmlMessage: "Look at the babies!".selfContainedFAHtmlComment, answers: []
+                      datetime: "Aug 11, 2022 10:23 PM", naturalDatetime: "2 months ago", message: .init(FAHTML: "Look at the babies!".selfContainedFAHtmlComment), answers: []
                 ))
             ]
         ))
@@ -274,7 +274,7 @@ extension FAUser {
 <code class=\"bbcode bbcode_center\"> <a href=\"/user/vampireknightlampleftplz\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221128/vampireknightlampleftplz.gif\" align=\"middle\" title=\"vampireknightlampleftplz\" alt=\"vampireknightlampleftplz\"></a> <a href=\"/user/hawthornbloodmoon\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221128/hawthornbloodmoon.gif\" align=\"middle\" title=\"hawthornbloodmoon\" alt=\"hawthornbloodmoon\"></a> <a href=\"/user/vampireknightlamprightplz\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221128/vampireknightlamprightplz.gif\" align=\"middle\" title=\"vampireknightlamprightplz\" alt=\"vampireknightlamprightplz\"></a> <br> <br> <h4 class=\"bbcode bbcode_h4\"> ∼ 👣 𝙃𝙖𝙫𝙚 𝙖 𝙣𝙞𝙘𝙚 𝙙𝙖𝙮, 𝙩𝙧𝙖𝙫𝙚𝙡𝙚𝙧 <br> 𝘾𝙤𝙢𝙚 𝙘𝙡𝙤𝙨𝙚𝙧 𝙖𝙣𝙙 𝙄\'𝙡𝙡 𝙨𝙝𝙤𝙬 𝙮𝙤𝙪 𝙞𝙣𝙘𝙧𝙚𝙙𝙞𝙗𝙡𝙚 𝙗𝙚𝙖𝙨𝙩𝙨 🐾 ∼ </h4><br> \n <hr class=\"bbcode bbcode_hr\"> <br> My name is <strong class=\"bbcode bbcode_b\">Terriniss.</strong> <br> Briefly - <strong class=\"bbcode bbcode_b\">Tira.</strong> <br> <br> <span class=\"bbcode\" style=\"color: #C92A2A;\">▸▹</span> 26 y.o. <span class=\"bbcode\" style=\"color: #000000;\">●</span> RU/ENG <span class=\"bbcode\" style=\"color: #000000;\">●</span> SFW <span class=\"bbcode\" style=\"color: #000000;\">●</span> Digital artist <span class=\"bbcode\" style=\"color: #C92A2A;\">◂◃</span><br> <span class=\"bbcode\" style=\"color: #C92A2A;\">▸▹</span> I\'m glad to see you here! <span class=\"bbcode\" style=\"color: #C92A2A;\">◂◃</span><br> <br> <sub class=\"bbcode bbcode_sub\"> 🌑 My main job here is creating fantasy creatures.<br> Mystical and dark themes are my favorite, but sometimes, on the contrary, I want to create something light.<br> I\'m trying to make the creature as alive as possible emotionally, <br> I want you to see his emotions when you look into his face, <br> or at the expressions of his body. And so that when I looked into his face, I could see them too.<br> I\'m glad when I can do it. And I\'m glad if you notice it. 🌕</sub> <br> <br> <span class=\"bbcode\" style=\"color: #C92A2A;\">☘</span> Thank you for your attention to my work. This is really important to me! <span class=\"bbcode\" style=\"color: #C92A2A;\">☘</span><br> <br> \n <hr class=\"bbcode bbcode_hr\"> <br> <u class=\"bbcode bbcode_u\"> My second account, for YCHes </u> <br> <a href=\"/user/terriniss-yches\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221128/terriniss-yches.gif\" align=\"middle\" title=\"terriniss-yches\" alt=\"terriniss-yches\"></a><br> <br> <u class=\"bbcode bbcode_u\"> My dear friends </u> <br> <a href=\"/user/obsidianna\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221128/obsidianna.gif\" align=\"middle\" title=\"obsidianna\" alt=\"obsidianna\"></a> <a href=\"/user/jackdeath11\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221128/jackdeath11.gif\" align=\"middle\" title=\"jackdeath11\" alt=\"jackdeath11\"></a> <a href=\"/user/draynd\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221128/draynd.gif\" align=\"middle\" title=\"draynd\" alt=\"draynd\"></a> <a href=\"/user/sapfirachib\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221128/sapfirachib.gif\" align=\"middle\" title=\"sapfirachib\" alt=\"sapfirachib\"></a> <a href=\"/user/noxor\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221128/noxor.gif\" align=\"middle\" title=\"noxor\" alt=\"noxor\"></a> <a href=\"/user/vetka\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221128/vetka.gif\" align=\"middle\" title=\"vetka\" alt=\"vetka\"></a> <a href=\"/user/rurudaspippen\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221128/rurudaspippen.gif\" align=\"middle\" title=\"rurudaspippen\" alt=\"rurudaspippen\"></a> <a href=\"/user/innart\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221128/innart.gif\" align=\"middle\" title=\"innart\" alt=\"innart\"></a> <a href=\"/user/chefraven\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221128/chefraven.gif\" align=\"middle\" title=\"chefraven\" alt=\"chefraven\"></a><br> <sub class=\"bbcode bbcode_sub\"> (Sorry if I forgot to mention anyone here)</sub> <br> <br> \n <hr class=\"bbcode bbcode_hr\"> <br> <span class=\"bbcode\" style=\"color: #000000;\">🕷</span> <u class=\"bbcode bbcode_u\"><span class=\"bbcode\" style=\"color: #EB3131;\"><strong class=\"bbcode bbcode_b\">Art-status</strong></span></u> <span class=\"bbcode\" style=\"color: #000000;\">🕷</span> <br> <span class=\"bbcode\" style=\"color: #000000;\">╭</span><span class=\"bbcode\" style=\"color: #131313;\">━</span><span class=\"bbcode\" style=\"color: #262626;\">━</span><span class=\"bbcode\" style=\"color: #393939;\">━</span><span class=\"bbcode\" style=\"color: #4C4C4C;\">━</span><span class=\"bbcode\" style=\"color: #606060;\">━</span><span class=\"bbcode\" style=\"color: #737373;\">━</span><span class=\"bbcode\" style=\"color: #868686;\">━</span><span class=\"bbcode\" style=\"color: #999999;\">━</span><span class=\"bbcode\" style=\"color: #ADADAD;\">━</span><span class=\"bbcode\" style=\"color: #999A99;\">━</span><span class=\"bbcode\" style=\"color: #868786;\">━</span><span class=\"bbcode\" style=\"color: #737473;\">━</span><span class=\"bbcode\" style=\"color: #606160;\">━</span><span class=\"bbcode\" style=\"color: #4C4E4C;\">━</span><span class=\"bbcode\" style=\"color: #393B39;\">━</span><span class=\"bbcode\" style=\"color: #262826;\">━</span><span class=\"bbcode\" style=\"color: #131513;\">━</span><span class=\"bbcode\" style=\"color: #000300;\">╮</span><br> <strong class=\"bbcode bbcode_b\">Commissions</strong> - open:<br> - headshot (w/o detailed bg)<br> - Haflbody (w/o detailed bg)<br> - custom design.<br> <br> <strong class=\"bbcode bbcode_b\">Collabs</strong> - maybe<br> <br> <strong class=\"bbcode bbcode_b\">Requests</strong> - no :&lt;<br> <span class=\"bbcode\" style=\"color: #000000;\">╰</span><span class=\"bbcode\" style=\"color: #131313;\">━</span><span class=\"bbcode\" style=\"color: #262626;\">━</span><span class=\"bbcode\" style=\"color: #393939;\">━</span><span class=\"bbcode\" style=\"color: #4C4C4C;\">━</span><span class=\"bbcode\" style=\"color: #606060;\">━</span><span class=\"bbcode\" style=\"color: #737373;\">━</span><span class=\"bbcode\" style=\"color: #868686;\">━</span><span class=\"bbcode\" style=\"color: #999999;\">━</span><span class=\"bbcode\" style=\"color: #ADADAD;\">━</span><span class=\"bbcode\" style=\"color: #999A99;\">━</span><span class=\"bbcode\" style=\"color: #868786;\">━</span><span class=\"bbcode\" style=\"color: #737473;\">━</span><span class=\"bbcode\" style=\"color: #606160;\">━</span><span class=\"bbcode\" style=\"color: #4C4E4C;\">━</span><span class=\"bbcode\" style=\"color: #393B39;\">━</span><span class=\"bbcode\" style=\"color: #262826;\">━</span><span class=\"bbcode\" style=\"color: #131513;\">━</span><span class=\"bbcode\" style=\"color: #000300;\">╯</span><br> <br> <a class=\"auto_link named_url\" href=\"https://www.deviantart.com/terriniss/\">DeviantArt</a> <br> <br> <h5 class=\"bbcode bbcode_h5\"><span class=\"bbcode\" style=\"color: #C92A2A;\">🕷</span> <a class=\"auto_link named_url\" href=\"https://www.patreon.com/Terriniss/id0\">PATREON</a> <span class=\"bbcode\" style=\"color: #C92A2A;\">🕷</span><br> <span class=\"bbcode\" style=\"color: #C92A2A;\">🕷</span> (Here you can see sketches and works that will NOT be uploaded to other galleries!) <span class=\"bbcode\" style=\"color: #C92A2A;\">🕷</span></h5> <br> <br> <sub class=\"bbcode bbcode_sub\"> P.S. Unfortunately, English is not my native language. I often have to communicate through a translator. Nevertheless, I will be glad to talk to any of you!</sub> </code>
 """.selfContainedFAHtmlSubmission
     
-    static let demo = FAUser(
+    static let demo = try! FAUser(
         name: "demo",
         displayName: "Demo",
         avatarUrl: URL(string: "https://a.furaffinity.net/20230319/furrycount.gif")!,
@@ -285,14 +285,14 @@ extension FAUser {
                 cid: 54569442, author: "sadisticss", displayAuthor: "Sadisticss",
                 authorAvatarUrl: URL(string: "https://a.furaffinity.net/1692639963/sadisticss.gif")!,
                 datetime: "Jul 29, 2023 10:16 PM", naturalDatetime: "a month ago",
-                htmlMessage: "Hola, dear! U have nice gallery &lt;3",
+                message: .init(FAHTML: "Hola, dear! U have nice gallery &lt;3".selfContainedFAHtmlComment),
                 answers: []
             )),
             .visible(.init(
                 cid: 53766730, author: "mostevilpupper", displayAuthor: "MostEvilPupper",
                 authorAvatarUrl: URL(string: "https://a.furaffinity.net/1670117631/mostevilpupper.gif")!,
                 datetime: "Dec 6, 2022 03:46 AM", naturalDatetime: "9 months ago",
-                htmlMessage: "An absolutely amazing artist",
+                message: .init(FAHTML: "An absolutely amazing artist".selfContainedFAHtmlComment),
                 answers: []
             ))
         ],

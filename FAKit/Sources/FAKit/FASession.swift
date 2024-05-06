@@ -92,7 +92,7 @@ open class FASession: Equatable {
               let page = FASubmissionPage(data: data)
         else { return nil }
         
-        return FASubmission(page, url: url)
+        return try? FASubmission(page, url: url)
     }
     
     open func toggleFavorite(for submission: FASubmission) async -> FASubmission? {
@@ -100,7 +100,7 @@ open class FASession: Equatable {
               let page = FASubmissionPage(data: data)
         else { return nil }
         
-        return FASubmission(page, url: submission.url)
+        return try? FASubmission(page, url: submission.url)
     }
     
     open func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async -> C? {
@@ -117,7 +117,7 @@ open class FASession: Equatable {
               let page = C.PageType(data: data)
         else { return nil }
         
-        return C(page, url: commentable.url)
+        return try? C(page, url: commentable.url)
     }
     
     // MARK: - Journals
@@ -130,7 +130,7 @@ open class FASession: Equatable {
               let page = FAJournalPage(data: data)
         else { return nil }
         
-        return FAJournal(page, url: url)
+        return try? FAJournal(page, url: url)
     }
     
     // MARK: - Notes
@@ -263,7 +263,7 @@ open class FASession: Equatable {
               let page = FAUserPage(data: data) else {
             return nil
         }
-        return FAUser(page)
+        return try? FAUser(page)
     }
     
     open func toggleWatch(for user: FAUser) async -> FAUser? {

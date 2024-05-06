@@ -14,7 +14,7 @@ public protocol FAPage {
 
 public protocol Commentable {
     associatedtype PageType: FAPage
-    init(_ page: PageType, url: URL)
+    init(_ page: PageType, url: URL) throws
     var url: URL { get }
 }
 

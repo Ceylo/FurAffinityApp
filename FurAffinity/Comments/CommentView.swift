@@ -10,7 +10,6 @@ import FAKit
 
 struct CommentView: View {
     var comment: FAComment
-    @State private var htmlMessage: AttributedString?
     @Environment(\.colorScheme) var colorScheme
     private let avatarSize = 42.0
     
@@ -26,13 +25,14 @@ struct CommentView: View {
     }
     
     var textBubble: some View {
-        htmlMessage.flatMap { text in
-            HTMLView(text: text, initialHeight: 32)
-                .padding(.horizontal, 1)
-                .background {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(overlayStyle)
-                }
+        HTMLView(
+            text: comment.message.convertingLinksForInAppNavigation(),
+            initialHeight: 32
+        )
+        .padding(.horizontal, 1)
+        .background {
+            RoundedRectangle(cornerRadius: 10)
+                .fill(overlayStyle)
         }
     }
     
@@ -63,12 +63,7 @@ struct CommentView: View {
                 .frame(width: avatarSize, height: avatarSize)
                 .padding(.top, 5)
             
-            VStack(alignment: .leading, spacing: 0) {
-                htmlMessage.flatMap {
-                    HTMLView(text: $0, initialHeight: 32)
-                        .zIndex(-1)
-                }
-            }
+            textBubble
         }
     }
     
@@ -81,19 +76,13 @@ struct CommentView: View {
                 commentView(comment)
             }
         }
-        .task {
-            htmlMessage = AttributedString(FAHTML: comment.htmlMessage)?
-                .convertingLinksForInAppNavigation()
-        }
     }
 }
 
-struct CommentView_Previews: PreviewProvider {
-    static var previews: some View {
-        CommentView(comment: FAComment.demo[0])
-            .previewDisplayName("Visible comment")
-        
-        CommentView(comment: FAComment.demoHidden[0])
-            .previewDisplayName("Hidden comment")
-    }
+#Preview("Visible comment") {
+    CommentView(comment: FAComment.demo[0])
+}
+
+#Preview("Hidden comment") {
+    CommentView(comment: FAComment.demoHidden[0])
 }

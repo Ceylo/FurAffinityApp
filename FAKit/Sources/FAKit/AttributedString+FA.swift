@@ -9,18 +9,18 @@ import Foundation
 import UIKit
 
 extension AttributedString {
-    public init?(FAHTML: String) {
+    public init(FAHTML: String) throws {
         let theme = String.FATheme(style: UITraitCollection.current.userInterfaceStyle)
         
-        guard let data = FAHTML.using(theme: theme).data(using: .utf8),
-              let nsattrstr = try? NSAttributedString(
-                data: data,
-                options: [
-                    .documentType: NSAttributedString.DocumentType.html,
-                    .characterEncoding: NSNumber(value: String.Encoding.utf8.rawValue)
-                ],
-                documentAttributes: nil)
-        else { return nil }
+        let data = try FAHTML.using(theme: theme).data(using: .utf8).unwrap()
+        let nsattrstr = try NSAttributedString(
+            data: data,
+            options: [
+                .documentType: NSAttributedString.DocumentType.html,
+                .characterEncoding: NSNumber(value: String.Encoding.utf8.rawValue)
+            ],
+            documentAttributes: nil
+        )
         
         self = AttributedString(nsattrstr)
             .transformingAttributes(\.foregroundColor) { foregroundColor in

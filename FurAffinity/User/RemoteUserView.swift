@@ -19,7 +19,7 @@ struct RemoteUserView: View {
         
         let user = await session.user(for: url)
         if let user {
-            description = AttributedString(FAHTML: user.htmlDescription)?
+            description = try? AttributedString(FAHTML: user.htmlDescription)
                 .convertingLinksForInAppNavigation()
         }
         return user

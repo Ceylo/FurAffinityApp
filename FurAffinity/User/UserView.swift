@@ -159,9 +159,9 @@ struct UserView: View {
 
 struct UserView_Previews: PreviewProvider {
     static var previews: some View {
-        let description = AttributedString(
+        let description = try! AttributedString(
             FAHTML: FAUser.demo.htmlDescription
-        )?.convertingLinksForInAppNavigation()
+        ).convertingLinksForInAppNavigation()
         UserView(
             user: FAUser.demo,
             description: .constant(description),

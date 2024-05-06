@@ -25,7 +25,7 @@ struct NoteView: View {
         note = await model.session?.note(for: url)
         if let note {
             avatarUrl = await model.session?.avatarUrl(for: note.author)
-            message = AttributedString(FAHTML: note.htmlMessage)?
+            message = try? AttributedString(FAHTML: note.htmlMessage)
                 .convertingLinksForInAppNavigation()
         }
     }

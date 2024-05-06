@@ -19,30 +19,30 @@ extension FAPageComment {
 }
 
 class FACommentTests: XCTestCase {
-    func testBuildCommentsTree_emptyListGivesEmptyTree() {
-        let tree = FAComment.buildCommentsTree([])
+    func testBuildCommentsTree_emptyListGivesEmptyTree() throws {
+        let tree = try FAComment.buildCommentsTree([])
         XCTAssertEqual(tree, [])
     }
     
-    func testBuildCommentsTree_onlyRootsGivesFlatTree() {
-        let tree = FAComment.buildCommentsTree([
+    func testBuildCommentsTree_onlyRootsGivesFlatTree() throws {
+        let tree = try FAComment.buildCommentsTree([
             .init(cid: 166652793, indentation: 0),
             .init(cid: 166653891, indentation: 0),
             .init(cid: 166658565, indentation: 0),
         ])
-        XCTAssertEqual(tree, [
+        XCTAssertEqual(tree, try [
             FAComment(.init(cid: 166652793, indentation: 0)),
             FAComment(.init(cid: 166653891, indentation: 0)),
             FAComment(.init(cid: 166658565, indentation: 0)),
         ])
     }
-    func testBuildCommentsTree_simpleHierarchy() {
-        let tree = FAComment.buildCommentsTree([
+    func testBuildCommentsTree_simpleHierarchy() throws {
+        let tree = try FAComment.buildCommentsTree([
             .init(cid: 166652793, indentation: 0),
             .init(cid: 166653891, indentation: 3),
             .init(cid: 166658565, indentation: 6),
         ])
-        XCTAssertEqual(tree, [
+        XCTAssertEqual(tree, try [
             FAComment(.init(cid: 166652793, indentation: 0)).withAnswers([
                 FAComment(.init(cid: 166653891, indentation: 3)).withAnswers([
                     FAComment(.init(cid: 166658565, indentation: 6))
@@ -51,8 +51,8 @@ class FACommentTests: XCTestCase {
         ])
     }
     
-    func testBuildCommentsTree_complexHierarchy() {
-        let tree = FAComment.buildCommentsTree([
+    func testBuildCommentsTree_complexHierarchy() throws {
+        let tree = try FAComment.buildCommentsTree([
             .init(cid: 166652793, indentation: 0),
             .init(cid: 166653891, indentation: 3),
             .init(cid: 166658565, indentation: 6),
@@ -61,7 +61,7 @@ class FACommentTests: XCTestCase {
             .init(cid: 166658865, indentation: 6),
             .init(cid: 166656182, indentation: 0),
         ])
-        XCTAssertEqual(tree, [
+        XCTAssertEqual(tree, try [
             FAComment(.init(cid: 166652793, indentation: 0)).withAnswers([
                 FAComment(.init(cid: 166653891, indentation: 3)).withAnswers([
                     FAComment(.init(cid: 166658565, indentation: 6))

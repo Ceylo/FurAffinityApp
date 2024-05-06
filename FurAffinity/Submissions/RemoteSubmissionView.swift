@@ -27,7 +27,7 @@ struct RemoteSubmissionView: View {
         if let submission {
             avatarUrl = await model.session?.avatarUrl(for: submission.author)
             
-            description = AttributedString(FAHTML: submission.htmlDescription)?
+            description = try? AttributedString(FAHTML: submission.htmlDescription)
                 .convertingLinksForInAppNavigation()
             submissionLoadingFailed = false
         } else {

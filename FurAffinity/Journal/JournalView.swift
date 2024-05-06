@@ -16,7 +16,7 @@ struct JournalViewModel {
 
 extension JournalViewModel {
     init(_ journal: FAJournal) {
-        let description = AttributedString(FAHTML: journal.htmlDescription)?
+        let description = try? AttributedString(FAHTML: journal.htmlDescription)
             .convertingLinksForInAppNavigation()
         self.init(journal: journal, attributedDescription: description ?? "Failed loading contents")
     }
