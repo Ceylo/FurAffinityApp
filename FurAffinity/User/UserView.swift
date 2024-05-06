@@ -148,6 +148,7 @@ struct UserView: View {
                 } header: {
                     SectionHeader(text: "Shouts")
                 }
+                .padding(.bottom, 10)
             }
             .listRowSeparator(.hidden)
             .listRowInsets(.init())

@@ -72,6 +72,7 @@ struct SubmissionView: View {
                     } header: {
                         SectionHeader(text: "Comments")
                     }
+                    .padding(.bottom, 10)
                 }
             }
             .listRowSeparator(.hidden)
