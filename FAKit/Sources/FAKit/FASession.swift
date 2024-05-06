@@ -156,7 +156,7 @@ open class FASession: Equatable {
               let page = FANotePage(data: data)
         else { return nil }
         
-        return FANote(page)
+        return try? FANote(page)
     }
     
     // MARK: - Notifications

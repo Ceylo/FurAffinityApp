@@ -14,7 +14,6 @@ struct NoteView: View {
     
     @State private var note: FANote?
     @State private var avatarUrl: URL?
-    @State private var message: AttributedString?
     @State private var activity: NSUserActivity?
     
     func loadNote(forceReload: Bool) async {
@@ -25,8 +24,6 @@ struct NoteView: View {
         note = await model.session?.note(for: url)
         if let note {
             avatarUrl = await model.session?.avatarUrl(for: note.author)
-            message = try? AttributedString(FAHTML: note.htmlMessage)
-                .convertingLinksForInAppNavigation()
         }
     }
     
@@ -54,11 +51,9 @@ struct NoteView: View {
                     Divider()
                         .padding(.vertical, 5)
                     
-                    if let message = message {
-                        HTMLView(text: message)
-                        // for text view inset
-                            .padding(.horizontal, -5)
-                    }
+                    HTMLView(text: note.message.convertingLinksForInAppNavigation())
+                    // for text view inset
+                        .padding(.horizontal, -5)
                 }
                 .padding()
                 .navigationTitle(note.title)

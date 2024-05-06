@@ -261,12 +261,14 @@ what you will need to get one.\n<br> - if you got a sketch you can get an upgrad
 }
 
 extension FANote {
-    static let demo = FANote(author: "someuser", displayAuthor: "SomeUser",
-                             title: "RE: Title with some spéciäl çhãrāčtęrs",
-                             datetime: "Apr 7th, 2022, 11:58 AM",
-                             naturalDatetime: "8 months ago",
-                             htmlMessage: "Message with some spéciäl çhãrāčtęrs.\n<br> And a newline!",
-                             answerKey: "84b24b5f34cdfaec56a3679144f6907a98576a57")
+    static let demo = try! FANote(
+        author: "someuser", displayAuthor: "SomeUser",
+        title: "RE: Title with some spéciäl çhãrāčtęrs",
+        datetime: "Apr 7th, 2022, 11:58 AM",
+        naturalDatetime: "8 months ago",
+        message: AttributedString(FAHTML: "Message with some spéciäl çhãrāčtęrs.\n<br> And a newline!".selfContainedFAHtmlSubmission),
+        answerKey: "84b24b5f34cdfaec56a3679144f6907a98576a57"
+    )
 }
 
 extension FAUser {
