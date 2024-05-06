@@ -247,7 +247,7 @@ extension FAJournal {
 what you will need to get one.\n<br> - if you got a sketch you can get an upgrade.\n<br> -comment on this Journal to get in line(ill work down the line and work in that order)\n<br> -make sure you have the funds to get a spot.\n<br> -if you have one more then one sketch you can have 3 at the most i can upgrade ( make sure you have the funds if your doing more then one)\n<br> -ill note you to get the ref and info to upgrade your pic. the farther your in line the longer will take to get to you, so PLZ try put aside the funds till i get to you in line.\n<br> -you will be paying $75 or more depending on what you want done.\n<br> for just you OC and no BG will $75 per OC.\n<br> BG and or extra stuff added will be $100 more or less.\n<br> \n<br> after this will go back to sketches then back to upgrades.\n<br> \n<br> depending on how much the person asks could take me more or less time to get to the next one in line.\n<br> so PLZ wait for not to get your info.\n<br> \n<br> GOOD LUCK TO EVERYONE.\n<br> \n<br> \n<br> 1. \n<a href=\"/user/fukothenimbat\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20230416/fukothenimbat.gif\" align=\"middle\" title=\"fukothenimbat\" alt=\"fukothenimbat\">&nbsp;fukothenimbat</a>\n<br> \n<br> 2. \n<a href=\"/user/zacharywulf\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20230416/zacharywulf.gif\" align=\"middle\" title=\"zacharywulf\" alt=\"zacharywulf\">&nbsp;zacharywulf</a>\n<br> \n<br> 3. \n<a href=\"/user/leacrea\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20230416/leacrea.gif\" align=\"middle\" title=\"leacrea\" alt=\"leacrea\">&nbsp;leacrea</a>\n<br> \n<br> 4. \n<a href=\"/user/thegrapedemon\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20230416/thegrapedemon.gif\" align=\"middle\" title=\"thegrapedemon\" alt=\"thegrapedemon\">&nbsp;thegrapedemon</a>\n<br> \n<br> 5. \n<a href=\"/user/shadoweddraco\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20230416/shadoweddraco.gif\" align=\"middle\" title=\"shadoweddraco\" alt=\"shadoweddraco\">&nbsp;shadoweddraco</a>\n<br> \n<br> for not this will be the last one then going back to sketches then maybe open one more then back to one more upgrade but will see how things go.
 """
         
-        return FAJournal(
+        return try! FAJournal(
             url: URL(string: "https://www.furaffinity.net/journal/10516170/")!,
             author: "rudragon",
             displayAuthor: "RUdragon",
@@ -255,7 +255,7 @@ what you will need to get one.\n<br> - if you got a sketch you can get an upgrad
             title: "UPGRADES ARE OPEN!!! 5",
             datetime: "Apr 2, 2023 11:59 PM",
             naturalDatetime: "2 weeks ago",
-            htmlDescription: htmlDescription,
+            description: AttributedString(FAHTML: htmlDescription.selfContainedFAHtmlSubmission),
             comments: FAComment.demo)
     }()
 }

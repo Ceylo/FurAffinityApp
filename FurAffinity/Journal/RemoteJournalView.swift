@@ -13,22 +13,19 @@ struct RemoteJournalView: View {
     var url: URL
     @EnvironmentObject var model: Model
     
-    private func load() async -> JournalViewModel? {
-        await model.session?
-            .journal(for: url)
-            .flatMap { JournalViewModel($0) }
+    private func load() async -> FAJournal? {
+        await model.session?.journal(for: url)
     }
     
     var body: some View {
-        RemoteView(url: url, contentsLoader: load) { journalData, updateHandler in
-            JournalView(journal: journalData,
+        RemoteView(url: url, contentsLoader: load) { journal, updateHandler in
+            JournalView(journal: journal,
                         replyAction: { parentCid, text in
                 Task {
                     let contents = try? await model
-                        .postComment(on: journalData.journal,
+                        .postComment(on: journal,
                                      replytoCid: parentCid,
                                      contents: text)
-                        .flatMap { JournalViewModel($0) }
                     updateHandler.update(with: contents)
                 }
             })

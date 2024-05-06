@@ -16,7 +16,7 @@ public struct FAJournal: Equatable {
     public let title: String
     public let datetime: String
     public let naturalDatetime: String
-    public let htmlDescription: String
+    public let description: AttributedString
     public let comments: [FAComment]
     
     public init(url: URL, author: String,
@@ -24,7 +24,7 @@ public struct FAJournal: Equatable {
                 title: String,
                 datetime: String,
                 naturalDatetime: String,
-                htmlDescription: String,
+                description: AttributedString,
                 comments: [FAComment]) {
         self.url = url
         self.author = author
@@ -33,21 +33,23 @@ public struct FAJournal: Equatable {
         self.title = title
         self.datetime = datetime
         self.naturalDatetime = naturalDatetime
-        self.htmlDescription = htmlDescription.selfContainedFAHtmlSubmission
+        self.description = description //.selfContainedFAHtmlSubmission
         self.comments = comments
     }
 }
 
 extension FAJournal {
     public init(_ page: FAJournalPage, url: URL) throws {
-        try self.init(url: url,
-                  author: page.author,
-                  displayAuthor: page.displayAuthor,
-                  authorAvatarUrl: page.authorAvatarUrl,
-                  title: page.title,
-                  datetime: page.datetime,
-                  naturalDatetime: page.naturalDatetime,
-                  htmlDescription: page.htmlDescription,
-                  comments: FAComment.buildCommentsTree(page.comments))
+        try self.init(
+            url: url,
+            author: page.author,
+            displayAuthor: page.displayAuthor,
+            authorAvatarUrl: page.authorAvatarUrl,
+            title: page.title,
+            datetime: page.datetime,
+            naturalDatetime: page.naturalDatetime,
+            description: AttributedString(FAHTML: page.htmlDescription.selfContainedFAHtmlSubmission),
+            comments: FAComment.buildCommentsTree(page.comments)
+        )
     }
 }

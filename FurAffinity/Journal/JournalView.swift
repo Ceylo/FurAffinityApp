@@ -9,24 +9,10 @@ import SwiftUI
 import FAKit
 import Combine
 
-struct JournalViewModel {
-    var journal: FAJournal
-    var attributedDescription: AttributedString
-}
-
-extension JournalViewModel {
-    init(_ journal: FAJournal) {
-        let description = try? AttributedString(FAHTML: journal.htmlDescription)
-            .convertingLinksForInAppNavigation()
-        self.init(journal: journal, attributedDescription: description ?? "Failed loading contents")
-    }
-}
-
 struct JournalView: View {
-    var journal: JournalViewModel
+    var journal: FAJournal
     var replyAction: (_ parentCid: Int?, _ text: String) -> Void
     
-    private var faJournal: FAJournal { journal.journal }
     @State private var replySession: Commenting.ReplySession?
     
     var body: some View {
@@ -34,20 +20,23 @@ struct JournalView: View {
             Group {
                 Group {
                     AuthoredHeaderView(
-                        username: faJournal.author,
-                        displayName: faJournal.displayAuthor,
-                        title: faJournal.title,
-                        avatarUrl: faJournal.authorAvatarUrl,
-                        datetime: .init(faJournal.datetime,
-                                        faJournal.naturalDatetime)
+                        username: journal.author,
+                        displayName: journal.displayAuthor,
+                        title: journal.title,
+                        avatarUrl: journal.authorAvatarUrl,
+                        datetime: .init(journal.datetime,
+                                        journal.naturalDatetime)
                     )
                     Divider()
                         .padding(.vertical, 5)
                     
-                    HTMLView(text: journal.attributedDescription, initialHeight: 300)
+                    HTMLView(
+                        text: journal.description.convertingLinksForInAppNavigation(),
+                        initialHeight: 300
+                    )
                     
                     JournalControlsView(
-                        journalUrl: faJournal.url,
+                        journalUrl: journal.url,
                         replyAction: {
                             replySession = .init(parentCid: nil, among: [])
                         }
@@ -55,12 +44,12 @@ struct JournalView: View {
                 }
                 .padding(.horizontal, 10)
                 
-                if !faJournal.comments.isEmpty {
+                if !journal.comments.isEmpty {
                     Section {
                         CommentsView(
-                            comments: faJournal.comments,
+                            comments: journal.comments,
                             replyAction: { cid in
-                                replySession = .init(parentCid: cid, among: faJournal.comments)
+                                replySession = .init(parentCid: cid, among: journal.comments)
                             }
                         )
                     } header: {
@@ -72,7 +61,7 @@ struct JournalView: View {
             .listRowInsets(.init())
         }
         .commentSheet(on: $replySession, replyAction)
-        .navigationTitle(faJournal.title)
+        .navigationTitle(journal.title)
         .listStyle(.plain)
     }
 }
@@ -80,7 +69,7 @@ struct JournalView: View {
 struct JournalView_Previews: PreviewProvider {
     static var previews: some View {
         JournalView(
-            journal: JournalViewModel(FAJournal.demo),
+            journal: FAJournal.demo,
             replyAction: { parentCid,text in }
         )
     }
