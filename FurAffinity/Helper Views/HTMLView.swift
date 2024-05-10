@@ -49,6 +49,10 @@ struct HTMLView: View {
             view.backgroundColor = nil
             view.textContainerInset = .init(top: 3, left: 3, bottom: 3, right: 0)
             
+            return view
+        }
+        
+        func updateUIView(_ view: UITextView, context: Context) {
             let bounds = CGSize(width: viewWidth,
                                 height: .greatestFiniteMagnitude)
             let fittingSize = view.systemLayoutSizeFitting(bounds)
@@ -56,11 +60,7 @@ struct HTMLView: View {
             Task {
                 neededHeight = fittingSize.height
             }
-            
-            return view
         }
-        
-        func updateUIView(_ uiView: UITextView, context: Context) {}
     }
 }
 
