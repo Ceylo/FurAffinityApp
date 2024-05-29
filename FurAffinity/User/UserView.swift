@@ -143,10 +143,12 @@ struct UserView: View {
                 .padding(.horizontal, 15)
                 .padding(.top, 5)
                 
-                Section {
-                    CommentsView(comments: user.shouts)
-                } header: {
-                    SectionHeader(text: "Shouts")
+                if !user.shouts.isEmpty {
+                    Section {
+                        CommentsView(comments: user.shouts)
+                    } header: {
+                        SectionHeader(text: "Shouts")
+                    }
                 }
             }
             .listRowSeparator(.hidden)
