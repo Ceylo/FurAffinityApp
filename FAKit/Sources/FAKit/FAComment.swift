@@ -194,4 +194,12 @@ extension [FAComment] {
         
         return nil
     }
+    
+    public var recursiveCount: Int {
+        var count = 0
+        for comment in self {
+            count += 1 + comment.answers.recursiveCount
+        }
+        return count
+    }
 }

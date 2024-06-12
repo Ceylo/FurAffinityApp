@@ -11,8 +11,7 @@ import XCTest
 final class FASubmissionPageTests: XCTestCase {
     func testSubmissionPageWithoutComment_isParsed() throws {
         let data = testData("www.furaffinity.net:view:49338772-nocomment.html")
-        let page = FASubmissionPage(data: data)
-        XCTAssertNotNil(page)
+        let page = try XCTUnwrap(FASubmissionPage(data: data))
         
         let htmlDescription = #"""
 YCH for 
@@ -45,6 +44,7 @@ YCH for
             naturalDatetime: "2 months ago",
             htmlDescription: htmlDescription,
             isFavorite: false,
+            favoriteCount: 67,
             favoriteUrl: URL(string: "https://www.furaffinity.net/fav/49338772/?key=57af11f57cd9a0d97575839f1ae07d2a775ae5af")!,
             comments: [])
         
@@ -71,8 +71,7 @@ YCH for
     
     func testSubmissionPageWithComments_isParsed() throws {
         let data = testData("www.furaffinity.net:view:48519387-comments.html")
-        let page = FASubmissionPage(data: data)
-        XCTAssertNotNil(page)
+        let page = try XCTUnwrap(FASubmissionPage(data: data))
         let terrinissAvatarUrl = URL(string: "https://a.furaffinity.net/1616615925/terriniss.gif")!
         let expected: [FAPageComment] = [
             .visible(.init(cid: 166652793, indentation: 0, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
@@ -100,6 +99,6 @@ YCH for
                            datetime: "Aug 12, 2022 04:08 AM", naturalDatetime: "3 months ago", htmlMessage: "these are gorgeous"))
         ]
         
-        XCTAssertEqual(expected, page?.comments)
+        XCTAssertEqual(expected, page.comments)
     }
 }

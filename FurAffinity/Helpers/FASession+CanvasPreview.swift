@@ -236,6 +236,7 @@ extension FASubmission {
             naturalDatetime: "a year ago",
             description: try! AttributedString(FAHTML: htmlDescription.selfContainedFAHtmlSubmission),
             isFavorite: false,
+            favoriteCount: 72,
             favoriteUrl: URL(string: "https://www.furaffinity.net/fav/44188741/?key=00f2f5f4c1c7fbfac02147b73d670cac6423ab85")!,
             comments: FAComment.demo)
     }()

@@ -45,8 +45,10 @@ struct SubmissionView: View {
                     SubmissionControlsView(
                         submissionUrl: submission.url,
                         fullResolutionImage: fullResolutionCGImage,
+                        favoritesCount: submission.favoriteCount,
                         isFavorite: submission.isFavorite,
                         favoriteAction: favoriteAction,
+                        repliesCount: submission.comments.recursiveCount,
                         replyAction: {
                             replySession = .init(parentCid: nil, among: [])
                         }

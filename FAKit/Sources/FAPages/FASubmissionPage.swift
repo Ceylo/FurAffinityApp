@@ -20,6 +20,7 @@ public struct FASubmissionPage: Equatable {
     public let naturalDatetime: String
     public let htmlDescription: String
     public let isFavorite: Bool
+    public let favoriteCount: Int
     public let favoriteUrl: URL
     public let comments: [FAPageComment]
 }
@@ -59,6 +60,10 @@ extension FASubmissionPage {
             let favoriteStatusStr = try favoriteUrlNode.text()
             self.favoriteUrl = try URL(unsafeString: FAURLs.homeUrl.absoluteString + favoriteUrlStr)
             self.isFavorite = favoriteStatusStr == "-Fav"
+            let favCountQuery = "div.submission-sidebar section.stats-container.text div.favorites span.font-large"
+            let favCountNode = try columnPageNode.select(favCountQuery)
+            let favCount = try Int(favCountNode.text()).unwrap()
+            self.favoriteCount = favCount
             
             let avatarQuery = "section div.section-header div.submission-id-container div.submission-id-avatar img.avatar"
             let avatarNode = try submissionContentNode.select(avatarQuery)
