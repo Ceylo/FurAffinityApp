@@ -280,6 +280,9 @@ open class FASession: Equatable {
     private var avatarUrlTasks = [String: Task<URL?, Swift.Error>]()
     private let avatarUrlsCache: Storage<String, URL>
     open func avatarUrl(for username: String) async -> URL? {
+        guard !username.isEmpty else {
+            return nil
+        }
         let task = avatarUrlRequestsQueue.sync { () -> Task<URL?, Swift.Error> in
             let previousTask = avatarUrlTasks[username]
             let newTask = Task { () -> URL? in
