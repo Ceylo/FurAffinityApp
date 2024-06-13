@@ -51,7 +51,8 @@ extension FAUserPage {
             let displayNameNode = try navHeaderNode.select(displayNameQuery).first().unwrap()
             let rawDisplayName = try displayNameNode.text()
             let displayName = try rawDisplayName
-                .substring(matching: "~(.+)").unwrap()
+                .substring(matching: "(~.+|!.+)").unwrap()
+                .trimmingPrefix("~")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             self.displayName = displayName
             
