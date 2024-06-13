@@ -26,7 +26,10 @@ public enum FAURLs {
     )!
     
     public static func userpageUrl(for username: String) -> URL? {
-        try? URL(unsafeString: "https://www.furaffinity.net/user/\(username)/")
+        guard !username.isEmpty else {
+            return nil
+        }
+        return try? URL(unsafeString: "https://www.furaffinity.net/user/\(username)/")
     }
     
     public static func galleryUrl(for username: String) -> URL {
