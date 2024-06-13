@@ -61,11 +61,13 @@ extension FANotesPage.NoteHeader {
         
         let authorQuery = "div.note-list-sendgroup div.note-list-sender-container div.note-list-sender div a"
         let authorNode = try node.select(authorQuery)
-        let author: String
+        var author: String
+        let displayAuthor: String
         do {
             author = try authorNode.attr("href")
                 .substring(matching: "/user/(.+)/")
                 .unwrap()
+            displayAuthor = try authorNode.text()
         } catch {
             let deletedUserQuery = "div.note-list-sendgroup div.note-list-sender-container div.note-list-sender div span.user-name-deleted"
             let result = try node.select(deletedUserQuery)
@@ -74,9 +76,8 @@ extension FANotesPage.NoteHeader {
                 throw FAPagesError.parserFailureError()
             }
             author = ""
+            displayAuthor = "[deleted user]"
         }
-        
-        let displayAuthor = try authorNode.text()
         
         let datetimeNode = try node.select("div.note-list-sendgroup div.note-list-senddate span.popup_date")
         let datetime = try datetimeNode.attr("title")
