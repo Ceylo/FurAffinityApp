@@ -18,7 +18,7 @@ final class FANotePageTests: XCTestCase {
                                   title: "RE: Title with some spéciäl çhãrāčtęrs",
                                   datetime: "Apr 7th, 2022, 11:58 AM",
                                   naturalDatetime: "8 months ago",
-                                  htmlMessage: "Message with some spéciäl çhãrāčtęrs.\n<br> And a newline!",
+                                  htmlMessage: "Message with some spéciäl çhãrāčtęrs.\n<br /> And a newline!",
                                   answerKey: "84b24b5f34cdfaec56a3679144f6907a98576a57")
         XCTAssertEqual(expected, page)
     }

@@ -13,25 +13,7 @@ final class FASubmissionPageTests: XCTestCase {
         let data = testData("www.furaffinity.net:view:49338772-nocomment.html")
         let page = try XCTUnwrap(FASubmissionPage(data: data))
         
-        let htmlDescription = #"""
-YCH for 
-<a href="/user/lil-maj" class="iconusername"><img src="//a.furaffinity.net/20221211/lil-maj.gif" align="middle" title="lil-maj" alt="lil-maj">&nbsp;lil-maj</a> 
-<br> 
-<br> Cody © 
-<a href="/user/lil-maj" class="iconusername"><img src="//a.furaffinity.net/20221211/lil-maj.gif" align="middle" title="lil-Maj" alt="lil-Maj">&nbsp;lil-Maj</a>
-<br> 
-<br> 
-<br> 
-<br> 
-<br> 
-<br> *******************************
-<br> * 
-<a class="auto_link named_url" href="http://ko-fi.com/J3J16KSH">Feed me with coffee?</a>
-<br> * 
-<a class="auto_link named_url" href="https://www.furaffinity.net/gallery/annetpeas/">My Gallery</a>
-<br> * 
-<a class="auto_link named_url" href="https://twitter.com/AnnetPeas_Art">Twitter</a>
-"""#
+        let htmlDescription = "YCH for \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221211/lil-maj.gif\" align=\"middle\" title=\"lil-maj\" alt=\"lil-maj\" />&nbsp;lil-maj</a> \n<br /> \n<br /> Cody © \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221211/lil-maj.gif\" align=\"middle\" title=\"lil-Maj\" alt=\"lil-Maj\" />&nbsp;lil-Maj</a>\n<br /> \n<br /> \n<br /> \n<br /> \n<br /> \n<br /> *******************************\n<br /> * \n<a class=\"auto_link named_url\" href=\"http://ko-fi.com/J3J16KSH\">Feed me with coffee?</a>\n<br /> * \n<a class=\"auto_link named_url\" href=\"https://www.furaffinity.net/gallery/annetpeas/\">My Gallery</a>\n<br /> * \n<a class=\"auto_link named_url\" href=\"https://twitter.com/AnnetPeas_Art\">Twitter</a>"
         let expected = FASubmissionPage(
             previewImageUrl: URL(string: "https://t.furaffinity.net/49338772@600-1665402309.jpg")!,
             fullResolutionImageUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1665402309/1665402309.annetpeas_the_hookah_fa.png")!,
@@ -75,7 +57,7 @@ YCH for
         let terrinissAvatarUrl = URL(string: "https://a.furaffinity.net/1616615925/terriniss.gif")!
         let expected: [FAPageComment] = [
             .visible(.init(cid: 166652793, indentation: 0, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
-                           datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "3 months ago", htmlMessage: "BID HERE \n<br> Moon")),
+                           datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "3 months ago", htmlMessage: "BID HERE \n<br /> Moon")),
             .visible(.init(cid: 166653891, indentation: 3, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
                            datetime: "Aug 11, 2022 10:58 PM", naturalDatetime: "3 months ago", htmlMessage: "SakuraSlowly (DA) - SB")),
             .visible(.init(cid: 166658565, indentation: 6, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
@@ -83,7 +65,7 @@ YCH for
             .visible(.init(cid: 166663244, indentation: 9, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
                            datetime: "Aug 12, 2022 12:33 PM", naturalDatetime: "3 months ago", htmlMessage: "ionightarts (DA) - 60")),
             .visible(.init(cid: 166652794, indentation: 0, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
-                           datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "3 months ago", htmlMessage: "BID HERE \n<br> Dawn")),
+                           datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "3 months ago", htmlMessage: "BID HERE \n<br /> Dawn")),
             .visible(.init(cid: 166656182, indentation: 3, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
                            datetime: "Aug 12, 2022 01:48 AM", naturalDatetime: "3 months ago", htmlMessage: "Miss-You-Love (da) - SB")),
             .visible(.init(cid: 166658577, indentation: 6, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
