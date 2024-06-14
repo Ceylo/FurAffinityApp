@@ -6,9 +6,10 @@
 //
 
 import Foundation
+import FAKit
 
 enum FAURL: Hashable {
-    case submission(url: URL)
+    case submission(url: URL, previewData: FASubmissionPreview?)
     case note(url: URL)
     case journal(url: URL)
     case user(url: URL)
@@ -22,7 +23,7 @@ fileprivate func ~=(regex: Regex<Substring>, str: String) -> Bool {
 }
 
 extension FAURL {
-    init?(with url: URL) {
+    init?(with url: URL, _ submissionPreviewData: FASubmissionPreview? = nil) {
         guard let url = url.replacingScheme(with: "https"),
               let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               components.host == "www.furaffinity.net" else {
@@ -39,7 +40,7 @@ extension FAURL {
         
         switch components.path {
         case submissionRegex:
-            self = .submission(url: url)
+            self = .submission(url: url, previewData: submissionPreviewData)
         case noteRegex:
             self = .note(url: url)
         case journalRegex:

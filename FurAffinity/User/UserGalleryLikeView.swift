@@ -37,7 +37,7 @@ struct UserGalleryLikeView: View {
                 }
             } else {
                 List(gallery.previews) { preview in
-                    NavigationLink(value: FAURL(with: preview.url)) {
+                    NavigationLink(value: FAURL(with: preview.url, preview)) {
                         if galleryType.shouldDisplayAuthor {
                             SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
                         } else {

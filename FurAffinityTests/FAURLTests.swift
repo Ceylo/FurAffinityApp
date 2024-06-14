@@ -21,7 +21,7 @@ final class FAURLTests: XCTestCase {
     
     func testMatchingSubmission() {
         let submissionUrl = URL(string: "https://www.furaffinity.net/view/123/")!
-        XCTAssertEqual(FAURL(with: submissionUrl), .submission(url: submissionUrl))
+        XCTAssertEqual(FAURL(with: submissionUrl), .submission(url: submissionUrl, previewData: nil))
     }
     
     func testMatchingNote() {

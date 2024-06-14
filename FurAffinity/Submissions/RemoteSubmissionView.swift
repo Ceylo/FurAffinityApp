@@ -12,6 +12,7 @@ struct RemoteSubmissionView: View {
     @EnvironmentObject var model: Model
     
     var url: URL
+    var previewData: FASubmissionPreview?
     @State private var avatarUrl: URL?
     @State private var submission: FASubmission?
     @State private var submissionLoadingFailed = false
@@ -20,6 +21,10 @@ struct RemoteSubmissionView: View {
     private func loadSubmission(forceReload: Bool) async {
         guard submission == nil || forceReload else {
             return
+        }
+        
+        if let previewData {
+            avatarUrl = await model.session?.avatarUrl(for: previewData.author)
         }
         
         submission = await model.session?.submission(for: url)
@@ -31,10 +36,11 @@ struct RemoteSubmissionView: View {
         }
     }
     
-    func loadingSucceededView(_ submission: FASubmission) -> some View {
+    func loadingSucceededView(_ submission: FASubmission, thumbnailUrl: URL?) -> some View {
         SubmissionView(
             submission: submission,
             avatarUrl: avatarUrl,
+            thumbnailUrl: thumbnailUrl,
             favoriteAction: {
                 Task {
                     self.submission = try await model.toggleFavorite(for: submission)
@@ -53,11 +59,13 @@ struct RemoteSubmissionView: View {
     var body: some View {
         Group {
             if let submission {
-                loadingSucceededView(submission)
+                loadingSucceededView(submission, thumbnailUrl: previewData?.thumbnailUrl)
             } else if submissionLoadingFailed {
                 ScrollView {
                     LoadingFailedView(url: url)
                 }
+            } else if let previewData {
+                SubmissionPreviewView(submission: previewData, avatarUrl: avatarUrl)
             } else {
                 ProgressView()
             }
@@ -92,10 +100,11 @@ struct RemoteSubmissionView: View {
     }
 }
 
-struct RemoteSubmissionView_Previews: PreviewProvider {
-    static var previews: some View {
-        RemoteSubmissionView(url: FASubmissionPreview.demo.url)
-//            .preferredColorScheme(.dark)
-            .environmentObject(Model.demo)
-    }
+#Preview {
+    RemoteSubmissionView(
+        url: FASubmissionPreview.demo.url,
+        previewData: .demo
+    )
+//    .preferredColorScheme(.dark)
+    .environmentObject(Model.demo)
 }

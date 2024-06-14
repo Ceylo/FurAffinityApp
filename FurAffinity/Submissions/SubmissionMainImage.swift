@@ -12,18 +12,28 @@ import Zoomable
 
 struct SubmissionMainImage: View {
     var widthOnHeightRatio: Float
+    var thumbnailImageUrl: URL?
     var fullResolutionImageUrl: URL
     @Binding var fullResolutionCGImage: CGImage?
     @State private var showZoomableSheet = false
     
     var body: some View {
         URLImage(fullResolutionImageUrl) { progress in
-            Centered {
-                CircularProgress(progress: CGFloat(progress ?? 0))
-                    .frame(width: 100, height: 100)
+            ZStack {
+                thumbnailImageUrl.map { thumbnailImageUrl in
+                    URLImage(thumbnailImageUrl) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    }
+                }
+                
+                Centered {
+                    CircularProgress(progress: CGFloat(progress ?? 0))
+                        .frame(width: 100, height: 100)
+                }
             }
-            .aspectRatio(CGFloat(widthOnHeightRatio),
-                         contentMode: .fit)
+            .aspectRatio(CGFloat(widthOnHeightRatio), contentMode: .fit)
         } failure: { error, retry in
             Centered {
                 Text("Oops, image loading failed 😞")
@@ -56,12 +66,11 @@ struct SubmissionMainImage: View {
     }
 }
 
-struct SubmissionMainImage_Previews: PreviewProvider {
-    static var previews: some View {
-        SubmissionMainImage(
-            widthOnHeightRatio: 1,
-            fullResolutionImageUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1634411740/1634411740.annetpeas_witch2021__2_fa.png")!,
-            fullResolutionCGImage: .constant(nil)
-        )
-    }
+#Preview {
+    SubmissionMainImage(
+        widthOnHeightRatio: 1,
+        thumbnailImageUrl: URL(string: "https://t.furaffinity.net/44188741@300-1634411740.jpg")!,
+        fullResolutionImageUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1634411740/1634411740.annetpeas_witch2021__2_fa.png")!,
+        fullResolutionCGImage: .constant(nil)
+    )
 }
