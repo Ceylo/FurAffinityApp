@@ -51,7 +51,7 @@ extension FANotePage {
             }
             
             self.htmlMessage = try noteContainerNode
-                .select("div.section-body div.user-submitted-links")
+                .select("div.section-body > div.user-submitted-links")
                 .html()
             let dateNode = try noteContainerNode
                 .select("div.section-header div.message-center-note-information div.addresses span.popup_date")
