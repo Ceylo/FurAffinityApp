@@ -28,6 +28,7 @@ struct SubmissionPreviewView: View {
                 SubmissionMainImage(
                     widthOnHeightRatio: submission.thumbnailWidthOnHeightRatio,
                     fullResolutionImageUrl: submission.thumbnailUrl,
+                    displayProgress: false,
                     fullResolutionCGImage: .constant(nil)
                 )
             }

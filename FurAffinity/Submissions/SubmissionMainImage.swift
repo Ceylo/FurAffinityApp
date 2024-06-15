@@ -14,13 +14,14 @@ struct SubmissionMainImage: View {
     var widthOnHeightRatio: Float
     var thumbnailImageUrl: URL?
     var fullResolutionImageUrl: URL
+    var displayProgress: Bool = true
     @Binding var fullResolutionCGImage: CGImage?
     @State private var showZoomableSheet = false
     
     var body: some View {
         URLImage(fullResolutionImageUrl) { progress in
             ZStack {
-                thumbnailImageUrl.map { thumbnailImageUrl in
+                if let thumbnailImageUrl {
                     URLImage(thumbnailImageUrl) { image in
                         image
                             .resizable()
@@ -28,9 +29,8 @@ struct SubmissionMainImage: View {
                     }
                 }
                 
-                Centered {
-                    CircularProgress(progress: CGFloat(progress ?? 0))
-                        .frame(width: 100, height: 100)
+                if displayProgress {
+                    LinearProgress(progress: progress ?? 0)
                 }
             }
             .aspectRatio(CGFloat(widthOnHeightRatio), contentMode: .fit)

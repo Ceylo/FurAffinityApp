@@ -22,13 +22,14 @@
 		873E65F027528FC6009C8767 /* SubmissionControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E65EF27528FC6009C8767 /* SubmissionControlsView.swift */; };
 		873E65F227529866009C8767 /* SaveButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E65F127529866009C8767 /* SaveButton.swift */; };
 		873E66112752AAB2009C8767 /* ImageSaveHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E66102752AAB2009C8767 /* ImageSaveHandler.swift */; };
-		873E66182752C631009C8767 /* CircularProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873E66172752C631009C8767 /* CircularProgress.swift */; };
 		8741BA2F29EC3FF700501A84 /* JournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8741BA2C29EC3FF700501A84 /* JournalView.swift */; };
 		8741BA3129EC3FF700501A84 /* RemoteJournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8741BA2E29EC3FF700501A84 /* RemoteJournalView.swift */; };
 		874D69BD2804D20600DF91E7 /* NoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 874D69BC2804D20600DF91E7 /* NoteView.swift */; };
 		87566B82297DC71600FD3199 /* CommentEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87566B81297DC71600FD3199 /* CommentEditor.swift */; };
 		87566B84297DD02300FD3199 /* SubmissionMainImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87566B83297DD02300FD3199 /* SubmissionMainImage.swift */; };
 		875EF2C72C1CABDC000D4BFB /* SubmissionPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 875EF2C62C1CABDC000D4BFB /* SubmissionPreviewView.swift */; };
+		875EF2E62C1E1705000D4BFB /* LinearProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 875EF2E52C1E1705000D4BFB /* LinearProgress.swift */; };
+		875EF2E82C1E1FF7000D4BFB /* Comparable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 875EF2E72C1E1FF7000D4BFB /* Comparable.swift */; };
 		8761834E271F5E570021A051 /* FAKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8761834D271F5E570021A051 /* FAKit */; };
 		8766005829055FBC00C7A998 /* CommentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8766005729055FBC00C7A998 /* CommentsView.swift */; };
 		876C137329D5F8E3001EB05B /* UserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 876C137229D5F8E3001EB05B /* UserView.swift */; };
@@ -110,13 +111,14 @@
 		873E65EF27528FC6009C8767 /* SubmissionControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionControlsView.swift; sourceTree = "<group>"; };
 		873E65F127529866009C8767 /* SaveButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveButton.swift; sourceTree = "<group>"; };
 		873E66102752AAB2009C8767 /* ImageSaveHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageSaveHandler.swift; sourceTree = "<group>"; };
-		873E66172752C631009C8767 /* CircularProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularProgress.swift; sourceTree = "<group>"; };
 		8741BA2C29EC3FF700501A84 /* JournalView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JournalView.swift; sourceTree = "<group>"; };
 		8741BA2E29EC3FF700501A84 /* RemoteJournalView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteJournalView.swift; sourceTree = "<group>"; };
 		874D69BC2804D20600DF91E7 /* NoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteView.swift; sourceTree = "<group>"; };
 		87566B81297DC71600FD3199 /* CommentEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentEditor.swift; sourceTree = "<group>"; };
 		87566B83297DD02300FD3199 /* SubmissionMainImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionMainImage.swift; sourceTree = "<group>"; };
 		875EF2C62C1CABDC000D4BFB /* SubmissionPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionPreviewView.swift; sourceTree = "<group>"; };
+		875EF2E52C1E1705000D4BFB /* LinearProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinearProgress.swift; sourceTree = "<group>"; };
+		875EF2E72C1E1FF7000D4BFB /* Comparable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Comparable.swift; sourceTree = "<group>"; };
 		8761834C271F5E380021A051 /* FAKit */ = {isa = PBXFileReference; lastKnownFileType = folder; path = FAKit; sourceTree = "<group>"; };
 		8766005729055FBC00C7A998 /* CommentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsView.swift; sourceTree = "<group>"; };
 		876C137229D5F8E3001EB05B /* UserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserView.swift; sourceTree = "<group>"; };
@@ -316,6 +318,7 @@
 				8791D60C29C4DCE6003FDBBE /* InAppNavigation.swift */,
 				87B0933B2AED6D53008DFDE7 /* DatetimePair.swift */,
 				878892DA2B8B905A00F332EE /* Text+Markdown.swift */,
+				875EF2E72C1E1FF7000D4BFB /* Comparable.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -360,7 +363,7 @@
 			isa = PBXGroup;
 			children = (
 				87A185A12745A8A100B10D2A /* CenteredView.swift */,
-				873E66172752C631009C8767 /* CircularProgress.swift */,
+				875EF2E52C1E1705000D4BFB /* LinearProgress.swift */,
 				879233D1278216DF0019AC44 /* HTMLView.swift */,
 				87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */,
 				87F960CA2801EFF3000B30A3 /* AvatarView.swift */,
@@ -528,7 +531,6 @@
 				87A9C34329C788A00001D1D6 /* RemoteUserView.swift in Sources */,
 				877C8A9D2A0043D000B2F02B /* NotificationsActionView.swift in Sources */,
 				87FE0DA72974609E005713DB /* SubmissionsFeedActionView.swift in Sources */,
-				873E66182752C631009C8767 /* CircularProgress.swift in Sources */,
 				87815AC728D63F9B005AD03E /* View+Introspection.swift in Sources */,
 				87292E45297DD3FB00BE39B8 /* LoadingFailedView.swift in Sources */,
 				8741BA3129EC3FF700501A84 /* RemoteJournalView.swift in Sources */,
@@ -541,8 +543,10 @@
 				87891FFA29F5A09700606F12 /* CommentView.swift in Sources */,
 				878B0B912970B18C00A08685 /* Secrets.swift in Sources */,
 				873E65F027528FC6009C8767 /* SubmissionControlsView.swift in Sources */,
+				875EF2E62C1E1705000D4BFB /* LinearProgress.swift in Sources */,
 				87B0933C2AED6D53008DFDE7 /* DatetimePair.swift in Sources */,
 				871C66E029B8CA9200A2B2C2 /* RemoteSubmissionView.swift in Sources */,
+				875EF2E82C1E1FF7000D4BFB /* Comparable.swift in Sources */,
 				87919B2329F1CED6006FC2D6 /* Commenting.swift in Sources */,
 				873E66112752AAB2009C8767 /* ImageSaveHandler.swift in Sources */,
 				87C13F8729FF0A89001C7CB2 /* SubmissionCommentNotificationItemView.swift in Sources */,
