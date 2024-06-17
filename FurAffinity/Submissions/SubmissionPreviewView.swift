@@ -25,12 +25,15 @@ struct SubmissionPreviewView: View {
                     avatarUrl: avatarUrl,
                     datetime: nil
                 )
-                SubmissionMainImage(
-                    widthOnHeightRatio: submission.thumbnailWidthOnHeightRatio,
-                    fullResolutionImageUrl: submission.thumbnailUrl,
-                    displayProgress: false,
-                    fullResolutionCGImage: .constant(nil)
-                )
+                GeometryReader { geometry in
+                    SubmissionMainImage(
+                        widthOnHeightRatio: submission.thumbnailWidthOnHeightRatio,
+                        fullResolutionImageUrl: submission.dynamicThumbnail.bestThumbnailUrl(for: geometry),
+                        displayProgress: false,
+                        fullResolutionCGImage: .constant(nil)
+                    )
+                }
+                .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
             }
             .padding(.horizontal, 10)
             .padding(.top, 5)

@@ -11,7 +11,7 @@ import FAKit
 struct SubmissionView: View {
     var submission: FASubmission
     var avatarUrl: URL?
-    var thumbnailUrl: URL?
+    var thumbnail: DynamicThumbnail?
     var favoriteAction: () -> Void
     var replyAction: (_ parentCid: Int?, _ text: String) -> Void
     
@@ -39,7 +39,7 @@ struct SubmissionView: View {
                     header
                     SubmissionMainImage(
                         widthOnHeightRatio: submission.widthOnHeightRatio,
-                        thumbnailImageUrl: thumbnailUrl,
+                        thumbnailImage: thumbnail,
                         fullResolutionImageUrl: submission.fullResolutionImageUrl,
                         fullResolutionCGImage: $fullResolutionCGImage
                     )

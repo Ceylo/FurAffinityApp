@@ -17,6 +17,7 @@ public struct FASubmissionPreview: Hashable, Identifiable {
     public let author: String
     public let displayAuthor: String
     public var id: Int { sid }
+    public let dynamicThumbnail: DynamicThumbnail
     
     public init(sid: Int, url: URL, thumbnailUrl: URL, thumbnailWidthOnHeightRatio: Float, title: String, author: String, displayAuthor: String) {
         self.sid = sid
@@ -26,6 +27,7 @@ public struct FASubmissionPreview: Hashable, Identifiable {
         self.title = title
         self.author = author
         self.displayAuthor = displayAuthor
+        self.dynamicThumbnail = .init(thumbnailUrl: thumbnailUrl)
     }
 }
 
@@ -38,34 +40,5 @@ public extension FASubmissionPreview {
                   title: submission.title,
                   author: submission.author,
                   displayAuthor: submission.displayAuthor)
-    }
-}
-
-public extension FASubmissionPreview {
-    enum ThumbnailSize: Int, CaseIterable {
-        case s50 = 50
-        case s75 = 75
-        case s100 = 100
-        case s120 = 120
-        case s200 = 200
-        case s300 = 300
-        case s320 = 320
-        case s400 = 400
-        case s600 = 600
-        case s800 = 800
-        case s1600 = 1600
-    }
-    
-    func thumbnailUrl(at size: ThumbnailSize) -> URL {
-        let regex = #/(.+@)(\d+)(-.+)/#
-        let newUrl = thumbnailUrl.absoluteString
-            .replacing(regex) { $0.1 + "\(size.rawValue)" + $0.3 }
-        return URL(string: newUrl)!
-    }
-    
-    func bestThumbnailUrl(for size: UInt) -> URL {
-        let match = ThumbnailSize.allCases.first { $0.rawValue > size }
-        let size = match ?? ThumbnailSize.allCases.last!
-        return thumbnailUrl(at: size)
     }
 }

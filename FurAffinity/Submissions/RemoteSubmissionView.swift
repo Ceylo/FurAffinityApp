@@ -36,11 +36,11 @@ struct RemoteSubmissionView: View {
         }
     }
     
-    func loadingSucceededView(_ submission: FASubmission, thumbnailUrl: URL?) -> some View {
+    func loadingSucceededView(_ submission: FASubmission, thumbnail: DynamicThumbnail?) -> some View {
         SubmissionView(
             submission: submission,
             avatarUrl: avatarUrl,
-            thumbnailUrl: thumbnailUrl,
+            thumbnail: thumbnail,
             favoriteAction: {
                 Task {
                     self.submission = try await model.toggleFavorite(for: submission)
@@ -59,7 +59,7 @@ struct RemoteSubmissionView: View {
     var body: some View {
         Group {
             if let submission {
-                loadingSucceededView(submission, thumbnailUrl: previewData?.thumbnailUrl)
+                loadingSucceededView(submission, thumbnail: previewData?.dynamicThumbnail)
             } else if submissionLoadingFailed {
                 ScrollView {
                     LoadingFailedView(url: url)

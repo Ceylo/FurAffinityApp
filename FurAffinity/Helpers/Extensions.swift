@@ -7,10 +7,6 @@
 
 import SwiftUI
 
-extension CGSize {
-    var maxDimension: CGFloat { max(width, height) }
-}
-
 extension Color {
     static let borderOverlay = Color("BorderOverlay")
 }

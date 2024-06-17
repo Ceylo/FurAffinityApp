@@ -20,24 +20,27 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
     
     var previewImage: some View {
         GeometryReader { geometry in
-            // AsyncImage sometimes remains in empty phase when used in a List…
-            URLImage(submission.bestThumbnailUrl(for: UInt(geometry.size.maxDimension))) { progress in
-                Rectangle()
-                    .foregroundColor(.white.opacity(0.1))
-            } failure: { error, retry in
-                Centered {
-                    Text("Oops, image loading failed 😞")
-                    Text(error.localizedDescription)
-                        .font(.caption)
-                }
-            } content: { image, info in
-                image
-                    .resizable()
-                    .transition(.opacity.animation(.default.speed(2)))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color.borderOverlay, lineWidth: 1)
+            if geometry.size.maxDimension > 0 {
+                let url = submission.dynamicThumbnail.bestThumbnailUrl(for: geometry)
+                // AsyncImage sometimes remains in empty phase when used in a List…
+                URLImage(url) { progress in
+                    Rectangle()
+                        .foregroundColor(.white.opacity(0.1))
+                } failure: { error, retry in
+                    Centered {
+                        Text("Oops, image loading failed 😞")
+                        Text(error.localizedDescription)
+                            .font(.caption)
                     }
+                } content: { image, info in
+                    image
+                        .resizable()
+                        .transition(.opacity.animation(.default.speed(2)))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.borderOverlay, lineWidth: 1)
+                        }
+                }
             }
         }
         .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
