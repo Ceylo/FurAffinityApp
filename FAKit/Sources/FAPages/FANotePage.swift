@@ -50,6 +50,10 @@ extension FANotePage {
                 }
             }
             
+            _ = try noteContainerNode
+                .select("div.section-body > div.user-submitted-links > div.noteWarningMessage")
+                .wrap("<i style=\"color: red;\"></i>")
+                .append("<br />")
             self.htmlMessage = try noteContainerNode
                 .select("div.section-body > div.user-submitted-links")
                 .html()
