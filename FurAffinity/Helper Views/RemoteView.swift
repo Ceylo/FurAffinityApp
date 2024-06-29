@@ -69,10 +69,9 @@ struct RemoteView<Contents, ContentsView: View>: View, UpdateHandler {
     
     func update() async {
         let contents = await contentsLoader()
-        await update(with: contents)
+        update(with: contents)
     }
 
-    @MainActor
     func update(with contents: Contents?) {
         if let contents {
             self.contentsState = .loaded(contents)

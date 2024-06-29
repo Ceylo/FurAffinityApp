@@ -17,7 +17,7 @@ enum ModelError: Error {
 class Model: ObservableObject {
     static let autorefreshDelay: TimeInterval = 15 * 60
     
-    @Published var session: FASession? {
+    @Published var session: (any FASession)? {
         didSet {
             guard oldValue !== session else { return }
             if session != nil {
@@ -30,28 +30,28 @@ class Model: ObservableObject {
     @Published
     /// nil until a fetch actually happened
     /// After a fetch it contains all found submissions, or an empty array if none was found
-    private (set) var submissionPreviews: [FASubmissionPreview]?
-    private (set) var lastSubmissionPreviewsFetchDate: Date?
+    private(set) var submissionPreviews: [FASubmissionPreview]?
+    private(set) var lastSubmissionPreviewsFetchDate: Date?
     
     @Published
     /// nil until a fetch actually happened
     /// After a fetch it contains all found notes, or an empty array if none was found
-    private (set) var notePreviews: [FANotePreview]?
+    private(set) var notePreviews: [FANotePreview]?
     @Published
-    private (set) var unreadNoteCount = 0
-    private (set) var lastNotePreviewsFetchDate: Date?
+    private(set) var unreadNoteCount = 0
+    private(set) var lastNotePreviewsFetchDate: Date?
     
     /// nil until a fetch actually happened
     /// After a fetch it contains all found notifications, or an empty array if none was found
-    @Published private (set) var notificationPreviews: FASession.NotificationPreviews?
-    @Published private (set) var lastNotificationPreviewsFetchDate: Date?
+    @Published private(set) var notificationPreviews: FANotificationPreviews?
+    @Published private(set) var lastNotificationPreviewsFetchDate: Date?
     
     @Published
-    private (set) var appInfo = AppInformation()
+    private(set) var appInfo = AppInformation()
     private var lastAppInfoUpdate: Date?
 
     private var subscriptions = Set<AnyCancellable>()
-    init(session: FASession? = nil) {
+    init(session: (any FASession)? = nil) {
         self.session = session
         appInfo.objectWillChange.sink {
             self.objectWillChange.send()
@@ -159,7 +159,7 @@ class Model: ObservableObject {
     
     func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) {
         notificationPreviews = notificationPreviews.map { oldNotifications in
-            FASession.NotificationPreviews(
+            FANotificationPreviews(
                 submissionComments: oldNotifications.submissionComments.filter { !notifications.contains($0) },
                 journalComments: oldNotifications.journalComments,
                 journals: oldNotifications.journals
@@ -175,7 +175,7 @@ class Model: ObservableObject {
     
     func deleteJournalCommentNotifications(_ notifications: [FANotificationPreview]) {
         notificationPreviews = notificationPreviews.map { oldNotifications in
-            FASession.NotificationPreviews(
+            FANotificationPreviews(
                 submissionComments: oldNotifications.submissionComments,
                 journalComments: oldNotifications.journalComments.filter { !notifications.contains($0) },
                 journals: oldNotifications.journals
@@ -191,7 +191,7 @@ class Model: ObservableObject {
     
     func deleteJournalNotifications(_ notifications: [FANotificationPreview]) {
         notificationPreviews = notificationPreviews.map { oldNotifications in
-            FASession.NotificationPreviews(
+            FANotificationPreviews(
                 submissionComments: oldNotifications.submissionComments,
                 journalComments: oldNotifications.journalComments,
                 journals: oldNotifications.journals.filter { !notifications.contains($0) }
@@ -224,7 +224,7 @@ class Model: ObservableObject {
     }
     
     
-    private func fetchNotificationPreviews(fetcher: (_ session: FASession) async -> FASession.NotificationPreviews) async {
+    private func fetchNotificationPreviews(fetcher: (_ session: any FASession) async -> FANotificationPreviews) async {
         guard let session else {
             logger.error("Tried to fetch notifications with no active session, skipping")
             return

@@ -12,11 +12,11 @@ struct HomeView: View {
     @State private var checkingConnection = true
     @EnvironmentObject var model: Model
     @State private var showLoginView = false
-    @State private var localSession: FASession?
+    @State private var localSession: OnlineFASession?
     
     func updateSession() async {
         checkingConnection = true
-        let session: FASession?
+        let session: OnlineFASession?
 
         if let localSession {
             session = localSession

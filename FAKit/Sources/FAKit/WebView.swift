@@ -25,7 +25,7 @@ struct WebView: UIViewRepresentable {
         let task = Task { @MainActor in
             await WKWebsiteDataStore.default().httpCookieStore.allCookies()
         }
-        return try! await task.result.get()
+        return await task.result.get()
     }
     
     static func clearCookies() async {
@@ -35,7 +35,7 @@ struct WebView: UIViewRepresentable {
                 await store.deleteCookie(cookie)
             }
         }
-        return try! await task.result.get()
+        return await task.result.get()
     }
     
     func makeUIView(context: Context) -> WKWebView {

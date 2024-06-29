@@ -54,7 +54,7 @@ extension ListedSection {
 extension FANotificationPreview: FANavigable {}
 
 struct NotificationsView: View {
-    var notifications: FASession.NotificationPreviews
+    var notifications: FANotificationPreviews
     var onDeleteSubmissionCommentNotifications: (_ items: [FANotificationPreview]) -> Void
     var onDeleteJournalCommentNotifications: (_ items: [FANotificationPreview]) -> Void
     var onDeleteJournalNotifications: (_ items: [FANotificationPreview]) -> Void

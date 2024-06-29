@@ -11,7 +11,7 @@ import WebKit
 import Cache
 
 public struct FALoginView: View {
-    @Binding var session: FASession?
+    @Binding var session: OnlineFASession?
     @State private var cookies = [HTTPCookie]()
     
     static private let cookieCache: Storage<Int, [CodableHTTPCookie]> = try! Storage(
@@ -20,7 +20,7 @@ public struct FALoginView: View {
         transformer: TransformerFactory.forCodable(ofType: [CodableHTTPCookie].self)
     )
     
-    public init(session: Binding<FASession?>) {
+    public init(session: Binding<OnlineFASession?>) {
         self._session = session
     }
     
@@ -36,7 +36,7 @@ public struct FALoginView: View {
             }
     }
     
-    public static func makeSession(cookies: [HTTPCookie]? = nil) async -> FASession? {
+    public static func makeSession(cookies: [HTTPCookie]? = nil) async -> OnlineFASession? {
         let actualCookies: [HTTPCookie]
         if let cookies {
             actualCookies = cookies
@@ -48,7 +48,7 @@ public struct FALoginView: View {
             }
         }
         
-        let session = await FASession(cookies: actualCookies)
+        let session = await OnlineFASession(cookies: actualCookies)
         if session != nil {
             let codableCookies = actualCookies.map { CodableHTTPCookie($0)! }
             try! cookieCache.setObject(codableCookies, forKey: 0)

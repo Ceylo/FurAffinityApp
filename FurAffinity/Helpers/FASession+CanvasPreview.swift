@@ -9,84 +9,98 @@ import Foundation
 import FAKit
 
 class OfflineFASession: FASession {
+    let username: String
+    let displayUsername: String
     let submissionPreviews: [FASubmissionPreview]
     let notePreviews: [FANotePreview]
+    let notificationPreviews: FANotificationPreviews
     
-    let notificationPreviews: NotificationPreviews
+    static func == (lhs: OfflineFASession, rhs: OfflineFASession) -> Bool {
+        lhs.username == rhs.username
+    }
     
     public init(sampleUsername: String,
                 submissions: [FASubmissionPreview],
                 notes: [FANotePreview],
-                notifications: NotificationPreviews) {
+                notifications: FANotificationPreviews) {
+        self.username = sampleUsername
+        self.displayUsername = sampleUsername
         self.submissionPreviews = submissions
         self.notePreviews = notes
         self.notificationPreviews = notifications
-        super.init(username: sampleUsername, displayUsername: sampleUsername, cookies: [], dataSource: URLSession.sharedForFARequests)
     }
     
-    override func user(for url: URL) async -> FAUser? {
+    func user(for url: URL) async -> FAUser? {
         FAUser.demo
     }
     
-    override func toggleWatch(for user: FAUser) async -> FAUser? {
+    func toggleWatch(for user: FAUser) async -> FAUser? {
         user
     }
     
-    override func submissionPreviews() async -> [FASubmissionPreview] { submissionPreviews }
+    func submissionPreviews() async -> [FASubmissionPreview] { submissionPreviews }
     
-    override func submission(for url: URL) async -> FASubmission? {
+    func submission(for url: URL) async -> FASubmission? {
         FASubmission.demo
     }
     
-    override func nukeSubmissions() async throws {
+    func nukeSubmissions() async throws {
         print(#function)
     }
     
-    override func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async -> C? {
+    func galleryLike(for url: URL) async -> FAUserGalleryLike? {
+        nil
+    }
+    
+    func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async -> C? {
         print(#function)
         return commentable
     }
     
-    override func toggleFavorite(for submission: FASubmission) async -> FASubmission? {
+    func toggleFavorite(for submission: FASubmission) async -> FASubmission? {
         print(#function)
         return submission
     }
     
-    override func notePreviews() async -> [FANotePreview] { notePreviews }
+    func journal(for url: URL) async -> FAJournal? {
+        nil
+    }
     
-    override func note(for url: URL) async -> FANote? {
+    func notePreviews() async -> [FANotePreview] { notePreviews }
+    
+    func note(for url: URL) async -> FANote? {
         FANote.demo
     }
     
-    override func notificationPreviews() async -> NotificationPreviews {
+    func notificationPreviews() async -> FANotificationPreviews {
         notificationPreviews
     }
     
-    override func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) async -> NotificationPreviews {
+    func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews {
         notificationPreviews
     }
     
-    override func deleteJournalCommentNotifications(_ notifications: [FANotificationPreview]) async -> NotificationPreviews {
+    func deleteJournalCommentNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews {
         notificationPreviews
     }
     
-    override func deleteJournalNotifications(_ notifications: [FANotificationPreview]) async -> NotificationPreviews {
+    func deleteJournalNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews {
         notificationPreviews
     }
     
-    override func nukeAllSubmissionCommentNotifications() async -> NotificationPreviews {
+    func nukeAllSubmissionCommentNotifications() async -> FANotificationPreviews {
         notificationPreviews
     }
     
-    override func nukeAllJournalCommentNotifications() async -> NotificationPreviews {
+    func nukeAllJournalCommentNotifications() async -> FANotificationPreviews {
         notificationPreviews
     }
     
-    override func nukeAllJournalNotifications() async -> NotificationPreviews {
+    func nukeAllJournalNotifications() async -> FANotificationPreviews {
         notificationPreviews
     }
     
-    override func avatarUrl(for user: String) async -> URL? {
+    func avatarUrl(for user: String) async -> URL? {
         nil
     }
 }
