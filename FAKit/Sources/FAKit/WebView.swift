@@ -25,7 +25,11 @@ struct WebView: UIViewRepresentable {
         let task = Task { @MainActor in
             await WKWebsiteDataStore.default().httpCookieStore.allCookies()
         }
+#if swift(>=6)
         return await task.result.get()
+#else
+        return try! await task.result.get()
+#endif
     }
     
     static func clearCookies() async {
@@ -35,7 +39,11 @@ struct WebView: UIViewRepresentable {
                 await store.deleteCookie(cookie)
             }
         }
+#if swift(>=6)
         return await task.result.get()
+#else
+        return try! await task.result.get()
+#endif
     }
     
     func makeUIView(context: Context) -> WKWebView {

@@ -69,9 +69,16 @@ struct RemoteView<Contents: Sendable, ContentsView: View>: View, UpdateHandler {
     
     func update() async {
         let contents = await contentsLoader()
+        #if swift(>=6)
         update(with: contents)
+        #else
+        await update(with: contents)
+        #endif
     }
 
+    #if swift(<6)
+    @MainActor
+    #endif
     func update(with contents: Contents?) {
         if let contents {
             self.contentsState = .loaded(contents)
