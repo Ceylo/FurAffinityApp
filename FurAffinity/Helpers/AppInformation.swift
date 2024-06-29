@@ -18,7 +18,7 @@ struct Release: Decodable {
     let body: String
     
     var version: Version {
-        Version(tolerant: tag_name) ?? .null
+        Version(tolerant: tag_name) ?? Version(0,0,0)
     }
 }
 
