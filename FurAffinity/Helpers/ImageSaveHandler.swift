@@ -16,6 +16,7 @@ enum ActionState: Identifiable, CaseIterable {
     var id: Self { self }
 }
 
+@MainActor
 class ImageSaveHandler: NSObject, ObservableObject {
     @Published var state: ActionState = .none
     
@@ -31,7 +32,8 @@ class ImageSaveHandler: NSObject, ObservableObject {
     @objc func image(_ image: UIImage, didFinishSavingWithError error: NSError?, contextInfo: UnsafeRawPointer)  {
         state = error == nil ? .succeeded : .failed
         
-        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
+        Task { [weak self] in
+            try await Task.sleep(for: .seconds(2))
             guard let self = self else { return }
             if self.state != .inProgress {
                 self.state = .none

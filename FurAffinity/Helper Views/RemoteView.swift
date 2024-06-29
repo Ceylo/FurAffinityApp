@@ -8,7 +8,7 @@
 import SwiftUI
 
 protocol UpdateHandler<Contents> {
-    associatedtype Contents
+    associatedtype Contents: Sendable
     
     @MainActor
     func update(with contents: Contents?)
@@ -18,7 +18,7 @@ protocol UpdateHandler<Contents> {
 /// - displaying a progress until content becomes available
 /// - allowing pull to refresh
 /// - giving web access to the content
-struct RemoteView<Contents, ContentsView: View>: View, UpdateHandler {
+struct RemoteView<Contents: Sendable, ContentsView: View>: View, UpdateHandler {
     var url: URL
     var contentsLoader: () async -> Contents?
     var contentsViewBuilder: (

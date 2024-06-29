@@ -1,6 +1,6 @@
 //
 //  OnlineFASession.swift
-//  
+//
 //
 //  Created by Ceylo on 30/06/2024.
 //
@@ -15,7 +15,8 @@ private extension Expiry {
     }
 }
 
-public actor OnlineFASession: FASession {
+@MainActor
+public class OnlineFASession: FASession {
     enum Error: String, Swift.Error {
         case requestFailure
     }
@@ -37,7 +38,7 @@ public actor OnlineFASession: FASession {
         )
     }
     
-    public static func == (lhs: OnlineFASession, rhs: OnlineFASession) -> Bool {
+    nonisolated public static func == (lhs: OnlineFASession, rhs: OnlineFASession) -> Bool {
         lhs.username == rhs.username
     }
     
@@ -271,7 +272,7 @@ extension OnlineFASession {
     /// Initialize a FASession from the given session cookies.
     /// - Parameter cookies: The cookies for furaffinity.net after the user is logged
     /// in through a usual web browser.
-    public init?(cookies: [HTTPCookie], dataSource: HTTPDataSource = URLSession.sharedForFARequests) async {
+    public convenience init?(cookies: [HTTPCookie], dataSource: HTTPDataSource = URLSession.sharedForFARequests) async {
         guard cookies.map(\.name).contains("a"),
               let data = await dataSource.httpData(from: FAURLs.homeUrl, cookies: cookies),
               let page = FAHomePage(data: data, baseUri: FAURLs.homeUrl)

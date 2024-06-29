@@ -10,12 +10,12 @@ import FAPages
 import SwiftGraph
 import OrderedCollections
 
-public enum FAComment: Equatable {
+public enum FAComment: Equatable, Sendable {
     case visible(FAVisibleComment)
     case hidden(FAHiddenComment)
 }
 
-public struct FAVisibleComment: Equatable {
+public struct FAVisibleComment: Equatable, Sendable {
     public let cid: Int
     public let author: String
     public let displayAuthor: String
@@ -38,7 +38,7 @@ public struct FAVisibleComment: Equatable {
     }
 }
 
-public struct FAHiddenComment: Equatable {
+public struct FAHiddenComment: Equatable, Sendable {
     public let cid: Int
     public let message: AttributedString
     public let answers: [FAComment]

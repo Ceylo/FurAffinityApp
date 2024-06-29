@@ -8,7 +8,7 @@
 import Foundation
 import FAPages
 
-public struct FASubmission: Equatable {
+public struct FASubmission: Equatable, Sendable {
     public let url: URL
     public let previewImageUrl: URL
     public let fullResolutionImageUrl: URL

@@ -8,7 +8,7 @@
 import Foundation
 import FAPages
 
-public struct FANote: Equatable {
+public struct FANote: Equatable, Sendable {
     public let author: String
     public let displayAuthor: String
     public let title: String

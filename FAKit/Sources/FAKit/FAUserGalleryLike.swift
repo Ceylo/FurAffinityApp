@@ -9,7 +9,7 @@ import Foundation
 import FAPages
 
 /// The representation for a gallery-like page (gallery, scraps, favorites)
-public struct FAUserGalleryLike {
+public struct FAUserGalleryLike: Sendable {
     public let displayAuthor: String
     public let previews: [FASubmissionPreview]
     

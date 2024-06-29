@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-public struct DynamicThumbnail: Hashable {
+public struct DynamicThumbnail: Hashable, Sendable {
     private let thumbnailUrl: URL
     
     public init(thumbnailUrl: URL) {

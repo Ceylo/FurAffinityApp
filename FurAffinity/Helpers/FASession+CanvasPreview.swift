@@ -8,6 +8,7 @@
 import Foundation
 import FAKit
 
+@MainActor
 class OfflineFASession: FASession {
     let username: String
     let displayUsername: String
@@ -15,7 +16,7 @@ class OfflineFASession: FASession {
     let notePreviews: [FANotePreview]
     let notificationPreviews: FANotificationPreviews
     
-    static func == (lhs: OfflineFASession, rhs: OfflineFASession) -> Bool {
+    nonisolated static func == (lhs: OfflineFASession, rhs: OfflineFASession) -> Bool {
         lhs.username == rhs.username
     }
     

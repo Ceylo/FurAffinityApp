@@ -8,7 +8,7 @@
 import Foundation
 import FAPages
 
-public struct FAUser: Equatable {
+public struct FAUser: Equatable, Sendable {
     public let name: String
     public let displayName: String
     public let avatarUrl: URL

@@ -8,7 +8,7 @@
 import Foundation
 import FAPages
 
-public struct FANotificationPreviews: Equatable {
+public struct FANotificationPreviews: Equatable, Sendable {
     public let submissionComments: [FANotificationPreview]
     public let journalComments: [FANotificationPreview]
     public let journals: [FANotificationPreview]
@@ -30,6 +30,7 @@ public struct FANotificationPreviews: Equatable {
     }
 }
 
+@MainActor
 public protocol FASession: AnyObject, Equatable {
     var username: String { get }
     var displayUsername: String { get }

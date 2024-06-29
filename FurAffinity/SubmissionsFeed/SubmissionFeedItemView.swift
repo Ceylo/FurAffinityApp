@@ -10,6 +10,7 @@ import FAKit
 import URLImage
 
 protocol SubmissionHeaderView: View {
+    @MainActor
     init(preview: FASubmissionPreview, avatarUrl: URL?)
 }
 

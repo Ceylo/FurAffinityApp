@@ -34,7 +34,7 @@ func inAppUserUrl(for username: String) -> URL? {
     FAURLs.userpageUrl(for: username)?.convertedForInAppNavigation
 }
 
-@ViewBuilder
+@MainActor @ViewBuilder
 func view(for url: FAURL) -> some View {
     switch url {
     case let .submission(url, previewData):

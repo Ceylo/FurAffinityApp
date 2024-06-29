@@ -46,7 +46,7 @@ struct AuthoredHeaderView: View {
 }
 
 extension AuthoredHeaderView: SubmissionHeaderView {
-    init(preview: FAKit.FASubmissionPreview, avatarUrl: URL?) {
+    init(preview: FASubmissionPreview, avatarUrl: URL?) {
         self.init(
             username: preview.author,
             displayName: preview.displayAuthor,
