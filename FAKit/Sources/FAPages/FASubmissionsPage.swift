@@ -6,10 +6,10 @@
 //
 
 import Foundation
-import SwiftSoup
+@preconcurrency import SwiftSoup
 
-public struct FASubmissionsPage {
-    public struct Submission: Equatable {
+public struct FASubmissionsPage: Sendable {
+    public struct Submission: Equatable, Sendable {
         public init(sid: Int, url: URL, thumbnailUrl: URL, thumbnailWidthOnHeightRatio: Float, title: String, author: String, displayAuthor: String) {
             self.sid = sid
             self.url = url
@@ -44,7 +44,7 @@ extension FASubmissionsPage {
             let doc = try SwiftSoup.parse(string, baseUri.absoluteString)
             
             let itemsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div#messages-comments-submission div#messagecenter-submissions section figure"
-            let items = try doc.select(itemsQuery).array()
+            let items = try doc.select(itemsQuery)
             
             async let submissions = items.parallelMap { Submission($0) }
             let buttonsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div.aligncenter a"

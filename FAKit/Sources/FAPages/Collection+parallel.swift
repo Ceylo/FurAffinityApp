@@ -7,8 +7,8 @@
 
 import Foundation
 
-extension Collection {
-    func parallelMap<T>(_ transform: @escaping (Self.Element) throws -> T) async rethrows -> [T] {
+extension Collection where Element: Sendable {
+    func parallelMap<T: Sendable>(_ transform: @Sendable @escaping (Self.Element) throws -> T) async rethrows -> [T] {
         try await withThrowingTaskGroup(of: (Int, T).self) { group in
             for (offset, element) in enumerated() {
                 group.addTask {

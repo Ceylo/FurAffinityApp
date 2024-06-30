@@ -8,8 +8,6 @@
 import SwiftUI
 import FAKit
 
-extension FANotePreview: Identifiable {}
-
 struct NotesView: View {
     @EnvironmentObject var model: Model
     

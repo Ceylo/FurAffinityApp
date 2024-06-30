@@ -6,9 +6,9 @@
 //
 
 import Foundation
-import SwiftSoup
+@preconcurrency import SwiftSoup
 
-public struct FAUserGalleryLikePage {
+public struct FAUserGalleryLikePage: Sendable {
     public let previews: [FASubmissionsPage.Submission?]
     public let displayAuthor: String
 }
@@ -26,7 +26,7 @@ extension FAUserGalleryLikePage {
                 "html body div#main-window div#site-content"
             )
             let itemsQuery = "section.gallery-section div.section-body section figure"
-            let items = try siteContentNode.select(itemsQuery).array()
+            let items = try siteContentNode.select(itemsQuery)
             async let previews = items.parallelMap { FASubmissionsPage.Submission($0) }
             
             let userNode = try siteContentNode.select(

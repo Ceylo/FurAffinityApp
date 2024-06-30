@@ -6,10 +6,10 @@
 //
 
 import Foundation
-import SwiftSoup
+@preconcurrency import SwiftSoup
 
-public struct FANotesPage: Equatable {
-    public struct NoteHeader: Equatable {
+public struct FANotesPage: Equatable, Sendable {
+    public struct NoteHeader: Equatable, Sendable {
         public let id: Int
         public let author: String
         public let displayAuthor: String

@@ -60,6 +60,11 @@ struct WebView: UIViewRepresentable {
         Coordinator(self)
     }
     
+    static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
+        coordinator.dismantle()
+    }
+    
+    @MainActor
     class Coordinator: NSObject, WKNavigationDelegate, WKHTTPCookieStoreObserver {
         weak var request: WKNavigation?
         
@@ -75,8 +80,16 @@ struct WebView: UIViewRepresentable {
         }
         
         deinit {
+            // Local declaration needed for this error (Xcode 16.0 beta 2):
+            // Main actor-isolated property 'observedCookieStore' can not be referenced from a non-isolated autoclosure
+            let observedCookieStore = observedCookieStore
+            assert(observedCookieStore == nil)
+        }
+        
+        func dismantle() {
             if let store = observedCookieStore {
                 store.remove(self)
+                observedCookieStore = nil
             }
         }
         
@@ -93,8 +106,8 @@ struct WebView: UIViewRepresentable {
                 if let store = observedCookieStore {
                     store.remove(self)
                 }
-                observedCookieStore = view.configuration.websiteDataStore.httpCookieStore
-                observedCookieStore?.add(self)
+                newStore.add(self)
+                observedCookieStore = newStore
             }
         }
         

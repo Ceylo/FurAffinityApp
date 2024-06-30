@@ -8,10 +8,6 @@
 import SwiftUI
 import FAKit
 
-extension FAComment: Identifiable {
-    public var id: Int { cid }
-}
-
 struct CommentsView: View {
     var comments: [FAComment]
     var replyAction: ((_ cid: Int) -> Void)?

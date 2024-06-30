@@ -36,5 +36,6 @@ let package = Package(
             resources: [
                 .copy("data"),
             ]),
-    ]
+    ],
+    swiftLanguageVersions: [.v6]
 )

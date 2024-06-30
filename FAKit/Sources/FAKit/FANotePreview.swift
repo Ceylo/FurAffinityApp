@@ -8,7 +8,7 @@
 import Foundation
 import FAPages
 
-public struct FANotePreview: Equatable, Hashable, Sendable {
+public struct FANotePreview: Hashable, Identifiable, Sendable {
     public let id: Int
     public let author: String
     public let displayAuthor: String

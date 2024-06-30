@@ -7,14 +7,14 @@
 
 import Foundation
 
-public enum HTTPMethod: String, CustomStringConvertible {
+public enum HTTPMethod: String, CustomStringConvertible, Sendable {
     public var description: String { rawValue }
     
     case GET
     case POST
 }
 
-public protocol HTTPDataSource {
+public protocol HTTPDataSource: Sendable {
     func httpData(from url: URL, cookies: [HTTPCookie]?,
                   method: HTTPMethod,
                   parameters: [URLQueryItem]) async -> Data?

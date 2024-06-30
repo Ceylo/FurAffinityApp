@@ -79,6 +79,10 @@ extension FAComment {
     }
 }
 
+extension FAComment: Identifiable {
+    public var id: Int { cid }
+}
+
 extension FAComment {
     init(_ comment: FAVisiblePageComment) throws {
         self = try .visible(.init(
