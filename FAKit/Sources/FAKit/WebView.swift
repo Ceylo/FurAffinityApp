@@ -64,7 +64,9 @@ struct WebView: UIViewRepresentable {
         coordinator.dismantle()
     }
     
+#if swift(>=6)
     @MainActor
+#endif
     class Coordinator: NSObject, WKNavigationDelegate, WKHTTPCookieStoreObserver {
         weak var request: WKNavigation?
         
