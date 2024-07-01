@@ -1,112 +1,112 @@
 {
   "images" : [
     {
+      "filename" : "logo_final4-20@2x.png",
       "idiom" : "iphone",
       "scale" : "2x",
-      "size" : "20x20",
-      "filename" : "wolf2-20@2x.png",
+      "size" : "20x20"
     },
     {
-      "idiom" : "iphone",
-      "scale" : "3x",
-      "size" : "20x20",
-      "filename" : "wolf2-20@3x.png",
-    },
-    {
-      "idiom" : "iphone",
-      "scale" : "2x",
-      "size" : "29x29",
-      "filename" : "wolf2-29@2x.png",
-    },
-    {
+      "filename" : "logo_final4-20@3x.png",
       "idiom" : "iphone",
       "scale" : "3x",
-      "size" : "29x29",
-      "filename" : "wolf2-29@3x.png",
+      "size" : "20x20"
     },
     {
+      "filename" : "logo_final4-29@2x.png",
       "idiom" : "iphone",
       "scale" : "2x",
-      "size" : "40x40",
-      "filename" : "wolf2-40@2x.png",
+      "size" : "29x29"
     },
     {
-      "idiom" : "iphone",
-      "scale" : "3x",
-      "size" : "40x40",
-      "filename" : "wolf2-40@3x.png",
-    },
-    {
-      "idiom" : "iphone",
-      "scale" : "2x",
-      "size" : "60x60",
-      "filename" : "wolf2-60@2x.png",
-    },
-    {
+      "filename" : "logo_final4-29@3x.png",
       "idiom" : "iphone",
       "scale" : "3x",
-      "size" : "60x60",
-      "filename" : "wolf2-60@3x.png",
+      "size" : "29x29"
     },
     {
+      "filename" : "logo_final4-40@2x.png",
+      "idiom" : "iphone",
+      "scale" : "2x",
+      "size" : "40x40"
+    },
+    {
+      "filename" : "logo_final4-40@3x.png",
+      "idiom" : "iphone",
+      "scale" : "3x",
+      "size" : "40x40"
+    },
+    {
+      "filename" : "logo_final4-60@2x.png",
+      "idiom" : "iphone",
+      "scale" : "2x",
+      "size" : "60x60"
+    },
+    {
+      "filename" : "logo_final4-60@3x.png",
+      "idiom" : "iphone",
+      "scale" : "3x",
+      "size" : "60x60"
+    },
+    {
+      "filename" : "logo_final4-20.png",
       "idiom" : "ipad",
       "scale" : "1x",
-      "size" : "20x20",
-      "filename" : "wolf2-20.png",
+      "size" : "20x20"
     },
     {
+      "filename" : "logo_final4-20@2x.png",
       "idiom" : "ipad",
       "scale" : "2x",
-      "size" : "20x20",
-      "filename" : "wolf2-20@2x.png",
+      "size" : "20x20"
     },
     {
+      "filename" : "logo_final4-29.png",
       "idiom" : "ipad",
       "scale" : "1x",
-      "size" : "29x29",
-      "filename" : "wolf2-29.png",
+      "size" : "29x29"
     },
     {
+      "filename" : "logo_final4-29@2x.png",
       "idiom" : "ipad",
       "scale" : "2x",
-      "size" : "29x29",
-      "filename" : "wolf2-29@2x.png",
+      "size" : "29x29"
     },
     {
+      "filename" : "logo_final4-40.png",
       "idiom" : "ipad",
       "scale" : "1x",
-      "size" : "40x40",
-      "filename" : "wolf2-40.png",
+      "size" : "40x40"
     },
     {
+      "filename" : "logo_final4-40@2x.png",
       "idiom" : "ipad",
       "scale" : "2x",
-      "size" : "40x40",
-      "filename" : "wolf2-40@2x.png",
+      "size" : "40x40"
     },
     {
+      "filename" : "logo_final4-76.png",
       "idiom" : "ipad",
       "scale" : "1x",
-      "size" : "76x76",
-      "filename" : "wolf2-76.png",
+      "size" : "76x76"
     },
     {
+      "filename" : "logo_final4-76@2x.png",
       "idiom" : "ipad",
       "scale" : "2x",
-      "size" : "76x76",
-      "filename" : "wolf2-76@2x.png",
+      "size" : "76x76"
     },
     {
+      "filename" : "logo_final4-83.5@2x.png",
       "idiom" : "ipad",
       "scale" : "2x",
-      "size" : "83.5x83.5",
-      "filename" : "wolf2-83.5@2x.png",
+      "size" : "83.5x83.5"
     },
     {
+      "filename" : "logo_final4-1024.png",
       "idiom" : "ios-marketing",
       "scale" : "1x",
-      "size" : "1024x1024",
-      "filename" : "wolf2-1024.png",
+      "size" : "1024x1024"
     }
   ],
   "info" : {
