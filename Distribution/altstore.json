@@ -1,0 +1,68 @@
+{
+  "name": "Ceylo's Apps Hub",
+  "subtitle": "github.com/Ceylo",
+  "description": null,
+  "website": null,
+  "iconURL": null,
+  "headerURL": null,
+  "tintColor": null,
+  "apps": [
+    {
+      "name": "Fur Affinity",
+      "bundleIdentifier": "ceylo.FurAffinity",
+      "marketplaceID": null,
+      "developerName": "Ceylo",
+      "subtitle": "An unofficial native app for the furaffinity.net website.",
+      "localizedDescription": "Connect with your furaffinity.net account and enjoy the furry community in a native app.\n\nFEATURES\n- Browse the latest submissions from your followed artists, add favorites and leave comments!\n- Read and participate to artists journals.\n- Check received notes and notifications.\n- Browse user profiles to check their content and eventually follow them!\n\nThis app is opensource and its sources are available at https://github.com/Ceylo/FurAffinityApp",
+      "iconURL": "https://furaffinity-app.yalir.org/fa-app-icon.heic",
+      "tintColor": null,
+      "category": "social",
+      "screenshots": [
+        {
+          "height": 2532,
+          "imageURL": "https://furaffinity-app.yalir.org/screenshots/IMG_7965.heic",
+          "width": 1170
+        },
+        {
+          "height": 2532,
+          "imageURL": "https://furaffinity-app.yalir.org/screenshots/IMG_7980.heic",
+          "width": 1170
+        },
+        {
+          "height": 2532,
+          "imageURL": "https://furaffinity-app.yalir.org/screenshots/IMG_7968.heic",
+          "width": 1170
+        },
+        {
+          "height": 2532,
+          "imageURL": "https://furaffinity-app.yalir.org/screenshots/IMG_7979.heic",
+          "width": 1170
+        },
+        {
+          "height": 2532,
+          "imageURL": "https://furaffinity-app.yalir.org/screenshots/IMG_7969.heic",
+          "width": 1170
+        }
+      ],
+      "versions": [
+        {
+          "version": "1.7",
+          "date": "2023-05-11T22:22:58+02:00",
+          "localizedDescription": "FEATURES\n\n- Extended in app navigation: opening links to journals now displays them within the app. Journals feature the same controls (including comments) as submissions, except the Download and Favorite controls.\n- New \"Notifications\" tab: this lists all submission comment and journal notifications from https://www.furaffinity.net/msg/others/ and lets you jump to the corresponding submission or journal from there.\nThe \"Notifications\" screen provides a control in top right to nuke all submission comment or journal notifications.\n- Draft comments on the current submission or journal are saved until posted. So you can freely go back and check the submission or journal details before continuing your own comment. Leaving the submission or journal will discard the draft.\n- The comment editor now displays the comment you're answering to.",
+          "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.7.0/FurAffinity-1.7.0-db72f89.ipa",
+          "size": 1513038,
+          "sha256": "09a6f27f9d77b7857a99dc172f0ddeb781bc08096f24ef4a46104344c15744ad",
+          "minOSVersion": "16.1"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [
+          "get-task-allow"
+        ],
+        "privacy": {
+          "NSPhotoLibraryAddUsageDescription": "Chosen images will be saved to the Photo Library."
+        }
+      }
+    }
+  ]
+}
