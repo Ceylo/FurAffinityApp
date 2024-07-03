@@ -45,7 +45,7 @@ The [furaffinity.net](https://www.furaffinity.net) website does not only host SF
 - Follow [these steps](https://faq.altstore.io) to install AltStore and AltServer if not already done.
 - From AltStore app on your iPhone, go to `Sources`, touch `+` icon in top left and paste the https://furaffinity-app.yalir.org/altstore.json url and touch the `+` button next to the displayed `Ceylo's Apps Hub` source to add it. This will give you access to all apps and their updates that I publish, all from within AltStore.
 - Now you can find the `Fur Affinity` app from the `Browse` tab and install it. Enjoy!
-<img alt="App preview in AltStore" width="585px" src="https://github.com/Ceylo/FurAffinityApp/assets/451334/6a9db988-a6d8-478a-be22-dbcb36728ff1" />
+<img alt="App preview in AltStore" width="390px" src="https://github.com/Ceylo/FurAffinityApp/assets/451334/6a9db988-a6d8-478a-be22-dbcb36728ff1" />
 
 ### Direct sideloading
 The [releases page](https://github.com/Ceylo/FurAffinityApp/releases) provides the IPA file for each release, so you can of course sideload this file with your preferred tool.
