@@ -9,8 +9,6 @@ import SwiftUI
 import FAKit
 import URLImage
 import URLImageStore
-import AppCenter
-import AppCenterAnalytics
 
 @main
 struct FurAffinityApp: App {
@@ -25,7 +23,7 @@ struct FurAffinityApp: App {
         let device = UIDevice.current
         logger.info("Launched FurAffinity \(Bundle.main.version, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public)")
 #if !targetEnvironment(simulator)
-        AppCenter.start(withAppSecret: Secrets.appCenterApiKey, services: [Analytics.self])
+        // TODO: Analytics
 #endif
     }
 
