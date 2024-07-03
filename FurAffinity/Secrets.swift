@@ -8,5 +8,5 @@
 import Foundation
 
 enum Secrets {
-    static let appCenterApiKey = "Your App Secret"
+    static let amplitudeApiKey = "Your App Secret"
 }

@@ -9,6 +9,7 @@ import SwiftUI
 import FAKit
 import URLImage
 import URLImageStore
+import AmplitudeSwift
 
 @main
 struct FurAffinityApp: App {
@@ -18,12 +19,16 @@ struct FurAffinityApp: App {
         let fields = URLSessionConfiguration.httpHeadersForFARequests
         return .init(urlRequestConfiguration: .init(allHTTPHeaderFields: fields))
     }()
+    @State private var amplitude: Amplitude?
     
     init() {
         let device = UIDevice.current
         logger.info("Launched FurAffinity \(Bundle.main.version, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public)")
 #if !targetEnvironment(simulator)
-        // TODO: Analytics
+        amplitude = Amplitude(configuration: Configuration(
+            apiKey: Secrets.amplitudeApiKey,
+            defaultTracking: .ALL
+        ))
 #endif
     }
 
