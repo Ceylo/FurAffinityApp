@@ -28,22 +28,27 @@ This project is written to be able to benefit from [furaffinity.net](https://www
   - [x] Submission download & fav
   - [x] Description
   - [x] Sharing and [Hand-Off](https://support.apple.com/en-gb/HT209455) support
-  - [x] Comments (read & write)
+  - [x] Comments threads (read & write)
 - [x] User profile browsing:
   - [x] Main description
   - [x] Shouts
   - [x] Gallery, scraps and favorites
+  - [x] Follow/unfollow
 - [ ] iOS notifications
 - [ ] Exploration
 
 ## Installation
-The [furaffinity.net](https://www.furaffinity.net) website hosts NSFW content in addition to SFW content. This prevents such application from being distributed through the official App Store. Nervertheless it can still be used on your own device through sideloading (manual installation through a .ipa file), for instance with [AltStore](https://altstore.io) or, if you are a developer, [by installing the app on your device with Xcode](https://developer.apple.com/documentation/xcode/running-your-app-in-simulator-or-on-a-device). In the future installation may become simpler thanks to [new EU regulations forcing Apple to allow sideloading](https://www.theverge.com/2022/3/25/22996248/apple-sideloading-apps-store-third-party-eu-dma-requirement).
+The [furaffinity.net](https://www.furaffinity.net) website does not only host SFW content. This prevents such application from being distributed through Apple's App Store (although it's not stopping apps like Twitter or Bluesky, but… 🤷). Nervertheless it can still be used on your own device through sideloading (manual installation through a .ipa file), for instance with [AltStore](https://altstore.io) or, if you are a developer, [by installing the app on your device with Xcode](https://developer.apple.com/documentation/xcode/running-your-app-in-simulator-or-on-a-device). In the near future, installation should become simpler thanks to [new EU regulations forcing Apple to allow sideloading](https://developer.apple.com/support/dma-and-apps-in-the-eu/). In particular, I have plans to distribute the app through [AltStore PAL](https://rileytestut.com/blog/2024/04/17/introducing-altstore-pal/) alternative marketplace, once their developers accept submissions for third-party apps.
 
 ### Installation with AltStore
 [AltStore](https://altstore.io) is an application on iPhone that can install applications to your device without needing approval from Apple. To do so, it interacts with a program named AltServer installed on your Windows or macOS computer.
-- Follow [these steps](https://faq.altstore.io) to install AltStore and AltServer if not already done. 
-- From your iPhone web browser, go the [releases](https://github.com/Ceylo/FurAffinityApp/releases) page and download the latest IPA file.
-- From AltStore app on your iPhone, go to "My Apps" tab, touch "+" icon in top left and select the IPA file you just downloaded.
+- Follow [these steps](https://faq.altstore.io) to install AltStore and AltServer if not already done.
+- From AltStore app on your iPhone, go to `Sources`, touch `+` icon in top left and paste the https://furaffinity-app.yalir.org/altstore.json url and touch the `+` button next to the displayed `Ceylo's Apps Hub` source to add it. This will give you access to all apps and their updates that I publish, all from within AltStore.
+- Now you can find the `Fur Affinity` app from the `Browse` tab and install it. Enjoy!
+<img alt="App preview in AltStore" width="390px" src="https://github.com/Ceylo/FurAffinityApp/assets/451334/6a9db988-a6d8-478a-be22-dbcb36728ff1" />
+
+### Direct sideloading
+The [releases page](https://github.com/Ceylo/FurAffinityApp/releases) provides the IPA file for each release, so you can of course sideload this file with your preferred tool.
 
 ## Can I trust this app?
 The application is unofficial so you may wonder if it's trying to steal your Fur Affinity account or some other personal information. The fact that you have access to the full source code lets you check how it works and specifically the fact that no password is ever known to the application. The app also does not try to use any personal information beyond what is stricly necessary to let the application run: it reads the submissions listed on your account only to give you access to them in the app, etc.
