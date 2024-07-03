@@ -19,17 +19,25 @@ struct FurAffinityApp: App {
         let fields = URLSessionConfiguration.httpHeadersForFARequests
         return .init(urlRequestConfiguration: .init(allHTTPHeaderFields: fields))
     }()
-    @State private var amplitude: Amplitude?
+    @State private var amplitude: Amplitude
     
     init() {
         let device = UIDevice.current
         logger.info("Launched FurAffinity \(Bundle.main.version, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public)")
-#if !targetEnvironment(simulator)
-        amplitude = Amplitude(configuration: Configuration(
+        let trackingOptions = TrackingOptions()
+        trackingOptions.disableTrackCity()
+        trackingOptions.disableTrackRegion()
+        trackingOptions.disableTrackCarrier()
+        trackingOptions.disableTrackDMA()
+        trackingOptions.disableTrackIpAddress()
+        trackingOptions.disableTrackIDFV()
+        
+        let config = Configuration(
             apiKey: Secrets.amplitudeApiKey,
+            trackingOptions: trackingOptions,
             defaultTracking: .ALL
-        ))
-#endif
+        )
+        amplitude = Amplitude(configuration: config)
     }
 
     var body: some Scene {
