@@ -1,5 +1,6 @@
 {
   "name": "Ceylo's Apps Hub",
+  "identifier": "ceylo.apps",
   "subtitle": "github.com/Ceylo",
   "description": null,
   "website": null,
@@ -17,6 +18,7 @@
       "iconURL": "https://furaffinity-app.yalir.org/fa-app-icon.heic",
       "tintColor": null,
       "category": "social",
+      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.8.0/FurAffinity-1.8.0-58b3697.ipa",
       "screenshots": [
         {
           "height": 2532,
@@ -43,6 +45,13 @@
           "imageURL": "https://furaffinity-app.yalir.org/screenshots/IMG_7969.heic",
           "width": 1170
         }
+      ],
+      "screenshotURLs": [
+        "https://furaffinity-app.yalir.org/screenshots/IMG_7965.heic",
+        "https://furaffinity-app.yalir.org/screenshots/IMG_7980.heic",
+        "https://furaffinity-app.yalir.org/screenshots/IMG_7968.heic",
+        "https://furaffinity-app.yalir.org/screenshots/IMG_7979.heic",
+        "https://furaffinity-app.yalir.org/screenshots/IMG_7969.heic"
       ],
       "versions": [
         {
