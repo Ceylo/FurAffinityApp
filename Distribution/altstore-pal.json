@@ -1,0 +1,65 @@
+{
+  "name": "Ceylo's Apps Hub",
+  "subtitle": "github.com/Ceylo",
+  "description": null,
+  "website": null,
+  "iconURL": null,
+  "headerURL": null,
+  "tintColor": null,
+  "apps": [
+    {
+      "name": "Fur Affinity",
+      "bundleIdentifier": "ceylo.FurAffinity",
+      "marketplaceID": "6505120829",
+      "developerName": "Ceylo",
+      "subtitle": "An unofficial native app for the furaffinity.net website.",
+      "localizedDescription": "Connect with your furaffinity.net account and enjoy the furry community in a native app.\n\nFEATURES\n- Browse the latest submissions from your followed artists, add favorites and leave comments!\n- Read and participate to artists journals.\n- Check received notes and notifications.\n- Browse user profiles to check their content and eventually follow them!\n\nThis app is opensource and its sources are available at https://github.com/Ceylo/FurAffinityApp",
+      "iconURL": "https://get.furaffinity.app/altstore/fa-app-icon.heic",
+      "tintColor": null,
+      "category": "social",
+      "screenshots": [
+        {
+          "height": 2532,
+          "imageURL": "https://get.furaffinity.app/altstore/screenshots/IMG_7965.heic",
+          "width": 1170
+        },
+        {
+          "height": 2532,
+          "imageURL": "https://get.furaffinity.app/altstore/screenshots/IMG_7980.heic",
+          "width": 1170
+        },
+        {
+          "height": 2532,
+          "imageURL": "https://get.furaffinity.app/altstore/screenshots/IMG_7968.heic",
+          "width": 1170
+        },
+        {
+          "height": 2532,
+          "imageURL": "https://get.furaffinity.app/altstore/screenshots/IMG_7979.heic",
+          "width": 1170
+        },
+        {
+          "height": 2532,
+          "imageURL": "https://get.furaffinity.app/altstore/screenshots/IMG_7969.heic",
+          "width": 1170
+        }
+      ],
+      "versions": [
+        {
+          "version": "1.8",
+          "buildVersion": "1",
+          "date": "2024-07-02T12:32:38+02:00",
+          "localizedDescription": "FEATURES\n- User view now gives access to the user's gallery, scraps, favorites and shouts. Users can also be followed or unfollowed.\n- Hide furaffinity.net latency on submissions loading by first displaying the thumbnail when possible\n- Display hidden/deleted comments in comment threads\n- Display journal comment notifications in the Notifications tab\n- Display the number of favorites and comments next to their respective controls in submissions\n- Notes sent by a deleted user are now properly displayed\n- New app icon designed by [BAKA.RASU](https://www.instagram.com/baka.rasu/) 🎉\n\nMISC\n- More resilient notifications loading\n- Preserve link color as chosen by FA users instead of forcing it to be blue\n- Many UI improvements, including in particular clearer comments UI through the use of bubbles\n\nBUG FIXES\n- Fix crash when deleting a notification\n- Fix transparent tab bar on iOS 17\n- Fixed temporarily incorrect contents layout when loading a submission, note or journal\n- Fix loading of the user view for banned users",
+          "downloadURL": "https://get.furaffinity.app/altstore/releases/1.8/",
+          "size": 1408467,
+          "minOSVersion": "16.1"
+        }
+      ],
+      "appPermissions": {
+        "privacy": {
+          "NSPhotoLibraryAddUsageDescription": "Chosen images will be saved to the Photo Library."
+        }
+      }
+    }
+  ]
+}
