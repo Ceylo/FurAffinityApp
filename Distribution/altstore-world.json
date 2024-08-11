@@ -15,43 +15,43 @@
       "developerName": "Ceylo",
       "subtitle": "An unofficial native app for the furaffinity.net website.",
       "localizedDescription": "Connect with your furaffinity.net account and enjoy the furry community in a native app.\n\nFEATURES\n- Browse the latest submissions from your followed artists, add favorites and leave comments!\n- Read and participate to artists journals.\n- Check received notes and notifications.\n- Browse user profiles to check their content and eventually follow them!\n\nThis app is opensource and its sources are available at https://github.com/Ceylo/FurAffinityApp",
-      "iconURL": "https://furaffinity-app.yalir.org/fa-app-icon.heic",
+      "iconURL": "https://get.furaffinity.app/altstore-world/fa-app-icon.heic",
       "tintColor": null,
       "category": "social",
       "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.8.0/FurAffinity-1.8.0-58b3697.ipa",
       "screenshots": [
         {
           "height": 2532,
-          "imageURL": "https://furaffinity-app.yalir.org/screenshots/IMG_7965.heic",
+          "imageURL": "https://get.furaffinity.app/altstore-world/screenshots/IMG_7965.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://furaffinity-app.yalir.org/screenshots/IMG_7980.heic",
+          "imageURL": "https://get.furaffinity.app/altstore-world/screenshots/IMG_7980.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://furaffinity-app.yalir.org/screenshots/IMG_7968.heic",
+          "imageURL": "https://get.furaffinity.app/altstore-world/screenshots/IMG_7968.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://furaffinity-app.yalir.org/screenshots/IMG_7979.heic",
+          "imageURL": "https://get.furaffinity.app/altstore-world/screenshots/IMG_7979.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://furaffinity-app.yalir.org/screenshots/IMG_7969.heic",
+          "imageURL": "https://get.furaffinity.app/altstore-world/screenshots/IMG_7969.heic",
           "width": 1170
         }
       ],
       "screenshotURLs": [
-        "https://furaffinity-app.yalir.org/screenshots/IMG_7965.heic",
-        "https://furaffinity-app.yalir.org/screenshots/IMG_7980.heic",
-        "https://furaffinity-app.yalir.org/screenshots/IMG_7968.heic",
-        "https://furaffinity-app.yalir.org/screenshots/IMG_7979.heic",
-        "https://furaffinity-app.yalir.org/screenshots/IMG_7969.heic"
+        "https://get.furaffinity.app/altstore-world/screenshots/IMG_7965.heic",
+        "https://get.furaffinity.app/altstore-world/screenshots/IMG_7980.heic",
+        "https://get.furaffinity.app/altstore-world/screenshots/IMG_7968.heic",
+        "https://get.furaffinity.app/altstore-world/screenshots/IMG_7979.heic",
+        "https://get.furaffinity.app/altstore-world/screenshots/IMG_7969.heic"
       ],
       "versions": [
         {
