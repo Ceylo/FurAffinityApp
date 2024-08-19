@@ -200,15 +200,18 @@ public class OnlineFASession: FASession {
         logger.info("Got \(notificationCount) notification previews")
         
         let submissionCommentHeaders = page.submissionCommentHeaders
-            .map { FANotificationPreview($0) }
+            .map(FANotificationPreview.init)
         let journalCommentHeaders = page.journalCommentHeaders
-            .map { FANotificationPreview($0) }
+            .map(FANotificationPreview.init)
+        let shoutHeaders = page.shoutHeaders
+            .map(FANotificationPreview.init)
         let journalHeaders = page.journalHeaders
-            .map { FANotificationPreview($0) }
+            .map(FANotificationPreview.init)
 
         return .init(
             submissionComments: submissionCommentHeaders,
             journalComments: journalCommentHeaders,
+            shouts: shoutHeaders,
             journals: journalHeaders
         )
     }

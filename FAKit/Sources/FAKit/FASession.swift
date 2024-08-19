@@ -11,21 +11,25 @@ import FAPages
 public struct FANotificationPreviews: Equatable, Sendable {
     public let submissionComments: [FANotificationPreview]
     public let journalComments: [FANotificationPreview]
+    public let shouts: [FANotificationPreview]
     public let journals: [FANotificationPreview]
     
     public init(
         submissionComments: [FANotificationPreview],
         journalComments: [FANotificationPreview],
+        shouts: [FANotificationPreview],
         journals: [FANotificationPreview]
     ) {
         self.submissionComments = submissionComments
         self.journalComments = journalComments
+        self.shouts = shouts
         self.journals = journals
     }
     
     public init() {
         self.submissionComments = []
         self.journalComments = []
+        self.shouts = []
         self.journals = []
     }
 }
