@@ -15,7 +15,6 @@ private extension Expiry {
     }
 }
 
-@MainActor
 public class OnlineFASession: FASession {
     enum Error: String, Swift.Error {
         case requestFailure
@@ -165,6 +164,14 @@ public class OnlineFASession: FASession {
         })
     }
     
+    public func deleteShoutNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews {
+        await notificationPreviews(method: .POST, parameters: [
+            URLQueryItem(name: "remove-shouts", value: "Remove Selected Shouts"),
+        ] + notifications.map {
+            URLQueryItem(name: "shouts[]", value: "\($0.id)")
+        })
+    }
+    
     public func deleteJournalNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews {
         await notificationPreviews(method: .POST, parameters: [
             URLQueryItem(name: "remove-journals", value: "Remove Selected Journals"),
@@ -182,6 +189,12 @@ public class OnlineFASession: FASession {
     public func nukeAllJournalCommentNotifications() async -> FANotificationPreviews {
         await notificationPreviews(method: .POST, parameters: [
             URLQueryItem(name: "nuke-journal-comments", value: "Nuke Journal Comments")
+        ])
+    }
+    
+    public func nukeAllShoutNotifications() async -> FANotificationPreviews {
+        await notificationPreviews(method: .POST, parameters: [
+            URLQueryItem(name: "nuke-shouts", value: "Nuke Shouts")
         ])
     }
     

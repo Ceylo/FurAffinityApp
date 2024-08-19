@@ -62,9 +62,11 @@ public protocol FASession: AnyObject, Equatable {
     func notificationPreviews() async -> FANotificationPreviews
     func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews
     func deleteJournalCommentNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews
+    func deleteShoutNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews
     func deleteJournalNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews
     func nukeAllSubmissionCommentNotifications() async -> FANotificationPreviews
     func nukeAllJournalCommentNotifications() async -> FANotificationPreviews
+    func nukeAllShoutNotifications() async -> FANotificationPreviews
     func nukeAllJournalNotifications() async -> FANotificationPreviews
     
     // MARK: - Users & avatar

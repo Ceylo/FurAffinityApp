@@ -10,10 +10,12 @@ import SwiftUI
 struct NotificationsActionView: View {
     var nukeSubmissionCommentsAction: () async -> Void
     var nukeJournalCommentsAction: () async -> Void
+    var nukeShoutsAction: () async -> Void
     var nukeJournalsAction: () async -> Void
     
     @State private var showNukeSubmissionCommentsAlert = false
     @State private var showNukeJournalCommentsAlert = false
+    @State private var showNukeShoutsAlert = false
     @State private var showNukeJournalsAlert = false
     
     var body: some View {
@@ -31,6 +33,12 @@ struct NotificationsActionView: View {
             }
             
             Button(role: .destructive) {
+                showNukeShoutsAlert = true
+            } label: {
+                Label("Nuke All Shouts", systemImage: "trash")
+            }
+            
+            Button(role: .destructive) {
                 showNukeJournalsAlert = true
             } label: {
                 Label("Nuke All Journals", systemImage: "trash")
@@ -42,13 +50,16 @@ struct NotificationsActionView: View {
                    show: $showNukeSubmissionCommentsAlert) {
             await nukeSubmissionCommentsAction()
         }
-       .nukeAlert("Journal Comments", "journal comment notifications",
-                  show: $showNukeJournalCommentsAlert) {
-           await nukeJournalCommentsAction()
-       }
-      .nukeAlert("Journals", "journal notifications", show: $showNukeJournalsAlert) {
-          await nukeJournalsAction()
-      }
+        .nukeAlert("Journal Comments", "journal comment notifications",
+                   show: $showNukeJournalCommentsAlert) {
+            await nukeJournalCommentsAction()
+        }
+        .nukeAlert("Shouts", "shout notifications", show: $showNukeShoutsAlert) {
+            await nukeShoutsAction()
+        }
+        .nukeAlert("Journals", "journal notifications", show: $showNukeJournalsAlert) {
+            await nukeJournalsAction()
+        }
     }
 }
 
@@ -57,7 +68,8 @@ struct NotificationsActionView_Previews: PreviewProvider {
         NotificationsActionView(
             nukeSubmissionCommentsAction: {},
             nukeJournalCommentsAction: {},
-            nukeJournalsAction: { }
+            nukeShoutsAction: {},
+            nukeJournalsAction: {}
         )
     }
 }

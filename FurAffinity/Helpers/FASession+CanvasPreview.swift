@@ -8,7 +8,6 @@
 import Foundation
 import FAKit
 
-@MainActor
 class OfflineFASession: FASession {
     let username: String
     let displayUsername: String
@@ -85,6 +84,10 @@ class OfflineFASession: FASession {
         notificationPreviews
     }
     
+    func deleteShoutNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews {
+        notificationPreviews
+    }
+    
     func deleteJournalNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews {
         notificationPreviews
     }
@@ -94,6 +97,10 @@ class OfflineFASession: FASession {
     }
     
     func nukeAllJournalCommentNotifications() async -> FANotificationPreviews {
+        notificationPreviews
+    }
+    
+    func nukeAllShoutNotifications() async -> FANotificationPreviews {
         notificationPreviews
     }
     

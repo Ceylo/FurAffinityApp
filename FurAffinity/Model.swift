@@ -191,6 +191,23 @@ class Model: ObservableObject {
         }
     }
     
+    func deleteShoutNotifications(_ notifications: [FANotificationPreview]) {
+        notificationPreviews = notificationPreviews.map { oldNotifications in
+            FANotificationPreviews(
+                submissionComments: oldNotifications.submissionComments,
+                journalComments: oldNotifications.journalComments,
+                shouts: oldNotifications.shouts.filter { !notifications.contains($0) },
+                journals: oldNotifications.journals
+            )
+        }
+        
+        Task {
+            await fetchNotificationPreviews { session in
+                await session.deleteShoutNotifications(notifications)
+            }
+        }
+    }
+    
     func deleteJournalNotifications(_ notifications: [FANotificationPreview]) {
         notificationPreviews = notificationPreviews.map { oldNotifications in
             FANotificationPreviews(
@@ -217,6 +234,12 @@ class Model: ObservableObject {
     func nukeAllJournalCommentNotifications() async {
         await fetchNotificationPreviews { session in
             await session.nukeAllJournalCommentNotifications()
+        }
+    }
+    
+    func nukeAllShoutNotifications() async {
+        await fetchNotificationPreviews { session in
+            await session.nukeAllShoutNotifications()
         }
     }
     

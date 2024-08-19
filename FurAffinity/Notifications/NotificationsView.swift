@@ -57,10 +57,12 @@ struct NotificationsView: View {
     var notifications: FANotificationPreviews
     var onDeleteSubmissionCommentNotifications: (_ items: [FANotificationPreview]) -> Void
     var onDeleteJournalCommentNotifications: (_ items: [FANotificationPreview]) -> Void
+    var onDeleteShoutNotifications: (_ items: [FANotificationPreview]) -> Void
     var onDeleteJournalNotifications: (_ items: [FANotificationPreview]) -> Void
     
     var onNukeSubmissionComments: () async -> Void
     var onNukeJournalComments: () async -> Void
+    var onNukeShouts: () async -> Void
     var onNukeJournals: () async -> Void
     
     var noNotification: Bool {
@@ -87,7 +89,7 @@ struct NotificationsView: View {
             ListedSection("Shouts", notifications.shouts) { item in
                 ShoutNotificationItemView(shout: item)
             } onDelete: { items in
-                
+                onDeleteShoutNotifications(items)
             }
             
             ListedSection("Journals", notifications.journals) { item in
@@ -104,6 +106,7 @@ struct NotificationsView: View {
             NotificationsActionView(
                 nukeSubmissionCommentsAction: onNukeSubmissionComments,
                 nukeJournalCommentsAction: onNukeJournalComments,
+                nukeShoutsAction: onNukeShouts,
                 nukeJournalsAction: onNukeJournals
             )
             .padding(.trailing, 20)
@@ -130,9 +133,11 @@ struct NotificationsView_Previews: PreviewProvider {
                 notifications: notificationPreviews,
                 onDeleteSubmissionCommentNotifications: { _ in },
                 onDeleteJournalCommentNotifications: { _ in },
+                onDeleteShoutNotifications: { _ in },
                 onDeleteJournalNotifications: { _ in },
                 onNukeSubmissionComments: {},
                 onNukeJournalComments: {},
+                onNukeShouts: {},
                 onNukeJournals: {}
             )
             .environmentObject(Model.demo)
@@ -141,9 +146,11 @@ struct NotificationsView_Previews: PreviewProvider {
                 notifications: .init(),
                 onDeleteSubmissionCommentNotifications: { _ in },
                 onDeleteJournalCommentNotifications: { _ in },
+                onDeleteShoutNotifications: { _ in },
                 onDeleteJournalNotifications: { _ in },
                 onNukeSubmissionComments: {},
                 onNukeJournalComments: {},
+                onNukeShouts: {},
                 onNukeJournals: {}
             )
             .environmentObject(Model.empty)
