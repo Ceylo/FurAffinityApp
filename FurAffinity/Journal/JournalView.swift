@@ -37,6 +37,7 @@ struct JournalView: View {
                     
                     JournalControlsView(
                         journalUrl: journal.url,
+                        repliesCount: journal.comments.recursiveCount,
                         replyAction: {
                             replySession = .init(parentCid: nil, among: [])
                         }
