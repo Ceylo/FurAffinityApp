@@ -162,6 +162,7 @@ class Model: ObservableObject {
             FANotificationPreviews(
                 submissionComments: oldNotifications.submissionComments.filter { !notifications.contains($0) },
                 journalComments: oldNotifications.journalComments,
+                shouts: oldNotifications.shouts,
                 journals: oldNotifications.journals
             )
         }
@@ -178,6 +179,7 @@ class Model: ObservableObject {
             FANotificationPreviews(
                 submissionComments: oldNotifications.submissionComments,
                 journalComments: oldNotifications.journalComments.filter { !notifications.contains($0) },
+                shouts: oldNotifications.shouts,
                 journals: oldNotifications.journals
             )
         }
@@ -194,6 +196,7 @@ class Model: ObservableObject {
             FANotificationPreviews(
                 submissionComments: oldNotifications.submissionComments,
                 journalComments: oldNotifications.journalComments,
+                shouts: oldNotifications.shouts,
                 journals: oldNotifications.journals.filter { !notifications.contains($0) }
             )
         }

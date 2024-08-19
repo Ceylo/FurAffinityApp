@@ -64,21 +64,30 @@ struct NotificationsView: View {
     var onNukeJournals: () async -> Void
     
     var noNotification: Bool {
-        notifications.submissionComments.isEmpty && notifications.journalComments.isEmpty && notifications.journals.isEmpty
+        notifications.submissionComments.isEmpty &&
+        notifications.journalComments.isEmpty &&
+        notifications.shouts.isEmpty &&
+        notifications.journals.isEmpty
     }
     
     var body: some View {
         List {
             ListedSection("Submission Comments", notifications.submissionComments) { item in
-                SubmissionCommentNotificationItemView(submissionComment: item)
+                CommentNotificationItemView(notification: item)
             } onDelete: { items in
                 onDeleteSubmissionCommentNotifications(items)
             }
             
             ListedSection("Journal Comments", notifications.journalComments) { item in
-                SubmissionCommentNotificationItemView(submissionComment: item)
+                CommentNotificationItemView(notification: item)
             } onDelete: { items in
                 onDeleteJournalCommentNotifications(items)
+            }
+            
+            ListedSection("Shouts", notifications.shouts) { item in
+                ShoutNotificationItemView(shout: item)
+            } onDelete: { items in
+                
             }
             
             ListedSection("Journals", notifications.journals) { item in

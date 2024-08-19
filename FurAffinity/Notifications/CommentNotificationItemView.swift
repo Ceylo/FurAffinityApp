@@ -1,5 +1,5 @@
 //
-//  SubmissionCommentNotificationItemView.swift
+//  CommentNotificationItemView.swift
 //  FurAffinity
 //
 //  Created by Ceylo on 15/04/2023.
@@ -8,9 +8,9 @@
 import SwiftUI
 import FAKit
 
-struct SubmissionCommentNotificationItemView: View {
+struct CommentNotificationItemView: View {
     @EnvironmentObject var model: Model
-    var submissionComment: FANotificationPreview
+    var notification: FANotificationPreview
     @State private var avatarUrl: URL?
     
     var body: some View {
@@ -18,22 +18,22 @@ struct SubmissionCommentNotificationItemView: View {
             AvatarView(avatarUrl: avatarUrl)
                 .frame(width: 42, height: 42)
                 .task {
-                    avatarUrl = await model.session?.avatarUrl(for: submissionComment.author)
+                    avatarUrl = await model.session?.avatarUrl(for: notification.author)
                 }
             
             VStack(alignment: .leading, spacing: 5) {
                 HStack {
-                    Text(submissionComment.displayAuthor)
+                    Text(notification.displayAuthor)
                         .font(.headline)
                     Spacer()
-                    DateTimeButton(datetime: submissionComment.datetime,
-                                   naturalDatetime: submissionComment.naturalDatetime)
+                    DateTimeButton(datetime: notification.datetime,
+                                   naturalDatetime: notification.naturalDatetime)
                 }
                 
                 HStack(alignment: .firstTextBaseline, spacing: 0) {
                     let text = AttributedString("On ") 
                         .transformingAttributes(\.foregroundColor, { $0.value = .secondary })
-                    + AttributedString(submissionComment.title)
+                    + AttributedString(notification.title)
                     
                     Text(text)
                 }
@@ -44,7 +44,7 @@ struct SubmissionCommentNotificationItemView: View {
 }
 
 struct SubmissionCommentNotificationItemView_Previews: PreviewProvider {
-    static var submissionComment: FANotificationPreview {
+    static var notification: FANotificationPreview {
         .init(
             id: 172177443,
             author: "someuser",
@@ -57,7 +57,7 @@ struct SubmissionCommentNotificationItemView_Previews: PreviewProvider {
     }
     
     static var previews: some View {
-        SubmissionCommentNotificationItemView(submissionComment: submissionComment)
+        CommentNotificationItemView(notification: notification)
             .environmentObject(Model.demo)
     }
 }

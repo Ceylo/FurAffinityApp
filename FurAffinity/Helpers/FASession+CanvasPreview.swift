@@ -161,6 +161,12 @@ extension OfflineFASession {
         .init(id: 60479543, author: "ceylo", displayAuthor: "Ceylo", title: "Test",
               datetime: "on Apr 22, 2024 02:11 PM", naturalDatetime: "couple of minutes ago",
               url: URL(string: "https://www.furaffinity.net/journal/10528107/#cid:60479543")!)
+    ], shouts: [
+        .init(
+            id: 54237319, author: "ceylo", displayAuthor: "Ceylo", title: "",
+            datetime: "on Apr 15, 2023 04:20 PM", naturalDatetime: "some seconds ago",
+            url: URL(string: "https://www.furaffinity.net/user/furrycount/#shout-54237319")!
+        )
     ], journals: [
             .init(id: 10526001, author: "holt-odium", displayAuthor: "Holt-Odium", title: "📝 3 Slots are available",
               datetime: "on Apr 14, 2023 08:23 PM", naturalDatetime: "18 hours ago",
