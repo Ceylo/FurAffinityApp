@@ -82,5 +82,16 @@
         ]
       }
     }
+  ],
+  "news": [
+    {
+      "title": "\"Ceylo's Apps Hub\" is now also in AltStore PAL!",
+      "identifier": "new_feature",
+      "caption": "If you live in the European Union, you can now benefit from this source without sideloading. Tap here for install steps.",
+      "date": "2024-09-01",
+      "tintColor": "#7588c6",
+      "notify": true,
+      "url": "https://furaffinity.app/",
+    },
   ]
 }
