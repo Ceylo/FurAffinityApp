@@ -8,6 +8,27 @@
 import SwiftUI
 import FAKit
 
+private struct HomeViewButtonContents: View {
+    var text: String
+    
+    var body: some View {
+        HStack {
+            Spacer()
+            Text(text)
+                .padding(10)
+                .font(.headline)
+                .tint(.primary)
+            Spacer()
+        }
+        .background(Color.borderOverlay.opacity(0.5))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay {
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.buttonBorderOverlay.opacity(0.5), lineWidth: 0.5)
+        }
+    }
+}
+
 struct HomeView: View {
     @State private var checkingConnection = true
     @EnvironmentObject var model: Model
@@ -29,23 +50,26 @@ struct HomeView: View {
     }
     
     var center: some View {
-        VStack(spacing: 40) {
+        VStack(spacing: 80) {
             if checkingConnection {
+                AppIcon()
                 ProgressView("Checking connection…")
             } else {
                 if model.session == nil {
-                    Label("Welcome Furry!", systemImage: "pawprint.fill")
-                        .font(.title)
-                    HStack(spacing: 20) {
-                        Button("Login with furaffinity.net") {
+                    AppIcon()
+                    
+                    VStack(spacing: 20) {
+                        Button {
                             showLoginView = true
+                        } label: {
+                            HomeViewButtonContents(text: "Login with furaffinity.net")
                         }
-                        .buttonStyle(.borderedProminent)
                         
-                        Link("Register",
-                             destination: FAURLs.signupUrl)
-                            .buttonStyle(.bordered)
+                        Link(destination: FAURLs.signupUrl) {
+                            HomeViewButtonContents(text: "Register")
+                        }
                     }
+                    .padding(.horizontal)
                 }
             }
         }
@@ -75,13 +99,11 @@ struct HomeView: View {
                 Link("App Privacy Policy", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/blob/main/Privacy%20Policy.md")!)
             }
         }
-        .padding(.bottom)
+        .padding()
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        HomeView()
-            .environmentObject(Model.demo)
-    }
+#Preview {
+    HomeView()
+        .environmentObject(Model.demo)
 }
