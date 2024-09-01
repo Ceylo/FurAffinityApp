@@ -45,7 +45,7 @@ extension URLSession: HTTPDataSource {
             }
             let request = request(with: url, method: method, parameters: parameters)
             
-            logger.info("Requesting data from \(url, privacy: .public) with method \(method)")
+            logger.info("\(method, privacy: .public) request on \(url, privacy: .public)")
             let (data, response) = try await self.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode)
