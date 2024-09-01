@@ -11,6 +11,29 @@ import URLImage
 import URLImageStore
 import AmplitudeSwift
 
+@MainActor
+private let amplitude: Amplitude? = {
+    guard Secrets.amplitudeApiKey != Secrets.placeholderApiKey else {
+        return nil
+    }
+    
+    let trackingOptions = TrackingOptions()
+        .disableTrackCity()
+        .disableTrackRegion()
+        .disableTrackCarrier()
+        .disableTrackDMA()
+        .disableTrackIpAddress()
+        .disableTrackIDFV()
+    
+    let config = Configuration(
+        apiKey: Secrets.amplitudeApiKey,
+        trackingOptions: trackingOptions,
+        defaultTracking: .init(sessions: true, appLifecycles: true)
+    )
+    
+    return Amplitude(configuration: config)
+}()
+
 @main
 struct FurAffinityApp: App {
     @StateObject private var model = Model()
@@ -19,25 +42,11 @@ struct FurAffinityApp: App {
         let fields = URLSessionConfiguration.httpHeadersForFARequests
         return .init(urlRequestConfiguration: .init(allHTTPHeaderFields: fields))
     }()
-    @State private var amplitude: Amplitude
     
     init() {
         let device = UIDevice.current
         logger.info("Launched FurAffinity \(Bundle.main.version, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public)")
-        let trackingOptions = TrackingOptions()
-        trackingOptions.disableTrackCity()
-        trackingOptions.disableTrackRegion()
-        trackingOptions.disableTrackCarrier()
-        trackingOptions.disableTrackDMA()
-        trackingOptions.disableTrackIpAddress()
-        trackingOptions.disableTrackIDFV()
-        
-        let config = Configuration(
-            apiKey: Secrets.amplitudeApiKey,
-            trackingOptions: trackingOptions,
-            defaultTracking: .ALL
-        )
-        amplitude = Amplitude(configuration: config)
+        logger.debug("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized")")
     }
 
     var body: some Scene {
