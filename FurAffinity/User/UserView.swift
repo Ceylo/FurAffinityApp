@@ -110,7 +110,7 @@ struct UserView: View {
                     Link(destination: control.destinationUrl(for: user.name)) {
                         Text(control.title)
                             .font(.headline)
-                            .padding(10)
+                            .padding(15)
                     }
                 }
             }
@@ -126,11 +126,12 @@ struct UserView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
                         AvatarView(avatarUrl: user.avatarUrl)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 42, height: 42)
                         Text(user.displayName)
                             .font(.title)
                         watchControl
                     }
+                    .padding(.vertical, 5)
                     
                     controls
                         .padding(.horizontal, -15)
