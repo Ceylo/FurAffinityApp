@@ -44,6 +44,44 @@ public enum FAURLs {
         URL(string: "https://www.furaffinity.net/favorites/\(username)/")!
     }
     
+    public static func watchlistUrl(for username: String, direction: FAWatchlistPage.WatchDirection) -> URL {
+        switch direction {
+        case .watchedBy:
+            URL(string: "https://www.furaffinity.net/watchlist/to/\(username)/")!
+        case .watching:
+            URL(string: "https://www.furaffinity.net/watchlist/by/\(username)/")!
+        }
+    }
+    
+    public static func parseWatchlistUrl(_ url: URL) -> (username: String, watchDirection: FAWatchlistPage.WatchDirection)? {
+        do {
+            // https://www.furaffinity.net/watchlist/to/xxx/
+            // https://www.furaffinity.net/watchlist/by/xxx/
+            let username = try url.absoluteString
+                .substring(matching: "\\/watchlist\\/[toby]{2}\\/(.+)\\/")
+                .unwrap()
+            let direction = try url.absoluteString
+                .substring(matching: "\\/watchlist\\/([toby]{2})\\/")
+                .unwrap()
+            
+            let watchDirection: FAWatchlistPage.WatchDirection
+            switch direction {
+            case "to":
+                watchDirection = .watchedBy
+            case "by":
+                watchDirection = .watching
+            default:
+                logger.error("\(#file, privacy: .public) - invalid direction in url: \(direction)")
+                return nil
+            }
+            
+            return (username, watchDirection)
+        } catch {
+            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
+            return nil
+        }
+    }
+    
     public static func submissionUrl(sid: Int) -> URL {
         URL(string: "https://www.furaffinity.net/view/\(sid)/")!
     }

@@ -72,6 +72,7 @@ public protocol FASession: AnyObject, Equatable {
     // MARK: - Users & avatar
     func user(for url: URL) async -> FAUser?
     func toggleWatch(for user: FAUser) async -> FAUser?
+    func watchlist(for username: String, direction: FAWatchlist.WatchDirection) async -> FAWatchlist?
     func avatarUrl(for username: String) async -> URL?
 }
 
@@ -97,5 +98,13 @@ extension FASession {
             return nil
         }
         return await user(for: userpageUrl)
+    }
+    
+    public func watchlist(for url: URL) async -> FAWatchlist? {
+        guard let parsed = FAURLs.parseWatchlistUrl(url) else {
+            return nil
+        }
+        
+        return await watchlist(for: parsed.username, direction: parsed.watchDirection)
     }
 }

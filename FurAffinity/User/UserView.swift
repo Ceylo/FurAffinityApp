@@ -15,27 +15,37 @@ private enum Control: Int, CaseIterable, Identifiable {
     case gallery
     case scraps
     case favorites
+    case watching
+    case watchedBy
 }
 
 extension Control {
     var title: String {
         switch self {
-        case .gallery: return "Gallery"
-        case .scraps: return "Scraps"
-        case .favorites: return "Favs"
+        case .gallery: "Gallery"
+        case .scraps: "Scraps"
+        case .favorites: "Favs"
+        case .watching: "Watching"
+        case .watchedBy: "Watched By"
         }
     }
     
     func destinationUrl(for user: String) -> URL {
         switch self {
         case .gallery:
-            return FAURLs.galleryUrl(for: user)
+            FAURLs.galleryUrl(for: user)
                 .convertedForInAppNavigation
         case .scraps:
-            return FAURLs.scrapsUrl(for: user)
+            FAURLs.scrapsUrl(for: user)
                 .convertedForInAppNavigation
         case .favorites:
-            return FAURLs.favoritesUrl(for: user)
+            FAURLs.favoritesUrl(for: user)
+                .convertedForInAppNavigation
+        case .watching:
+            FAURLs.watchlistUrl(for: user, direction: .watching)
+                .convertedForInAppNavigation
+        case .watchedBy:
+            FAURLs.watchlistUrl(for: user, direction: .watchedBy)
                 .convertedForInAppNavigation
         }
     }

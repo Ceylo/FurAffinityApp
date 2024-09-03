@@ -16,6 +16,7 @@ enum FAURL: Hashable {
     case gallery(url: URL)
     case scraps(url: URL)
     case favorites(url: URL)
+    case watchlist(url: URL)
 }
 
 fileprivate func ~=(regex: Regex<Substring>, str: String) -> Bool {
@@ -30,13 +31,14 @@ extension FAURL {
             return nil
         }
         
-        let submissionRegex = #//view/\d+/#     // https://www.furaffinity.net/view/nnn/
-        let noteRegex = #//msg/pms/\d+/\d+/#    // https://www.furaffinity.net/msg/pms/n/nnn/#message
-        let journalRegex = #//journal/\d+/#     // https://www.furaffinity.net/journal/nnn/
-        let userRegex = #//user/.+/#            // https://www.furaffinity.net/user/xxx
-        let galleryRegex = #//gallery/.+/#      // https://www.furaffinity.net/gallery/xxx
-        let scrapsRegex = #//scraps/.+/#        // https://www.furaffinity.net/scraps/xxx
-        let favoritesRegex = #//favorites/.+/#  // https://www.furaffinity.net/favorites/xxx
+        let submissionRegex = #//view/\d+/#             // https://www.furaffinity.net/view/nnn/
+        let noteRegex = #//msg/pms/\d+/\d+/#            // https://www.furaffinity.net/msg/pms/n/nnn/#message
+        let journalRegex = #//journal/\d+/#             // https://www.furaffinity.net/journal/nnn/
+        let userRegex = #//user/.+/#                    // https://www.furaffinity.net/user/xxx
+        let galleryRegex = #//gallery/.+/#              // https://www.furaffinity.net/gallery/xxx
+        let scrapsRegex = #//scraps/.+/#                // https://www.furaffinity.net/scraps/xxx
+        let favoritesRegex = #//favorites/.+/#          // https://www.furaffinity.net/favorites/xxx
+        let watchlistRegex = #//watchlist/[toby]{2}/.+/#// https://www.furaffinity.net/watchlist/by/xxx/
         
         switch components.path {
         case submissionRegex:
@@ -53,6 +55,8 @@ extension FAURL {
             self = .scraps(url: url)
         case favoritesRegex:
             self = .favorites(url: url)
+        case watchlistRegex:
+            self = .watchlist(url: url)
         default:
             return nil
         }

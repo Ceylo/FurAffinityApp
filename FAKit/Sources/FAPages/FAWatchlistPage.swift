@@ -8,14 +8,28 @@
 @preconcurrency import SwiftSoup
 import Foundation
 
-struct FAWatchlistPage: Equatable {
-    struct FAUser: Equatable {
-        let name: String
-        let displayName: String
+public struct FAWatchlistPage: Equatable, Sendable {
+    public struct User: Equatable, Sendable, Identifiable {
+        public init(name: String, displayName: String) {
+            self.name = name
+            self.displayName = displayName
+        }
+        
+        public let name: String
+        public let displayName: String
+        
+        public var id: String { name }
     }
     
-    let users: [FAUser]
-    let nextPageUrl: URL?
+    public enum WatchDirection: Sendable {
+        case watching
+        case watchedBy
+    }
+    
+    public let currentUser: User
+    public let watchDirection: WatchDirection
+    public let users: [User]
+    public let nextPageUrl: URL?
 }
 
 extension FAWatchlistPage {
@@ -27,7 +41,7 @@ extension FAWatchlistPage {
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
             let items = try doc.select("div.watch-list-items")
             let users = await items
-                .parallelMap { FAUser($0) }
+                .parallelMap { User($0) }
                 .compactMap { $0 }
             
             let nextPageRelLink = try doc
@@ -40,7 +54,22 @@ extension FAWatchlistPage {
                 nil
             }
             
-            self.init(users: users, nextPageUrl: nextPageUrl)
+            let (username, watchDirection) = try FAURLs.parseWatchlistUrl(baseUri).unwrap()
+            
+            let title = try doc.select("body > div > section > div.section-header > h2").text()
+            let displayName = switch watchDirection {
+            case .watchedBy:
+                try title.substring(matching: "Users that are watching (.+)").unwrap()
+            case .watching:
+                try title.substring(matching: "Users (.+) is watching").unwrap()
+            }
+            
+            self.init(
+                currentUser: .init(name: username, displayName: displayName),
+                watchDirection: watchDirection,
+                users: users,
+                nextPageUrl: nextPageUrl
+            )
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil
@@ -48,7 +77,7 @@ extension FAWatchlistPage {
     }
 }
 
-extension FAWatchlistPage.FAUser {
+extension FAWatchlistPage.User {
     init?(_ node: SwiftSoup.Element) {
         let state = signposter.beginInterval("Watchlist User Parsing")
         defer { signposter.endInterval("Watchlist User Parsing", state) }

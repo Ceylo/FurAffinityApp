@@ -73,6 +73,8 @@
 		87C94A542AA893BA0049CA81 /* UserGalleryLikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C94A532AA893BA0049CA81 /* UserGalleryLikeView.swift */; };
 		87C94A562AA897E50049CA81 /* RemoteUserGalleryLikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C94A552AA897E50049CA81 /* RemoteUserGalleryLikeView.swift */; };
 		87D4B92029C7BAC600DBD8B4 /* OptionalLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D4B91F29C7BAC600DBD8B4 /* OptionalLink.swift */; };
+		87D64FBD2C87181600AB6F44 /* WatchlistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FBC2C87181600AB6F44 /* WatchlistView.swift */; };
+		87D64FBF2C871B9300AB6F44 /* RemoteWatchlistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FBE2C871B9300AB6F44 /* RemoteWatchlistView.swift */; };
 		87E0E2B82801D967005207A8 /* NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B72801D967005207A8 /* NotesView.swift */; };
 		87E0E2BA2801DCDB005207A8 /* NoteItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B92801DCDB005207A8 /* NoteItemView.swift */; };
 		87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */; };
@@ -162,6 +164,8 @@
 		87C94A532AA893BA0049CA81 /* UserGalleryLikeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserGalleryLikeView.swift; sourceTree = "<group>"; };
 		87C94A552AA897E50049CA81 /* RemoteUserGalleryLikeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteUserGalleryLikeView.swift; sourceTree = "<group>"; };
 		87D4B91F29C7BAC600DBD8B4 /* OptionalLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionalLink.swift; sourceTree = "<group>"; };
+		87D64FBC2C87181600AB6F44 /* WatchlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistView.swift; sourceTree = "<group>"; };
+		87D64FBE2C871B9300AB6F44 /* RemoteWatchlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteWatchlistView.swift; sourceTree = "<group>"; };
 		87E0E2B72801D967005207A8 /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
 		87E0E2B92801DCDB005207A8 /* NoteItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteItemView.swift; sourceTree = "<group>"; };
 		87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOverlay.swift; sourceTree = "<group>"; };
@@ -399,6 +403,8 @@
 				876C137229D5F8E3001EB05B /* UserView.swift */,
 				87C94A552AA897E50049CA81 /* RemoteUserGalleryLikeView.swift */,
 				87C94A532AA893BA0049CA81 /* UserGalleryLikeView.swift */,
+				87D64FBE2C871B9300AB6F44 /* RemoteWatchlistView.swift */,
+				87D64FBC2C87181600AB6F44 /* WatchlistView.swift */,
 			);
 			path = User;
 			sourceTree = "<group>";
@@ -546,6 +552,8 @@
 				87815AC728D63F9B005AD03E /* View+Introspection.swift in Sources */,
 				87292E45297DD3FB00BE39B8 /* LoadingFailedView.swift in Sources */,
 				8741BA3129EC3FF700501A84 /* RemoteJournalView.swift in Sources */,
+				87D64FBD2C87181600AB6F44 /* WatchlistView.swift in Sources */,
+				87D64FBF2C871B9300AB6F44 /* RemoteWatchlistView.swift in Sources */,
 				87A4DA642A097ECB00704857 /* ActionControl.swift in Sources */,
 				8741BA2F29EC3FF700501A84 /* JournalView.swift in Sources */,
 				87F5EE8F29C5D9DD00649C5B /* DateTimeButton.swift in Sources */,

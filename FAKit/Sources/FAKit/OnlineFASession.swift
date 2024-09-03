@@ -248,6 +248,16 @@ public class OnlineFASession: FASession {
         return await self.user(for: user.name)
     }
     
+    public func watchlist(for username: String, direction: FAWatchlist.WatchDirection) async -> FAWatchlist? {
+        let url = FAURLs.watchlistUrl(for: username, direction: direction)        
+        guard let data = await dataSource.httpData(from: url, cookies: cookies),
+              let page = await FAWatchlistPage(data: data, baseUri: url) else {
+            return nil
+        }
+        
+        return FAWatchlist(page)
+    }
+    
     private let avatarUrlRequestsQueue = DispatchQueue(label: "FASession.AvatarRequests")
     private var avatarUrlTasks = [String: Task<URL?, Swift.Error>]()
     private let avatarUrlsCache: Storage<String, URL>
