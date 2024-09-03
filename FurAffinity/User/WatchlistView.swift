@@ -10,6 +10,7 @@ import FAKit
 
 struct WatchlistView: View {
     var watchlist: FAWatchlist
+    @State private var searchText = ""
     
     var navigationTitle: String {
         switch watchlist.watchDirection {
@@ -29,10 +30,22 @@ struct WatchlistView: View {
         }
     }
     
+    var filteredUsers: [FAWatchlist.User] {
+        guard !searchText.isEmpty else {
+            return watchlist.users
+        }
+        
+        return watchlist.users.filter { user in
+            user.displayName.containsAllOrderedCharacters(from: searchText) ||
+            user.name.containsAllOrderedCharacters(from: searchText)
+        }
+    }
+    
     var body: some View {
-        List(watchlist.users) { user in
+        List(filteredUsers) { user in
             NavigationLink(user.displayName, value: FAURL(with: FAURLs.userpageUrl(for: user.name)!))
         }
+        .searchable(text: $searchText)
         .swap(when: watchlist.users.isEmpty) {
             VStack(spacing: 10) {
                 Spacer()
