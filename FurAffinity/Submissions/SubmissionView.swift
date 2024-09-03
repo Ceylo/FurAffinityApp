@@ -83,6 +83,7 @@ struct SubmissionView: View {
         }
         .commentSheet(on: $replySession, replyAction)
         .navigationTitle(submission.title)
+        .navigationBarTitleDisplayMode(.inline)
         .listStyle(.plain)
     }
 }

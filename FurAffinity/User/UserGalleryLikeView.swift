@@ -52,8 +52,6 @@ struct UserGalleryLikeView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        // Toolbar needs to be setup before refresh control…
-        // https://stackoverflow.com/a/64700545/869385
         .navigationTitle("\(gallery.displayAuthor)'s \(galleryType)")
     }
 }

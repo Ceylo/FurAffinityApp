@@ -57,6 +57,7 @@ struct NoteView: View {
                 }
                 .padding()
                 .navigationTitle(note.title)
+                .navigationBarTitleDisplayMode(.inline)
             }
         }
         .task {

@@ -39,6 +39,7 @@ struct SubmissionPreviewView: View {
             .padding(.top, 5)
         }
         .navigationTitle(submission.title)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
