@@ -8,11 +8,16 @@
 import SwiftUI
 import FAKit
 
+extension FAWatchlist: ProgressiveData {
+    var canLoadMore: Bool {
+        nextPageUrl != nil
+    }
+}
+
 struct WatchlistView: View {
     var watchlist: FAWatchlist
     var loadMoreUsers: (_ watchlist: FAWatchlist) -> Void
     @State private var searchText = ""
-    @State private var needsMoreUsers = false
     
     var navigationTitle: String {
         switch watchlist.watchDirection {
@@ -58,19 +63,11 @@ struct WatchlistView: View {
                 NavigationLink(user.displayName, value: FAURL(with: FAURLs.userpageUrl(for: user.name)!))
             }
             
-            if watchlist.nextPageUrl != nil {
-                HStack {
-                    ProgressView()
-                    Text("Loading more users…")
-                }
-                .onAppear {
-                    needsMoreUsers = true
-                    loadMoreUsers(watchlist)
-                }
-                .onDisappear {
-                    needsMoreUsers = false
-                }
-            }
+            ProgressiveLoadItem(
+                label: "Loading more users…",
+                currentData: watchlist,
+                loadMoreData: loadMoreUsers
+            )
             
             Section {
             } header: {
@@ -96,11 +93,6 @@ struct WatchlistView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(navigationTitle)
-        .onChange(of: watchlist) { newWatchlist in
-            if needsMoreUsers && newWatchlist.nextPageUrl != nil {
-                loadMoreUsers(newWatchlist)
-            }
-        }
     }
 }
 
