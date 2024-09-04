@@ -30,10 +30,6 @@ extension AttributedString {
     }
 }
 
-func inAppUserUrl(for username: String) -> URL? {
-    FAURLs.userpageUrl(for: username)?.convertedForInAppNavigation
-}
-
 @MainActor @ViewBuilder
 func view(for url: FAURL) -> some View {
     switch url {

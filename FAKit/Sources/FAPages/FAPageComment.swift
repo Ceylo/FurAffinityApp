@@ -126,7 +126,7 @@ extension FAPageComment {
                 naturalDatetime: naturalDatetime, htmlMessage: htmlMessage
             ))
         } catch {
-            logger.warning("Caught error: \(error)\nWhile parsing: \((try? node.html()) ?? "")")
+            logger.warning("\(error)\nWhile parsing: \((try? node.html()) ?? "")")
             self = .hidden(.init(cid: cid, indentation: indentation, htmlMessage: htmlMessage))
         }
     }

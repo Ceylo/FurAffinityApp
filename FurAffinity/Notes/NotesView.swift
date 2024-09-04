@@ -31,7 +31,7 @@ struct NotesView: View {
             if let notes = model.notePreviews {
                 List(notes) { preview in
                     HStack {
-                        NavigationLink(value: FAURL(with: preview.noteUrl)) {
+                        NavigationLink(value: FAURL.note(url: preview.noteUrl)) {
                             NoteItemView(notePreview: preview)
                         }
                     }

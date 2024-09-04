@@ -57,10 +57,21 @@ struct WatchlistView: View {
         }
     }
     
+    func userURL(for user: FAWatchlist.User) -> FAURL? {
+        guard let userUrl = FAURLs.userpageUrl(for: user.name) else {
+            return nil
+        }
+        
+        return .user(
+            url: userUrl,
+            previewData: .init(username: user.name, displayName: user.displayName)
+        )
+    }
+    
     var body: some View {
         List {
             ForEach(filteredUsers) { user in
-                NavigationLink(user.displayName, value: FAURL(with: FAURLs.userpageUrl(for: user.name)!))
+                NavigationLink(user.displayName, value: userURL(for: user))
             }
             
             ProgressiveLoadItem(

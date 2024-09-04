@@ -24,11 +24,7 @@ fileprivate func ~=(regex: Regex<Substring>, str: String) -> Bool {
 }
 
 extension FAURL {
-    init?(
-        with url: URL,
-        submissionPreviewData: FASubmissionPreview? = nil,
-        userPreviewData: UserPreviewData? = nil
-    ) {
+    init?(with url: URL) {
         guard let url = url.replacingScheme(with: "https"),
               let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               components.host == "www.furaffinity.net" else {
@@ -46,13 +42,13 @@ extension FAURL {
         
         switch components.path {
         case submissionRegex:
-            self = .submission(url: url, previewData: submissionPreviewData)
+            self = .submission(url: url, previewData: nil)
         case noteRegex:
             self = .note(url: url)
         case journalRegex:
             self = .journal(url: url)
         case userRegex:
-            self = .user(url: url, previewData: userPreviewData)
+            self = .user(url: url, previewData: nil)
         case galleryRegex:
             self = .gallery(url: url)
         case scrapsRegex:

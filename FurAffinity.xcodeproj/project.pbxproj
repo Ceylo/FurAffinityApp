@@ -81,6 +81,7 @@
 		87D64FC72C88790E00AB6F44 /* UserPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FC62C88790E00AB6F44 /* UserPreviewView.swift */; };
 		87D64FC92C887DE200AB6F44 /* UserProfileControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FC82C887DDE00AB6F44 /* UserProfileControl.swift */; };
 		87D64FCB2C88ADEC00AB6F44 /* UserProfileControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FCA2C88ADEC00AB6F44 /* UserProfileControlView.swift */; };
+		87D64FCD2C88B00100AB6F44 /* FANavigationLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FCC2C88B00100AB6F44 /* FANavigationLink.swift */; };
 		87E0E2B82801D967005207A8 /* NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B72801D967005207A8 /* NotesView.swift */; };
 		87E0E2BA2801DCDB005207A8 /* NoteItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B92801DCDB005207A8 /* NoteItemView.swift */; };
 		87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */; };
@@ -178,6 +179,7 @@
 		87D64FC62C88790E00AB6F44 /* UserPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreviewView.swift; sourceTree = "<group>"; };
 		87D64FC82C887DDE00AB6F44 /* UserProfileControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileControl.swift; sourceTree = "<group>"; };
 		87D64FCA2C88ADEC00AB6F44 /* UserProfileControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileControlView.swift; sourceTree = "<group>"; };
+		87D64FCC2C88B00100AB6F44 /* FANavigationLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FANavigationLink.swift; sourceTree = "<group>"; };
 		87E0E2B72801D967005207A8 /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
 		87E0E2B92801DCDB005207A8 /* NoteItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteItemView.swift; sourceTree = "<group>"; };
 		87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOverlay.swift; sourceTree = "<group>"; };
@@ -399,6 +401,7 @@
 				87D4B91F29C7BAC600DBD8B4 /* OptionalLink.swift */,
 				87292E44297DD3FB00BE39B8 /* LoadingFailedView.swift */,
 				87F8FA332761347200CDD985 /* AuthoredHeaderView.swift */,
+				87D64FCC2C88B00100AB6F44 /* FANavigationLink.swift */,
 				87B093392AED6CEA008DFDE7 /* TitledHeaderView.swift */,
 				87A4DA612A097D9000704857 /* NukeAlert.swift */,
 				87A4DA632A097ECB00704857 /* ActionControl.swift */,
@@ -554,6 +557,7 @@
 				871B05EF2C84BADA00302500 /* AppIcon.swift in Sources */,
 				87C4435A2C73C59900200991 /* ShoutNotificationItemView.swift in Sources */,
 				87A185A22745A8A100B10D2A /* CenteredView.swift in Sources */,
+				87D64FCD2C88B00100AB6F44 /* FANavigationLink.swift in Sources */,
 				8799FAE22741672E0068A049 /* SubmissionFeedItemView.swift in Sources */,
 				87EAA2DD29EB4F3700677446 /* JournalNotificationItemView.swift in Sources */,
 				87E0E2BA2801DCDB005207A8 /* NoteItemView.swift in Sources */,

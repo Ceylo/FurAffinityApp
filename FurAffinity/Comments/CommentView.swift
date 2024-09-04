@@ -36,9 +36,24 @@ struct CommentView: View {
         }
     }
     
+    func userURL(for comment: FAVisibleComment) -> FAURL? {
+        guard let userUrl = FAURLs.userpageUrl(for: comment.author) else {
+            return nil
+        }
+        
+        return .user(
+            url: userUrl,
+            previewData: .init(
+                username: comment.author,
+                displayName: comment.displayAuthor,
+                avatarUrl: comment.authorAvatarUrl
+            )
+        )
+    }
+    
     func commentView(_ comment: FAVisibleComment) -> some View {
         HStack(alignment: .top) {
-            OptionalLink(destination: inAppUserUrl(for: comment.author)) {
+            FANavigationLink(destination: userURL(for: comment)) {
                 AvatarView(avatarUrl: comment.authorAvatarUrl)
                     .frame(width: avatarSize, height: avatarSize)
             }
