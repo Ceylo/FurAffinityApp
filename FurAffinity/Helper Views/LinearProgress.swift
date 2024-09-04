@@ -10,11 +10,19 @@ import SwiftUI
 struct LinearProgress: View {
     var progress: Float
     
+    private var clampedProgress: CGFloat {
+        CGFloat(progress.clamped(to: 0.0...1.0))
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             Rectangle()
-                .fill(Color.accentColor)
-                .frame(width: geometry.size.width * CGFloat(progress.clamped(to: 0.0...1.0)), height: 3)
+                .fill(LinearGradient(
+                    colors: [Color.accentColor, Color.pink],
+                    startPoint: .leading,
+                    endPoint: .init(x: 1.0 / clampedProgress, y: 0.5)
+                ))
+                .frame(width: geometry.size.width * clampedProgress, height: 3)
         }
     }
 }
