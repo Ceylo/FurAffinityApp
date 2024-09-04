@@ -43,8 +43,8 @@ func view(for url: FAURL) -> some View {
         NoteView(url: url)
     case let .journal(url):
         RemoteJournalView(url: url)
-    case let .user(url):
-        RemoteUserView(url: url)
+    case let .user(url, previewData):
+        RemoteUserView(url: url, previewData: previewData)
     case let .gallery(url):
         RemoteUserGalleryLikeView(galleryType: .gallery, url: url)
     case let .scraps(url):

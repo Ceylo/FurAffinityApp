@@ -9,48 +9,6 @@ import SwiftUI
 import FAKit
 import URLImage
 
-private enum Control: Int, CaseIterable, Identifiable {
-    var id: Int { rawValue }
-
-    case gallery
-    case scraps
-    case favorites
-    case watching
-    case watchedBy
-}
-
-extension Control {
-    var title: String {
-        switch self {
-        case .gallery: "Gallery"
-        case .scraps: "Scraps"
-        case .favorites: "Favs"
-        case .watching: "Watching"
-        case .watchedBy: "Watched By"
-        }
-    }
-    
-    func destinationUrl(for user: String) -> URL {
-        switch self {
-        case .gallery:
-            FAURLs.galleryUrl(for: user)
-                .convertedForInAppNavigation
-        case .scraps:
-            FAURLs.scrapsUrl(for: user)
-                .convertedForInAppNavigation
-        case .favorites:
-            FAURLs.favoritesUrl(for: user)
-                .convertedForInAppNavigation
-        case .watching:
-            FAURLs.watchlistUrl(for: user, direction: .watching)
-                .convertedForInAppNavigation
-        case .watchedBy:
-            FAURLs.watchlistUrl(for: user, direction: .watchedBy)
-                .convertedForInAppNavigation
-        }
-    }
-}
-
 struct UserView: View {
     var user: FAUser
     var description: Binding<AttributedString?>
@@ -113,21 +71,6 @@ struct UserView: View {
         }
     }
     
-    var controls: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 0) {
-                ForEach(Control.allCases) { control in
-                    Link(destination: control.destinationUrl(for: user.name)) {
-                        Text(control.title)
-                            .font(.headline)
-                            .padding(15)
-                    }
-                }
-            }
-        }
-        .background(.regularMaterial)
-    }
-    
     var body: some View {
         List {
             Group {
@@ -143,7 +86,7 @@ struct UserView: View {
                     }
                     .padding(.vertical, 5)
                     
-                    controls
+                    UserProfileControlView(username: user.name)
                         .padding(.horizontal, -15)
                         .padding(.vertical, 5)
                     

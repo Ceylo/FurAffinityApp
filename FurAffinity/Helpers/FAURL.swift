@@ -12,7 +12,7 @@ enum FAURL: Hashable {
     case submission(url: URL, previewData: FASubmissionPreview?)
     case note(url: URL)
     case journal(url: URL)
-    case user(url: URL)
+    case user(url: URL, previewData: UserPreviewData?)
     case gallery(url: URL)
     case scraps(url: URL)
     case favorites(url: URL)
@@ -24,7 +24,11 @@ fileprivate func ~=(regex: Regex<Substring>, str: String) -> Bool {
 }
 
 extension FAURL {
-    init?(with url: URL, _ submissionPreviewData: FASubmissionPreview? = nil) {
+    init?(
+        with url: URL,
+        submissionPreviewData: FASubmissionPreview? = nil,
+        userPreviewData: UserPreviewData? = nil
+    ) {
         guard let url = url.replacingScheme(with: "https"),
               let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               components.host == "www.furaffinity.net" else {
@@ -48,7 +52,7 @@ extension FAURL {
         case journalRegex:
             self = .journal(url: url)
         case userRegex:
-            self = .user(url: url)
+            self = .user(url: url, previewData: userPreviewData)
         case galleryRegex:
             self = .gallery(url: url)
         case scrapsRegex:

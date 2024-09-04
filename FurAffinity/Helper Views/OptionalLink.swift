@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct OptionalLink<Wrapped>: View where Wrapped: View {
+struct OptionalLink<Wrapped: View>: View {
     var destination: URL?
     @ViewBuilder
     var subview: () -> Wrapped

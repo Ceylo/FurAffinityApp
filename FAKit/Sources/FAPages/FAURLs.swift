@@ -32,6 +32,11 @@ public enum FAURLs {
         return try? URL(unsafeString: "https://www.furaffinity.net/user/\(username)/")
     }
     
+    public static func usernameFrom(userUrl: URL) -> String? {
+        userUrl.absoluteString
+            .substring(matching: "https:\\/\\/www\\.furaffinity\\.net\\/user\\/(.+)\\/")
+    }
+    
     public static func galleryUrl(for username: String) -> URL {
         URL(string: "https://www.furaffinity.net/gallery/\(username)/")!
     }

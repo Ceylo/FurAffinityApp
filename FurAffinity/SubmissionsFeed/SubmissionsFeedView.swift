@@ -22,7 +22,9 @@ struct SubmissionsFeedView: View {
             Group {
                 if let previews = model.submissionPreviews {
                     List(previews) { submission in
-                        NavigationLink(value: FAURL(with: submission.url, submission)) {
+                        NavigationLink(value: FAURL(
+                            with: submission.url, submissionPreviewData: submission
+                        )) {
                             SubmissionFeedItemView<AuthoredHeaderView>(submission: submission)
                                 .id(submission.sid)
                         }

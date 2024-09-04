@@ -14,13 +14,15 @@ protocol UpdateHandler<Contents> {
     func update(with contents: Contents?)
 }
 
-/// `RemoteView` provides common behavior for remotely loaded content, such as:
+/// `PreviewableRemoteView` provides common behavior for remotely loaded content, such as:
 /// - displaying a progress until content becomes available
+/// - displaying a incomplete view until the content is loaded
 /// - allowing pull to refresh
 /// - giving web access to the content
-struct RemoteView<Contents: Sendable, ContentsView: View>: View, UpdateHandler {
+struct PreviewableRemoteView<Contents: Sendable, ContentsView: View, PreviewView: View>: View, UpdateHandler {
     var url: URL
     var contentsLoader: () async -> Contents?
+    var previewViewBuilder: (() -> PreviewView)?
     var contentsViewBuilder: (
         _ contents: Contents,
         _ updateHandler: any UpdateHandler<Contents>
@@ -44,9 +46,13 @@ struct RemoteView<Contents: Sendable, ContentsView: View>: View, UpdateHandler {
                     }
                 }
             } else {
-                VStack(spacing: 20) {
-                    ProgressView()
-                    Link("Waiting for \(url.host(percentEncoded: false) ?? "?")…", destination: url)
+                if let previewViewBuilder {
+                    previewViewBuilder()
+                } else {
+                    VStack(spacing: 20) {
+                        ProgressView()
+                        Link("Waiting for \(url.host(percentEncoded: false) ?? "?")…", destination: url)
+                    }
                 }
             }
         }
@@ -87,3 +93,5 @@ struct RemoteView<Contents: Sendable, ContentsView: View>: View, UpdateHandler {
         }
     }
 }
+
+typealias RemoteView<Contents: Sendable, ContentsView: View> = PreviewableRemoteView<Contents, ContentsView, EmptyView>

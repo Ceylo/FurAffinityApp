@@ -11,6 +11,7 @@ import URLImage
 
 struct RemoteUserView: View {
     var url: URL
+    var previewData: UserPreviewData?
     @EnvironmentObject var model: Model
     @State private var description: AttributedString?
     
@@ -26,25 +27,38 @@ struct RemoteUserView: View {
     }
     
     var body: some View {
-        RemoteView(url: url, contentsLoader: loadUser) { user, updateHandler in
-            UserView(
-                user: user,
-                description: $description,
-                toggleWatchAction: {
-                    Task {
-                        let updatedUser = await model.session?.toggleWatch(for: user)
-                        updateHandler.update(with: updatedUser)
+        PreviewableRemoteView(
+            url: url,
+            contentsLoader: loadUser,
+            previewViewBuilder: {
+                Group {
+                    if let previewData {
+                        UserPreviewView(preview: previewData)
+                    } else if let username = FAURLs.usernameFrom(userUrl: url) {
+                        UserPreviewView(preview: .init(username: username))
                     }
                 }
-            )
-        }
+            },
+            contentsViewBuilder: { user, updateHandler in
+                UserView(
+                    user: user,
+                    description: $description,
+                    toggleWatchAction: {
+                        Task {
+                            let updatedUser = await model.session?.toggleWatch(for: user)
+                            updateHandler.update(with: updatedUser)
+                        }
+                    }
+                )
+            }
+        )
     }
 }
 
-struct RemoteUserView_Previews: PreviewProvider {
-    static var previews: some View {
+#Preview {
+    NavigationStack {
         RemoteUserView(url: FAURLs.userpageUrl(for: "terriniss")!)
-            .environmentObject(Model.demo)
-//            .preferredColorScheme(.dark)
     }
+    .environmentObject(Model.demo)
+//    .preferredColorScheme(.dark)
 }
