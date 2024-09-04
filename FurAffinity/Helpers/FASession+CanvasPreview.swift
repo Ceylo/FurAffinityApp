@@ -460,6 +460,7 @@ extension FAWatchlist {
             .init(name: "zullkharn", displayName: "ZullKharn"),
             .init(name: "~inkyenigma~", displayName: "~InkyEnigma~"),
             .init(name: "~rizonik~", displayName: "~RIZONIK~")
-        ]
+        ],
+        nextPageUrl: nil
     )
 }
