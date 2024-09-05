@@ -89,7 +89,7 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
               let page = FASubmissionPage(data: data)
         else { return nil }
         
-        let submission = try? FASubmission(page, url: url)
+        let submission = try? await FASubmission(page, url: url)
         if let submission {
             Task {
                 await cacheAvatars(from: submission)
@@ -103,7 +103,7 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
               let page = FASubmissionPage(data: data)
         else { return nil }
         
-        return try? FASubmission(page, url: submission.url)
+        return try? await FASubmission(page, url: submission.url)
     }
     
     public func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async -> C? {
@@ -120,7 +120,7 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
               let page = C.PageType(data: data)
         else { return nil }
         
-        return try? C(page, url: commentable.url)
+        return try? await C(page, url: commentable.url)
     }
     
     // MARK: - Journals
@@ -130,7 +130,7 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
         else { return nil }
         
         
-        let journal = try? FAJournal(page, url: url)
+        let journal = try? await FAJournal(page, url: url)
         if let journal {
             Task {
                 await cacheAvatars(from: journal)
@@ -158,7 +158,7 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
               let page = FANotePage(data: data)
         else { return nil }
         
-        return try? FANote(page)
+        return try? await FANote(page)
     }
     
     // MARK: - Notifications
@@ -249,16 +249,17 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
     
     // MARK: - Users & avatar
     public func user(for url: URL) async -> FAUser? {
-        guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = FAUserPage(data: data) else {
+        guard let data = await dataSource.httpData(from: url, cookies: cookies) else {
             return nil
         }
-        let user = try? FAUser(page)
-        if let user {
-            Task {
-                await cacheAvatars(from: user)
-            }
-        }
+        
+        return try? await loadUser(from: data)
+    }
+    
+    private nonisolated func loadUser(from data: Data) async throws -> FAUser? {
+        let page = try FAUserPage(data: data).unwrap()
+        let user = try await FAUser(page)
+        await cacheAvatars(from: user)
         return user
     }
     

@@ -9,6 +9,7 @@ import Foundation
 import UIKit
 
 extension AttributedString {
+    @MainActor
     public init(FAHTML: String) throws {
         let theme = String.FATheme(style: UITraitCollection.current.userInterfaceStyle)
         

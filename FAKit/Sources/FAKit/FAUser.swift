@@ -33,14 +33,14 @@ public struct FAUser: Equatable, Sendable {
 }
 
 public extension FAUser {
-    init(_ page: FAUserPage) throws {
+    init(_ page: FAUserPage) async throws {
         self.init(
             name: page.name,
             displayName: page.displayName,
             avatarUrl: page.avatarUrl,
             bannerUrl: page.bannerUrl,
             htmlDescription: page.htmlDescription,
-            shouts: try page.shouts.map(FAComment.init),
+            shouts: try await page.shouts.parallelMap(FAComment.init),
             watchData: page.watchData
         )
     }
