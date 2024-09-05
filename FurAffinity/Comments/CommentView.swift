@@ -83,13 +83,11 @@ struct CommentView: View {
     }
     
     var body: some View {
-        Group {
-            switch comment {
-            case let .visible(comment):
-                commentView(comment)
-            case let .hidden(comment):
-                commentView(comment)
-            }
+        switch comment {
+        case let .visible(comment):
+            commentView(comment)
+        case let .hidden(comment):
+            commentView(comment)
         }
     }
 }

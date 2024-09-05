@@ -20,9 +20,21 @@ protocol UpdateHandler<Contents> {
 /// - allowing pull to refresh
 /// - giving web access to the content
 struct PreviewableRemoteView<Contents: Sendable, ContentsView: View, PreviewView: View>: View, UpdateHandler {
+    init(
+        url: URL,
+        contentsLoader: @escaping () async -> Contents?,
+        @ViewBuilder previewViewBuilder: @escaping () -> PreviewView? = { nil }, contentsViewBuilder:
+        @escaping (Contents, any UpdateHandler<Contents>) -> ContentsView
+    ) {
+        self.url = url
+        self.contentsLoader = contentsLoader
+        self.previewViewBuilder = previewViewBuilder
+        self.contentsViewBuilder = contentsViewBuilder
+    }
+    
     var url: URL
     var contentsLoader: () async -> Contents?
-    var previewViewBuilder: (() -> PreviewView)?
+    @ViewBuilder var previewViewBuilder: () -> PreviewView?
     var contentsViewBuilder: (
         _ contents: Contents,
         _ updateHandler: any UpdateHandler<Contents>
@@ -46,8 +58,8 @@ struct PreviewableRemoteView<Contents: Sendable, ContentsView: View, PreviewView
                     }
                 }
             } else {
-                if let previewViewBuilder {
-                    previewViewBuilder()
+                if let preview = previewViewBuilder() {
+                    preview
                 } else {
                     VStack(spacing: 20) {
                         ProgressView()

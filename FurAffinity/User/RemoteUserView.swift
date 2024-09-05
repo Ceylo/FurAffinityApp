@@ -31,12 +31,10 @@ struct RemoteUserView: View {
             url: url,
             contentsLoader: loadUser,
             previewViewBuilder: {
-                Group {
-                    if let previewData {
-                        UserPreviewView(preview: previewData)
-                    } else if let username = FAURLs.usernameFrom(userUrl: url) {
-                        UserPreviewView(preview: .init(username: username))
-                    }
+                if let previewData {
+                    UserPreviewView(preview: previewData)
+                } else if let username = FAURLs.usernameFrom(userUrl: url) {
+                    UserPreviewView(preview: .init(username: username))
                 }
             },
             contentsViewBuilder: { user, updateHandler in

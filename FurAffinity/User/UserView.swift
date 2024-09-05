@@ -54,20 +54,19 @@ struct UserView: View {
         }
     }
     
+    @ViewBuilder
     var watchControl: some View {
-        Group {
-            if let watchData = user.watchData {
-                Spacer()
-                Button(action: toggleWatchAction) {
-                    Label(
-                        watchData.watching ? "Unwatch" : "Watch",
-                        systemImage: watchData.watching ? "bookmark.fill": "bookmark"
-                    )
-                    .labelStyle(WatchControlStyle())
-                }
-                // 🫠 https://forums.developer.apple.com/forums/thread/747558
-                .buttonStyle(BorderlessButtonStyle())
+        if let watchData = user.watchData {
+            Spacer()
+            Button(action: toggleWatchAction) {
+                Label(
+                    watchData.watching ? "Unwatch" : "Watch",
+                    systemImage: watchData.watching ? "bookmark.fill": "bookmark"
+                )
+                .labelStyle(WatchControlStyle())
             }
+            // 🫠 https://forums.developer.apple.com/forums/thread/747558
+            .buttonStyle(BorderlessButtonStyle())
         }
     }
     

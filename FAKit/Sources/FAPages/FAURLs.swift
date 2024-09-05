@@ -33,7 +33,11 @@ public enum FAURLs {
     }
     
     public static func usernameFrom(userUrl: URL) -> String? {
-        userUrl.absoluteString
+        var urlString = userUrl.absoluteString
+        if urlString.suffix(1) != "/" {
+            urlString.append("/")
+        }
+        return urlString
             .substring(matching: "https:\\/\\/www\\.furaffinity\\.net\\/user\\/(.+)\\/")
     }
     

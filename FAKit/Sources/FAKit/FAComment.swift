@@ -199,6 +199,13 @@ extension [FAComment] {
         return nil
     }
     
+    public func forEach(_ closure: (FAComment) async throws -> Void) async rethrows {
+        for comment in self {
+            try await closure(comment)
+            try await comment.answers.forEach(closure)
+        }
+    }
+    
     public var recursiveCount: Int {
         var count = 0
         for comment in self {
