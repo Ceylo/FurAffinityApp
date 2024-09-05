@@ -65,13 +65,13 @@ actor AvatarCache {
     }
     
     func cacheAvatarUrl(_ url: URL, for username: String) throws {
-        if !avatarUrlsCache.objectExists(forKey: username) {
-            let validDays = (7..<14).randomElement()!
-            let expiry = Expiry.days(validDays)
-            try avatarUrlsCache.setObject(url, forKey: username, expiry: expiry)
-            logger.info("Cached url \(url, privacy: .public) for user \(username, privacy: .public) for \(validDays) days since there was nothing cached")
-        } else {
-            logger.info("Did not cache \(url, privacy: .public) for user \(username, privacy: .public) since it is already cached")
+        guard !avatarUrlsCache.objectExists(forKey: username) else {
+            return
         }
+        
+        let validDays = (7..<14).randomElement()!
+        let expiry = Expiry.days(validDays)
+        try avatarUrlsCache.setObject(url, forKey: username, expiry: expiry)
+        logger.info("Cached url \(url, privacy: .public) for user \(username, privacy: .public) for \(validDays) days")
     }
 }
