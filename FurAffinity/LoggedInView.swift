@@ -79,7 +79,7 @@ struct LoggedInView: View {
                 .tag(Tab.notifications)
                 
                 NavigationStack(path: $userpageNavigationStack) {
-                    CurentUserView()
+                    CurrentUserView()
                         .navigationDestination(for: FAURL.self) { nav in
                             view(for: nav)
                         }

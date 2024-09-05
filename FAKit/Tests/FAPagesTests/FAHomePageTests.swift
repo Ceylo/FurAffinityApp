@@ -12,20 +12,17 @@ final class FAHomePageTests: XCTestCase {
     func testLoggedOutPage_parsedAsExpected() throws {
         let data = testData("www.furaffinity.net:loggedout.html")
         let page = FAHomePage(data: data, baseUri: FAURLs.homeUrl)
-        XCTAssertNotNil(page)
-        XCTAssertNil(page?.username)
-        XCTAssertNil(page?.displayUsername)
-        XCTAssertNil(page?.submissionsCount)
-        XCTAssertNil(page?.journalsCount)
+        XCTAssertNil(page)
     }
     
     func testLoggedInPage_parsedAsExpected() throws {
         let data = testData("www.furaffinity.net:loggedin.html")
-        let page = FAHomePage(data: data, baseUri: FAURLs.homeUrl)
-        XCTAssertNotNil(page)
-        XCTAssertEqual(page?.username, "furrycount")
-        XCTAssertEqual(page?.displayUsername, "Furrycount")
-        XCTAssertEqual(page?.submissionsCount, 2487)
-        XCTAssertEqual(page?.journalsCount, 308)
+        let page = try XCTUnwrap(FAHomePage(data: data, baseUri: FAURLs.homeUrl))
+        
+        XCTAssertEqual(page, .init(
+            username: "furrycount",
+            displayUsername: "Furrycount",
+            avatarUrl: URL(string: "https://a.furaffinity.net/20221211/furrycount.gif")!
+        ))
     }
 }

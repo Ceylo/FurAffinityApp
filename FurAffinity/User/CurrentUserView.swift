@@ -1,5 +1,5 @@
 //
-//  CurentUserView.swift
+//  CurrentUserView.swift
 //  FurAffinity
 //
 //  Created by Ceylo on 19/03/2023.
@@ -8,7 +8,7 @@
 import SwiftUI
 import FAKit
 
-struct CurentUserView: View {
+struct CurrentUserView: View {
     @EnvironmentObject var model: Model
     
     var body: some View {
@@ -19,7 +19,8 @@ struct CurentUserView: View {
                     url: url,
                     previewData: .init(
                         username: session.username,
-                        displayName: session.displayUsername
+                        displayName: session.displayUsername,
+                        avatarUrl: session.avatarUrl
                     )
                 )
             } else {
@@ -33,7 +34,7 @@ struct CurentUserView: View {
 
 struct CurentUserView_Previews: PreviewProvider {
     static var previews: some View {
-        CurentUserView()
+        CurrentUserView()
             .environmentObject(Model.demo)
     }
 }

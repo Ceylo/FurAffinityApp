@@ -22,13 +22,21 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
     
     public let username: String
     public let displayUsername: String
+    public let avatarUrl: URL
     private let cookies: [HTTPCookie]
     private let dataSource: HTTPDataSource
     private var avatarCache: AvatarCache!
     
-    public init(username: String, displayUsername: String, cookies: [HTTPCookie], dataSource: HTTPDataSource) {
+    public init(
+        username: String,
+        displayUsername: String,
+        avatarUrl: URL,
+        cookies: [HTTPCookie],
+        dataSource: HTTPDataSource
+    ) {
         self.username = username
         self.displayUsername = displayUsername
+        self.avatarUrl = avatarUrl
         self.cookies = cookies
         self.dataSource = dataSource
         self.avatarCache = .init(delegate: self)
@@ -312,17 +320,13 @@ extension OnlineFASession {
               let page = FAHomePage(data: data, baseUri: FAURLs.homeUrl)
         else { return nil }
         
-        guard let username = page.username,
-              let displayUsername = page.displayUsername
-        else {
-            logger.error("\(#file, privacy: .public) - missing user")
-            return nil
-        }
-        
-        self.init(username: username,
-                  displayUsername: displayUsername,
-                  cookies: cookies,
-                  dataSource: dataSource)
+        self.init(
+            username: page.username,
+            displayUsername: page.displayUsername,
+            avatarUrl: page.avatarUrl,
+            cookies: cookies,
+            dataSource: dataSource
+        )
     }
 }
 

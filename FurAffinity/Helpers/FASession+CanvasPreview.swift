@@ -11,6 +11,7 @@ import FAKit
 class OfflineFASession: FASession {
     let username: String
     let displayUsername: String
+    let avatarUrl: URL = FAComment.terrinissAvatarUrl
     let submissionPreviews: [FASubmissionPreview]
     let notePreviews: [FANotePreview]
     let notificationPreviews: FANotificationPreviews
@@ -118,83 +119,86 @@ class OfflineFASession: FASession {
 }
 
 extension OfflineFASession {
-    static let `default` = OfflineFASession(sampleUsername: "DemoUser", submissions: [
-        .init(sid: 44648356,
-              url: URL(string: "https://www.furaffinity.net/view/44648356/")!,
-              thumbnailUrl: URL(string: "https://t.furaffinity.net/44648356@200-1637084699.jpg")!,
-              thumbnailWidthOnHeightRatio: 0.998574972,
-              title: "Commission open NOW!",
-              author: "hiorou",
-              displayAuthor: "Hiorou"),
-        .init(sid: 44644268,
-              url: URL(string: "https://www.furaffinity.net/view/44644268/")!,
-              thumbnailUrl: URL(string: "https://t.furaffinity.net/44644268@300-1637057229.jpg")!,
-              thumbnailWidthOnHeightRatio: 1.1006,
-              title: "Scary stories",
-              author: "annetpeas",
-              displayAuthor: "AnnetPeas"),
-        .init(sid: 44642258,
-              url: URL(string: "https://www.furaffinity.net/view/44642258/")!,
-              thumbnailUrl: URL(string: "https://t.furaffinity.net/44642258@400-1637039064.jpg")!,
-              thumbnailWidthOnHeightRatio: 1.77231002,
-              title: "Halloween-well-cat 18-31 (with link to VID v)",
-              author: "rudragon",
-              displayAuthor: "RUdragon"),
-        .init(sid: 44638371,
-              url: URL(string: "https://www.furaffinity.net/view/44638371/")!,
-              thumbnailUrl: URL(string: "https://t.furaffinity.net/44638371@400-1637017760.jpg")!,
-              thumbnailWidthOnHeightRatio: 2.58585024,
-              title: "[OPEN] Adopt Auction - Rasul",
-              author: "terriniss",
-              displayAuthor: "Terriniss"),
-        .init(sid: 44631607,
-              url: URL(string: "https://www.furaffinity.net/view/44631607/")!,
-              thumbnailUrl: URL(string: "https://t.furaffinity.net/44631607@200-1636991632.jpg")!,
-              thumbnailWidthOnHeightRatio: 0.692519962,
-              title: "Eorah Pg.205",
-              author: "hiorou",
-              displayAuthor: "Hiorou")
-    ], notes: [
-        .init(id: 129953494, author: "someuser", displayAuthor: "SomeUser", title: "Another message",
-              datetime: "Apr 7, 2022 12:09PM", naturalDatetime: "an hour ago", unread: true,
-              noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953494/#message")!),
-        .init(id: 129953262, author: "someuser", displayAuthor: "SomeUser", title: "Title with some spéciäl çhãrāčtęrs",
-              datetime: "Apr 7, 2022 11:58AM", naturalDatetime: "an hour ago", unread: false,
-              noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953262/#message")!)
-    ], notifications: .init(submissionComments: [
+    static let `default` = OfflineFASession(
+        sampleUsername: "DemoUser",
+        submissions: [
+            .init(sid: 44648356,
+                  url: URL(string: "https://www.furaffinity.net/view/44648356/")!,
+                  thumbnailUrl: URL(string: "https://t.furaffinity.net/44648356@200-1637084699.jpg")!,
+                  thumbnailWidthOnHeightRatio: 0.998574972,
+                  title: "Commission open NOW!",
+                  author: "hiorou",
+                  displayAuthor: "Hiorou"),
+            .init(sid: 44644268,
+                  url: URL(string: "https://www.furaffinity.net/view/44644268/")!,
+                  thumbnailUrl: URL(string: "https://t.furaffinity.net/44644268@300-1637057229.jpg")!,
+                  thumbnailWidthOnHeightRatio: 1.1006,
+                  title: "Scary stories",
+                  author: "annetpeas",
+                  displayAuthor: "AnnetPeas"),
+            .init(sid: 44642258,
+                  url: URL(string: "https://www.furaffinity.net/view/44642258/")!,
+                  thumbnailUrl: URL(string: "https://t.furaffinity.net/44642258@400-1637039064.jpg")!,
+                  thumbnailWidthOnHeightRatio: 1.77231002,
+                  title: "Halloween-well-cat 18-31 (with link to VID v)",
+                  author: "rudragon",
+                  displayAuthor: "RUdragon"),
+            .init(sid: 44638371,
+                  url: URL(string: "https://www.furaffinity.net/view/44638371/")!,
+                  thumbnailUrl: URL(string: "https://t.furaffinity.net/44638371@400-1637017760.jpg")!,
+                  thumbnailWidthOnHeightRatio: 2.58585024,
+                  title: "[OPEN] Adopt Auction - Rasul",
+                  author: "terriniss",
+                  displayAuthor: "Terriniss"),
+            .init(sid: 44631607,
+                  url: URL(string: "https://www.furaffinity.net/view/44631607/")!,
+                  thumbnailUrl: URL(string: "https://t.furaffinity.net/44631607@200-1636991632.jpg")!,
+                  thumbnailWidthOnHeightRatio: 0.692519962,
+                  title: "Eorah Pg.205",
+                  author: "hiorou",
+                  displayAuthor: "Hiorou")
+        ], notes: [
+            .init(id: 129953494, author: "someuser", displayAuthor: "SomeUser", title: "Another message",
+                  datetime: "Apr 7, 2022 12:09PM", naturalDatetime: "an hour ago", unread: true,
+                  noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953494/#message")!),
+            .init(id: 129953262, author: "someuser", displayAuthor: "SomeUser", title: "Title with some spéciäl çhãrāčtęrs",
+                  datetime: "Apr 7, 2022 11:58AM", naturalDatetime: "an hour ago", unread: false,
+                  noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953262/#message")!)
+        ], notifications: .init(submissionComments: [
             .init(id: 172177443, author: "furrycount", displayAuthor: "Furrycount", title: "FurAffinity iOS App 1.3 Update",
                   datetime: "on Apr 30, 2023 09:50 PM", naturalDatetime: "a few seconds ago",
                   url: URL(string: "https://www.furaffinity.net/view/49215481/#cid:172177443")!),
             .init(id: 172177425, author: "furrycount", displayAuthor: "Furrycount", title: "FurAffinity iOS App 1.3 Update",
                   datetime: "on Apr 30, 2023 09:49 PM", naturalDatetime: "a minute ago",
                   url: URL(string: "https://www.furaffinity.net/view/49215481/#cid:172177425")!)
-    ], journalComments: [
-        .init(id: 60479543, author: "ceylo", displayAuthor: "Ceylo", title: "Test",
-              datetime: "on Apr 22, 2024 02:11 PM", naturalDatetime: "couple of minutes ago",
-              url: URL(string: "https://www.furaffinity.net/journal/10528107/#cid:60479543")!)
-    ], shouts: [
-        .init(
-            id: 54237319, author: "ceylo", displayAuthor: "Ceylo", title: "",
-            datetime: "on Apr 15, 2023 04:20 PM", naturalDatetime: "some seconds ago",
-            url: URL(string: "https://www.furaffinity.net/user/furrycount/#shout-54237319")!
-        )
-    ], journals: [
+        ], journalComments: [
+            .init(id: 60479543, author: "ceylo", displayAuthor: "Ceylo", title: "Test",
+                  datetime: "on Apr 22, 2024 02:11 PM", naturalDatetime: "couple of minutes ago",
+                  url: URL(string: "https://www.furaffinity.net/journal/10528107/#cid:60479543")!)
+        ], shouts: [
+            .init(
+                id: 54237319, author: "ceylo", displayAuthor: "Ceylo", title: "",
+                datetime: "on Apr 15, 2023 04:20 PM", naturalDatetime: "some seconds ago",
+                url: URL(string: "https://www.furaffinity.net/user/furrycount/#shout-54237319")!
+            )
+        ], journals: [
             .init(id: 10526001, author: "holt-odium", displayAuthor: "Holt-Odium", title: "📝 3 Slots are available",
-              datetime: "on Apr 14, 2023 08:23 PM", naturalDatetime: "18 hours ago",
-              url: URL(string: "https://www.furaffinity.net/journal/10526001/")!),
+                  datetime: "on Apr 14, 2023 08:23 PM", naturalDatetime: "18 hours ago",
+                  url: URL(string: "https://www.furaffinity.net/journal/10526001/")!),
             .init(id: 10521084, author: "holt-odium", displayAuthor: "Holt-Odium", title: "Sketch commission are open (115$)",
-              datetime: "on Apr 8, 2023 07:00 PM", naturalDatetime: "a week ago",
-              url: URL(string: "https://www.furaffinity.net/journal/10521084/")!),
+                  datetime: "on Apr 8, 2023 07:00 PM", naturalDatetime: "a week ago",
+                  url: URL(string: "https://www.furaffinity.net/journal/10521084/")!),
             .init(id: 10516170, author: "rudragon", displayAuthor: "RUdragon", title: "UPGRADES ARE OPEN!!! 5",
-              datetime: "on Apr 2, 2023 11:59 PM", naturalDatetime: "12 days ago",
-              url: URL(string: "https://www.furaffinity.net/journal/10516170/")!),
+                  datetime: "on Apr 2, 2023 11:59 PM", naturalDatetime: "12 days ago",
+                  url: URL(string: "https://www.furaffinity.net/journal/10516170/")!),
             .init(id: 10512063, author: "ishiru", displayAuthor: "Ishiru", title: "30 minutes before end of auction",
-              datetime: "on Mar 29, 2023 03:33 PM", naturalDatetime: "17 days ago",
-              url: URL(string: "https://www.furaffinity.net/journal/10512063/")!),
+                  datetime: "on Mar 29, 2023 03:33 PM", naturalDatetime: "17 days ago",
+                  url: URL(string: "https://www.furaffinity.net/journal/10512063/")!),
             .init(id: 10511753, author: "ishiru", displayAuthor: "Ishiru", title: "one day left",
-              datetime: "on Mar 29, 2023 07:42 AM", naturalDatetime: "17 days ago",
-              url: URL(string: "https://www.furaffinity.net/journal/10511753/")!)
-        ])
+                  datetime: "on Mar 29, 2023 07:42 AM", naturalDatetime: "17 days ago",
+                  url: URL(string: "https://www.furaffinity.net/journal/10511753/")!)
+        ]
+        )
     )
     
     static let empty = OfflineFASession(sampleUsername: "Demo User", submissions: [], notes: [], notifications: .init())
@@ -218,7 +222,7 @@ extension FASubmissionPreview {
 }
 
 extension FAComment {
-    private static let terrinissAvatarUrl = URL(string: "https://a.furaffinity.net/1616615925/terriniss.gif")!
+    static let terrinissAvatarUrl = URL(string: "https://a.furaffinity.net/1616615925/terriniss.gif")!
     static let demo: [FAComment] = try! [
         .visible(.init(
             cid: 166652793, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "2 months ago",
