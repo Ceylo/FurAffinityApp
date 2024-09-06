@@ -53,7 +53,7 @@ struct CommentView: View {
     
     func commentView(_ comment: FAVisibleComment) -> some View {
         HStack(alignment: .top) {
-            FANavigationLink(destination: userURL(for: comment)) {
+            FALink(destination: userURL(for: comment)) {
                 AvatarView(avatarUrl: comment.authorAvatarUrl)
                     .frame(width: avatarSize, height: avatarSize)
             }
@@ -93,9 +93,17 @@ struct CommentView: View {
 }
 
 #Preview("Visible comment") {
-    CommentView(comment: FAComment.demo[0])
+    NavigationStack {
+        List {
+            CommentView(comment: FAComment.demo[0])
+        }
+    }
 }
 
 #Preview("Hidden comment") {
-    CommentView(comment: FAComment.demoHidden[0])
+    NavigationStack {
+        List {
+            CommentView(comment: FAComment.demoHidden[0])
+        }
+    }
 }

@@ -37,8 +37,8 @@ struct UserGalleryLikeView: View {
                 }
             } else {
                 List(gallery.previews) { preview in
-                    FANavigationLink(
-                        destination: .submission(url: preview.url, previewData: preview)
+                    NavigationLink(
+                        value: FAURL.submission(url: preview.url, previewData: preview)
                     ) {
                         if galleryType.shouldDisplayAuthor {
                             SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
@@ -59,21 +59,22 @@ struct UserGalleryLikeView: View {
 }
 
 // MARK: -
-struct UserGalleryLikeView_Previews: PreviewProvider {
-    static var previews: some View {
-        Group {
-            UserGalleryLikeView(
-                galleryType: .favorites,
-                gallery: .init(displayAuthor: "Some User", previews: OfflineFASession.default.submissionPreviews)
-            )
-            .environmentObject(Model.demo)
-            
-            UserGalleryLikeView(
-                galleryType: .favorites,
-                gallery: .init(displayAuthor: "Some User", previews: [])
-            )
-            .environmentObject(Model.empty)
-        }
-        .preferredColorScheme(.dark)
+#Preview {
+    NavigationStack {
+        UserGalleryLikeView(
+            galleryType: .favorites,
+            gallery: .init(displayAuthor: "Some User", previews: OfflineFASession.default.submissionPreviews)
+        )
     }
+    .environmentObject(Model.demo)
+}
+
+#Preview {
+    NavigationStack {
+        UserGalleryLikeView(
+            galleryType: .favorites,
+            gallery: .init(displayAuthor: "Some User", previews: [])
+        )
+    }
+    .environmentObject(Model.empty)
 }

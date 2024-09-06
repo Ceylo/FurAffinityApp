@@ -33,20 +33,16 @@ struct AuthoredHeaderView: View {
     
     var body: some View {
         HStack(alignment: .top) {
-            FANavigationLink(destination: userFAURL) {
+            FALink(destination: userFAURL) {
                 AvatarView(avatarUrl: avatarUrl)
                     .frame(width: 38, height: 38)
             }
             
             VStack(alignment: .leading) {
                 HStack(alignment: .firstTextBaseline) {
-                    // Link here while title below won't navigate might be surprising.
-                    // Should it be kept?
-                    FANavigationLink(destination: userFAURL) {
-                        Text(displayName)
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                    }
+                    Text(displayName)
+                        .font(.headline)
+                        .foregroundColor(.primary)
                     Spacer()
                     if let datetime {
                         DateTimeButton(datetime: datetime.datetime,

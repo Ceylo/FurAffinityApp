@@ -22,7 +22,7 @@ struct SubmissionsFeedView: View {
             Group {
                 if let previews = model.submissionPreviews {
                     List(previews) { submission in
-                        FANavigationLink(destination: .submission(
+                        NavigationLink(value: FAURL.submission(
                             url: submission.url, previewData: submission
                         )) {
                             SubmissionFeedItemView<AuthoredHeaderView>(submission: submission)
@@ -131,14 +131,17 @@ extension SubmissionsFeedView {
 }
 
 // MARK: -
-struct SubmissionsFeedView_Previews: PreviewProvider {
-    static var previews: some View {
-        Group {
-            SubmissionsFeedView()
-                .environmentObject(Model.demo)
-            SubmissionsFeedView()
-                .environmentObject(Model.empty)
-        }
-        .preferredColorScheme(.dark)
+#Preview {
+    NavigationStack {
+        SubmissionsFeedView()
     }
+    .environmentObject(Model.demo)
+}
+
+#Preview("Empty feed") {
+    NavigationStack {
+        SubmissionsFeedView()
+    }
+    .environmentObject(Model.empty)
+    .preferredColorScheme(.dark)
 }

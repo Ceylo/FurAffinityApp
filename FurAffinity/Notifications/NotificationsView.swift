@@ -124,37 +124,36 @@ struct NotificationsView: View {
     }
 }
 
-struct NotificationsView_Previews: PreviewProvider {
-    static let notificationPreviews = OfflineFASession.default.notificationPreviews
-    
-    static var previews: some View {
-        Group {
-            NotificationsView(
-                notifications: notificationPreviews,
-                onDeleteSubmissionCommentNotifications: { _ in },
-                onDeleteJournalCommentNotifications: { _ in },
-                onDeleteShoutNotifications: { _ in },
-                onDeleteJournalNotifications: { _ in },
-                onNukeSubmissionComments: {},
-                onNukeJournalComments: {},
-                onNukeShouts: {},
-                onNukeJournals: {}
-            )
-            .environmentObject(Model.demo)
-            
-            NotificationsView(
-                notifications: .init(),
-                onDeleteSubmissionCommentNotifications: { _ in },
-                onDeleteJournalCommentNotifications: { _ in },
-                onDeleteShoutNotifications: { _ in },
-                onDeleteJournalNotifications: { _ in },
-                onNukeSubmissionComments: {},
-                onNukeJournalComments: {},
-                onNukeShouts: {},
-                onNukeJournals: {}
-            )
-            .environmentObject(Model.empty)
-        }
-        .preferredColorScheme(.dark)
+#Preview {
+    NavigationStack {
+        NotificationsView(
+            notifications: OfflineFASession.default.notificationPreviews,
+            onDeleteSubmissionCommentNotifications: { _ in },
+            onDeleteJournalCommentNotifications: { _ in },
+            onDeleteShoutNotifications: { _ in },
+            onDeleteJournalNotifications: { _ in },
+            onNukeSubmissionComments: {},
+            onNukeJournalComments: {},
+            onNukeShouts: {},
+            onNukeJournals: {}
+        )
     }
+    .environmentObject(Model.demo)
+}
+
+#Preview {
+    NavigationStack {
+        NotificationsView(
+            notifications: .init(),
+            onDeleteSubmissionCommentNotifications: { _ in },
+            onDeleteJournalCommentNotifications: { _ in },
+            onDeleteShoutNotifications: { _ in },
+            onDeleteJournalNotifications: { _ in },
+            onNukeSubmissionComments: {},
+            onNukeJournalComments: {},
+            onNukeShouts: {},
+            onNukeJournals: {}
+        )
+    }
+    .environmentObject(Model.empty)
 }

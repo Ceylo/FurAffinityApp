@@ -63,15 +63,16 @@ struct NotesView: View {
     }
 }
 
-struct NotesView_Previews: PreviewProvider {
-    static var previews: some View {
-        Group {
-            NotesView()
-                .environmentObject(Model.demo)
-            
-            NotesView()
-                .environmentObject(Model.empty)
-        }
-        .preferredColorScheme(.dark)
+#Preview {
+    NavigationStack {
+        NotesView()
     }
+    .environmentObject(Model.demo)
+}
+
+#Preview {
+    NavigationStack {
+        NotesView()
+    }
+    .environmentObject(Model.empty)
 }
