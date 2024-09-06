@@ -34,11 +34,16 @@ public struct FANotificationPreviews: Equatable, Sendable {
     }
 }
 
+public protocol AvatarProvider: Actor {
+    func avatarUrl(for username: String) async -> URL?
+}
+
 @MainActor
 public protocol FASession: AnyObject, Equatable {
     var username: String { get }
     var displayUsername: String { get }
     var avatarUrl: URL { get }
+    var avatarProvider: AvatarProvider { get }
     
     // MARK: - Submissions feed
     func submissionPreviews() async -> [FASubmissionPreview]

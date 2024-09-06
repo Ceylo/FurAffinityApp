@@ -8,20 +8,16 @@
 import Foundation
 import Cache
 
-private extension Expiry {
-    static func days(_ days: Int) -> Expiry {
-        .seconds(TimeInterval(60 * 60 * 24 * days))
-    }
+public protocol AvatarCacheDelegate: AnyObject {
+    /// Implement this to try to provide the avatar url when the cache could not
+    /// provide it.
+    func avatarUrlCacheMiss(for username: String) async -> URL?
 }
 
-protocol AvatarCacheDelegate: AnyObject {
-    func user(for username: String) async -> FAUser?
-}
-
-actor AvatarCache {
-    private(set) weak var delegate: AvatarCacheDelegate?
+public actor AvatarCache {
+    private weak var delegate: AvatarCacheDelegate?
     
-    init(delegate: AvatarCacheDelegate) {
+    public init(delegate: AvatarCacheDelegate) {
         self.delegate = delegate
     }
     
@@ -52,11 +48,11 @@ actor AvatarCache {
                 return nil
             }
             
-            guard let user = await delegate?.user(for: username)
+            guard let avatarUrl = await delegate?.avatarUrlCacheMiss(for: username)
             else { return nil }
             
-            try cacheAvatarUrl(user.avatarUrl, for: username)
-            return user.avatarUrl
+            try cacheAvatarUrl(avatarUrl, for: username)
+            return avatarUrl
         }
         
         avatarUrlTasks[username] = newTask
@@ -73,5 +69,15 @@ actor AvatarCache {
         let expiry = Expiry.days(validDays)
         try avatarUrlsCache.setObject(url, forKey: username, expiry: expiry)
         logger.info("Cached url \(url, privacy: .public) for user \(username, privacy: .public) for \(validDays) days")
+    }
+    
+    public func cachedAvatarUrl(for username: String) -> URL? {
+        try? avatarUrlsCache.object(forKey: username)
+    }
+}
+
+private extension Expiry {
+    static func days(_ days: Int) -> Expiry {
+        .seconds(TimeInterval(60 * 60 * 24 * days))
     }
 }

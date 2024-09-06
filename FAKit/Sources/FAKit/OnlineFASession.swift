@@ -15,6 +15,18 @@ private extension Expiry {
     }
 }
 
+private actor CachedAvatarProvider: AvatarProvider {
+    let avatarCache: AvatarCache
+    
+    init(avatarCache: AvatarCache) {
+        self.avatarCache = avatarCache
+    }
+    
+    func avatarUrl(for username: String) async -> URL? {
+        await avatarCache.cachedAvatarUrl(for: username)
+    }
+}
+
 public class OnlineFASession: FASession, AvatarCacheDelegate {
     enum Error: String, Swift.Error {
         case requestFailure
@@ -23,6 +35,7 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
     public let username: String
     public let displayUsername: String
     public let avatarUrl: URL
+    public var avatarProvider: AvatarProvider { CachedAvatarProvider(avatarCache: avatarCache) }
     private let cookies: [HTTPCookie]
     private let dataSource: HTTPDataSource
     private var avatarCache: AvatarCache!
@@ -285,6 +298,10 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
     
     public func avatarUrl(for username: String) async -> URL? {
         await avatarCache.avatarUrl(for: username)
+    }
+    
+    public func avatarUrlCacheMiss(for username: String) async -> URL? {
+        await user(for: username)?.avatarUrl
     }
     
     private nonisolated func cacheAvatars(from submission: FASubmission) async {

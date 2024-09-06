@@ -7,6 +7,11 @@
 
 import SwiftUI
 import URLImage
+import FAKit
+
+extension EnvironmentValues {
+    @Entry var avatarProvider: AvatarProvider?
+}
 
 struct AvatarView: View {
     var avatarUrl: URL?
