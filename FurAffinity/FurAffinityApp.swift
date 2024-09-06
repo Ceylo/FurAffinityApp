@@ -11,6 +11,26 @@ import URLImage
 import URLImageStore
 import AmplitudeSwift
 
+enum BuildConfiguration: CustomStringConvertible {
+    case debug
+    case release
+    
+    var description: String {
+        switch self {
+        case .debug:
+            "debug"
+        case .release:
+            "release"
+        }
+    }
+}
+
+#if DEBUG
+let buildConfiguration = BuildConfiguration.debug
+#else
+let buildConfiguration = BuildConfiguration.release
+#endif
+
 @MainActor
 private let amplitude: Amplitude? = {
     guard Secrets.amplitudeApiKey != Secrets.placeholderApiKey else {
@@ -45,7 +65,7 @@ struct FurAffinityApp: App {
     
     init() {
         let device = UIDevice.current
-        logger.info("Launched FurAffinity \(Bundle.main.version, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public)")
+        logger.info("Launched FurAffinity \(Bundle.main.version, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public), \(buildConfiguration, privacy: .public) build")
         logger.debug("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized")")
     }
 
