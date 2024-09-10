@@ -88,10 +88,10 @@ struct SubmissionView: View {
     }
 }
 
-struct SubmissionView_Previews: PreviewProvider {
-    static var previews: some View {
+#Preview {
+    withAsync({ await FASubmission.demo }) {
         SubmissionView(
-            submission: FASubmission.demo,
+            submission: $0,
             favoriteAction: {},
             replyAction: { parentCid,text in }
         )

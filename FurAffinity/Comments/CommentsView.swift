@@ -49,16 +49,27 @@ struct CommentsView: View {
     }
 }
 
-struct CommentsView_Previews: PreviewProvider {
-    static var previews: some View {
+#Preview {
+    withAsync({ await FAComment.demo }) { comments in
         List {
             CommentsView(
-                comments: FAComment.demo,
+                comments: comments,
                 replyAction: { cid in
                     print("Reply to cid \(cid)")
                 }
             )
         }
         .listStyle(.plain)
+    }
+}
+
+#Preview {
+    withAsync({ await FAComment.demo }) { comments in
+        CommentsView(
+            comments: comments,
+            replyAction: { cid in
+                print("Reply to cid \(cid)")
+            }
+        )
     }
 }

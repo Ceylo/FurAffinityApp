@@ -6,13 +6,18 @@
 //
 
 import Foundation
-import UIKit
 
 extension String {
+    static private let inliner = CSSInliner()
+    
     private var fixingLinks: String {
         self.replacingOccurrences(of: "href=\"/", with: "href=\"https://www.furaffinity.net/")
             .replacingOccurrences(of: "src=\"//", with: "src=\"https://")
             .replacingOccurrences(of: "src=\"/", with: "src=\"https://www.furaffinity.net/")
+    }
+    
+    public func inliningCSS() async throws -> String {
+        try await Self.inliner.inlineCSS(in: self)
     }
     
     public var selfContainedFAHtmlSubmission: String {
@@ -39,7 +44,7 @@ extension String {
 <html lang="en" class="no-js" xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <meta charset="utf-8" />
-        <link type="text/css" rel="stylesheet" href="https://www.furaffinity.net/themes/beta/css/ui_theme_dark.css" />
+        <link type="text/css" rel="stylesheet" href="/themes/beta/css/ui_theme_dark.css" />
     </head>
     <body>\(self)</body>
 </html>
@@ -47,30 +52,12 @@ extension String {
     }
     
     public var selfContainedFAHtmlUserDescription: String { selfContainedFAHtmlComment }
-
-    enum FATheme {
-        case light
-        case dark
-    }
     
     func using(theme: FATheme) -> String {
         if theme == .light {
             return replacingOccurrences(of: "ui_theme_dark.css", with: "ui_theme_light.css")
         } else {
             return self
-        }
-    }
-}
-
-extension String.FATheme {
-    init(style: UIUserInterfaceStyle) {
-        switch style {
-        case .unspecified, .dark:
-            self = .dark
-        case .light:
-            self = .light
-        @unknown default:
-            self = .dark
         }
     }
 }

@@ -67,13 +67,15 @@ struct UserPreviewView: View {
 }
 
 #Preview("Full preview") {
-    NavigationStack {
-        UserPreviewView(
-            preview: .init(
-                username: "foo",
-                displayName: "Foo",
-                avatarUrl: FAUser.demo.avatarUrl
+    withAsync({ await FAUser.demo }) { user in
+        NavigationStack {
+            UserPreviewView(
+                preview: .init(
+                    username: "foo",
+                    displayName: "Foo",
+                    avatarUrl: user.avatarUrl
+                )
             )
-        )
+        }
     }
 }

@@ -72,6 +72,7 @@
 		87C4D2B027653C3600C29A4B /* Zoomable in Frameworks */ = {isa = PBXBuildFile; productRef = 87C4D2AF27653C3600C29A4B /* Zoomable */; };
 		87C94A542AA893BA0049CA81 /* UserGalleryLikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C94A532AA893BA0049CA81 /* UserGalleryLikeView.swift */; };
 		87C94A562AA897E50049CA81 /* RemoteUserGalleryLikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C94A552AA897E50049CA81 /* RemoteUserGalleryLikeView.swift */; };
+		87D252062C906AB700E07AE1 /* withAsync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D252052C906AB700E07AE1 /* withAsync.swift */; };
 		87D4B92029C7BAC600DBD8B4 /* OptionalLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D4B91F29C7BAC600DBD8B4 /* OptionalLink.swift */; };
 		87D64FBD2C87181600AB6F44 /* WatchlistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FBC2C87181600AB6F44 /* WatchlistView.swift */; };
 		87D64FBF2C871B9300AB6F44 /* RemoteWatchlistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FBE2C871B9300AB6F44 /* RemoteWatchlistView.swift */; };
@@ -170,6 +171,7 @@
 		87C4435B2C73F29600200991 /* AlignedLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlignedLabel.swift; sourceTree = "<group>"; };
 		87C94A532AA893BA0049CA81 /* UserGalleryLikeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserGalleryLikeView.swift; sourceTree = "<group>"; };
 		87C94A552AA897E50049CA81 /* RemoteUserGalleryLikeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteUserGalleryLikeView.swift; sourceTree = "<group>"; };
+		87D252052C906AB700E07AE1 /* withAsync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = withAsync.swift; sourceTree = "<group>"; };
 		87D4B91F29C7BAC600DBD8B4 /* OptionalLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionalLink.swift; sourceTree = "<group>"; };
 		87D64FBC2C87181600AB6F44 /* WatchlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistView.swift; sourceTree = "<group>"; };
 		87D64FBE2C871B9300AB6F44 /* RemoteWatchlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteWatchlistView.swift; sourceTree = "<group>"; };
@@ -409,6 +411,7 @@
 				879536D82BE29CE1004A50B0 /* SectionHeader.swift */,
 				87C4435B2C73F29600200991 /* AlignedLabel.swift */,
 				87D64FC42C886F0200AB6F44 /* ProgressiveLoadItem.swift */,
+				87D252052C906AB700E07AE1 /* withAsync.swift */,
 			);
 			path = "Helper Views";
 			sourceTree = "<group>";
@@ -601,6 +604,7 @@
 				877226B327402F9300245DF0 /* LoggedInView.swift in Sources */,
 				877929D02744386E003AE828 /* FASession+CanvasPreview.swift in Sources */,
 				87346B372B0A658F000407C7 /* RemoteView.swift in Sources */,
+				87D252062C906AB700E07AE1 /* withAsync.swift in Sources */,
 				877FD54D29EC939E00230996 /* JournalControlsView.swift in Sources */,
 				873B2D1929EB2A0F00FA5F58 /* NotificationsView.swift in Sources */,
 				87566B84297DD02300FD3199 /* SubmissionMainImage.swift in Sources */,

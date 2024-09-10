@@ -31,10 +31,7 @@ struct RemoteJournalView: View {
     }
 }
 
-struct RemoteJournalView_Previews: PreviewProvider {
-    static var previews: some View {
-        RemoteJournalView(url: FAJournal.demo.url)
-            .environmentObject(Model.demo)
-//            .preferredColorScheme(.dark)
-    }
+#Preview {
+    RemoteJournalView(url: URL(string: "https://www.furaffinity.net/journal/10516170/")!)
+        .environmentObject(Model.demo)
 }

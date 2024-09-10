@@ -93,17 +93,23 @@ struct CommentView: View {
 }
 
 #Preview("Visible comment") {
-    NavigationStack {
-        List {
-            CommentView(comment: FAComment.demo[0])
+    withAsync({ await FAComment.demo[0] }) { comment in
+        NavigationStack {
+            List {
+                CommentView(comment: comment)
+            }
+            .listStyle(.plain)
         }
     }
 }
 
 #Preview("Hidden comment") {
-    NavigationStack {
-        List {
-            CommentView(comment: FAComment.demoHidden[0])
+    withAsync({ await FAComment.demoHidden[0] }) { comment in
+        NavigationStack {
+            List {
+                CommentView(comment: comment)
+            }
+            .listStyle(.plain)
         }
     }
 }

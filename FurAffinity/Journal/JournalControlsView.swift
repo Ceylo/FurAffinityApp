@@ -44,25 +44,27 @@ struct JournalControlsView: View {
 }
 
 #Preview {
-    Group {
-        JournalControlsView(journalUrl: FAJournal.demo.url,
-                            repliesCount: 12,
-                            replyAction: {
-            print("Reply")
-        })
-        
-        JournalControlsView(journalUrl: FAJournal.demo.url,
-                            repliesCount: 0,
-                            replyAction: {
-            print("Reply")
-        })
-    }
-    .preferredColorScheme(.dark)
-    .background {
-        Rectangle()
-            .fill(.clear)
-            .border(.secondary)
-            .offset(y: 3)
-            .frame(height: 18)
+    withAsync({ await FAJournal.demo }) { journal in
+        Group {
+            JournalControlsView(journalUrl: journal.url,
+                                repliesCount: 12,
+                                replyAction: {
+                print("Reply")
+            })
+            
+            JournalControlsView(journalUrl: journal.url,
+                                repliesCount: 0,
+                                replyAction: {
+                print("Reply")
+            })
+        }
+        .preferredColorScheme(.dark)
+        .background {
+            Rectangle()
+                .fill(.clear)
+                .border(.secondary)
+                .offset(y: 3)
+                .frame(height: 18)
+        }
     }
 }

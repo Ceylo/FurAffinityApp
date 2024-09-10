@@ -60,9 +60,9 @@ struct CommentEditor: View {
     }
 }
 
-struct CommentEditor_Previews: PreviewProvider {
-    static var previews: some View {
-        CommentEditor(text: .constant("Hello"), parentComment: FAComment.demo[0]) { contents in
+#Preview {
+    withAsync({ await FAComment.demo[0] }) {
+        CommentEditor(text: .constant("Hello"), parentComment: $0) { contents in
             print(contents as Any)
         }
         .border(.red)

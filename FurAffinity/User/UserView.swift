@@ -113,16 +113,20 @@ struct UserView: View {
     }
 }
 
-struct UserView_Previews: PreviewProvider {
-    static var previews: some View {
-        let description = try! AttributedString(
-            FAHTML: FAUser.demo.htmlDescription
-        ).convertingLinksForInAppNavigation()
+#Preview {
+    withAsync({
+        await (
+            FAUser.demo,
+            try! AttributedString(
+                FAHTML: FAUser.demo.htmlDescription
+            ).convertingLinksForInAppNavigation()
+        )
+    }) { user, description in
         UserView(
-            user: FAUser.demo,
+            user: user,
             description: .constant(description),
             toggleWatchAction: {}
         )
-        //        .preferredColorScheme(.dark)
     }
+    //        .preferredColorScheme(.dark)
 }

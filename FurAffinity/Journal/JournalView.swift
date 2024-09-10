@@ -68,10 +68,10 @@ struct JournalView: View {
     }
 }
 
-struct JournalView_Previews: PreviewProvider {
-    static var previews: some View {
+#Preview {
+    withAsync({ await FAJournal.demo }) {
         JournalView(
-            journal: FAJournal.demo,
+            journal: $0,
             replyAction: { parentCid,text in }
         )
     }

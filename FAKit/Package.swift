@@ -20,22 +20,27 @@ let package = Package(
     targets: [
         .target(
             name: "FAPages",
-            dependencies: ["SwiftSoup"]),
+            dependencies: ["SwiftSoup"]
+        ),
         .testTarget(
             name: "FAPagesTests",
             dependencies: ["FAPages"],
             resources: [
                 .copy("data"),
-            ]),
+            ]
+        ),
         .target(
             name: "FAKit",
-            dependencies: ["FAPages", "Cache", "SwiftGraph", .product(name: "OrderedCollections", package: "swift-collections")]),
+            dependencies: ["FAPages", "Cache", "SwiftGraph", .product(name: "OrderedCollections", package: "swift-collections")],
+            resources: [.process("Resources")]
+        ),
         .testTarget(
             name: "FAKitTests",
             dependencies: ["FAKit"],
             resources: [
                 .copy("data"),
-            ]),
+            ]
+        ),
     ],
-    swiftLanguageVersions: [.v6]
+    swiftLanguageModes: [.v6]
 )
