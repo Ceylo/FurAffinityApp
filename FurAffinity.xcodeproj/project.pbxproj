@@ -12,7 +12,6 @@
 		8716E7F0271C659D00C0BC4A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8716E7EF271C659D00C0BC4A /* Assets.xcassets */; };
 		8716E7F3271C659D00C0BC4A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8716E7F2271C659D00C0BC4A /* Preview Assets.xcassets */; };
 		871B05EF2C84BADA00302500 /* AppIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 871B05EE2C84BAD400302500 /* AppIcon.swift */; };
-		871C66E029B8CA9200A2B2C2 /* RemoteSubmissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 871C66DF29B8CA9200A2B2C2 /* RemoteSubmissionView.swift */; };
 		8725335F274A70BB007FEF3B /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8725335E274A70BB007FEF3B /* Model.swift */; };
 		87292E45297DD3FB00BE39B8 /* LoadingFailedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87292E44297DD3FB00BE39B8 /* LoadingFailedView.swift */; };
 		8733DDFB28F75B1A00CD8BCF /* Logs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8733DDFA28F75B1A00CD8BCF /* Logs.swift */; };
@@ -88,6 +87,7 @@
 		87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */; };
 		87EAA2DB29EB4F1800677446 /* RemoteNotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87EAA2DA29EB4F1800677446 /* RemoteNotificationsView.swift */; };
 		87EAA2DD29EB4F3700677446 /* JournalNotificationItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87EAA2DC29EB4F3700677446 /* JournalNotificationItemView.swift */; };
+		87F074A82C91AF0C00218D0E /* RemoteSubmissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F074A72C91AF0C00218D0E /* RemoteSubmissionView.swift */; };
 		87F5EE8F29C5D9DD00649C5B /* DateTimeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */; };
 		87F8FA342761347200CDD985 /* AuthoredHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA332761347200CDD985 /* AuthoredHeaderView.swift */; };
 		87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA3527613DD900CDD985 /* Extensions.swift */; };
@@ -114,7 +114,6 @@
 		8716E7F2271C659D00C0BC4A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		871B05EE2C84BAD400302500 /* AppIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIcon.swift; sourceTree = "<group>"; };
 		871C66DE29B8C36700A2B2C2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		871C66DF29B8CA9200A2B2C2 /* RemoteSubmissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteSubmissionView.swift; sourceTree = "<group>"; };
 		8725335E274A70BB007FEF3B /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
 		87292E44297DD3FB00BE39B8 /* LoadingFailedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingFailedView.swift; sourceTree = "<group>"; };
 		8733DDFA28F75B1A00CD8BCF /* Logs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logs.swift; sourceTree = "<group>"; };
@@ -187,6 +186,7 @@
 		87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOverlay.swift; sourceTree = "<group>"; };
 		87EAA2DA29EB4F1800677446 /* RemoteNotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteNotificationsView.swift; sourceTree = "<group>"; };
 		87EAA2DC29EB4F3700677446 /* JournalNotificationItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalNotificationItemView.swift; sourceTree = "<group>"; };
+		87F074A72C91AF0C00218D0E /* RemoteSubmissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteSubmissionView.swift; sourceTree = "<group>"; };
 		87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateTimeButton.swift; sourceTree = "<group>"; };
 		87F8FA332761347200CDD985 /* AuthoredHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthoredHeaderView.swift; sourceTree = "<group>"; };
 		87F8FA3527613DD900CDD985 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
@@ -302,7 +302,7 @@
 		875DD46B2843D0AC00F3E5D9 /* Submissions */ = {
 			isa = PBXGroup;
 			children = (
-				871C66DF29B8CA9200A2B2C2 /* RemoteSubmissionView.swift */,
+				87F074A72C91AF0C00218D0E /* RemoteSubmissionView.swift */,
 				8773058229D5FB8E004F8019 /* SubmissionView.swift */,
 				875EF2C62C1CABDC000D4BFB /* SubmissionPreviewView.swift */,
 				87566B83297DD02300FD3199 /* SubmissionMainImage.swift */,
@@ -595,7 +595,7 @@
 				873E65F027528FC6009C8767 /* SubmissionControlsView.swift in Sources */,
 				875EF2E62C1E1705000D4BFB /* LinearProgress.swift in Sources */,
 				87B0933C2AED6D53008DFDE7 /* DatetimePair.swift in Sources */,
-				871C66E029B8CA9200A2B2C2 /* RemoteSubmissionView.swift in Sources */,
+				87F074A82C91AF0C00218D0E /* RemoteSubmissionView.swift in Sources */,
 				875EF2E82C1E1FF7000D4BFB /* Comparable.swift in Sources */,
 				87919B2329F1CED6006FC2D6 /* Commenting.swift in Sources */,
 				873E66112752AAB2009C8767 /* ImageSaveHandler.swift in Sources */,
