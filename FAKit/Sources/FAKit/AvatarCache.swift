@@ -27,6 +27,7 @@ public actor AvatarCache {
         memoryConfig: MemoryConfig(),
         transformer: TransformerFactory.forCodable(ofType: URL.self)
     )
+    private var lastFlushDate = Date.distantPast
     
     func avatarUrl(for username: String) async -> URL? {
         guard !username.isEmpty else {
@@ -37,7 +38,10 @@ public actor AvatarCache {
         let delegate = self.delegate
         let newTask = Task { () -> URL? in
             _ = await previousTask?.result
-            try avatarUrlsCache.removeExpiredObjects()
+            if -lastFlushDate.timeIntervalSinceNow > 60 {
+                try avatarUrlsCache.removeExpiredObjects()
+                lastFlushDate = Date()
+            }
             
             if let url = try? avatarUrlsCache.object(forKey: username) {
                 return url
