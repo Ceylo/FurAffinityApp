@@ -8,7 +8,7 @@
 import Foundation
 import FAPages
 
-public struct FASubmission: Equatable {
+public struct FASubmission: Equatable, Sendable {
     public let url: URL
     public let previewImageUrl: URL
     public let fullResolutionImageUrl: URL
@@ -56,7 +56,7 @@ public struct FASubmission: Equatable {
 }
 
 extension FASubmission {
-    public init(_ page: FASubmissionPage, url: URL) throws {
+    public init(_ page: FASubmissionPage, url: URL) async throws {
         try self.init(
             url: url,
             previewImageUrl: page.previewImageUrl,
@@ -68,11 +68,11 @@ extension FASubmission {
             title: page.title,
             datetime: page.datetime,
             naturalDatetime: page.naturalDatetime,
-            description: AttributedString(FAHTML: page.htmlDescription.selfContainedFAHtmlSubmission),
+            description: await AttributedString(FAHTML: page.htmlDescription.selfContainedFAHtmlSubmission),
             isFavorite: page.isFavorite,
             favoriteCount: page.favoriteCount,
             favoriteUrl: page.favoriteUrl,
-            comments: FAComment.buildCommentsTree(page.comments)
+            comments: await FAComment.buildCommentsTree(page.comments)
         )
     }
 }

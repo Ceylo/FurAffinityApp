@@ -32,9 +32,11 @@ struct RemoteNotificationsView: View {
                     notifications: notifications,
                     onDeleteSubmissionCommentNotifications: model.deleteSubmissionCommentNotifications,
                     onDeleteJournalCommentNotifications: model.deleteJournalCommentNotifications,
+                    onDeleteShoutNotifications: model.deleteShoutNotifications,
                     onDeleteJournalNotifications: model.deleteJournalNotifications,
                     onNukeSubmissionComments: model.nukeAllSubmissionCommentNotifications,
                     onNukeJournalComments: model.nukeAllJournalCommentNotifications,
+                    onNukeShouts: model.nukeAllShoutNotifications,
                     onNukeJournals: model.nukeAllJournalNotifications
                 )
             } else {

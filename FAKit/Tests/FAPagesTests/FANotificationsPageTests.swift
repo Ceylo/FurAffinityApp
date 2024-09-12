@@ -9,12 +9,22 @@ import XCTest
 @testable import FAPages
 
 final class FANotificationsPageTests: XCTestCase {
-    func testShoutOnly_returnsNoJournal() async throws {
+    func testShoutOnly_returnsShout() async throws {
         let data = testData("www.furaffinity.net:msg:others-shout-only.html")
         let page = try await FANotificationsPage(data: data).unwrap()
         XCTAssertEqual([], page.submissionCommentHeaders)
         XCTAssertEqual([], page.journalCommentHeaders)
         XCTAssertEqual([], page.journalHeaders)
+        
+        let expected: [FANotificationsPage.Header] = [
+            .init(
+                id: 54237319, author: "ceylo", displayAuthor: "Ceylo", title: "",
+                datetime: "on Apr 15, 2023 04:20 PM", naturalDatetime: "some seconds ago",
+                url: URL(string: "https://www.furaffinity.net/user/furrycount#shout-54237319")!
+            )
+        ]
+        
+        XCTAssertEqual(expected, page.shoutHeaders)
     }
     
     func testEmpty_returnsNoJournal() async throws {

@@ -50,6 +50,8 @@ struct NotificationOverlay: View {
                         withAnimation {
                             self.itemCount = nil
                         }
+                    } catch is CancellationError {
+                        self.itemCount = nil
                     } catch {}
                 }
                 .transition(.fallAndFade)

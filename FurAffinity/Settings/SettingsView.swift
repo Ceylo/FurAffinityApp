@@ -15,7 +15,7 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("App information") {
-                Link("Website", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp")!)
+                Link("Website", destination: URL(string: "https://furaffinity.app")!)
                 Link("Privacy policy", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/blob/main/Privacy%20Policy.md")!)
                 Link("Feature request & bug report", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/issues")!)
                 Text("Current version: " + model.appInfo.currentVersion.description)

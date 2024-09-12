@@ -10,12 +10,13 @@ import FAKit
 
 struct JournalControlsView: View {
     var journalUrl: URL
+    var repliesCount: Int
     var replyAction: () -> Void
     
     private let buttonsSize: CGFloat = 55
     
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
+        HStack(spacing: 0) {
             Spacer()
             
             Button {
@@ -26,17 +27,14 @@ struct JournalControlsView: View {
                                     .aspectRatio(contentMode: .fit)
                                     .padding()
             }
-            .frame(width: buttonsSize, height: buttonsSize)
+            .frame(height: buttonsSize)
             
             Button {
                 replyAction()
             } label: {
-                Image(systemName: "arrowshape.turn.up.left")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .padding()
+                AlignedLabel(value: repliesCount, systemImage: "bubble.right")
             }
-            .frame(width: buttonsSize, height: buttonsSize)
+            .frame(height: buttonsSize-4)
             
             Spacer()
         }
@@ -45,12 +43,28 @@ struct JournalControlsView: View {
     }
 }
 
-struct JournalControlsView_Previews: PreviewProvider {
-    static var previews: some View {
-        JournalControlsView(journalUrl: FAJournal.demo.url,
-                            replyAction: {
-            print("Reply")
-        })
-            .preferredColorScheme(.dark)
+#Preview {
+    withAsync({ await FAJournal.demo }) { journal in
+        Group {
+            JournalControlsView(journalUrl: journal.url,
+                                repliesCount: 12,
+                                replyAction: {
+                print("Reply")
+            })
+            
+            JournalControlsView(journalUrl: journal.url,
+                                repliesCount: 0,
+                                replyAction: {
+                print("Reply")
+            })
+        }
+        .preferredColorScheme(.dark)
+        .background {
+            Rectangle()
+                .fill(.clear)
+                .border(.secondary)
+                .offset(y: 3)
+                .frame(height: 18)
+        }
     }
 }

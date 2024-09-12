@@ -1,4 +1,4 @@
-// swift-tools-version:5.7
+// swift-tools-version:6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -20,21 +20,27 @@ let package = Package(
     targets: [
         .target(
             name: "FAPages",
-            dependencies: ["SwiftSoup"]),
+            dependencies: ["SwiftSoup"]
+        ),
         .testTarget(
             name: "FAPagesTests",
             dependencies: ["FAPages"],
             resources: [
                 .copy("data"),
-            ]),
+            ]
+        ),
         .target(
             name: "FAKit",
-            dependencies: ["FAPages", "Cache", "SwiftGraph", .product(name: "OrderedCollections", package: "swift-collections")]),
+            dependencies: ["FAPages", "Cache", "SwiftGraph", .product(name: "OrderedCollections", package: "swift-collections")],
+            resources: [.process("Resources")]
+        ),
         .testTarget(
             name: "FAKitTests",
             dependencies: ["FAKit"],
             resources: [
                 .copy("data"),
-            ]),
-    ]
+            ]
+        ),
+    ],
+    swiftLanguageModes: [.v6]
 )

@@ -7,10 +7,6 @@
 
 import SwiftUI
 
-extension Color {
-    static let borderOverlay = Color("BorderOverlay")
-}
-
 extension CGPoint {
     static func+(lhs: CGPoint, rhs: CGPoint) -> CGPoint {
         .init(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
@@ -19,7 +15,7 @@ extension CGPoint {
 
 extension UIScrollView {
     var reachedTop: Bool {
-        return contentOffset.y - adjustedContentInset.top <= 0
+        return abs(contentOffset.y + adjustedContentInset.top) < 1e-6
     }
 }
 

@@ -44,10 +44,10 @@ jobs:
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
       - name: Update Secrets
         env:
-          APPCENTER_API_KEY: ${{ secrets.APPCENTER_API_KEY }}
+          AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
           BUNDLE_ID: ${{ secrets.BUNDLE_ID }}
         run: |
-          sed -i "" "s/appCenterApiKey = \"Your App Secret\"/appCenterApiKey = \"${APPCENTER_API_KEY}\"/" "FurAffinity/Secrets.swift"
+          sed -i "" "s/amplitudeApiKey = \"Your App Secret\"/amplitudeApiKey = \"${AMPLITUDE_API_KEY}\"/" "FurAffinity/Secrets.swift"
           sed -i "" "s/PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;/PRODUCT_BUNDLE_IDENTIFIER = ${BUNDLE_ID};/" "FurAffinity.xcodeproj/project.pbxproj"
       - uses: mxcl/xcodebuild@v2
         with:

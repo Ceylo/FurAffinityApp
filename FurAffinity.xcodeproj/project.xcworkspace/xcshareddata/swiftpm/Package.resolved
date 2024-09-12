@@ -1,12 +1,22 @@
 {
+  "originHash" : "045cf3894818953a3a8fd2d8c532a20eca0ec6ec4278a753775b92d8f400ad32",
   "pins" : [
     {
-      "identity" : "appcenter-sdk-apple",
+      "identity" : "amplitude-swift",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/microsoft/appcenter-sdk-apple.git",
+      "location" : "https://github.com/amplitude/Amplitude-Swift",
       "state" : {
-        "revision" : "ab54f758243f282d290b33027e8aac910d3d859a",
-        "version" : "5.0.5"
+        "revision" : "acbe89d2ae39614302aed6970e3b93f05db8ac7f",
+        "version" : "1.6.2"
+      }
+    },
+    {
+      "identity" : "analytics-connector-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/amplitude/analytics-connector-ios.git",
+      "state" : {
+        "revision" : "e2ca17ac735bcbc48b13062484541702ef45153d",
+        "version" : "1.0.3"
       }
     },
     {
@@ -16,15 +26,6 @@
       "state" : {
         "revision" : "ad6abdf2a3a866288a7dad2c4e13379406002a81",
         "version" : "6.2.0"
-      }
-    },
-    {
-      "identity" : "plcrashreporter",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/microsoft/PLCrashReporter.git",
-      "state" : {
-        "revision" : "6752f71de206f6a53fa6a758c3660fd9a7fe7527",
-        "version" : "1.11.2"
       }
     },
     {
@@ -91,5 +92,5 @@
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

@@ -37,6 +37,7 @@ struct JournalView: View {
                     
                     JournalControlsView(
                         journalUrl: journal.url,
+                        repliesCount: journal.comments.recursiveCount,
                         replyAction: {
                             replySession = .init(parentCid: nil, among: [])
                         }
@@ -62,14 +63,15 @@ struct JournalView: View {
         }
         .commentSheet(on: $replySession, replyAction)
         .navigationTitle(journal.title)
+        .navigationBarTitleDisplayMode(.inline)
         .listStyle(.plain)
     }
 }
 
-struct JournalView_Previews: PreviewProvider {
-    static var previews: some View {
+#Preview {
+    withAsync({ await FAJournal.demo }) {
         JournalView(
-            journal: FAJournal.demo,
+            journal: $0,
             replyAction: { parentCid,text in }
         )
     }

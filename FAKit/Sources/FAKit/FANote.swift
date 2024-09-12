@@ -8,7 +8,7 @@
 import Foundation
 import FAPages
 
-public struct FANote: Equatable {
+public struct FANote: Equatable, Sendable {
     public let author: String
     public let displayAuthor: String
     public let title: String
@@ -30,11 +30,11 @@ public struct FANote: Equatable {
 }
 
 public extension FANote {
-    init(_ notePage: FANotePage) throws {
+    init(_ notePage: FANotePage) async throws {
         try self.init(
             author: notePage.author, displayAuthor: notePage.displayAuthor,
             title: notePage.title, datetime: notePage.datetime, naturalDatetime: notePage.naturalDatetime,
-            message: AttributedString(FAHTML: notePage.htmlMessage.selfContainedFAHtmlSubmission), answerKey: notePage.answerKey
+            message: await AttributedString(FAHTML: notePage.htmlMessage.selfContainedFAHtmlSubmission), answerKey: notePage.answerKey
         )
     }
 }

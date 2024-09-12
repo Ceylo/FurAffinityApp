@@ -8,19 +8,33 @@
 import SwiftUI
 
 protocol UpdateHandler<Contents> {
-    associatedtype Contents
+    associatedtype Contents: Sendable
     
     @MainActor
     func update(with contents: Contents?)
 }
 
-/// `RemoteView` provides common behavior for remotely loaded content, such as:
+/// `PreviewableRemoteView` provides common behavior for remotely loaded content, such as:
 /// - displaying a progress until content becomes available
+/// - displaying a incomplete view until the content is loaded
 /// - allowing pull to refresh
 /// - giving web access to the content
-struct RemoteView<Contents, ContentsView: View>: View, UpdateHandler {
+struct PreviewableRemoteView<Contents: Sendable, ContentsView: View, PreviewView: View>: View, UpdateHandler {
+    init(
+        url: URL,
+        contentsLoader: @escaping () async -> Contents?,
+        @ViewBuilder previewViewBuilder: @escaping () -> PreviewView? = { nil }, contentsViewBuilder:
+        @escaping (Contents, any UpdateHandler<Contents>) -> ContentsView
+    ) {
+        self.url = url
+        self.contentsLoader = contentsLoader
+        self.previewViewBuilder = previewViewBuilder
+        self.contentsViewBuilder = contentsViewBuilder
+    }
+    
     var url: URL
     var contentsLoader: () async -> Contents?
+    @ViewBuilder var previewViewBuilder: () -> PreviewView?
     var contentsViewBuilder: (
         _ contents: Contents,
         _ updateHandler: any UpdateHandler<Contents>
@@ -44,9 +58,13 @@ struct RemoteView<Contents, ContentsView: View>: View, UpdateHandler {
                     }
                 }
             } else {
-                VStack(spacing: 20) {
-                    ProgressView()
-                    Link("Waiting for \(url.host(percentEncoded: false) ?? "?")…", destination: url)
+                if let preview = previewViewBuilder() {
+                    preview
+                } else {
+                    VStack(spacing: 20) {
+                        ProgressView()
+                        Link("Waiting for \(url.host(percentEncoded: false) ?? "?")…", destination: url)
+                    }
                 }
             }
         }
@@ -69,10 +87,16 @@ struct RemoteView<Contents, ContentsView: View>: View, UpdateHandler {
     
     func update() async {
         let contents = await contentsLoader()
+        #if swift(>=6)
+        update(with: contents)
+        #else
         await update(with: contents)
+        #endif
     }
 
+    #if swift(<6)
     @MainActor
+    #endif
     func update(with contents: Contents?) {
         if let contents {
             self.contentsState = .loaded(contents)
@@ -81,3 +105,5 @@ struct RemoteView<Contents, ContentsView: View>: View, UpdateHandler {
         }
     }
 }
+
+typealias RemoteView<Contents: Sendable, ContentsView: View> = PreviewableRemoteView<Contents, ContentsView, EmptyView>

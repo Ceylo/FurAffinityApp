@@ -30,11 +30,7 @@ extension AttributedString {
     }
 }
 
-func inAppUserUrl(for username: String) -> URL? {
-    FAURLs.userpageUrl(for: username)?.convertedForInAppNavigation
-}
-
-@ViewBuilder
+@MainActor @ViewBuilder
 func view(for url: FAURL) -> some View {
     switch url {
     case let .submission(url, previewData):
@@ -43,13 +39,15 @@ func view(for url: FAURL) -> some View {
         NoteView(url: url)
     case let .journal(url):
         RemoteJournalView(url: url)
-    case let .user(url):
-        RemoteUserView(url: url)
+    case let .user(url, previewData):
+        RemoteUserView(url: url, previewData: previewData)
     case let .gallery(url):
         RemoteUserGalleryLikeView(galleryType: .gallery, url: url)
     case let .scraps(url):
         RemoteUserGalleryLikeView(galleryType: .scraps, url: url)
     case let .favorites(url):
         RemoteUserGalleryLikeView(galleryType: .favorites, url: url)
+    case let .watchlist(url):
+        RemoteWatchlistView(url: url)
     }
 }

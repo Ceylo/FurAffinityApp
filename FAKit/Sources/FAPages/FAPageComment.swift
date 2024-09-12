@@ -8,7 +8,7 @@
 import Foundation
 import SwiftSoup
 
-public enum FAPageComment: Equatable {
+public enum FAPageComment: Equatable, Sendable {
     case visible(FAVisiblePageComment)
     case hidden(FAHiddenPageComment)
 }
@@ -43,7 +43,7 @@ extension FAPageComment {
 }
 
 
-public struct FAVisiblePageComment: Equatable {
+public struct FAVisiblePageComment: Equatable, Sendable {
     public let cid: Int
     public let indentation: Int
     public let author: String
@@ -54,7 +54,7 @@ public struct FAVisiblePageComment: Equatable {
     public let htmlMessage: String
 }
 
-public struct FAHiddenPageComment: Equatable {
+public struct FAHiddenPageComment: Equatable, Sendable {
     public let cid: Int
     public let indentation: Int
     public let htmlMessage: String
@@ -126,7 +126,7 @@ extension FAPageComment {
                 naturalDatetime: naturalDatetime, htmlMessage: htmlMessage
             ))
         } catch {
-            logger.warning("Caught error: \(error)\nWhile parsing: \((try? node.html()) ?? "")")
+            logger.warning("\(error)\nWhile parsing: \((try? node.html()) ?? "")")
             self = .hidden(.init(cid: cid, indentation: indentation, htmlMessage: htmlMessage))
         }
     }

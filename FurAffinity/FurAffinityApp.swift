@@ -9,8 +9,50 @@ import SwiftUI
 import FAKit
 import URLImage
 import URLImageStore
-import AppCenter
-import AppCenterAnalytics
+import AmplitudeSwift
+
+enum BuildConfiguration: CustomStringConvertible {
+    case debug
+    case release
+    
+    var description: String {
+        switch self {
+        case .debug:
+            "debug"
+        case .release:
+            "release"
+        }
+    }
+}
+
+#if DEBUG
+let buildConfiguration = BuildConfiguration.debug
+#else
+let buildConfiguration = BuildConfiguration.release
+#endif
+
+@MainActor
+private let amplitude: Amplitude? = {
+    guard Secrets.amplitudeApiKey != Secrets.placeholderApiKey else {
+        return nil
+    }
+    
+    let trackingOptions = TrackingOptions()
+        .disableTrackCity()
+        .disableTrackRegion()
+        .disableTrackCarrier()
+        .disableTrackDMA()
+        .disableTrackIpAddress()
+        .disableTrackIDFV()
+    
+    let config = Configuration(
+        apiKey: Secrets.amplitudeApiKey,
+        trackingOptions: trackingOptions,
+        defaultTracking: .init(sessions: true, appLifecycles: true)
+    )
+    
+    return Amplitude(configuration: config)
+}()
 
 @main
 struct FurAffinityApp: App {
@@ -23,10 +65,8 @@ struct FurAffinityApp: App {
     
     init() {
         let device = UIDevice.current
-        logger.info("Launched FurAffinity \(Bundle.main.version, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public)")
-#if !targetEnvironment(simulator)
-        AppCenter.start(withAppSecret: Secrets.appCenterApiKey, services: [Analytics.self])
-#endif
+        logger.info("Launched FurAffinity \(Bundle.main.version, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public), \(buildConfiguration, privacy: .public) build")
+        logger.debug("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized")")
     }
 
     var body: some Scene {

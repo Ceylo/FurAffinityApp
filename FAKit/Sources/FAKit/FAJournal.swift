@@ -8,7 +8,7 @@
 import Foundation
 import FAPages
 
-public struct FAJournal: Equatable {
+public struct FAJournal: Equatable, Sendable {
     public let url: URL
     public let author: String
     public let displayAuthor: String
@@ -39,7 +39,7 @@ public struct FAJournal: Equatable {
 }
 
 extension FAJournal {
-    public init(_ page: FAJournalPage, url: URL) throws {
+    public init(_ page: FAJournalPage, url: URL) async throws {
         try self.init(
             url: url,
             author: page.author,
@@ -48,8 +48,8 @@ extension FAJournal {
             title: page.title,
             datetime: page.datetime,
             naturalDatetime: page.naturalDatetime,
-            description: AttributedString(FAHTML: page.htmlDescription.selfContainedFAHtmlSubmission),
-            comments: FAComment.buildCommentsTree(page.comments)
+            description: await AttributedString(FAHTML: page.htmlDescription.selfContainedFAHtmlSubmission),
+            comments: await FAComment.buildCommentsTree(page.comments)
         )
     }
 }

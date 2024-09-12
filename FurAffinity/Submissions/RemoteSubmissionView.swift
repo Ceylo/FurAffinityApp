@@ -13,76 +13,60 @@ struct RemoteSubmissionView: View {
     
     var url: URL
     var previewData: FASubmissionPreview?
-    @State private var avatarUrl: URL?
-    @State private var submission: FASubmission?
-    @State private var submissionLoadingFailed = false
+    @Environment(\.avatarProvider) var avatarProvider
+    @State private var previewAvatarUrl: URL?
     @State private var activity: NSUserActivity?
     
-    private func loadSubmission(forceReload: Bool) async {
-        guard submission == nil || forceReload else {
-            return
+    private func loadSubmission() async -> (submission: FASubmission, avatarURL: URL?)? {
+        guard let submission = await model.session?.submission(for: url) else {
+            return nil
         }
         
-        if let previewData {
-            avatarUrl = await model.session?.avatarUrl(for: previewData.author)
-        }
-        
-        submission = await model.session?.submission(for: url)
-        if let submission {
-            avatarUrl = await model.session?.avatarUrl(for: submission.author)
-            submissionLoadingFailed = false
-        } else {
-            submissionLoadingFailed = true
-        }
+        let avatarUrl = await model.session?.avatarUrl(for: submission.author)
+        return (submission, avatarUrl)
     }
     
-    func loadingSucceededView(_ submission: FASubmission, thumbnail: DynamicThumbnail?) -> some View {
-        SubmissionView(
-            submission: submission,
-            avatarUrl: avatarUrl,
-            thumbnail: thumbnail,
-            favoriteAction: {
-                Task {
-                    self.submission = try await model.toggleFavorite(for: submission)
-                }
-            },
-            replyAction: { parentCid, text in
-                Task {
-                    self.submission = try await model
-                        .postComment(on: submission,
-                                     replytoCid: parentCid,
-                                     contents: text)
-                }
-            })
+    private var username: String? {
+        previewData?.author ?? FAURLs.usernameFrom(userUrl: url)
     }
     
     var body: some View {
-        Group {
-            if let submission {
-                loadingSucceededView(submission, thumbnail: previewData?.dynamicThumbnail)
-            } else if submissionLoadingFailed {
-                ScrollView {
-                    LoadingFailedView(url: url)
+        PreviewableRemoteView(
+            url: url,
+            contentsLoader: loadSubmission,
+            previewViewBuilder: {
+                if let previewData {
+                    return SubmissionPreviewView(submission: previewData, avatarUrl: previewAvatarUrl)
+                } else {
+                    return nil
                 }
-            } else if let previewData {
-                SubmissionPreviewView(submission: previewData, avatarUrl: avatarUrl)
-            } else {
-                ProgressView()
+            },
+            contentsViewBuilder: { contents, updateHandler in
+                SubmissionView(
+                    submission: contents.submission,
+                    avatarUrl: contents.avatarURL,
+                    thumbnail: previewData?.dynamicThumbnail,
+                    favoriteAction: {
+                        Task {
+                            let updated = try await model.toggleFavorite(for: contents.submission)
+                            updateHandler.update(with: updated.map { ($0, contents.avatarURL) })
+                        }
+                    },
+                    replyAction: { parentCid, text in
+                        Task {
+                            let updated = try await model.postComment(
+                                on: contents.submission,
+                                replytoCid: parentCid,
+                                contents: text
+                            )
+                            updateHandler.update(with: updated.map { ($0, contents.avatarURL) })
+                        }
+                    })
             }
-        }
-        .refreshable {
-            Task {
-                await loadSubmission(forceReload: true)
-            }
-        }
+        )
         .task {
-            await loadSubmission(forceReload: false)
-        }
-        .toolbar {
-            ToolbarItem {
-                Link(destination: url) {
-                    Image(systemName: "safari")
-                }
+            if previewAvatarUrl == nil, let username {
+                previewAvatarUrl = await avatarProvider?.avatarUrl(for: username)
             }
         }
         .onAppear {

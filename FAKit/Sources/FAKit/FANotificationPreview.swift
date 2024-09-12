@@ -8,7 +8,7 @@
 import Foundation
 import FAPages
 
-public struct FANotificationPreview: Equatable, Hashable, Identifiable {
+public struct FANotificationPreview: Hashable, Identifiable, Sendable {
     public let id: Int
     public let author: String
     public let displayAuthor: String

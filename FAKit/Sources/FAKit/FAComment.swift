@@ -7,15 +7,15 @@
 
 import Foundation
 import FAPages
-import SwiftGraph
+@preconcurrency import SwiftGraph
 import OrderedCollections
 
-public enum FAComment: Equatable {
+public enum FAComment: Equatable, Sendable {
     case visible(FAVisibleComment)
     case hidden(FAHiddenComment)
 }
 
-public struct FAVisibleComment: Equatable {
+public struct FAVisibleComment: Equatable, Sendable {
     public let cid: Int
     public let author: String
     public let displayAuthor: String
@@ -38,7 +38,7 @@ public struct FAVisibleComment: Equatable {
     }
 }
 
-public struct FAHiddenComment: Equatable {
+public struct FAHiddenComment: Equatable, Sendable {
     public let cid: Int
     public let message: AttributedString
     public let answers: [FAComment]
@@ -79,8 +79,12 @@ extension FAComment {
     }
 }
 
+extension FAComment: Identifiable {
+    public var id: Int { cid }
+}
+
 extension FAComment {
-    init(_ comment: FAVisiblePageComment) throws {
+    init(_ comment: FAVisiblePageComment) async throws {
         self = try .visible(.init(
             cid: comment.cid,
             author: comment.author,
@@ -88,25 +92,25 @@ extension FAComment {
             authorAvatarUrl: comment.authorAvatarUrl,
             datetime: comment.datetime,
             naturalDatetime: comment.naturalDatetime,
-            message: AttributedString(FAHTML: comment.htmlMessage.selfContainedFAHtmlComment),
+            message: await AttributedString(FAHTML: comment.htmlMessage.selfContainedFAHtmlComment),
             answers: []
         ))
     }
     
-    init(_ comment: FAHiddenPageComment) throws {
+    init(_ comment: FAHiddenPageComment) async throws {
         self = try .hidden(.init(
             cid: comment.cid,
-            message: AttributedString(FAHTML: comment.htmlMessage.selfContainedFAHtmlComment),
+            message: await AttributedString(FAHTML: comment.htmlMessage.selfContainedFAHtmlComment),
             answers: []
         ))
     }
     
-    init(_ comment: FAPageComment) throws {
+    init(_ comment: FAPageComment) async throws {
         switch comment {
         case let .visible(comment):
-            try self.init(comment)
+            try await self.init(comment)
         case let .hidden(comment):
-            try self.init(comment)
+            try await self.init(comment)
         }
     }
     
@@ -134,21 +138,21 @@ extension FAComment {
     
     static func childrenOf(comment: FAPageComment,
                            in graph: UnweightedGraph<Int>,
-                           index: [Int: FAPageComment]) throws -> [FAComment] {
+                           index: [Int: FAPageComment]) async throws -> [FAComment] {
         let children = graph.edgesForVertex(comment.cid)!
             .filter { $0.u == graph.indexOfVertex(comment.cid)! }
             .map { graph.vertexAtIndex($0.v) }
         
-        return try children
-            .map { (try FAComment(index[$0]!), index[$0]!) }
-            .map { comment, rawComment in
-                comment.withAnswers(
+        return try await children
+            .parallelMap { (try await FAComment(index[$0]!), index[$0]!) }
+            .parallelMap { comment, rawComment in
+                await comment.withAnswers(
                     try childrenOf(comment: rawComment, in: graph, index: index)
                 )
             }
     }
     
-    static func buildCommentsTree(_ comments: [FAPageComment]) throws -> [FAComment] {
+    static func buildCommentsTree(_ comments: [FAPageComment]) async throws -> [FAComment] {
         let commentsIndex = Dictionary(uniqueKeysWithValues: comments
             .map { ($0.cid, $0) })
         let graph = UnweightedGraph<Int>()
@@ -174,8 +178,8 @@ extension FAComment {
             }
         }
         
-        return try rootCommentIDs.map { cid in
-            try FAComment(commentsIndex[cid]!)
+        return try await rootCommentIDs.parallelMap { cid in
+            try await FAComment(commentsIndex[cid]!)
                 .withAnswers(childrenOf(comment: commentsIndex[cid]!,
                                         in: graph, index: commentsIndex))
         }
@@ -193,6 +197,13 @@ extension [FAComment] {
         }
         
         return nil
+    }
+    
+    public func forEach(_ closure: (FAComment) async throws -> Void) async rethrows {
+        for comment in self {
+            try await closure(comment)
+            try await comment.answers.forEach(closure)
+        }
     }
     
     public var recursiveCount: Int {

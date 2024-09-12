@@ -10,6 +10,7 @@ import FAKit
 import URLImage
 
 protocol SubmissionHeaderView: View {
+    @MainActor
     init(preview: FASubmissionPreview, avatarUrl: URL?)
 }
 
@@ -50,9 +51,9 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HeaderView(preview: submission, avatarUrl: avatarUrl)
-            .task {
-                avatarUrl = await model.session?.avatarUrl(for: submission.author)
-            }
+                .task {
+                    avatarUrl = await model.session?.avatarUrl(for: submission.author)
+                }
             previewImage
         }
         .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 0))

@@ -27,18 +27,35 @@ struct NoteView: View {
         }
     }
     
+    func userURL(for note: FANote) -> FAURL? {
+        guard let userUrl = FAURLs.userpageUrl(for: note.author) else {
+            return nil
+        }
+        
+        return .user(
+            url: userUrl,
+            previewData: .init(
+                username: note.author,
+                displayName: note.displayAuthor,
+                avatarUrl: avatarUrl
+            )
+        )
+    }
+    
     var body: some View {
         ScrollView {
             if let note {
                 VStack(alignment: .leading, spacing: 0) {
                     VStack(alignment: .leading) {
                         HStack {
-                            OptionalLink(destination: inAppUserUrl(for: note.author)) {
-                                AvatarView(avatarUrl: avatarUrl)
-                                    .frame(width: 42, height: 42)
-                                
-                                Text(note.displayAuthor)
-                                    .foregroundColor(.primary)
+                            FALink(destination: userURL(for: note)) {
+                                HStack {
+                                    AvatarView(avatarUrl: avatarUrl)
+                                        .frame(width: 42, height: 42)
+                                    
+                                    Text(note.displayAuthor)
+                                        .foregroundColor(.primary)
+                                }
                             }
                             Spacer()
                             DateTimeButton(datetime: note.datetime,
@@ -57,6 +74,7 @@ struct NoteView: View {
                 }
                 .padding()
                 .navigationTitle(note.title)
+                .navigationBarTitleDisplayMode(.inline)
             }
         }
         .task {
@@ -84,10 +102,8 @@ struct NoteView: View {
     }
 }
 
-struct NoteView_Previews: PreviewProvider {
-    static var previews: some View {
-        NoteView(url: OfflineFASession.default.notePreviews[1].noteUrl)
-//            .preferredColorScheme(.dark)
-            .environmentObject(Model.demo)
-    }
+#Preview {
+    NoteView(url: OfflineFASession.default.notePreviews[1].noteUrl)
+//        .preferredColorScheme(.dark)
+        .environmentObject(Model.demo)
 }

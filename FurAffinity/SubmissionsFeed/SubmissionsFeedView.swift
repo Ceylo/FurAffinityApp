@@ -14,82 +14,164 @@ struct SubmissionsFeedView: View {
     @EnvironmentObject var model: Model
     @State private var newSubmissionsCount: Int?
     @State private var scrollView: UIScrollView?
-    @State private var targetScrollItemSid: Int?
+    @State private var targetScrollItem: FASubmissionPreview?
     @State private var currentViewIsDisplayed = false
+    @AppStorage(Model.lastViewedSubmissionIDKey) private var lastViewedSubmissionID: Int?
     
-    var body: some View {
-        ScrollViewReader { proxy in
-            Group {
-                if let previews = model.submissionPreviews {
-                    List(previews) { submission in
-                        NavigationLink(value: FAURL(with: submission.url, submission)) {
-                            SubmissionFeedItemView<AuthoredHeaderView>(submission: submission)
-                                .id(submission.sid)
-                        }
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                    }
-                    .introspectScrollViewOnList { scrollView in
-                        Task {
-                            self.scrollView = scrollView
-                        }
-                    }
-                    .listStyle(.plain)
-                    .navigationBarTitleDisplayMode(.inline)
-                    .overlay(alignment: .topTrailing) {
-                        SubmissionsFeedActionView()
-                            .padding(.trailing, 20)
-                            .padding(.top, 6)
-                    }
-                    // Toolbar needs to be setup before refresh control…
-                    // https://stackoverflow.com/a/64700545/869385
-                    .navigationTitle("Submissions")
-                    .toolbar(.hidden, for: .navigationBar)
-                    .refreshable {
-                        refresh(pulled: true)
-                    }
-                    .swap(when: previews.isEmpty) {
-                        VStack(spacing: 20) {
-                            VStack(spacing: 10) {
-                                Text("It's a bit empty in here.")
-                                    .font(.headline)
-                                Text("Watch artists and wait for them to post new art. Submissions from [www.furaffinity.net/msg/submissions/](https://www.furaffinity.net/msg/submissions/) will be displayed here.")
-                                    .multilineTextAlignment(.center)
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            Button("Refresh") {
-                                refresh(pulled: true)
-                            }
-                        }
-                        .padding()
-                    }
-                }
+    var noPreview: some View {
+        VStack(spacing: 20) {
+            VStack(spacing: 10) {
+                Text("It's a bit empty in here.")
+                    .font(.headline)
+                Text("Watch artists and wait for them to post new art. Submissions from [www.furaffinity.net/msg/submissions/](https://www.furaffinity.net/msg/submissions/) will be displayed here.")
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.secondary)
             }
-            .onChange(of: model.submissionPreviews) { newValue in
-                Task { @MainActor in
-                    if let targetSid = targetScrollItemSid {
-                        proxy.scrollTo(targetSid, anchor: .top)
-                        targetScrollItemSid = nil
-                    }
-                }
+            
+            Button("Refresh") {
+                refresh(pulled: true)
             }
-            .overlay(alignment: .top) {
-                NotificationOverlay(itemCount: $newSubmissionsCount)
-                    .offset(y: 40)
+        }
+        .padding()
+    }
+    
+    private enum Item: Hashable, Identifiable {
+        case fetchTrigger(targetScrollItem: FASubmissionPreview)
+        case submissionPreview(FASubmissionPreview)
+        
+        var id: Self { self }
+    }
+    
+    private var listItems: [Item]? {
+        guard let modelPreviews = model.submissionPreviews else {
+            return nil
+        }
+        
+        guard let targetScrollItem else {
+            return modelPreviews.map { .submissionPreview($0) }
+        }
+        
+        var items = [Item]()
+        for preview in modelPreviews {
+            if preview == targetScrollItem {
+                items.append(.fetchTrigger(targetScrollItem: targetScrollItem))
             }
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-                autorefreshIfNeeded()
-            }
-            // Relying on this to know if the view is displayed doesn't always work
-            // in the general case, hopefully this view is used in a TabView
-            // which calls these modifiers as expected!
+            items.append(.submissionPreview(preview))
+        }
+        return items
+    }
+    
+    /// This implements the most reliable way known to be able to update the list
+    /// with new items at the beginning, while preventing the list from scrolling away
+    /// of `targetScrollItem`.
+    private func fetchTriggerView(with targetPreview: FASubmissionPreview, scrollProxy: ScrollViewProxy) -> some View {
+        Rectangle()
+            .foregroundStyle(.clear)
+            .frame(height: 1)
             .onAppear {
-                currentViewIsDisplayed = true
+                scrollProxy.scrollTo(Item.submissionPreview(targetPreview), anchor: .top)
+                
+                Task {
+                    let newSubmissionCount = await model
+                        .fetchSubmissionPreviews()
+                    
+                    withAnimation {
+                        newSubmissionsCount = newSubmissionCount
+                    }
+                    self.targetScrollItem = nil
+                }
             }
             .onDisappear {
-                currentViewIsDisplayed = false
+                scrollProxy.scrollTo(Item.submissionPreview(targetPreview), anchor: .top)
+                lastViewedSubmissionID = targetPreview.sid
             }
+    }
+    
+    private func followItem(_ preview: FASubmissionPreview, frame: CGRect?, geometry: GeometryProxy) {
+        guard let frame else { return }
+        let listFrame = geometry.frame(in: .global)
+        let itemTop = frame.minY / listFrame.height
+        let itemBottom = frame.maxY / listFrame.height
+        let isActive = (itemTop...itemBottom).contains(0.3)
+        if isActive, lastViewedSubmissionID != preview.sid {
+            lastViewedSubmissionID = preview.sid
+        }
+    }
+    
+    private func list(with items: [Item]) -> some View {
+        ScrollViewReader { scrollProxy in
+            GeometryReader { geometry in
+                List(items) { item in
+                    Group {
+                        switch item {
+                        case let .fetchTrigger(targetScrollItem):
+                            fetchTriggerView(with: targetScrollItem, scrollProxy: scrollProxy)
+                        case let .submissionPreview(preview):
+                            NavigationLink(value: FAURL.submission(
+                                url: preview.url, previewData: preview
+                            )) {
+                                SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
+                                    .id(preview.sid)
+                            }
+                            .onItemFrameChanged(listGeometry: geometry) { frame in
+                                followItem(preview, frame: frame, geometry: geometry)
+                            }
+                        }
+                    }
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    
+                }
+                .introspectScrollViewOnList { scrollView in
+                    // async because otherwise:
+                    // Modifying state during view update, this will cause undefined behavior.
+                    Task {
+                        self.scrollView = scrollView
+                    }
+                }
+                .trackListFrame()
+                .listStyle(.plain)
+                .overlay(alignment: .topTrailing) {
+                    SubmissionsFeedActionView()
+                        .padding(.trailing, 20)
+                        .padding(.top, 6)
+                }
+                .navigationBarTitleDisplayMode(.inline)
+                // Toolbar needs to be setup before refresh control…
+                // https://stackoverflow.com/a/64700545/869385
+                .navigationTitle("Submissions")
+                .toolbar(.hidden, for: .navigationBar)
+                .refreshable {
+                    refresh(pulled: true)
+                }
+                .swap(when: items.isEmpty) {
+                    noPreview
+                }
+            }
+        }
+    }
+    
+    var body: some View {
+        Group {
+            if let listItems {
+                list(with: listItems)
+            }
+        }
+        .overlay(alignment: .top) {
+            NotificationOverlay(itemCount: $newSubmissionsCount)
+                .offset(y: 40)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            autorefreshIfNeeded()
+        }
+        // Relying on this to know if the view is displayed doesn't always work
+        // in the general case, hopefully this view is used in a TabView
+        // which calls these modifiers as expected!
+        .onAppear {
+            currentViewIsDisplayed = true
+        }
+        .onDisappear {
+            currentViewIsDisplayed = false
         }
     }
 }
@@ -97,21 +179,22 @@ struct SubmissionsFeedView: View {
 // MARK: - Refresh
 extension SubmissionsFeedView {
     func refresh(pulled: Bool) {
-        targetScrollItemSid = model.submissionPreviews?.first?.sid
-        
         Task {
             // The delay gives time for the pull-to-refresh to go back
             // to its position and prevents interrupting animation
             if pulled {
-                try await Task.sleep(nanoseconds: UInt64(0.5 * 1e9))
+                if let scrollView {
+                    while !scrollView.reachedTop {
+                        try await Task.sleep(for: .milliseconds(50))
+                    }
+                } else {
+                    try await Task.sleep(for: .seconds(1))
+                }
             }
             
-            let newSubmissionCount = await model
-                .fetchSubmissionPreviews()
-            
-            withAnimation {
-                newSubmissionsCount = newSubmissionCount
-            }
+            // This will cause an Item.fetchTrigger to appear in the list,
+            // which will effectively cause the refresh
+            targetScrollItem = model.submissionPreviews?.first
         }
     }
     
@@ -128,15 +211,18 @@ extension SubmissionsFeedView {
     }
 }
 
-// MARK: -
-struct SubmissionsFeedView_Previews: PreviewProvider {
-    static var previews: some View {
-        Group {
-            SubmissionsFeedView()
-                .environmentObject(Model.demo)
-            SubmissionsFeedView()
-                .environmentObject(Model.empty)
-        }
-        .preferredColorScheme(.dark)
+// MARK: - Previews
+#Preview {
+    NavigationStack {
+        SubmissionsFeedView()
     }
+    .environmentObject(Model.demo)
+}
+
+#Preview("Empty feed") {
+    NavigationStack {
+        SubmissionsFeedView()
+    }
+    .environmentObject(Model.empty)
+    .preferredColorScheme(.dark)
 }

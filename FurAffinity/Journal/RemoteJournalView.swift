@@ -13,12 +13,10 @@ struct RemoteJournalView: View {
     var url: URL
     @EnvironmentObject var model: Model
     
-    private func load() async -> FAJournal? {
-        await model.session?.journal(for: url)
-    }
-    
     var body: some View {
-        RemoteView(url: url, contentsLoader: load) { journal, updateHandler in
+        RemoteView(url: url, contentsLoader: {
+            await model.session?.journal(for: url)
+        }) { journal, updateHandler in
             JournalView(journal: journal,
                         replyAction: { parentCid, text in
                 Task {
@@ -33,10 +31,7 @@ struct RemoteJournalView: View {
     }
 }
 
-struct RemoteJournalView_Previews: PreviewProvider {
-    static var previews: some View {
-        RemoteJournalView(url: FAJournal.demo.url)
-            .environmentObject(Model.demo)
-//            .preferredColorScheme(.dark)
-    }
+#Preview {
+    RemoteJournalView(url: URL(string: "https://www.furaffinity.net/journal/10516170/")!)
+        .environmentObject(Model.demo)
 }

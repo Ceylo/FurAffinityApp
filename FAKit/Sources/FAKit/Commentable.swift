@@ -12,9 +12,9 @@ public protocol FAPage {
     init?(data: Data)
 }
 
-public protocol Commentable {
+public protocol Commentable: Sendable {
     associatedtype PageType: FAPage
-    init(_ page: PageType, url: URL) throws
+    init(_ page: PageType, url: URL) async throws
     var url: URL { get }
 }
 

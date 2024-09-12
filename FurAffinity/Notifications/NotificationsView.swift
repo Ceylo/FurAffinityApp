@@ -54,31 +54,42 @@ extension ListedSection {
 extension FANotificationPreview: FANavigable {}
 
 struct NotificationsView: View {
-    var notifications: FASession.NotificationPreviews
+    var notifications: FANotificationPreviews
     var onDeleteSubmissionCommentNotifications: (_ items: [FANotificationPreview]) -> Void
     var onDeleteJournalCommentNotifications: (_ items: [FANotificationPreview]) -> Void
+    var onDeleteShoutNotifications: (_ items: [FANotificationPreview]) -> Void
     var onDeleteJournalNotifications: (_ items: [FANotificationPreview]) -> Void
     
     var onNukeSubmissionComments: () async -> Void
     var onNukeJournalComments: () async -> Void
+    var onNukeShouts: () async -> Void
     var onNukeJournals: () async -> Void
     
     var noNotification: Bool {
-        notifications.submissionComments.isEmpty && notifications.journalComments.isEmpty && notifications.journals.isEmpty
+        notifications.submissionComments.isEmpty &&
+        notifications.journalComments.isEmpty &&
+        notifications.shouts.isEmpty &&
+        notifications.journals.isEmpty
     }
     
     var body: some View {
         List {
             ListedSection("Submission Comments", notifications.submissionComments) { item in
-                SubmissionCommentNotificationItemView(submissionComment: item)
+                CommentNotificationItemView(notification: item)
             } onDelete: { items in
                 onDeleteSubmissionCommentNotifications(items)
             }
             
             ListedSection("Journal Comments", notifications.journalComments) { item in
-                SubmissionCommentNotificationItemView(submissionComment: item)
+                CommentNotificationItemView(notification: item)
             } onDelete: { items in
                 onDeleteJournalCommentNotifications(items)
+            }
+            
+            ListedSection("Shouts", notifications.shouts) { item in
+                ShoutNotificationItemView(shout: item)
+            } onDelete: { items in
+                onDeleteShoutNotifications(items)
             }
             
             ListedSection("Journals", notifications.journals) { item in
@@ -95,6 +106,7 @@ struct NotificationsView: View {
             NotificationsActionView(
                 nukeSubmissionCommentsAction: onNukeSubmissionComments,
                 nukeJournalCommentsAction: onNukeJournalComments,
+                nukeShoutsAction: onNukeShouts,
                 nukeJournalsAction: onNukeJournals
             )
             .padding(.trailing, 20)
@@ -112,33 +124,36 @@ struct NotificationsView: View {
     }
 }
 
-struct NotificationsView_Previews: PreviewProvider {
-    static let notificationPreviews = OfflineFASession.default.notificationPreviews
-    
-    static var previews: some View {
-        Group {
-            NotificationsView(
-                notifications: notificationPreviews,
-                onDeleteSubmissionCommentNotifications: { _ in },
-                onDeleteJournalCommentNotifications: { _ in },
-                onDeleteJournalNotifications: { _ in },
-                onNukeSubmissionComments: {},
-                onNukeJournalComments: {},
-                onNukeJournals: {}
-            )
-            .environmentObject(Model.demo)
-            
-            NotificationsView(
-                notifications: .init(),
-                onDeleteSubmissionCommentNotifications: { _ in },
-                onDeleteJournalCommentNotifications: { _ in },
-                onDeleteJournalNotifications: { _ in },
-                onNukeSubmissionComments: {},
-                onNukeJournalComments: {},
-                onNukeJournals: {}
-            )
-            .environmentObject(Model.empty)
-        }
-        .preferredColorScheme(.dark)
+#Preview {
+    NavigationStack {
+        NotificationsView(
+            notifications: OfflineFASession.default.notificationPreviews,
+            onDeleteSubmissionCommentNotifications: { _ in },
+            onDeleteJournalCommentNotifications: { _ in },
+            onDeleteShoutNotifications: { _ in },
+            onDeleteJournalNotifications: { _ in },
+            onNukeSubmissionComments: {},
+            onNukeJournalComments: {},
+            onNukeShouts: {},
+            onNukeJournals: {}
+        )
     }
+    .environmentObject(Model.demo)
+}
+
+#Preview {
+    NavigationStack {
+        NotificationsView(
+            notifications: .init(),
+            onDeleteSubmissionCommentNotifications: { _ in },
+            onDeleteJournalCommentNotifications: { _ in },
+            onDeleteShoutNotifications: { _ in },
+            onDeleteJournalNotifications: { _ in },
+            onNukeSubmissionComments: {},
+            onNukeJournalComments: {},
+            onNukeShouts: {},
+            onNukeJournals: {}
+        )
+    }
+    .environmentObject(Model.empty)
 }

@@ -36,9 +36,24 @@ struct CommentView: View {
         }
     }
     
+    func userURL(for comment: FAVisibleComment) -> FAURL? {
+        guard let userUrl = FAURLs.userpageUrl(for: comment.author) else {
+            return nil
+        }
+        
+        return .user(
+            url: userUrl,
+            previewData: .init(
+                username: comment.author,
+                displayName: comment.displayAuthor,
+                avatarUrl: comment.authorAvatarUrl
+            )
+        )
+    }
+    
     func commentView(_ comment: FAVisibleComment) -> some View {
         HStack(alignment: .top) {
-            OptionalLink(destination: inAppUserUrl(for: comment.author)) {
+            FALink(destination: userURL(for: comment)) {
                 AvatarView(avatarUrl: comment.authorAvatarUrl)
                     .frame(width: avatarSize, height: avatarSize)
             }
@@ -68,21 +83,33 @@ struct CommentView: View {
     }
     
     var body: some View {
-        Group {
-            switch comment {
-            case let .visible(comment):
-                commentView(comment)
-            case let .hidden(comment):
-                commentView(comment)
-            }
+        switch comment {
+        case let .visible(comment):
+            commentView(comment)
+        case let .hidden(comment):
+            commentView(comment)
         }
     }
 }
 
 #Preview("Visible comment") {
-    CommentView(comment: FAComment.demo[0])
+    withAsync({ await FAComment.demo[0] }) { comment in
+        NavigationStack {
+            List {
+                CommentView(comment: comment)
+            }
+            .listStyle(.plain)
+        }
+    }
 }
 
 #Preview("Hidden comment") {
-    CommentView(comment: FAComment.demoHidden[0])
+    withAsync({ await FAComment.demoHidden[0] }) { comment in
+        NavigationStack {
+            List {
+                CommentView(comment: comment)
+            }
+            .listStyle(.plain)
+        }
+    }
 }

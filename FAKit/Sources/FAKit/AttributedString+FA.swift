@@ -9,10 +9,17 @@ import Foundation
 import UIKit
 
 extension AttributedString {
-    public init(FAHTML: String) throws {
-        let theme = String.FATheme(style: UITraitCollection.current.userInterfaceStyle)
+    @MainActor // needed for NSAttributedString from HTML data which calls WebKit which isn't thread-safe
+    public init(FAHTML: String) async throws {
+        let token = signposter.beginInterval("AttributedString.init(FAHTML:)")
+        defer { signposter.endInterval("AttributedString.init(FAHTML:)", token) }
+        let theme = FATheme(style: UITraitCollection.current.userInterfaceStyle)
         
-        let data = try FAHTML.using(theme: theme).data(using: .utf8).unwrap()
+        let data = try await FAHTML
+            .using(theme: theme)
+            .inliningCSS()
+            .data(using: .utf8)
+            .unwrap()
         let nsattrstr = try NSAttributedString(
             data: data,
             options: [

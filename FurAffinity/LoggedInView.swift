@@ -7,10 +7,12 @@
 
 import SwiftUI
 import FAKit
+import Combine
 
 struct LoggedInView: View {
     @EnvironmentObject var model: Model
     @State private var selectedTab: Tab = .submissions
+    @State private var navigationStream = PassthroughSubject<FAURL, Never>()
     @State private var submissionsNavigationStack = NavigationPath()
     @State private var notesNavigationStack = NavigationPath()
     @State private var notificationsNavigationStack = NavigationPath()
@@ -22,6 +24,21 @@ struct LoggedInView: View {
         case notifications
         case userpage
         case settings
+    }
+    
+    func handleURL(_ url: FAURL) {
+        switch selectedTab {
+        case .submissions:
+            submissionsNavigationStack.append(url)
+        case .notes:
+            notesNavigationStack.append(url)
+        case .notifications:
+            notificationsNavigationStack.append(url)
+        case .userpage:
+            userpageNavigationStack.append(url)
+        case .settings:
+            fatalError("Internal inconsistency")
+        }
     }
     
     var body: some View {
@@ -62,7 +79,7 @@ struct LoggedInView: View {
                 .tag(Tab.notifications)
                 
                 NavigationStack(path: $userpageNavigationStack) {
-                    CurentUserView()
+                    CurrentUserView()
                         .navigationDestination(for: FAURL.self) { nav in
                             view(for: nav)
                         }
@@ -81,23 +98,13 @@ struct LoggedInView: View {
                 .tag(Tab.settings)
         }
         .onOpenURL { url in
-            guard let match = FAURL(with: url) else {
-                return
-            }
-            
-            switch selectedTab {
-            case .submissions:
-                submissionsNavigationStack.append(match)
-            case .notes:
-                notesNavigationStack.append(match)
-            case .notifications:
-                notificationsNavigationStack.append(match)
-            case .userpage:
-                userpageNavigationStack.append(match)
-            case .settings:
-                fatalError("Internal inconsistency")
-            }
+            FAURL(with: url).map(handleURL)
         }
+        .environment(\.navigationStream, navigationStream)
+        .onReceive(navigationStream, perform: { url in
+            handleURL(url)
+        })
+        .environment(\.avatarProvider, model.session?.avatarProvider)
         .onAppear {
             let tabBarAppearance = UITabBarAppearance()
             tabBarAppearance.configureWithDefaultBackground()

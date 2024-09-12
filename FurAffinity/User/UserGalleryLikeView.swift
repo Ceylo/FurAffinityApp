@@ -37,7 +37,9 @@ struct UserGalleryLikeView: View {
                 }
             } else {
                 List(gallery.previews) { preview in
-                    NavigationLink(value: FAURL(with: preview.url, preview)) {
+                    NavigationLink(
+                        value: FAURL.submission(url: preview.url, previewData: preview)
+                    ) {
                         if galleryType.shouldDisplayAuthor {
                             SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
                         } else {
@@ -52,28 +54,27 @@ struct UserGalleryLikeView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        // Toolbar needs to be setup before refresh control…
-        // https://stackoverflow.com/a/64700545/869385
         .navigationTitle("\(gallery.displayAuthor)'s \(galleryType)")
     }
 }
 
 // MARK: -
-struct UserGalleryLikeView_Previews: PreviewProvider {
-    static var previews: some View {
-        Group {
-            UserGalleryLikeView(
-                galleryType: .favorites,
-                gallery: .init(displayAuthor: "Some User", previews: OfflineFASession.default.submissionPreviews)
-            )
-            .environmentObject(Model.demo)
-            
-            UserGalleryLikeView(
-                galleryType: .favorites,
-                gallery: .init(displayAuthor: "Some User", previews: [])
-            )
-            .environmentObject(Model.empty)
-        }
-        .preferredColorScheme(.dark)
+#Preview {
+    NavigationStack {
+        UserGalleryLikeView(
+            galleryType: .favorites,
+            gallery: .init(displayAuthor: "Some User", previews: OfflineFASession.default.submissionPreviews)
+        )
     }
+    .environmentObject(Model.demo)
+}
+
+#Preview {
+    NavigationStack {
+        UserGalleryLikeView(
+            galleryType: .favorites,
+            gallery: .init(displayAuthor: "Some User", previews: [])
+        )
+    }
+    .environmentObject(Model.empty)
 }

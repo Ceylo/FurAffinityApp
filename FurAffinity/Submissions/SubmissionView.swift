@@ -83,14 +83,15 @@ struct SubmissionView: View {
         }
         .commentSheet(on: $replySession, replyAction)
         .navigationTitle(submission.title)
+        .navigationBarTitleDisplayMode(.inline)
         .listStyle(.plain)
     }
 }
 
-struct SubmissionView_Previews: PreviewProvider {
-    static var previews: some View {
+#Preview {
+    withAsync({ await FASubmission.demo }) {
         SubmissionView(
-            submission: FASubmission.demo,
+            submission: $0,
             favoriteAction: {},
             replyAction: { parentCid,text in }
         )

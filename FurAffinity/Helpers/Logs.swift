@@ -11,8 +11,8 @@ import OSLog
 let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FA")
 let signposter = OSSignposter(logger: logger)
 
-extension OSLogEntryLog.Level: CustomStringConvertible {
-    public var description: String {
+extension OSLogEntryLog.Level {
+    fileprivate var description: String {
         switch self {
         case .undefined: return "undefined"
         case .debug: return "debug"
@@ -33,7 +33,7 @@ func generateLogFile() throws -> URL {
     let logs = allEntries
         .compactMap { $0 as? OSLogEntryLog }
         .filter { $0.subsystem == subsystem }
-        .map { "\($0.date) [\($0.category)] [\($0.level)] \($0.composedMessage)" }
+        .map { "\($0.date) [\($0.category)] [\($0.level.description)] \($0.composedMessage)" }
         .joined(separator: "\n")
     let data = logs.data(using: .utf8)!
     let url = FileManager.default.temporaryDirectory

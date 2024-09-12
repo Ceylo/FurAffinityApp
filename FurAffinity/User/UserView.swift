@@ -9,38 +9,6 @@ import SwiftUI
 import FAKit
 import URLImage
 
-private enum Control: Int, CaseIterable, Identifiable {
-    var id: Int { rawValue }
-
-    case gallery
-    case scraps
-    case favorites
-}
-
-extension Control {
-    var title: String {
-        switch self {
-        case .gallery: return "Gallery"
-        case .scraps: return "Scraps"
-        case .favorites: return "Favs"
-        }
-    }
-    
-    func destinationUrl(for user: String) -> URL {
-        switch self {
-        case .gallery:
-            return FAURLs.galleryUrl(for: user)
-                .convertedForInAppNavigation
-        case .scraps:
-            return FAURLs.scrapsUrl(for: user)
-                .convertedForInAppNavigation
-        case .favorites:
-            return FAURLs.favoritesUrl(for: user)
-                .convertedForInAppNavigation
-        }
-    }
-}
-
 struct UserView: View {
     var user: FAUser
     var description: Binding<AttributedString?>
@@ -86,36 +54,20 @@ struct UserView: View {
         }
     }
     
+    @ViewBuilder
     var watchControl: some View {
-        Group {
-            if let watchData = user.watchData {
-                Spacer()
-                Button(action: toggleWatchAction) {
-                    Label(
-                        watchData.watching ? "Unwatch" : "Watch",
-                        systemImage: watchData.watching ? "bookmark.fill": "bookmark"
-                    )
-                    .labelStyle(WatchControlStyle())
-                }
-                // 🫠 https://forums.developer.apple.com/forums/thread/747558
-                .buttonStyle(BorderlessButtonStyle())
+        if let watchData = user.watchData {
+            Spacer()
+            Button(action: toggleWatchAction) {
+                Label(
+                    watchData.watching ? "Unwatch" : "Watch",
+                    systemImage: watchData.watching ? "bookmark.fill": "bookmark"
+                )
+                .labelStyle(WatchControlStyle())
             }
+            // 🫠 https://forums.developer.apple.com/forums/thread/747558
+            .buttonStyle(BorderlessButtonStyle())
         }
-    }
-    
-    var controls: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 0) {
-                ForEach(Control.allCases) { control in
-                    Link(destination: control.destinationUrl(for: user.name)) {
-                        Text(control.title)
-                            .font(.headline)
-                            .padding(10)
-                    }
-                }
-            }
-        }
-        .background(.regularMaterial)
     }
     
     var body: some View {
@@ -126,13 +78,14 @@ struct UserView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
                         AvatarView(avatarUrl: user.avatarUrl)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 42, height: 42)
                         Text(user.displayName)
                             .font(.title)
                         watchControl
                     }
+                    .padding(.vertical, 5)
                     
-                    controls
+                    UserProfileControlView(username: user.name)
                         .padding(.horizontal, -15)
                         .padding(.vertical, 5)
                     
@@ -155,20 +108,25 @@ struct UserView: View {
             .listRowInsets(.init())
         }
         .navigationTitle(user.displayName)
+        .navigationBarTitleDisplayMode(.inline)
         .listStyle(.plain)
     }
 }
 
-struct UserView_Previews: PreviewProvider {
-    static var previews: some View {
-        let description = try! AttributedString(
-            FAHTML: FAUser.demo.htmlDescription
-        ).convertingLinksForInAppNavigation()
+#Preview {
+    withAsync({
+        await (
+            FAUser.demo,
+            try! AttributedString(
+                FAHTML: FAUser.demo.htmlDescription
+            ).convertingLinksForInAppNavigation()
+        )
+    }) { user, description in
         UserView(
-            user: FAUser.demo,
+            user: user,
             description: .constant(description),
             toggleWatchAction: {}
         )
-        //        .preferredColorScheme(.dark)
     }
+    //        .preferredColorScheme(.dark)
 }

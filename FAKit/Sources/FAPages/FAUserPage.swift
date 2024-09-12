@@ -16,7 +16,7 @@ public struct FAUserPage: Equatable {
     public let htmlDescription: String
     public let shouts: [FAPageComment]
     
-    public struct WatchData: Equatable {
+    public struct WatchData: Equatable, Sendable {
         public let watchUrl: URL
         public var watching: Bool {
             watchUrl.path().starts(with: "/unwatch/")
