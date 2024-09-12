@@ -94,9 +94,11 @@ struct HomeView: View {
             center
             Spacer()
             HStack {
-                Link(FAURLs.homeUrl.schemelessDisplayString, destination: FAURLs.homeUrl)
+                Link("furaffinity.app",
+                     destination: URL(string: "https://furaffinity.app")!)
                 Text("—")
-                Link("App Privacy Policy", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/blob/main/Privacy%20Policy.md")!)
+                Link("Privacy Policy",
+                     destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/blob/main/Privacy%20Policy.md")!)
             }
         }
         .padding()
