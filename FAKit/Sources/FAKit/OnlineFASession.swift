@@ -60,8 +60,12 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
     }
     
     // MARK: - Submissions feed
-    public func submissionPreviews() async -> [FASubmissionPreview] {
-        let url = FAURLs.latest72SubmissionsUrl
+    public func submissionPreviews(from sid: Int?) async -> [FASubmissionPreview] {
+        let url = if let sid {
+            FAURLs.submissionsUrl(from: sid)
+        } else {
+            FAURLs.latest72SubmissionsUrl
+        }
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
               let page = await FASubmissionsPage(data: data, baseUri: url)
         else { return [] }

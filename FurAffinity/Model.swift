@@ -16,6 +16,7 @@ enum ModelError: Error {
 @MainActor
 class Model: ObservableObject {
     static let autorefreshDelay: TimeInterval = 15 * 60
+    static let lastViewedSubmissionIDKey = "lastViewedSubmissionID"
     
     @Published var session: (any FASession)? {
         didSet {
@@ -26,16 +27,16 @@ class Model: ObservableObject {
             processNewSession()
         }
     }
-    
+
+    /// `nil` until a fetch actually happened.
+    /// After a fetch it contains all found submissions, or an empty array if none was found.
     @Published
-    /// nil until a fetch actually happened
-    /// After a fetch it contains all found submissions, or an empty array if none was found
     private(set) var submissionPreviews: [FASubmissionPreview]?
     private(set) var lastSubmissionPreviewsFetchDate: Date?
     
+    /// `nil` until a fetch actually happened.
+    /// After a fetch it contains all found notes, or an empty array if none was found.
     @Published
-    /// nil until a fetch actually happened
-    /// After a fetch it contains all found notes, or an empty array if none was found
     private(set) var notePreviews: [FANotePreview]?
     @Published
     private(set) var unreadNoteCount = 0
@@ -98,7 +99,13 @@ class Model: ObservableObject {
             return 0
         }
         
-        let latestSubmissions = await session.submissionPreviews()
+        var firstWantedSubmissionID: Int?
+        if submissionPreviews == nil {
+            firstWantedSubmissionID = UserDefaults.standard
+                .object(forKey: Self.lastViewedSubmissionIDKey) as? Int
+        }
+        
+        let latestSubmissions = await session.submissionPreviews(from: firstWantedSubmissionID)
         lastSubmissionPreviewsFetchDate = Date()
         let lastKnownSid = submissionPreviews?.first?.sid ?? 0
         // We take advantage of the fact that submission IDs are always increasing

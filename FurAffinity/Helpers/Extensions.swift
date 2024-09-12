@@ -15,7 +15,7 @@ extension CGPoint {
 
 extension UIScrollView {
     var reachedTop: Bool {
-        return contentOffset.y - adjustedContentInset.top <= 0
+        return abs(contentOffset.y + adjustedContentInset.top) < 1e-6
     }
 }
 

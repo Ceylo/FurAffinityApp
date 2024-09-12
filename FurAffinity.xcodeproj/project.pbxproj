@@ -64,6 +64,7 @@
 		87B0933A2AED6CEA008DFDE7 /* TitledHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B093392AED6CEA008DFDE7 /* TitledHeaderView.swift */; };
 		87B0933C2AED6D53008DFDE7 /* DatetimePair.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B0933B2AED6D53008DFDE7 /* DatetimePair.swift */; };
 		87B0933E2AED7C47008DFDE7 /* URL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B0933D2AED7C47008DFDE7 /* URL.swift */; };
+		87BF3EE32C9329C8000A837E /* ListItemTracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87BF3EE22C9329C8000A837E /* ListItemTracking.swift */; };
 		87C13F8729FF0A89001C7CB2 /* CommentNotificationItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C13F8629FF0A89001C7CB2 /* CommentNotificationItemView.swift */; };
 		87C1A0AD284B6E5400529F8C /* Version in Frameworks */ = {isa = PBXBuildFile; productRef = 87C1A0AC284B6E5400529F8C /* Version */; };
 		87C4435A2C73C59900200991 /* ShoutNotificationItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C443592C73C59900200991 /* ShoutNotificationItemView.swift */; };
@@ -165,6 +166,7 @@
 		87B093392AED6CEA008DFDE7 /* TitledHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TitledHeaderView.swift; sourceTree = "<group>"; };
 		87B0933B2AED6D53008DFDE7 /* DatetimePair.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatetimePair.swift; sourceTree = "<group>"; };
 		87B0933D2AED7C47008DFDE7 /* URL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URL.swift; sourceTree = "<group>"; };
+		87BF3EE22C9329C8000A837E /* ListItemTracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListItemTracking.swift; sourceTree = "<group>"; };
 		87C13F8629FF0A89001C7CB2 /* CommentNotificationItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentNotificationItemView.swift; sourceTree = "<group>"; };
 		87C443592C73C59900200991 /* ShoutNotificationItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoutNotificationItemView.swift; sourceTree = "<group>"; };
 		87C4435B2C73F29600200991 /* AlignedLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlignedLabel.swift; sourceTree = "<group>"; };
@@ -347,6 +349,7 @@
 				87B0933B2AED6D53008DFDE7 /* DatetimePair.swift */,
 				878892DA2B8B905A00F332EE /* Text+Markdown.swift */,
 				875EF2E72C1E1FF7000D4BFB /* Comparable.swift */,
+				87BF3EE22C9329C8000A837E /* ListItemTracking.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -603,6 +606,7 @@
 				878892DB2B8B905A00F332EE /* Text+Markdown.swift in Sources */,
 				877226B327402F9300245DF0 /* LoggedInView.swift in Sources */,
 				877929D02744386E003AE828 /* FASession+CanvasPreview.swift in Sources */,
+				87BF3EE32C9329C8000A837E /* ListItemTracking.swift in Sources */,
 				87346B372B0A658F000407C7 /* RemoteView.swift in Sources */,
 				87D252062C906AB700E07AE1 /* withAsync.swift in Sources */,
 				877FD54D29EC939E00230996 /* JournalControlsView.swift in Sources */,

@@ -46,7 +46,7 @@ class OfflineFASession: FASession, AvatarCacheDelegate {
         user
     }
     
-    func submissionPreviews() async -> [FASubmissionPreview] { submissionPreviews }
+    func submissionPreviews(from sid: Int?) async -> [FASubmissionPreview] { submissionPreviews }
     
     func submission(for url: URL) async -> FASubmission? {
         await FASubmission.demo

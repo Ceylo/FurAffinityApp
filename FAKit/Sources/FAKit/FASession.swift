@@ -46,7 +46,10 @@ public protocol FASession: AnyObject, Equatable {
     var avatarProvider: AvatarProvider { get }
     
     // MARK: - Submissions feed
-    func submissionPreviews() async -> [FASubmissionPreview]
+    
+    /// - Parameter sid: The first submission ID (in date order) that should be returned.
+    /// If `nil`, the latest submission previews are provided.
+    func submissionPreviews(from sid: Int?) async -> [FASubmissionPreview]
     func nukeSubmissions() async throws
     
     // MARK: - User gallery

@@ -16,6 +16,9 @@ public enum FAURLs {
     )!
     
     public static let latest72SubmissionsUrl = submissionsUrl.appending(path: "new@72")
+    public static func submissionsUrl(from sid: Int) -> URL {
+        submissionsUrl.appending(component: "new~\(sid)@72")
+    }
     
     public static let notesInboxUrl = URL(
         string: "https://www.furaffinity.net/controls/switchbox/inbox/"
