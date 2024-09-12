@@ -73,7 +73,6 @@
 		87C94A542AA893BA0049CA81 /* UserGalleryLikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C94A532AA893BA0049CA81 /* UserGalleryLikeView.swift */; };
 		87C94A562AA897E50049CA81 /* RemoteUserGalleryLikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C94A552AA897E50049CA81 /* RemoteUserGalleryLikeView.swift */; };
 		87D252062C906AB700E07AE1 /* withAsync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D252052C906AB700E07AE1 /* withAsync.swift */; };
-		87D4B92029C7BAC600DBD8B4 /* OptionalLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D4B91F29C7BAC600DBD8B4 /* OptionalLink.swift */; };
 		87D64FBD2C87181600AB6F44 /* WatchlistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FBC2C87181600AB6F44 /* WatchlistView.swift */; };
 		87D64FBF2C871B9300AB6F44 /* RemoteWatchlistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FBE2C871B9300AB6F44 /* RemoteWatchlistView.swift */; };
 		87D64FC12C87542B00AB6F44 /* String.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FC02C87542700AB6F44 /* String.swift */; };
@@ -173,7 +172,6 @@
 		87C94A532AA893BA0049CA81 /* UserGalleryLikeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserGalleryLikeView.swift; sourceTree = "<group>"; };
 		87C94A552AA897E50049CA81 /* RemoteUserGalleryLikeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteUserGalleryLikeView.swift; sourceTree = "<group>"; };
 		87D252052C906AB700E07AE1 /* withAsync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = withAsync.swift; sourceTree = "<group>"; };
-		87D4B91F29C7BAC600DBD8B4 /* OptionalLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionalLink.swift; sourceTree = "<group>"; };
 		87D64FBC2C87181600AB6F44 /* WatchlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistView.swift; sourceTree = "<group>"; };
 		87D64FBE2C871B9300AB6F44 /* RemoteWatchlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteWatchlistView.swift; sourceTree = "<group>"; };
 		87D64FC02C87542700AB6F44 /* String.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = String.swift; sourceTree = "<group>"; };
@@ -403,7 +401,6 @@
 				873E65F127529866009C8767 /* SaveButton.swift */,
 				8733DDFE28FAD58D00CD8BCF /* SwapView.swift */,
 				87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */,
-				87D4B91F29C7BAC600DBD8B4 /* OptionalLink.swift */,
 				87292E44297DD3FB00BE39B8 /* LoadingFailedView.swift */,
 				87F8FA332761347200CDD985 /* AuthoredHeaderView.swift */,
 				87D64FCC2C88B00100AB6F44 /* FALink.swift */,
@@ -612,7 +609,6 @@
 				877FD54D29EC939E00230996 /* JournalControlsView.swift in Sources */,
 				873B2D1929EB2A0F00FA5F58 /* NotificationsView.swift in Sources */,
 				87566B84297DD02300FD3199 /* SubmissionMainImage.swift in Sources */,
-				87D4B92029C7BAC600DBD8B4 /* OptionalLink.swift in Sources */,
 				873E65F227529866009C8767 /* SaveButton.swift in Sources */,
 				87F960CB2801EFF3000B30A3 /* AvatarView.swift in Sources */,
 				876C137329D5F8E3001EB05B /* UserView.swift in Sources */,
