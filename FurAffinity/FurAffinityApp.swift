@@ -66,7 +66,8 @@ struct FurAffinityApp: App {
     init() {
         let device = UIDevice.current
         logger.info("Launched FurAffinity \(Bundle.main.version, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public), \(buildConfiguration, privacy: .public) build")
-        logger.debug("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized")")
+        _ = amplitude
+        logger.info("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized")")
     }
 
     var body: some Scene {
