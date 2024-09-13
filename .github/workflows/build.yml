@@ -42,10 +42,10 @@ jobs:
         run: |
           sed -i "" "s/amplitudeApiKey = \"Your App Secret\"/amplitudeApiKey = \"${AMPLITUDE_API_KEY}\"/" "FurAffinity/Secrets.swift"
           sed -i "" "s/PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;/PRODUCT_BUNDLE_IDENTIFIER = ${BUNDLE_ID};/" "FurAffinity.xcodeproj/project.pbxproj"
-      - uses: mxcl/xcodebuild@v2
+      - uses: mxcl/xcodebuild@v3
         with:
           action: none
-          xcode: 16.0
+          xcode: ~16.0
       - name: Build App
         run: |
           xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 15' -configuration Release build
