@@ -29,15 +29,15 @@ public struct FANotificationPreview: Hashable, Identifiable, Sendable {
 }
 
 public extension FANotificationPreview {
-    init(_ comment: FANotificationsPage.Header) {
+    init(_ header: FANotificationsPage.Header) {
         self.init(
-            id: comment.id,
-            author: comment.author,
-            displayAuthor: comment.displayAuthor,
-            title: comment.title,
-            datetime: comment.datetime,
-            naturalDatetime: comment.naturalDatetime,
-            url: comment.url
+            id: header.id,
+            author: header.author,
+            displayAuthor: header.displayAuthor,
+            title: header.title,
+            datetime: header.datetime,
+            naturalDatetime: header.naturalDatetime,
+            url: header.url
         )
     }
 }
