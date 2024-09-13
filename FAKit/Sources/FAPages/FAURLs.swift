@@ -40,8 +40,12 @@ public enum FAURLs {
         if urlString.suffix(1) != "/" {
             urlString.append("/")
         }
-        return urlString
-            .substring(matching: "https:\\/\\/www\\.furaffinity\\.net\\/user\\/(.+)\\/")
+        
+        guard urlString.wholeMatch(of: /https:\/\/www\.furaffinity\.net\/user\/.+\//) != nil else {
+            return nil
+        }
+        
+        return userUrl.lastPathComponent
     }
     
     public static func galleryUrl(for username: String) -> URL {
