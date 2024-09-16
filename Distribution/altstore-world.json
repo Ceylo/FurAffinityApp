@@ -14,46 +14,55 @@
       "marketplaceID": null,
       "developerName": "Ceylo",
       "subtitle": "An unofficial native app for the furaffinity.net website.",
-      "localizedDescription": "Connect with your furaffinity.net account and enjoy the furry community in a native app.\n\nFEATURES\n- Browse the latest submissions from your followed artists, add favorites and leave comments!\n- Read and participate to artists journals.\n- Check received notes and notifications.\n- Browse user profiles to check their content and eventually follow them!\n\nThis app is opensource and its sources are available at https://github.com/Ceylo/FurAffinityApp",
-      "iconURL": "https://get.furaffinity.app/altstore-world/fa-app-icon.heic",
+      "localizedDescription": "🐾 Connect with your furaffinity.net account and enjoy the furry community in a native app.\n\n📱 FEATURES\n- Browse the latest submissions from your followed artists, add favorites and leave comments!\n- Read and participate to artists journals.\n- Check received notes and notifications.\n- Browse user profiles to check their content and eventually follow them!\n\nThis app is opensource and its sources are available at https://github.com/Ceylo/FurAffinityApp\n\n🔗 Website: https://furaffinity.app\n🔗 Privacy policy: https://github.com/Ceylo/FurAffinityApp/blob/main/Privacy%20Policy.md",
+      "iconURL": "https://get.furaffinity.app/altstore/fa-app-icon.heic",
       "tintColor": null,
       "category": "social",
       "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.8.0/FurAffinity-1.8.0-58b3697.ipa",
       "screenshots": [
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore-world/screenshots/IMG_7965.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9/screenshots/feed.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore-world/screenshots/IMG_7980.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9/screenshots/submission.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore-world/screenshots/IMG_7968.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9/screenshots/comments.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore-world/screenshots/IMG_7979.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9/screenshots/profile.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore-world/screenshots/IMG_7969.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9/screenshots/notifications.heic",
           "width": 1170
         }
       ],
       "screenshotURLs": [
-        "https://get.furaffinity.app/altstore-world/screenshots/IMG_7965.heic",
-        "https://get.furaffinity.app/altstore-world/screenshots/IMG_7980.heic",
-        "https://get.furaffinity.app/altstore-world/screenshots/IMG_7968.heic",
-        "https://get.furaffinity.app/altstore-world/screenshots/IMG_7979.heic",
-        "https://get.furaffinity.app/altstore-world/screenshots/IMG_7969.heic"
+        "https://get.furaffinity.app/altstore/releases/1.9/screenshots/feed.heic",
+        "https://get.furaffinity.app/altstore/releases/1.9/screenshots/submission.heic",
+        "https://get.furaffinity.app/altstore/releases/1.9/screenshots/comments.heic",
+        "https://get.furaffinity.app/altstore/releases/1.9/screenshots/profile.heic",
+        "https://get.furaffinity.app/altstore/releases/1.9/screenshots/notifications.heic"
       ],
       "versions": [
+        {
+          "version": "1.9",
+          "date": "2024-09-16T20:06:38+02:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n📱 FEATURES\n• Shout notifications are now displayed in the Notifications tab\n• User watch and \"watched by\" lists are now accessible from user profiles. Additionally, the watchlist features a search field allowing to look for a specific user\n• The scroll position of the submissions feed is now preserved when restarting the app\n• Speed improvements:\n    • Until furaffinity.net answers and provide the full data, user profiles now first display a preview content instead of a progress indicator\n    • A lot more avatars get cached and are thus available for early display\n    • Scrolling through favorites is much smoother\n    • Submissions or journals with many comments are loaded much faster\n\n🐞 BUGFIXES\n• Fix new submissions notification bubble sometimes not dismissing\n• Fix navigation bar sometimes becoming bigger when navigating back\n\n📦 MISCELLANEOUS\n• The login screen has been redesigned\n• Analytics have been migrated from \"Microsoft AppCenter\" to \"Amplitude\"",
+          "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.9.0/FurAffinity-1.9.0-75b71f0.ipa",
+          "size": 2208262,
+          "sha256": "bbb0e365e47a91c33734fb05761da1c23763db99d6854fcd6601b7983f3f0e65",
+          "minOSVersion": "16.1"
+        },
         {
           "version": "1.8",
           "date": "2024-07-02T12:32:38+02:00",
