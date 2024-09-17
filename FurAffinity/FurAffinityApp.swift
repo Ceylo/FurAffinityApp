@@ -48,7 +48,7 @@ private let amplitude: Amplitude? = {
     let config = Configuration(
         apiKey: Secrets.amplitudeApiKey,
         trackingOptions: trackingOptions,
-        defaultTracking: .init(sessions: true, appLifecycles: true)
+        autocapture: [.sessions, .appLifecycles]
     )
     
     return Amplitude(configuration: config)

@@ -42,7 +42,6 @@
 		877932AF2743186F004C43FD /* URLImageStore in Frameworks */ = {isa = PBXBuildFile; productRef = 877932AE2743186F004C43FD /* URLImageStore */; };
 		877C8A9D2A0043D000B2F02B /* NotificationsActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877C8A9C2A0043D000B2F02B /* NotificationsActionView.swift */; };
 		877FD54D29EC939E00230996 /* JournalControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877FD54C29EC939E00230996 /* JournalControlsView.swift */; };
-		87815AC728D63F9B005AD03E /* View+Introspection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87815AC628D63F9B005AD03E /* View+Introspection.swift */; };
 		878892DB2B8B905A00F332EE /* Text+Markdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878892DA2B8B905A00F332EE /* Text+Markdown.swift */; };
 		87891FFA29F5A09700606F12 /* CommentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87891FF929F5A09700606F12 /* CommentView.swift */; };
 		878B0B912970B18C00A08685 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878B0B902970B18C00A08685 /* Secrets.swift */; };
@@ -53,7 +52,6 @@
 		879233D2278216DF0019AC44 /* HTMLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 879233D1278216DF0019AC44 /* HTMLView.swift */; };
 		879536D92BE29CE1004A50B0 /* SectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 879536D82BE29CE1004A50B0 /* SectionHeader.swift */; };
 		8799FAE22741672E0068A049 /* SubmissionFeedItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */; };
-		879BFAB928D5E97800BDFB43 /* Introspect in Frameworks */ = {isa = PBXBuildFile; productRef = 879BFAB828D5E97800BDFB43 /* Introspect */; };
 		87A1859C27459FFE00B10D2A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A1859B27459FFE00B10D2A /* SettingsView.swift */; };
 		87A185A02745A83B00B10D2A /* Debugging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A1859F2745A83B00B10D2A /* Debugging.swift */; };
 		87A185A22745A8A100B10D2A /* CenteredView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A185A12745A8A100B10D2A /* CenteredView.swift */; };
@@ -84,6 +82,7 @@
 		87D64FCD2C88B00100AB6F44 /* FALink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FCC2C88B00100AB6F44 /* FALink.swift */; };
 		87E0E2B82801D967005207A8 /* NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B72801D967005207A8 /* NotesView.swift */; };
 		87E0E2BA2801DCDB005207A8 /* NoteItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B92801DCDB005207A8 /* NoteItemView.swift */; };
+		87E796172C99994D0020EACD /* SwiftUIIntrospect in Frameworks */ = {isa = PBXBuildFile; productRef = 87E796162C99994D0020EACD /* SwiftUIIntrospect */; };
 		87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */; };
 		87EAA2DB29EB4F1800677446 /* RemoteNotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87EAA2DA29EB4F1800677446 /* RemoteNotificationsView.swift */; };
 		87EAA2DD29EB4F3700677446 /* JournalNotificationItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87EAA2DC29EB4F3700677446 /* JournalNotificationItemView.swift */; };
@@ -142,7 +141,6 @@
 		877929CF2744386E003AE828 /* FASession+CanvasPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FASession+CanvasPreview.swift"; sourceTree = "<group>"; };
 		877C8A9C2A0043D000B2F02B /* NotificationsActionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsActionView.swift; sourceTree = "<group>"; };
 		877FD54C29EC939E00230996 /* JournalControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalControlsView.swift; sourceTree = "<group>"; };
-		87815AC628D63F9B005AD03E /* View+Introspection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Introspection.swift"; sourceTree = "<group>"; };
 		878892DA2B8B905A00F332EE /* Text+Markdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Text+Markdown.swift"; sourceTree = "<group>"; };
 		87891FF929F5A09700606F12 /* CommentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentView.swift; sourceTree = "<group>"; };
 		878B0B8A296CA5B200A08685 /* Privacy Policy.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Privacy Policy.md"; sourceTree = "<group>"; };
@@ -200,11 +198,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				87E796172C99994D0020EACD /* SwiftUIIntrospect in Frameworks */,
 				877932AD2743186F004C43FD /* URLImage in Frameworks */,
 				87C1A0AD284B6E5400529F8C /* Version in Frameworks */,
 				87C4D2B027653C3600C29A4B /* Zoomable in Frameworks */,
 				877932AF2743186F004C43FD /* URLImageStore in Frameworks */,
-				879BFAB928D5E97800BDFB43 /* Introspect in Frameworks */,
 				877173752C35878700B84624 /* AmplitudeSwift in Frameworks */,
 				8761834E271F5E570021A051 /* FAKit in Frameworks */,
 			);
@@ -337,7 +335,6 @@
 				87F8FA3527613DD900CDD985 /* Extensions.swift */,
 				877929CF2744386E003AE828 /* FASession+CanvasPreview.swift */,
 				873E66102752AAB2009C8767 /* ImageSaveHandler.swift */,
-				87815AC628D63F9B005AD03E /* View+Introspection.swift */,
 				8733DDFC28F75C1200CD8BCF /* Sharing.swift */,
 				8733DDFA28F75B1A00CD8BCF /* Logs.swift */,
 				87FE0DA829747C0C005713DB /* AppInformation.swift */,
@@ -455,8 +452,8 @@
 				877932AE2743186F004C43FD /* URLImageStore */,
 				87C4D2AF27653C3600C29A4B /* Zoomable */,
 				87C1A0AC284B6E5400529F8C /* Version */,
-				879BFAB828D5E97800BDFB43 /* Introspect */,
 				877173742C35878700B84624 /* AmplitudeSwift */,
+				87E796162C99994D0020EACD /* SwiftUIIntrospect */,
 			);
 			productName = FurAffinity;
 			productReference = 8716E7E8271C659C00C0BC4A /* Fur Affinity.app */;
@@ -575,7 +572,6 @@
 				87A9C34329C788A00001D1D6 /* RemoteUserView.swift in Sources */,
 				877C8A9D2A0043D000B2F02B /* NotificationsActionView.swift in Sources */,
 				87FE0DA72974609E005713DB /* SubmissionsFeedActionView.swift in Sources */,
-				87815AC728D63F9B005AD03E /* View+Introspection.swift in Sources */,
 				87292E45297DD3FB00BE39B8 /* LoadingFailedView.swift in Sources */,
 				8741BA3129EC3FF700501A84 /* RemoteJournalView.swift in Sources */,
 				87D64FCB2C88ADEC00AB6F44 /* UserProfileControlView.swift in Sources */,
@@ -795,8 +791,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;
 				MARKETING_VERSION = 1.9;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;
 				PRODUCT_NAME = "Fur Affinity";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -828,8 +824,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;
 				MARKETING_VERSION = 1.9;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;
 				PRODUCT_NAME = "Fur Affinity";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -911,7 +907,7 @@
 			repositoryURL = "https://github.com/amplitude/Amplitude-Swift";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
+				minimumVersion = 1.9.2;
 			};
 		};
 		877932AB2743186F004C43FD /* XCRemoteSwiftPackageReference "url-image" */ = {
@@ -927,7 +923,7 @@
 			repositoryURL = "https://github.com/siteline/SwiftUI-Introspect.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.1.4;
+				minimumVersion = 1.3.0;
 			};
 		};
 		87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */ = {
@@ -935,7 +931,7 @@
 			repositoryURL = "https://github.com/mxcl/Version.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.0.0;
+				minimumVersion = 2.1.0;
 			};
 		};
 		87C4D2AE27653C3600C29A4B /* XCRemoteSwiftPackageReference "Zoomable" */ = {
@@ -968,11 +964,6 @@
 			package = 877932AB2743186F004C43FD /* XCRemoteSwiftPackageReference "url-image" */;
 			productName = URLImageStore;
 		};
-		879BFAB828D5E97800BDFB43 /* Introspect */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */;
-			productName = Introspect;
-		};
 		87C1A0AC284B6E5400529F8C /* Version */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */;
@@ -982,6 +973,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 87C4D2AE27653C3600C29A4B /* XCRemoteSwiftPackageReference "Zoomable" */;
 			productName = Zoomable;
+		};
+		87E796162C99994D0020EACD /* SwiftUIIntrospect */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */;
+			productName = SwiftUIIntrospect;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

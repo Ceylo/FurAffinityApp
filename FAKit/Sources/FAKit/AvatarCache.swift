@@ -25,6 +25,7 @@ public actor AvatarCache {
     private let avatarUrlsCache: Storage<String, URL> = try! .init(
         diskConfig: DiskConfig(name: "AvatarURLs"),
         memoryConfig: MemoryConfig(),
+        fileManager: .default,
         transformer: TransformerFactory.forCodable(ofType: URL.self)
     )
     private var lastFlushDate = Date.distantPast

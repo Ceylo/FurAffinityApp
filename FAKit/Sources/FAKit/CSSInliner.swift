@@ -12,6 +12,7 @@ actor CSSInliner {
     private let cssCache: Storage<FATheme, String> = try! .init(
         diskConfig: DiskConfig(name: "CSSInlinerCache"),
         memoryConfig: MemoryConfig(),
+        fileManager: .default,
         transformer: TransformerFactory.forCodable(ofType: String.self)
     )
     private let lighThemeFallbackCSS = {

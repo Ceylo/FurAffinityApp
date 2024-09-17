@@ -17,6 +17,7 @@ public struct FALoginView: View {
     static private let cookieCache: Storage<Int, [CodableHTTPCookie]> = try! Storage(
         diskConfig: DiskConfig(name: "SessionCookies"),
         memoryConfig: MemoryConfig(),
+        fileManager: .default,
         transformer: TransformerFactory.forCodable(ofType: [CodableHTTPCookie].self)
     )
     

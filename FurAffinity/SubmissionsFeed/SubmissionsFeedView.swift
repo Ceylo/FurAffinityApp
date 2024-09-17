@@ -7,13 +7,13 @@
 
 import SwiftUI
 import FAKit
-import Introspect
+@_spi(Advanced) import SwiftUIIntrospect
 import UIKit
 
 struct SubmissionsFeedView: View {
     @EnvironmentObject var model: Model
     @State private var newSubmissionsCount: Int?
-    @State private var scrollView: UIScrollView?
+    @Weak private var scrollView: UIScrollView?
     @State private var targetScrollItem: FASubmissionPreview?
     @State private var currentViewIsDisplayed = false
     @AppStorage(Model.lastViewedSubmissionIDKey) private var lastViewedSubmissionID: Int?
@@ -122,12 +122,8 @@ struct SubmissionsFeedView: View {
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                     
                 }
-                .introspectScrollViewOnList { scrollView in
-                    // async because otherwise:
-                    // Modifying state during view update, this will cause undefined behavior.
-                    Task {
-                        self.scrollView = scrollView
-                    }
+                .introspect(.scrollView, on: .iOS(.v16...)) { scrollView in
+                    self.scrollView = scrollView
                 }
                 .trackListFrame()
                 .listStyle(.plain)
