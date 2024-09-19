@@ -14,7 +14,8 @@ struct SubmissionMainImage: View {
     var widthOnHeightRatio: Float
     var thumbnailImage: DynamicThumbnail?
     var fullResolutionImageUrl: URL
-    var displayProgress: Bool = true
+    var displayProgress = true
+    var allowZoomableSheet = true
     @Binding var fullResolutionCGImage: CGImage?
     @State private var showZoomableSheet = false
     
@@ -54,7 +55,9 @@ struct SubmissionMainImage: View {
                         .ignoresSafeArea()
                     }
                     .onTapGesture {
-                        showZoomableSheet = true
+                        if allowZoomableSheet {
+                            showZoomableSheet = true
+                        }
                     }
             }
         }

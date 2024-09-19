@@ -30,6 +30,7 @@ struct SubmissionPreviewView: View {
                         widthOnHeightRatio: submission.thumbnailWidthOnHeightRatio,
                         fullResolutionImageUrl: submission.dynamicThumbnail.bestThumbnailUrl(for: geometry),
                         displayProgress: false,
+                        allowZoomableSheet: false,
                         fullResolutionCGImage: .constant(nil)
                     )
                 }
