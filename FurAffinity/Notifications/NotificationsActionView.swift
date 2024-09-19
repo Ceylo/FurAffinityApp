@@ -7,11 +7,20 @@
 
 import SwiftUI
 
+@MainActor
+protocol NotificationsNuker {
+    func nukeAllSubmissionCommentNotifications() async -> Void
+    func nukeAllJournalCommentNotifications() async -> Void
+    func nukeAllShoutNotifications() async -> Void
+    func nukeAllJournalNotifications() async -> Void
+}
+
 struct NotificationsActionView: View {
-    var nukeSubmissionCommentsAction: () async -> Void
-    var nukeJournalCommentsAction: () async -> Void
-    var nukeShoutsAction: () async -> Void
-    var nukeJournalsAction: () async -> Void
+    var hasSubmissionComments: Bool
+    var hasJournalComments: Bool
+    var hasShouts: Bool
+    var hasJournals: Bool
+    var nuker: NotificationsNuker
     
     @State private var showNukeSubmissionCommentsAlert = false
     @State private var showNukeJournalCommentsAlert = false
@@ -19,57 +28,73 @@ struct NotificationsActionView: View {
     @State private var showNukeJournalsAlert = false
     
     var body: some View {
-        Menu {
-            Button(role: .destructive) {
-                showNukeSubmissionCommentsAlert = true
+        if hasSubmissionComments || hasJournalComments || hasShouts || hasJournals {
+            Menu {
+                if hasSubmissionComments {
+                    Button(role: .destructive) {
+                        showNukeSubmissionCommentsAlert = true
+                    } label: {
+                        Label("Nuke All Submission Comments", systemImage: "trash")
+                    }
+                }
+                
+                if hasJournalComments {
+                    Button(role: .destructive) {
+                        showNukeJournalCommentsAlert = true
+                    } label: {
+                        Label("Nuke All Journal Comments", systemImage: "trash")
+                    }
+                }
+                
+                if hasShouts {
+                    Button(role: .destructive) {
+                        showNukeShoutsAlert = true
+                    } label: {
+                        Label("Nuke All Shouts", systemImage: "trash")
+                    }
+                }
+                
+                if hasJournals {
+                    Button(role: .destructive) {
+                        showNukeJournalsAlert = true
+                    } label: {
+                        Label("Nuke All Journals", systemImage: "trash")
+                    }
+                }
             } label: {
-                Label("Nuke All Submission Comments", systemImage: "trash")
+                ActionControl()
             }
-            
-            Button(role: .destructive) {
-                showNukeJournalCommentsAlert = true
-            } label: {
-                Label("Nuke All Journal Comments", systemImage: "trash")
+            .nukeAlert("Submission Comments", "submission comment notifications",
+                       show: $showNukeSubmissionCommentsAlert) {
+                await nuker.nukeAllSubmissionCommentNotifications()
             }
-            
-            Button(role: .destructive) {
-                showNukeShoutsAlert = true
-            } label: {
-                Label("Nuke All Shouts", systemImage: "trash")
+            .nukeAlert("Journal Comments", "journal comment notifications",
+                       show: $showNukeJournalCommentsAlert) {
+                await nuker.nukeAllJournalCommentNotifications()
             }
-            
-            Button(role: .destructive) {
-                showNukeJournalsAlert = true
-            } label: {
-                Label("Nuke All Journals", systemImage: "trash")
+            .nukeAlert("Shouts", "shout notifications", show: $showNukeShoutsAlert) {
+                await nuker.nukeAllShoutNotifications()
             }
-        } label: {
-            ActionControl()
-        }
-        .nukeAlert("Submission Comments", "submission comment notifications",
-                   show: $showNukeSubmissionCommentsAlert) {
-            await nukeSubmissionCommentsAction()
-        }
-        .nukeAlert("Journal Comments", "journal comment notifications",
-                   show: $showNukeJournalCommentsAlert) {
-            await nukeJournalCommentsAction()
-        }
-        .nukeAlert("Shouts", "shout notifications", show: $showNukeShoutsAlert) {
-            await nukeShoutsAction()
-        }
-        .nukeAlert("Journals", "journal notifications", show: $showNukeJournalsAlert) {
-            await nukeJournalsAction()
+            .nukeAlert("Journals", "journal notifications", show: $showNukeJournalsAlert) {
+                await nuker.nukeAllJournalNotifications()
+            }
         }
     }
 }
 
-struct NotificationsActionView_Previews: PreviewProvider {
-    static var previews: some View {
-        NotificationsActionView(
-            nukeSubmissionCommentsAction: {},
-            nukeJournalCommentsAction: {},
-            nukeShoutsAction: {},
-            nukeJournalsAction: {}
-        )
-    }
+private struct DummyNuker: NotificationsNuker {
+    func nukeAllSubmissionCommentNotifications() async {}
+    func nukeAllJournalCommentNotifications() async {}
+    func nukeAllShoutNotifications() async {}
+    func nukeAllJournalNotifications() async {}
+}
+
+#Preview {
+    NotificationsActionView(
+        hasSubmissionComments: true,
+        hasJournalComments: true,
+        hasShouts: true,
+        hasJournals: true,
+        nuker: DummyNuker()
+    )
 }

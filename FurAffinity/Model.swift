@@ -14,7 +14,7 @@ enum ModelError: Error {
 }
 
 @MainActor
-class Model: ObservableObject {
+class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     static let autorefreshDelay: TimeInterval = 15 * 60
     static let lastViewedSubmissionIDKey = "lastViewedSubmissionID"
     
