@@ -18,73 +18,61 @@ class FAUserPageTests: XCTestCase {
         let shouts: [FAPageComment] = [
             .visible(.init(
                 cid: 54569442, indentation: 0, author: "sadisticss", displayAuthor: "Sadisticss",
-                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1692639963/sadisticss.gif")!,
                 datetime: "Jul 29, 2023 10:16 PM", naturalDatetime: "a month ago",
                 htmlMessage: "Hola, dear! U have nice gallery &lt;3"
             )),
             .visible(.init(
                 cid: 53766730, indentation: 0, author: "mostevilpupper", displayAuthor: "MostEvilPupper",
-                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1670117631/mostevilpupper.gif")!,
                 datetime: "Dec 6, 2022 03:46 AM", naturalDatetime: "9 months ago",
                 htmlMessage: "An absolutely amazing artist"
             )),
             .visible(.init(
                 cid: 53552229, indentation: 0, author: "flutesong", displayAuthor: "Flutesong",
-                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1673159927/flutesong.gif")!,
                 datetime: "Oct 6, 2022 01:56 PM", naturalDatetime: "a year ago",
                 htmlMessage: "Thank you for watching!"
             )),
             .visible(.init(
                 cid: 53547789, indentation: 0, author: "chicken-scratch", displayAuthor: "Chicken-Scratch",
-                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1685728194/chicken-scratch.gif")!,
                 datetime: "Oct 5, 2022 06:11 AM", naturalDatetime: "a year ago",
                 htmlMessage: "<a href=\"/user/8bitstarsp1\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20230831/8bitstarsp1.gif\" align=\"middle\" title=\"8bitstarsp1\" alt=\"8bitstarsp1\" /></a> Thank you for watching me! Merp! \n<a href=\"/user/8bitstarsp2\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20230831/8bitstarsp2.gif\" align=\"middle\" title=\"8bitstarsp2\" alt=\"8bitstarsp2\" /></a>"
             )),
             .visible(.init(
                 cid: 53545450, indentation: 0, author: "jackthewerewolf", displayAuthor: "JacktheWerewolf",
-                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1662593026/jackthewerewolf.gif")!,
                 datetime: "Oct 4, 2022 04:10 PM", naturalDatetime: "a year ago",
                 htmlMessage: "Thank you kindly for the watch\'"
             )),
             .visible(.init(
                 cid: 53545334, indentation: 0, author: "-mlady-", displayAuthor: "-Mlady-",
-                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1640376609/-mlady-.gif")!,
                 datetime: "Oct 4, 2022 03:39 PM", naturalDatetime: "a year ago",
                 htmlMessage: "<code class=\"bbcode bbcode_center\"> <a href=\"/user/8bitstars2\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20230831/8bitstars2.gif\" align=\"middle\" title=\"8bitstars2\" alt=\"8bitstars2\" /></a>♡ Thanks you so much for the watch! You have wonderful adopts ♡<a href=\"/user/8bitstars1\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20230831/8bitstars1.gif\" align=\"middle\" title=\"8bitstars1\" alt=\"8bitstars1\" /></a> </code>"
             )),
             .visible(.init(
                 cid: 53499892, indentation: 0, author: "zenithwhitetiger", displayAuthor: "Zenithwhitetiger",
-                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1663888910/zenithwhitetiger.gif")!,
                 datetime: "Sep 22, 2022 02:21 AM", naturalDatetime: "a year ago",
                 htmlMessage: "your characters are so well drawn"
             )),
             .visible(.init(
                 cid: 53034784, indentation: 0, author: "halfheart7", displayAuthor: "HalfHeart7",
-                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1658473991/halfheart7.gif")!,
                 datetime: "May 27, 2022 06:56 AM", naturalDatetime: "a year ago",
                 htmlMessage: "love seeing what you make, sorry to hear you\'re having troubles atm D:"
             )),
             .visible(.init(
                 cid: 52282428, indentation: 0, author: "jun1fate", displayAuthor: "Jun1fate",
-                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1634697251/jun1fate.gif")!,
                 datetime: "Dec 10, 2021 07:03 PM", naturalDatetime: "a year ago",
                 htmlMessage: "You have really amazing designs!!!!!!!"
             )),
             .visible(.init(
                 cid: 52155794, indentation: 0, author: "onyxvega", displayAuthor: "Onyx_Vega",
-                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1632339576/onyxvega.gif")!,
                 datetime: "Nov 13, 2021 01:53 PM", naturalDatetime: "a year ago",
                 htmlMessage: "Just passing by to say I adore your monsters. They\'re all so unique and full of personality. Love \'em"
             )),
             .visible(.init(
                 cid: 51986676, indentation: 0, author: "wulframite", displayAuthor: "WulfRamIte",
-                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1688516982/wulframite.gif")!,
                 datetime: "Oct 9, 2021 03:01 AM", naturalDatetime: "a year ago",
                 htmlMessage: "How much is your art"
             )),
             .visible(.init(
                 cid: 51643953, indentation: 0, author: "alfyn", displayAuthor: "Alfyn",
-                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1675020279/alfyn.gif")!,
                 datetime: "Jul 30, 2021 02:25 AM", naturalDatetime: "2 years ago",
                 htmlMessage: "Your mouse giveaway is awesome and adorable and inspiring!\n<br /> I\'ve totally gotta add something like this to my to-do list, create some fun cute adopts to pass out to some of my active fans sometime x3\n<br /> You\'re awesome!"
             ))
@@ -93,7 +81,6 @@ class FAUserPageTests: XCTestCase {
         let expected = FAUserPage(
             name: "terriniss",
             displayName: "Terriniss",
-            avatarUrl: URL(string: "https://a.furaffinity.net/1616615925/terriniss.gif")!,
             bannerUrl: URL(string: "https://www.furaffinity.net/themes/beta/img/banners/logo/fa-banner-summer.jpg")!,
             htmlDescription: htmlDescription,
             shouts: shouts,

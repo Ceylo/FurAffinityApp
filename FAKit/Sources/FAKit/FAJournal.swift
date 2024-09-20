@@ -12,7 +12,6 @@ public struct FAJournal: Equatable, Sendable {
     public let url: URL
     public let author: String
     public let displayAuthor: String
-    public let authorAvatarUrl: URL
     public let title: String
     public let datetime: String
     public let naturalDatetime: String
@@ -20,7 +19,7 @@ public struct FAJournal: Equatable, Sendable {
     public let comments: [FAComment]
     
     public init(url: URL, author: String,
-                displayAuthor: String, authorAvatarUrl: URL,
+                displayAuthor: String,
                 title: String,
                 datetime: String,
                 naturalDatetime: String,
@@ -29,7 +28,6 @@ public struct FAJournal: Equatable, Sendable {
         self.url = url
         self.author = author
         self.displayAuthor = displayAuthor
-        self.authorAvatarUrl = authorAvatarUrl
         self.title = title
         self.datetime = datetime
         self.naturalDatetime = naturalDatetime
@@ -44,7 +42,6 @@ extension FAJournal {
             url: url,
             author: page.author,
             displayAuthor: page.displayAuthor,
-            authorAvatarUrl: page.authorAvatarUrl,
             title: page.title,
             datetime: page.datetime,
             naturalDatetime: page.naturalDatetime,

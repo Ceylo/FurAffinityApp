@@ -11,7 +11,6 @@ import FAPages
 public struct FAUser: Equatable, Sendable {
     public let name: String
     public let displayName: String
-    public let avatarUrl: URL
     public let bannerUrl: URL
     public let htmlDescription: String
     public let shouts: [FAComment]
@@ -20,11 +19,10 @@ public struct FAUser: Equatable, Sendable {
     /// Unavailable when parsing your own user page
     public let watchData: WatchData?
     
-    public init(name: String, displayName: String, avatarUrl: URL, bannerUrl: URL,
+    public init(name: String, displayName: String, bannerUrl: URL,
                 htmlDescription: String, shouts: [FAComment], watchData: WatchData?) {
         self.name = name
         self.displayName = displayName
-        self.avatarUrl = avatarUrl
         self.bannerUrl = bannerUrl
         self.htmlDescription = htmlDescription.selfContainedFAHtmlUserDescription
         self.shouts = shouts
@@ -37,7 +35,6 @@ public extension FAUser {
         self.init(
             name: page.name,
             displayName: page.displayName,
-            avatarUrl: page.avatarUrl,
             bannerUrl: page.bannerUrl,
             htmlDescription: page.htmlDescription,
             shouts: try await page.shouts.parallelMap(FAComment.init),

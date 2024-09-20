@@ -38,7 +38,6 @@ public struct FANotificationPreviews: Equatable, Sendable {
 public protocol FASession: AnyObject, Equatable {
     var username: String { get }
     var displayUsername: String { get }
-    var avatarUrl: URL { get }
     
     // MARK: - Submissions feed
     

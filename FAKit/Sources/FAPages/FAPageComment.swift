@@ -48,7 +48,6 @@ public struct FAVisiblePageComment: Equatable, Sendable {
     public let indentation: Int
     public let author: String
     public let displayAuthor: String
-    public let authorAvatarUrl: URL
     public let datetime: String
     public let naturalDatetime: String
     public let htmlMessage: String
@@ -112,8 +111,6 @@ extension FAPageComment {
         do {
             let authorNode = try node.select("comment-container div.avatar a")
             let author = try authorNode.attr("href").substring(matching: "/user/(.+)/").unwrap()
-            let authorAvatarUrlString = try authorNode.select("img").attr("src")
-            let authorAvatarUrl = try URL(unsafeString: "https:" + authorAvatarUrlString)
             let displayAuthor = try node.select(config.displayAuthorQuery).text()
             let datetimeNode = try node.select("comment-container div.comment-content comment-date span.popup_date")
             let naturalDatetime = try datetimeNode.text()
@@ -122,8 +119,8 @@ extension FAPageComment {
             self = .visible(.init(
                 cid: cid, indentation: indentation,
                 author: author, displayAuthor: displayAuthor,
-                authorAvatarUrl: authorAvatarUrl, datetime: datetime,
-                naturalDatetime: naturalDatetime, htmlMessage: htmlMessage
+                datetime: datetime, naturalDatetime: naturalDatetime,
+                htmlMessage: htmlMessage
             ))
         } catch {
             logger.warning("\(error)\nWhile parsing: \((try? node.html()) ?? "")")

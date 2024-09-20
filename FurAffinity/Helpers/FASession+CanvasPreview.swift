@@ -11,7 +11,6 @@ import FAKit
 class OfflineFASession: FASession {
     let username: String
     let displayUsername: String
-    let avatarUrl: URL = FAComment.terrinissAvatarUrl
     let submissionPreviews: [FASubmissionPreview]
     let notePreviews: [FANotePreview]
     let notificationPreviews: FANotificationPreviews
@@ -223,18 +222,18 @@ extension FAComment {
         get async {
             try! await [
                 .visible(.init(
-                    cid: 166652793, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "2 months ago",
+                    cid: 166652793, author: "terriniss", displayAuthor: "Terriniss", datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "2 months ago",
                     message: .init(FAHTML: "BID HERE \n<br> Moon".selfContainedFAHtmlComment), answers: [
                         .visible(.init(
-                            cid: 166653891, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 11, 2022 10:58 PM", naturalDatetime: "2 months ago",
+                            cid: 166653891, author: "terriniss", displayAuthor: "Terriniss", datetime: "Aug 11, 2022 10:58 PM", naturalDatetime: "2 months ago",
                             message: .init(FAHTML: "SakuraSlowly (DA) - SB".selfContainedFAHtmlComment), answers: [
                                 .visible(.init(
-                                    cid: 166658565, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl, datetime: "Aug 12, 2022 05:16 AM", naturalDatetime: "2 months ago",
+                                    cid: 166658565, author: "terriniss", displayAuthor: "Terriniss", datetime: "Aug 12, 2022 05:16 AM", naturalDatetime: "2 months ago",
                                     message: .init(FAHTML: "DeathPanda21 (da) - 55$".selfContainedFAHtmlComment), answers: [])
                                 )]))
                     ])),
                 .visible(.init(
-                    cid: 166653340, author: "rurudaspippen", displayAuthor: "RuruDasPippen", authorAvatarUrl: URL(string: "https://a.furaffinity.net/1643948243/rurudaspippen.gif")!,
+                    cid: 166653340, author: "rurudaspippen", displayAuthor: "RuruDasPippen",
                     datetime: "Aug 11, 2022 10:23 PM", naturalDatetime: "2 months ago", message: .init(FAHTML: "Look at the babies!".selfContainedFAHtmlComment), answers: []
                 ))
             ]
@@ -249,7 +248,7 @@ extension FAComment {
                     message: .init(FAHTML: "[deleted]".selfContainedFAHtmlComment),
                     answers: [
                         .visible(.init(
-                            cid: 166653340, author: "rurudaspippen", displayAuthor: "RuruDasPippen", authorAvatarUrl: URL(string: "https://a.furaffinity.net/1643948243/rurudaspippen.gif")!,
+                            cid: 166653340, author: "rurudaspippen", displayAuthor: "RuruDasPippen",
                             datetime: "Aug 11, 2022 10:23 PM", naturalDatetime: "2 months ago", message: .init(FAHTML: "Look at the babies!".selfContainedFAHtmlComment), answers: []
                         ))
                     ]
@@ -271,7 +270,6 @@ extension FASubmission {
                 widthOnHeightRatio: 416 / 600,
                 author: "annetpeas",
                 displayAuthor: "AnnetPeas",
-                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1633245638/annetpeas.gif")!,
                 title: "Spells and magic",
                 datetime: "Oct 16, 2021 04:15 PM",
                 naturalDatetime: "a year ago",
@@ -295,7 +293,6 @@ what you will need to get one.\n<br> - if you got a sketch you can get an upgrad
                 url: URL(string: "https://www.furaffinity.net/journal/10516170/")!,
                 author: "rudragon",
                 displayAuthor: "RUdragon",
-                authorAvatarUrl: URL(string: "https://a.furaffinity.net/1424255659/rudragon.gif")!,
                 title: "UPGRADES ARE OPEN!!! 5",
                 datetime: "Apr 2, 2023 11:59 PM",
                 naturalDatetime: "2 weeks ago",
@@ -330,20 +327,17 @@ extension FAUser {
             try! await FAUser(
                 name: "demo",
                 displayName: "Demo",
-                avatarUrl: URL(string: "https://a.furaffinity.net/20230319/furrycount.gif")!,
                 bannerUrl: URL(string: "https://www.furaffinity.net/themes/beta/img/banners/logo/fa-banner-winter.jpg")!,
                 htmlDescription: htmlDescription,
                 shouts: [
                     .visible(.init(
                         cid: 54569442, author: "sadisticss", displayAuthor: "Sadisticss",
-                        authorAvatarUrl: URL(string: "https://a.furaffinity.net/1692639963/sadisticss.gif")!,
                         datetime: "Jul 29, 2023 10:16 PM", naturalDatetime: "a month ago",
                         message: .init(FAHTML: "Hola, dear! U have nice gallery &lt;3".selfContainedFAHtmlComment),
                         answers: []
                     )),
                     .visible(.init(
                         cid: 53766730, author: "mostevilpupper", displayAuthor: "MostEvilPupper",
-                        authorAvatarUrl: URL(string: "https://a.furaffinity.net/1670117631/mostevilpupper.gif")!,
                         datetime: "Dec 6, 2022 03:46 AM", naturalDatetime: "9 months ago",
                         message: .init(FAHTML: "An absolutely amazing artist".selfContainedFAHtmlComment),
                         answers: []

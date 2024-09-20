@@ -11,7 +11,6 @@ import SwiftSoup
 public struct FAJournalPage: Equatable {
     public let author: String
     public let displayAuthor: String
-    public let authorAvatarUrl: URL
     public let title: String
     public let datetime: String
     public let naturalDatetime: String
@@ -36,8 +35,6 @@ extension FAJournalPage {
             self.author = try avatarNode.attr("href")
                 .substring(matching: "/user/(.+)/")
                 .unwrap()
-            let avatarSrc = try avatarNode.select("img").attr("src")
-            self.authorAvatarUrl = try URL(unsafeString: "https:" + avatarSrc)
             
             let userNode = try siteContentNode.select(
                 "userpage-nav-header userpage-nav-user-details h1 username"

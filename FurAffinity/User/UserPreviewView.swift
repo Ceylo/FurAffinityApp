@@ -73,7 +73,7 @@ struct UserPreviewView: View {
                 preview: .init(
                     username: "foo",
                     displayName: "Foo",
-                    avatarUrl: user.avatarUrl
+                    avatarUrl: FAURLs.avatarUrl(for: "foo")
                 )
             )
         }

@@ -21,8 +21,7 @@ final class FAHomePageTests: XCTestCase {
         
         XCTAssertEqual(page, .init(
             username: "furrycount",
-            displayUsername: "Furrycount",
-            avatarUrl: URL(string: "https://a.furaffinity.net/20221211/furrycount.gif")!
+            displayUsername: "Furrycount"
         ))
     }
 }

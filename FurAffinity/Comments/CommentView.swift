@@ -46,7 +46,7 @@ struct CommentView: View {
             previewData: .init(
                 username: comment.author,
                 displayName: comment.displayAuthor,
-                avatarUrl: comment.authorAvatarUrl
+                avatarUrl: FAURLs.avatarUrl(for: comment.author)
             )
         )
     }
@@ -54,7 +54,7 @@ struct CommentView: View {
     func commentView(_ comment: FAVisibleComment) -> some View {
         HStack(alignment: .top) {
             FALink(destination: userURL(for: comment)) {
-                AvatarView(avatarUrl: comment.authorAvatarUrl)
+                AvatarView(avatarUrl: FAURLs.avatarUrl(for: comment.author))
                     .frame(width: avatarSize, height: avatarSize)
             }
             

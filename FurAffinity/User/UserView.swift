@@ -77,7 +77,7 @@ struct UserView: View {
                 
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
-                        AvatarView(avatarUrl: user.avatarUrl)
+                        AvatarView(avatarUrl: FAURLs.avatarUrl(for: user.name))
                             .frame(width: 42, height: 42)
                         Text(user.displayName)
                             .font(.title)

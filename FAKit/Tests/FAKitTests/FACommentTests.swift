@@ -13,7 +13,7 @@ extension FAPageComment {
     init(cid: Int, indentation: Int) {
         self = .visible(.init(
             cid: cid, indentation: indentation, author: "t", displayAuthor: "T",
-            authorAvatarUrl: URL(string: "https://some.url/")!, datetime: "Aug 12, 2022 04:08 AM", naturalDatetime: "Today", htmlMessage: "Msg"
+            datetime: "Aug 12, 2022 04:08 AM", naturalDatetime: "Today", htmlMessage: "Msg"
         ))
     }
 }

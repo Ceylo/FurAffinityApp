@@ -19,18 +19,16 @@ public struct FAVisibleComment: Equatable, Sendable {
     public let cid: Int
     public let author: String
     public let displayAuthor: String
-    public let authorAvatarUrl: URL
     public let datetime: String
     public let naturalDatetime: String
     public let message: AttributedString
     public let answers: [FAComment]
     
-    public init(cid: Int, author: String, displayAuthor: String, authorAvatarUrl: URL, datetime: String,
+    public init(cid: Int, author: String, displayAuthor: String, datetime: String,
                 naturalDatetime: String, message: AttributedString, answers: [FAComment]) {
         self.cid = cid
         self.author = author
         self.displayAuthor = displayAuthor
-        self.authorAvatarUrl = authorAvatarUrl
         self.datetime = datetime
         self.naturalDatetime = naturalDatetime
         self.message = message
@@ -89,7 +87,6 @@ extension FAComment {
             cid: comment.cid,
             author: comment.author,
             displayAuthor: comment.displayAuthor,
-            authorAvatarUrl: comment.authorAvatarUrl,
             datetime: comment.datetime,
             naturalDatetime: comment.naturalDatetime,
             message: await AttributedString(FAHTML: comment.htmlMessage.selfContainedFAHtmlComment),
@@ -121,7 +118,6 @@ extension FAComment {
                 cid: comment.cid,
                 author: comment.author,
                 displayAuthor: comment.displayAuthor,
-                authorAvatarUrl: comment.authorAvatarUrl,
                 datetime: comment.datetime,
                 naturalDatetime: comment.naturalDatetime,
                 message: comment.message,

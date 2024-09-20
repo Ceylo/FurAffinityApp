@@ -16,26 +16,19 @@ final class FAJournalPageTests: XCTestCase {
         
         let expectedComments: [FAPageComment] = [
             .visible(.init(cid: 59820550, indentation: 0, author: "fukothenimbat", displayAuthor: "FukoTheNimbat",
-                           authorAvatarUrl: URL(string: "https://a.furaffinity.net/1643296327/fukothenimbat.gif")!,
                            datetime: "Apr 3, 2023 12:01 AM", naturalDatetime: "2 weeks ago", htmlMessage: "Ill take one")),
             .visible(.init(cid: 59820552, indentation: 0, author: "zacharywulf", displayAuthor: "Zacharywulf",
-                           authorAvatarUrl: URL(string: "https://a.furaffinity.net/1577257416/zacharywulf.gif")!,
                            datetime: "Apr 3, 2023 12:01 AM", naturalDatetime: "2 weeks ago", htmlMessage: "I want one!")),
             .visible(.init(cid: 59820567, indentation: 0, author: "leacrea", displayAuthor: "Leacrea",
-                           authorAvatarUrl: URL(string: "https://a.furaffinity.net/1598944742/leacrea.gif")!,
                            datetime: "Apr 3, 2023 12:11 AM", naturalDatetime: "2 weeks ago", htmlMessage: "I’ll take one")),
             .visible(.init(cid: 59820573, indentation: 0, author: "thegrapedemon", displayAuthor: "TheGrapeDemon",
-                           authorAvatarUrl: URL(string: "https://a.furaffinity.net/1628047319/thegrapedemon.gif")!,
                            datetime: "Apr 3, 2023 12:17 AM", naturalDatetime: "2 weeks ago", htmlMessage: "I would love one please!! &lt;3")),
             .visible(.init(cid: 59820579, indentation: 0, author: "shadoweddraco", displayAuthor: "ShadowedDraco",
-                           authorAvatarUrl: URL(string: "https://a.furaffinity.net/1647799580/shadoweddraco.gif")!,
                            datetime: "Apr 3, 2023 12:22 AM", naturalDatetime: "2 weeks ago", htmlMessage: "i will take aslot")),
             .visible(.init(cid: 59820673, indentation: 0, author: "xaraphiel", displayAuthor: "Xaraphiel",
-                           authorAvatarUrl: URL(string: "https://a.furaffinity.net/1628022893/xaraphiel.gif")!,
                            datetime: "Apr 3, 2023 02:34 AM", naturalDatetime: "2 weeks ago",
                            htmlMessage: "Awww I keep waking up and finding all slots are taken. I hate time zones 😭😅\n<br /> \n<br /> Congrats all who got upgrades 😇")),
             .visible(.init(cid: 59820831, indentation: 3, author: "flamekillaxxx", displayAuthor: "flamekillaXxX",
-                           authorAvatarUrl: URL(string: "https://a.furaffinity.net/1680473466/flamekillaxxx.gif")!,
                            datetime: "Apr 3, 2023 06:37 AM", naturalDatetime: "2 weeks ago",
                            htmlMessage: "I know that feeling! Best of luck to us if there is another round \n<i class=\"smilie love\"></i>"))
         ]
@@ -47,7 +40,6 @@ final class FAJournalPageTests: XCTestCase {
         let expectedPage = FAJournalPage(
             author: "rudragon",
             displayAuthor: "RUdragon",
-            authorAvatarUrl: URL(string: "https://a.furaffinity.net/1424255659/rudragon.gif")!,
             title: "UPGRADES ARE OPEN!!! 5",
             datetime: "Apr 2, 2023 11:59 PM",
             naturalDatetime: "2 weeks ago",

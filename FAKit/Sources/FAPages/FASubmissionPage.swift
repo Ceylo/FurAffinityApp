@@ -14,7 +14,6 @@ public struct FASubmissionPage: Equatable {
     public let widthOnHeightRatio: Float
     public let author: String
     public let displayAuthor: String
-    public let authorAvatarUrl: URL
     public let title: String
     public let datetime: String
     public let naturalDatetime: String
@@ -64,14 +63,7 @@ extension FASubmissionPage {
             let favCountNode = try columnPageNode.select(favCountQuery)
             let favCount = try Int(favCountNode.text()).unwrap()
             self.favoriteCount = favCount
-            
-            let avatarQuery = "section div.section-header div.submission-id-container div.submission-id-avatar img.avatar"
-            let avatarNode = try submissionContentNode.select(avatarQuery)
-            let avatarStr = try avatarNode.attr("src")
-            let avatarUrl = try URL(unsafeString: "https:" + avatarStr)
-            
-            self.authorAvatarUrl = avatarUrl
-            
+                        
             let submissionContainerQuery = "section div.section-header div.submission-id-container div.submission-id-sub-container"
             let submissionContainerNode = try submissionContentNode.select(submissionContainerQuery)
             let titleNode = try submissionContainerNode.select("div.submission-title h2 p")

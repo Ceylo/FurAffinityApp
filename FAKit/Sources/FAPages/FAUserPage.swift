@@ -11,7 +11,6 @@ import Foundation
 public struct FAUserPage: Equatable {
     public let name: String
     public let displayName: String
-    public let avatarUrl: URL
     public let bannerUrl: URL
     public let htmlDescription: String
     public let shouts: [FAPageComment]
@@ -55,9 +54,6 @@ extension FAUserPage {
                 .trimmingPrefix("~")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             self.displayName = displayName
-            
-            let avatarUrlNode = try navAvatarNode.select("img").attr("src")
-            self.avatarUrl = try URL(unsafeString: "https:" + avatarUrlNode)
             
             let bannerNode = try mainWindowNode.select("div#header a img")
             let bannerStringUrl = try bannerNode.attr("src")

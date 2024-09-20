@@ -20,7 +20,7 @@ struct CurrentUserView: View {
                     previewData: .init(
                         username: session.username,
                         displayName: session.displayUsername,
-                        avatarUrl: session.avatarUrl
+                        avatarUrl: FAURLs.avatarUrl(for: session.username)
                     )
                 )
             } else {

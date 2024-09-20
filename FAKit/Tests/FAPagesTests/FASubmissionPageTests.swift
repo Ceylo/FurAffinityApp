@@ -20,7 +20,6 @@ final class FASubmissionPageTests: XCTestCase {
             widthOnHeightRatio: 1217 / 1280,
             author: "annetpeas",
             displayAuthor: "AnnetPeas",
-            authorAvatarUrl: URL(string: "https://a.furaffinity.net/1670079651/annetpeas.gif")!,
             title: "The hookah",
             datetime: "Oct 10, 2022 08:45 AM",
             naturalDatetime: "2 months ago",
@@ -54,30 +53,26 @@ final class FASubmissionPageTests: XCTestCase {
     func testSubmissionPageWithComments_isParsed() throws {
         let data = testData("www.furaffinity.net:view:48519387-comments.html")
         let page = try XCTUnwrap(FASubmissionPage(data: data))
-        let terrinissAvatarUrl = URL(string: "https://a.furaffinity.net/1616615925/terriniss.gif")!
         let expected: [FAPageComment] = [
-            .visible(.init(cid: 166652793, indentation: 0, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
+            .visible(.init(cid: 166652793, indentation: 0, author: "terriniss", displayAuthor: "Terriniss",
                            datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "3 months ago", htmlMessage: "BID HERE \n<br /> Moon")),
-            .visible(.init(cid: 166653891, indentation: 3, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
+            .visible(.init(cid: 166653891, indentation: 3, author: "terriniss", displayAuthor: "Terriniss",
                            datetime: "Aug 11, 2022 10:58 PM", naturalDatetime: "3 months ago", htmlMessage: "SakuraSlowly (DA) - SB")),
-            .visible(.init(cid: 166658565, indentation: 6, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
+            .visible(.init(cid: 166658565, indentation: 6, author: "terriniss", displayAuthor: "Terriniss",
                            datetime: "Aug 12, 2022 05:16 AM", naturalDatetime: "3 months ago", htmlMessage: "DeathPanda21 (da) - 55$")),
-            .visible(.init(cid: 166663244, indentation: 9, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
+            .visible(.init(cid: 166663244, indentation: 9, author: "terriniss", displayAuthor: "Terriniss",
                            datetime: "Aug 12, 2022 12:33 PM", naturalDatetime: "3 months ago", htmlMessage: "ionightarts (DA) - 60")),
-            .visible(.init(cid: 166652794, indentation: 0, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
+            .visible(.init(cid: 166652794, indentation: 0, author: "terriniss", displayAuthor: "Terriniss",
                            datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "3 months ago", htmlMessage: "BID HERE \n<br /> Dawn")),
-            .visible(.init(cid: 166656182, indentation: 3, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
+            .visible(.init(cid: 166656182, indentation: 3, author: "terriniss", displayAuthor: "Terriniss",
                            datetime: "Aug 12, 2022 01:48 AM", naturalDatetime: "3 months ago", htmlMessage: "Miss-You-Love (da) - SB")),
-            .visible(.init(cid: 166658577, indentation: 6, author: "terriniss", displayAuthor: "Terriniss", authorAvatarUrl: terrinissAvatarUrl,
+            .visible(.init(cid: 166658577, indentation: 6, author: "terriniss", displayAuthor: "Terriniss",
                            datetime: "Aug 12, 2022 05:17 AM", naturalDatetime: "3 months ago", htmlMessage: "LilNikkiBun (da) - 55$")),
             .visible(.init(cid: 166653340, indentation: 0, author: "rurudaspippen", displayAuthor: "RuruDasPippen",
-                           authorAvatarUrl: URL(string: "https://a.furaffinity.net/1643948243/rurudaspippen.gif")!,
                            datetime: "Aug 11, 2022 10:23 PM", naturalDatetime: "3 months ago", htmlMessage: "Look at the babies!")),
             .visible(.init(cid: 166656573, indentation: 0, author: "fallen5592", displayAuthor: "fallen5592",
-                           authorAvatarUrl: URL(string: "https://a.furaffinity.net/1631355052/fallen5592.gif")!,
                            datetime: "Aug 12, 2022 02:17 AM", naturalDatetime: "3 months ago", htmlMessage: "ooo... more intrestin, cute lil fellas ;p")),
             .visible(.init(cid: 166657876, indentation: 0, author: "alvienta", displayAuthor: "alvienta",
-                           authorAvatarUrl: URL(string: "https://a.furaffinity.net/1637617140/alvienta.gif")!,
                            datetime: "Aug 12, 2022 04:08 AM", naturalDatetime: "3 months ago", htmlMessage: "these are gorgeous"))
         ]
         

@@ -22,20 +22,17 @@ public class OnlineFASession: FASession {
     
     public let username: String
     public let displayUsername: String
-    public let avatarUrl: URL
     private let cookies: [HTTPCookie]
     private let dataSource: HTTPDataSource
     
     public init(
         username: String,
         displayUsername: String,
-        avatarUrl: URL,
         cookies: [HTTPCookie],
         dataSource: HTTPDataSource
     ) {
         self.username = username
         self.displayUsername = displayUsername
-        self.avatarUrl = avatarUrl
         self.cookies = cookies
         self.dataSource = dataSource
     }
@@ -284,7 +281,6 @@ extension OnlineFASession {
         self.init(
             username: page.username,
             displayUsername: page.displayUsername,
-            avatarUrl: page.avatarUrl,
             cookies: cookies,
             dataSource: dataSource
         )

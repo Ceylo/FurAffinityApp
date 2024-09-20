@@ -15,7 +15,6 @@ public struct FASubmission: Equatable, Sendable {
     public let widthOnHeightRatio: Float
     public let author: String
     public let displayAuthor: String
-    public let authorAvatarUrl: URL
     public let title: String
     public let datetime: String
     public let naturalDatetime: String
@@ -28,7 +27,7 @@ public struct FASubmission: Equatable, Sendable {
     public init(url: URL, previewImageUrl: URL,
                 fullResolutionImageUrl: URL,
                 widthOnHeightRatio: Float, author: String,
-                displayAuthor: String, authorAvatarUrl: URL,
+                displayAuthor: String,
                 title: String,
                 datetime: String,
                 naturalDatetime: String,
@@ -43,7 +42,6 @@ public struct FASubmission: Equatable, Sendable {
         self.widthOnHeightRatio = widthOnHeightRatio
         self.author = author
         self.displayAuthor = displayAuthor
-        self.authorAvatarUrl = authorAvatarUrl
         self.title = title
         self.datetime = datetime
         self.naturalDatetime = naturalDatetime
@@ -64,7 +62,6 @@ extension FASubmission {
             widthOnHeightRatio: page.widthOnHeightRatio,
             author: page.author,
             displayAuthor: page.displayAuthor,
-            authorAvatarUrl: page.authorAvatarUrl,
             title: page.title,
             datetime: page.datetime,
             naturalDatetime: page.naturalDatetime,

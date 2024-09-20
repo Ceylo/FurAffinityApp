@@ -11,7 +11,6 @@ import Foundation
 public struct FAHomePage: Equatable {
     public let username: String
     public let displayUsername: String
-    public let avatarUrl: URL
 }
 
 extension FAHomePage {
@@ -30,14 +29,9 @@ extension FAHomePage {
             let username = try link.substring(matching: "/user/(.+)/").unwrap()
             let displayUsername = try element.text()
             
-            let avatarNode = try doc.select("body > nav#ddmenu > ul > li > div > a > img.avatar")
-            let avatarStr = try "https:" + avatarNode.attr("src")
-            let avatarUrl = try URL(unsafeString: avatarStr)
-            
             self.init(
                 username: username,
-                displayUsername: displayUsername,
-                avatarUrl: avatarUrl
+                displayUsername: displayUsername
             )
         } catch {
             logger.error("\(#file, privacy: .public) - failed decoding or parsing: \(error, privacy: .public)")
