@@ -9,17 +9,12 @@ import SwiftUI
 import FAKit
 
 struct CommentNotificationItemView: View {
-    @EnvironmentObject var model: Model
     var notification: FANotificationPreview
-    @State private var avatarUrl: URL?
     
     var body: some View {
         HStack(alignment: .top) {
-            AvatarView(avatarUrl: avatarUrl)
+            AvatarView(avatarUrl: FAURLs.avatarUrl(for: notification.author))
                 .frame(width: 42, height: 42)
-                .task {
-                    avatarUrl = await model.session?.avatarUrl(for: notification.author)
-                }
             
             VStack(alignment: .leading, spacing: 5) {
                 HStack {
@@ -58,6 +53,5 @@ struct SubmissionCommentNotificationItemView_Previews: PreviewProvider {
     
     static var previews: some View {
         CommentNotificationItemView(notification: notification)
-            .environmentObject(Model.demo)
     }
 }

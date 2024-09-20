@@ -104,7 +104,6 @@ struct LoggedInView: View {
         .onReceive(navigationStream, perform: { url in
             handleURL(url)
         })
-        .environment(\.avatarProvider, model.session?.avatarProvider)
         .onAppear {
             let tabBarAppearance = UITabBarAppearance()
             tabBarAppearance.configureWithDefaultBackground()

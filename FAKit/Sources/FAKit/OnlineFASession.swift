@@ -15,19 +15,7 @@ private extension Expiry {
     }
 }
 
-private actor CachedAvatarProvider: AvatarProvider {
-    let avatarCache: AvatarCache
-    
-    init(avatarCache: AvatarCache) {
-        self.avatarCache = avatarCache
-    }
-    
-    func avatarUrl(for username: String) async -> URL? {
-        await avatarCache.cachedAvatarUrl(for: username)
-    }
-}
-
-public class OnlineFASession: FASession, AvatarCacheDelegate {
+public class OnlineFASession: FASession {
     enum Error: String, Swift.Error {
         case requestFailure
     }
@@ -35,10 +23,8 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
     public let username: String
     public let displayUsername: String
     public let avatarUrl: URL
-    public var avatarProvider: AvatarProvider { CachedAvatarProvider(avatarCache: avatarCache) }
     private let cookies: [HTTPCookie]
     private let dataSource: HTTPDataSource
-    private var avatarCache: AvatarCache!
     
     public init(
         username: String,
@@ -52,7 +38,6 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
         self.avatarUrl = avatarUrl
         self.cookies = cookies
         self.dataSource = dataSource
-        self.avatarCache = .init(delegate: self)
     }
     
     nonisolated public static func == (lhs: OnlineFASession, rhs: OnlineFASession) -> Bool {
@@ -106,13 +91,7 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
               let page = FASubmissionPage(data: data)
         else { return nil }
         
-        let submission = try? await FASubmission(page, url: url)
-        if let submission {
-            Task {
-                await cacheAvatars(from: submission)
-            }
-        }
-        return submission
+        return try? await FASubmission(page, url: url)
     }
     
     public func toggleFavorite(for submission: FASubmission) async -> FASubmission? {
@@ -146,14 +125,7 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
               let page = FAJournalPage(data: data)
         else { return nil }
         
-        
-        let journal = try? await FAJournal(page, url: url)
-        if let journal {
-            Task {
-                await cacheAvatars(from: journal)
-            }
-        }
-        return journal
+        return try? await FAJournal(page, url: url)
     }
     
     // MARK: - Notes
@@ -264,7 +236,7 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
         )
     }
     
-    // MARK: - Users & avatar
+    // MARK: - Users
     public func user(for url: URL) async -> FAUser? {
         guard let data = await dataSource.httpData(from: url, cookies: cookies) else {
             return nil
@@ -275,9 +247,7 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
     
     private nonisolated func loadUser(from data: Data) async throws -> FAUser? {
         let page = try FAUserPage(data: data).unwrap()
-        let user = try await FAUser(page)
-        await cacheAvatars(from: user)
-        return user
+        return try await FAUser(page)
     }
     
     public func toggleWatch(for user: FAUser) async -> FAUser? {
@@ -298,37 +268,6 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
         }
         
         return FAWatchlist(page)
-    }
-    
-    public func avatarUrl(for username: String) async -> URL? {
-        await avatarCache.avatarUrl(for: username)
-    }
-    
-    public func avatarUrlCacheMiss(for username: String) async -> URL? {
-        await user(for: username)?.avatarUrl
-    }
-    
-    private nonisolated func cacheAvatars(from submission: FASubmission) async {
-        try? await avatarCache.cacheAvatarUrl(submission.authorAvatarUrl, for: submission.author)
-        await cacheAvatars(from: submission.comments)
-    }
-    
-    private nonisolated func cacheAvatars(from journal: FAJournal) async {
-        try? await avatarCache.cacheAvatarUrl(journal.authorAvatarUrl, for: journal.author)
-        await cacheAvatars(from: journal.comments)
-    }
-    
-    private nonisolated func cacheAvatars(from user: FAUser) async {
-        try? await avatarCache.cacheAvatarUrl(user.avatarUrl, for: user.name)
-        await cacheAvatars(from: user.shouts)
-    }
-    
-    private nonisolated func cacheAvatars(from comments: [FAComment]) async {
-        try? await comments.forEach { comment in
-            if case let .visible(comment) = comment {
-                try await avatarCache.cacheAvatarUrl(comment.authorAvatarUrl, for: comment.author)
-            }
-        }
     }
 }
 

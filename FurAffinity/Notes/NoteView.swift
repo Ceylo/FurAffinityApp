@@ -13,7 +13,6 @@ struct NoteView: View {
     @EnvironmentObject var model: Model
     
     @State private var note: FANote?
-    @State private var avatarUrl: URL?
     @State private var activity: NSUserActivity?
     
     func loadNote(forceReload: Bool) async {
@@ -22,9 +21,6 @@ struct NoteView: View {
         }
         
         note = await model.session?.note(for: url)
-        if let note {
-            avatarUrl = await model.session?.avatarUrl(for: note.author)
-        }
     }
     
     func userURL(for note: FANote) -> FAURL? {
@@ -37,7 +33,7 @@ struct NoteView: View {
             previewData: .init(
                 username: note.author,
                 displayName: note.displayAuthor,
-                avatarUrl: avatarUrl
+                avatarUrl: FAURLs.avatarUrl(for: note.author)
             )
         )
     }
@@ -50,7 +46,7 @@ struct NoteView: View {
                         HStack {
                             FALink(destination: userURL(for: note)) {
                                 HStack {
-                                    AvatarView(avatarUrl: avatarUrl)
+                                    AvatarView(avatarUrl: FAURLs.avatarUrl(for: note.author))
                                         .frame(width: 42, height: 42)
                                     
                                     Text(note.displayAuthor)

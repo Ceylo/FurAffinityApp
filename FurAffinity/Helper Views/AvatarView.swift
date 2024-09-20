@@ -9,10 +9,6 @@ import SwiftUI
 import URLImage
 import FAKit
 
-extension EnvironmentValues {
-    @Entry var avatarProvider: AvatarProvider?
-}
-
 struct AvatarView: View {
     var avatarUrl: URL?
     
@@ -44,12 +40,10 @@ struct AvatarView: View {
     }
 }
 
-struct AvatarView_Previews: PreviewProvider {
-    static var previews: some View {
-        AvatarView(avatarUrl: URL(string: "https://a.furaffinity.net/20220409/furrycount.gif")!)
-            .frame(width: 32, height: 32)
-            .padding()
-            .previewLayout(.sizeThatFits)
-            .preferredColorScheme(.dark)
-    }
+@available(iOS 17, *)
+#Preview(traits: .sizeThatFitsLayout) {
+    AvatarView(avatarUrl: URL(string: "https://a.furaffinity.net/20220409/furrycount.gif")!)
+        .frame(width: 32, height: 32)
+        .padding()
+        .preferredColorScheme(.dark)
 }

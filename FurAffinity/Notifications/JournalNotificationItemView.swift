@@ -9,17 +9,12 @@ import SwiftUI
 import FAKit
 
 struct JournalNotificationItemView: View {
-    @EnvironmentObject var model: Model
     var journal: FANotificationPreview
-    @State private var avatarUrl: URL?
     
     var body: some View {
         HStack(alignment: .top) {
-            AvatarView(avatarUrl: avatarUrl)
+            AvatarView(avatarUrl: FAURLs.avatarUrl(for: journal.author))
                 .frame(width: 42, height: 42)
-                .task {
-                    avatarUrl = await model.session?.avatarUrl(for: journal.author)
-                }
             
             VStack(alignment: .leading, spacing: 5) {
                 HStack {
@@ -48,6 +43,5 @@ struct JournalNotificationItemView_Previews: PreviewProvider {
     
     static var previews: some View {
         JournalNotificationItemView(journal: journal)
-            .environmentObject(Model.demo)
     }
 }

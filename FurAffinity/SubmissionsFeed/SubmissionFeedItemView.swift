@@ -15,9 +15,7 @@ protocol SubmissionHeaderView: View {
 }
 
 struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
-    @EnvironmentObject var model: Model
     var submission: FASubmissionPreview
-    @State private var avatarUrl: URL?
     
     var previewImage: some View {
         GeometryReader { geometry in
@@ -50,10 +48,7 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HeaderView(preview: submission, avatarUrl: avatarUrl)
-                .task {
-                    avatarUrl = await model.session?.avatarUrl(for: submission.author)
-                }
+            HeaderView(preview: submission, avatarUrl: FAURLs.avatarUrl(for: submission.author))
             previewImage
         }
         .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 0))
@@ -63,7 +58,6 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
 struct SubmissionFeedItemView_Previews: PreviewProvider {
     static var previews: some View {
         SubmissionFeedItemView<AuthoredHeaderView>(submission: OfflineFASession.default.submissionPreviews[0])
-            .environmentObject(Model.demo)
             .preferredColorScheme(.dark)
     }
 }

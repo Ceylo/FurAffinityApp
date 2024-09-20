@@ -9,17 +9,12 @@ import SwiftUI
 import FAKit
 
 struct NoteItemView: View {
-    @EnvironmentObject var model: Model
     var notePreview: FANotePreview
-    @State private var avatarUrl: URL?
     
     var body: some View {
         HStack(alignment: .top) {
-            AvatarView(avatarUrl: avatarUrl)
+            AvatarView(avatarUrl: FAURLs.avatarUrl(for: notePreview.author))
                 .frame(width: 42, height: 42)
-                .task {
-                    avatarUrl = await model.session?.avatarUrl(for: notePreview.author)
-                }
             
             VStack(alignment: .leading, spacing: 5) {
                 HStack {
@@ -46,11 +41,8 @@ struct NoteItemView: View {
     }
 }
 
-struct NoteItemView_Previews: PreviewProvider {
-    static var previews: some View {
-        NoteItemView(notePreview: OfflineFASession.default.notePreviews[0])
-            .previewLayout(.sizeThatFits)
-            .preferredColorScheme(.dark)
-            .environmentObject(Model.demo)
-    }
+@available(iOS 17, *)
+#Preview(traits: .sizeThatFitsLayout) {
+    NoteItemView(notePreview: OfflineFASession.default.notePreviews[0])
+        .preferredColorScheme(.dark)
 }

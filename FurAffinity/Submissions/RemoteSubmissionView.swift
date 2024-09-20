@@ -13,18 +13,7 @@ struct RemoteSubmissionView: View {
     
     var url: URL
     var previewData: FASubmissionPreview?
-    @Environment(\.avatarProvider) var avatarProvider
-    @State private var previewAvatarUrl: URL?
     @State private var activity: NSUserActivity?
-    
-    private func loadSubmission() async -> (submission: FASubmission, avatarURL: URL?)? {
-        guard let submission = await model.session?.submission(for: url) else {
-            return nil
-        }
-        
-        let avatarUrl = await model.session?.avatarUrl(for: submission.author)
-        return (submission, avatarUrl)
-    }
     
     private var username: String? {
         previewData?.author ?? FAURLs.usernameFrom(userUrl: url)
@@ -33,42 +22,40 @@ struct RemoteSubmissionView: View {
     var body: some View {
         PreviewableRemoteView(
             url: url,
-            contentsLoader: loadSubmission,
+            contentsLoader: {
+                await model.session?.submission(for: url)
+            },
             previewViewBuilder: {
-                if let previewData {
-                    return SubmissionPreviewView(submission: previewData, avatarUrl: previewAvatarUrl)
-                } else {
-                    return nil
+                previewData.map {
+                    SubmissionPreviewView(
+                        submission: $0,
+                        avatarUrl: FAURLs.avatarUrl(for: $0.author)
+                    )
                 }
             },
-            contentsViewBuilder: { contents, updateHandler in
+            contentsViewBuilder: { submission, updateHandler in
                 SubmissionView(
-                    submission: contents.submission,
-                    avatarUrl: contents.avatarURL,
+                    submission: submission,
+                    avatarUrl: FAURLs.avatarUrl(for: submission.author),
                     thumbnail: previewData?.dynamicThumbnail,
                     favoriteAction: {
                         Task {
-                            let updated = try await model.toggleFavorite(for: contents.submission)
-                            updateHandler.update(with: updated.map { ($0, contents.avatarURL) })
+                            let updated = try await model.toggleFavorite(for: submission)
+                            updateHandler.update(with: updated)
                         }
                     },
                     replyAction: { parentCid, text in
                         Task {
                             let updated = try await model.postComment(
-                                on: contents.submission,
+                                on: submission,
                                 replytoCid: parentCid,
                                 contents: text
                             )
-                            updateHandler.update(with: updated.map { ($0, contents.avatarURL) })
+                            updateHandler.update(with: updated)
                         }
                     })
             }
         )
-        .task {
-            if previewAvatarUrl == nil, let username {
-                previewAvatarUrl = await avatarProvider?.avatarUrl(for: username)
-            }
-        }
         .onAppear {
             if activity == nil {
                 let activity = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)

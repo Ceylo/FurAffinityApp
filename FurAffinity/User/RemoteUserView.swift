@@ -14,8 +14,6 @@ struct RemoteUserView: View {
     var previewData: UserPreviewData?
     @EnvironmentObject var model: Model
     @State private var description: AttributedString?
-    @Environment(\.avatarProvider) var avatarProvider
-    @State private var avatarUrl: URL?
     
     private func loadUser() async -> FAUser? {
         guard let session = model.session else { return nil }
@@ -37,13 +35,13 @@ struct RemoteUserView: View {
             UserPreviewData(
                 username: previewData.username,
                 displayName: previewData.displayName,
-                avatarUrl: previewData.avatarUrl ?? avatarUrl
+                avatarUrl: previewData.avatarUrl ?? FAURLs.avatarUrl(for: previewData.username)
             )
         } else if let username {
             UserPreviewData(
                 username: username,
                 displayName: previewData?.displayName,
-                avatarUrl: previewData?.avatarUrl ?? avatarUrl
+                avatarUrl: previewData?.avatarUrl ?? FAURLs.avatarUrl(for: username)
             )
         } else {
             nil
@@ -72,17 +70,6 @@ struct RemoteUserView: View {
                 )
             }
         )
-        .task {
-            guard previewData?.avatarUrl == nil else {
-                return
-            }
-            
-            if let username {
-                avatarUrl = await avatarProvider?.avatarUrl(for: username)
-            } else {
-                logger.warning("Could not parse username from url: \(url, privacy: .public)")
-            }
-        }
     }
 }
 

@@ -8,17 +8,10 @@
 import Foundation
 import FAKit
 
-class OfflineFASession: FASession, AvatarCacheDelegate {
+class OfflineFASession: FASession {
     let username: String
     let displayUsername: String
     let avatarUrl: URL = FAComment.terrinissAvatarUrl
-    var avatarProvider: AvatarProvider {
-        actor DummyProvider: AvatarProvider {
-            func avatarUrl(for username: String) async -> URL? { nil }
-        }
-        
-        return DummyProvider()
-    }
     let submissionPreviews: [FASubmissionPreview]
     let notePreviews: [FANotePreview]
     let notificationPreviews: FANotificationPreviews
@@ -114,14 +107,6 @@ class OfflineFASession: FASession, AvatarCacheDelegate {
     
     func nukeAllJournalNotifications() async -> FANotificationPreviews {
         notificationPreviews
-    }
-    
-    func avatarUrl(for user: String) async -> URL? {
-        nil
-    }
-    
-    func avatarUrlCacheMiss(for username: String) async -> URL? {
-        nil
     }
     
     func watchlist(for username: String, direction: FAWatchlist.WatchDirection) async -> FAWatchlist? {

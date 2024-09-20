@@ -34,16 +34,11 @@ public struct FANotificationPreviews: Equatable, Sendable {
     }
 }
 
-public protocol AvatarProvider: Actor {
-    func avatarUrl(for username: String) async -> URL?
-}
-
 @MainActor
 public protocol FASession: AnyObject, Equatable {
     var username: String { get }
     var displayUsername: String { get }
     var avatarUrl: URL { get }
-    var avatarProvider: AvatarProvider { get }
     
     // MARK: - Submissions feed
     
@@ -78,11 +73,10 @@ public protocol FASession: AnyObject, Equatable {
     func nukeAllShoutNotifications() async -> FANotificationPreviews
     func nukeAllJournalNotifications() async -> FANotificationPreviews
     
-    // MARK: - Users & avatar
+    // MARK: - Users
     func user(for url: URL) async -> FAUser?
     func toggleWatch(for user: FAUser) async -> FAUser?
     func watchlist(for username: String, direction: FAWatchlist.WatchDirection) async -> FAWatchlist?
-    func avatarUrl(for username: String) async -> URL?
 }
 
 extension FASession {
