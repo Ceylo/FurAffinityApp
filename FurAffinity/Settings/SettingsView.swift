@@ -67,6 +67,7 @@ struct SettingsView: View {
                         Task {
                             await FALoginView.logout()
                             let newSession = await FALoginView.makeSession()
+                            assert(newSession == nil)
                             DispatchQueue.main.async {
                                 model.session = newSession
                             }
