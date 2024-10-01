@@ -47,7 +47,7 @@ actor CSSInliner {
         let downloadedCSS = await downloadedCSS(for: theme)
         let localCSS = fallbackCSS(for: theme)
         if downloadedCSS == nil {
-            logger.warning("Could not download CSS for \(theme) theme, using local fallback")
+            logger.warning("Could not download CSS for \(theme, privacy: .public) theme, using local fallback")
         }
         return "<style>" + (downloadedCSS ?? localCSS) + "</style>"
     }
@@ -90,7 +90,7 @@ actor CSSInliner {
             let (data, response) = try await URLSession.sharedForFARequests.data(from: url)
             guard let response = response as? HTTPURLResponse,
                   (200...299).contains(response.statusCode) else {
-                logger.error("\(self.url(for: theme), privacy: .public): css download request failed with response \(response, privacy: .public) and received data \(String(data: data, encoding: .utf8) ?? "<non-UTF8 data>").")
+                logger.error("\(self.url(for: theme), privacy: .public): css download request failed with response \(response, privacy: .public) and received data \(String(data: data, encoding: .utf8) ?? "<non-UTF8 data>", privacy: .public).")
                 return nil
             }
             

@@ -173,7 +173,7 @@ extension FAComment {
             }) {
                 graph.addEdge(from: parentCid.value, to: comment.cid, directed: true)
             } else {
-                logger.error("\(String(describing: comment)) doesn't have any parent and is not a root")
+                logger.error("\(String(describing: comment), privacy: .public) doesn't have any parent and is not a root")
                 assertionFailure()
             }
         }

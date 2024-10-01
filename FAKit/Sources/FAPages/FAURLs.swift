@@ -87,7 +87,7 @@ public enum FAURLs {
             case "by":
                 watchDirection = .watching
             default:
-                logger.error("\(#file, privacy: .public) - invalid direction in url: \(direction)")
+                logger.error("\(#file, privacy: .public) - invalid direction in url: \(direction, privacy: .public)")
                 return nil
             }
             

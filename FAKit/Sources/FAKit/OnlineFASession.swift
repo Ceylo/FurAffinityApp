@@ -282,7 +282,7 @@ public class OnlineFASession: FASession, AvatarCacheDelegate {
     
     public func toggleWatch(for user: FAUser) async -> FAUser? {
         guard let watchData = user.watchData else {
-            logger.error("Tried to toggle watch on user \(user.name) without watch data")
+            logger.error("Tried to toggle watch on user \(user.name, privacy: .public) without watch data")
             return user
         }
         

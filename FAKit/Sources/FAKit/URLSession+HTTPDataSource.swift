@@ -50,13 +50,13 @@ extension URLSession: HTTPDataSource {
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode)
             else {
-                logger.error("\(url, privacy: .public): request failed with response \(response, privacy: .public) and received data \(String(data: data, encoding: .utf8) ?? "<non-UTF8 data>").")
+                logger.error("\(url, privacy: .public): request failed with response \(response, privacy: .public) and received data \(String(data: data, encoding: .utf8) ?? "<non-UTF8 data>", privacy: .public).")
                 return nil
             }
             
             return data
         } catch {
-            logger.error("\(url, privacy: .public): caught error: \(error)")
+            logger.error("\(url, privacy: .public): caught error: \(error, privacy: .public)")
             return nil
         }
     }
