@@ -19,20 +19,23 @@ struct SubmissionsFeedView: View {
     @AppStorage(Model.lastViewedSubmissionIDKey) private var lastViewedSubmissionID: Int?
     
     var noPreview: some View {
-        VStack(spacing: 20) {
-            VStack(spacing: 10) {
-                Text("It's a bit empty in here.")
-                    .font(.headline)
-                Text("Watch artists and wait for them to post new art. Submissions from [www.furaffinity.net/msg/submissions/](https://www.furaffinity.net/msg/submissions/) will be displayed here.")
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.secondary)
+        ScrollView {
+            VStack(spacing: 20) {
+                VStack(spacing: 10) {
+                    Text("It's a bit empty in here.")
+                        .font(.headline)
+                    Text("Watch artists and wait for them to post new art. Submissions from [www.furaffinity.net/msg/submissions/](https://www.furaffinity.net/msg/submissions/) will be displayed here.")
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.secondary)
+                    Text("You may pull to refresh.")
+                        .foregroundColor(.secondary)
+                }
             }
-            
-            Button("Refresh") {
-                refresh(pulled: true)
-            }
+            .padding()
         }
-        .padding()
+        .refreshable {
+            refresh(pulled: true)
+        }
     }
     
     private enum Item: Hashable, Identifiable {
@@ -72,12 +75,7 @@ struct SubmissionsFeedView: View {
                 scrollProxy.scrollTo(Item.submissionPreview(targetPreview), anchor: .top)
                 
                 Task {
-                    let newSubmissionCount = await model
-                        .fetchSubmissionPreviews()
-                    
-                    withAnimation {
-                        newSubmissionsCount = newSubmissionCount
-                    }
+                    await fetchSubmissionPreviews()
                     self.targetScrollItem = nil
                 }
             }
@@ -192,9 +190,15 @@ extension SubmissionsFeedView {
                 }
             }
             
-            // This will cause an Item.fetchTrigger to appear in the list,
-            // which will effectively cause the refresh
-            targetScrollItem = model.submissionPreviews?.first
+            if let item = model.submissionPreviews?.first {
+                // This will cause an Item.fetchTrigger to appear in the list,
+                // which will effectively cause the refresh
+                targetScrollItem = item
+            } else {
+                // List has no item, so there's no scroll to preserve. Perform
+                // a direct fetch
+                await fetchSubmissionPreviews()
+            }
         }
     }
     
@@ -208,6 +212,15 @@ extension SubmissionsFeedView {
         }
         
         refresh(pulled: false)
+    }
+    
+    func fetchSubmissionPreviews() async {
+        let newSubmissionCount = await model
+            .fetchSubmissionPreviews()
+        
+        withAnimation {
+            newSubmissionsCount = newSubmissionCount
+        }
     }
 }
 
