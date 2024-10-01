@@ -105,7 +105,13 @@ class Model: ObservableObject {
                 .object(forKey: Self.lastViewedSubmissionIDKey) as? Int
         }
         
-        let latestSubmissions = await session.submissionPreviews(from: firstWantedSubmissionID)
+        var latestSubmissions = await session.submissionPreviews(from: firstWantedSubmissionID)
+        if latestSubmissions.isEmpty, let firstWantedSubmissionID {
+            assert(submissionPreviews == nil)
+            // Happens if submissions have been nuked
+            logger.info("Fetching submissions from \(firstWantedSubmissionID) and older gave no result. Falling back to latest submissions.")
+            latestSubmissions = await session.submissionPreviews(from: nil)
+        }
         lastSubmissionPreviewsFetchDate = Date()
         let lastKnownSid = submissionPreviews?.first?.sid ?? 0
         // We take advantage of the fact that submission IDs are always increasing
