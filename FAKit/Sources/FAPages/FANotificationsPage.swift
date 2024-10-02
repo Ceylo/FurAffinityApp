@@ -61,7 +61,7 @@ extension FANotificationsPage {
                 return try headerDecoder(node)
             } catch {
                 let html = (try? node.html()) ?? ""
-                logger.error("Failed decoding header for \(T.self). Error: \(error). Generated while parsing: \(html)")
+                logger.error("Failed decoding header for \(T.self, privacy: .public). Error: \(error, privacy: .public). Generated while parsing: \(html, privacy: .public)")
                 return nil
             }
         }

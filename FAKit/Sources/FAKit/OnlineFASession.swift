@@ -249,7 +249,7 @@ public class OnlineFASession: FASession {
     
     public func toggleWatch(for user: FAUser) async -> FAUser? {
         guard let watchData = user.watchData else {
-            logger.error("Tried to toggle watch on user \(user.name) without watch data")
+            logger.error("Tried to toggle watch on user \(user.name, privacy: .public) without watch data")
             return user
         }
         
@@ -274,9 +274,16 @@ extension OnlineFASession {
     /// in through a usual web browser.
     public convenience init?(cookies: [HTTPCookie], dataSource: HTTPDataSource = URLSession.sharedForFARequests) async {
         guard cookies.map(\.name).contains("a"),
-              let data = await dataSource.httpData(from: FAURLs.homeUrl, cookies: cookies),
-              let page = FAHomePage(data: data, baseUri: FAURLs.homeUrl)
-        else { return nil }
+              let data = await dataSource.httpData(from: FAURLs.homeUrl, cookies: cookies)
+        else {
+            return nil
+        }
+        
+        guard let page = FAHomePage(data: data, baseUri: FAURLs.homeUrl) else {
+            logger.info("User is not logged in")
+            return nil
+        }
+        logger.info("User is logged in")
         
         self.init(
             username: page.username,

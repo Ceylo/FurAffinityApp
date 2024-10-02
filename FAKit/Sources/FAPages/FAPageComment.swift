@@ -123,7 +123,7 @@ extension FAPageComment {
                 htmlMessage: htmlMessage
             ))
         } catch {
-            logger.warning("\(error)\nWhile parsing: \((try? node.html()) ?? "")")
+            logger.warning("\(error, privacy: .public)\nWhile parsing: \((try? node.html()) ?? "", privacy: .public)")
             self = .hidden(.init(cid: cid, indentation: indentation, htmlMessage: htmlMessage))
         }
     }
