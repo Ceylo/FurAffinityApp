@@ -18,42 +18,51 @@
       "iconURL": "https://get.furaffinity.app/altstore/fa-app-icon.heic",
       "tintColor": null,
       "category": "social",
-      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.8.0/FurAffinity-1.8.0-58b3697.ipa",
+      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.9.1/FurAffinity-1.9.1-6606733.ipa",
       "screenshots": [
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9/screenshots/feed.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9.1/screenshots/feed.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9/screenshots/submission.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9.1/screenshots/submission.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9/screenshots/comments.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9.1/screenshots/comments.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9/screenshots/profile.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9.1/screenshots/profile.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9/screenshots/notifications.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9.1/screenshots/notifications.heic",
           "width": 1170
         }
       ],
       "screenshotURLs": [
-        "https://get.furaffinity.app/altstore/releases/1.9/screenshots/feed.heic",
-        "https://get.furaffinity.app/altstore/releases/1.9/screenshots/submission.heic",
-        "https://get.furaffinity.app/altstore/releases/1.9/screenshots/comments.heic",
-        "https://get.furaffinity.app/altstore/releases/1.9/screenshots/profile.heic",
-        "https://get.furaffinity.app/altstore/releases/1.9/screenshots/notifications.heic"
+        "https://get.furaffinity.app/altstore/releases/1.9.1/screenshots/feed.heic",
+        "https://get.furaffinity.app/altstore/releases/1.9.1/screenshots/submission.heic",
+        "https://get.furaffinity.app/altstore/releases/1.9.1/screenshots/comments.heic",
+        "https://get.furaffinity.app/altstore/releases/1.9.1/screenshots/profile.heic",
+        "https://get.furaffinity.app/altstore/releases/1.9.1/screenshots/notifications.heic"
       ],
       "versions": [
+        {
+          "version": "1.9.1",
+          "date": "2024-10-02T12:20:00+02:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n🐞 BUGFIXES\n• Fix ability to refresh the submissions feed when it is empty (regression from 1.9.0)\n• Fix the submissions feed loading after app start when it tries to restore the feed position to a submission that is now gone, for instance after nuking all submission notifications (regression from 1.9.0)\n\nRelease notes for version 1.9.0:\n📱 FEATURES\n• Shout notifications are now displayed in the Notifications tab\n• User watch and \"watched by\" lists are now accessible from user profiles. Additionally, the watchlist features a search field allowing to look for a specific user\n• The scroll position of the submissions feed is now preserved when restarting the app\n• Speed improvements:\n    • Until furaffinity.net answers and provide the full data, user profiles now first display a preview content instead of a progress indicator\n    • A lot more avatars get cached and are thus available for early display\n    • Scrolling through favorites is much smoother\n    • Submissions or journals with many comments are loaded much faster\n\n🐞 BUGFIXES\n• Fix new submissions notification bubble sometimes not dismissing\n• Fix navigation bar sometimes becoming bigger when navigating back\n\n📦 MISCELLANEOUS\n• The login screen has been redesigned\n• Analytics have been migrated from \"Microsoft AppCenter\" to \"Amplitude\"",
+          "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.9.1/FurAffinity-1.9.1-6606733.ipa",
+          "size": 2209993,
+          "sha256": "c081e1f16c9f073aeeea9119119fea39ee2e2d6537921d21d5292e9d5c7d2c84",
+          "minOSVersion": "16.1"
+        },
         {
           "version": "1.9",
           "date": "2024-09-16T20:06:38+02:00",
