@@ -9,15 +9,15 @@ import XCTest
 @testable import FAPages
 
 final class FAHomePageTests: XCTestCase {
-    func testLoggedOutPage_parsedAsExpected() throws {
+    func testLoggedOutPage_parsedAsExpected() async throws {
         let data = testData("www.furaffinity.net:loggedout.html")
-        let page = FAHomePage(data: data, baseUri: FAURLs.homeUrl)
+        let page = await FAHomePage(data: data, baseUri: FAURLs.homeUrl)
         XCTAssertNil(page)
     }
     
-    func testLoggedInPage_parsedAsExpected() throws {
+    func testLoggedInPage_parsedAsExpected() async throws {
         let data = testData("www.furaffinity.net:loggedin.html")
-        let page = try XCTUnwrap(FAHomePage(data: data, baseUri: FAURLs.homeUrl))
+        let page = try await FAHomePage(data: data, baseUri: FAURLs.homeUrl).unwrap()
         
         XCTAssertEqual(page, .init(
             username: "furrycount",

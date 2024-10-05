@@ -272,7 +272,7 @@ extension OnlineFASession {
             return nil
         }
         
-        guard let page = FAHomePage(data: data, baseUri: FAURLs.homeUrl) else {
+        guard let page = await FAHomePage(data: data, baseUri: FAURLs.homeUrl) else {
             logger.info("User is not logged in")
             return nil
         }

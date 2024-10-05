@@ -8,13 +8,13 @@
 import SwiftSoup
 import Foundation
 
-public struct FAHomePage: Equatable {
+public struct FAHomePage: Equatable, Sendable {
     public let username: String
     public let displayUsername: String
 }
 
 extension FAHomePage {
-    public init?(data: Data, baseUri: URL) {
+    public init?(data: Data, baseUri: URL) async {
         let state = signposter.beginInterval("Home Parsing")
         defer { signposter.endInterval("Home Parsing", state) }
         
