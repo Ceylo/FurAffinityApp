@@ -25,12 +25,11 @@ struct FAURLsTests {
     
     @Test("avatarFromUrl", arguments: [
         ("", nil),
-        ("foo", "https://a.furaffinity.net/20240920/foo.gif"),
-        ("^6", "https://a.furaffinity.net/20240920/%5E6.gif")
+        ("foo", "https://a.furaffinity.net/foo.gif"),
+        ("^6", "https://a.furaffinity.net/%5E6.gif")
     ])
     func avatarFromUrl(username: String, expectedUrl: String?) async throws {
-        let date = try Date("2024-09-20T11:11:11Z", strategy: .iso8601)
-        let url = FAURLs.avatarUrl(for: username, date: date)
+        let url = FAURLs.avatarUrl(for: username)
         #expect(url?.absoluteString == expectedUrl)
     }
 }

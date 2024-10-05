@@ -35,16 +35,12 @@ public enum FAURLs {
         return try? URL(unsafeString: "https://www.furaffinity.net/user/\(username)/")
     }
     
-    public static func avatarUrl(for username: String, date: Date = Date()) -> URL? {
+    public static func avatarUrl(for username: String) -> URL? {
         guard !username.isEmpty else {
             return nil
         }
         
-        // https://a.furaffinity.net/yyyymmdd/username.gif
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMdd"
-        let date = formatter.string(from: date)
-        let str = "https://a.furaffinity.net/\(date)/\(username).gif"
+        let str = "https://a.furaffinity.net/\(username).gif"
         return try? URL(unsafeString: str)
     }
     
