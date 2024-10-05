@@ -7,7 +7,7 @@
 
 import SwiftUI
 import FAKit
-import URLImage
+import Kingfisher
 
 struct UserView: View {
     var user: FAUser
@@ -18,22 +18,18 @@ struct UserView: View {
     
     var banner: some View {
         GeometryReader { geometry in
-            URLImage(user.bannerUrl) { progress in
-                Rectangle()
-                    .foregroundColor(.white.opacity(0.1))
-            } failure: { error, retry in
-                Image(systemName: "questionmark")
-                    .resizable()
-            } content: { image, info in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: geometry.size.width,
-                           height: bannerHeight,
-                           alignment: .leading)
-                    .clipped()
-                    .transition(.opacity.animation(.default.speed(2)))
-            }
+            FAImage(user.bannerUrl)
+                .placeholder {
+                    Rectangle()
+                        .foregroundColor(.white.opacity(0.1))
+                }
+                .resizable()
+                .fade(duration: 0.25)
+                .aspectRatio(contentMode: .fill)
+                .frame(width: geometry.size.width,
+                       height: bannerHeight,
+                       alignment: .leading)
+                .clipped()
         }
         .frame(height: bannerHeight)
     }

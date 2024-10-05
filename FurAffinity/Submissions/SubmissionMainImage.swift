@@ -7,7 +7,7 @@
 
 import SwiftUI
 import FAKit
-import URLImage
+import Kingfisher
 import Zoomable
 
 struct SubmissionMainImage: View {
@@ -16,46 +16,49 @@ struct SubmissionMainImage: View {
     var fullResolutionImageUrl: URL
     var displayProgress = true
     var allowZoomableSheet = true
-    @Binding var fullResolutionCGImage: CGImage?
+    @Binding var fullResolutionImage: UIImage?
     @State private var showZoomableSheet = false
+    @State private var errorMessage: String?
     
     var body: some View {
         GeometryReader { geometry in
-            URLImage(fullResolutionImageUrl) { progress in
-                ZStack {
-                    if let thumbnailUrl = thumbnailImage?.bestThumbnailUrl(for: geometry) {
-                        URLImage(thumbnailUrl) { image, info in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                        }
-                    }
-                    
-                    if displayProgress {
-                        LinearProgress(progress: progress ?? 0)
-                    }
-                }
-            } failure: { error, retry in
+            if let errorMessage {
                 Centered {
                     Text("Oops, image loading failed 😞")
-                    Text(error.localizedDescription)
+                    Text(errorMessage)
                         .font(.caption)
                 }
-            } content: { image, info in
-                image
+            } else {
+                FAImage(fullResolutionImageUrl)
+                    .placeholder { progress in
+                        ZStack {
+                            if let thumbnailUrl = thumbnailImage?.bestThumbnailUrl(for: geometry) {
+                                FAImage(thumbnailUrl)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                            }
+                            
+                            if displayProgress {
+                                LinearProgress(progress: Float(progress.fractionCompleted))
+                            }
+                        }
+                    }
+                    .onFailure { error in
+                        errorMessage = error.localizedDescription
+                    }
                     .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .onAppear {
-                        fullResolutionCGImage = info.cgImage
+                    .onSuccess { result in
+                        fullResolutionImage = result.image
                     }
                     .sheet(isPresented: $showZoomableSheet) {
                         Zoomable(allowZoomOutBeyondFit: false) {
-                            image
+                            Image(uiImage: fullResolutionImage!)
                         }
                         .ignoresSafeArea()
                     }
+                    .aspectRatio(contentMode: .fit)
                     .onTapGesture {
-                        if allowZoomableSheet {
+                        if allowZoomableSheet && fullResolutionImage != nil {
                             showZoomableSheet = true
                         }
                     }
@@ -75,6 +78,6 @@ struct SubmissionMainImage: View {
         widthOnHeightRatio: 208/300.0,
         thumbnailImage: .init(thumbnailUrl: URL(string: "https://t.furaffinity.net/44188741@300-1634411740.jpg")!),
         fullResolutionImageUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1634411740/1634411740.annetpeas_witch2021__2_fa.png")!,
-        fullResolutionCGImage: .constant(nil)
+        fullResolutionImage: .constant(nil)
     )
 }

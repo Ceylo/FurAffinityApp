@@ -6,43 +6,42 @@
 //
 
 import SwiftUI
-import URLImage
 import FAKit
+import Kingfisher
 
 struct AvatarView: View {
     var avatarUrl: URL?
     
     var body: some View {
         ZStack {
-            if let avatarUrl {
-                URLImage(avatarUrl) { progress in
+            FAImage(avatarUrl)
+                .placeholder {
                     Rectangle()
                         .foregroundColor(.white.opacity(0.1))
-                } failure: { error, retry in
-                    Image(systemName: "questionmark")
-                        .resizable()
-                } content: { image, info in
-                    image
-                        .resizable()
-                        .transition(.opacity.animation(.default.speed(2)))
                 }
-            } else {
-                Rectangle()
-                    .foregroundColor(.white.opacity(0.1))
-            }
+                .onFailureImage(.defaultAvatar)
+                .resizable()
+                .fade(duration: 0.25)
         }
         .cornerRadius(5)
         .overlay {
             RoundedRectangle(cornerRadius: 5)
                 .stroke(Color.borderOverlay, lineWidth: 1)
         }
-            
     }
 }
 
 @available(iOS 17, *)
-#Preview(traits: .sizeThatFitsLayout) {
-    AvatarView(avatarUrl: URL(string: "https://a.furaffinity.net/20220409/furrycount.gif")!)
+#Preview("With URL", traits: .sizeThatFitsLayout) {
+    AvatarView(avatarUrl: URL(string: "https://a.furaffinity.net/terriniss.gif")!)
+        .frame(width: 32, height: 32)
+        .padding()
+        .preferredColorScheme(.dark)
+}
+
+@available(iOS 17, *)
+#Preview("Empty", traits: .sizeThatFitsLayout) {
+    AvatarView(avatarUrl: nil)
         .frame(width: 32, height: 32)
         .padding()
         .preferredColorScheme(.dark)

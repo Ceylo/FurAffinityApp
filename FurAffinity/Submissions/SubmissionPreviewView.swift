@@ -31,7 +31,7 @@ struct SubmissionPreviewView: View {
                         fullResolutionImageUrl: submission.dynamicThumbnail.bestThumbnailUrl(for: geometry),
                         displayProgress: false,
                         allowZoomableSheet: false,
-                        fullResolutionCGImage: .constant(nil)
+                        fullResolutionImage: .constant(nil)
                     )
                 }
                 .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)

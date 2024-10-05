@@ -20,8 +20,7 @@ enum ActionState: Identifiable, CaseIterable {
 class ImageSaveHandler: NSObject, ObservableObject {
     @Published var state: ActionState = .none
     
-    func startSaving(_ image: CGImage) {
-        let image = UIImage(cgImage: image)
+    func startSaving(_ image: UIImage) {
         UIImageWriteToSavedPhotosAlbum(
             image, self,
             #selector(ImageSaveHandler.image(_:didFinishSavingWithError:contextInfo:)),

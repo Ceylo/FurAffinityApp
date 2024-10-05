@@ -7,7 +7,7 @@
 
 import SwiftUI
 import FAKit
-import URLImage
+import Kingfisher
 
 protocol SubmissionHeaderView: View {
     @MainActor
@@ -17,24 +17,29 @@ protocol SubmissionHeaderView: View {
 struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
     var submission: FASubmissionPreview
     
+    @State private var errorMessage: String?
+    
     var previewImage: some View {
         GeometryReader { geometry in
             if geometry.size.maxDimension > 0 {
                 let url = submission.dynamicThumbnail.bestThumbnailUrl(for: geometry)
-                // AsyncImage sometimes remains in empty phase when used in a List…
-                URLImage(url) { progress in
-                    Rectangle()
-                        .foregroundColor(.white.opacity(0.1))
-                } failure: { error, retry in
+                if let errorMessage {
                     Centered {
                         Text("Oops, image loading failed 😞")
-                        Text(error.localizedDescription)
+                        Text(errorMessage)
                             .font(.caption)
                     }
-                } content: { image, info in
-                    image
+                } else {
+                    FAImage(url)
+                        .placeholder {
+                            Rectangle()
+                                .foregroundColor(.white.opacity(0.1))
+                        }
                         .resizable()
-                        .transition(.opacity.animation(.default.speed(2)))
+                        .onFailure { error in
+                            errorMessage = error.localizedDescription
+                        }
+                        .fade(duration: 0.25)
                         .overlay {
                             RoundedRectangle(cornerRadius: 10)
                                 .stroke(Color.borderOverlay, lineWidth: 1)

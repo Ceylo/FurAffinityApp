@@ -9,7 +9,7 @@ import SwiftUI
 
 struct SubmissionControlsView: View {
     var submissionUrl: URL
-    var fullResolutionImage: CGImage?
+    var fullResolutionImage: UIImage?
     var favoritesCount: Int
     var isFavorite: Bool
     var favoriteAction: () -> Void
@@ -70,7 +70,7 @@ struct SubmissionControlsView: View {
     Group {
         SubmissionControlsView(
             submissionUrl: OfflineFASession.default.submissionPreviews[0].url,
-            fullResolutionImage: UIImage(systemName: "checkmark")?.cgImage,
+            fullResolutionImage: UIImage(systemName: "checkmark"),
             favoritesCount: 15,
             isFavorite: false,
             favoriteAction: {
@@ -83,7 +83,7 @@ struct SubmissionControlsView: View {
         )
         SubmissionControlsView(
             submissionUrl: OfflineFASession.default.submissionPreviews[0].url,
-            fullResolutionImage: UIImage(systemName: "checkmark")?.cgImage,
+            fullResolutionImage: UIImage(systemName: "checkmark"),
             favoritesCount: 0,
             isFavorite: false,
             favoriteAction: {

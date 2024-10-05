@@ -7,7 +7,6 @@
 
 import SwiftUI
 import FAKit
-import URLImage
 
 struct RemoteUserView: View {
     var url: URL

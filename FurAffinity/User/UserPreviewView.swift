@@ -7,7 +7,6 @@
 
 import SwiftUI
 import FAKit
-import URLImage
 
 struct UserPreviewData: Hashable {
     var username: String
