@@ -7,13 +7,6 @@
 
 import Foundation
 import FAPages
-import Cache
-
-private extension Expiry {
-    static func days(_ days: Int) -> Expiry {
-        .seconds(TimeInterval(60 * 60 * 24 * days))
-    }
-}
 
 public class OnlineFASession: FASession {
     enum Error: String, Swift.Error {
