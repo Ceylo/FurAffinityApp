@@ -14,13 +14,12 @@ struct AvatarView: View {
     
     var body: some View {
         ZStack {
-            FAImage(avatarUrl)
+            FAAnimatedImage(avatarUrl)
                 .placeholder {
                     Rectangle()
                         .foregroundColor(.white.opacity(0.1))
                 }
                 .onFailureImage(.defaultAvatar)
-                .resizable()
                 .fade(duration: 0.25)
         }
         .cornerRadius(5)

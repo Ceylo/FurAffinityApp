@@ -28,10 +28,10 @@ struct SubmissionPreviewView: View {
                 GeometryReader { geometry in
                     SubmissionMainImage(
                         widthOnHeightRatio: submission.thumbnailWidthOnHeightRatio,
-                        fullResolutionImageUrl: submission.dynamicThumbnail.bestThumbnailUrl(for: geometry),
+                        fullResolutionMediaUrl: submission.dynamicThumbnail.bestThumbnailUrl(for: geometry),
                         displayProgress: false,
                         allowZoomableSheet: false,
-                        fullResolutionImage: .constant(nil)
+                        fullResolutionMediaFileUrl: .constant(nil)
                     )
                 }
                 .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)

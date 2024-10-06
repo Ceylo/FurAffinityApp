@@ -19,7 +19,7 @@ struct SubmissionView: View {
         let parentCid: Int?
     }
     @State private var replySession: Commenting.ReplySession?
-    @State private var fullResolutionImage: UIImage?
+    @State private var fullResolutionMediaFileUrl: URL?
     
     var header: some View {
         AuthoredHeaderView(
@@ -40,13 +40,13 @@ struct SubmissionView: View {
                     SubmissionMainImage(
                         widthOnHeightRatio: submission.widthOnHeightRatio,
                         thumbnailImage: thumbnail,
-                        fullResolutionImageUrl: submission.fullResolutionImageUrl,
-                        fullResolutionImage: $fullResolutionImage
+                        fullResolutionMediaUrl: submission.fullResolutionMediaUrl,
+                        fullResolutionMediaFileUrl: $fullResolutionMediaFileUrl
                     )
                     
                     SubmissionControlsView(
                         submissionUrl: submission.url,
-                        fullResolutionImage: fullResolutionImage,
+                        mediaFileUrl: fullResolutionMediaFileUrl,
                         favoritesCount: submission.favoriteCount,
                         isFavorite: submission.isFavorite,
                         favoriteAction: favoriteAction,

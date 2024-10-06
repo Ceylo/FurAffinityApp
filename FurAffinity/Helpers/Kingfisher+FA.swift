@@ -20,6 +20,21 @@ func FAImage(_ url: URL?) -> KFImage {
         }
 }
 
+@MainActor
+func FAAnimatedImage(_ url: URL?) -> KFAnimatedImage {
+    KFAnimatedImage(url)
+        .backgroundDecode()
+        .reducePriorityOnDisappear(true)
+        .downloader(downloaderWithUserAgent)
+        .diskCacheExpiration(.days((7...14).randomElement()!))
+        .onFailure { error in
+            logger.error("\(error, privacy: .public)")
+        }
+        .configure { view in
+            view.framePreloadCount = .max
+        }
+}
+
 private let downloaderWithUserAgent: ImageDownloader = {
     let downloader = ImageDownloader(name: "FurAffinity Downloader")
     downloader.sessionConfiguration = downloader.sessionConfiguration.withHttpHeadersForFARequests()

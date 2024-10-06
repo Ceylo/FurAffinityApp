@@ -10,7 +10,7 @@ import SwiftSoup
 
 public struct FASubmissionPage: Equatable {
     public let previewImageUrl: URL
-    public let fullResolutionImageUrl: URL
+    public let fullResolutionMediaUrl: URL
     public let widthOnHeightRatio: Float
     public let author: String
     public let displayAuthor: String
@@ -48,7 +48,7 @@ extension FASubmissionPage {
             let fullViewUrl = try URL(unsafeString: "https:" + fullViewStr)
             
             self.previewImageUrl = previewUrl
-            self.fullResolutionImageUrl = fullViewUrl
+            self.fullResolutionMediaUrl = fullViewUrl
             
             let favoriteNode = try submissionContentNode.select("div.favorite-nav a.button")
             let favoriteUrlNode = try favoriteNode

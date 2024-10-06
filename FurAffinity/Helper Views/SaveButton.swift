@@ -11,7 +11,7 @@ import Combine
 fileprivate extension ActionState {
     var saveButtonImageName: String {
         switch self {
-        case .none, .inProgress:
+        case .idle, .inProgress:
             return "square.and.arrow.down"
         case .succeeded:
             return "checkmark"

@@ -16,7 +16,7 @@ final class FASubmissionPageTests: XCTestCase {
         let htmlDescription = "YCH for \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221211/lil-maj.gif\" align=\"middle\" title=\"lil-maj\" alt=\"lil-maj\" />&nbsp;lil-maj</a> \n<br /> \n<br /> Cody © \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221211/lil-maj.gif\" align=\"middle\" title=\"lil-Maj\" alt=\"lil-Maj\" />&nbsp;lil-Maj</a>\n<br /> \n<br /> \n<br /> \n<br /> \n<br /> \n<br /> *******************************\n<br /> * \n<a class=\"auto_link named_url\" href=\"http://ko-fi.com/J3J16KSH\">Feed me with coffee?</a>\n<br /> * \n<a class=\"auto_link named_url\" href=\"https://www.furaffinity.net/gallery/annetpeas/\">My Gallery</a>\n<br /> * \n<a class=\"auto_link named_url\" href=\"https://twitter.com/AnnetPeas_Art\">Twitter</a>"
         let expected = FASubmissionPage(
             previewImageUrl: URL(string: "https://t.furaffinity.net/49338772@600-1665402309.jpg")!,
-            fullResolutionImageUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1665402309/1665402309.annetpeas_the_hookah_fa.png")!,
+            fullResolutionMediaUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1665402309/1665402309.annetpeas_the_hookah_fa.png")!,
             widthOnHeightRatio: 1217 / 1280,
             author: "annetpeas",
             displayAuthor: "AnnetPeas",

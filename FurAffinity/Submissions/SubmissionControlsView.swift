@@ -9,7 +9,7 @@ import SwiftUI
 
 struct SubmissionControlsView: View {
     var submissionUrl: URL
-    var fullResolutionImage: UIImage?
+    var mediaFileUrl: URL?
     var favoritesCount: Int
     var isFavorite: Bool
     var favoriteAction: () -> Void
@@ -18,7 +18,7 @@ struct SubmissionControlsView: View {
     
     private let buttonsSize: CGFloat = 55
     
-    @StateObject private var imageSaveHandler = ImageSaveHandler()
+    @StateObject private var saveHandler = MediaSaveHandler()
     
     var body: some View {
         HStack(spacing: 0) {
@@ -35,11 +35,13 @@ struct SubmissionControlsView: View {
             }
             .frame(height: buttonsSize-4)
             
-            SaveButton(state: imageSaveHandler.state) {
-                imageSaveHandler.startSaving(fullResolutionImage!)
+            SaveButton(state: saveHandler.state) {
+                Task {
+                    await saveHandler.saveMedia(atFileUrl: mediaFileUrl!)
+                }
             }
             .frame(height: buttonsSize)
-            .disabled(fullResolutionImage == nil)
+            .disabled(mediaFileUrl == nil)
             
             Button {
                 share([submissionUrl])
@@ -70,7 +72,7 @@ struct SubmissionControlsView: View {
     Group {
         SubmissionControlsView(
             submissionUrl: OfflineFASession.default.submissionPreviews[0].url,
-            fullResolutionImage: UIImage(systemName: "checkmark"),
+            mediaFileUrl: URL(fileURLWithPath: "/tmp/dummy.jpg"),
             favoritesCount: 15,
             isFavorite: false,
             favoriteAction: {
@@ -83,7 +85,7 @@ struct SubmissionControlsView: View {
         )
         SubmissionControlsView(
             submissionUrl: OfflineFASession.default.submissionPreviews[0].url,
-            fullResolutionImage: UIImage(systemName: "checkmark"),
+            mediaFileUrl: URL(fileURLWithPath: "/tmp/dummy.jpg"),
             favoritesCount: 0,
             isFavorite: false,
             favoriteAction: {

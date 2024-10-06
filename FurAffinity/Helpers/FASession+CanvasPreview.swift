@@ -266,7 +266,7 @@ extension FASubmission {
             return await FASubmission(
                 url: URL(string: "https://www.furaffinity.net/view/44188741/")!,
                 previewImageUrl: URL(string: "https://t.furaffinity.net/44188741@400-1634411740.jpg")!,
-                fullResolutionImageUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1634411740/1634411740.annetpeas_witch2021__2_fa.png")!,
+                fullResolutionMediaUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1634411740/1634411740.annetpeas_witch2021__2_fa.png")!,
                 widthOnHeightRatio: 416 / 600,
                 author: "annetpeas",
                 displayAuthor: "AnnetPeas",

@@ -11,7 +11,7 @@ import FAPages
 public struct FASubmission: Equatable, Sendable {
     public let url: URL
     public let previewImageUrl: URL
-    public let fullResolutionImageUrl: URL
+    public let fullResolutionMediaUrl: URL
     public let widthOnHeightRatio: Float
     public let author: String
     public let displayAuthor: String
@@ -25,7 +25,7 @@ public struct FASubmission: Equatable, Sendable {
     public let comments: [FAComment]
     
     public init(url: URL, previewImageUrl: URL,
-                fullResolutionImageUrl: URL,
+                fullResolutionMediaUrl: URL,
                 widthOnHeightRatio: Float, author: String,
                 displayAuthor: String,
                 title: String,
@@ -38,7 +38,7 @@ public struct FASubmission: Equatable, Sendable {
                 comments: [FAComment]) {
         self.url = url
         self.previewImageUrl = previewImageUrl
-        self.fullResolutionImageUrl = fullResolutionImageUrl
+        self.fullResolutionMediaUrl = fullResolutionMediaUrl
         self.widthOnHeightRatio = widthOnHeightRatio
         self.author = author
         self.displayAuthor = displayAuthor
@@ -58,7 +58,7 @@ extension FASubmission {
         try self.init(
             url: url,
             previewImageUrl: page.previewImageUrl,
-            fullResolutionImageUrl: page.fullResolutionImageUrl,
+            fullResolutionMediaUrl: page.fullResolutionMediaUrl,
             widthOnHeightRatio: page.widthOnHeightRatio,
             author: page.author,
             displayAuthor: page.displayAuthor,
