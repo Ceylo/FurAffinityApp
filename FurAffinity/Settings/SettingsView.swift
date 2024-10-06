@@ -11,6 +11,8 @@ import FAKit
 struct SettingsView: View {
     @EnvironmentObject var model: Model
     @State private var dumpingLogs = false
+    @AppStorage(UserDefaultKeys.animateAvatars.rawValue)
+    private var animateAvatars: Bool = true
     
     var body: some View {
         Form {
@@ -34,6 +36,10 @@ struct SettingsView: View {
                         .padding(.bottom, 5)
                     }
                 }
+            }
+            
+            Section("Display") {
+                Toggle("Animate avatars", isOn: $animateAvatars)
             }
             
             Section("Logs") {

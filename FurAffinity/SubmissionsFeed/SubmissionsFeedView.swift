@@ -16,7 +16,8 @@ struct SubmissionsFeedView: View {
     @Weak private var scrollView: UIScrollView?
     @State private var targetScrollItem: FASubmissionPreview?
     @State private var currentViewIsDisplayed = false
-    @AppStorage(Model.lastViewedSubmissionIDKey) private var lastViewedSubmissionID: Int?
+    @AppStorage(UserDefaultKeys.lastViewedSubmissionID.rawValue)
+    private var lastViewedSubmissionID: Int?
     
     var noPreview: some View {
         ScrollView {

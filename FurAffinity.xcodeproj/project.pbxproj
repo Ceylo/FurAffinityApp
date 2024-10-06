@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		87098D362CB14F1000E7BD94 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 87098D352CB14F1000E7BD94 /* Kingfisher */; };
 		87098D382CB19E4D00E7BD94 /* Kingfisher+FA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */; };
+		87098D3A2CB2BEF000E7BD94 /* UserDefaultKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87098D392CB2BEF000E7BD94 /* UserDefaultKeys.swift */; };
 		8716E7EC271C659C00C0BC4A /* FurAffinityApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8716E7EB271C659C00C0BC4A /* FurAffinityApp.swift */; };
 		8716E7EE271C659C00C0BC4A /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8716E7ED271C659C00C0BC4A /* HomeView.swift */; };
 		8716E7F0271C659D00C0BC4A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8716E7EF271C659D00C0BC4A /* Assets.xcassets */; };
@@ -107,6 +108,7 @@
 
 /* Begin PBXFileReference section */
 		87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Kingfisher+FA.swift"; sourceTree = "<group>"; };
+		87098D392CB2BEF000E7BD94 /* UserDefaultKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultKeys.swift; sourceTree = "<group>"; };
 		8716E7E8271C659C00C0BC4A /* Fur Affinity.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Fur Affinity.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8716E7EB271C659C00C0BC4A /* FurAffinityApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FurAffinityApp.swift; sourceTree = "<group>"; };
 		8716E7ED271C659C00C0BC4A /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -249,6 +251,7 @@
 				878B0B902970B18C00A08685 /* Secrets.swift */,
 				8716E7ED271C659C00C0BC4A /* HomeView.swift */,
 				877226B227402F9300245DF0 /* LoggedInView.swift */,
+				87098D392CB2BEF000E7BD94 /* UserDefaultKeys.swift */,
 				875DD46E2843D1C300F3E5D9 /* Helpers */,
 				87A4CA8B2756D17C009AA219 /* Helper Views */,
 				877FD54B29EC90B600230996 /* Comments */,
@@ -554,6 +557,7 @@
 				8791D60D29C4DCE6003FDBBE /* InAppNavigation.swift in Sources */,
 				87A185A02745A83B00B10D2A /* Debugging.swift in Sources */,
 				87E0E2B82801D967005207A8 /* NotesView.swift in Sources */,
+				87098D3A2CB2BEF000E7BD94 /* UserDefaultKeys.swift in Sources */,
 				871B05EF2C84BADA00302500 /* AppIcon.swift in Sources */,
 				87C4435A2C73C59900200991 /* ShoutNotificationItemView.swift in Sources */,
 				87A185A22745A8A100B10D2A /* CenteredView.swift in Sources */,

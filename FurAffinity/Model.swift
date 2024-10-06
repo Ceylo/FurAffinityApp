@@ -16,7 +16,6 @@ enum ModelError: Error {
 @MainActor
 class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     static let autorefreshDelay: TimeInterval = 15 * 60
-    static let lastViewedSubmissionIDKey = "lastViewedSubmissionID"
     
     @Published var session: (any FASession)? {
         didSet {
@@ -102,7 +101,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         var firstWantedSubmissionID: Int?
         if submissionPreviews == nil {
             firstWantedSubmissionID = UserDefaults.standard
-                .object(forKey: Self.lastViewedSubmissionIDKey) as? Int
+                .object(forKey: UserDefaultKeys.lastViewedSubmissionID.rawValue) as? Int
         }
         
         var latestSubmissions = await session.submissionPreviews(from: firstWantedSubmissionID)
