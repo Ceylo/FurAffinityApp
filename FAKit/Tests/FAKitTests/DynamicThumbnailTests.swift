@@ -29,9 +29,10 @@ struct DynamicThumbnailTests {
     static let baseUrl = "https://t.fa/123@100-123.jpg"
     
     @Test("bestThumbnailUrl", arguments: [
-        (baseUrl, (300, 600), "https://t.fa/123@300-123.jpg"),
+        (baseUrl, (300, 600), "https://t.fa/123@600-123.jpg"),
         (baseUrl, (600, 300), "https://t.fa/123@600-123.jpg"),
         (baseUrl, (900, 300), "https://t.fa/123@600-123.jpg"),
+        (baseUrl, (300, 900), "https://t.fa/123@600-123.jpg"),
         (baseUrl, (300, 300), "https://t.fa/123@300-123.jpg"),
         (baseUrl, (30, 30), "https://t.fa/123@200-123.jpg"),
     ])
