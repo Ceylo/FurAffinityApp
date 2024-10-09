@@ -67,9 +67,9 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
         let downloadStartDate = DownloadDelegate.shared.downloading[url]
         if let downloadStartDate {
             let elapsedMs = Int(abs(downloadStartDate.timeIntervalSinceNow * 1000))
-            logger.info("Thumbnail for \(submission.title, privacy: .public) downloaded started \(elapsedMs)ms ago")
+            logger.info("Thumbnail download for \"\(submission.title, privacy: .public)\" started \(elapsedMs)ms ago")
         } else if cacheType == .none {
-            logger.info("Thumbnail for \(submission.title, privacy: .public) isn't downloading yet")
+            logger.info("Thumbnail for \"\(submission.title, privacy: .public)\" isn't downloading yet")
         }
     }
 }
