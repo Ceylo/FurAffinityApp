@@ -143,7 +143,7 @@ struct SubmissionsFeedView: View {
                     noPreview
                 }
                 .onReceive(model.$submissionPreviews.compactMap { $0 }) { previews in
-                    let thumbnailsWidth = geometry.size.width - 28
+                    let thumbnailsWidth = geometry.size.width - 28.333
                     prefetchThumbnails(for: previews, availableWidth: thumbnailsWidth)
                     prefetchAvatars(for: previews)
                 }

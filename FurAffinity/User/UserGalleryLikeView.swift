@@ -54,7 +54,7 @@ struct UserGalleryLikeView: View {
                     .listStyle(.plain)
                     .onAppear {
                         // Note: onAppear won't be enough once infinite scroll is implemented
-                        let thumbnailsWidth = geometry.size.width - 28
+                        let thumbnailsWidth = geometry.size.width - 28.333
                         let previews = gallery.previews
                         prefetchThumbnails(for: previews, availableWidth: thumbnailsWidth)
                         prefetchAvatars(for: previews)
