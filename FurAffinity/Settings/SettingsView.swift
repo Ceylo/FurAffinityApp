@@ -7,12 +7,17 @@
 
 import SwiftUI
 import FAKit
+import Kingfisher
 
 struct SettingsView: View {
     @EnvironmentObject var model: Model
     @State private var dumpingLogs = false
+    
     @AppStorage(UserDefaultKeys.animateAvatars.rawValue)
     private var animateAvatars: Bool = true
+    @State private var cachedFileSize = "unknown"
+    
+    @State private var cleaningCache = false
     
     var body: some View {
         Form {
@@ -42,7 +47,18 @@ struct SettingsView: View {
                 Toggle("Animate avatars", isOn: $animateAvatars)
             }
             
-            Section("Logs") {
+            Section("Advanced") {
+                Button("Clear cached files (\(cachedFileSize))") {
+                    cleaningCache = true
+                    
+                    Task {
+                        await ImageCache.default.clearDiskCache()
+                        updateCachedFileSize()
+                        cleaningCache = false
+                    }
+                }
+                .disabled(cleaningCache)
+                
                 Button {
                     dumpingLogs = true
                     Task.detached {
@@ -84,6 +100,18 @@ struct SettingsView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             model.updateAppInfoIfNeeded()
+        }
+        .onAppear {
+            updateCachedFileSize()
+        }
+    }
+    
+    func updateCachedFileSize() {
+        if let size = try? ImageCache.default.diskStorage.totalSize() {
+            cachedFileSize = ByteCountFormatter.string(
+                fromByteCount: Int64(size),
+                countStyle: .file
+            )
         }
     }
 }
