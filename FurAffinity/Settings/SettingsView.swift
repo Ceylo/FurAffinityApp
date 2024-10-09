@@ -91,6 +91,7 @@ struct SettingsView: View {
                             let newSession = await FALoginView.makeSession()
                             assert(newSession == nil)
                             DispatchQueue.main.async {
+                                model.clearSessionData()
                                 model.session = newSession
                             }
                         }

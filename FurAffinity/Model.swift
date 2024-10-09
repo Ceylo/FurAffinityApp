@@ -71,6 +71,12 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         lastAppInfoUpdate = Date()
     }
     
+    func clearSessionData() {
+        UserDefaults.standard.removeObject(
+            forKey: UserDefaultKeys.lastViewedSubmissionID.rawValue
+        )
+    }
+    
     private func processNewSession() {
         guard session != nil else {
             lastSubmissionPreviewsFetchDate = nil
