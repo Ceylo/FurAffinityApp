@@ -9,23 +9,22 @@ import SwiftUI
 
 public struct DynamicThumbnail: Hashable, Sendable {
     private let thumbnailUrl: URL
+    // Empirically determined from thumbnail sizes in
+    // https://www.furaffinity.net/msg/submissions/
+    // Trying to use larger sizes will redirect to fit this size.
+    // FA+ users may have a higher limit.
+    private let maximumThumbnailSize = CGSize(width: 600, height: 300)
     
     public init(thumbnailUrl: URL) {
         self.thumbnailUrl = thumbnailUrl
     }
     
     private enum ThumbnailSize: Int, CaseIterable {
-        case s50 = 50
-        case s75 = 75
-        case s100 = 100
-        case s120 = 120
         case s200 = 200
         case s300 = 300
         case s320 = 320
         case s400 = 400
         case s600 = 600
-        case s800 = 800
-        case s1600 = 1600
     }
 
     private func thumbnailUrl(at size: ThumbnailSize) -> URL {
@@ -36,12 +35,17 @@ public struct DynamicThumbnail: Hashable, Sendable {
     }
 
     private func bestThumbnailUrl(for size: UInt) -> URL {
-        let match = ThumbnailSize.allCases.first { $0.rawValue > size }
+        let match = ThumbnailSize.allCases.first { $0.rawValue >= size }
         let discreteSize = match ?? ThumbnailSize.allCases.last!
         return thumbnailUrl(at: discreteSize)
     }
     
+    public func bestThumbnailUrl(for size: CGSize) -> URL {
+        let size = size.fitting(in: maximumThumbnailSize)
+        return bestThumbnailUrl(for: UInt(size.maxDimension))
+    }
+    
     public func bestThumbnailUrl(for geometry: GeometryProxy) -> URL {
-        bestThumbnailUrl(for: UInt(geometry.size.maxDimension))
+        bestThumbnailUrl(for: geometry.size)
     }
 }

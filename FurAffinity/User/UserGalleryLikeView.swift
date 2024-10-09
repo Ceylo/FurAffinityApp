@@ -36,21 +36,30 @@ struct UserGalleryLikeView: View {
                     .padding()
                 }
             } else {
-                List(gallery.previews) { preview in
-                    NavigationLink(
-                        value: FAURL.submission(url: preview.url, previewData: preview)
-                    ) {
-                        if galleryType.shouldDisplayAuthor {
-                            SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
-                        } else {
-                            SubmissionFeedItemView<TitledHeaderView>(submission: preview)
+                GeometryReader { geometry in
+                    List(gallery.previews) { preview in
+                        NavigationLink(
+                            value: FAURL.submission(url: preview.url, previewData: preview)
+                        ) {
+                            if galleryType.shouldDisplayAuthor {
+                                SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
+                            } else {
+                                SubmissionFeedItemView<TitledHeaderView>(submission: preview)
+                            }
                         }
+                        .id(preview.sid)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                     }
-                    .id(preview.sid)
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listStyle(.plain)
+                    .onAppear {
+                        // Note: onAppear won't be enough once infinite scroll is implemented
+                        let thumbnailsWidth = geometry.size.width - 28
+                        let previews = gallery.previews
+                        prefetchThumbnails(for: previews, availableWidth: thumbnailsWidth)
+                        prefetchAvatars(for: previews)
+                    }
                 }
-                .listStyle(.plain)
             }
         }
         .navigationBarTitleDisplayMode(.inline)

@@ -85,6 +85,9 @@ struct SubmissionView: View {
         .navigationTitle(submission.title)
         .navigationBarTitleDisplayMode(.inline)
         .listStyle(.plain)
+        .onAppear {
+            prefetchAvatars(for: submission.comments)
+        }
     }
 }
 

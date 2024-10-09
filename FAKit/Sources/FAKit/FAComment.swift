@@ -195,10 +195,10 @@ extension [FAComment] {
         return nil
     }
     
-    public func forEach(_ closure: (FAComment) async throws -> Void) async rethrows {
+    public func recursiveForEach(_ closure: (FAComment) throws -> Void) rethrows {
         for comment in self {
-            try await closure(comment)
-            try await comment.answers.forEach(closure)
+            try closure(comment)
+            try comment.answers.recursiveForEach(closure)
         }
     }
     

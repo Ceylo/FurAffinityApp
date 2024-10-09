@@ -44,6 +44,9 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
                             RoundedRectangle(cornerRadius: 10)
                                 .stroke(Color.borderOverlay, lineWidth: 1)
                         }
+                        .onAppear {
+                            controlCacheBehavior(for: url)
+                        }
                 }
             }
         }
@@ -58,11 +61,20 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
         }
         .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 0))
     }
+    
+    func controlCacheBehavior(for url: URL) {
+        let cacheType = ImageCache.default.imageCachedType(forKey: url.cacheKey)
+        let downloadStartDate = DownloadDelegate.shared.downloading[url]
+        if let downloadStartDate {
+            let elapsedMs = Int(abs(downloadStartDate.timeIntervalSinceNow * 1000))
+            logger.info("Thumbnail for \(submission.title, privacy: .public) downloaded started \(elapsedMs)ms ago")
+        } else if cacheType == .none {
+            logger.info("Thumbnail for \(submission.title, privacy: .public) isn't downloading yet")
+        }
+    }
 }
 
-struct SubmissionFeedItemView_Previews: PreviewProvider {
-    static var previews: some View {
-        SubmissionFeedItemView<AuthoredHeaderView>(submission: OfflineFASession.default.submissionPreviews[0])
-            .preferredColorScheme(.dark)
-    }
+#Preview {
+    SubmissionFeedItemView<AuthoredHeaderView>(submission: OfflineFASession.default.submissionPreviews[0])
+        .preferredColorScheme(.dark)
 }
