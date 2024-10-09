@@ -13,7 +13,7 @@ public struct DynamicThumbnail: Hashable, Sendable {
     // https://www.furaffinity.net/msg/submissions/
     // Trying to use larger sizes will redirect to fit this size.
     // FA+ users may have a higher limit.
-    private let maximumThumbnailSize = CGSize(width: 600, height: 300)
+    private let maximumThumbnailSize = CGSize(width: 600, height: 600)
     
     public init(thumbnailUrl: URL) {
         self.thumbnailUrl = thumbnailUrl
