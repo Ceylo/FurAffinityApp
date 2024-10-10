@@ -285,8 +285,8 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         }
         
         let updated = await session.toggleFavorite(for: submission)
-        if let updated {
-            assert(updated.isFavorite != submission.isFavorite)
+        if let updated, updated.isFavorite == submission.isFavorite {
+            logger.error("\(#function, privacy: .public) did not change favorite state: \(submission.isFavorite)")
         }
         return updated
     }

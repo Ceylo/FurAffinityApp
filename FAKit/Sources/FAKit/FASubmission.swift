@@ -51,6 +51,25 @@ public struct FASubmission: Equatable, Sendable {
         self.favoriteCount = favoriteCount
         self.comments = comments
     }
+    
+    public func togglingFavorite() -> FASubmission {
+        .init(
+            url: url,
+            previewImageUrl: previewImageUrl,
+            fullResolutionMediaUrl: fullResolutionMediaUrl,
+            widthOnHeightRatio: widthOnHeightRatio,
+            author: author,
+            displayAuthor: displayAuthor,
+            title: title,
+            datetime: datetime,
+            naturalDatetime: naturalDatetime,
+            description: description,
+            isFavorite: !isFavorite,
+            favoriteCount: favoriteCount + (isFavorite ? -1 : 1),
+            favoriteUrl: favoriteUrl,
+            comments: comments
+        )
+    }
 }
 
 extension FASubmission {
