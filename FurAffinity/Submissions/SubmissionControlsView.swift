@@ -37,7 +37,7 @@ struct SubmissionControlsView: View {
             .apply {
                 if #available(iOS 17, *) {
                     $0.sensoryFeedback(
-                        .success,
+                        .impact,
                         trigger: isFavorite,
                         condition: { $1 == true }
                     )
