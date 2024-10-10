@@ -34,6 +34,15 @@ struct SubmissionControlsView: View {
                 )
             }
             .frame(height: buttonsSize-4)
+            .apply {
+                if #available(iOS 17, *) {
+                    $0.sensoryFeedback(
+                        .success,
+                        trigger: isFavorite,
+                        condition: { $1 == true }
+                    )
+                } else { $0 }
+            }
             
             SaveButton(state: saveHandler.state) {
                 Task {
@@ -42,6 +51,15 @@ struct SubmissionControlsView: View {
             }
             .frame(height: buttonsSize)
             .disabled(mediaFileUrl == nil)
+            .apply {
+                if #available(iOS 17, *) {
+                    $0.sensoryFeedback(
+                        .success,
+                        trigger: saveHandler.state,
+                        condition: { $1 == .succeeded }
+                    )
+                } else { $0 }
+            }
             
             Button {
                 share([submissionUrl])
