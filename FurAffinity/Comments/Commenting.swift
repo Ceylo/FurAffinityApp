@@ -23,13 +23,31 @@ struct Commenting: ViewModifier {
     }
 
     @Binding var replySession: ReplySession?
-    var replyAction: (_ parentCid: Int?, _ text: String) -> Void
+    var replyAction: (_ parentCid: Int?, _ text: String) async -> Bool
     @State private var commentText: String = ""
+    @State private var replySent: Bool?
     
     func body(content: Content) -> some View {
         content
             .sheet(isPresented: showCommentEditor) {
                 commentEditor
+            }
+            .apply {
+                if #available(iOS 17, *) {
+                    $0.sensoryFeedback(
+                        .success,
+                        trigger: replySent,
+                        condition: { $1 == true }
+                    )
+                    .sensoryFeedback(
+                        .error,
+                        trigger: replySent,
+                        condition: { $1 == false }
+                    )
+                } else { $0 }
+            }
+            .onChange(of: replySent) { newValue in
+                replySent = nil
             }
     }
     
@@ -55,9 +73,10 @@ struct Commenting: ViewModifier {
             parentComment: replySession.parentComment
         ) { action in
             if case .submit = action, !commentText.isEmpty {
-                replyAction(replySession.parentCid, commentText)
+                let result = await replyAction(replySession.parentCid, commentText)
                 // Preserve user text unless submitted
                 commentText = ""
+                replySent = result
             }
             
             self.replySession = nil
@@ -68,7 +87,7 @@ struct Commenting: ViewModifier {
 extension View {
     func commentSheet(
         on replySession: Binding<Commenting.ReplySession?>,
-        _ replyAction: @escaping (_ parentCid: Int?, _ text: String) -> Void
+        _ replyAction: @escaping (_ parentCid: Int?, _ text: String) async -> Bool
     ) -> some View {
         modifier(Commenting(
             replySession: replySession,

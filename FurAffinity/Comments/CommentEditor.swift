@@ -16,20 +16,39 @@ struct CommentEditor: View {
     
     @Binding var text: String
     var parentComment: FAComment?
-    var handler: (_ action: Action) -> Void
+    var handler: (_ action: Action) async -> Void
     @FocusState private var editorHasFocus: Bool
+    @State private var actionInProgress: Action?
     
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
+            HStack(spacing: 10) {
                 Button("Cancel") {
-                    handler(.cancel)
+                    actionInProgress = .cancel
+                    Task {
+                        await handler(.cancel)
+                        actionInProgress = nil
+                    }
                 }
+                .disabled(actionInProgress != nil)
+                
+                if actionInProgress == .cancel {
+                    ProgressView()
+                }
+                
                 Spacer()
                 Button("Submit") {
-                    handler(.submit)
+                    actionInProgress = .submit
+                    Task {
+                        await handler(.submit)
+                        actionInProgress = nil
+                    }
                 }
-                .disabled(text.isEmpty)
+                .disabled(text.isEmpty || actionInProgress != nil)
+                
+                if actionInProgress == .submit {
+                    ProgressView()
+                }
             }
             .padding()
             .font(.title3)
@@ -62,8 +81,9 @@ struct CommentEditor: View {
 
 #Preview {
     withAsync({ await FAComment.demo[0] }) {
-        CommentEditor(text: .constant("Hello"), parentComment: $0) { contents in
-            print(contents as Any)
+        CommentEditor(text: .constant("Hello"), parentComment: $0) { action in
+            try! await Task.sleep(for: .seconds(1))
+            print(action as Any)
         }
         .border(.red)
     }
