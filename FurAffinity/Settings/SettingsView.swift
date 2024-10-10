@@ -47,18 +47,7 @@ struct SettingsView: View {
                 Toggle("Animate avatars", isOn: $animateAvatars)
             }
             
-            Section("Advanced") {
-                Button("Clear cached files (\(cachedFileSize))") {
-                    cleaningCache = true
-                    
-                    Task {
-                        await ImageCache.default.clearDiskCache()
-                        updateCachedFileSize()
-                        cleaningCache = false
-                    }
-                }
-                .disabled(cleaningCache)
-                
+            Section {
                 Button {
                     dumpingLogs = true
                     Task.detached {
@@ -81,7 +70,23 @@ struct SettingsView: View {
                     }
                 }
                 .disabled(dumpingLogs)
+                
+                Button("Delete cached files (\(cachedFileSize))") {
+                    cleaningCache = true
+                    
+                    Task {
+                        await ImageCache.default.clearDiskCache()
+                        updateCachedFileSize()
+                        cleaningCache = false
+                    }
+                }
+                .disabled(cleaningCache)
+            } header: {
+                Text("Advanced")
+            } footer: {
+                Text("This cache allows faster contents display. Clearing it will cause images to be downloaded again from furaffinity.net when needed.")
             }
+
             
             if let session = model.session {
                 Section("Account") {
