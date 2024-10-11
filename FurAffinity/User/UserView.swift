@@ -12,7 +12,7 @@ import Kingfisher
 struct UserView: View {
     var user: FAUser
     var description: Binding<AttributedString?>
-    var toggleWatchAction: () -> Void
+    var toggleWatchAction: () async -> Bool
     
     private let bannerHeight = 100.0
     
@@ -54,7 +54,11 @@ struct UserView: View {
     var watchControl: some View {
         if let watchData = user.watchData {
             Spacer()
-            Button(action: toggleWatchAction) {
+            Button {
+                Task {
+                    await toggleWatchAction()
+                }
+            } label: {
                 Label(
                     watchData.watching ? "Unwatch" : "Watch",
                     systemImage: watchData.watching ? "bookmark.fill": "bookmark"
@@ -63,6 +67,15 @@ struct UserView: View {
             }
             // 🫠 https://forums.developer.apple.com/forums/thread/747558
             .buttonStyle(BorderlessButtonStyle())
+            .apply {
+                if #available(iOS 17, *) {
+                    $0.sensoryFeedback(
+                        .impact,
+                        trigger: user.watchData?.watching,
+                        condition: { $1 == true }
+                    )
+                } else { $0 }
+            }
         }
     }
     
@@ -124,7 +137,7 @@ struct UserView: View {
         UserView(
             user: user,
             description: .constant(description),
-            toggleWatchAction: {}
+            toggleWatchAction: { true }
         )
     }
     //        .preferredColorScheme(.dark)

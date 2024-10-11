@@ -54,7 +54,7 @@ struct SubmissionControlsView: View {
             .apply {
                 if #available(iOS 17, *) {
                     $0.sensoryFeedback(
-                        .success,
+                        .impact,
                         trigger: saveHandler.state,
                         condition: { $1 == .succeeded }
                     )

@@ -61,10 +61,9 @@ struct RemoteUserView: View {
                     user: user,
                     description: $description,
                     toggleWatchAction: {
-                        Task {
-                            let updatedUser = await model.session?.toggleWatch(for: user)
-                            updateHandler.update(with: updatedUser)
-                        }
+                        let updatedUser = await model.session?.toggleWatch(for: user)
+                        updateHandler.update(with: updatedUser)
+                        return updatedUser != nil
                     }
                 )
             }
