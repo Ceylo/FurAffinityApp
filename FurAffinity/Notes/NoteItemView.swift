@@ -41,7 +41,6 @@ struct NoteItemView: View {
     }
 }
 
-@available(iOS 17, *)
 #Preview(traits: .sizeThatFitsLayout) {
     NoteItemView(notePreview: OfflineFASession.default.notePreviews[0])
         .preferredColorScheme(.dark)

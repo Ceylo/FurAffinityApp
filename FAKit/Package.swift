@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "FAKit",
-    platforms: [.iOS(.v16), .macOS(.v13)],
+    platforms: [.iOS(.v17), .macOS(.v14)],
     products: [
         .library(
             name: "FAKit",

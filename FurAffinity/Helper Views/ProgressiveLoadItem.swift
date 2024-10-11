@@ -35,7 +35,7 @@ struct ProgressiveLoadItem<DataType: ProgressiveData>: View {
                 }
             }
         }
-        .onChange(of: currentData) { newData in
+        .onChange(of: currentData) { _, newData in
             if needsMoreData && newData.canLoadMore {
                 Task {
                     try await Task.sleep(for: crawlingDelay)
@@ -50,7 +50,6 @@ extension [Int]: ProgressiveData {
     var canLoadMore: Bool { true }
 }
 
-@available(iOS 17, *)
 #Preview {
     @Previewable @State var data = [42]
     List {

@@ -68,7 +68,6 @@ extension AuthoredHeaderView: SubmissionHeaderView {
     }
 }
 
-@available(iOS 17, *)
 #Preview(traits: .sizeThatFitsLayout) {
     NavigationStack {
         List {

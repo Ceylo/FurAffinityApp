@@ -82,8 +82,8 @@ struct HomeView: View {
             }
         } content: {
             FALoginView(session: $localSession)
-                .onChange(of: localSession) { newValue in
-                    showLoginView = localSession == nil
+                .onChange(of: localSession) { _, newValue in
+                    showLoginView = newValue == nil
                 }
         }
     }

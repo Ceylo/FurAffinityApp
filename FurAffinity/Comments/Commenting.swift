@@ -32,21 +32,13 @@ struct Commenting: ViewModifier {
             .sheet(isPresented: showCommentEditor) {
                 commentEditor
             }
-            .apply {
-                if #available(iOS 17, *) {
-                    $0.sensoryFeedback(
-                        .success,
-                        trigger: replySent,
-                        condition: { $1 == true }
-                    )
-                    .sensoryFeedback(
-                        .error,
-                        trigger: replySent,
-                        condition: { $1 == false }
-                    )
-                } else { $0 }
-            }
-            .onChange(of: replySent) { newValue in
+            .sensoryFeedback(.success, trigger: replySent, condition: {
+                $1 == true
+            })
+            .sensoryFeedback(.error, trigger: replySent, condition: {
+                $1 == false
+            })
+            .onChange(of: replySent) {
                 replySent = nil
             }
     }

@@ -41,7 +41,6 @@ struct AvatarView: View {
     }
 }
 
-@available(iOS 17, *)
 #Preview("With URL", traits: .sizeThatFitsLayout) {
     AvatarView(avatarUrl: URL(string: "https://a.furaffinity.net/terriniss.gif")!)
         .frame(width: 32, height: 32)
@@ -49,7 +48,6 @@ struct AvatarView: View {
         .preferredColorScheme(.dark)
 }
 
-@available(iOS 17, *)
 #Preview("Empty", traits: .sizeThatFitsLayout) {
     AvatarView(avatarUrl: nil)
         .frame(width: 32, height: 32)

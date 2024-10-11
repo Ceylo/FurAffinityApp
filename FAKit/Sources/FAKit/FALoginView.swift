@@ -29,10 +29,10 @@ public struct FALoginView: View {
         WebView(initialUrl: FAURLs.homeUrl.appendingPathComponent("login"),
                 cookies: $cookies,
                 clearCookies: true)
-            .onChange(of: cookies) { newCookies in
+            .onChange(of: cookies) { _, newCookies in
                 Task {
                     guard session == nil else { return }
-                    session = await Self.makeSession(cookies: cookies)
+                    session = await Self.makeSession(cookies: newCookies)
                 }
             }
     }

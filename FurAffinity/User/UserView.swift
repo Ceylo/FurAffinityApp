@@ -67,15 +67,9 @@ struct UserView: View {
             }
             // 🫠 https://forums.developer.apple.com/forums/thread/747558
             .buttonStyle(BorderlessButtonStyle())
-            .apply {
-                if #available(iOS 17, *) {
-                    $0.sensoryFeedback(
-                        .impact,
-                        trigger: user.watchData?.watching,
-                        condition: { $1 == true }
-                    )
-                } else { $0 }
-            }
+            .sensoryFeedback(.impact, trigger: user.watchData?.watching, condition: {
+                $1 == true
+            })
         }
     }
     
