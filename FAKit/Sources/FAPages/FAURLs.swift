@@ -110,4 +110,8 @@ public enum FAURLs {
     public static func submissionUrl(sid: Int) -> URL {
         URL(string: "https://www.furaffinity.net/view/\(sid)/")!
     }
+    
+    public static func journalUrl(jid: Int) -> URL {
+        URL(string: "https://www.furaffinity.net/journal/\(jid)/")!
+    }
 }
