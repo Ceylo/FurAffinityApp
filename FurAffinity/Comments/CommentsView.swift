@@ -23,6 +23,12 @@ struct CommentsView: View {
                         })
                         .tint(.orange)
                     }
+                    .contextMenu {
+                        Button(action: { replyAction(comment.cid) },
+                               label: {
+                            Label("Reply", systemImage: "arrowshape.turn.up.left")
+                        })
+                    }
             } else {
                 CommentView(comment: comment)
             }
