@@ -12,13 +12,18 @@ import Testing
 struct FAJournalsPageTests {
     @Test func journalsPageWithNoJournal_isParsed() async throws {
         let data = testData("www.furaffinity.net:journals:maziurek-empty.html")
-        let page = try await FAJournalsPage(data: data).unwrap()
-        #expect(page.journals.isEmpty)
+        let page = try await FAUserJournalsPage(data: data).unwrap()
+        let expected = FAUserJournalsPage(
+            displayAuthor: "Maziurek",
+            journals: []
+        )
+        #expect(page == expected)
     }
     
     @Test func journalsPageWithJournals_isParsed() async throws {
         let data = testData("www.furaffinity.net:journals:tiaamaito.html")
-        let page = try await FAJournalsPage(data: data).unwrap()
+        let page = try await FAUserJournalsPage(data: data).unwrap()
+        #expect(page.displayAuthor == "tiaamaito")
         #expect(page.journals.count == 25)
         #expect(page.journals.prefix(5) == [
             .init(id: 10954574, title: "I'll resume posting art!",

@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  FAUserJournalsPage.swift
 //  FAKit
 //
 //  Created by Ceylo on 11/10/2024.
@@ -8,28 +8,43 @@
 import Foundation
 @preconcurrency import SwiftSoup
 
-public struct FAJournalsPage: Equatable {
-    public struct Journal: Equatable, Sendable {
+public struct FAUserJournalsPage: Equatable {
+    public struct Journal: Equatable, Sendable, Identifiable {
         public let id: Int
         public let title: String
         public let datetime: String
         public let naturalDatetime: String
         public let url: URL
+        
+        public init(id: Int, title: String, datetime: String, naturalDatetime: String, url: URL) {
+            self.id = id
+            self.title = title
+            self.datetime = datetime
+            self.naturalDatetime = naturalDatetime
+            self.url = url
+        }
     }
     
+    public let displayAuthor: String
     public let journals: [Journal]
 }
 
-extension FAJournalsPage {
+extension FAUserJournalsPage {
     public init?(data: Data) async {
         let state = signposter.beginInterval("All Journals Preview Parsing")
         defer { signposter.endInterval("All Journals Preview Parsing", state) }
         
         do {
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
+            let authorQuery = "#site-content > userpage-nav-header > userpage-nav-user-details > h1 > username"
+            let rawDisplayAuthor = try doc.select(authorQuery).text()
+            let displayAuthor = try FAUserPage.parseDisplayName(in: rawDisplayAuthor)
+            
             let journalsQuery = "html body#pageid-journals-list div#main-window div#site-content div#columnpage div.content section"
             let journalNodes = try doc.select(journalsQuery)
-            self.journals = try await journalNodes.parallelMap(Self.decodeJournal)
+            let journals = try await journalNodes.parallelMap(Self.decodeJournal)
+            
+            self.init(displayAuthor: displayAuthor, journals: journals)
         } catch {
             logger.error("Decoding failure in \(#file, privacy: .public): \(error, privacy: .public)")
             return nil

@@ -30,6 +30,13 @@ public struct FAUserPage: Equatable {
 }
 
 extension FAUserPage {
+    static func parseDisplayName(in string: String) throws -> String {
+        try string
+            .substring(matching: "(~.+|!.+)").unwrap()
+            .trimmingPrefix("~")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
     public init?(data: Data) {
         let state = signposter.beginInterval("User Page Parsing")
         defer { signposter.endInterval("User Page Parsing", state) }
@@ -49,11 +56,7 @@ extension FAUserPage {
             let displayNameQuery = "userpage-nav-user-details h1 username"
             let displayNameNode = try navHeaderNode.select(displayNameQuery).first().unwrap()
             let rawDisplayName = try displayNameNode.text()
-            let displayName = try rawDisplayName
-                .substring(matching: "(~.+|!.+)").unwrap()
-                .trimmingPrefix("~")
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            self.displayName = displayName
+            self.displayName = try Self.parseDisplayName(in: rawDisplayName)
             
             let bannerNode = try mainWindowNode.select("div#header a img")
             let bannerStringUrl = try bannerNode.attr("src")
