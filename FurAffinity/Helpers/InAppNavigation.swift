@@ -47,6 +47,8 @@ func view(for url: FAURL) -> some View {
         RemoteUserGalleryLikeView(galleryType: .scraps, url: url)
     case let .favorites(url):
         RemoteUserGalleryLikeView(galleryType: .favorites, url: url)
+    case let .journals(url):
+        RemoteUserJournalsView(url: url)
     case let .watchlist(url):
         RemoteWatchlistView(url: url)
     }

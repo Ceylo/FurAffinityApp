@@ -14,6 +14,7 @@ enum UserProfileControl: Int, CaseIterable, Identifiable {
     case gallery
     case scraps
     case favorites
+    case journals
     case watching
     case watchedBy
 }
@@ -24,6 +25,7 @@ extension UserProfileControl {
         case .gallery: "Gallery"
         case .scraps: "Scraps"
         case .favorites: "Favs"
+        case .journals: "Journals"
         case .watching: "Watching"
         case .watchedBy: "Watched By"
         }
@@ -39,6 +41,9 @@ extension UserProfileControl {
                 .convertedForInAppNavigation
         case .favorites:
             FAURLs.favoritesUrl(for: user)
+                .convertedForInAppNavigation
+        case .journals:
+            FAURLs.journalsUrl(for: user)
                 .convertedForInAppNavigation
         case .watching:
             FAURLs.watchlistUrl(for: user, direction: .watching)

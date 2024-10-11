@@ -21,7 +21,7 @@ public struct FAUserJournals: Equatable, Sendable {
 }
 
 public extension FAUserJournals {
-    init(_ page: FAUserJournalsPage) async throws {
+    init(_ page: FAUserJournalsPage) {
         self.init(
             displayAuthor: page.displayAuthor,
             journals: page.journals

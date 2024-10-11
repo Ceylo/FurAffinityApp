@@ -55,6 +55,7 @@ public protocol FASession: AnyObject, Equatable {
     func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async -> C?
     
     // MARK: - Journals
+    func journals(for url: URL) async -> FAUserJournals?
     func journal(for url: URL) async -> FAJournal?
     
     // MARK: - Notes

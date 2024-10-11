@@ -16,6 +16,7 @@ enum FAURL: Hashable {
     case gallery(url: URL)
     case scraps(url: URL)
     case favorites(url: URL)
+    case journals(url: URL)
     case watchlist(url: URL)
 }
 
@@ -38,6 +39,7 @@ extension FAURL {
         let galleryRegex = #//gallery/.+/#              // https://www.furaffinity.net/gallery/xxx
         let scrapsRegex = #//scraps/.+/#                // https://www.furaffinity.net/scraps/xxx
         let favoritesRegex = #//favorites/.+/#          // https://www.furaffinity.net/favorites/xxx
+        let journalsRegex = #//journals/.+/#            // https://www.furaffinity.net/journals/xxx/
         let watchlistRegex = #//watchlist/[toby]{2}/.+/#// https://www.furaffinity.net/watchlist/by/xxx/
         
         switch components.path {
@@ -55,6 +57,8 @@ extension FAURL {
             self = .scraps(url: url)
         case favoritesRegex:
             self = .favorites(url: url)
+        case journalsRegex:
+            self = .journals(url: url)
         case watchlistRegex:
             self = .watchlist(url: url)
         default:

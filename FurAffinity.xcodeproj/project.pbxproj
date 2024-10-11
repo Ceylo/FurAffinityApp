@@ -43,6 +43,8 @@
 		877929D02744386E003AE828 /* FASession+CanvasPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877929CF2744386E003AE828 /* FASession+CanvasPreview.swift */; };
 		877C8A9D2A0043D000B2F02B /* NotificationsActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877C8A9C2A0043D000B2F02B /* NotificationsActionView.swift */; };
 		877FD54D29EC939E00230996 /* JournalControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877FD54C29EC939E00230996 /* JournalControlsView.swift */; };
+		878401452CB9747D0099CAC8 /* UserJournalsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878401442CB9747D0099CAC8 /* UserJournalsView.swift */; };
+		878401472CB994330099CAC8 /* RemoteUserJournalsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878401462CB994330099CAC8 /* RemoteUserJournalsView.swift */; };
 		878892DB2B8B905A00F332EE /* Text+Markdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878892DA2B8B905A00F332EE /* Text+Markdown.swift */; };
 		87891FFA29F5A09700606F12 /* CommentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87891FF929F5A09700606F12 /* CommentView.swift */; };
 		878B0B912970B18C00A08685 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878B0B902970B18C00A08685 /* Secrets.swift */; };
@@ -144,6 +146,8 @@
 		877929CF2744386E003AE828 /* FASession+CanvasPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FASession+CanvasPreview.swift"; sourceTree = "<group>"; };
 		877C8A9C2A0043D000B2F02B /* NotificationsActionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsActionView.swift; sourceTree = "<group>"; };
 		877FD54C29EC939E00230996 /* JournalControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalControlsView.swift; sourceTree = "<group>"; };
+		878401442CB9747D0099CAC8 /* UserJournalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserJournalsView.swift; sourceTree = "<group>"; };
+		878401462CB994330099CAC8 /* RemoteUserJournalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteUserJournalsView.swift; sourceTree = "<group>"; };
 		878892DA2B8B905A00F332EE /* Text+Markdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Text+Markdown.swift"; sourceTree = "<group>"; };
 		87891FF929F5A09700606F12 /* CommentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentView.swift; sourceTree = "<group>"; };
 		878B0B8A296CA5B200A08685 /* Privacy Policy.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Privacy Policy.md"; sourceTree = "<group>"; };
@@ -428,6 +432,8 @@
 				87D64FCA2C88ADEC00AB6F44 /* UserProfileControlView.swift */,
 				87C94A552AA897E50049CA81 /* RemoteUserGalleryLikeView.swift */,
 				87C94A532AA893BA0049CA81 /* UserGalleryLikeView.swift */,
+				878401462CB994330099CAC8 /* RemoteUserJournalsView.swift */,
+				878401442CB9747D0099CAC8 /* UserJournalsView.swift */,
 				87D64FBE2C871B9300AB6F44 /* RemoteWatchlistView.swift */,
 				87D64FBC2C87181600AB6F44 /* WatchlistView.swift */,
 			);
@@ -608,6 +614,7 @@
 				87D252062C906AB700E07AE1 /* withAsync.swift in Sources */,
 				877FD54D29EC939E00230996 /* JournalControlsView.swift in Sources */,
 				873B2D1929EB2A0F00FA5F58 /* NotificationsView.swift in Sources */,
+				878401472CB994330099CAC8 /* RemoteUserJournalsView.swift in Sources */,
 				87566B84297DD02300FD3199 /* SubmissionMainImage.swift in Sources */,
 				873E65F227529866009C8767 /* SaveButton.swift in Sources */,
 				87F960CB2801EFF3000B30A3 /* AvatarView.swift in Sources */,
@@ -617,6 +624,7 @@
 				877226B52740361C00245DF0 /* SubmissionsFeedView.swift in Sources */,
 				87098D382CB19E4D00E7BD94 /* Kingfisher+FA.swift in Sources */,
 				87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */,
+				878401452CB9747D0099CAC8 /* UserJournalsView.swift in Sources */,
 				8733DDFD28F75C1200CD8BCF /* Sharing.swift in Sources */,
 				87B0933A2AED6CEA008DFDE7 /* TitledHeaderView.swift in Sources */,
 				87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */,

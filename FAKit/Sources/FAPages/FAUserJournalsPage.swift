@@ -8,7 +8,7 @@
 import Foundation
 @preconcurrency import SwiftSoup
 
-public struct FAUserJournalsPage: Equatable {
+public struct FAUserJournalsPage: Equatable, Sendable {
     public struct Journal: Equatable, Sendable, Identifiable {
         public let id: Int
         public let title: String

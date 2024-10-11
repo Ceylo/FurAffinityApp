@@ -69,6 +69,10 @@ public enum FAURLs {
         URL(string: "https://www.furaffinity.net/favorites/\(username)/")!
     }
     
+    public static func journalsUrl(for username: String) -> URL {
+        URL(string: "https://www.furaffinity.net/journals/\(username)/")!
+    }
+    
     public static func watchlistUrl(for username: String, direction: FAWatchlistPage.WatchDirection) -> URL {
         switch direction {
         case .watchedBy:

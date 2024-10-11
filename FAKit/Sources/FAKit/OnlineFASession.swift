@@ -110,6 +110,14 @@ public class OnlineFASession: FASession {
     }
     
     // MARK: - Journals
+    public func journals(for url: URL) async -> FAUserJournals? {
+        guard let data = await dataSource.httpData(from: url, cookies: cookies),
+              let page = await FAUserJournalsPage(data: data) else {
+            return nil
+        }
+        return FAUserJournals(page)
+    }
+    
     public func journal(for url: URL) async -> FAJournal? {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
               let page = FAJournalPage(data: data)
