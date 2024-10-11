@@ -72,26 +72,53 @@ struct NotificationsView: View {
         notifications.journals.isEmpty
     }
     
+    private func userFAURL(for notification: FANotificationPreview) -> FAURL? {
+        guard let userUrl = FAURLs.userpageUrl(for: notification.author) else {
+            return nil
+        }
+        
+        return .user(
+            url: userUrl,
+            previewData: .init(
+                username: notification.author,
+                displayName: notification.displayAuthor,
+                avatarUrl: FAURLs.avatarUrl(for: notification.author)
+            )
+        )
+    }
+    
     var body: some View {
         List {
             ListedSection("Submission Comments", notifications.submissionComments,
                           onDelete: actions.deleteSubmissionCommentNotifications) { item in
-                CommentNotificationItemView(notification: item)
+                CommentNotificationItemView(
+                    notification: item,
+                    url: userFAURL(for: item)
+                )
             }
             
             ListedSection("Journal Comments", notifications.journalComments,
                           onDelete: actions.deleteJournalCommentNotifications) { item in
-                CommentNotificationItemView(notification: item)
+                CommentNotificationItemView(
+                    notification: item,
+                    url: userFAURL(for: item)
+                )
             }
             
             ListedSection("Shouts", notifications.shouts,
                           onDelete: actions.deleteShoutNotifications) { item in
-                ShoutNotificationItemView(shout: item)
+                ShoutNotificationItemView(
+                    shout: item,
+                    url: userFAURL(for: item)
+                )
             }
             
             ListedSection("Journals", notifications.journals,
                           onDelete: actions.deleteJournalNotifications) { item in
-                JournalNotificationItemView(journal: item)
+                JournalNotificationItemView(
+                    journal: item,
+                    url: userFAURL(for: item)
+                )
             }
         }
         .listStyle(.plain)

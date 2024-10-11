@@ -10,11 +10,14 @@ import FAKit
 
 struct JournalNotificationItemView: View {
     var journal: FANotificationPreview
+    var url: FAURL?
     
     var body: some View {
         HStack(alignment: .top) {
-            AvatarView(avatarUrl: FAURLs.avatarUrl(for: journal.author))
-                .frame(width: 42, height: 42)
+            FALink(destination: url) {
+                AvatarView(avatarUrl: FAURLs.avatarUrl(for: journal.author))
+                    .frame(width: 42, height: 42)
+            }
             
             VStack(alignment: .leading, spacing: 5) {
                 HStack {

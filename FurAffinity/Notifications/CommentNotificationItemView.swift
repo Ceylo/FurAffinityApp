@@ -10,11 +10,14 @@ import FAKit
 
 struct CommentNotificationItemView: View {
     var notification: FANotificationPreview
+    var url: FAURL?
     
     var body: some View {
         HStack(alignment: .top) {
-            AvatarView(avatarUrl: FAURLs.avatarUrl(for: notification.author))
-                .frame(width: 42, height: 42)
+            FALink(destination: url) {
+                AvatarView(avatarUrl: FAURLs.avatarUrl(for: notification.author))
+                    .frame(width: 42, height: 42)
+            }
             
             VStack(alignment: .leading, spacing: 5) {
                 HStack {
