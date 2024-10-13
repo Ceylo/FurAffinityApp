@@ -27,10 +27,14 @@ struct ListedSection<T: FANavigable & Identifiable, ItemView: View> : View {
                             itemViewProvider(item)
                         }
                     }
-                }
-                .onDelete { indexSet in
-                    let items = indexSet.map { list[$0] }
-                    onDelete(items)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            onDelete([item])
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+
+                    }
                 }
             } header: {
                 Text(title)
