@@ -45,9 +45,12 @@ struct RemoteNotificationsView: View {
     }
 }
 
-struct RemoteNotificationsView_Previews: PreviewProvider {
-    static var previews: some View {
-        RemoteNotificationsView()
-            .environmentObject(Model.demo)
-    }
+#Preview {
+    RemoteNotificationsView()
+        .environmentObject(Model.demo)
+}
+
+#Preview("Empty") {
+    RemoteNotificationsView()
+        .environmentObject(Model.empty)
 }

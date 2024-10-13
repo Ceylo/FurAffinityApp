@@ -136,14 +136,18 @@ struct NotificationsView: View {
             .padding(.trailing, 20)
         }
         .swap(when: noNotification) {
-            VStack(spacing: 10) {
-                Text("It's a bit empty in here.")
-                    .font(.headline)
-                Text(markdown: "Notifications from [\(FAURLs.notificationsUrl.schemelessDisplayString)](\(FAURLs.notificationsUrl)) will be displayed here.")
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.secondary)
+            ScrollView {
+                VStack(spacing: 10) {
+                    Text("It's a bit empty in here.")
+                        .font(.headline)
+                    Text(markdown: "Notifications from [\(FAURLs.notificationsUrl.schemelessDisplayString)](\(FAURLs.notificationsUrl)) will be displayed here.")
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.secondary)
+                    Text("You may pull to refresh.")
+                        .foregroundColor(.secondary)
+                }
+                .padding()
             }
-            .padding()
         }
     }
 }

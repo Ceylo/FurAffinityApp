@@ -21,16 +21,14 @@ struct SubmissionsFeedView: View {
     
     var noPreview: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                VStack(spacing: 10) {
-                    Text("It's a bit empty in here.")
-                        .font(.headline)
-                    Text("Watch artists and wait for them to post new art. Submissions from [www.furaffinity.net/msg/submissions/](https://www.furaffinity.net/msg/submissions/) will be displayed here.")
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.secondary)
-                    Text("You may pull to refresh.")
-                        .foregroundColor(.secondary)
-                }
+            VStack(spacing: 10) {
+                Text("It's a bit empty in here.")
+                    .font(.headline)
+                Text("Watch artists and wait for them to post new art. Submissions from [www.furaffinity.net/msg/submissions/](https://www.furaffinity.net/msg/submissions/) will be displayed here.")
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.secondary)
+                Text("You may pull to refresh.")
+                    .foregroundColor(.secondary)
             }
             .padding()
         }
