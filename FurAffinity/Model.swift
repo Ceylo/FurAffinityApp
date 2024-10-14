@@ -62,6 +62,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
             for: UserDefaults.didChangeNotification,
             object: UserDefaults.standard
         )
+        .receive(on: DispatchQueue.main)
         .sink { _ in
             let preferences = UserDefaults.standard.dictionaryRepresentation()
                 .filter { (key, value) in
