@@ -58,6 +58,19 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         }
         .store(in: &subscriptions)
         
+        NotificationCenter.default.publisher(
+            for: UserDefaults.didChangeNotification,
+            object: UserDefaults.standard
+        )
+        .sink { _ in
+            let preferences = UserDefaults.standard.dictionaryRepresentation()
+                .filter { (key, value) in
+                    UserDefaultKeys(rawValue: key) != nil
+                }
+            logger.info("UserDefaults state update: \(preferences)")
+        }
+        .store(in: &subscriptions)
+        
         processNewSession()
     }
     
