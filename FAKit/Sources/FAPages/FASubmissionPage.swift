@@ -6,9 +6,9 @@
 //
 
 import Foundation
-import SwiftSoup
+@preconcurrency import SwiftSoup
 
-public struct FASubmissionPage: Equatable {
+public struct FASubmissionPage: Equatable, Sendable {
     public let previewImageUrl: URL
     public let fullResolutionMediaUrl: URL
     public let widthOnHeightRatio: Float
@@ -25,7 +25,7 @@ public struct FASubmissionPage: Equatable {
 }
 
 extension FASubmissionPage {
-    public init?(data: Data) {
+    public init?(data: Data) async {
         do {
             let state = signposter.beginInterval("Submission Parsing")
             defer { signposter.endInterval("Submission Parsing", state) }
@@ -84,7 +84,9 @@ extension FASubmissionPage {
             self.htmlDescription = htmlContent
             
             let commentNodes = try submissionContentNode.select("div.comments-list div#comments-submission div.comment_container")
-            self.comments = try commentNodes.compactMap { try FAPageComment($0, type: .comment) }
+            self.comments = try await commentNodes
+                .parallelMap { try FAPageComment($0, type: .comment) }
+                .compactMap { $0 }
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil

@@ -5,7 +5,7 @@
 //  Created by Ceylo on 05/12/2021.
 //
 
-import SwiftSoup
+@preconcurrency import SwiftSoup
 import Foundation
 
 public struct FAUserPage: Equatable {
@@ -37,7 +37,7 @@ extension FAUserPage {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    public init?(data: Data) {
+    public init?(data: Data) async {
         let state = signposter.beginInterval("User Page Parsing")
         defer { signposter.endInterval("User Page Parsing", state) }
         
@@ -72,7 +72,9 @@ extension FAUserPage {
             
             let shoutsQuery = "div#site-content div#page-userpage section.userpage-right-column div.userpage-section-right div.comment_container"
             let shoutsNodes = try mainWindowNode.select(shoutsQuery)
-            self.shouts = try shoutsNodes.compactMap { try FAPageComment($0, type: .shout) }
+            self.shouts = try await shoutsNodes
+                .parallelMap { try FAPageComment($0, type: .shout) }
+                .compactMap { $0 }
             
             if let watchButtonNode = try navHeaderNode.select("userpage-nav-interface-buttons a.button").first() {
                 let watchLink = try watchButtonNode.attr("href")

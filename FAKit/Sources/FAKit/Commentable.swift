@@ -8,8 +8,8 @@
 import Foundation
 import FAPages
 
-public protocol FAPage {
-    init?(data: Data)
+public protocol FAPage: Sendable {
+    init?(data: Data) async
 }
 
 public protocol Commentable: Sendable {

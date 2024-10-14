@@ -6,9 +6,9 @@
 //
 
 import Foundation
-import SwiftSoup
+@preconcurrency import SwiftSoup
 
-public struct FAJournalPage: Equatable {
+public struct FAJournalPage: Equatable, Sendable {
     public let author: String
     public let displayAuthor: String
     public let title: String
@@ -19,7 +19,7 @@ public struct FAJournalPage: Equatable {
 }
 
 extension FAJournalPage {
-    public init?(data: Data) {
+    public init?(data: Data) async {
         let state = signposter.beginInterval("Journal Parsing")
         defer { signposter.endInterval("Journal Parsing", state) }
         
@@ -59,7 +59,9 @@ extension FAJournalPage {
             let commentNodes = try siteContentNode.select(
                 "div#columnpage div.content div#comments-journal div.comment_container"
             )
-            self.comments = try commentNodes.compactMap { try FAPageComment($0, type: .comment) }
+            self.comments = try await commentNodes
+                .parallelMap { try FAPageComment($0, type: .comment) }
+                .compactMap { $0 }
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil

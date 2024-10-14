@@ -78,7 +78,7 @@ public class OnlineFASession: FASession {
     // MARK: - Submissions
     public func submission(for url: URL) async -> FASubmission? {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = FASubmissionPage(data: data)
+              let page = await FASubmissionPage(data: data)
         else { return nil }
         
         return try? await FASubmission(page, url: url)
@@ -86,7 +86,7 @@ public class OnlineFASession: FASession {
     
     public func toggleFavorite(for submission: FASubmission) async -> FASubmission? {
         guard let data = await dataSource.httpData(from: submission.favoriteUrl, cookies: cookies),
-              let page = FASubmissionPage(data: data)
+              let page = await FASubmissionPage(data: data)
         else { return nil }
         
         return try? await FASubmission(page, url: submission.url)
@@ -103,7 +103,7 @@ public class OnlineFASession: FASession {
         ]
         
         guard let data = await dataSource.httpData(from: commentable.url, cookies: cookies, method: .POST, parameters: params),
-              let page = C.PageType(data: data)
+              let page = await C.PageType(data: data)
         else { return nil }
         
         return try? await C(page, url: commentable.url)
@@ -120,7 +120,7 @@ public class OnlineFASession: FASession {
     
     public func journal(for url: URL) async -> FAJournal? {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = FAJournalPage(data: data)
+              let page = await FAJournalPage(data: data)
         else { return nil }
         
         return try? await FAJournal(page, url: url)
@@ -244,7 +244,7 @@ public class OnlineFASession: FASession {
     }
     
     private nonisolated func loadUser(from data: Data) async throws -> FAUser? {
-        let page = try FAUserPage(data: data).unwrap()
+        let page = try await FAUserPage(data: data).unwrap()
         return try await FAUser(page)
     }
     

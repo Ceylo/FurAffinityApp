@@ -9,9 +9,9 @@ import XCTest
 @testable import FAPages
 
 final class FAJournalPageTests: XCTestCase {
-    func testSubmissionPageWithComments_isParsed() throws {
+    func testSubmissionPageWithComments_isParsed() async throws {
         let data = testData("www.furaffinity.net:journal:10516170-withcomments.html")
-        let page = FAJournalPage(data: data)
+        let page = await FAJournalPage(data: data)
         XCTAssertNotNil(page)
         
         let expectedComments: [FAPageComment] = [
