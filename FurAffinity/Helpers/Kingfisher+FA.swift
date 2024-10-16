@@ -10,28 +10,32 @@ import Kingfisher
 import SwiftUI
 import FAKit
 
+private extension KFImageProtocol {
+    func defaultConfiguration() -> Self {
+        self
+            .backgroundDecode()
+            .reducePriorityOnDisappear(true)
+            .downloader(downloaderWithUserAgent)
+            .diskCacheExpiration(.days((7...14).randomElement()!))
+            .onFailure { error in
+                logger.error("\(error, privacy: .public)")
+            }
+    }
+}
+
 @MainActor
 func FAImage(_ url: URL?) -> KFImage {
     KFImage(url)
-        .backgroundDecode()
-        .reducePriorityOnDisappear(true)
-        .downloader(downloaderWithUserAgent)
-        .diskCacheExpiration(.days((7...14).randomElement()!))
-        .onFailure { error in
-            logger.error("\(error, privacy: .public)")
-        }
+    // not strictly needed but this is the implicit behavior of KFAnimatedImage,
+    // so this makes both functions consistent
+        .resizable()
+        .defaultConfiguration()
 }
 
 @MainActor
 func FAAnimatedImage(_ url: URL?) -> KFAnimatedImage {
     KFAnimatedImage(url)
-        .backgroundDecode()
-        .reducePriorityOnDisappear(true)
-        .downloader(downloaderWithUserAgent)
-        .diskCacheExpiration(.days((7...14).randomElement()!))
-        .onFailure { error in
-            logger.error("\(error, privacy: .public)")
-        }
+        .defaultConfiguration()
         .configure { view in
             view.framePreloadCount = .max
         }

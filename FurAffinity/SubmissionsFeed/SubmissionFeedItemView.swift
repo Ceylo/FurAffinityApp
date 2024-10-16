@@ -35,7 +35,6 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
                             Rectangle()
                                 .foregroundColor(.white.opacity(0.1))
                         }
-                        .resizable()
                         .onFailure { error in
                             errorMessage = error.localizedDescription
                         }

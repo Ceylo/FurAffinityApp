@@ -30,7 +30,7 @@ struct AvatarView: View {
             if animateAvatars {
                 configure(FAAnimatedImage(avatarUrl))
             } else {
-                configure(FAImage(avatarUrl).resizable())
+                configure(FAImage(avatarUrl))
             }
         }
         .cornerRadius(5)

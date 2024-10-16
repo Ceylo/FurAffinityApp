@@ -10,6 +10,12 @@ import FAKit
 import Kingfisher
 import Zoomable
 
+// KFAnimatedImage may display with an incorrect aspect ratio
+// on the initial display, so we don't use it unless needed.
+private func canAnimate(_ url: URL?) -> Bool {
+    url?.pathExtension.lowercased() == "gif"
+}
+
 struct SubmissionMainImage: View {
     var widthOnHeightRatio: Float
     var thumbnailImage: DynamicThumbnail?
@@ -21,6 +27,32 @@ struct SubmissionMainImage: View {
     @State private var errorMessage: String?
     @State private var fullResolutionImage: UIImage?
     
+    private func configure(_ image: some KFImageProtocol, geometry: GeometryProxy) -> some KFImageProtocol {
+        image
+            .placeholder { progress in
+                ZStack {
+                    if let thumbnailUrl = thumbnailImage?.bestThumbnailUrl(for: geometry) {
+                        FAImage(thumbnailUrl)
+                            .aspectRatio(contentMode: .fit)
+                    }
+                    
+                    if displayProgress {
+                        LinearProgress(progress: Float(progress.fractionCompleted))
+                    }
+                }
+            }
+            .onFailure { error in
+                errorMessage = error.localizedDescription
+            }
+            .waitForCache()
+            .onSuccess { result in
+                prepareFullResolutionMedia(
+                    sourceUrl: fullResolutionMediaUrl,
+                    loadedImage: result.image
+                )
+            }
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             if let errorMessage {
@@ -30,43 +62,32 @@ struct SubmissionMainImage: View {
                         .font(.caption)
                 }
             } else {
-                FAAnimatedImage(fullResolutionMediaUrl)
-                    .placeholder { progress in
-                        ZStack {
-                            if let thumbnailUrl = thumbnailImage?.bestThumbnailUrl(for: geometry) {
-                                FAImage(thumbnailUrl)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
+                Group {
+                    if canAnimate(fullResolutionMediaUrl) {
+                        configure(FAAnimatedImage(fullResolutionMediaUrl), geometry: geometry)
+                    } else {
+                        configure(FAImage(fullResolutionMediaUrl), geometry: geometry)
+                    }
+                }
+                .sheet(isPresented: $showZoomableSheet) {
+                    Zoomable(allowZoomOutBeyondFit: false) {
+                        Group {
+                            if canAnimate(fullResolutionMediaUrl) {
+                                FAAnimatedImage(fullResolutionMediaUrl)
+                            } else {
+                                FAImage(fullResolutionMediaUrl)
                             }
-                            
-                            if displayProgress {
-                                LinearProgress(progress: Float(progress.fractionCompleted))
-                            }
                         }
+                        .frame(width: fullResolutionImage!.size.width, height: fullResolutionImage!.size.height)
                     }
-                    .onFailure { error in
-                        errorMessage = error.localizedDescription
+                    .ignoresSafeArea()
+                }
+                .aspectRatio(contentMode: .fit)
+                .onTapGesture {
+                    if allowZoomableSheet && fullResolutionImage != nil {
+                        showZoomableSheet = true
                     }
-                    .waitForCache()
-                    .onSuccess { result in
-                        prepareFullResolutionMedia(
-                            sourceUrl: fullResolutionMediaUrl,
-                            loadedImage: result.image
-                        )
-                    }
-                    .sheet(isPresented: $showZoomableSheet) {
-                        Zoomable(allowZoomOutBeyondFit: false) {
-                            FAAnimatedImage(fullResolutionMediaUrl)
-                                .frame(width: fullResolutionImage!.size.width, height: fullResolutionImage!.size.height)
-                        }
-                        .ignoresSafeArea()
-                    }
-                    .aspectRatio(contentMode: .fit)
-                    .onTapGesture {
-                        if allowZoomableSheet && fullResolutionImage != nil {
-                            showZoomableSheet = true
-                        }
-                    }
+                }
             }
         }
         .aspectRatio(CGFloat(widthOnHeightRatio), contentMode: .fit)

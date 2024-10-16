@@ -23,7 +23,6 @@ struct UserView: View {
                     Rectangle()
                         .foregroundColor(.white.opacity(0.1))
                 }
-                .resizable()
                 .fade(duration: 0.25)
                 .aspectRatio(contentMode: .fill)
                 .frame(width: geometry.size.width,
