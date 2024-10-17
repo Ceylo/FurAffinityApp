@@ -65,10 +65,11 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         .receive(on: DispatchQueue.main)
         .sink { _ in
             let preferences = UserDefaults.standard.dictionaryRepresentation()
-                .filter { (key, value) in
-                    UserDefaultKeys(rawValue: key) != nil
-                }
-            logger.info("UserDefaults state update: \(preferences)")
+                .filter { UserDefaultKeys(rawValue: $0.key) != nil }
+                .map { ($0, $1) }
+                .sorted(by: { $0.0 < $1.0 })
+            
+            logger.info("UserDefaults state update: \(preferences, privacy: .public)")
         }
         .store(in: &subscriptions)
         
