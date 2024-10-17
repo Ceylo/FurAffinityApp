@@ -16,17 +16,28 @@ struct LinearProgress: View {
     
     var body: some View {
         GeometryReader { geometry in
-            Rectangle()
+            UnevenRoundedRectangle(bottomTrailingRadius: 2, topTrailingRadius: 2)
                 .fill(LinearGradient(
                     colors: [Color.accentColor, Color.pink],
                     startPoint: .leading,
                     endPoint: .init(x: 1.0 / clampedProgress, y: 0.5)
                 ))
-                .frame(width: geometry.size.width * clampedProgress, height: 3)
+                .frame(width: geometry.size.width * clampedProgress, height: 5)
+                .shadow(radius: 3)
+                .animation(.spring, value: progress)
         }
     }
 }
 
 #Preview {
-    LinearProgress(progress: 0.3)
+    @Previewable @State var value: Float = 0.3
+    LinearProgress(progress: value)
+        .task {
+            do {
+                while true {
+                    try await Task.sleep(for: .seconds(1))
+                    value = 1 - value
+                }
+            } catch {}
+        }
 }
