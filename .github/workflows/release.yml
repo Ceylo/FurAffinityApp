@@ -26,7 +26,8 @@ jobs:
           xcode: ~16.0
           code-sign-certificate: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
           code-sign-certificate-passphrase: ${{ secrets.P12_PASSWORD }}
-          mobile-provisioning-profiles-base64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+          mobile-provisioning-profiles-base64: |
+            ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
       - name: Archive App
         run: |
           git_hash=$(git rev-parse --short "$GITHUB_SHA")
