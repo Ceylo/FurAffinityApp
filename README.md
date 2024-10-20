@@ -19,17 +19,18 @@ This project is written to be able to benefit from [furaffinity.net](https://www
 ## Features
 
 - [x] Submissions feed
-- [x] Notifications feed (journals, submission comments & journal comments)
+- [x] Notifications feed (journals, submission comments & journal comments, shouts)
 - [x] Notes (read only)
 - [x] In-app navigation for any submission and journal
   - [x] Submission download & fav
+  - [x] Animated GIFs
   - [x] Description
   - [x] Sharing and [Hand-Off](https://support.apple.com/en-gb/HT209455) support
   - [x] Comments threads (read & write)
 - [x] User profile browsing:
   - [x] Main description
   - [x] Shouts
-  - [x] Gallery, scraps and favorites
+  - [x] Gallery, scraps, favorites, journals and watchlist
   - [x] Follow/unfollow
 - [ ] iOS notifications
 - [ ] Exploration
@@ -47,8 +48,8 @@ The app displays furaffinity.net login webpage to let you enter account details.
 As of May 2022, Fur Affinity staff allows the use of the application as long as it does not make excessive requests to furaffinity.net. This goes against apps that download the full gallery of a user for instance, but not against this app which, from furaffinity.net's point of view, behaves very similarly to a usual web browsing experience.
 
 ## Technologies used and required iOS version
-This project is fully written in Swift and is based on SwiftUI, Swift Concurrency and other APIs introduced in iOS 16.
-As such iOS 16 or later is required to run the app.
+This project is fully written in Swift and is based on SwiftUI, Swift Concurrency and other APIs introduced in iOS 17.
+As such iOS 17.4 or later is required to run the latest version of the app. If you're still on iOS 16, the latest compatible version is 1.9.1.
 
 ## Privacy policy
 See the [Privacy Policy](Privacy%20Policy.md) page.
