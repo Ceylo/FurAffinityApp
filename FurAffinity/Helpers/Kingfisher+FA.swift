@@ -17,6 +17,7 @@ private extension KFImageProtocol {
             .reducePriorityOnDisappear(true)
             .downloader(downloaderWithUserAgent)
             .diskCacheExpiration(.days((7...14).randomElement()!))
+            .diskCacheAccessExtending(.none)
             .onFailure { error in
                 logger.error("\(error, privacy: .public)")
             }
