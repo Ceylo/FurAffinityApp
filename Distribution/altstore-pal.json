@@ -20,31 +20,40 @@
       "screenshots": [
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9/screenshots/feed.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.10/screenshots/feed.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9/screenshots/submission.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.10/screenshots/submission.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9/screenshots/comments.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.10/screenshots/comments.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9/screenshots/profile.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.10/screenshots/profile.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.9/screenshots/notifications.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.10/screenshots/notifications.heic",
           "width": 1170
         }
       ],
       "versions": [
+        {
+          "version": "1.10",
+          "buildVersion": "1",
+          "date": "2024-10-21T11:20:00+02:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n📱 FEATURES\n- Submissions featuring animated GIFs are now displayed animated. Downloading also preserves the animation\n- Avatars using an animated GIF are now displayed animated by default. A setting was added in case you prefer to disable avatar animations\n- Avatars and submission thumbnails are now loaded in advance, so you'll mostly not see them loading anymore\n- Scrolling through galleries and the submissions feed has again been made much smoother\n- User profiles now give access to the user's journals\n- In addition to swiping to the left, replying to comments is now also available through long press\n- Touching avatars in notifications now opens the corresponding user profile\n\n🐞 BUGFIXES\n- Fixed a rare case where the submission zoomable sheet could be opened before the full submission is actually loaded\n- Fixed a rare crash that could happen when deleting notifications one by one\n\n📦 MISCELLANEOUS\n- iOS 16 support has been removed, iOS 17.4 or later is now required\n- The top right action button in Notifications tab doesn't display the Nuke action anymore for types of notifications whose section is already empty\n- Logging out will now forget what was the last viewed submission. Logging in to the same or a different account will then display the latest submissions instead of going back to this last viewed submission\n- A new item in the Settings tab allows deleting cached files\n- Haptic feedback has been added when a download is successful, a submission is marked as favorite, a comment has been successfully submitted or when you watch a user\n- When Notifications and Notes tabs are empty, they can now be pulled to refresh",
+          "downloadURL": "https://get.furaffinity.app/altstore/releases/1.10/adp/",
+          "size": 2363013,
+          "minOSVersion": "17.4"
+        },
         {
           "version": "1.9.1",
           "buildVersion": "1",
