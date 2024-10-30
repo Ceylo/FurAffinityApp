@@ -69,7 +69,7 @@ struct SubmissionMainImage: View {
                         configure(FAImage(fullResolutionMediaUrl), geometry: geometry)
                     }
                 }
-                .sheet(isPresented: $showZoomableSheet) {
+                .pullableScreenCover(isPresented: $showZoomableSheet) {
                     Zoomable(allowZoomOutBeyondFit: false) {
                         Group {
                             if canAnimate(fullResolutionMediaUrl) {
@@ -80,7 +80,6 @@ struct SubmissionMainImage: View {
                         }
                         .frame(width: fullResolutionImage!.size.width, height: fullResolutionImage!.size.height)
                     }
-                    .ignoresSafeArea()
                 }
                 .aspectRatio(contentMode: .fit)
                 .onTapGesture {

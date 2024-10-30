@@ -1,5 +1,5 @@
 {
-  "originHash" : "d2193613374323a80a749fcf71774fb3f4f52f0967211afbd9eef6a2110da67d",
+  "originHash" : "91aa95e4b40a0b54c56e639449ae082cd7b2b9f2163b44a2c7d10ff2df63cec0",
   "pins" : [
     {
       "identity" : "amplitude-swift",
@@ -87,8 +87,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Ceylo/Zoomable.git",
       "state" : {
-        "revision" : "0340851bf499db602b6e50550774c2279b231743",
-        "version" : "1.0.0"
+        "revision" : "03e6cdc1ee9f9840ddc2ae07f684129158346407",
+        "version" : "1.0.1"
       }
     }
   ],
