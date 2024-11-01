@@ -23,19 +23,23 @@ public struct FASubmission: Equatable, Sendable {
     public let favoriteCount: Int
     public let favoriteUrl: URL
     public let comments: [FAComment]
+    public let acceptsNewComments: Bool
     
-    public init(url: URL, previewImageUrl: URL,
-                fullResolutionMediaUrl: URL,
-                widthOnHeightRatio: Float, author: String,
-                displayAuthor: String,
-                title: String,
-                datetime: String,
-                naturalDatetime: String,
-                description: AttributedString,
-                isFavorite: Bool,
-                favoriteCount: Int,
-                favoriteUrl: URL,
-                comments: [FAComment]) {
+    public init(
+        url: URL, previewImageUrl: URL,
+        fullResolutionMediaUrl: URL,
+        widthOnHeightRatio: Float, author: String,
+        displayAuthor: String,
+        title: String,
+        datetime: String,
+        naturalDatetime: String,
+        description: AttributedString,
+        isFavorite: Bool,
+        favoriteCount: Int,
+        favoriteUrl: URL,
+        comments: [FAComment],
+        acceptsNewComments: Bool
+    ) {
         self.url = url
         self.previewImageUrl = previewImageUrl
         self.fullResolutionMediaUrl = fullResolutionMediaUrl
@@ -50,6 +54,7 @@ public struct FASubmission: Equatable, Sendable {
         self.favoriteUrl = favoriteUrl
         self.favoriteCount = favoriteCount
         self.comments = comments
+        self.acceptsNewComments = acceptsNewComments
     }
     
     public func togglingFavorite() -> FASubmission {
@@ -67,7 +72,8 @@ public struct FASubmission: Equatable, Sendable {
             isFavorite: !isFavorite,
             favoriteCount: favoriteCount + (isFavorite ? -1 : 1),
             favoriteUrl: favoriteUrl,
-            comments: comments
+            comments: comments,
+            acceptsNewComments: acceptsNewComments
         )
     }
 }
@@ -88,7 +94,8 @@ extension FASubmission {
             isFavorite: page.isFavorite,
             favoriteCount: page.favoriteCount,
             favoriteUrl: page.favoriteUrl,
-            comments: await FAComment.buildCommentsTree(page.comments)
+            comments: await FAComment.buildCommentsTree(page.comments),
+            acceptsNewComments: page.acceptsNewComments
         )
     }
 }

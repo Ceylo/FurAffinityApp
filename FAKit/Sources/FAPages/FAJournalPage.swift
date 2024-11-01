@@ -16,6 +16,7 @@ public struct FAJournalPage: Equatable, Sendable {
     public let naturalDatetime: String
     public let htmlDescription: String
     public let comments: [FAPageComment]
+    public let acceptsNewComments: Bool
 }
 
 extension FAJournalPage {
@@ -62,6 +63,10 @@ extension FAJournalPage {
             self.comments = try await commentNodes
                 .parallelMap { try FAPageComment($0, type: .comment) }
                 .compactMap { $0 }
+            
+            let commentsDisabledNode = try siteContentNode.select("div#columnpage div#responsebox")
+            let commentsDisabled = try commentsDisabledNode.text().contains("Comment posting has been disabled")
+            self.acceptsNewComments = !commentsDisabled
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil

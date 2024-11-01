@@ -44,8 +44,17 @@ final class FAJournalPageTests: XCTestCase {
             datetime: "Apr 2, 2023 11:59 PM",
             naturalDatetime: "2 weeks ago",
             htmlDescription: expectedHtmlDescription,
-            comments: expectedComments)
+            comments: expectedComments,
+            acceptsNewComments: true
+        )
         
         XCTAssertEqual(expectedPage, page)
+    }
+    
+    func testSubmissionPageWithCommentsDisabled_isParsed() async throws {
+        let data = testData("www.furaffinity.net:journal:10882268-disabled-comments.html")
+        let page = try await FAJournalPage(data: data).unwrap()
+        
+        XCTAssertEqual(page.acceptsNewComments, false)
     }
 }

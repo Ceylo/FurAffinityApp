@@ -22,6 +22,7 @@ public struct FASubmissionPage: Equatable, Sendable {
     public let favoriteCount: Int
     public let favoriteUrl: URL
     public let comments: [FAPageComment]
+    public let acceptsNewComments: Bool
 }
 
 extension FASubmissionPage {
@@ -87,6 +88,11 @@ extension FASubmissionPage {
             self.comments = try await commentNodes
                 .parallelMap { try FAPageComment($0, type: .comment) }
                 .compactMap { $0 }
+            
+            let commentsDisabledNode = try columnPageNode.select("div#responsebox")
+            let commentsDisabled = try commentsDisabledNode.text().contains("Comment posting has been disabled")
+            self.acceptsNewComments = !commentsDisabled
+            
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil

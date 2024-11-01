@@ -17,14 +17,18 @@ public struct FAJournal: Equatable, Sendable {
     public let naturalDatetime: String
     public let description: AttributedString
     public let comments: [FAComment]
+    public let acceptsNewComments: Bool
     
-    public init(url: URL, author: String,
-                displayAuthor: String,
-                title: String,
-                datetime: String,
-                naturalDatetime: String,
-                description: AttributedString,
-                comments: [FAComment]) {
+    public init(
+        url: URL, author: String,
+        displayAuthor: String,
+        title: String,
+        datetime: String,
+        naturalDatetime: String,
+        description: AttributedString,
+        comments: [FAComment],
+        acceptsNewComments: Bool
+    ) {
         self.url = url
         self.author = author
         self.displayAuthor = displayAuthor
@@ -33,6 +37,7 @@ public struct FAJournal: Equatable, Sendable {
         self.naturalDatetime = naturalDatetime
         self.description = description //.selfContainedFAHtmlSubmission
         self.comments = comments
+        self.acceptsNewComments = acceptsNewComments
     }
 }
 
@@ -46,7 +51,8 @@ extension FAJournal {
             datetime: page.datetime,
             naturalDatetime: page.naturalDatetime,
             description: await AttributedString(FAHTML: page.htmlDescription.selfContainedFAHtmlSubmission),
-            comments: await FAComment.buildCommentsTree(page.comments)
+            comments: await FAComment.buildCommentsTree(page.comments),
+            acceptsNewComments: page.acceptsNewComments
         )
     }
 }

@@ -27,9 +27,18 @@ final class FASubmissionPageTests: XCTestCase {
             isFavorite: false,
             favoriteCount: 67,
             favoriteUrl: URL(string: "https://www.furaffinity.net/fav/49338772/?key=57af11f57cd9a0d97575839f1ae07d2a775ae5af")!,
-            comments: [])
+            comments: [],
+            acceptsNewComments: true
+        )
         
         XCTAssertEqual(page, expected)
+    }
+    
+    func testSubmissionPageWithCommentsDisabled_isParsed() async throws {
+        let data = testData("www.furaffinity.net:view:52209828-disabled-comments.html")
+        let page = try await FASubmissionPage(data: data).unwrap()
+        
+        XCTAssertEqual(page.acceptsNewComments, false)
     }
     
     func testSubmissionPageWithHiddenComment_isParsed() async throws {

@@ -281,7 +281,9 @@ extension FASubmission {
                 isFavorite: false,
                 favoriteCount: 72,
                 favoriteUrl: URL(string: "https://www.furaffinity.net/fav/44188741/?key=00f2f5f4c1c7fbfac02147b73d670cac6423ab85")!,
-                comments: FAComment.demo)
+                comments: FAComment.demo,
+                acceptsNewComments: true
+            )
         }
     }
 }
@@ -301,7 +303,9 @@ what you will need to get one.\n<br> - if you got a sketch you can get an upgrad
                 datetime: "Apr 2, 2023 11:59 PM",
                 naturalDatetime: "2 weeks ago",
                 description: AttributedString(FAHTML: htmlDescription.selfContainedFAHtmlSubmission),
-                comments: FAComment.demo)
+                comments: FAComment.demo,
+                acceptsNewComments: true
+            )
         }
     }
 }
