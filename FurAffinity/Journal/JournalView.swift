@@ -38,6 +38,7 @@ struct JournalView: View {
                     JournalControlsView(
                         journalUrl: journal.url,
                         repliesCount: journal.comments.recursiveCount,
+                        acceptsNewReplies: journal.acceptsNewComments,
                         replyAction: {
                             replySession = .init(parentCid: nil, among: [])
                         }
@@ -49,6 +50,7 @@ struct JournalView: View {
                     Section {
                         CommentsView(
                             comments: journal.comments,
+                            acceptsNewReplies: journal.acceptsNewComments,
                             replyAction: { cid in
                                 replySession = .init(parentCid: cid, among: journal.comments)
                             }

@@ -11,6 +11,7 @@ import FAKit
 struct JournalControlsView: View {
     var journalUrl: URL
     var repliesCount: Int
+    var acceptsNewReplies: Bool
     var replyAction: () -> Void
     
     private let buttonsSize: CGFloat = 55
@@ -29,12 +30,11 @@ struct JournalControlsView: View {
             }
             .frame(height: buttonsSize)
             
-            Button {
-                replyAction()
-            } label: {
-                AlignedLabel(value: repliesCount, systemImage: "bubble.right")
-            }
-            .frame(height: buttonsSize-4)
+            ReplyButton(
+                repliesCount: repliesCount,
+                acceptsNewReplies: acceptsNewReplies,
+                replyAction: replyAction
+            )
             
             Spacer()
         }
@@ -46,17 +46,23 @@ struct JournalControlsView: View {
 #Preview {
     withAsync({ await FAJournal.demo }) { journal in
         Group {
-            JournalControlsView(journalUrl: journal.url,
-                                repliesCount: 12,
-                                replyAction: {
-                print("Reply")
-            })
+            JournalControlsView(
+                journalUrl: journal.url,
+                repliesCount: 12,
+                acceptsNewReplies: true,
+                replyAction: {
+                    print("Reply")
+                }
+            )
             
-            JournalControlsView(journalUrl: journal.url,
-                                repliesCount: 0,
-                                replyAction: {
-                print("Reply")
-            })
+            JournalControlsView(
+                journalUrl: journal.url,
+                repliesCount: 0,
+                acceptsNewReplies: false,
+                replyAction: {
+                    print("Reply")
+                }
+            )
         }
         .preferredColorScheme(.dark)
         .background {

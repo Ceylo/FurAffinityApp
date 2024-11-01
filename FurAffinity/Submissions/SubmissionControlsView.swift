@@ -7,6 +7,32 @@
 
 import SwiftUI
 
+private let buttonsSize: CGFloat = 55
+
+struct ReplyButton: View {
+    var repliesCount: Int
+    var acceptsNewReplies: Bool
+    var replyAction: () -> Void
+    
+    var body: some View {
+        if acceptsNewReplies {
+            Button {
+                replyAction()
+            } label: {
+                AlignedLabel(value: repliesCount, systemImage: "bubble", imageYOffset: -1)
+            }
+            .frame(height: buttonsSize-4)
+        } else {
+            Menu {
+                Text("Comment posting has been disabled")
+            } label: {
+                AlignedLabel(value: repliesCount, systemImage: "exclamationmark.bubble", imageYOffset: -1)
+            }
+            .frame(height: buttonsSize-3)
+        }
+    }
+}
+
 struct SubmissionControlsView: View {
     var submissionUrl: URL
     var mediaFileUrl: URL?
@@ -14,10 +40,9 @@ struct SubmissionControlsView: View {
     var isFavorite: Bool
     var favoriteAction: () -> Void
     var repliesCount: Int
+    var acceptsNewReplies: Bool
     var replyAction: () -> Void
-    
-    private let buttonsSize: CGFloat = 55
-    
+        
     @StateObject private var saveHandler = MediaSaveHandler()
     
     var body: some View {
@@ -59,12 +84,11 @@ struct SubmissionControlsView: View {
             }
             .frame(height: buttonsSize)
             
-            Button {
-                replyAction()
-            } label: {
-                AlignedLabel(value: repliesCount, systemImage: "bubble.right")
-            }
-            .frame(height: buttonsSize-4)
+            ReplyButton(
+                repliesCount: repliesCount,
+                acceptsNewReplies: acceptsNewReplies,
+                replyAction: replyAction
+            )
             
             Spacer()
         }
@@ -84,6 +108,7 @@ struct SubmissionControlsView: View {
                 print("I like it")
             },
             repliesCount: 3,
+            acceptsNewReplies: true,
             replyAction: {
                 print("Reply")
             }
@@ -97,6 +122,7 @@ struct SubmissionControlsView: View {
                 print("I like it")
             },
             repliesCount: 0,
+            acceptsNewReplies: false,
             replyAction: {
                 print("Reply")
             }

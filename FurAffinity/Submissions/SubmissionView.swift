@@ -51,11 +51,11 @@ struct SubmissionView: View {
                         isFavorite: submission.isFavorite,
                         favoriteAction: favoriteAction,
                         repliesCount: submission.comments.recursiveCount,
+                        acceptsNewReplies: submission.acceptsNewComments,
                         replyAction: {
                             replySession = .init(parentCid: nil, among: [])
                         }
                     )
-                    .foregroundStyle(Color.accentColor)
                     
                     HTMLView(
                         text: submission.description.convertingLinksForInAppNavigation(),
@@ -68,11 +68,11 @@ struct SubmissionView: View {
                     Section {
                         CommentsView(
                             comments: submission.comments,
+                            acceptsNewReplies: submission.acceptsNewComments,
                             replyAction: { cid in
                                 replySession = .init(parentCid: cid, among: submission.comments)
                             }
                         )
-                        
                     } header: {
                         SectionHeader(text: "Comments")
                     }

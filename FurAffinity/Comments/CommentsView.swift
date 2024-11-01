@@ -10,11 +10,12 @@ import FAKit
 
 struct CommentsView: View {
     var comments: [FAComment]
+    var acceptsNewReplies: Bool = false
     var replyAction: ((_ cid: Int) -> Void)?
     
     func visitComment(_ comment: FAComment, indentation: Int) -> some View {
         Group {
-            if let replyAction, case .visible = comment {
+            if let replyAction, acceptsNewReplies, case .visible = comment {
                 CommentView(comment: comment)
                     .swipeActions(edge: .trailing) {
                         Button(action: { replyAction(comment.cid) },
@@ -60,6 +61,7 @@ struct CommentsView: View {
         List {
             CommentsView(
                 comments: comments,
+                acceptsNewReplies: true,
                 replyAction: { cid in
                     print("Reply to cid \(cid)")
                 }
@@ -73,6 +75,7 @@ struct CommentsView: View {
     withAsync({ await FAComment.demo }) { comments in
         CommentsView(
             comments: comments,
+            acceptsNewReplies: false,
             replyAction: { cid in
                 print("Reply to cid \(cid)")
             }
