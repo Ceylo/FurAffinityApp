@@ -8,6 +8,7 @@
 import SwiftUI
 import FAKit
 import Combine
+import Defaults
 
 enum ModelError: Error {
     case disconnected
@@ -45,6 +46,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     /// After a fetch it contains all found notifications, or an empty array if none was found
     @Published private(set) var notificationPreviews: FANotificationPreviews?
     @Published private(set) var lastNotificationPreviewsFetchDate: Date?
+    @Published private(set) var significantNotificationCount = 0
     
     @Published
     private(set) var appInfo = AppInformation()
@@ -58,20 +60,26 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         }
         .store(in: &subscriptions)
         
-        NotificationCenter.default.publisher(
-            for: UserDefaults.didChangeNotification,
-            object: UserDefaults.standard
-        )
-        .receive(on: DispatchQueue.main)
-        .sink { _ in
-            let preferences = UserDefaults.standard.dictionaryRepresentation()
-                .filter { UserDefaultKeys(rawValue: $0.key) != nil }
-                .map { ($0, $1) }
-                .sorted(by: { $0.0 < $1.0 })
-            
-            logger.info("UserDefaults state update: \(preferences, privacy: .public)")
-        }
-        .store(in: &subscriptions)
+        Defaults.publisher(keys: Defaults.Keys.all)
+            .sink {
+                let userDefaults = UserDefaults.standard
+                let preferences = Defaults.Keys.all
+                    .compactMap { key in
+                        userDefaults.object(forKey: key.name).map { value in
+                            (key.name, value)
+                        }
+                    }
+                    .sorted(by: { $0.0 < $1.0 })
+                
+                logger.info("UserDefaults state update: \(preferences, privacy: .public)")
+            }
+            .store(in: &subscriptions)
+        
+        Defaults.publisher(keys: Defaults.Keys.notifications)
+            .sink { [unowned self] in
+                updateSignificantNotificationCount()
+            }
+            .store(in: &subscriptions)
         
         processNewSession()
     }
@@ -87,9 +95,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     }
     
     func clearSessionData() {
-        UserDefaults.standard.removeObject(
-            forKey: UserDefaultKeys.lastViewedSubmissionID.rawValue
-        )
+        Defaults[.lastViewedSubmissionID] = nil
     }
     
     private func processNewSession() {
@@ -101,6 +107,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
             unreadNoteCount = 0
             notificationPreviews = nil
             lastNotificationPreviewsFetchDate = nil
+            significantNotificationCount = 0
             return
         }
         
@@ -121,8 +128,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         
         var firstWantedSubmissionID: Int?
         if submissionPreviews == nil {
-            firstWantedSubmissionID = UserDefaults.standard
-                .object(forKey: UserDefaultKeys.lastViewedSubmissionID.rawValue) as? Int
+            firstWantedSubmissionID = Defaults[.lastViewedSubmissionID]
         }
         
         var latestSubmissions = await session.submissionPreviews(from: firstWantedSubmissionID)
@@ -291,6 +297,32 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         
         notificationPreviews = await fetcher(session)
         lastNotificationPreviewsFetchDate = Date()
+        updateSignificantNotificationCount()
+    }
+    
+    private func updateSignificantNotificationCount() {
+        significantNotificationCount = notificationPreviews
+            .flatMap { notifications in
+                var count = 0
+                
+                if Defaults[.notifySubmissionComments] {
+                    count += notifications.submissionComments.count
+                }
+                
+                if Defaults[.notifyJournalComments] {
+                    count += notifications.journalComments.count
+                }
+                
+                if Defaults[.notifyShouts] {
+                    count += notifications.shouts.count
+                }
+                
+                if Defaults[.notifyJournals] {
+                    count += notifications.journals.count
+                }
+                
+                return count
+            } ?? 0
     }
     
     // MARK: - Submission

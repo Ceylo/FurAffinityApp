@@ -63,6 +63,7 @@
 		87A4DA642A097ECB00704857 /* ActionControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A4DA632A097ECB00704857 /* ActionControl.swift */; };
 		87A9C34129C788350001D1D6 /* CurrentUserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A9C34029C788350001D1D6 /* CurrentUserView.swift */; };
 		87A9C34329C788A00001D1D6 /* RemoteUserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A9C34229C788A00001D1D6 /* RemoteUserView.swift */; };
+		87B0233F2CD54F9200F4D400 /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 87B0233E2CD54F9200F4D400 /* Defaults */; };
 		87B0933A2AED6CEA008DFDE7 /* TitledHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B093392AED6CEA008DFDE7 /* TitledHeaderView.swift */; };
 		87B0933C2AED6D53008DFDE7 /* DatetimePair.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B0933B2AED6D53008DFDE7 /* DatetimePair.swift */; };
 		87B0933E2AED7C47008DFDE7 /* URL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B0933D2AED7C47008DFDE7 /* URL.swift */; };
@@ -213,6 +214,7 @@
 				87098D362CB14F1000E7BD94 /* Kingfisher in Frameworks */,
 				877173752C35878700B84624 /* AmplitudeSwift in Frameworks */,
 				8761834E271F5E570021A051 /* FAKit in Frameworks */,
+				87B0233F2CD54F9200F4D400 /* Defaults in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -466,6 +468,7 @@
 				877173742C35878700B84624 /* AmplitudeSwift */,
 				87E796162C99994D0020EACD /* SwiftUIIntrospect */,
 				87098D352CB14F1000E7BD94 /* Kingfisher */,
+				87B0233E2CD54F9200F4D400 /* Defaults */,
 			);
 			productName = FurAffinity;
 			productReference = 8716E7E8271C659C00C0BC4A /* Fur Affinity.app */;
@@ -526,6 +529,7 @@
 				879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
 				877173732C35878700B84624 /* XCRemoteSwiftPackageReference "Amplitude-Swift" */,
 				87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults" */,
 			);
 			productRefGroup = 8716E7E9271C659C00C0BC4A /* Products */;
 			projectDirPath = "";
@@ -943,6 +947,14 @@
 				minimumVersion = 1.3.0;
 			};
 		};
+		87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/Defaults.git";
+			requirement = {
+				kind = revision;
+				revision = 38925e3cfacf3fb89a81a35b1cd44fd5a5b7e0fa;
+			};
+		};
 		87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/mxcl/Version.git";
@@ -975,6 +987,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 877173732C35878700B84624 /* XCRemoteSwiftPackageReference "Amplitude-Swift" */;
 			productName = AmplitudeSwift;
+		};
+		87B0233E2CD54F9200F4D400 /* Defaults */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults" */;
+			productName = Defaults;
 		};
 		87C1A0AC284B6E5400529F8C /* Version */ = {
 			isa = XCSwiftPackageProductDependency;

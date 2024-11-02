@@ -1,5 +1,5 @@
 {
-  "originHash" : "91aa95e4b40a0b54c56e639449ae082cd7b2b9f2163b44a2c7d10ff2df63cec0",
+  "originHash" : "5b34f55ec0957933c8f20439161b9454399cf7ec52927a427d74641f727ba543",
   "pins" : [
     {
       "identity" : "amplitude-swift",
@@ -26,6 +26,14 @@
       "state" : {
         "revision" : "24e47109e31b2031cb26e25cc1b81b607496066c",
         "version" : "7.4.0"
+      }
+    },
+    {
+      "identity" : "defaults",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sindresorhus/Defaults.git",
+      "state" : {
+        "revision" : "38925e3cfacf3fb89a81a35b1cd44fd5a5b7e0fa"
       }
     },
     {

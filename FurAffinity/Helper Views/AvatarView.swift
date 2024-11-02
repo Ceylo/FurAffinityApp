@@ -8,12 +8,11 @@
 import SwiftUI
 import FAKit
 import Kingfisher
+import Defaults
 
 struct AvatarView: View {
     var avatarUrl: URL?
-    
-    @AppStorage(UserDefaultKeys.animateAvatars.rawValue)
-    private var animateAvatars: Bool = true
+    @Default(.animateAvatars) var animateAvatars
     
     private func configure(_ image: some KFImageProtocol) -> some KFImageProtocol {
         image

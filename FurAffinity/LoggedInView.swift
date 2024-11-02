@@ -73,6 +73,7 @@ struct LoggedInView: View {
                             view(for: nav)
                         }
                 }
+                .badge(model.significantNotificationCount)
                 .tabItem {
                     Label("Notifications", systemImage: "bell")
                 }

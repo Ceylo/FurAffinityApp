@@ -8,13 +8,18 @@
 import SwiftUI
 import FAKit
 import Kingfisher
+import Defaults
 
 struct SettingsView: View {
     @EnvironmentObject var model: Model
     @State private var dumpingLogs = false
     
-    @AppStorage(UserDefaultKeys.animateAvatars.rawValue)
-    private var animateAvatars: Bool = true
+    @Default(.animateAvatars) private var animateAvatars: Bool
+    @Default(.notifySubmissionComments) private var notifySubmissionComments
+    @Default(.notifyJournalComments) private var notifyJournalComments
+    @Default(.notifyShouts) private var notifyShouts
+    @Default(.notifyJournals) private var notifyJournals
+    
     @State private var cachedFileSize = "unknown"
     
     @State private var cleaningCache = false
@@ -45,6 +50,17 @@ struct SettingsView: View {
             
             Section("Display") {
                 Toggle("Animate avatars", isOn: $animateAvatars)
+            }
+            
+            Section {
+                Toggle("Submission comments", isOn: $notifySubmissionComments)
+                Toggle("Journal comments", isOn: $notifyJournalComments)
+                Toggle("Shouts", isOn: $notifyShouts)
+                Toggle("Journals", isOn: $notifyJournals)
+            } header: {
+                Text("Notification badge")
+            } footer: {
+                Text("iOS notifications are not supported. These settings change the badge displayed on the Notifications tab.")
             }
             
             Section {

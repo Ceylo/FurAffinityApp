@@ -9,6 +9,7 @@ import SwiftUI
 import FAKit
 @_spi(Advanced) import SwiftUIIntrospect
 import UIKit
+import Defaults
 
 struct SubmissionsFeedView: View {
     @EnvironmentObject var model: Model
@@ -16,8 +17,6 @@ struct SubmissionsFeedView: View {
     @Weak private var scrollView: UIScrollView?
     @State private var targetScrollItem: FASubmissionPreview?
     @State private var currentViewIsDisplayed = false
-    @AppStorage(UserDefaultKeys.lastViewedSubmissionID.rawValue)
-    private var lastViewedSubmissionID: Int?
     
     var noPreview: some View {
         ScrollView {
@@ -80,7 +79,7 @@ struct SubmissionsFeedView: View {
             }
             .onDisappear {
                 scrollProxy.scrollTo(Item.submissionPreview(targetPreview), anchor: .top)
-                lastViewedSubmissionID = targetPreview.sid
+                Defaults[.lastViewedSubmissionID] = targetPreview.sid
             }
     }
     
@@ -90,8 +89,8 @@ struct SubmissionsFeedView: View {
         let itemTop = frame.minY / listFrame.height
         let itemBottom = frame.maxY / listFrame.height
         let isActive = (itemTop...itemBottom).contains(0.3)
-        if isActive, lastViewedSubmissionID != preview.sid {
-            lastViewedSubmissionID = preview.sid
+        if isActive {
+            Defaults[.lastViewedSubmissionID] = preview.sid
         }
     }
     
