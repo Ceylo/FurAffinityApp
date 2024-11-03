@@ -19,8 +19,6 @@ struct ActionControl: View {
     }
 }
 
-struct ActionControl_Previews: PreviewProvider {
-    static var previews: some View {
-        ActionControl()
-    }
+#Preview {
+    ActionControl()
 }

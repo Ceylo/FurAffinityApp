@@ -38,13 +38,11 @@ struct JournalNotificationItemView: View {
     }
 }
 
-struct JournalNotificationItemView_Previews: PreviewProvider {
-    static var journal: FANotificationPreview {
+#Preview {
+    var journal: FANotificationPreview {
         let previews = OfflineFASession.default.notificationPreviews
         return previews.journals.first!
     }
     
-    static var previews: some View {
-        JournalNotificationItemView(journal: journal)
-    }
+    JournalNotificationItemView(journal: journal)
 }

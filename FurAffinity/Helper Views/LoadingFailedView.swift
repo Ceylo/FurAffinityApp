@@ -38,8 +38,6 @@ struct LoadingFailedView: View {
     }
 }
 
-struct LoadingFailedView_Previews: PreviewProvider {
-    static var previews: some View {
-        LoadingFailedView(url: FAURLs.homeUrl)
-    }
+#Preview {
+    LoadingFailedView(url: FAURLs.homeUrl)
 }

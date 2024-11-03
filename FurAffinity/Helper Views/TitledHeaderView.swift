@@ -29,11 +29,7 @@ extension TitledHeaderView: SubmissionHeaderView {
     }
 }
 
-struct SubmissionTitledHeaderView_Previews: PreviewProvider {
-    static var previews: some View {
-        TitledHeaderView(title: "Great Content")
-            .previewLayout(.sizeThatFits)
-            .preferredColorScheme(.dark)
-            
-    }
+#Preview(traits: .sizeThatFitsLayout) {
+    TitledHeaderView(title: "Great Content")
+        .preferredColorScheme(.dark)
 }

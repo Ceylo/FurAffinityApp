@@ -138,9 +138,7 @@ struct SettingsView: View {
     }
 }
 
-struct SettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        SettingsView()
-            .environmentObject(Model.demo)
-    }
+#Preview {
+    SettingsView()
+        .environmentObject(Model.demo)
 }

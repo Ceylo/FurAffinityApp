@@ -66,8 +66,8 @@ struct HTMLView: View {
 
 
 
-struct TextView_Previews: PreviewProvider {
-    static var html: String {
+#Preview {
+    var html: String {
         "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n<html lang=\"en\" class=\"no-js\" xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n<meta charset=\"utf-8\" />\n<meta name=\"viewport\"           content=\"width=device-width, initial-scale=1.0\" />\n<link type=\"text/css\" rel=\"stylesheet\" href=\"/themes/beta/css/ui_theme_dark.css\" /></head>\n<body data-static-path=\"/themes/beta\">"
         +
         "<code class=\"bbcode bbcode_center\"><strong class=\"bbcode bbcode_b\"> Happy New Year, guys! <br> Let the New Year bring happiness and joy to every home, because each of you deserves all the best!<br> Love you all!!! </strong></code>\n<br> \n<br> \n<br> \n<br> \n<br> \n<br> Rudy © \n<a href=\"/user/ruddi\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20211231/ruddi.gif\" align=\"middle\" title=\"ruddi\" alt=\"ruddi\"></a>\n<br> Rigel Peyton © \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20211231/lil-maj.gif\" align=\"middle\" title=\"lil-Maj\" alt=\"lil-Maj\"></a> \n<br> Annet © \n<a href=\"/user/annetpeas\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20211231/annetpeas.gif\" align=\"middle\" title=\"annetpeas\" alt=\"annetpeas\"></a> \n<br> Seth © \n<a href=\"/user/longdanger\" class=\"iconusername\"><img src=\"https://a.furaffinity.net/20211231/longdanger.gif\" align=\"middle\" title=\"longdanger\" alt=\"longdanger\"></a>\n<br> \n<br> and Bulka © irl my pet cat \n<br> \n<br> \n<br> *******************************\n<br> * \n<a class=\"auto_link named_url\" href=\"http://ko-fi.com/J3J16KSH\">Feed me with coffee?</a>\n<br> * \n<a class=\"auto_link named_url\" href=\"https://www.furaffinity.net/gallery/annetpeas/\">My Gallery</a>\n<br> * \n<a class=\"auto_link named_url\" href=\"https://twitter.com/AnnetPeas_Art\">Twitter</a>"
@@ -75,7 +75,7 @@ struct TextView_Previews: PreviewProvider {
         "</body></html>"
     }
     
-    static var attributedString: AttributedString {
+    var attributedString: AttributedString {
         let data = html
             .replacingOccurrences(of: "href=\"/", with: "href=\"https://www.furaffinity.net/")
             .replacingOccurrences(of: "src=\"//", with: "src=\"https://")
@@ -91,12 +91,10 @@ struct TextView_Previews: PreviewProvider {
         return AttributedString(nsattrstr)
     }
     
-    static var previews: some View {
-        ScrollView {
-            HTMLView(text: attributedString)
-                .border(.yellow)
-        }
-        .border(.blue)
-        .preferredColorScheme(.dark)
+    ScrollView {
+        HTMLView(text: attributedString)
+            .border(.yellow)
     }
+    .border(.blue)
+    .preferredColorScheme(.dark)
 }

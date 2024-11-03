@@ -111,10 +111,8 @@ struct WebView: UIViewRepresentable {
     }
 }
 
-struct WebView_Previews: PreviewProvider {
-    static var previews: some View {
-        WebView(initialUrl: URL(string: "https://apple.com/")!,
-                cookies: .constant([]),
-                clearCookies: false)
-    }
+#Preview {
+    WebView(initialUrl: URL(string: "https://apple.com/")!,
+            cookies: .constant([]),
+            clearCookies: false)
 }

@@ -64,8 +64,6 @@ public struct FALoginView: View {
     }
 }
 
-struct FALoginView_Previews: PreviewProvider {
-    static var previews: some View {
-        FALoginView(session: .constant(nil))
-    }
+#Preview {
+    FALoginView(session: .constant(nil))
 }

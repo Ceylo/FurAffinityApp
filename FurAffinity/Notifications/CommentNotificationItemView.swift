@@ -41,8 +41,8 @@ struct CommentNotificationItemView: View {
     }
 }
 
-struct SubmissionCommentNotificationItemView_Previews: PreviewProvider {
-    static var notification: FANotificationPreview {
+#Preview {
+    var notification: FANotificationPreview {
         .init(
             id: 172177443,
             author: "someuser",
@@ -54,7 +54,5 @@ struct SubmissionCommentNotificationItemView_Previews: PreviewProvider {
         )
     }
     
-    static var previews: some View {
-        CommentNotificationItemView(notification: notification)
-    }
+    CommentNotificationItemView(notification: notification)
 }

@@ -43,14 +43,12 @@ struct SaveButton: View {
     }
 }
 
-struct SaveButton_Previews: PreviewProvider {
-    static var previews: some View {
-        HStack {
-            ForEach(ActionState.allCases) { state in
-                SaveButton(state: state) {
-                }
-                .frame(width: 60, height: 60)
+#Preview {
+    HStack {
+        ForEach(ActionState.allCases) { state in
+            SaveButton(state: state) {
             }
+            .frame(width: 60, height: 60)
         }
     }
 }

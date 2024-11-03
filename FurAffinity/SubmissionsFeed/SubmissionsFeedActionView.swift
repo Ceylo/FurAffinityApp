@@ -27,11 +27,9 @@ struct SubmissionsFeedActionView: View {
     }
 }
 
-struct SubmissionsFeedActionView_Previews: PreviewProvider {
-    static var previews: some View {
-        SubmissionsFeedActionView()
-            .padding()
-            .background(.yellow)
-            .environmentObject(Model.demo)
-    }
+#Preview {
+    SubmissionsFeedActionView()
+        .padding()
+        .background(.yellow)
+        .environmentObject(Model.demo)
 }

@@ -59,11 +59,8 @@ struct NotificationOverlay: View {
     }
 }
 
-struct NotificationOverlay_Previews: PreviewProvider {
-    static var previews: some View {
-        NotificationOverlay(itemCount: .constant(12))
-            .padding()
-            .background(.yellow)
-            .previewLayout(.sizeThatFits)
-    }
+#Preview(traits: .sizeThatFitsLayout) {
+    NotificationOverlay(itemCount: .constant(12))
+        .padding()
+        .background(.yellow)
 }

@@ -38,13 +38,11 @@ struct ShoutNotificationItemView: View {
     }
 }
 
-struct ShoutNotificationItemView_Previews: PreviewProvider {
-    static var shout: FANotificationPreview {
+#Preview {
+    var shout: FANotificationPreview {
         let previews = OfflineFASession.default.notificationPreviews
         return previews.shouts.first!
     }
     
-    static var previews: some View {
-        ShoutNotificationItemView(shout: shout)
-    }
+    ShoutNotificationItemView(shout: shout)
 }

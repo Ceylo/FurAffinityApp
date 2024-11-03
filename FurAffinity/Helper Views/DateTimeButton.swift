@@ -23,9 +23,7 @@ struct DateTimeButton: View {
     }
 }
 
-struct DateTimeButton_Previews: PreviewProvider {
-    static var previews: some View {
-        DateTimeButton(datetime: "Apr 7th, 2022, 11:58 AM",
-                       naturalDatetime: "8 months ago")
-    }
+#Preview {
+    DateTimeButton(datetime: "Apr 7th, 2022, 11:58 AM",
+                   naturalDatetime: "8 months ago")
 }

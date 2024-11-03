@@ -113,9 +113,7 @@ struct LoggedInView: View {
     }
 }
 
-struct LoggedInView_Previews: PreviewProvider {
-    static var previews: some View {
-        LoggedInView()
-            .environmentObject(Model.demo)
-    }
+#Preview {
+    LoggedInView()
+        .environmentObject(Model.demo)
 }

@@ -32,9 +32,7 @@ struct CurrentUserView: View {
     }
 }
 
-struct CurentUserView_Previews: PreviewProvider {
-    static var previews: some View {
-        CurrentUserView()
-            .environmentObject(Model.demo)
-    }
+#Preview {
+    CurrentUserView()
+        .environmentObject(Model.demo)
 }

@@ -25,12 +25,10 @@ struct RemoteUserGalleryLikeView: View {
     }
 }
 
-struct RemoteUserGalleryLikeView_Previews: PreviewProvider {
-    static var previews: some View {
-        RemoteUserGalleryLikeView(
-            galleryType: .gallery,
-            url: URL(string: "https://www.furaffinity.net/gallery/tiaamaito/")!
-        )
-        .environmentObject(Model.demo)
-    }
+#Preview {
+    RemoteUserGalleryLikeView(
+        galleryType: .gallery,
+        url: URL(string: "https://www.furaffinity.net/gallery/tiaamaito/")!
+    )
+    .environmentObject(Model.demo)
 }
