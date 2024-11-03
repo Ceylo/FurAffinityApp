@@ -27,6 +27,7 @@ struct ReplyButton: View {
                 Text("Comment posting has been disabled")
             } label: {
                 AlignedLabel(value: repliesCount, systemImage: "exclamationmark.bubble", imageYOffset: -1)
+                    .foregroundStyle(.orange)
             }
             .frame(height: buttonsSize-3)
         }
