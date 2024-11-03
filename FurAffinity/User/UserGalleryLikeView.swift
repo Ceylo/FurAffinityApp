@@ -18,9 +18,16 @@ enum GalleryType {
     }
 }
 
+extension FAUserGalleryLike: ProgressiveData {
+    var canLoadMore: Bool {
+        nextPageUrl != nil
+    }
+}
+
 struct UserGalleryLikeView: View {
     var galleryType: GalleryType
     var gallery: FAUserGalleryLike
+    var loadMore: (_ galleryLike: FAUserGalleryLike) -> Void
     
     var body: some View {
         Group {
@@ -37,23 +44,30 @@ struct UserGalleryLikeView: View {
                 }
             } else {
                 GeometryReader { geometry in
-                    List(gallery.previews) { preview in
-                        NavigationLink(
-                            value: FAURL.submission(url: preview.url, previewData: preview)
-                        ) {
-                            if galleryType.shouldDisplayAuthor {
-                                SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
-                            } else {
-                                SubmissionFeedItemView<TitledHeaderView>(submission: preview)
+                    List {
+                        ForEach(gallery.previews) { preview in
+                            NavigationLink(
+                                value: FAURL.submission(url: preview.url, previewData: preview)
+                            ) {
+                                if galleryType.shouldDisplayAuthor {
+                                    SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
+                                } else {
+                                    SubmissionFeedItemView<TitledHeaderView>(submission: preview)
+                                }
                             }
+                            .id(preview.sid)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                         }
-                        .id(preview.sid)
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                        
+                        ProgressiveLoadItem(
+                            label: "Loading more submissions…",
+                            currentData: gallery,
+                            loadMoreData: loadMore
+                        )
                     }
                     .listStyle(.plain)
-                    .onAppear {
-                        // Note: onAppear won't be enough once infinite scroll is implemented
+                    .onChange(of: gallery.previews, initial: true) {
                         let thumbnailsWidth = geometry.size.width - 28.333
                         let previews = gallery.previews
                         prefetchThumbnails(for: previews, availableWidth: thumbnailsWidth)
@@ -72,7 +86,8 @@ struct UserGalleryLikeView: View {
     NavigationStack {
         UserGalleryLikeView(
             galleryType: .favorites,
-            gallery: .init(displayAuthor: "Some User", previews: OfflineFASession.default.submissionPreviews)
+            gallery: .init(displayAuthor: "Some User", previews: OfflineFASession.default.submissionPreviews, nextPageUrl: nil),
+            loadMore: { _ in }
         )
     }
     .environmentObject(Model.demo)
@@ -82,7 +97,8 @@ struct UserGalleryLikeView: View {
     NavigationStack {
         UserGalleryLikeView(
             galleryType: .favorites,
-            gallery: .init(displayAuthor: "Some User", previews: [])
+            gallery: .init(displayAuthor: "Some User", previews: [], nextPageUrl: nil),
+            loadMore: { _ in }
         )
     }
     .environmentObject(Model.empty)

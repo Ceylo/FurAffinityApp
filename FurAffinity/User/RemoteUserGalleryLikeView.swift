@@ -16,12 +16,22 @@ struct RemoteUserGalleryLikeView: View {
     var body: some View {
         RemoteView(url: url, contentsLoader: {
             await model.session?.galleryLike(for: url)
-        }) { gallery, _ in
+        }, contentsViewBuilder: { gallery, updateHandler in
             UserGalleryLikeView(
                 galleryType: galleryType,
-                gallery: gallery
-            )
-        }
+                gallery: gallery) { latestGallery in
+                    guard let nextUrl = latestGallery.nextPageUrl else {
+                        logger.error("Next page requested but there is none!")
+                        return
+                    }
+                    
+                    Task {
+                        let nextGallery = await model.session?.galleryLike(for: nextUrl)
+                        let updated = nextGallery.map { latestGallery.appending($0) }
+                        updateHandler.update(with: updated)
+                    }
+                }
+        })
     }
 }
 
