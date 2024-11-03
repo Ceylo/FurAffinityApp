@@ -68,16 +68,24 @@ struct UserGalleryLikeView: View {
                     }
                     .listStyle(.plain)
                     .onChange(of: gallery.previews, initial: true) {
-                        let thumbnailsWidth = geometry.size.width - 28.333
-                        let previews = gallery.previews
-                        prefetchThumbnails(for: previews, availableWidth: thumbnailsWidth)
-                        prefetchAvatars(for: previews)
+                        prefetch(with: geometry)
                     }
                 }
             }
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("\(gallery.displayAuthor)'s \(galleryType)")
+    }
+    
+    func prefetch(with geometry: GeometryProxy) {
+        let thumbnailsWidth = geometry.size.width - 28.333
+        guard thumbnailsWidth > 0 else {
+            logger.error("Skipping prefetch due to too small geometry: \(String(describing: geometry.size))")
+            return
+        }
+        let previews = gallery.previews
+        prefetchThumbnails(for: previews, availableWidth: thumbnailsWidth)
+        prefetchAvatars(for: previews)
     }
 }
 
