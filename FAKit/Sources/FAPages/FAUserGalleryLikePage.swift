@@ -11,6 +11,7 @@ import Foundation
 public struct FAUserGalleryLikePage: Sendable {
     public let previews: [FASubmissionsPage.Submission?]
     public let displayAuthor: String
+    public let nextPageUrl: URL?
 }
 
 extension FAUserGalleryLikePage {
@@ -34,6 +35,19 @@ extension FAUserGalleryLikePage {
             )
             self.displayAuthor = try String(userNode.text().dropFirst())
             self.previews = await previews
+            
+            let navigationFormsQuery = "section.gallery-section div.section-body div.gallery-navigation div form"
+            let nextButtonForm = try? siteContentNode
+                .select(navigationFormsQuery)
+                .first(where: {
+                    try $0.text() == "Next"
+                })
+            if let nextButtonForm {
+                let relativeUrl = try nextButtonForm.attr("action")
+                self.nextPageUrl = try URL(unsafeString: FAURLs.homeUrl.absoluteString + relativeUrl)
+            } else {
+                self.nextPageUrl = nil
+            }
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil
