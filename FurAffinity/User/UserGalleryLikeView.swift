@@ -28,6 +28,20 @@ struct UserGalleryLikeView: View {
     var galleryType: GalleryType
     var gallery: FAUserGalleryLike
     var loadMore: (_ galleryLike: FAUserGalleryLike) -> Void
+    @State private var searchText = ""
+    
+    var filteredPreviews: [FASubmissionPreview] {
+        guard !searchText.isEmpty else {
+            return gallery.previews
+        }
+        
+        let searchText = searchText.lowercased()
+        return gallery.previews.filter { preview in
+            preview.title.lowercased().contains(searchText) ||
+            preview.displayAuthor.lowercased().contains(searchText) ||
+            preview.author.lowercased().contains(searchText)
+        }
+    }
     
     var body: some View {
         Group {
@@ -45,7 +59,7 @@ struct UserGalleryLikeView: View {
             } else {
                 GeometryReader { geometry in
                     List {
-                        ForEach(gallery.previews) { preview in
+                        ForEach(filteredPreviews) { preview in
                             NavigationLink(
                                 value: FAURL.submission(url: preview.url, previewData: preview)
                             ) {
@@ -65,9 +79,16 @@ struct UserGalleryLikeView: View {
                             currentData: gallery,
                             loadMoreData: loadMore
                         )
+                        
+                        ListCounter(
+                            name: "submission",
+                            fullList: gallery.previews,
+                            filteredList: filteredPreviews
+                        )
                     }
                     .listStyle(.plain)
-                    .onChange(of: gallery.previews, initial: true) {
+                    .searchable(text: $searchText)
+                    .onChange(of: filteredPreviews, initial: true) {
                         prefetch(with: geometry)
                     }
                 }
@@ -83,7 +104,7 @@ struct UserGalleryLikeView: View {
             logger.error("Skipping prefetch due to too small geometry: \(String(describing: geometry.size))")
             return
         }
-        let previews = gallery.previews
+        let previews = filteredPreviews
         prefetchThumbnails(for: previews, availableWidth: thumbnailsWidth)
         prefetchAvatars(for: previews)
     }

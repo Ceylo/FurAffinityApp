@@ -44,15 +44,15 @@ func FAAnimatedImage(_ url: URL?) -> KFAnimatedImage {
 
 @MainActor
 func prefetch(_ urls: [URL], priority: Float = URLSessionTask.lowPriority) {
-    ImagePrefetcher(
+    let prefetcher = ImagePrefetcher(
         urls: urls,
         options: [
             .downloader(downloaderWithUserAgent),
-            .downloadPriority(priority),
-            .alsoPrefetchToMemory,
-            .backgroundDecode
+            .downloadPriority(priority)
         ]
-    ).start()
+    )
+    prefetcher.maxConcurrentDownloads = 100
+    prefetcher.start()
 }
 
 @MainActor
