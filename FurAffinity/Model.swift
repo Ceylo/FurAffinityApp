@@ -60,7 +60,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         }
         .store(in: &subscriptions)
         
-        Defaults.publisher(keys: Defaults.Keys.all)
+        Defaults.publisher(keys: Defaults.Keys.all, options: [])
             .sink {
                 let userDefaults = UserDefaults.standard
                 let preferences = Defaults.Keys.all
