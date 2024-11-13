@@ -33,9 +33,10 @@ struct WatchlistView: View {
             return watchlist.users
         }
         
+        let searchText = searchText.lowercased()
         return watchlist.users.filter { user in
-            user.displayName.containsAllOrderedCharacters(from: searchText) ||
-            user.name.containsAllOrderedCharacters(from: searchText)
+            user.displayName.lowercased().contains(searchText) ||
+            user.name.lowercased().contains(searchText)
         }
     }
     
