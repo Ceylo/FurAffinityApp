@@ -63,8 +63,10 @@ extension [Int]: ProgressiveData {
             label: "Loading more numbers…",
             currentData: data,
             loadMoreData: { latestData in
-                data = latestData + [latestData.last! + 1]
+                let oldData = latestData.count < 10 ? latestData : []
+                data = oldData + [latestData.last! + 1]
             }
         )
     }
+    .listStyle(.plain)
 }
