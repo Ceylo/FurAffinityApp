@@ -111,18 +111,29 @@ private let downloaderWithUserAgent: ImageDownloader = {
     return downloader
 }()
 
-final class DownloadDelegate: ImageDownloaderDelegate {
+actor DownloadDelegate: ImageDownloaderDelegate {
     @MainActor static let shared = DownloadDelegate()
     
     private init() {}
     
-    public private(set) var downloading = [URL: Date]()
-    func imageDownloader(
+    private var downloadStartDates = [URL: Date]()
+    // Get/set boilerplate needed for actor isolation
+    private func setDownloadStartDate(_ date: Date?, for url: URL) {
+        downloadStartDates[url] = date
+    }
+    public func downloadStartDate(for url: URL) -> Date? {
+        downloadStartDates[url]
+    }
+    
+    nonisolated func imageDownloader(
         _ downloader: ImageDownloader,
         willDownloadImageForURL url: URL,
         with request: URLRequest?
     ) {
-        downloading[url] = Date()
+        let startDate = Date()
+        Task {
+            await setDownloadStartDate(startDate, for: url)
+        }
         if let request {
             let method = request.httpMethod ?? "GET"
             logger.info("[KF] \(method, privacy: .public) request on \(url, privacy: .public)")
@@ -131,7 +142,9 @@ final class DownloadDelegate: ImageDownloaderDelegate {
         }
     }
     
-    func imageDownloader(_ downloader: ImageDownloader, didFinishDownloadingImageForURL url: URL, with response: URLResponse?, error: (any Error)?) {
-        downloading[url] = nil
+    nonisolated func imageDownloader(_ downloader: ImageDownloader, didFinishDownloadingImageForURL url: URL, with response: URLResponse?, error: (any Error)?) {
+        Task {
+            await setDownloadStartDate(nil, for: url)
+        }
     }
 }

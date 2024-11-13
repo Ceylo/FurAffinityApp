@@ -44,7 +44,9 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
                                 .stroke(Color.borderOverlay, lineWidth: 1)
                         }
                         .onAppear {
-                            controlCacheBehavior(for: url)
+                            Task {
+                                await controlCacheBehavior(for: url)
+                            }
                         }
                 }
             }
@@ -61,9 +63,9 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
         .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 0))
     }
     
-    func controlCacheBehavior(for url: URL) {
+    func controlCacheBehavior(for url: URL) async {
         let cacheType = ImageCache.default.imageCachedType(forKey: url.cacheKey)
-        let downloadStartDate = DownloadDelegate.shared.downloading[url]
+        let downloadStartDate = await DownloadDelegate.shared.downloadStartDate(for: url)
         if let downloadStartDate {
             let elapsedMs = Int(abs(downloadStartDate.timeIntervalSinceNow * 1000))
             logger.info("Thumbnail download for \"\(submission.title, privacy: .public)\" started \(elapsedMs)ms ago")
