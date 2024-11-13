@@ -37,15 +37,6 @@ struct WatchlistView: View {
         }
     }
     
-    var userCountMessage: String {
-        let filteredUserCount = filteredUsers.count
-        if filteredUserCount != watchlist.users.count {
-            return "\(filteredUserCount) out of \(watchlist.users.count) users"
-        } else {
-            return "\(watchlist.users.count) users"
-        }
-    }
-    
     var filteredUsers: [FAWatchlist.User] {
         guard !searchText.isEmpty else {
             return watchlist.users
@@ -80,14 +71,11 @@ struct WatchlistView: View {
                 loadMoreData: loadMoreUsers
             )
             
-            Section {
-            } header: {
-                HStack {
-                    Spacer()
-                    Text(userCountMessage)
-                    Spacer()
-                }
-            }
+            ListCounter(
+                name: "user",
+                fullList: watchlist.users,
+                filteredList: filteredUsers
+            )
         }
         .searchable(text: $searchText)
         .swap(when: watchlist.users.isEmpty) {
