@@ -28,15 +28,6 @@ struct WatchlistView: View {
         }
     }
     
-    var emptyWatchMessage: String {
-        switch watchlist.watchDirection {
-        case .watchedBy:
-            "Looks like nobody is watching \(watchlist.currentUser.displayName) yet."
-        case .watching:
-            "Looks like \(watchlist.currentUser.displayName) isn't watching anyone yet."
-        }
-    }
-    
     var filteredUsers: [FAWatchlist.User] {
         guard !searchText.isEmpty else {
             return watchlist.users
@@ -78,18 +69,6 @@ struct WatchlistView: View {
             )
         }
         .searchable(text: $searchText)
-        .swap(when: watchlist.users.isEmpty) {
-            VStack(spacing: 10) {
-                Spacer()
-                Text("It's a bit empty in here.")
-                    .font(.headline)
-                Text(emptyWatchMessage)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.secondary)
-                Spacer()
-            }
-            .padding()
-        }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(navigationTitle)
     }
