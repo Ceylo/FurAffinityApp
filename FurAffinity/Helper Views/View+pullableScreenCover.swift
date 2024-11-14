@@ -48,7 +48,7 @@ private struct PullableFullScreenCoverView<Contents: View>: View {
         .onDisappear {
             visible = false
         }
-        .simultaneousGesture(
+        .gesture(
             // Below 15, this gesture tends to take precedence over scroll views in
             // the contents view
             DragGesture(minimumDistance: 15, coordinateSpace: .global)
