@@ -48,13 +48,13 @@ jobs:
           xcode: ~16.0
       - name: Build App
         run: |
-          xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 15' -configuration Release build
+          xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 16' -configuration Release build
       - name: Run Tests
         run: |
           git_hash=$(git rev-parse --short "$GITHUB_SHA")
           qualified_app_name="FurAffinity-${GITHUB_REF_NAME}-${git_hash}"
           results_path=$(pwd)/${qualified_app_name}.xcresult
-          xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 15' -resultBundlePath "${results_path}" test
+          xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 16' -resultBundlePath "${results_path}" test
           zip -r "${qualified_app_name}.xcresult.zip" "${qualified_app_name}.xcresult"
       - name: Upload Tests Results
         uses: actions/upload-artifact@v4
