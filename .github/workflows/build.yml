@@ -2,7 +2,7 @@ name: Build App
 on: [push, workflow_dispatch]
 jobs:
   Build-App:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
