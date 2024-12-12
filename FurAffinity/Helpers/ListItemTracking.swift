@@ -36,7 +36,7 @@ struct ItemFrameTracking: ViewModifier {
                                            value: visible ? itemFrame : nil)
                 }
             }
-            .onPreferenceChange(ViewFrameKey.self) { frame in
+            .onPreferenceChange(ViewFrameKey.self) { [frameUpdated] frame in
                 frameUpdated(frame)
             }
     }
