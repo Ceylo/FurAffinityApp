@@ -82,7 +82,7 @@ struct SubmissionMainImage: View {
                             height: fullResolutionImage!.size.height
                         )
                     }
-                    .tapZoomLevel(.fill)
+                    .secondaryZoomLevel(.fill)
                     .ignoresSafeArea()
                 }
                 .aspectRatio(contentMode: .fit)

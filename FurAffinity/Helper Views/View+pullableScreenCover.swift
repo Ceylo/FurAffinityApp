@@ -88,7 +88,7 @@ extension View {
                 .fixedSize()
                 .ignoresSafeArea()
         }
-        .tapZoomLevel(.fill)
+        .secondaryZoomLevel(.fill)
         .zoomRange(0.1...100)
         .ignoresSafeArea()
     }
