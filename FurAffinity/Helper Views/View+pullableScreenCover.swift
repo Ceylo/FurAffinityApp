@@ -89,7 +89,6 @@ extension View {
                 .ignoresSafeArea()
         }
         .secondaryZoomLevel(.fill)
-        .zoomRange(0.1...100)
         .ignoresSafeArea()
     }
 }
