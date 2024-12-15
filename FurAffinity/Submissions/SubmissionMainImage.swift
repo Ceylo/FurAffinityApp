@@ -8,7 +8,6 @@
 import SwiftUI
 import FAKit
 import Kingfisher
-import Zoomable
 
 // KFAnimatedImage may display with an incorrect aspect ratio
 // on the initial display, so we don't use it unless needed.
@@ -69,8 +68,8 @@ struct SubmissionMainImage: View {
                         configure(FAImage(fullResolutionMediaUrl), geometry: geometry)
                     }
                 }
-                .pullableScreenCover(isPresented: $showZoomableSheet) {
-                    Zoomable(allowZoomOutBeyondFit: false) {
+                .fadingSheet(isPresented: $showZoomableSheet) {
+                    Zoomable {
                         Group {
                             if canAnimate(fullResolutionMediaUrl) {
                                 FAAnimatedImage(fullResolutionMediaUrl)
@@ -78,8 +77,13 @@ struct SubmissionMainImage: View {
                                 FAImage(fullResolutionMediaUrl)
                             }
                         }
-                        .frame(width: fullResolutionImage!.size.width, height: fullResolutionImage!.size.height)
+                        .frame(
+                            width: fullResolutionImage!.size.width,
+                            height: fullResolutionImage!.size.height
+                        )
                     }
+                    .tapZoomLevel(.fill)
+                    .ignoresSafeArea()
                 }
                 .aspectRatio(contentMode: .fit)
                 .onTapGesture {

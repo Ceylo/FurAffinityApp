@@ -73,7 +73,6 @@
 		87C1A0AD284B6E5400529F8C /* Version in Frameworks */ = {isa = PBXBuildFile; productRef = 87C1A0AC284B6E5400529F8C /* Version */; };
 		87C4435A2C73C59900200991 /* ShoutNotificationItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C443592C73C59900200991 /* ShoutNotificationItemView.swift */; };
 		87C4435C2C73F29600200991 /* AlignedLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C4435B2C73F29600200991 /* AlignedLabel.swift */; };
-		87C4D2B027653C3600C29A4B /* Zoomable in Frameworks */ = {isa = PBXBuildFile; productRef = 87C4D2AF27653C3600C29A4B /* Zoomable */; };
 		87C94A542AA893BA0049CA81 /* UserGalleryLikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C94A532AA893BA0049CA81 /* UserGalleryLikeView.swift */; };
 		87C94A562AA897E50049CA81 /* RemoteUserGalleryLikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C94A552AA897E50049CA81 /* RemoteUserGalleryLikeView.swift */; };
 		87D252062C906AB700E07AE1 /* withAsync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D252052C906AB700E07AE1 /* withAsync.swift */; };
@@ -86,6 +85,7 @@
 		87D64FCD2C88B00100AB6F44 /* FALink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FCC2C88B00100AB6F44 /* FALink.swift */; };
 		87E0E2B82801D967005207A8 /* NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B72801D967005207A8 /* NotesView.swift */; };
 		87E0E2BA2801DCDB005207A8 /* NoteItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B92801DCDB005207A8 /* NoteItemView.swift */; };
+		87E528372CE8D3D800CAFDC0 /* Zoomable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E528362CE8D3D800CAFDC0 /* Zoomable.swift */; };
 		87E796172C99994D0020EACD /* SwiftUIIntrospect in Frameworks */ = {isa = PBXBuildFile; productRef = 87E796162C99994D0020EACD /* SwiftUIIntrospect */; };
 		87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */; };
 		87EAA2DB29EB4F1800677446 /* RemoteNotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87EAA2DA29EB4F1800677446 /* RemoteNotificationsView.swift */; };
@@ -189,6 +189,7 @@
 		87D64FCC2C88B00100AB6F44 /* FALink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FALink.swift; sourceTree = "<group>"; };
 		87E0E2B72801D967005207A8 /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
 		87E0E2B92801DCDB005207A8 /* NoteItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteItemView.swift; sourceTree = "<group>"; };
+		87E528362CE8D3D800CAFDC0 /* Zoomable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zoomable.swift; sourceTree = "<group>"; };
 		87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOverlay.swift; sourceTree = "<group>"; };
 		87EAA2DA29EB4F1800677446 /* RemoteNotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteNotificationsView.swift; sourceTree = "<group>"; };
 		87EAA2DC29EB4F3700677446 /* JournalNotificationItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalNotificationItemView.swift; sourceTree = "<group>"; };
@@ -208,7 +209,6 @@
 			files = (
 				87E796172C99994D0020EACD /* SwiftUIIntrospect in Frameworks */,
 				87C1A0AD284B6E5400529F8C /* Version in Frameworks */,
-				87C4D2B027653C3600C29A4B /* Zoomable in Frameworks */,
 				87098D362CB14F1000E7BD94 /* Kingfisher in Frameworks */,
 				877173752C35878700B84624 /* AmplitudeSwift in Frameworks */,
 				8761834E271F5E570021A051 /* FAKit in Frameworks */,
@@ -418,6 +418,7 @@
 				87D64FC42C886F0200AB6F44 /* ProgressiveLoadItem.swift */,
 				87D252052C906AB700E07AE1 /* withAsync.swift */,
 				872EF3C32CCFDAEA00251EB5 /* View+pullableScreenCover.swift */,
+				87E528362CE8D3D800CAFDC0 /* Zoomable.swift */,
 			);
 			path = "Helper Views";
 			sourceTree = "<group>";
@@ -460,7 +461,6 @@
 			name = FurAffinity;
 			packageProductDependencies = (
 				8761834D271F5E570021A051 /* FAKit */,
-				87C4D2AF27653C3600C29A4B /* Zoomable */,
 				87C1A0AC284B6E5400529F8C /* Version */,
 				877173742C35878700B84624 /* AmplitudeSwift */,
 				87E796162C99994D0020EACD /* SwiftUIIntrospect */,
@@ -521,7 +521,6 @@
 			);
 			mainGroup = 8716E7DF271C659C00C0BC4A;
 			packageReferences = (
-				87C4D2AE27653C3600C29A4B /* XCRemoteSwiftPackageReference "Zoomable" */,
 				87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */,
 				879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
 				877173732C35878700B84624 /* XCRemoteSwiftPackageReference "Amplitude-Swift" */,
@@ -625,6 +624,7 @@
 				87FE0DA929747C0C005713DB /* AppInformation.swift in Sources */,
 				87A587452CD8152B005F8D3B /* ListCounter.swift in Sources */,
 				872EF3C42CCFDAEA00251EB5 /* View+pullableScreenCover.swift in Sources */,
+				87E528372CE8D3D800CAFDC0 /* Zoomable.swift in Sources */,
 				874D69BD2804D20600DF91E7 /* NoteView.swift in Sources */,
 				877226B52740361C00245DF0 /* SubmissionsFeedView.swift in Sources */,
 				87098D382CB19E4D00E7BD94 /* Kingfisher+FA.swift in Sources */,
@@ -959,14 +959,6 @@
 				minimumVersion = 2.1.0;
 			};
 		};
-		87C4D2AE27653C3600C29A4B /* XCRemoteSwiftPackageReference "Zoomable" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Ceylo/Zoomable.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -993,11 +985,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */;
 			productName = Version;
-		};
-		87C4D2AF27653C3600C29A4B /* Zoomable */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 87C4D2AE27653C3600C29A4B /* XCRemoteSwiftPackageReference "Zoomable" */;
-			productName = Zoomable;
 		};
 		87E796162C99994D0020EACD /* SwiftUIIntrospect */ = {
 			isa = XCSwiftPackageProductDependency;
