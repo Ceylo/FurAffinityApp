@@ -82,8 +82,9 @@ struct SubmissionMainImage: View {
                             height: fullResolutionImage!.size.height
                         )
                     }
-                    .secondaryZoomLevel(.fill)
-                    .initialZoomState(.secondary)
+                    .initialZoomLevel(.boundedFill(maxScaledFit: 2))
+                    .primaryZoomLevel(.fill)
+                    .secondaryZoomLevel(.fit)
                     .ignoresSafeArea()
                 }
                 .aspectRatio(contentMode: .fit)
