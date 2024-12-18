@@ -104,7 +104,10 @@ struct UserGalleryLikeView: View {
             logger.error("Skipping prefetch due to too small geometry: \(String(describing: geometry.size))")
             return
         }
-        let previews = filteredPreviews
+        // When user cancels search, the list can contain several thousands of previews.
+        // It's unlikely that they will scroll down this much. And if they do, avatars
+        // and thumbnails will download on the fly. Less optimal experience but still fine.
+        let previews = Array(filteredPreviews.prefix(200))
         prefetchThumbnails(for: previews, availableWidth: thumbnailsWidth)
         prefetchAvatars(for: previews)
     }
