@@ -10,15 +10,25 @@ import Version
 
 struct Release: Decodable {
     let html_url: String
-    let draft: Bool
-    let prerelease: Bool
-    let published_at: String
-    let tag_name: String
+    private let draft: Bool
+    private let prerelease: Bool
+    private let published_at: String
+    private let tag_name: String
     let name: String
     let body: String
     
     var version: Version {
         Version(tolerant: tag_name) ?? Version(0,0,0)
+    }
+}
+
+extension Version {
+    var shortDescription: String {
+        if patch != 0 {
+            "\(major).\(minor).\(patch)"
+        } else {
+            "\(major).\(minor)"
+        }
     }
 }
 

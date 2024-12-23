@@ -30,9 +30,9 @@ struct SettingsView: View {
                 Link("Website", destination: URL(string: "https://furaffinity.app")!)
                 Link("Privacy policy", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/blob/main/Privacy%20Policy.md")!)
                 Link("Feature request & bug report", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/issues")!)
-                Text("Current version: " + model.appInfo.currentVersion.description)
+                Text("Current version: " + model.appInfo.currentVersion.shortDescription)
                 Text("Latest available version: "
-                     + (model.appInfo.latestRelease?.tag_name ?? "…"))
+                     + (model.appInfo.latestRelease?.version.shortDescription ?? "…"))
                 
                 if let latestRelease = model.appInfo.latestRelease,
                    let isUpToDate = model.appInfo.isUpToDate,
