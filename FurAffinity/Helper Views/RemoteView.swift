@@ -77,7 +77,7 @@ struct PreviewableRemoteView<Contents: Sendable, ContentsView: View, PreviewView
             await update()
         }
         .toolbar {
-            ToolbarItem {
+            ToolbarItem(placement: .primaryAction) {
                 Link(destination: url) {
                     Image(systemName: "safari")
                 }

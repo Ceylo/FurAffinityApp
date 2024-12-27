@@ -8,16 +8,35 @@
 import Foundation
 @preconcurrency import SwiftSoup
 
-public enum FAFolderItem: Sendable, Equatable {
-    case section(title: String)
-    case folder(title: String, url: URL)
+public struct FAFolderGroup: Sendable, Hashable, Identifiable {
+    public let title: String?
+    public let folders: [FAFolder]
+    public let id = UUID()
+    
+    public init(title: String?, folders: [FAFolder]) {
+        self.title = title
+        self.folders = folders
+    }
+}
+
+public struct FAFolder: Sendable, Hashable, Identifiable {
+    public let title: String
+    public let url: URL
+    public let isActive: Bool
+    public let id = UUID()
+    
+    public init(title: String, url: URL, isActive: Bool) {
+        self.title = title
+        self.url = url
+        self.isActive = isActive
+    }
 }
 
 public struct FAUserGalleryLikePage: Sendable {
     public let previews: [FASubmissionsPage.Submission?]
     public let displayAuthor: String
     public let nextPageUrl: URL?
-    public let folderItems: [FAFolderItem]
+    public let folderGroups: [FAFolderGroup]
 }
 
 extension FAUserGalleryLikePage {
@@ -55,16 +74,16 @@ extension FAUserGalleryLikePage {
                 self.nextPageUrl = nil
             }
             
-            let folderItemsQuery = "div#page-galleryscraps div#columnpage div.sidebar div.folder-list div.user-folders"
+            let folderItemsQuery = "div#page-galleryscraps div#columnpage div div.folder-list div.user-folders"
             let userItems = try siteContentNode.select(folderItemsQuery)
-            self.folderItems = try Self.parseFolderItems(from: userItems, currentUrl: url)
+            self.folderGroups = try Self.parseFolderGroups(from: userItems, currentUrl: url)
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil
         }
     }
     
-    static func parseFolderItems(from node: SwiftSoup.Elements, currentUrl: URL) throws -> [FAFolderItem] {
+    static func parseFolderGroups(from node: SwiftSoup.Elements, currentUrl: URL) throws -> [FAFolderGroup] {
         enum Error: Swift.Error {
             case unexpectedStructure
         }
@@ -77,8 +96,12 @@ extension FAUserGalleryLikePage {
             }
         }
         
-        func parseFolder(in liNode: SwiftSoup.Element) throws -> FAFolderItem {
-            let title = try liNode.text()
+        func parseFolder(in liNode: SwiftSoup.Element) throws -> FAFolder {
+            var title = try liNode.text()
+            if title.starts(with: "❯❯ ") {
+                title = String(title.dropFirst(3))
+            }
+            let isActive = liNode.hasClass("active")
             let url: URL
             if let linkNode = try? liNode.select("a").first() {
                 let urlStr = try linkNode.attr("href")
@@ -86,24 +109,32 @@ extension FAUserGalleryLikePage {
             } else {
                 url = currentUrl
             }
-            return .folder(title: title, url: url)
+            return .init(title: title, url: url, isActive: isActive)
         }
         
-        var folderItems = [FAFolderItem]()
+        var folderGroups = [FAFolderGroup]()
+        var unfinishedFolderGroupTitle: String?
+        
         for child in node[0].children() {
             if child.tagName() == "div" && child.hasClass("container-item-top") {
-                let title = try child.text()
-                folderItems.append(.section(title: title))
-            } else if child.tagName() == "div" && child.hasClass("default-folders") {
-                folderItems.append(contentsOf: try child.select("li").map(parseFolder))
-            } else if child.tagName() == "ul" {
-                folderItems.append(contentsOf: try child.select("li").map(parseFolder))
+                unfinishedFolderGroupTitle = try child.text()
+            } else if (child.tagName() == "div" && child.hasClass("default-folders")) || child.tagName() == "ul" {
+                // HTML structure is modified on mobile and first item is missing
+                if unfinishedFolderGroupTitle == nil && folderGroups.isEmpty {
+                    unfinishedFolderGroupTitle = "Gallery Folders"
+                }
+                let folders = try child.select("li").map(parseFolder)
+                folderGroups.append(.init(
+                    title: unfinishedFolderGroupTitle.take(),
+                    folders: folders
+                ))
             } else {
                 let html = (try? child.html()) ?? ""
                 logger.error("Unhandled tag \(child.tagName(), privacy: .public) in \(html, privacy: .public)")
                 throw Error.unexpectedStructure
             }
         }
-        return folderItems
+        
+        return folderGroups
     }
 }

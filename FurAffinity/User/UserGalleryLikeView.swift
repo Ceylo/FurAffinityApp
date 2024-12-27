@@ -96,6 +96,31 @@ struct UserGalleryLikeView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("\(gallery.displayAuthor)'s \(galleryType)")
+        .toolbar { foldersMenu }
+        
+    }
+    
+    @ViewBuilder
+    var foldersMenu: some View {
+        if !gallery.folderGroups.isEmpty {
+            Menu {
+                ForEach(gallery.folderGroups) { group in
+                    if let title = group.title {
+                        Divider()
+                        Text(title)
+                    }
+                    Divider()
+                    
+                    ForEach(group.folders, id: \.hashValue) { folder in
+                        FALink(destination: .gallery(url: folder.url)) {
+                            Text(folder.title)
+                        }
+                    }
+                }
+            } label: {
+                Label("Folders", systemImage: "folder")
+            }
+        }
     }
     
     func prefetch(with geometry: GeometryProxy) {
@@ -113,12 +138,17 @@ struct UserGalleryLikeView: View {
     }
 }
 
-// MARK: -
+// MARK: - Previews
 #Preview {
     NavigationStack {
         UserGalleryLikeView(
             galleryType: .favorites,
-            gallery: .init(displayAuthor: "Some User", previews: OfflineFASession.default.submissionPreviews, nextPageUrl: nil),
+            gallery: .init(
+                displayAuthor: "Some User",
+                previews: OfflineFASession.default.submissionPreviews,
+                nextPageUrl: nil,
+                folderGroups: FAUserGalleryLike.FolderGroup.demo
+            ),
             loadMore: { _ in }
         )
     }
@@ -129,7 +159,7 @@ struct UserGalleryLikeView: View {
     NavigationStack {
         UserGalleryLikeView(
             galleryType: .favorites,
-            gallery: .init(displayAuthor: "Some User", previews: [], nextPageUrl: nil),
+            gallery: .init(displayAuthor: "Some User", previews: [], nextPageUrl: nil, folderGroups: []),
             loadMore: { _ in }
         )
     }
