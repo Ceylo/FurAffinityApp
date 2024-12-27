@@ -11,11 +11,12 @@ import Foundation
 public struct FAFolderGroup: Sendable, Hashable, Identifiable {
     public let title: String?
     public let folders: [FAFolder]
-    public let id = UUID()
+    public let id: UUID
     
-    public init(title: String?, folders: [FAFolder]) {
+    public init(title: String?, folders: [FAFolder], id: UUID = UUID()) {
         self.title = title
         self.folders = folders
+        self.id = id
     }
 }
 
@@ -23,12 +24,13 @@ public struct FAFolder: Sendable, Hashable, Identifiable {
     public let title: String
     public let url: URL
     public let isActive: Bool
-    public let id = UUID()
+    public let id: UUID
     
-    public init(title: String, url: URL, isActive: Bool) {
+    public init(title: String, url: URL, isActive: Bool, id: UUID = UUID()) {
         self.title = title
         self.url = url
         self.isActive = isActive
+        self.id = id
     }
 }
 

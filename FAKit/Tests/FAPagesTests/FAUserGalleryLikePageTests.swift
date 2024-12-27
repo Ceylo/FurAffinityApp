@@ -8,6 +8,25 @@
 import XCTest
 @testable import FAPages
 
+extension [FAFolderGroup] {
+    func ignoringUUID() -> Self {
+        map { $0.ignoringUUID() }
+    }
+}
+
+extension FAFolderGroup {
+    func ignoringUUID() -> Self {
+        let folders = self.folders.map { $0.ignoringUUID() }
+        return Self.init(title: title, folders: folders, id: UUID(uuid: UUID_NULL))
+    }
+}
+
+extension FAFolder {
+    func ignoringUUID() -> Self {
+        Self.init(title: title, url: url, isActive: isActive, id: UUID(uuid: UUID_NULL))
+    }
+}
+
 final class FAUserGalleryLikePageTests: XCTestCase {
     let tiaamaitoFolders: [FAFolderGroup] = [
         .init(title: "Gallery Folders", folders: [
@@ -78,7 +97,7 @@ final class FAUserGalleryLikePageTests: XCTestCase {
             URL(string: "https://www.furaffinity.net/gallery/tiaamaito/2/")!,
             page.nextPageUrl
         )
-        XCTAssertEqual(tiaamaitoFolders, page.folderGroups)
+        XCTAssertEqual(tiaamaitoFolders.ignoringUUID(), page.folderGroups.ignoringUUID())
     }
     
     func testEmptyGalleryPage_parsedWithNoContent() async throws {
