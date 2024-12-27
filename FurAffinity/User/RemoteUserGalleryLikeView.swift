@@ -12,14 +12,16 @@ struct RemoteUserGalleryLikeView: View {
     var galleryType: GalleryType
     var url: URL
     @EnvironmentObject var model: Model
+    @State private var modifiedUrl: URL?
     
     var body: some View {
-        RemoteView(url: url, contentsLoader: {
+        RemoteView(url: modifiedUrl ?? url, contentsLoader: {
             await model.session?.galleryLike(for: url)
         }, contentsViewBuilder: { gallery, updateHandler in
             UserGalleryLikeView(
                 galleryType: galleryType,
-                gallery: gallery) { latestGallery in
+                gallery: gallery,
+                loadMore: { latestGallery in
                     guard let nextUrl = latestGallery.nextPageUrl else {
                         logger.error("Next page requested but there is none!")
                         return
@@ -30,7 +32,15 @@ struct RemoteUserGalleryLikeView: View {
                         let updated = nextGallery.map { latestGallery.appending($0) }
                         updateHandler.update(with: updated)
                     }
+                },
+                updateSourceUrl: { source in
+                    Task {
+                        let updated = await model.session?.galleryLike(for: source)
+                        updateHandler.update(with: updated)
+                        modifiedUrl = source
+                    }
                 }
+            )
         })
     }
 }

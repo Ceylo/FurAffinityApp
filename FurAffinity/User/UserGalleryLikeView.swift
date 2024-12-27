@@ -28,6 +28,7 @@ struct UserGalleryLikeView: View {
     var galleryType: GalleryType
     var gallery: FAUserGalleryLike
     var loadMore: (_ galleryLike: FAUserGalleryLike) -> Void
+    var updateSourceUrl: (_ url: URL) -> Void
     @State private var searchText = ""
     
     var filteredPreviews: [FASubmissionPreview] {
@@ -112,8 +113,8 @@ struct UserGalleryLikeView: View {
                     Divider()
                     
                     ForEach(group.folders, id: \.hashValue) { folder in
-                        FALink(destination: .gallery(url: folder.url)) {
-                            Text(folder.title)
+                        Button(folder.title) {
+                            updateSourceUrl(folder.url)
                         }
                     }
                 }
@@ -149,7 +150,8 @@ struct UserGalleryLikeView: View {
                 nextPageUrl: nil,
                 folderGroups: FAUserGalleryLike.FolderGroup.demo
             ),
-            loadMore: { _ in }
+            loadMore: { _ in },
+            updateSourceUrl: { _ in }
         )
     }
     .environmentObject(Model.demo)
@@ -160,7 +162,8 @@ struct UserGalleryLikeView: View {
         UserGalleryLikeView(
             galleryType: .favorites,
             gallery: .init(displayAuthor: "Some User", previews: [], nextPageUrl: nil, folderGroups: []),
-            loadMore: { _ in }
+            loadMore: { _ in },
+            updateSourceUrl: { _ in }
         )
     }
     .environmentObject(Model.empty)
