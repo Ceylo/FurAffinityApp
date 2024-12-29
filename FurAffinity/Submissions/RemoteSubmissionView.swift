@@ -22,10 +22,10 @@ struct RemoteSubmissionView: View {
     var body: some View {
         PreviewableRemoteView(
             url: url,
-            contentsLoader: { url in
+            dataSource: { url in
                 await model.session?.submission(for: url)
             },
-            previewViewBuilder: {
+            preview: {
                 previewData.map {
                     SubmissionPreviewView(
                         submission: $0,
@@ -33,7 +33,7 @@ struct RemoteSubmissionView: View {
                     )
                 }
             },
-            contentsViewBuilder: { submission, updateHandler in
+            view: { submission, updateHandler in
                 SubmissionView(
                     submission: submission,
                     avatarUrl: FAURLs.avatarUrl(for: submission.author),

@@ -15,8 +15,8 @@ struct RemoteWatchlistView: View {
     var body: some View {
         RemoteView(url: url) { url in
             await model.session?.watchlist(for: url)
-        } contentsViewBuilder: { contents, updateHandler in
-            WatchlistView(watchlist: contents) { latestWatchlist in
+        } view: { watchlist, updateHandler in
+            WatchlistView(watchlist: watchlist) { latestWatchlist in
                 guard let nextUrl = latestWatchlist.nextPageUrl else {
                     logger.error("Next page requested but there is none!")
                     return

@@ -7,11 +7,11 @@
 
 import SwiftUI
 
-protocol UpdateHandler<Contents> {
-    associatedtype Contents: Sendable
+protocol UpdateHandler<Data> {
+    associatedtype Data: Sendable
     
     @MainActor
-    func update(with contents: Contents?)
+    func update(with data: Data?)
 }
 
 /// `PreviewableRemoteView` provides common behavior for remotely loaded content, such as:
@@ -19,46 +19,46 @@ protocol UpdateHandler<Contents> {
 /// - displaying a incomplete view until the content is loaded
 /// - allowing pull to refresh
 /// - giving web access to the content
-struct PreviewableRemoteView<Contents: Sendable, ContentsView: View, PreviewView: View>: View, UpdateHandler {
+struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: View>: View, UpdateHandler {
     init(
         url: URL,
-        contentsLoader: @escaping (_ sourceUrl: URL) async -> Contents?,
-        @ViewBuilder previewViewBuilder: @escaping () -> PreviewView? = { nil }, contentsViewBuilder:
-        @escaping (Contents, any UpdateHandler<Contents>) -> ContentsView
+        dataSource: @escaping (_ sourceUrl: URL) async -> Data?,
+        @ViewBuilder preview: @escaping () -> PreviewView? = { nil },
+        view: @escaping (Data, any UpdateHandler<Data>) -> ContentsView
     ) {
         self.url = url
-        self.contentsLoader = contentsLoader
-        self.previewViewBuilder = previewViewBuilder
-        self.contentsViewBuilder = contentsViewBuilder
+        self.dataSource = dataSource
+        self.preview = preview
+        self.view = view
     }
     
     var url: URL
-    var contentsLoader: (_ sourceUrl: URL) async -> Contents?
-    @ViewBuilder var previewViewBuilder: () -> PreviewView?
-    var contentsViewBuilder: (
-        _ contents: Contents,
-        _ updateHandler: any UpdateHandler<Contents>
+    var dataSource: (_ sourceUrl: URL) async -> Data?
+    @ViewBuilder var preview: () -> PreviewView?
+    var view: (
+        _ data: Data,
+        _ updateHandler: any UpdateHandler<Data>
     ) -> ContentsView
     
-    private enum ContentsState {
-        case loaded(Contents)
+    private enum DataState {
+        case loaded(Data)
         case failed
     }
-    @State private var contentsState: ContentsState?
+    @State private var dataState: DataState?
     
     var body: some View {
         Group {
-            if let contentsState {
-                switch contentsState {
-                case .loaded(let contents):
-                    contentsViewBuilder(contents, self)
+            if let dataState {
+                switch dataState {
+                case .loaded(let data):
+                    view(data, self)
                 case .failed:
                     ScrollView {
                         LoadingFailedView(url: url)
                     }
                 }
             } else {
-                if let preview = previewViewBuilder() {
+                if let preview = preview() {
                     preview
                 } else {
                     VStack(spacing: 20) {
@@ -69,7 +69,7 @@ struct PreviewableRemoteView<Contents: Sendable, ContentsView: View, PreviewView
             }
         }
         .task {
-            if contentsState == nil {
+            if dataState == nil {
                 await update()
             }
         }
@@ -91,17 +91,17 @@ struct PreviewableRemoteView<Contents: Sendable, ContentsView: View, PreviewView
     }
     
     func update() async {
-        let contents = await contentsLoader(url)
-        update(with: contents)
+        let data = await dataSource(url)
+        update(with: data)
     }
 
-    func update(with contents: Contents?) {
-        if let contents {
-            self.contentsState = .loaded(contents)
+    func update(with data: Data?) {
+        if let data {
+            self.dataState = .loaded(data)
         } else {
-            self.contentsState = .failed
+            self.dataState = .failed
         }
     }
 }
 
-typealias RemoteView<Contents: Sendable, ContentsView: View> = PreviewableRemoteView<Contents, ContentsView, EmptyView>
+typealias RemoteView<Data: Sendable, ContentsView: View> = PreviewableRemoteView<Data, ContentsView, EmptyView>

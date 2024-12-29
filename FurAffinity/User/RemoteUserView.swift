@@ -50,13 +50,13 @@ struct RemoteUserView: View {
     var body: some View {
         PreviewableRemoteView(
             url: url,
-            contentsLoader: loadUser,
-            previewViewBuilder: {
+            dataSource: loadUser,
+            preview: {
                 if let augmentedPreviewData {
                     UserPreviewView(preview: augmentedPreviewData)
                 }
             },
-            contentsViewBuilder: { user, updateHandler in
+            view: { user, updateHandler in
                 UserView(
                     user: user,
                     description: $description,

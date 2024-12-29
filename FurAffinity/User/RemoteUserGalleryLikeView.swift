@@ -15,28 +15,31 @@ struct RemoteUserGalleryLikeView: View {
     @State private var modifiedUrl: URL?
     
     var body: some View {
-        RemoteView(url: modifiedUrl ?? url, contentsLoader: { url in
-            await model.session?.galleryLike(for: url)
-        }, contentsViewBuilder: { gallery, updateHandler in
-            UserGalleryLikeView(
-                galleryType: galleryType,
-                gallery: gallery,
-                loadMore: { latestGallery in
-                    guard let nextUrl = latestGallery.nextPageUrl else {
-                        logger.error("Next page requested but there is none!")
-                        return
+        RemoteView(
+            url: modifiedUrl ?? url,
+            dataSource: { url in
+                await model.session?.galleryLike(for: url)
+            },
+            view: { gallery, updateHandler in
+                UserGalleryLikeView(
+                    galleryType: galleryType,
+                    gallery: gallery,
+                    loadMore: { latestGallery in
+                        guard let nextUrl = latestGallery.nextPageUrl else {
+                            logger.error("Next page requested but there is none!")
+                            return
+                        }
+                        
+                        Task {
+                            let nextGallery = await model.session?.galleryLike(for: nextUrl)
+                            let updated = nextGallery.map { latestGallery.appending($0) }
+                            updateHandler.update(with: updated)
+                        }
+                    },
+                    updateSource: { source in
+                        modifiedUrl = source
                     }
-                    
-                    Task {
-                        let nextGallery = await model.session?.galleryLike(for: nextUrl)
-                        let updated = nextGallery.map { latestGallery.appending($0) }
-                        updateHandler.update(with: updated)
-                    }
-                },
-                updateSource: { source in
-                    modifiedUrl = source
-                }
-            )
+                )
         })
     }
 }
