@@ -102,11 +102,10 @@ struct UserGalleryLikeView: View {
                         Button {
                             updateSource(folder.url)
                         } label: {
-                            HStack {
+                            if folder.isActive {
+                                Label(folder.title, systemImage: "checkmark")
+                            } else {
                                 Text(folder.title)
-                                if folder.isActive {
-                                    Image(systemName: "checkmark")
-                                }
                             }
                         }
                     }
