@@ -22,7 +22,7 @@ protocol UpdateHandler<Data> {
 struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: View>: View, UpdateHandler {
     init(
         url: URL,
-        dataSource: @escaping (_ sourceUrl: URL) async -> Data?,
+        dataSource: @escaping (_ sourceUrl: URL) async throws -> Data?,
         @ViewBuilder preview: @escaping () -> PreviewView? = { nil },
         view: @escaping (Data, any UpdateHandler<Data>) -> ContentsView
     ) {
@@ -33,7 +33,7 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
     }
     
     var url: URL
-    var dataSource: (_ sourceUrl: URL) async -> Data?
+    var dataSource: (_ sourceUrl: URL) async throws -> Data?
     @ViewBuilder var preview: () -> PreviewView?
     var view: (
         _ data: Data,
@@ -42,9 +42,18 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
     
     private enum DataState {
         case loaded(Data)
+        case updating(oldData: Data)
         case failed
     }
     @State private var dataState: DataState?
+    
+    var loadingView: some View {
+        VStack(spacing: 20) {
+            ProgressView()
+            Link("Waiting for \(url.host(percentEncoded: false) ?? "?")…", destination: url)
+                .fixedSize()
+        }
+    }
     
     var body: some View {
         Group {
@@ -52,6 +61,14 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
                 switch dataState {
                 case .loaded(let data):
                     view(data, self)
+                case .updating(let oldData):
+                    view(oldData, self)
+                        .overlay {
+                            loadingView
+                                .padding(20)
+                                .background(.thinMaterial)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
                 case .failed:
                     ScrollView {
                         LoadingFailedView(url: url)
@@ -61,10 +78,7 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
                 if let preview = preview() {
                     preview
                 } else {
-                    VStack(spacing: 20) {
-                        ProgressView()
-                        Link("Waiting for \(url.host(percentEncoded: false) ?? "?")…", destination: url)
-                    }
+                    loadingView
                 }
             }
         }
@@ -77,6 +91,16 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
             await update()
         }
         .onChange(of: url) {
+            let newState: DataState? = switch dataState {
+            case .loaded(let data):
+                    .updating(oldData: data)
+            case .updating(let oldData):
+                    .updating(oldData: oldData)
+            case .failed, nil:
+                nil
+            }
+            
+            dataState = newState
             Task {
                 await update()
             }
@@ -91,7 +115,7 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
     }
     
     func update() async {
-        let data = await dataSource(url)
+        let data = try? await dataSource(url)
         update(with: data)
     }
 
@@ -105,3 +129,21 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
 }
 
 typealias RemoteView<Data: Sendable, ContentsView: View> = PreviewableRemoteView<Data, ContentsView, EmptyView>
+
+#Preview {
+    @Previewable
+    @State var url = URL(string: "https://www.furaffinity.net/")!
+    
+    RemoteView(url: url) { sourceUrl in
+        try await Task.sleep(for: .seconds(1))
+        return sourceUrl
+    } view: { data, updateHandler in
+        VStack {
+            Text(data.absoluteString)
+            Button("Update") {
+                url = url.appending(component: "hi")
+            }
+        }
+        .border(.red)
+    }
+}
