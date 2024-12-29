@@ -12,7 +12,6 @@ enum UserProfileControl: Int, CaseIterable, Identifiable {
     var id: Int { rawValue }
 
     case gallery
-    case scraps
     case favorites
     case journals
     case watching
@@ -23,8 +22,7 @@ extension UserProfileControl {
     var title: String {
         switch self {
         case .gallery: "Gallery"
-        case .scraps: "Scraps"
-        case .favorites: "Favs"
+        case .favorites: "Favorites"
         case .journals: "Journals"
         case .watching: "Watching"
         case .watchedBy: "Watched By"
@@ -35,9 +33,6 @@ extension UserProfileControl {
         switch self {
         case .gallery:
             FAURLs.galleryUrl(for: user)
-                .convertedForInAppNavigation
-        case .scraps:
-            FAURLs.scrapsUrl(for: user)
                 .convertedForInAppNavigation
         case .favorites:
             FAURLs.favoritesUrl(for: user)
