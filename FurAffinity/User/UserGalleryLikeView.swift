@@ -45,52 +45,39 @@ struct UserGalleryLikeView: View {
     
     var body: some View {
         Group {
-            if gallery.previews.isEmpty {
-                ScrollView {
-                    VStack(spacing: 10) {
-                        Text("It's a bit empty in here.")
-                            .font(.headline)
-                        Text("There's nothing to see in \(gallery.displayAuthor)'s \(galleryType) yet.")
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding()
-                }
-            } else {
-                GeometryReader { geometry in
-                    List {
-                        ForEach(filteredPreviews) { preview in
-                            NavigationLink(
-                                value: FAURL.submission(url: preview.url, previewData: preview)
-                            ) {
-                                if galleryType.shouldDisplayAuthor {
-                                    SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
-                                } else {
-                                    SubmissionFeedItemView<TitledHeaderView>(submission: preview)
-                                }
+            GeometryReader { geometry in
+                List {
+                    ForEach(filteredPreviews) { preview in
+                        NavigationLink(
+                            value: FAURL.submission(url: preview.url, previewData: preview)
+                        ) {
+                            if galleryType.shouldDisplayAuthor {
+                                SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
+                            } else {
+                                SubmissionFeedItemView<TitledHeaderView>(submission: preview)
                             }
-                            .id(preview.sid)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                         }
-                        
-                        ProgressiveLoadItem(
-                            label: "Loading more submissions…",
-                            currentData: gallery,
-                            loadMoreData: loadMore
-                        )
-                        
-                        ListCounter(
-                            name: "submission",
-                            fullList: gallery.previews,
-                            filteredList: filteredPreviews
-                        )
+                        .id(preview.sid)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                     }
-                    .listStyle(.plain)
-                    .searchable(text: $searchText)
-                    .onChange(of: filteredPreviews, initial: true) {
-                        prefetch(with: geometry)
-                    }
+                    
+                    ProgressiveLoadItem(
+                        label: "Loading more submissions…",
+                        currentData: gallery,
+                        loadMoreData: loadMore
+                    )
+                    
+                    ListCounter(
+                        name: "submission",
+                        fullList: gallery.previews,
+                        filteredList: filteredPreviews
+                    )
+                }
+                .listStyle(.plain)
+                .searchable(text: $searchText)
+                .onChange(of: filteredPreviews, initial: true) {
+                    prefetch(with: geometry)
                 }
             }
         }
