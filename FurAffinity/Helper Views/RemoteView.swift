@@ -46,6 +46,7 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
         case failed
     }
     @State private var dataState: DataState?
+    @State private var showUpdateLoadingView = false
     
     var loadingView: some View {
         VStack(spacing: 20) {
@@ -62,13 +63,17 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
                 case .loaded(let data):
                     view(data, self)
                 case .updating(let oldData):
-                    view(oldData, self)
-                        .overlay {
+                    ZStack {
+                        view(oldData, self)
+                        
+                        if showUpdateLoadingView {
                             loadingView
                                 .padding(20)
                                 .background(.thinMaterial)
                                 .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
+                    }
+                    .modifier(DelayedToggle(toggle: $showUpdateLoadingView, delay: .seconds(1)))
                 case .failed:
                     ScrollView {
                         LoadingFailedView(url: url)
