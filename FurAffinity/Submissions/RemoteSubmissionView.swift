@@ -22,7 +22,7 @@ struct RemoteSubmissionView: View {
     var body: some View {
         PreviewableRemoteView(
             url: url,
-            contentsLoader: {
+            contentsLoader: { url in
                 await model.session?.submission(for: url)
             },
             previewViewBuilder: {

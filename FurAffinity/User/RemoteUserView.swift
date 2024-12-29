@@ -14,7 +14,7 @@ struct RemoteUserView: View {
     @EnvironmentObject var model: Model
     @State private var description: AttributedString?
     
-    private func loadUser() async -> FAUser? {
+    private func loadUser(from url: URL) async -> FAUser? {
         guard let session = model.session else { return nil }
         
         let user = await session.user(for: url)

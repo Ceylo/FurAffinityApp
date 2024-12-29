@@ -13,7 +13,7 @@ struct RemoteUserJournalsView: View {
     @EnvironmentObject var model: Model
     
     var body: some View {
-        RemoteView(url: url) {
+        RemoteView(url: url) { url in
             await model.session?.journals(for: url)
         } contentsViewBuilder: { contents, updateHandler in
             UserJournalsView(journals: contents)

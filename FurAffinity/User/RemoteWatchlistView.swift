@@ -13,7 +13,7 @@ struct RemoteWatchlistView: View {
     @EnvironmentObject var model: Model
     
     var body: some View {
-        RemoteView(url: url) {
+        RemoteView(url: url) { url in
             await model.session?.watchlist(for: url)
         } contentsViewBuilder: { contents, updateHandler in
             WatchlistView(watchlist: contents) { latestWatchlist in

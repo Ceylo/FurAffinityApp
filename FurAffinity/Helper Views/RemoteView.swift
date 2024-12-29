@@ -22,7 +22,7 @@ protocol UpdateHandler<Contents> {
 struct PreviewableRemoteView<Contents: Sendable, ContentsView: View, PreviewView: View>: View, UpdateHandler {
     init(
         url: URL,
-        contentsLoader: @escaping () async -> Contents?,
+        contentsLoader: @escaping (_ sourceUrl: URL) async -> Contents?,
         @ViewBuilder previewViewBuilder: @escaping () -> PreviewView? = { nil }, contentsViewBuilder:
         @escaping (Contents, any UpdateHandler<Contents>) -> ContentsView
     ) {
@@ -33,7 +33,7 @@ struct PreviewableRemoteView<Contents: Sendable, ContentsView: View, PreviewView
     }
     
     var url: URL
-    var contentsLoader: () async -> Contents?
+    var contentsLoader: (_ sourceUrl: URL) async -> Contents?
     @ViewBuilder var previewViewBuilder: () -> PreviewView?
     var contentsViewBuilder: (
         _ contents: Contents,
@@ -76,6 +76,11 @@ struct PreviewableRemoteView<Contents: Sendable, ContentsView: View, PreviewView
         .refreshable {
             await update()
         }
+        .onChange(of: url) {
+            Task {
+                await update()
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Link(destination: url) {
@@ -86,7 +91,7 @@ struct PreviewableRemoteView<Contents: Sendable, ContentsView: View, PreviewView
     }
     
     func update() async {
-        let contents = await contentsLoader()
+        let contents = await contentsLoader(url)
         update(with: contents)
     }
 

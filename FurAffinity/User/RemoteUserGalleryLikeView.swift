@@ -15,7 +15,7 @@ struct RemoteUserGalleryLikeView: View {
     @State private var modifiedUrl: URL?
     
     var body: some View {
-        RemoteView(url: modifiedUrl ?? url, contentsLoader: {
+        RemoteView(url: modifiedUrl ?? url, contentsLoader: { url in
             await model.session?.galleryLike(for: url)
         }, contentsViewBuilder: { gallery, updateHandler in
             UserGalleryLikeView(
@@ -33,12 +33,8 @@ struct RemoteUserGalleryLikeView: View {
                         updateHandler.update(with: updated)
                     }
                 },
-                updateSourceUrl: { source in
-                    Task {
-                        let updated = await model.session?.galleryLike(for: source)
-                        updateHandler.update(with: updated)
-                        modifiedUrl = source
-                    }
+                updateSource: { source in
+                    modifiedUrl = source
                 }
             )
         })
