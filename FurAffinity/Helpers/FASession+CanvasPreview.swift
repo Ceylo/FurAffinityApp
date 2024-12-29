@@ -222,6 +222,10 @@ extension FASubmissionPreview {
 
 extension FAUserGalleryLike.FolderGroup {
     static let demo: [FAUserGalleryLike.FolderGroup] = [
+        .init(title: "Gallery Folders", folders: [
+            .init(title: "Main Gallery", url: URL(string: "https://www.furaffinity.net/gallery/tiaamaito/")!, isActive: true),
+            .init(title: "Scraps", url: URL(string: "https://www.furaffinity.net/scraps/tiaamaito/")!, isActive: false)
+        ]),
         .init(title: "Personal", folders: [
             .init(title: "Chuvareu", url: URL(string: "https://www.furaffinity.net/gallery/tiaamaito/folder/147920/Chuvareu")!, isActive: false),
             .init(title: "Chuvareu Comic (archieved)", url: URL(string: "https://www.furaffinity.net/gallery/tiaamaito/folder/292599/Chuvareu-Comic-archieved")!, isActive: false),

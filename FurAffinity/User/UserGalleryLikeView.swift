@@ -113,8 +113,15 @@ struct UserGalleryLikeView: View {
                     Divider()
                     
                     ForEach(group.folders, id: \.hashValue) { folder in
-                        Button(folder.title) {
+                        Button {
                             updateSource(folder.url)
+                        } label: {
+                            HStack {
+                                Text(folder.title)
+                                if folder.isActive {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
                         }
                     }
                 }
