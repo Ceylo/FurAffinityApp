@@ -10,7 +10,6 @@ import FAKit
 
 enum GalleryType {
     case gallery
-    case scraps
     case favorites
     
     var shouldDisplayAuthor: Bool {
