@@ -20,31 +20,40 @@
       "screenshots": [
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.10/screenshots/feed.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.11/screenshots/feed.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.10/screenshots/submission.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.11/screenshots/submission.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.10/screenshots/comments.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.11/screenshots/comments.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.10/screenshots/profile.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.11/screenshots/notifications.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.10/screenshots/notifications.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.11/screenshots/search-field.heic",
           "width": 1170
         }
       ],
       "versions": [
+        {
+          "version": "1.11",
+          "buildVersion": "1",
+          "date": "2025-01-10T23:20:00+02:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n📱 FEATURES\n- Improved submission fullscreen view: you can now use a single tap to display a submission zoomed in and in fullscreen. Then tap one more time to change again the zoom level.\n- The Notifications tab now displays a badge when you have notifications. By default, all supported types of notifications are taken into account, except journal notifications. You can change this behavior in the Settings tab.\n- Scrolling through a user's gallery, scraps or favorites now automatically loads the next page when needed. This effectively makes scrolling infinite as long as more content is available.\n- User's gallery, scraps and favorites now have a search field at the top. Combined with infinite loading, this effectively allows searching through a full gallery, scraps or favorites of any user. Search is case insensitive and done on the submissions title and author.\n\n📦 MISCELLANEOUS\n- Submissions and journals where comments have been disabled is now reflected in the app: the comment icon has a different color and tapping it will inform that posting a comment is not possible.",
+          "downloadURL": "https://get.furaffinity.app/altstore/releases/1.11/adp/",
+          "size": 2468515,
+          "minOSVersion": "17.4"
+        },
         {
           "version": "1.10",
           "buildVersion": "1",

@@ -18,42 +18,51 @@
       "iconURL": "https://get.furaffinity.app/altstore/fa-app-icon.heic",
       "tintColor": null,
       "category": "social",
-      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.10/FurAffinity-1.10-2d0ba50.ipa",
+      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.11/FurAffinity-1.11-037de74.ipa",
       "screenshots": [
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.10/screenshots/feed.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.11/screenshots/feed.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.10/screenshots/submission.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.11/screenshots/submission.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.10/screenshots/comments.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.11/screenshots/comments.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.10/screenshots/profile.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.11/screenshots/notifications.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.10/screenshots/notifications.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.11/screenshots/search-field.heic",
           "width": 1170
         }
       ],
       "screenshotURLs": [
-        "https://get.furaffinity.app/altstore/releases/1.10/screenshots/feed.heic",
-        "https://get.furaffinity.app/altstore/releases/1.10/screenshots/submission.heic",
-        "https://get.furaffinity.app/altstore/releases/1.10/screenshots/comments.heic",
-        "https://get.furaffinity.app/altstore/releases/1.10/screenshots/profile.heic",
-        "https://get.furaffinity.app/altstore/releases/1.10/screenshots/notifications.heic"
+        "https://get.furaffinity.app/altstore/releases/1.11/screenshots/feed.heic",
+        "https://get.furaffinity.app/altstore/releases/1.11/screenshots/submission.heic",
+        "https://get.furaffinity.app/altstore/releases/1.11/screenshots/comments.heic",
+        "https://get.furaffinity.app/altstore/releases/1.11/screenshots/notifications.heic",
+        "https://get.furaffinity.app/altstore/releases/1.11/screenshots/search-field.heic"
       ],
       "versions": [
+        {
+          "version": "1.11",
+          "date": "2025-01-10T23:20:00+02:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n📱 FEATURES\n- Improved submission fullscreen view: you can now use a single tap to display a submission zoomed in and in fullscreen. Then tap one more time to change again the zoom level.\n- The Notifications tab now displays a badge when you have notifications. By default, all supported types of notifications are taken into account, except journal notifications. You can change this behavior in the Settings tab.\n- Scrolling through a user's gallery, scraps or favorites now automatically loads the next page when needed. This effectively makes scrolling infinite as long as more content is available.\n- User's gallery, scraps and favorites now have a search field at the top. Combined with infinite loading, this effectively allows searching through a full gallery, scraps or favorites of any user. Search is case insensitive and done on the submissions title and author.\n\n📦 MISCELLANEOUS\n- Submissions and journals where comments have been disabled is now reflected in the app: the comment icon has a different color and tapping it will inform that posting a comment is not possible.",
+          "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.11/FurAffinity-1.11-037de74.ipa",
+          "size": 2468515,
+          "sha256": "c9eb00ed992336ad699d7392208e5037e24482c1faf54e8abdda1f35f9f9d51f",
+          "minOSVersion": "17.4"
+        },
         {
           "version": "1.10",
           "date": "2024-10-21T11:20:00+02:00",
@@ -118,7 +127,7 @@
       "date": "2024-09-01",
       "tintColor": "#7588c6",
       "notify": true,
-      "url": "https://furaffinity.app/",
-    },
+      "url": "https://furaffinity.app/"
+    }
   ]
 }
