@@ -14,7 +14,6 @@ enum FAURL: Hashable {
     case journal(url: URL)
     case user(url: URL, previewData: UserPreviewData?)
     case gallery(url: URL)
-    case scraps(url: URL)
     case favorites(url: URL)
     case journals(url: URL)
     case watchlist(url: URL)
@@ -51,10 +50,8 @@ extension FAURL {
             self = .journal(url: url)
         case userRegex:
             self = .user(url: url, previewData: nil)
-        case galleryRegex:
+        case galleryRegex, scrapsRegex:
             self = .gallery(url: url)
-        case scrapsRegex:
-            self = .scraps(url: url)
         case favoritesRegex:
             self = .favorites(url: url)
         case journalsRegex:

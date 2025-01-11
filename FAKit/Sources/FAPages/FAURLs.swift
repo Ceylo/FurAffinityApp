@@ -61,10 +61,6 @@ public enum FAURLs {
         URL(string: "https://www.furaffinity.net/gallery/\(username)/")!
     }
     
-    public static func scrapsUrl(for username: String) -> URL {
-        URL(string: "https://www.furaffinity.net/scraps/\(username)/")!
-    }
-    
     public static func favoritesUrl(for username: String) -> URL {
         URL(string: "https://www.furaffinity.net/favorites/\(username)/")!
     }

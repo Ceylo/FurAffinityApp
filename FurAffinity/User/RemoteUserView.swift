@@ -14,7 +14,7 @@ struct RemoteUserView: View {
     @EnvironmentObject var model: Model
     @State private var description: AttributedString?
     
-    private func loadUser() async -> FAUser? {
+    private func loadUser(from url: URL) async -> FAUser? {
         guard let session = model.session else { return nil }
         
         let user = await session.user(for: url)
@@ -50,13 +50,13 @@ struct RemoteUserView: View {
     var body: some View {
         PreviewableRemoteView(
             url: url,
-            contentsLoader: loadUser,
-            previewViewBuilder: {
+            dataSource: loadUser,
+            preview: {
                 if let augmentedPreviewData {
                     UserPreviewView(preview: augmentedPreviewData)
                 }
             },
-            contentsViewBuilder: { user, updateHandler in
+            view: { user, updateHandler in
                 UserView(
                     user: user,
                     description: $description,

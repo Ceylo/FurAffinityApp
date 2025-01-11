@@ -67,7 +67,7 @@ public class OnlineFASession: FASession {
     // MARK: - User gallery
     public func galleryLike(for url: URL) async -> FAUserGalleryLike? {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = await FAUserGalleryLikePage(data: data)
+              let page = await FAUserGalleryLikePage(data: data, url: url)
         else { return nil }
         
         let gallery = FAUserGalleryLike(page)

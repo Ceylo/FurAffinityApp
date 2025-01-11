@@ -13,17 +13,17 @@ struct RemoteJournalView: View {
     @EnvironmentObject var model: Model
     
     var body: some View {
-        RemoteView(url: url, contentsLoader: {
+        RemoteView(url: url, dataSource: { url in
             await model.session?.journal(for: url)
         }) { journal, updateHandler in
             JournalView(journal: journal,
                         replyAction: { parentCid, text in
-                let contents = try? await model
+                let updatedJournal = try? await model
                     .postComment(on: journal,
                                  replytoCid: parentCid,
                                  contents: text)
-                updateHandler.update(with: contents)
-                return contents != nil
+                updateHandler.update(with: updatedJournal)
+                return updatedJournal != nil
             })
         }
     }
