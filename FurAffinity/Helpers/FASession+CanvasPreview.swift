@@ -354,6 +354,7 @@ what you will need to get one.\n<br> - if you got a sketch you can get an upgrad
                 naturalDatetime: "2 weeks ago",
                 description: AttributedString(FAHTML: htmlDescription.selfContainedFAHtmlSubmission),
                 comments: FAComment.demo,
+                targetCommentId: nil,
                 acceptsNewComments: true
             )
         }

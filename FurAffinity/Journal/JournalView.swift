@@ -15,60 +15,86 @@ struct JournalView: View {
     
     @State private var replySession: Commenting.ReplySession?
     
+    var header: some View {
+        AuthoredHeaderView(
+            username: journal.author,
+            displayName: journal.displayAuthor,
+            title: journal.title,
+            avatarUrl: FAURLs.avatarUrl(for: journal.author),
+            datetime: .init(journal.datetime,
+                            journal.naturalDatetime)
+        )
+    }
+    
+    var journalContents: some View {
+        HTMLView(
+            text: journal.description.convertingLinksForInAppNavigation(),
+            initialHeight: 300
+        )
+    }
+    
+    var journalControls: some View {
+        JournalControlsView(
+            journalUrl: journal.url,
+            repliesCount: journal.comments.recursiveCount,
+            acceptsNewReplies: journal.acceptsNewComments,
+            replyAction: {
+                replySession = .init(parentCid: nil, among: [])
+            }
+        )
+    }
+    
+    @ViewBuilder
+    var journalComments: some View {
+        if !journal.comments.isEmpty {
+            Section {
+                CommentsView(
+                    comments: journal.comments,
+                    highlightedCommentId: journal.targetCommentId,
+                    acceptsNewReplies: journal.acceptsNewComments,
+                    replyAction: { cid in
+                        replySession = .init(parentCid: cid, among: journal.comments)
+                    }
+                )
+            } header: {
+                SectionHeader(text: "Comments")
+            }
+        }
+    }
+    
     var body: some View {
-        List {
-            Group {
+        ScrollViewReader { reader in
+            List {
                 Group {
-                    AuthoredHeaderView(
-                        username: journal.author,
-                        displayName: journal.displayAuthor,
-                        title: journal.title,
-                        avatarUrl: FAURLs.avatarUrl(for: journal.author),
-                        datetime: .init(journal.datetime,
-                                        journal.naturalDatetime)
-                    )
-                    Divider()
-                        .padding(.vertical, 5)
+                    Group {
+                        header
+                        Divider()
+                            .padding(.vertical, 5)
+                        journalContents
+                        journalControls
+                    }
+                    .padding(.horizontal, 10)
                     
-                    HTMLView(
-                        text: journal.description.convertingLinksForInAppNavigation(),
-                        initialHeight: 300
-                    )
-                    
-                    JournalControlsView(
-                        journalUrl: journal.url,
-                        repliesCount: journal.comments.recursiveCount,
-                        acceptsNewReplies: journal.acceptsNewComments,
-                        replyAction: {
-                            replySession = .init(parentCid: nil, among: [])
-                        }
-                    )
+                    journalComments
                 }
-                .padding(.horizontal, 10)
+                .listRowSeparator(.hidden)
+                .listRowInsets(.init())
+            }
+            .commentSheet(on: $replySession, replyAction)
+            .navigationTitle(journal.title)
+            .navigationBarTitleDisplayMode(.inline)
+            .listStyle(.plain)
+            .onFirstAppear {
+                prefetchAvatars(for: journal.comments)
                 
-                if !journal.comments.isEmpty {
-                    Section {
-                        CommentsView(
-                            comments: journal.comments,
-                            acceptsNewReplies: journal.acceptsNewComments,
-                            replyAction: { cid in
-                                replySession = .init(parentCid: cid, among: journal.comments)
-                            }
-                        )
-                    } header: {
-                        SectionHeader(text: "Comments")
+                if let targetCommentId = journal.targetCommentId {
+                    Task {
+                        withAnimation {
+                            reader.scrollTo(targetCommentId, anchor: .top)
+                        }
                     }
                 }
             }
-            .listRowSeparator(.hidden)
-            .listRowInsets(.init())
-        }
-        .commentSheet(on: $replySession, replyAction)
-        .navigationTitle(journal.title)
-        .navigationBarTitleDisplayMode(.inline)
-        .listStyle(.plain)
-        .onAppear {
-            prefetchAvatars(for: journal.comments)
         }
     }
 }

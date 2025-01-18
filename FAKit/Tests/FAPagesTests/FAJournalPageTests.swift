@@ -10,7 +10,7 @@ import XCTest
 
 final class FAJournalPageTests: XCTestCase {
     func testSubmissionPageWithComments_isParsed() async throws {
-        let url = URL(string: "https://www.furaffinity.net/view/10516170/")!
+        let url = URL(string: "https://www.furaffinity.net/journal/10516170/")!
         let data = testData("www.furaffinity.net:journal:10516170-withcomments.html")
         let page = await FAJournalPage(data: data, url: url)
         XCTAssertNotNil(page)
@@ -46,6 +46,7 @@ final class FAJournalPageTests: XCTestCase {
             naturalDatetime: "2 weeks ago",
             htmlDescription: expectedHtmlDescription,
             comments: expectedComments,
+            targetCommentId: nil,
             acceptsNewComments: true
         )
         

@@ -16,6 +16,7 @@ public struct FAJournalPage: Equatable, Sendable {
     public let naturalDatetime: String
     public let htmlDescription: String
     public let comments: [FAPageComment]
+    public let targetCommentId: Int?
     public let acceptsNewComments: Bool
 }
 
@@ -63,6 +64,10 @@ extension FAJournalPage {
             self.comments = try await commentNodes
                 .parallelMap { try FAPageComment($0, type: .comment) }
                 .compactMap { $0 }
+            
+            self.targetCommentId = url.absoluteString
+                .substring(matching: #"www\.furaffinity\.net\/journal\/\d+\/#cid:(\d+)$"#)
+                .flatMap { Int($0) }
             
             let commentsDisabledNode = try siteContentNode.select("div#columnpage div#responsebox")
             let commentsDisabled = try commentsDisabledNode.text().contains("Comment posting has been disabled")
