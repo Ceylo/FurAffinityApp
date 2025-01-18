@@ -78,7 +78,7 @@ public class OnlineFASession: FASession {
     // MARK: - Submissions
     public func submission(for url: URL) async -> FASubmission? {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = await FASubmissionPage(data: data)
+              let page = await FASubmissionPage(data: data, url: url)
         else { return nil }
         
         return try? await FASubmission(page, url: url)
@@ -86,7 +86,7 @@ public class OnlineFASession: FASession {
     
     public func toggleFavorite(for submission: FASubmission) async -> FASubmission? {
         guard let data = await dataSource.httpData(from: submission.favoriteUrl, cookies: cookies),
-              let page = await FASubmissionPage(data: data)
+              let page = await FASubmissionPage(data: data, url: submission.url)
         else { return nil }
         
         return try? await FASubmission(page, url: submission.url)
@@ -103,7 +103,7 @@ public class OnlineFASession: FASession {
         ]
         
         guard let data = await dataSource.httpData(from: commentable.url, cookies: cookies, method: .POST, parameters: params),
-              let page = await C.PageType(data: data)
+              let page = await C.PageType(data: data, url: commentable.url)
         else { return nil }
         
         return try? await C(page, url: commentable.url)
@@ -120,7 +120,7 @@ public class OnlineFASession: FASession {
     
     public func journal(for url: URL) async -> FAJournal? {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = await FAJournalPage(data: data)
+              let page = await FAJournalPage(data: data, url: url)
         else { return nil }
         
         return try? await FAJournal(page, url: url)

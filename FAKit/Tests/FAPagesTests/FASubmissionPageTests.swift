@@ -10,8 +10,9 @@ import XCTest
 
 final class FASubmissionPageTests: XCTestCase {
     func testSubmissionPageWithoutComment_isParsed() async throws {
+        let url = URL(string: "https://www.furaffinity.net/view/49338772/")!
         let data = testData("www.furaffinity.net:view:49338772-nocomment.html")
-        let page = try await FASubmissionPage(data: data).unwrap()
+        let page = try await FASubmissionPage(data: data, url: url).unwrap()
         
         let htmlDescription = "YCH for \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221211/lil-maj.gif\" align=\"middle\" title=\"lil-maj\" alt=\"lil-maj\" />&nbsp;lil-maj</a> \n<br /> \n<br /> Cody © \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20221211/lil-maj.gif\" align=\"middle\" title=\"lil-Maj\" alt=\"lil-Maj\" />&nbsp;lil-Maj</a>\n<br /> \n<br /> \n<br /> \n<br /> \n<br /> \n<br /> *******************************\n<br /> * \n<a class=\"auto_link named_url\" href=\"http://ko-fi.com/J3J16KSH\">Feed me with coffee?</a>\n<br /> * \n<a class=\"auto_link named_url\" href=\"https://www.furaffinity.net/gallery/annetpeas/\">My Gallery</a>\n<br /> * \n<a class=\"auto_link named_url\" href=\"https://twitter.com/AnnetPeas_Art\">Twitter</a>"
         let expected = FASubmissionPage(
@@ -28,6 +29,7 @@ final class FASubmissionPageTests: XCTestCase {
             favoriteCount: 67,
             favoriteUrl: URL(string: "https://www.furaffinity.net/fav/49338772/?key=57af11f57cd9a0d97575839f1ae07d2a775ae5af")!,
             comments: [],
+            targetCommentId: nil,
             acceptsNewComments: true
         )
         
@@ -35,15 +37,17 @@ final class FASubmissionPageTests: XCTestCase {
     }
     
     func testSubmissionPageWithCommentsDisabled_isParsed() async throws {
+        let url = URL(string: "https://www.furaffinity.net/view/52209828/")!
         let data = testData("www.furaffinity.net:view:52209828-disabled-comments.html")
-        let page = try await FASubmissionPage(data: data).unwrap()
+        let page = try await FASubmissionPage(data: data, url: url).unwrap()
         
         XCTAssertEqual(page.acceptsNewComments, false)
     }
     
     func testSubmissionPageWithHiddenComment_isParsed() async throws {
+        let url = URL(string: "https://www.furaffinity.net/view/49917619/")!
         let data = testData("www.furaffinity.net:view:49917619-comment-hidden.html")
-        let page = try await FASubmissionPage(data: data).unwrap()
+        let page = try await FASubmissionPage(data: data, url: url).unwrap()
         XCTAssertEqual(12, page.comments.count)
         
         for (index, comment) in page.comments.enumerated() {
@@ -60,8 +64,9 @@ final class FASubmissionPageTests: XCTestCase {
     }
     
     func testSubmissionPageWithComments_isParsed() async throws {
+        let url = URL(string: "https://www.furaffinity.net/view/48519387/#cid:166652794")!
         let data = testData("www.furaffinity.net:view:48519387-comments.html")
-        let page = try await FASubmissionPage(data: data).unwrap()
+        let page = try await FASubmissionPage(data: data, url: url).unwrap()
         let expected: [FAPageComment] = [
             .visible(.init(cid: 166652793, indentation: 0, author: "terriniss", displayAuthor: "Terriniss",
                            datetime: "Aug 11, 2022 09:48 PM", naturalDatetime: "3 months ago", htmlMessage: "BID HERE \n<br /> Moon")),
@@ -86,5 +91,6 @@ final class FASubmissionPageTests: XCTestCase {
         ]
         
         XCTAssertEqual(expected, page.comments)
+        XCTAssertEqual(166652794, page.targetCommentId)
     }
 }

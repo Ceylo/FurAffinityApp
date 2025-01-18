@@ -32,61 +32,87 @@ struct SubmissionView: View {
         )
     }
     
+    var mainImage: some View {
+        SubmissionMainImage(
+            widthOnHeightRatio: submission.widthOnHeightRatio,
+            thumbnailImage: thumbnail,
+            fullResolutionMediaUrl: submission.fullResolutionMediaUrl,
+            fullResolutionMediaFileUrl: $fullResolutionMediaFileUrl
+        )
+    }
+    
+    var submissionControls: some View {
+        SubmissionControlsView(
+            submissionUrl: submission.url,
+            mediaFileUrl: fullResolutionMediaFileUrl,
+            favoritesCount: submission.favoriteCount,
+            isFavorite: submission.isFavorite,
+            favoriteAction: favoriteAction,
+            repliesCount: submission.comments.recursiveCount,
+            acceptsNewReplies: submission.acceptsNewComments,
+            replyAction: {
+                replySession = .init(parentCid: nil, among: [])
+            }
+        )
+    }
+    
+    var submissionDescription: some View {
+        HTMLView(
+            text: submission.description.convertingLinksForInAppNavigation(),
+            initialHeight: 300
+        )
+    }
+    
+    @ViewBuilder
+    var submissionComments: some View {
+        if !submission.comments.isEmpty {
+            Section {
+                CommentsView(
+                    comments: submission.comments,
+                    highlightedCommentId: submission.targetCommentId,
+                    acceptsNewReplies: submission.acceptsNewComments,
+                    replyAction: { cid in
+                        replySession = .init(parentCid: cid, among: submission.comments)
+                    }
+                )
+            } header: {
+                SectionHeader(text: "Comments")
+            }
+        }
+    }
+    
     var body: some View {
-        List {
-            Group {
+        ScrollViewReader { reader in
+            List {
                 Group {
-                    header
-                    SubmissionMainImage(
-                        widthOnHeightRatio: submission.widthOnHeightRatio,
-                        thumbnailImage: thumbnail,
-                        fullResolutionMediaUrl: submission.fullResolutionMediaUrl,
-                        fullResolutionMediaFileUrl: $fullResolutionMediaFileUrl
-                    )
+                    Group {
+                        header
+                        mainImage
+                        submissionControls
+                        submissionDescription
+                    }
+                    .padding(.horizontal, 10)
                     
-                    SubmissionControlsView(
-                        submissionUrl: submission.url,
-                        mediaFileUrl: fullResolutionMediaFileUrl,
-                        favoritesCount: submission.favoriteCount,
-                        isFavorite: submission.isFavorite,
-                        favoriteAction: favoriteAction,
-                        repliesCount: submission.comments.recursiveCount,
-                        acceptsNewReplies: submission.acceptsNewComments,
-                        replyAction: {
-                            replySession = .init(parentCid: nil, among: [])
-                        }
-                    )
-                    
-                    HTMLView(
-                        text: submission.description.convertingLinksForInAppNavigation(),
-                        initialHeight: 300
-                    )
+                    submissionComments
                 }
-                .padding(.horizontal, 10)
+                .listRowSeparator(.hidden)
+                .listRowInsets(.init(top: 5, leading: 0, bottom: 5, trailing: 0))
+            }
+            .commentSheet(on: $replySession, replyAction)
+            .navigationTitle(submission.title)
+            .navigationBarTitleDisplayMode(.inline)
+            .listStyle(.plain)
+            .onFirstAppear {
+                prefetchAvatars(for: submission.comments)
                 
-                if !submission.comments.isEmpty {
-                    Section {
-                        CommentsView(
-                            comments: submission.comments,
-                            acceptsNewReplies: submission.acceptsNewComments,
-                            replyAction: { cid in
-                                replySession = .init(parentCid: cid, among: submission.comments)
-                            }
-                        )
-                    } header: {
-                        SectionHeader(text: "Comments")
+                if let targetCommentId = submission.targetCommentId {
+                    Task {
+                        withAnimation {
+                            reader.scrollTo(targetCommentId, anchor: .top)
+                        }
                     }
                 }
             }
-            .listRowSeparator(.hidden)
-            .listRowInsets(.init(top: 5, leading: 0, bottom: 5, trailing: 0))
-        }
-        .commentSheet(on: $replySession, replyAction)
-        .navigationTitle(submission.title)
-        .navigationBarTitleDisplayMode(.inline)
-        .listStyle(.plain)
-        .onAppear {
-            prefetchAvatars(for: submission.comments)
         }
     }
 }

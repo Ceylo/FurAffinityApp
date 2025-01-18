@@ -20,7 +20,7 @@ public struct FAJournalPage: Equatable, Sendable {
 }
 
 extension FAJournalPage {
-    public init?(data: Data) async {
+    public init?(data: Data, url: URL) async {
         let state = signposter.beginInterval("Journal Parsing")
         defer { signposter.endInterval("Journal Parsing", state) }
         

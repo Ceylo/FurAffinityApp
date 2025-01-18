@@ -22,11 +22,12 @@ public struct FASubmissionPage: Equatable, Sendable {
     public let favoriteCount: Int
     public let favoriteUrl: URL
     public let comments: [FAPageComment]
+    public let targetCommentId: Int?
     public let acceptsNewComments: Bool
 }
 
 extension FASubmissionPage {
-    public init?(data: Data) async {
+    public init?(data: Data, url: URL) async {
         do {
             let state = signposter.beginInterval("Submission Parsing")
             defer { signposter.endInterval("Submission Parsing", state) }
@@ -88,6 +89,11 @@ extension FASubmissionPage {
             self.comments = try await commentNodes
                 .parallelMap { try FAPageComment($0, type: .comment) }
                 .compactMap { $0 }
+            
+            // https://www.furaffinity.net/view/49215481/#cid:183695893
+            self.targetCommentId = url.absoluteString
+                .substring(matching: #"www\.furaffinity\.net\/view\/\d+\/#cid:(\d+)$"#)
+                .flatMap { Int($0) }
             
             let commentsDisabledNode = try columnPageNode.select("div#responsebox")
             let commentsDisabled = try commentsDisabledNode.text().contains("Comment posting has been disabled")

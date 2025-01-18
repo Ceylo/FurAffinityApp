@@ -59,7 +59,7 @@ struct CommentEditor: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         if let parentComment {
-                            CommentView(comment: parentComment)
+                            CommentView(comment: parentComment, highlight: false)
                                 .allowsHitTesting(false)
                                 .padding()
                             Divider()

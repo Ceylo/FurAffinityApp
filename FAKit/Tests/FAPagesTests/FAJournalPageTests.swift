@@ -10,8 +10,9 @@ import XCTest
 
 final class FAJournalPageTests: XCTestCase {
     func testSubmissionPageWithComments_isParsed() async throws {
+        let url = URL(string: "https://www.furaffinity.net/view/10516170/")!
         let data = testData("www.furaffinity.net:journal:10516170-withcomments.html")
-        let page = await FAJournalPage(data: data)
+        let page = await FAJournalPage(data: data, url: url)
         XCTAssertNotNil(page)
         
         let expectedComments: [FAPageComment] = [
@@ -52,8 +53,9 @@ final class FAJournalPageTests: XCTestCase {
     }
     
     func testSubmissionPageWithCommentsDisabled_isParsed() async throws {
+        let url = URL(string: "https://www.furaffinity.net/journal/10882268/")!
         let data = testData("www.furaffinity.net:journal:10882268-disabled-comments.html")
-        let page = try await FAJournalPage(data: data).unwrap()
+        let page = try await FAJournalPage(data: data, url: url).unwrap()
         
         XCTAssertEqual(page.acceptsNewComments, false)
     }

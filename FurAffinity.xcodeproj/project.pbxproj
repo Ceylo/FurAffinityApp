@@ -86,6 +86,7 @@
 		87D64FCD2C88B00100AB6F44 /* FALink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FCC2C88B00100AB6F44 /* FALink.swift */; };
 		87E0E2B82801D967005207A8 /* NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B72801D967005207A8 /* NotesView.swift */; };
 		87E0E2BA2801DCDB005207A8 /* NoteItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E0E2B92801DCDB005207A8 /* NoteItemView.swift */; };
+		87E47B272D3C1F6B00E44490 /* View+onFirstAppear.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E47B262D3C1F6B00E44490 /* View+onFirstAppear.swift */; };
 		87E528372CE8D3D800CAFDC0 /* Zoomable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E528362CE8D3D800CAFDC0 /* Zoomable.swift */; };
 		87E796172C99994D0020EACD /* SwiftUIIntrospect in Frameworks */ = {isa = PBXBuildFile; productRef = 87E796162C99994D0020EACD /* SwiftUIIntrospect */; };
 		87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */; };
@@ -191,6 +192,7 @@
 		87D64FCC2C88B00100AB6F44 /* FALink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FALink.swift; sourceTree = "<group>"; };
 		87E0E2B72801D967005207A8 /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
 		87E0E2B92801DCDB005207A8 /* NoteItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteItemView.swift; sourceTree = "<group>"; };
+		87E47B262D3C1F6B00E44490 /* View+onFirstAppear.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+onFirstAppear.swift"; sourceTree = "<group>"; };
 		87E528362CE8D3D800CAFDC0 /* Zoomable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zoomable.swift; sourceTree = "<group>"; };
 		87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOverlay.swift; sourceTree = "<group>"; };
 		87EAA2DA29EB4F1800677446 /* RemoteNotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteNotificationsView.swift; sourceTree = "<group>"; };
@@ -421,6 +423,7 @@
 				87D64FC42C886F0200AB6F44 /* ProgressiveLoadItem.swift */,
 				87D252052C906AB700E07AE1 /* withAsync.swift */,
 				872EF3C32CCFDAEA00251EB5 /* View+pullableScreenCover.swift */,
+				87E47B262D3C1F6B00E44490 /* View+onFirstAppear.swift */,
 				87E528362CE8D3D800CAFDC0 /* Zoomable.swift */,
 			);
 			path = "Helper Views";
@@ -642,6 +645,7 @@
 				879233D2278216DF0019AC44 /* HTMLView.swift in Sources */,
 				8716E7EC271C659C00C0BC4A /* FurAffinityApp.swift in Sources */,
 				87C94A562AA897E50049CA81 /* RemoteUserGalleryLikeView.swift in Sources */,
+				87E47B272D3C1F6B00E44490 /* View+onFirstAppear.swift in Sources */,
 				875EF2C72C1CABDC000D4BFB /* SubmissionPreviewView.swift in Sources */,
 				8791D5FB29C4CBBA003FDBBE /* FAURL.swift in Sources */,
 				8773058329D5FB8E004F8019 /* SubmissionView.swift in Sources */,

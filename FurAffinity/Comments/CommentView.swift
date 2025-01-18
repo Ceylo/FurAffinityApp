@@ -10,8 +10,10 @@ import FAKit
 
 struct CommentView: View {
     var comment: FAComment
+    var highlight: Bool
     @Environment(\.colorScheme) var colorScheme
     private let avatarSize = 42.0
+    @State private var rowBackgroundAnimated = false
     
     var overlayStyle: some ShapeStyle {
         switch colorScheme {
@@ -82,13 +84,37 @@ struct CommentView: View {
         }
     }
     
-    var body: some View {
-        switch comment {
-        case let .visible(comment):
-            commentView(comment)
-        case let .hidden(comment):
-            commentView(comment)
+    @ViewBuilder
+    private var rowBackground: some View {
+        if highlight {
+            (rowBackgroundAnimated ? Color.primary.opacity(0) : Color.primary.opacity(0.15))
+                .animation(
+                    .easeInOut
+                        .speed(0.333)
+                        .repeatCount(7, autoreverses: true)
+                )
         }
+    }
+    
+    var body: some View {
+        Group {
+            switch comment {
+            case let .visible(comment):
+                commentView(comment)
+            case let .hidden(comment):
+                commentView(comment)
+            }
+        }
+        .listRowBackground(rowBackground)
+        .onAppear {
+            // According to https://stackoverflow.com/a/66391586/869385
+            // animation on list row background has to be triggered
+            // asynchronously
+            Task {
+                rowBackgroundAnimated = true
+            }
+        }
+        .id(comment.id)
     }
 }
 
@@ -96,7 +122,7 @@ struct CommentView: View {
     withAsync({ await FAComment.demo[0] }) { comment in
         NavigationStack {
             List {
-                CommentView(comment: comment)
+                CommentView(comment: comment, highlight: true)
             }
             .listStyle(.plain)
         }
@@ -107,7 +133,7 @@ struct CommentView: View {
     withAsync({ await FAComment.demoHidden[0] }) { comment in
         NavigationStack {
             List {
-                CommentView(comment: comment)
+                CommentView(comment: comment, highlight: false)
             }
             .listStyle(.plain)
         }

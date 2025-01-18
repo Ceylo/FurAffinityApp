@@ -23,6 +23,7 @@ public struct FASubmission: Equatable, Sendable {
     public let favoriteCount: Int
     public let favoriteUrl: URL
     public let comments: [FAComment]
+    public let targetCommentId: Int?
     public let acceptsNewComments: Bool
     
     public init(
@@ -38,6 +39,7 @@ public struct FASubmission: Equatable, Sendable {
         favoriteCount: Int,
         favoriteUrl: URL,
         comments: [FAComment],
+        targetCommentId: Int?,
         acceptsNewComments: Bool
     ) {
         self.url = url
@@ -54,6 +56,7 @@ public struct FASubmission: Equatable, Sendable {
         self.favoriteUrl = favoriteUrl
         self.favoriteCount = favoriteCount
         self.comments = comments
+        self.targetCommentId = targetCommentId
         self.acceptsNewComments = acceptsNewComments
     }
     
@@ -73,6 +76,7 @@ public struct FASubmission: Equatable, Sendable {
             favoriteCount: favoriteCount + (isFavorite ? -1 : 1),
             favoriteUrl: favoriteUrl,
             comments: comments,
+            targetCommentId: targetCommentId,
             acceptsNewComments: acceptsNewComments
         )
     }
@@ -95,6 +99,7 @@ extension FASubmission {
             favoriteCount: page.favoriteCount,
             favoriteUrl: page.favoriteUrl,
             comments: await FAComment.buildCommentsTree(page.comments),
+            targetCommentId: page.targetCommentId,
             acceptsNewComments: page.acceptsNewComments
         )
     }
