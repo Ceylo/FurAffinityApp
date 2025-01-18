@@ -90,7 +90,6 @@ extension FASubmissionPage {
                 .parallelMap { try FAPageComment($0, type: .comment) }
                 .compactMap { $0 }
             
-            // https://www.furaffinity.net/view/49215481/#cid:183695893
             self.targetCommentId = url.absoluteString
                 .substring(matching: #"www\.furaffinity\.net\/view\/\d+\/#cid:(\d+)$"#)
                 .flatMap { Int($0) }
