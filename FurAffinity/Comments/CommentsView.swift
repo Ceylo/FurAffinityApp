@@ -21,7 +21,7 @@ struct CommentsView: View {
                     comment: comment,
                     highlight: comment.cid == highlightedCommentId
                 )
-                .swipeActions(edge: .trailing) {
+                .swipeActions {
                     Button(action: { replyAction(comment.cid) },
                            label: {
                         Label("Reply", systemImage: "arrowshape.turn.up.left")

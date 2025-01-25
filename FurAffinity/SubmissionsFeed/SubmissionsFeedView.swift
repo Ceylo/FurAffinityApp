@@ -94,29 +94,36 @@ struct SubmissionsFeedView: View {
         }
     }
     
+    @ViewBuilder
+    private func itemView(for item: Item, geometry: GeometryProxy, scrollProxy: ScrollViewProxy) -> some View {
+        switch item {
+        case let .fetchTrigger(targetScrollItem):
+            fetchTriggerView(with: targetScrollItem, scrollProxy: scrollProxy)
+        case let .submissionPreview(preview):
+            NavigationLink(value: FAURL.submission(
+                url: preview.url, previewData: preview
+            )) {
+                SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
+                    .id(preview.sid)
+            }
+            .onItemFrameChanged(listGeometry: geometry) { frame in
+                followItem(preview, frame: frame, geometry: geometry)
+            }
+        }
+    }
+    
     private func list(with items: [Item]) -> some View {
         ScrollViewReader { scrollProxy in
             GeometryReader { geometry in
-                List(items) { item in
-                    Group {
-                        switch item {
-                        case let .fetchTrigger(targetScrollItem):
-                            fetchTriggerView(with: targetScrollItem, scrollProxy: scrollProxy)
-                        case let .submissionPreview(preview):
-                            NavigationLink(value: FAURL.submission(
-                                url: preview.url, previewData: preview
-                            )) {
-                                SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
-                                    .id(preview.sid)
-                            }
-                            .onItemFrameChanged(listGeometry: geometry) { frame in
-                                followItem(preview, frame: frame, geometry: geometry)
-                            }
-                        }
+                List {
+                    ForEach(items) { item in
+                        itemView(for: item, geometry: geometry, scrollProxy: scrollProxy)
+                    }
+                    .onDelete { offsets in
+                        model.deleteSubmissionPreviews(atOffsets: offsets)
                     }
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                    
                 }
                 .introspect(.scrollView, on: .iOS(.v16...)) { scrollView in
                     self.scrollView = scrollView

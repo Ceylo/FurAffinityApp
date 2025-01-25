@@ -52,6 +52,21 @@ public class OnlineFASession: FASession {
         return previews
     }
     
+    public func deleteSubmissionPreviews(_ previews: [FASubmissionPreview]) async throws {
+        let url = try FAURLs.submissionsUrl(from: previews.max().unwrap().sid)
+        let params: [URLQueryItem] = [
+            .init(name: "messagecenter-action", value: "remove_checked")
+        ] + previews.map {
+            URLQueryItem(name: "submissions[]", value: "\($0.id)")
+        }
+        
+        guard let data = await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params),
+              let page = await FASubmissionsPage(data: data, baseUri: url),
+              !page.submissions.compactMap({ $0 }).map({ FASubmissionPreview($0) }).contains(previews) else {
+            throw Error.requestFailure
+        }
+    }
+    
     public func nukeSubmissions() async throws {
         let url = FAURLs.latest72SubmissionsUrl
         let params: [URLQueryItem] = [

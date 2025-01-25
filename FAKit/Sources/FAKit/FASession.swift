@@ -64,6 +64,7 @@ public protocol FASession: AnyObject, Equatable {
     
     // MARK: - Notifications
     func notificationPreviews() async -> FANotificationPreviews
+    func deleteSubmissionPreviews(_ previews: [FASubmissionPreview]) async throws
     func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews
     func deleteJournalCommentNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews
     func deleteShoutNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews

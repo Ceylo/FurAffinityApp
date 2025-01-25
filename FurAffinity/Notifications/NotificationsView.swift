@@ -27,13 +27,12 @@ struct ListedSection<T: FANavigable & Identifiable, ItemView: View> : View {
                             itemViewProvider(item)
                         }
                     }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    .swipeActions {
                         Button(role: .destructive) {
                             onDelete([item])
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
-
                     }
                 }
             } header: {

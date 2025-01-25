@@ -40,6 +40,10 @@ class OfflineFASession: FASession {
     
     func submissionPreviews(from sid: Int?) async -> [FASubmissionPreview] { submissionPreviews }
     
+    func deleteSubmissionPreviews(_ previews: [FASubmissionPreview]) async throws {
+        print(#function)
+    }
+    
     func submission(for url: URL) async -> FASubmission? {
         await FASubmission.demo
     }

@@ -152,6 +152,26 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         return newSubmissions.count
     }
     
+    func deleteSubmissionPreviews(atOffsets offsets: IndexSet) {
+        precondition(submissionPreviews != nil)
+        
+        let previews = offsets.map { submissionPreviews![$0] }
+        submissionPreviews!.remove(atOffsets: offsets)
+        
+        Task {
+            do {
+                let session = try session.unwrap()
+                try await session.deleteSubmissionPreviews(previews)
+            } catch {
+                logger.error("Submission previews deletion failed with error \"\(error, privacy: .public)\", rolling back")
+                let rollback = ((submissionPreviews ?? []) + previews)
+                    .sorted()
+                    .reversed()
+                submissionPreviews = rollback
+            }
+        }
+    }
+    
     func nukeAllSubmissions() async {
         guard let session else {
             logger.error("Tried to nuke submissions with no active session, skipping")
@@ -195,7 +215,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
             await session.notificationPreviews()
         }
     }
-    
+        
     func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) {
         notificationPreviews = notificationPreviews.map { oldNotifications in
             FANotificationPreviews(

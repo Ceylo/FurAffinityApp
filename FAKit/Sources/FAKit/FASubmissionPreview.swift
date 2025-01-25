@@ -42,3 +42,9 @@ public extension FASubmissionPreview {
                   displayAuthor: submission.displayAuthor)
     }
 }
+
+extension FASubmissionPreview: Comparable {
+    public static func < (lhs: FASubmissionPreview, rhs: FASubmissionPreview) -> Bool {
+        lhs.sid < rhs.sid
+    }
+}
