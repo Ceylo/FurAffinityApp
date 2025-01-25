@@ -108,7 +108,7 @@ struct SubmissionView: View {
                 if let targetCommentId = submission.targetCommentId {
                     Task {
                         withAnimation {
-                            reader.scrollTo(targetCommentId, anchor: .top)
+                            reader.scrollTo(targetCommentId, anchor: .center)
                         }
                     }
                 }

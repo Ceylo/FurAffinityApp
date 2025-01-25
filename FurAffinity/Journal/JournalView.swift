@@ -90,7 +90,7 @@ struct JournalView: View {
                 if let targetCommentId = journal.targetCommentId {
                     Task {
                         withAnimation {
-                            reader.scrollTo(targetCommentId, anchor: .top)
+                            reader.scrollTo(targetCommentId, anchor: .center)
                         }
                     }
                 }
