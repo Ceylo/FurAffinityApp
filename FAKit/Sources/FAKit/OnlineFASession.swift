@@ -240,11 +240,11 @@ public class OnlineFASession: FASession {
             return nil
         }
         
-        return try? await loadUser(from: data)
+        return try? await loadUser(from: data, url: url)
     }
     
-    private nonisolated func loadUser(from data: Data) async throws -> FAUser? {
-        let page = try await FAUserPage(data: data).unwrap()
+    private nonisolated func loadUser(from data: Data, url: URL) async throws -> FAUser? {
+        let page = try await FAUserPage(data: data, url: url).unwrap()
         return try await FAUser(page)
     }
     

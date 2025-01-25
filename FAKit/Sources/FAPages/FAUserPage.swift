@@ -14,6 +14,7 @@ public struct FAUserPage: Equatable {
     public let bannerUrl: URL
     public let htmlDescription: String
     public let shouts: [FAPageComment]
+    public let targetShoutId: Int?
     
     public struct WatchData: Equatable, Sendable {
         public let watchUrl: URL
@@ -37,7 +38,7 @@ extension FAUserPage {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    public init?(data: Data) async {
+    public init?(data: Data, url: URL) async {
         let state = signposter.beginInterval("User Page Parsing")
         defer { signposter.endInterval("User Page Parsing", state) }
         
@@ -75,6 +76,10 @@ extension FAUserPage {
             self.shouts = try await shoutsNodes
                 .parallelMap { try FAPageComment($0, type: .shout) }
                 .compactMap { $0 }
+            
+            self.targetShoutId = url.absoluteString
+                .substring(matching: #"www\.furaffinity\.net\/user\/.+#shout-(\d+)$"#)
+                .flatMap { Int($0) }
             
             if let watchButtonNode = try navHeaderNode.select("userpage-nav-interface-buttons a.button").first() {
                 let watchLink = try watchButtonNode.attr("href")
