@@ -402,6 +402,7 @@ extension FAUser {
                         answers: []
                     ))
                 ],
+                targetShoutId: nil,
                 watchData: WatchData(watchUrl: URL(string: "https://www.furaffinity.net/watch/furrycount/?key=c11e718bd61ecbfad8750b76135052f90ea84026")!)
             )
         }
