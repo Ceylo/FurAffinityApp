@@ -63,39 +63,30 @@ struct JournalView: View {
     }
     
     var body: some View {
-        ScrollViewReader { reader in
-            List {
+        List {
+            Group {
                 Group {
-                    Group {
-                        header
-                        Divider()
-                            .padding(.vertical, 5)
-                        journalContents
-                        journalControls
-                    }
-                    .padding(.horizontal, 10)
-                    
-                    journalComments
+                    header
+                    Divider()
+                        .padding(.vertical, 5)
+                    journalContents
+                    journalControls
                 }
-                .listRowSeparator(.hidden)
-                .listRowInsets(.init())
-            }
-            .commentSheet(on: $replySession, replyAction)
-            .navigationTitle(journal.title)
-            .navigationBarTitleDisplayMode(.inline)
-            .listStyle(.plain)
-            .onFirstAppear {
-                prefetchAvatars(for: journal.comments)
+                .padding(.horizontal, 10)
                 
-                if let targetCommentId = journal.targetCommentId {
-                    Task {
-                        withAnimation {
-                            reader.scrollTo(targetCommentId, anchor: .center)
-                        }
-                    }
-                }
+                journalComments
             }
+            .listRowSeparator(.hidden)
+            .listRowInsets(.init())
         }
+        .commentSheet(on: $replySession, replyAction)
+        .navigationTitle(journal.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .listStyle(.plain)
+        .onAppear {
+            prefetchAvatars(for: journal.comments)
+        }
+        .scrollToItem(id: journal.targetCommentId)
     }
 }
 

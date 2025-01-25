@@ -8,7 +8,7 @@
 
 import SwiftUI
 
-public struct OnFirstAppearModifier: ViewModifier {
+private struct OnFirstAppearModifier: ViewModifier {
 
     private let onFirstAppearAction: () -> ()
     @State private var hasAppeared = false

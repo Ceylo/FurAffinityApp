@@ -82,38 +82,29 @@ struct SubmissionView: View {
     }
     
     var body: some View {
-        ScrollViewReader { reader in
-            List {
+        List {
+            Group {
                 Group {
-                    Group {
-                        header
-                        mainImage
-                        submissionControls
-                        submissionDescription
-                    }
-                    .padding(.horizontal, 10)
-                    
-                    submissionComments
+                    header
+                    mainImage
+                    submissionControls
+                    submissionDescription
                 }
-                .listRowSeparator(.hidden)
-                .listRowInsets(.init(top: 5, leading: 0, bottom: 5, trailing: 0))
-            }
-            .commentSheet(on: $replySession, replyAction)
-            .navigationTitle(submission.title)
-            .navigationBarTitleDisplayMode(.inline)
-            .listStyle(.plain)
-            .onFirstAppear {
-                prefetchAvatars(for: submission.comments)
+                .padding(.horizontal, 10)
                 
-                if let targetCommentId = submission.targetCommentId {
-                    Task {
-                        withAnimation {
-                            reader.scrollTo(targetCommentId, anchor: .center)
-                        }
-                    }
-                }
+                submissionComments
             }
+            .listRowSeparator(.hidden)
+            .listRowInsets(.init(top: 5, leading: 0, bottom: 5, trailing: 0))
         }
+        .commentSheet(on: $replySession, replyAction)
+        .navigationTitle(submission.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .listStyle(.plain)
+        .onAppear {
+            prefetchAvatars(for: submission.comments)
+        }
+        .scrollToItem(id: submission.targetCommentId)
     }
 }
 

@@ -73,61 +73,52 @@ struct UserView: View {
     }
     
     var body: some View {
-        ScrollViewReader { reader in
-            List {
-                Group {
-                    banner
-                    
-                    VStack(alignment: .leading, spacing: 0) {
-                        HStack {
-                            AvatarView(avatarUrl: FAURLs.avatarUrl(for: user.name))
-                                .frame(width: 42, height: 42)
-                            Text(user.displayName)
-                                .font(.title)
-                            watchControl
-                        }
-                        .padding(.vertical, 5)
-                        
-                        UserProfileControlView(username: user.name)
-                            .padding(.horizontal, -15)
-                            .padding(.vertical, 5)
-                        
-                        if let description = description.wrappedValue {
-                            HTMLView(text: description, initialHeight: 300)
-                        }
-                    }
-                    .padding(.horizontal, 15)
-                    .padding(.top, 5)
-                    
-                    if !user.shouts.isEmpty {
-                        Section {
-                            CommentsView(
-                                comments: user.shouts,
-                                highlightedCommentId: user.targetShoutId
-                            )
-                        } header: {
-                            SectionHeader(text: "Shouts")
-                        }
-                    }
-                }
-                .listRowSeparator(.hidden)
-                .listRowInsets(.init())
-            }
-            .navigationTitle(user.displayName)
-            .navigationBarTitleDisplayMode(.inline)
-            .listStyle(.plain)
-            .onFirstAppear {
-                prefetchAvatars(for: user.shouts)
+        List {
+            Group {
+                banner
                 
-                if let targetShoutId = user.targetShoutId {
-                    Task {
-                        withAnimation {
-                            reader.scrollTo(targetShoutId, anchor: .center)
-                        }
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        AvatarView(avatarUrl: FAURLs.avatarUrl(for: user.name))
+                            .frame(width: 42, height: 42)
+                        Text(user.displayName)
+                            .font(.title)
+                        watchControl
+                    }
+                    .padding(.vertical, 5)
+                    
+                    UserProfileControlView(username: user.name)
+                        .padding(.horizontal, -15)
+                        .padding(.vertical, 5)
+                    
+                    if let description = description.wrappedValue {
+                        HTMLView(text: description, initialHeight: 300)
+                    }
+                }
+                .padding(.horizontal, 15)
+                .padding(.top, 5)
+                
+                if !user.shouts.isEmpty {
+                    Section {
+                        CommentsView(
+                            comments: user.shouts,
+                            highlightedCommentId: user.targetShoutId
+                        )
+                    } header: {
+                        SectionHeader(text: "Shouts")
                     }
                 }
             }
+            .listRowSeparator(.hidden)
+            .listRowInsets(.init())
         }
+        .navigationTitle(user.displayName)
+        .navigationBarTitleDisplayMode(.inline)
+        .listStyle(.plain)
+        .onAppear {
+            prefetchAvatars(for: user.shouts)
+        }
+        .scrollToItem(id: user.targetShoutId)
     }
 }
 
