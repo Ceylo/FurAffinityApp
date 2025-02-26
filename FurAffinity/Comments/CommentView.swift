@@ -91,7 +91,7 @@ struct CommentView: View {
                 .animation(
                     .easeInOut
                         .speed(0.333)
-                        .repeatCount(7, autoreverses: true)
+                        .repeatCount(5, autoreverses: true)
                 )
         }
     }
