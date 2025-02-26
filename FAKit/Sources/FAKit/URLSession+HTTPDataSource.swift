@@ -8,10 +8,16 @@
 import Foundation
 
 extension URLSession: HTTPDataSource {
-    private func request(with url: URL, method: HTTPMethod, parameters: [URLQueryItem]) -> URLRequest {
+    private func request(with url: URL, method: HTTPMethod, parameters: [URLQueryItem]) -> (URLRequest, httpBody: String?) {
         
         var request: URLRequest
-        let urlWithParams = url.appending(queryItems: parameters)
+        let urlWithParams: URL
+        if !parameters.isEmpty {
+            urlWithParams = url.appending(queryItems: parameters)
+        } else {
+            urlWithParams = url
+        }
+        var httpBody: String?
         
         switch method {
         case .GET:
@@ -22,11 +28,11 @@ extension URLSession: HTTPDataSource {
             request.httpMethod = "POST"
             request.cachePolicy = .reloadIgnoringLocalCacheData
             if let query = urlWithParams.query() {
-                logger.debug("\(query)")
+                httpBody = query
                 request.httpBody = query.data(using: .utf8)
             }
         }
-        return request
+        return (request, httpBody)
     }
     
     public func httpData(
@@ -43,9 +49,15 @@ extension URLSession: HTTPDataSource {
                 self.configuration.httpCookieStorage!
                     .setCookies(cookies, for: url, mainDocumentURL: url)
             }
-            let request = request(with: url, method: method, parameters: parameters)
+            let (request, httpBody) = request(with: url, method: method, parameters: parameters)
+            let requestDesc: String
+            if let httpBody {
+                requestDesc = "\(request.url!) with body \"\(httpBody)\""
+            } else {
+                requestDesc = "\(request.url!)"
+            }
             
-            logger.info("\(method, privacy: .public) request on \(url, privacy: .public)")
+            logger.info("\(method, privacy: .public) request on \(requestDesc, privacy: .public)")
             let (data, response) = try await self.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode)
