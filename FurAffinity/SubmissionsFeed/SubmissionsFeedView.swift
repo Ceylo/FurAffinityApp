@@ -212,12 +212,9 @@ extension SubmissionsFeedView {
         guard scrollView?.reachedTop ?? true else { return }
         guard currentViewIsDisplayed else { return }
         
-        if let lastRefreshDate = model.lastSubmissionPreviewsFetchDate {
-            let secondsSinceLastRefresh = -lastRefreshDate.timeIntervalSinceNow
-            guard secondsSinceLastRefresh > Model.autorefreshDelay else { return }
+        if Model.shouldAutoRefresh(with: model.lastSubmissionPreviewsFetchDate) {
+            refresh(pulled: false)
         }
-        
-        refresh(pulled: false)
     }
     
     func fetchSubmissionPreviews() async {

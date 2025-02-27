@@ -38,17 +38,15 @@ class AppInformation: ObservableObject {
     @Published var latestRelease: Release?
     @Published var isUpToDate: Bool?
 
-    func fetch() {
-        Task {
-            let url = URL(string: "https://api.github.com/repos/Ceylo/FurAffinityApp/releases/latest")!
-            if let data = await URLSession.shared.httpData(from: url, cookies: nil) {
-                let release = try JSONDecoder().decode(Release.self, from: data)
-                isUpToDate = release.version <= currentVersion
-                latestRelease = release
-            } else {
-                latestRelease = nil
-                isUpToDate = nil
-            }
+    func fetch() async throws {
+        let url = URL(string: "https://api.github.com/repos/Ceylo/FurAffinityApp/releases/latest")!
+        if let data = await URLSession.shared.httpData(from: url, cookies: nil) {
+            let release = try JSONDecoder().decode(Release.self, from: data)
+            isUpToDate = release.version <= currentVersion
+            latestRelease = release
+        } else {
+            latestRelease = nil
+            isUpToDate = nil
         }
     }
 }

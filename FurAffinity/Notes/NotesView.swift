@@ -11,21 +11,6 @@ import FAKit
 struct NotesView: View {
     @EnvironmentObject var model: Model
     
-    func refresh() async {
-        await model.fetchNotePreviews()
-    }
-    
-    func autorefreshIfNeeded() {
-        if let lastRefreshDate = model.lastNotePreviewsFetchDate {
-            let secondsSinceLastRefresh = -lastRefreshDate.timeIntervalSinceNow
-            guard secondsSinceLastRefresh > Model.autorefreshDelay else { return }
-        }
-        
-        Task {
-            await refresh()
-        }
-    }
-    
     var body: some View {
         Group {
             if let notes = model.notePreviews {
@@ -59,10 +44,7 @@ struct NotesView: View {
             }
         }
         .refreshable {
-            await refresh()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            autorefreshIfNeeded()
+            await model.fetchNotePreviews()
         }
     }
 }

@@ -120,9 +120,6 @@ struct SettingsView: View {
                 }
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            model.updateAppInfoIfNeeded()
-        }
         .onAppear {
             updateCachedFileSize()
         }

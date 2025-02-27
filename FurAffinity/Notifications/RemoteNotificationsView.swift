@@ -10,21 +10,6 @@ import SwiftUI
 struct RemoteNotificationsView: View {
     @EnvironmentObject var model: Model
     
-    func refresh() async {
-        await model.fetchNotificationPreviews()
-    }
-    
-    func autorefreshIfNeeded() {
-        if let lastRefreshDate = model.lastNotificationPreviewsFetchDate {
-            let secondsSinceLastRefresh = -lastRefreshDate.timeIntervalSinceNow
-            guard secondsSinceLastRefresh > Model.autorefreshDelay else { return }
-        }
-        
-        Task {
-            await refresh()
-        }
-    }
-    
     var body: some View {
         Group {
             if let notifications = model.notificationPreviews {
@@ -37,10 +22,7 @@ struct RemoteNotificationsView: View {
             }
         }
         .refreshable {
-            await refresh()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            autorefreshIfNeeded()
+            await model.fetchNotificationPreviews()
         }
     }
 }

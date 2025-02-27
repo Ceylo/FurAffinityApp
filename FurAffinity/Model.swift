@@ -16,7 +16,7 @@ enum ModelError: Error {
 
 @MainActor
 class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
-    static let autorefreshDelay: TimeInterval = 15 * 60
+    static private let autorefreshDelay: TimeInterval = 15 * 60
     
     @Published var session: (any FASession)? {
         didSet {
@@ -53,6 +53,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     private var lastAppInfoUpdate: Date?
 
     private var subscriptions = Set<AnyCancellable>()
+    private var autorefreshSubscription: AnyCancellable?
     init(session: (any FASession)? = nil) {
         self.session = session
         appInfo.objectWillChange.sink {
@@ -84,13 +85,8 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         processNewSession()
     }
     
-    func updateAppInfoIfNeeded() {
-        if let lastAppInfoUpdate {
-            let secondsSinceLastRefresh = -lastAppInfoUpdate.timeIntervalSinceNow
-            guard secondsSinceLastRefresh > Self.autorefreshDelay else { return }
-        }
-        
-        appInfo.fetch()
+    func updateAppInfo() async {
+        try? await appInfo.fetch()
         lastAppInfoUpdate = Date()
     }
     
@@ -108,6 +104,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
             notificationPreviews = nil
             lastNotificationPreviewsFetchDate = nil
             significantNotificationCount = 0
+            autorefreshSubscription = nil
             return
         }
         
@@ -115,7 +112,45 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
             _ = await fetchSubmissionPreviews()
             await fetchNotePreviews()
             await fetchNotificationPreviews()
-            updateAppInfoIfNeeded()
+            await updateAppInfo()
+            
+            autorefreshSubscription = NotificationCenter.default
+                .publisher(for: UIApplication.willEnterForegroundNotification)
+                .sink { [unowned self] _ in
+                    Task {
+                        await autorefreshIfNeeded()
+                    }
+                }
+        }
+    }
+    
+    static func shouldAutoRefresh(with lastRefreshDate: Date?) -> Bool {
+        if let lastRefreshDate {
+            let secondsSinceLastRefresh = -lastRefreshDate.timeIntervalSinceNow
+            guard secondsSinceLastRefresh > Self.autorefreshDelay else {
+                return false
+            }
+        }
+        return true
+    }
+    
+    private func autorefreshIfNeeded() async {
+        // Note how submission previews are not checked here. This is for two reasons:
+        // - SubmissionsFeedView has special scroll handling and needs to control
+        // when refresh happens
+        // - SubmissionsFeedView is always loaded first, so there's no risk that it
+        // cannot subscribe to willEnterForegroundNotification
+        
+        if Self.shouldAutoRefresh(with: lastNotePreviewsFetchDate) {
+            await fetchNotePreviews()
+        }
+        
+        if Self.shouldAutoRefresh(with: lastNotificationPreviewsFetchDate) {
+            await fetchNotificationPreviews()
+        }
+        
+        if Self.shouldAutoRefresh(with: lastAppInfoUpdate) {
+            await updateAppInfo()
         }
     }
     
