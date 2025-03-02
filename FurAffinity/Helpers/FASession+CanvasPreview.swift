@@ -325,14 +325,37 @@ extension FASubmission {
                 previewImageUrl: URL(string: "https://t.furaffinity.net/44188741@400-1634411740.jpg")!,
                 fullResolutionMediaUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1634411740/1634411740.annetpeas_witch2021__2_fa.png")!,
                 widthOnHeightRatio: 416 / 600,
-                author: "annetpeas",
-                displayAuthor: "AnnetPeas",
-                title: "Spells and magic",
-                datetime: "Oct 16, 2021 04:15 PM",
-                naturalDatetime: "a year ago",
+                metadata: FASubmission.Metadata(
+                    title: "Spells and magic",
+                    author: "annetpeas",
+                    displayAuthor: "AnnetPeas",
+                    datetime: "Oct 16, 2021 04:15 PM",
+                    naturalDatetime: "a year ago",
+                    viewCount: 755,
+                    commentCount: 3,
+                    favoriteCount: 72,
+                    rating: .general,
+                    category: "Artwork (Digital) / All",
+                    species: "Unspecified / Any",
+                    gender: "Female",
+                    size: "888 x 1280",
+                    fileSize: "949.8 kB",
+                    keywords: ["mikazukihellfire", "medea", "female", "cute", "chibi", "annetpeas", "halloween", "witch", "grimoire", "magic", "books"],
+                    folders: [
+                        .init(
+                            title: "My arts - 2021",
+                            url: URL(string: "https://www.furaffinity.net/gallery/annetpeas/folder/910706/2021/")!,
+                            isActive: false
+                        ),
+                        .init(
+                            title: "My arts - 🎃 Halloween Witches!!",
+                            url: URL(string: "https://www.furaffinity.net/gallery/annetpeas/folder/1037607/Halloween-Witches/")!,
+                            isActive: false
+                        )
+                    ]
+                ),
                 description: try! AttributedString(FAHTML: htmlDescription.selfContainedFAHtmlSubmission),
                 isFavorite: false,
-                favoriteCount: 72,
                 favoriteUrl: URL(string: "https://www.furaffinity.net/fav/44188741/?key=00f2f5f4c1c7fbfac02147b73d670cac6423ab85")!,
                 comments: FAComment.demo,
                 targetCommentId: nil,

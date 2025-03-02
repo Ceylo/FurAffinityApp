@@ -9,18 +9,21 @@ import Foundation
 import FAPages
 
 public struct FASubmission: Equatable, Sendable {
+    public typealias Metadata = FASubmissionPage.Metadata
+    
     public let url: URL
     public let previewImageUrl: URL
     public let fullResolutionMediaUrl: URL
     public let widthOnHeightRatio: Float
-    public let author: String
-    public let displayAuthor: String
-    public let title: String
-    public let datetime: String
-    public let naturalDatetime: String
+    public let metadata: Metadata
+    public var author: String { metadata.author }
+    public var displayAuthor: String { metadata.displayAuthor }
+    public var title: String { metadata.title }
+    public var datetime: String { metadata.datetime }
+    public var naturalDatetime: String { metadata.naturalDatetime }
     public let description: AttributedString
     public let isFavorite: Bool
-    public let favoriteCount: Int
+    public var favoriteCount: Int {metadata.favoriteCount }
     public let favoriteUrl: URL
     public let comments: [FAComment]
     public let targetCommentId: Int?
@@ -29,14 +32,10 @@ public struct FASubmission: Equatable, Sendable {
     public init(
         url: URL, previewImageUrl: URL,
         fullResolutionMediaUrl: URL,
-        widthOnHeightRatio: Float, author: String,
-        displayAuthor: String,
-        title: String,
-        datetime: String,
-        naturalDatetime: String,
+        widthOnHeightRatio: Float,
+        metadata: Metadata,
         description: AttributedString,
         isFavorite: Bool,
-        favoriteCount: Int,
         favoriteUrl: URL,
         comments: [FAComment],
         targetCommentId: Int?,
@@ -46,15 +45,10 @@ public struct FASubmission: Equatable, Sendable {
         self.previewImageUrl = previewImageUrl
         self.fullResolutionMediaUrl = fullResolutionMediaUrl
         self.widthOnHeightRatio = widthOnHeightRatio
-        self.author = author
-        self.displayAuthor = displayAuthor
-        self.title = title
-        self.datetime = datetime
-        self.naturalDatetime = naturalDatetime
+        self.metadata = metadata
         self.description = description
         self.isFavorite = isFavorite
         self.favoriteUrl = favoriteUrl
-        self.favoriteCount = favoriteCount
         self.comments = comments
         self.targetCommentId = targetCommentId
         self.acceptsNewComments = acceptsNewComments
@@ -66,14 +60,9 @@ public struct FASubmission: Equatable, Sendable {
             previewImageUrl: previewImageUrl,
             fullResolutionMediaUrl: fullResolutionMediaUrl,
             widthOnHeightRatio: widthOnHeightRatio,
-            author: author,
-            displayAuthor: displayAuthor,
-            title: title,
-            datetime: datetime,
-            naturalDatetime: naturalDatetime,
+            metadata: metadata.togglingFavorite(isFavorite),
             description: description,
             isFavorite: !isFavorite,
-            favoriteCount: favoriteCount + (isFavorite ? -1 : 1),
             favoriteUrl: favoriteUrl,
             comments: comments,
             targetCommentId: targetCommentId,
@@ -82,6 +71,7 @@ public struct FASubmission: Equatable, Sendable {
     }
 }
 
+
 extension FASubmission {
     public init(_ page: FASubmissionPage, url: URL) async throws {
         try self.init(
@@ -89,14 +79,9 @@ extension FASubmission {
             previewImageUrl: page.previewImageUrl,
             fullResolutionMediaUrl: page.fullResolutionMediaUrl,
             widthOnHeightRatio: page.widthOnHeightRatio,
-            author: page.author,
-            displayAuthor: page.displayAuthor,
-            title: page.title,
-            datetime: page.datetime,
-            naturalDatetime: page.naturalDatetime,
+            metadata: page.metadata,
             description: await AttributedString(FAHTML: page.htmlDescription.selfContainedFAHtmlSubmission),
             isFavorite: page.isFavorite,
-            favoriteCount: page.favoriteCount,
             favoriteUrl: page.favoriteUrl,
             comments: await FAComment.buildCommentsTree(page.comments),
             targetCommentId: page.targetCommentId,
