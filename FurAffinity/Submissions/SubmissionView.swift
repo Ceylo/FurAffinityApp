@@ -52,7 +52,8 @@ struct SubmissionView: View {
             acceptsNewReplies: submission.acceptsNewComments,
             replyAction: {
                 replySession = .init(parentCid: nil, among: [])
-            }
+            },
+            infoLink: .submissionInfo(submission.metadata)
         )
     }
     

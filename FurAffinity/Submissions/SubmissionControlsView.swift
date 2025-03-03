@@ -43,6 +43,7 @@ struct SubmissionControlsView: View {
     var repliesCount: Int
     var acceptsNewReplies: Bool
     var replyAction: () -> Void
+    var infoLink: FAURL?
         
     @StateObject private var saveHandler = MediaSaveHandler()
     
@@ -91,6 +92,16 @@ struct SubmissionControlsView: View {
                 replyAction: replyAction
             )
             
+            FALink(destination: infoLink) {
+                Image(systemName: "text.badge.star")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .foregroundStyle(Color.accentColor)
+                    .padding()
+                    .offset(y: 2)
+            }
+            .frame(height: buttonsSize)
+            
             Spacer()
         }
         // 🫠 https://forums.developer.apple.com/forums/thread/747558
@@ -112,7 +123,8 @@ struct SubmissionControlsView: View {
             acceptsNewReplies: true,
             replyAction: {
                 print("Reply")
-            }
+            },
+            infoLink: nil
         )
         SubmissionControlsView(
             submissionUrl: OfflineFASession.default.submissionPreviews[0].url,
@@ -126,7 +138,8 @@ struct SubmissionControlsView: View {
             acceptsNewReplies: false,
             replyAction: {
                 print("Reply")
-            }
+            },
+            infoLink: nil
         )
     }
     .preferredColorScheme(.dark)

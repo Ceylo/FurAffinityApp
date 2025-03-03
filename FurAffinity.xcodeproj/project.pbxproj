@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8708DA262D74CF19000B419C /* SubmissionMetadataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8708DA252D74CF19000B419C /* SubmissionMetadataView.swift */; };
+		8708DA292D74D4D4000B419C /* WrappingHStack in Frameworks */ = {isa = PBXBuildFile; productRef = 8708DA282D74D4D4000B419C /* WrappingHStack */; };
 		87098D362CB14F1000E7BD94 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 87098D352CB14F1000E7BD94 /* Kingfisher */; };
 		87098D382CB19E4D00E7BD94 /* Kingfisher+FA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */; };
 		87098D3A2CB2BEF000E7BD94 /* UserDefaultKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87098D392CB2BEF000E7BD94 /* UserDefaultKeys.swift */; };
@@ -113,6 +115,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		8708DA252D74CF19000B419C /* SubmissionMetadataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionMetadataView.swift; sourceTree = "<group>"; };
 		87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Kingfisher+FA.swift"; sourceTree = "<group>"; };
 		87098D392CB2BEF000E7BD94 /* UserDefaultKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultKeys.swift; sourceTree = "<group>"; };
 		8716E7E8271C659C00C0BC4A /* Fur Affinity.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Fur Affinity.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -215,6 +218,7 @@
 			files = (
 				87E796172C99994D0020EACD /* SwiftUIIntrospect in Frameworks */,
 				87C1A0AD284B6E5400529F8C /* Version in Frameworks */,
+				8708DA292D74D4D4000B419C /* WrappingHStack in Frameworks */,
 				87098D362CB14F1000E7BD94 /* Kingfisher in Frameworks */,
 				877173752C35878700B84624 /* AmplitudeSwift in Frameworks */,
 				8761834E271F5E570021A051 /* FAKit in Frameworks */,
@@ -320,6 +324,7 @@
 				875EF2C62C1CABDC000D4BFB /* SubmissionPreviewView.swift */,
 				87566B83297DD02300FD3199 /* SubmissionMainImage.swift */,
 				873E65EF27528FC6009C8767 /* SubmissionControlsView.swift */,
+				8708DA252D74CF19000B419C /* SubmissionMetadataView.swift */,
 			);
 			path = Submissions;
 			sourceTree = "<group>";
@@ -475,6 +480,7 @@
 				87E796162C99994D0020EACD /* SwiftUIIntrospect */,
 				87098D352CB14F1000E7BD94 /* Kingfisher */,
 				87B0233E2CD54F9200F4D400 /* Defaults */,
+				8708DA282D74D4D4000B419C /* WrappingHStack */,
 			);
 			productName = FurAffinity;
 			productReference = 8716E7E8271C659C00C0BC4A /* Fur Affinity.app */;
@@ -535,6 +541,7 @@
 				877173732C35878700B84624 /* XCRemoteSwiftPackageReference "Amplitude-Swift" */,
 				87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults" */,
+				8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack" */,
 			);
 			productRefGroup = 8716E7E9271C659C00C0BC4A /* Products */;
 			projectDirPath = "";
@@ -614,6 +621,7 @@
 				875EF2E62C1E1705000D4BFB /* LinearProgress.swift in Sources */,
 				87B0933C2AED6D53008DFDE7 /* DatetimePair.swift in Sources */,
 				87F074A82C91AF0C00218D0E /* RemoteSubmissionView.swift in Sources */,
+				8708DA262D74CF19000B419C /* SubmissionMetadataView.swift in Sources */,
 				875EF2E82C1E1FF7000D4BFB /* Comparable.swift in Sources */,
 				87919B2329F1CED6006FC2D6 /* Commenting.swift in Sources */,
 				873E66112752AAB2009C8767 /* MediaSaveHandler.swift in Sources */,
@@ -931,6 +939,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/dkk/WrappingHStack.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.2.11;
+			};
+		};
 		87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
@@ -974,6 +990,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		8708DA282D74D4D4000B419C /* WrappingHStack */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack" */;
+			productName = WrappingHStack;
+		};
 		87098D352CB14F1000E7BD94 /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */;

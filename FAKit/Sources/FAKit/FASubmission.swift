@@ -8,6 +8,8 @@
 import Foundation
 import FAPages
 
+public typealias Rating = FAPages.Rating
+
 public struct FASubmission: Equatable, Sendable {
     public typealias Metadata = FASubmissionPage.Metadata
     

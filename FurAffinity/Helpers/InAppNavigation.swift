@@ -49,5 +49,7 @@ func view(for url: FAURL) -> some View {
         RemoteUserJournalsView(url: url)
     case let .watchlist(url):
         RemoteWatchlistView(url: url)
+    case let .submissionInfo(metadata):
+        SubmissionMetadataView(metadata: metadata)
     }
 }
