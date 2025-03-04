@@ -11,6 +11,7 @@
     <meta name="keywords"           content="fur furry furries fursuit fursuits cosplay brony bronies zootopia scalies kemono anthro anthropormophic art online gallery portfolio" />
     <meta name="distribution"       content="global" />
     <meta name="copyright"          content="Frost Dragon Art LLC" />
+    <meta name="robots"             content="noai, noimageai" />
 
     <link rel="icon" href="/themes/beta/img/favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="/themes/beta/img/favicon.ico" type="image/x-icon" />
@@ -27,10 +28,10 @@
         <meta name="twitter:image" content="https://www.furaffinity.net/themes/beta/img/banners/fa_logo.png?v2" />
     
     <script type="text/javascript">
-        var _faurl={d:'//d.furaffinity.net',a:'//a.furaffinity.net',r:'//rv.furaffinity.net',t:'//t.furaffinity.net',pb:'/themes/beta/js/prebid-6.13.0-fa.js'};
+        var _faurl={d:'//d.furaffinity.net',a:'//a.furaffinity.net',r:'//rv.furaffinity.net',t:'//t.furaffinity.net',pb:'/themes/beta/js/prebid-7.54.5-fa.js'};
     </script>
-    <script type="text/javascript" src="/themes/beta/js/common.js?u=2022120703"></script>
-    <link type="text/css" rel="stylesheet" href="/themes/beta/css/ui_theme_dark.css?u=2022120703" />
+    <script type="text/javascript" src="/themes/beta/js/common.js?u=2025030401"></script>
+    <link type="text/css" rel="stylesheet" href="/themes/beta/css/ui_theme_dark.css?u=2025030401" />
 
     <!-- browser hints -->
     <link rel="preconnect" href="//t.furaffinity.net" />
@@ -39,15 +40,25 @@
     <link rel="preconnect" href="https://www15.smartadserver.com" />
 
     <link rel="preload" href="/themes/beta/js/prototype.1.7.3.min.js" as="script" />
-    <link rel="preload" href="/themes/beta/js/script.js?u=2022120703" as="script" />
-    <link rel="preload" href="/themes/beta/js/prebid-6.13.0-fa.js" as="script" />
-    <link rel="preload" href="https://cdn.intergient.com/ramp.js" as="script" />
-    <link rel="preload" href="https://config.playwire.com/1024443/v2/websites/73185/banner.json" as="fetch" type="application/json" crossorigin="anonymous" />
+    <link rel="preload" href="/themes/beta/js/script.js?u=2025030401" as="script" />
+    <link rel="preload" href="/themes/beta/js/prebid-7.54.5-fa.js" as="script" />
+
+    <!-- Playwire Pre-connect <head> links -->
+    <link rel="preconnect" href="https://cdn.intergient.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.intergi.com" crossorigin />
+    <link rel="preconnect" href="https://config.playwire.com" crossorigin />
+    <link rel="preconnect" href="https://securepubads.g.doubleclick.net" crossorigin />
+    <link rel="preconnect" href="https://z.moatads.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.playwire.com" crossorigin />
 
 </head>
 
 <!-- EU request: yes -->
-<body data-static-path="/themes/beta" id="pageid-messagecenter-submissions">
+<body id="pageid-messagecenter-submissions" data-static-path="/themes/beta" data-user-logged-in="1" data-tag-blocklist="" data-tag-blocklist-hide-tagless="0" data-tag-blocklist-nonce="2f0f3457b16b4fc22088878c38b67e2ad01505c2">
+    <script type="text/javascript">
+        0; // attempted fix for fouc in ff
+    </script>
+
     
     <!-- sidebar -->
     <div class="mobile-navigation">
@@ -71,12 +82,13 @@
 
         <div class="mobile-nav-content-container">
                             <div class="aligncenter">
-                    <a href="/user/furrycount/"><img class="loggedin_user_avatar avatar" alt="Furrycount" src="//a.furaffinity.net/20221211/furrycount.gif"/></a>
+                    <a href="/user/furrycount/"><img class="loggedin_user_avatar avatar" alt="Furrycount" src="//a.furaffinity.net/20250304/furrycount.gif"/></a>
                     <h2 style="margin-bottom:0"><a href="/user/furrycount/">Furrycount</a></h2>
                     <a href="/user/furrycount/">Userpage</a> |
                     <a href="/msg/pms/">Notes</a> |
                     <a href="/controls/journal/">Journals</a> |
-                    <a href="/plus/"><img style="position:relative;top:4px" src="/themes/beta/img/the-golden-pawb.png"> FA+</a>
+                    <a href="/plus/"><img style="position:relative;top:4px" src="/themes/beta/img/the-golden-pawb.png"> FA+</a> |
+                    <a href="https://shop.furaffinity.net" target="_blank"><img style="position:relative;top:3px" src="/themes/beta/img/icons/merch_store_icon.png"> Shop</a>
                     <br>
                 </div>
                 <hr>
@@ -95,7 +107,7 @@
 
                     <h3>SUPPORT FA</h3>
                     <a href="/plus/">Subscribe to FA+ </a><br>
-                    <a href="https://shop.furaffinity.net/">FA Merch Store</a>
+                    <a href="https://shop.furaffinity.net/" target="_blank">FA Merch Store</a>
 
 
                     <h3>RULES & POLICIES</h3>
@@ -105,7 +117,7 @@
                     <a href="/aup">Upload Policy</a>
 
                     <h3>SOCIAL</h3>
-                    <a href="https://forums.furaffinity.net">Forums</a><br>
+                    <a href="https://discord.gg/furaffinity">Discord</a><br>
                     <a href="https://www.twitter.com/furaffinity/">Twitter</a>
 
                                             <h3>Support</h3>
@@ -148,7 +160,7 @@
             
             <hr>
 
-            <h2><form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="ef394ce5f14ee7bf1f2bdd0a9426edf4549ae8d1"/></form>
+            <h2><form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="c5bf32c2ed84e5f6950ded2a8d4f5850de41abe0"/></form>
 <script type="text/javascript">
     _fajs.push(['init_logout_button', '.logout-link button']);
 </script>
@@ -164,10 +176,10 @@
 
 
     <div class="mobile-notification-bar">
-                    <a class="notification-container inline" href="/msg/submissions/" title="2,487 Submission Notifications">2487S</a>
-                                                    <a class="notification-container inline" href="/msg/others/#journals" title="308 Journal Notifications">308J</a>
-                            <a class="notification-container inline" href="/msg/pms/" title="1 Unread Notes">1N</a>
-                    </div>
+                    <a class="notification-container inline" href="/msg/submissions/" title="227 Submission Notifications">227S</a>
+                                    <a class="notification-container inline" href="/msg/others/#comments" title="2 Comment Notifications">2C</a>
+                                    <a class="notification-container inline" href="/msg/others/#journals" title="21 Journal Notifications">21J</a>
+                            </div>
 
 
 
@@ -208,7 +220,7 @@
                         <a href="/aup">Upload Policy</a>
 
                         <h3>Social</h3>
-                        <a href="https://forums.furaffinity.net">Forums</a>
+                        <a href="https://discord.gg/furaffinity">Discord</a>
                         <a href="https://www.twitter.com/furaffinity/">Twitter</a>
 
                                                     <h3>Trouble Tickets</h3>
@@ -218,8 +230,9 @@
             </div>
         </li>
 
-                    <li class="lileft menu-space-saver"><a class="top-heading hideontablet" href="/plus/"><img style="position:relative;top:3px" src="/themes/beta/img/the-golden-pawb.png"> FA+</a></li>
-        
+                    <li class="lileft"><a class="top-heading" href="/plus/" title="FA+"><img style="position:relative;top:3px" src="/themes/beta/img/the-golden-pawb.png"><span class="hidebrowselowres"> FA+</span></a></li>
+                <li class="lileft"><a class="top-heading" href="https://shop.furaffinity.net" title="Shop" target="_blank"><img style="position:relative;top:3px" src="/themes/beta/img/icons/merch_store_icon.png"><span class="hidebrowselowres"> Shop</span></a></li>
+
         <div class="lileft hideonmobile">
             <form id="searchbox" method="get" action="/search/">
                 <input type="search" name="q" placeholder="SEARCH">
@@ -235,14 +248,14 @@
         
             <li class="message-bar-desktop">
 
-                                            <a class="notification-container inline" href="/msg/submissions/" title="2,487 Submission Notifications">2487S</a>
-                                                                                                                            <a class="notification-container inline" href="/msg/others/#journals" title="308 Journal Notifications">308J</a>
-                                                                <a class="notification-container inline" href="/msg/pms/" title="1 Unread Notes">1N</a>
-                                                    </li>
+                                            <a class="notification-container inline" href="/msg/submissions/" title="227 Submission Notifications">227S</a>
+                                                                                    <a class="notification-container inline" href="/msg/others/#comments" title="2 Comment Notifications">2C</a>
+                                                                                    <a class="notification-container inline" href="/msg/others/#journals" title="21 Journal Notifications">21J</a>
+                                                                        </li>
 
             <li>
                 <div class="floatleft hideonmobile">
-                    <a href="/user/furrycount"><img class="loggedin_user_avatar menubar-icon-resize avatar" style="cursor:pointer" alt="Furrycount" src="//a.furaffinity.net/20221211/furrycount.gif"/></a>
+                    <a href="/user/furrycount"><img class="loggedin_user_avatar menubar-icon-resize avatar" style="cursor:pointer" alt="Furrycount" src="//a.furaffinity.net/20250304/furrycount.gif"/></a>
                 </div>
             </li>
 
@@ -251,7 +264,7 @@
                     <svg class="avatar-submenu-trigger banner-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"></path></svg>
                 </div>
                 <a id="my-username" class="top-heading hideondesktop" href="#"><span class="hideondesktop">My FA ( </span>Furrycount<span class="hideondesktop"> )</span></a>
-               
+
                 <div class="dropdown dropdown-right">
                     <div class="dd-inner">
                         <div class="column">
@@ -263,13 +276,13 @@
 
                             <h3>Support Fur Affinity</h3>
                             <a href="/plus/">Subscribe to FA+ </a>
-                            <a href="https://shop.furaffinity.net/">Merch Store</a>
+                            <a href="https://shop.furaffinity.net/" target="_blank">Merch Store</a>
 
                             <h3>Trouble Tickets</h3>
                             <a href="/controls/troubletickets/">Report a Problem</a>
 
                                                                                     <hr>
-                            <form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="ef394ce5f14ee7bf1f2bdd0a9426edf4549ae8d1"/></form>
+                            <form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="c5bf32c2ed84e5f6950ded2a8d4f5850de41abe0"/></form>
 <script type="text/javascript">
     _fajs.push(['init_logout_button', '.logout-link button']);
 </script>
@@ -337,8 +350,8 @@
 </script>
 
     <div class="news-block">
-                                <div id="news" class="newsBlock" data-date="1669683525">
-    <strong>News:</strong><span class="hideondesktop hideontablet"><br></span> <a href="/journal/10396110">Nov 28, 2022 - Site Update, Known Issues</a>
+                                <div id="news" class="newsBlock" data-date="1741049554">
+    <strong>News:</strong><span class="hideondesktop hideontablet"><br></span> <a href="/journal/11085097">March 3rd 2025- Memorial Badge, Update, and Display Names</a>
     <span class="jsClose newsBlock__closeBtn" title="Close"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="transform: ;msFilter:;" title="Dismiss" ><path d="M20 3H4c-1.103 0-2 .897-2 2v14c0 1.103.897 2 2 2h16c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2zM4 19V7h16l.001 12H4z"></path><path d="m15.707 10.707-1.414-1.414L12 11.586 9.707 9.293l-1.414 1.414L10.586 13l-2.293 2.293 1.414 1.414L12 14.414l2.293 2.293 1.414-1.414L13.414 13z"></path></svg></span>
 </div>
 
@@ -353,14 +366,15 @@
 
                             <!-- site banner -->
                 <site-banner>
-                    <a href="/"><img src="/themes/beta/img/banners/logo/fa-banner-fall.jpg"></a>
+                    <a href="/"><img src="/themes/beta/img/banners/logo/fa-banner-winter.jpg"></a>
                 </site-banner>
             
             <a name="top"></a>
         </div>
 
         <div id="site-content">
-<!-- /header -->
+
+            <!-- /header -->
 
 <form name="messages-form" id="messages-form" method="post" action="/msg/submissions/new@72/">
     <div id="messagecenter-new-submissions">
@@ -371,15 +385,30 @@
     <div data-id="header_middle" class="leaderboardAd__slot format--leaderboard jsAdSlot"></div>
 </div>
 
-            <section>
+            
+            <section class="gallery-section">
                 <div class="section-header">
                     <h2>New Submissions</h2>
                 </div>
+            </section>
+
+            <section class="actions-section">
+                <div class="section-body">
+                        
+
+    <div class="section-options actions">
+        <button class="standard invert-selection" type="button">Invert <span class="hideontablet hideondesktop"><br></span>Selection</span></button>
+        <button class="standard check-uncheck" type="button">Select <span class="hideontablet hideondesktop"><br></span>All</button>
+        <button class="standard remove-checked" type="submit" name="messagecenter-action" value="remove_checked">Remove <span class="hideontablet hideondesktop"><br></span>Selected</button>
+        <button class="standard nuke remove_nuke" type="submit" name="messagecenter-action" value="nuke_notifications"><div class="sprite-nuke"></div>Nuke</button>
+    </div>                                    </div>
+            </section>
+
+            <section class="gallery-section">
                 <div class="section-body" style="padding-bottom:10px">
 
-
-                    <div class="aligncenter" style="line-height:40px">
-                                                    <a class="button standard more prev" href="/msg/submissions/new~36003843@72/">Prev. 72</a>
+                    <div class="messagecenter-navigation aligncenter" style="line-height:40px">
+                                                    <a class="button standard more prev" href="/msg/submissions/new~57208617@72/">Prev. 72</a>
                         
                         <a class="button standard oldest hideonmobile " href="/msg/submissions/old@72/">Oldest</a>
                         <a class="button standard  a newest hideonmobile active" href="/msg/submissions/new@72/">Newest</a>
@@ -390,145 +419,304 @@
                     <div id="messages-comments-submission">
                         <div id="messagecenter-submissions">
                             
-                                                                        <div class="notifications-by-date" data-date="1585351290">
-                                                <h4 class="date-divider">989 days ago, 27 March 2020</h4>
+                                                                        <div class="notifications-by-date" data-date="1708907644">
+                                                <h4 class="date-divider">373 days ago, 25 February 2024</h4>
                                                 <section id="gallery-0" class="gallery messagecenter with-checkboxes s-200 ">
-                                            <figure id="sid-35633431" class="r-general t-image"><b><u><a href="/view/35633431/"><img alt="" src="//t.furaffinity.net/35633431@200-1585351290.jpg"  data-width="200" data-height="200" style="width:200px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35633431"><div><input id="input-35633431" type="checkbox" name="submissions[]" value="35633431"></div><p><a href="/view/35633431/" title="CM - happy!">CM - happy!</a></p><p><i>by</i> <a href="/user/tiaamaito/" title="tiaamaito">tiaamaito</a></p></label></figcaption></figure><!--
---><figure id="sid-35632416" class="r-general t-image"><b><u><a href="/view/35632416/"><img alt="" src="//t.furaffinity.net/35632416@300-1585347229.jpg"  data-width="247.343" data-height="200" style="width:247.343px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35632416"><div><input id="input-35632416" type="checkbox" name="submissions[]" value="35632416"></div><p><a href="/view/35632416/" title="[CLOSED] Adopt Auction - Boni">[CLOSED] Adopt Auction - Boni</a></p><p><i>by</i> <a href="/user/terriniss/" title="Terriniss">Terriniss</a></p></label></figcaption></figure><!--
---><figure id="sid-35630418" class="r-general t-image"><b><u><a href="/view/35630418/"><img alt="" src="//t.furaffinity.net/35630418@400-1585339166.jpg"  data-width="300.823" data-height="200" style="width:300.823px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35630418"><div><input id="input-35630418" type="checkbox" name="submissions[]" value="35630418"></div><p><a href="/view/35630418/" title="[CLOSED] Adopt Auction - Huni">[CLOSED] Adopt Auction - Huni</a></p><p><i>by</i> <a href="/user/terriniss/" title="Terriniss">Terriniss</a></p></label></figcaption></figure><!--
--->                                                    </section>
+                                            <figure id="sid-55682423" class="r-general t-image">
+    <b>
+        <u>
+            <a href="/view/55682423/">
+                <img data-tags="adopt adoptable auction adoptadoptable auctionadoptable auctionopen auctionadopt auction_adoptable" class="blocked-content" alt="" src="//t.furaffinity.net/55682423@400-1708907644.jpg"  data-width="400" data-height="147.059" style="width:400px; height:147.059px" loading="lazy" decoding="async" />
+                <i title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <label for="input-55682423">
+            <div>
+                <input id="input-55682423" type="checkbox" name="submissions[]" value="55682423">
+            </div>
+            <p>
+                <a href="/view/55682423/" title="[OPEN] MonsterFluffers - Adopts FixPrice - #1 Pack">[OPEN] MonsterFluffers - Adopts FixPrice - #1 Pack</a>
+            </p>
+            <p>
+                <i>by</i> <a href="/user/terriniss/" title="Terriniss">Terriniss</a>
+            </p>
+        </label>
+    </figcaption>
+</figure>
+<figure id="sid-55678491" class="r-general t-image">
+    <b>
+        <u>
+            <a href="/view/55678491/">
+                <img data-tags="adopt adoptable auction adoptadoptable auctionadoptable auctionopen auctionadopt auction_adoptable" class="blocked-content" alt="" src="//t.furaffinity.net/55678491@400-1708889023.jpg"  data-width="319.489" data-height="200" style="width:319.489px; height:200px" loading="lazy" decoding="async" />
+                <i title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <label for="input-55678491">
+            <div>
+                <input id="input-55678491" type="checkbox" name="submissions[]" value="55678491">
+            </div>
+            <p>
+                <a href="/view/55678491/" title="[CLOSED] Adopt Auction - Fizzgig">[CLOSED] Adopt Auction - Fizzgig</a>
+            </p>
+            <p>
+                <i>by</i> <a href="/user/terriniss/" title="Terriniss">Terriniss</a>
+            </p>
+        </label>
+    </figcaption>
+</figure>
+                                                    </section>
                                                     <script type="text/javascript">
                                                         _fajs.push(['init_gallery', 'gallery-0']);
                                                     </script>
                                                 </div>
-                                                                                        <div class="notifications-by-date" data-date="1585284072">
-                                                <h4 class="date-divider">990 days ago, 26 March 2020</h4>
+                                                                                        <div class="notifications-by-date" data-date="1708712615">
+                                                <h4 class="date-divider">375 days ago, 23 February 2024</h4>
                                                 <section id="gallery-1" class="gallery messagecenter with-checkboxes s-200 ">
-                                            <figure id="sid-35621296" class="r-general t-image"><b><u><a href="/view/35621296/"><img alt="" src="//t.furaffinity.net/35621296@400-1585284275.jpg"  data-width="308.93" data-height="200" style="width:308.93px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35621296"><div><input id="input-35621296" type="checkbox" name="submissions[]" value="35621296"></div><p><a href="/view/35621296/" title="Rai-eeko-DJ-party">Rai-eeko-DJ-party</a></p><p><i>by</i> <a href="/user/rudragon/" title="RUdragon">RUdragon</a></p></label></figcaption></figure><!--
---><figure id="sid-35617315" class="r-general t-image"><b><u><a href="/view/35617315/"><img alt="" src="//t.furaffinity.net/35617315@400-1585263504.jpg"  data-width="400" data-height="194.688" style="width:400px; height:194.688px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35617315"><div><input id="input-35617315" type="checkbox" name="submissions[]" value="35617315"></div><p><a href="/view/35617315/" title="[CLOSED] Adopt Auction - Merhu">[CLOSED] Adopt Auction - Merhu</a></p><p><i>by</i> <a href="/user/terriniss/" title="Terriniss">Terriniss</a></p></label></figcaption></figure><!--
---><figure id="sid-35611985" class="r-general t-image"><b><u><a href="/view/35611985/"><img alt="" src="//t.furaffinity.net/35611985@300-1585243875.jpg"  data-width="287.964" data-height="200" style="width:287.964px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35611985"><div><input id="input-35611985" type="checkbox" name="submissions[]" value="35611985"></div><p><a href="/view/35611985/" title="[CLOSED] Adopt Auction - Aaani">[CLOSED] Adopt Auction - Aaani</a></p><p><i>by</i> <a href="/user/terriniss/" title="Terriniss">Terriniss</a></p></label></figcaption></figure><!--
--->                                                    </section>
+                                            <figure id="sid-55653799" class="r-general t-image">
+    <b>
+        <u>
+            <a href="/view/55653799/">
+                <img data-tags="adopt adoptable auction adoptadoptable auctionadoptable auctionopen auctionadopt auction_adoptable" class="blocked-content" alt="" src="//t.furaffinity.net/55653799@400-1708712615.jpg"  data-width="303.337" data-height="200" style="width:303.337px; height:200px" loading="lazy" decoding="async" />
+                <i title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <label for="input-55653799">
+            <div>
+                <input id="input-55653799" type="checkbox" name="submissions[]" value="55653799">
+            </div>
+            <p>
+                <a href="/view/55653799/" title="[CLOSED] Adopt Auction - Quix">[CLOSED] Adopt Auction - Quix</a>
+            </p>
+            <p>
+                <i>by</i> <a href="/user/terriniss/" title="Terriniss">Terriniss</a>
+            </p>
+        </label>
+    </figcaption>
+</figure>
+                                                    </section>
                                                     <script type="text/javascript">
                                                         _fajs.push(['init_gallery', 'gallery-1']);
                                                     </script>
                                                 </div>
-                                                                                        <div class="notifications-by-date" data-date="1585184409">
-                                                <h4 class="date-divider">991 days ago, 25 March 2020</h4>
+                                                                                        <div class="notifications-by-date" data-date="1708555177">
+                                                <h4 class="date-divider">377 days ago, 21 February 2024</h4>
                                                 <section id="gallery-2" class="gallery messagecenter with-checkboxes s-200 ">
-                                            <figure id="sid-35602777" class="r-general t-image"><b><u><a href="/view/35602777/"><img alt="" src="//t.furaffinity.net/35602777@400-1585184409.jpg"  data-width="300.117" data-height="200" style="width:300.117px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35602777"><div><input id="input-35602777" type="checkbox" name="submissions[]" value="35602777"></div><p><a href="/view/35602777/" title="Field of the fallen">Field of the fallen</a></p><p><i>by</i> <a href="/user/hiorou/" title="Hiorou">Hiorou</a></p></label></figcaption></figure><!--
---><figure id="sid-35596329" class="r-general t-image"><b><u><a href="/view/35596329/"><img alt="" src="//t.furaffinity.net/35596329@200-1585158260.jpg"  data-width="133.333" data-height="200" style="width:133.333px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35596329"><div><input id="input-35596329" type="checkbox" name="submissions[]" value="35596329"></div><p><a href="/view/35596329/" title="[Prompt] The Hallow Witch">[Prompt] The Hallow Witch</a></p><p><i>by</i> <a href="/user/mowen/" title="Mowen">Mowen</a></p></label></figcaption></figure><!--
---><figure id="sid-35594138" class="r-general t-image"><b><u><a href="/view/35594138/"><img alt="" src="//t.furaffinity.net/35594138@200-1585148325.jpg"  data-width="175.333" data-height="200" style="width:175.333px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35594138"><div><input id="input-35594138" type="checkbox" name="submissions[]" value="35594138"></div><p><a href="/view/35594138/" title="Relax">Relax</a></p><p><i>by</i> <a href="/user/annetpeas/" title="AnnetPeas">AnnetPeas</a></p></label></figcaption></figure><!--
--->                                                    </section>
+                                            <figure id="sid-55633969" class="r-general t-image">
+    <b>
+        <u>
+            <a href="/view/55633969/">
+                <img data-tags="adopt adoptable auction adoptadoptable auctionadoptable auctionopen auctionadopt auction_adoptable" class="blocked-content" alt="" src="//t.furaffinity.net/55633969@300-1708555177.jpg"  data-width="290.98" data-height="200" style="width:290.98px; height:200px" loading="lazy" decoding="async" />
+                <i title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <label for="input-55633969">
+            <div>
+                <input id="input-55633969" type="checkbox" name="submissions[]" value="55633969">
+            </div>
+            <p>
+                <a href="/view/55633969/" title="[CLOSED] Adopt Auction - Gravax">[CLOSED] Adopt Auction - Gravax</a>
+            </p>
+            <p>
+                <i>by</i> <a href="/user/terriniss/" title="Terriniss">Terriniss</a>
+            </p>
+        </label>
+    </figcaption>
+</figure>
+                                                    </section>
                                                     <script type="text/javascript">
                                                         _fajs.push(['init_gallery', 'gallery-2']);
                                                     </script>
                                                 </div>
-                                                                                        <div class="notifications-by-date" data-date="1585120900">
-                                                <h4 class="date-divider">992 days ago, 25 March 2020</h4>
+                                                                                        <div class="notifications-by-date" data-date="1708443019">
+                                                <h4 class="date-divider">378 days ago, 20 February 2024</h4>
                                                 <section id="gallery-3" class="gallery messagecenter with-checkboxes s-200 ">
-                                            <figure id="sid-35590474" class="r-general t-image"><b><u><a href="/view/35590474/"><img alt="" src="//t.furaffinity.net/35590474@400-1585120900.jpg"  data-width="400" data-height="126.875" style="width:400px; height:126.875px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35590474"><div><input id="input-35590474" type="checkbox" name="submissions[]" value="35590474"></div><p><a href="/view/35590474/" title="Kled sculpture">Kled sculpture</a></p><p><i>by</i> <a href="/user/maziurek/" title="Maziurek">Maziurek</a></p></label></figcaption></figure><!--
---><figure id="sid-35589868" class="r-general t-image"><b><u><a href="/view/35589868/"><img alt="" src="//t.furaffinity.net/35589868@200-1585115903.jpg"  data-width="129.375" data-height="200" style="width:129.375px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35589868"><div><input id="input-35589868" type="checkbox" name="submissions[]" value="35589868"></div><p><a href="/view/35589868/" title="RUandME-taco">RUandME-taco</a></p><p><i>by</i> <a href="/user/rudragon/" title="RUdragon">RUdragon</a></p></label></figcaption></figure><!--
---><figure id="sid-35574963" class="r-general t-image"><b><u><a href="/view/35574963/"><img alt="" src="//t.furaffinity.net/35574963@200-1585044414.jpg"  data-width="200" data-height="200" style="width:200px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35574963"><div><input id="input-35574963" type="checkbox" name="submissions[]" value="35574963"></div><p><a href="/view/35574963/" title="Walked together">Walked together</a></p><p><i>by</i> <a href="/user/annetpeas/" title="AnnetPeas">AnnetPeas</a></p></label></figcaption></figure><!--
--->                                                    </section>
+                                            <figure id="sid-55616595" class="r-general t-image">
+    <b>
+        <u>
+            <a href="/view/55616595/">
+                <img data-tags="eel dolphin fantasy poem comic lore fish lightning" class="blocked-content" alt="" src="//t.furaffinity.net/55616595@200-1708443019.jpg"  data-width="150.038" data-height="200" style="width:150.038px; height:200px" loading="lazy" decoding="async" />
+                <i title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <label for="input-55616595">
+            <div>
+                <input id="input-55616595" type="checkbox" name="submissions[]" value="55616595">
+            </div>
+            <p>
+                <a href="/view/55616595/" title="The book of Epitemnein: Electricity Spirit.">The book of Epitemnein: Electricity Spirit.</a>
+            </p>
+            <p>
+                <i>by</i> <a href="/user/hiorou/" title="Hiorou">Hiorou</a>
+            </p>
+        </label>
+    </figcaption>
+</figure>
+                                                    </section>
                                                     <script type="text/javascript">
                                                         _fajs.push(['init_gallery', 'gallery-3']);
                                                     </script>
                                                 </div>
-                                                                                        <div class="notifications-by-date" data-date="1585029370">
-                                                <h4 class="date-divider">993 days ago, 23 March 2020</h4>
+                                                                                        <div class="notifications-by-date" data-date="1708384320">
+                                                <h4 class="date-divider">379 days ago, 19 February 2024</h4>
                                                 <section id="gallery-4" class="gallery messagecenter with-checkboxes s-200 ">
-                                            <figure id="sid-35573214" class="r-general t-image"><b><u><a href="/view/35573214/"><img alt="" src="//t.furaffinity.net/35573214@200-1585029360.jpg"  data-width="185.676" data-height="200" style="width:185.676px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35573214"><div><input id="input-35573214" type="checkbox" name="submissions[]" value="35573214"></div><p><a href="/view/35573214/" title="Galelai">Galelai</a></p><p><i>by</i> <a href="/user/mewitti/" title="Mewitti">Mewitti</a></p></label></figcaption></figure><!--
---><figure id="sid-35568275" class="r-general t-image"><b><u><a href="/view/35568275/"><img alt="" src="//t.furaffinity.net/35568275@400-1585003358.jpg"  data-width="386.124" data-height="200" style="width:386.124px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35568275"><div><input id="input-35568275" type="checkbox" name="submissions[]" value="35568275"></div><p><a href="/view/35568275/" title="[CLOSED] Adopt Auction - Talik">[CLOSED] Adopt Auction - Talik</a></p><p><i>by</i> <a href="/user/terriniss/" title="Terriniss">Terriniss</a></p></label></figcaption></figure><!--
---><figure id="sid-35563822" class="r-general t-image"><b><u><a href="/view/35563822/"><img alt="" src="//t.furaffinity.net/35563822@200-1584987267.jpg"  data-width="150" data-height="200" style="width:150px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35563822"><div><input id="input-35563822" type="checkbox" name="submissions[]" value="35563822"></div><p><a href="/view/35563822/" title="YCH Auction &quot;Yukata-2&quot; [CLOSED]">YCH Auction &quot;Yukata-2&quot; [CLOSED]</a></p><p><i>by</i> <a href="/user/annetpeas/" title="AnnetPeas">AnnetPeas</a></p></label></figcaption></figure><!--
---><figure id="sid-35561829" class="r-general t-image"><b><u><a href="/view/35561829/"><img alt="" src="//t.furaffinity.net/35561829@200-1584978162.jpg"  data-width="156.333" data-height="200" style="width:156.333px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35561829"><div><input id="input-35561829" type="checkbox" name="submissions[]" value="35561829"></div><p><a href="/view/35561829/" title="Celti">Celti</a></p><p><i>by</i> <a href="/user/annetpeas/" title="AnnetPeas">AnnetPeas</a></p></label></figcaption></figure><!--
---><figure id="sid-35561079" class="r-general t-image"><b><u><a href="/view/35561079/"><img alt="" src="//t.furaffinity.net/35561079@400-1584973584.jpg"  data-width="400" data-height="167.188" style="width:400px; height:167.188px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35561079"><div><input id="input-35561079" type="checkbox" name="submissions[]" value="35561079"></div><p><a href="/view/35561079/" title="custom design">custom design</a></p><p><i>by</i> <a href="/user/terriniss/" title="Terriniss">Terriniss</a></p></label></figcaption></figure><!--
---><figure id="sid-35560917" class="r-general t-image"><b><u><a href="/view/35560917/"><img alt="" src="//t.furaffinity.net/35560917@300-1584972544.jpg"  data-width="256.32" data-height="200" style="width:256.32px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35560917"><div><input id="input-35560917" type="checkbox" name="submissions[]" value="35560917"></div><p><a href="/view/35560917/" title="custom design">custom design</a></p><p><i>by</i> <a href="/user/terriniss/" title="Terriniss">Terriniss</a></p></label></figcaption></figure><!--
--->                                                    </section>
+                                            <figure id="sid-55609779" class="r-general t-image">
+    <b>
+        <u>
+            <a href="/view/55609779/">
+                <img data-tags="adopt adoptable auction adoptadoptable auctionadoptable auctionopen auctionadopt auction_adoptable" class="blocked-content" alt="" src="//t.furaffinity.net/55609779@400-1708385698.jpg"  data-width="364.465" data-height="200" style="width:364.465px; height:200px" loading="lazy" decoding="async" />
+                <i title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <label for="input-55609779">
+            <div>
+                <input id="input-55609779" type="checkbox" name="submissions[]" value="55609779">
+            </div>
+            <p>
+                <a href="/view/55609779/" title="[CLOSED] Adopt Auction - Grave fire">[CLOSED] Adopt Auction - Grave fire</a>
+            </p>
+            <p>
+                <i>by</i> <a href="/user/terriniss/" title="Terriniss">Terriniss</a>
+            </p>
+        </label>
+    </figcaption>
+</figure>
+<figure id="sid-55601769" class="r-general t-image">
+    <b>
+        <u>
+            <a href="/view/55601769/">
+                <img data-tags="phaiton cutekawaii dragon squirrel tailmouth rudragon" class="blocked-content" alt="" src="//t.furaffinity.net/55601769@400-1708330696.jpg"  data-width="308.871" data-height="200" style="width:308.871px; height:200px" loading="lazy" decoding="async" />
+                <i title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <label for="input-55601769">
+            <div>
+                <input id="input-55601769" type="checkbox" name="submissions[]" value="55601769">
+            </div>
+            <p>
+                <a href="/view/55601769/" title="lil-blu-and-dragitail (2023)">lil-blu-and-dragitail (2023)</a>
+            </p>
+            <p>
+                <i>by</i> <a href="/user/rudragon/" title="RUdragon">RUdragon</a>
+            </p>
+        </label>
+    </figcaption>
+</figure>
+                                                    </section>
                                                     <script type="text/javascript">
                                                         _fajs.push(['init_gallery', 'gallery-4']);
                                                     </script>
                                                 </div>
-                                                                                        <div class="notifications-by-date" data-date="1584926306">
-                                                <h4 class="date-divider">994 days ago, 22 March 2020</h4>
+                                                                                        <div class="notifications-by-date" data-date="1708123283">
+                                                <h4 class="date-divider">382 days ago, 16 February 2024</h4>
                                                 <section id="gallery-5" class="gallery messagecenter with-checkboxes s-200 ">
-                                            <figure id="sid-35554609" class="r-general t-image"><b><u><a href="/view/35554609/"><img alt="" src="//t.furaffinity.net/35554609@400-1584926306.jpg"  data-width="334.728" data-height="200" style="width:334.728px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35554609"><div><input id="input-35554609" type="checkbox" name="submissions[]" value="35554609"></div><p><a href="/view/35554609/" title="Fall Furries! Cute Canines Edition [CLOSED]">Fall Furries! Cute Canines Edition [CLOSED]</a></p><p><i>by</i> <a href="/user/mowen/" title="Mowen">Mowen</a></p></label></figcaption></figure><!--
---><figure id="sid-35554253" class="r-general t-image"><b><u><a href="/view/35554253/"><img alt="" src="//t.furaffinity.net/35554253@200-1584924499.jpg"  data-width="150" data-height="200" style="width:150px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35554253"><div><input id="input-35554253" type="checkbox" name="submissions[]" value="35554253"></div><p><a href="/view/35554253/" title="YCH Auction &quot;Yukata-1&quot; [CLOSED]">YCH Auction &quot;Yukata-1&quot; [CLOSED]</a></p><p><i>by</i> <a href="/user/annetpeas/" title="AnnetPeas">AnnetPeas</a></p></label></figcaption></figure><!--
---><figure id="sid-35553242" class="r-general t-image"><b><u><a href="/view/35553242/"><img alt="" src="//t.furaffinity.net/35553242@400-1584919571.jpg"  data-width="308.93" data-height="200" style="width:308.93px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35553242"><div><input id="input-35553242" type="checkbox" name="submissions[]" value="35553242"></div><p><a href="/view/35553242/" title="RU-water-gun">RU-water-gun</a></p><p><i>by</i> <a href="/user/rudragon/" title="RUdragon">RUdragon</a></p></label></figcaption></figure><!--
---><figure id="sid-35549291" class="r-general t-image"><b><u><a href="/view/35549291/"><img alt="" src="//t.furaffinity.net/35549291@200-1584905435.jpg"  data-width="150.24" data-height="200" style="width:150.24px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35549291"><div><input id="input-35549291" type="checkbox" name="submissions[]" value="35549291"></div><p><a href="/view/35549291/" title="CM - Kito Stickers">CM - Kito Stickers</a></p><p><i>by</i> <a href="/user/tiaamaito/" title="tiaamaito">tiaamaito</a></p></label></figcaption></figure><!--
---><figure id="sid-35547546" class="r-general t-image"><b><u><a href="/view/35547546/"><img alt="" src="//t.furaffinity.net/35547546@400-1584898425.jpg"  data-width="301.62" data-height="200" style="width:301.62px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35547546"><div><input id="input-35547546" type="checkbox" name="submissions[]" value="35547546"></div><p><a href="/view/35547546/" title="[CLOSED] Adopt Auction - Ozil">[CLOSED] Adopt Auction - Ozil</a></p><p><i>by</i> <a href="/user/terriniss/" title="Terriniss">Terriniss</a></p></label></figcaption></figure><!--
---><figure id="sid-35545731" class="r-general t-image"><b><u><a href="/view/35545731/"><img alt="" src="//t.furaffinity.net/35545731@200-1584889891.jpg"  data-width="200" data-height="200" style="width:200px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35545731"><div><input id="input-35545731" type="checkbox" name="submissions[]" value="35545731"></div><p><a href="/view/35545731/" title="Ice Cream">Ice Cream</a></p><p><i>by</i> <a href="/user/annetpeas/" title="AnnetPeas">AnnetPeas</a></p></label></figcaption></figure><!--
---><figure id="sid-35544529" class="r-general t-image"><b><u><a href="/view/35544529/"><img alt="" src="//t.furaffinity.net/35544529@300-1584882955.jpg"  data-width="266.667" data-height="200" style="width:266.667px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35544529"><div><input id="input-35544529" type="checkbox" name="submissions[]" value="35544529"></div><p><a href="/view/35544529/" title="ヽ(*・ω・)ﾉ">ヽ(*・ω・)ﾉ</a></p><p><i>by</i> <a href="/user/peach07/" title="Peach07">Peach07</a></p></label></figcaption></figure><!--
--->                                                    </section>
+                                            <figure id="sid-55573180" class="r-general t-image">
+    <b>
+        <u>
+            <a href="/view/55573180/">
+                <img data-tags="adopt adoptable auction adoptadoptable auctionadoptable auctionopen auctionadopt auction_adoptable" class="blocked-content" alt="" src="//t.furaffinity.net/55573180@400-1708123283.jpg"  data-width="304.762" data-height="200" style="width:304.762px; height:200px" loading="lazy" decoding="async" />
+                <i title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <label for="input-55573180">
+            <div>
+                <input id="input-55573180" type="checkbox" name="submissions[]" value="55573180">
+            </div>
+            <p>
+                <a href="/view/55573180/" title="[CLOSED] Adopt Auction - Vorastrix">[CLOSED] Adopt Auction - Vorastrix</a>
+            </p>
+            <p>
+                <i>by</i> <a href="/user/terriniss/" title="Terriniss">Terriniss</a>
+            </p>
+        </label>
+    </figcaption>
+</figure>
+                                                    </section>
                                                     <script type="text/javascript">
                                                         _fajs.push(['init_gallery', 'gallery-5']);
                                                     </script>
                                                 </div>
-                                                                                        <div class="notifications-by-date" data-date="1584818497">
-                                                <h4 class="date-divider">995 days ago, 21 March 2020</h4>
+                                                                                        <div class="notifications-by-date" data-date="1707948919">
+                                                <h4 class="date-divider">384 days ago, 14 February 2024</h4>
                                                 <section id="gallery-6" class="gallery messagecenter with-checkboxes s-200 ">
-                                            <figure id="sid-35533432" class="r-general t-image"><b><u><a href="/view/35533432/"><img alt="" src="//t.furaffinity.net/35533432@200-1584818497.jpg"  data-width="150" data-height="200" style="width:150px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35533432"><div><input id="input-35533432" type="checkbox" name="submissions[]" value="35533432"></div><p><a href="/view/35533432/" title="YCH Auction &quot;The little black jacket&quot; [CLOSED]">YCH Auction &quot;The little black jacket&quot; [CLOSED]</a></p><p><i>by</i> <a href="/user/annetpeas/" title="AnnetPeas">AnnetPeas</a></p></label></figcaption></figure><!--
---><figure id="sid-35533257" class="r-general t-image"><b><u><a href="/view/35533257/"><img alt="" src="//t.furaffinity.net/35533257@200-1584817740.jpg"  data-width="159.333" data-height="200" style="width:159.333px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35533257"><div><input id="input-35533257" type="checkbox" name="submissions[]" value="35533257"></div><p><a href="/view/35533257/" title="Kyra">Kyra</a></p><p><i>by</i> <a href="/user/annetpeas/" title="AnnetPeas">AnnetPeas</a></p></label></figcaption></figure><!--
---><figure id="sid-35533155" class="r-general t-image"><b><u><a href="/view/35533155/"><img alt="" src="//t.furaffinity.net/35533155@400-1584817477.jpg"  data-width="355.556" data-height="200" style="width:355.556px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35533155"><div><input id="input-35533155" type="checkbox" name="submissions[]" value="35533155"></div><p><a href="/view/35533155/" title="Blinking">Blinking</a></p><p><i>by</i> <a href="/user/zinagluk/" title="ZinaGluk">ZinaGluk</a></p></label></figcaption></figure><!--
---><figure id="sid-35532620" class="r-general t-image"><b><u><a href="/view/35532620/"><img alt="" src="//t.furaffinity.net/35532620@200-1584815320.jpg"  data-width="163.971" data-height="200" style="width:163.971px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35532620"><div><input id="input-35532620" type="checkbox" name="submissions[]" value="35532620"></div><p><a href="/view/35532620/" title="Feanora">Feanora</a></p><p><i>by</i> <a href="/user/slavdy/" title="Slavdy">Slavdy</a></p></label></figcaption></figure><!--
---><figure id="sid-35530707" class="r-general t-image"><b><u><a href="/view/35530707/"><img alt="" src="//t.furaffinity.net/35530707@200-1584806666.jpg"  data-width="150" data-height="200" style="width:150px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35530707"><div><input id="input-35530707" type="checkbox" name="submissions[]" value="35530707"></div><p><a href="/view/35530707/" title="YCH Auction &quot;Coats are always in fashion&quot; [CLOSED]">YCH Auction &quot;Coats are always in fashion&quot; [CLOSED]</a></p><p><i>by</i> <a href="/user/annetpeas/" title="AnnetPeas">AnnetPeas</a></p></label></figcaption></figure><!--
--->                                                    </section>
+                                            <figure id="sid-55548147" class="r-general t-image">
+    <b>
+        <u>
+            <a href="/view/55548147/">
+                <img data-tags="adopt adoptable auction adoptadoptable auctionadoptable auctionopen auctionadopt auction_adoptable" class="blocked-content" alt="" src="//t.furaffinity.net/55548147@400-1707948919.jpg"  data-width="300.188" data-height="200" style="width:300.188px; height:200px" loading="lazy" decoding="async" />
+                <i title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <label for="input-55548147">
+            <div>
+                <input id="input-55548147" type="checkbox" name="submissions[]" value="55548147">
+            </div>
+            <p>
+                <a href="/view/55548147/" title="[CLOSED] Cute Monsters - Adopts FixPrice - #3 Pack">[CLOSED] Cute Monsters - Adopts FixPrice - #3 Pack</a>
+            </p>
+            <p>
+                <i>by</i> <a href="/user/terriniss/" title="Terriniss">Terriniss</a>
+            </p>
+        </label>
+    </figcaption>
+</figure>
+                                                    </section>
                                                     <script type="text/javascript">
                                                         _fajs.push(['init_gallery', 'gallery-6']);
                                                     </script>
                                                 </div>
-                                                                                        <div class="notifications-by-date" data-date="1584724348">
-                                                <h4 class="date-divider">996 days ago, 20 March 2020</h4>
+                                                                                        <div class="notifications-by-date" data-date="1707557960">
+                                                <h4 class="date-divider">388 days ago, 10 February 2024</h4>
                                                 <section id="gallery-7" class="gallery messagecenter with-checkboxes s-200 ">
-                                            <figure id="sid-35516139" class="r-general t-image"><b><u><a href="/view/35516139/"><img alt="" src="//t.furaffinity.net/35516139@200-1584724348.jpg"  data-width="156.333" data-height="200" style="width:156.333px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35516139"><div><input id="input-35516139" type="checkbox" name="submissions[]" value="35516139"></div><p><a href="/view/35516139/" title="Yancha">Yancha</a></p><p><i>by</i> <a href="/user/annetpeas/" title="AnnetPeas">AnnetPeas</a></p></label></figcaption></figure><!--
---><figure id="sid-35515585" class="r-general t-image"><b><u><a href="/view/35515585/"><img alt="" src="//t.furaffinity.net/35515585@200-1584722105.jpg"  data-width="139.586" data-height="200" style="width:139.586px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35515585"><div><input id="input-35515585" type="checkbox" name="submissions[]" value="35515585"></div><p><a href="/view/35515585/" title="ALL-sket-2020-2">ALL-sket-2020-2</a></p><p><i>by</i> <a href="/user/rudragon/" title="RUdragon">RUdragon</a></p></label></figcaption></figure><!--
--->                                                    </section>
-                                                    <script type="text/javascript">
-                                                        _fajs.push(['init_gallery', 'gallery-7']);
-                                                    </script>
-                                                </div>
-                                                                                        <div class="notifications-by-date" data-date="1584687486">
-                                                <h4 class="date-divider">997 days ago, 19 March 2020</h4>
-                                                <section id="gallery-8" class="gallery messagecenter with-checkboxes s-200 ">
-                                            <figure id="sid-35510594" class="r-general t-image"><b><u><a href="/view/35510594/"><img alt="" src="//t.furaffinity.net/35510594@200-1584687486.jpg"  data-width="163.333" data-height="200" style="width:163.333px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35510594"><div><input id="input-35510594" type="checkbox" name="submissions[]" value="35510594"></div><p><a href="/view/35510594/" title="Why not go for a ride?">Why not go for a ride?</a></p><p><i>by</i> <a href="/user/annetpeas/" title="AnnetPeas">AnnetPeas</a></p></label></figcaption></figure><!--
--->                                                    </section>
-                                                    <script type="text/javascript">
-                                                        _fajs.push(['init_gallery', 'gallery-8']);
-                                                    </script>
-                                                </div>
-                                                                                        <div class="notifications-by-date" data-date="1584530967">
-                                                <h4 class="date-divider">998 days ago, 18 March 2020</h4>
-                                                <section id="gallery-9" class="gallery messagecenter with-checkboxes s-200 ">
-                                            <figure id="sid-35480026" class="r-general t-image"><b><u><a href="/view/35480026/"><img alt="" src="//t.furaffinity.net/35480026@300-1584530967.jpg"  data-width="217.241" data-height="200" style="width:217.241px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35480026"><div><input id="input-35480026" type="checkbox" name="submissions[]" value="35480026"></div><p><a href="/view/35480026/" title="&quot;You Never Can Tell&quot;">&quot;You Never Can Tell&quot;</a></p><p><i>by</i> <a href="/user/annetpeas/" title="AnnetPeas">AnnetPeas</a></p></label></figcaption></figure><!--
--->                                                    </section>
-                                                    <script type="text/javascript">
-                                                        _fajs.push(['init_gallery', 'gallery-9']);
-                                                    </script>
-                                                </div>
-                                                                                        <div class="notifications-by-date" data-date="1584517208">
-                                                <h4 class="date-divider">999 days ago, 18 March 2020</h4>
-                                                <section id="gallery-10" class="gallery messagecenter with-checkboxes s-200 ">
-                                            <figure id="sid-35478551" class="r-general t-image"><b><u><a href="/view/35478551/"><img alt="" src="//t.furaffinity.net/35478551@400-1584517254.jpg"  data-width="308.93" data-height="200" style="width:308.93px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35478551"><div><input id="input-35478551" type="checkbox" name="submissions[]" value="35478551"></div><p><a href="/view/35478551/" title="sea-dog">sea-dog</a></p><p><i>by</i> <a href="/user/rudragon/" title="RUdragon">RUdragon</a></p></label></figcaption></figure><!--
---><figure id="sid-35475003" class="r-general t-image"><b><u><a href="/view/35475003/"><img alt="" src="//t.furaffinity.net/35475003@300-1584492443.jpg"  data-width="228" data-height="200" style="width:228px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35475003"><div><input id="input-35475003" type="checkbox" name="submissions[]" value="35475003"></div><p><a href="/view/35475003/" title="Cutie &lt;3">Cutie &lt;3</a></p><p><i>by</i> <a href="/user/annetpeas/" title="AnnetPeas">AnnetPeas</a></p></label></figcaption></figure><!--
---><figure id="sid-35469700" class="r-general t-image"><b><u><a href="/view/35469700/"><img alt="" src="//t.furaffinity.net/35469700@300-1584470311.jpg"  data-width="222.997" data-height="200" style="width:222.997px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35469700"><div><input id="input-35469700" type="checkbox" name="submissions[]" value="35469700"></div><p><a href="/view/35469700/" title="[Commission] Fireaze (3)">[Commission] Fireaze (3)</a></p><p><i>by</i> <a href="/user/toth-m/" title="Toth-M">Toth-M</a></p></label></figcaption></figure><!--
---><figure id="sid-35465945" class="r-general t-image"><b><u><a href="/view/35465945/"><img alt="" src="//t.furaffinity.net/35465945@200-1584450650.jpg"  data-width="150" data-height="200" style="width:150px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35465945"><div><input id="input-35465945" type="checkbox" name="submissions[]" value="35465945"></div><p><a href="/view/35465945/" title="Golden Ray">Golden Ray</a></p><p><i>by</i> <a href="/user/annetpeas/" title="AnnetPeas">AnnetPeas</a></p></label></figcaption></figure><!--
--->                                                    </section>
-                                                    <script type="text/javascript">
-                                                        _fajs.push(['init_gallery', 'gallery-10']);
-                                                    </script>
-                                                </div>
-                                                                                        <div class="notifications-by-date" data-date="1584397597">
-                                                <h4 class="date-divider">1000 days ago, 16 March 2020</h4>
-                                                <section id="gallery-11" class="gallery messagecenter with-checkboxes s-200 ">
-                                            <figure id="sid-35458543" class="r-general t-image"><b><u><a href="/view/35458543/"><img alt="" src="//t.furaffinity.net/35458543@200-1584397597.jpg"  data-width="152.969" data-height="200" style="width:152.969px; height:200px"/><i title="Click for description"></i></a></u></b><figcaption><label for="input-35458543"><div><input id="input-35458543" type="checkbox" name="submissions[]" value="35458543"></div><p><a href="/view/35458543/" title="You're breathtaking! ❤️">You're breathtaking! ❤️</a></p><p><i>by</i> <a href="/user/annetpeas/" title="AnnetPeas">AnnetPeas</a></p></label></figcaption></figure><!--
--->                                    </section>
+                                            <figure id="sid-55488521" class="r-general t-image">
+    <b>
+        <u>
+            <a href="/view/55488521/">
+                <img data-tags="phation rudragon yearofthedragon2024 yearofthedragon" class="blocked-content" alt="" src="//t.furaffinity.net/55488521@200-1707558015.jpg"  data-width="129.463" data-height="200" style="width:129.463px; height:200px" loading="lazy" decoding="async" />
+                <i title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <label for="input-55488521">
+            <div>
+                <input id="input-55488521" type="checkbox" name="submissions[]" value="55488521">
+            </div>
+            <p>
+                <a href="/view/55488521/" title="RUz YEAR OF THE DRAGON 2024">RUz YEAR OF THE DRAGON 2024</a>
+            </p>
+            <p>
+                <i>by</i> <a href="/user/rudragon/" title="RUdragon">RUdragon</a>
+            </p>
+        </label>
+    </figcaption>
+</figure>
+                                    </section>
                                     <script type="text/javascript">
-                                        _fajs.push(['init_gallery', 'gallery-11']);
+                                        _fajs.push(['init_gallery', 'gallery-7']);
                                     </script>
                                 </div>
                                                     </div>
 
-                        <div class="aligncenter">
-                                                            <a class="button standard more prev" href="/msg/submissions/new~36003843@72/">Prev. 72</a>
+                        <div class="messagecenter-navigation aligncenter">
+                                                            <a class="button standard more prev" href="/msg/submissions/new~57208617@72/">Prev. 72</a>
                             
                             <a class="button standard oldest hideonmobile " href="/msg/submissions/old@72/">Oldest</a>
                             <a class="button standard newest hideonmobile active" href="/msg/submissions/new@72/">Newest</a>
@@ -539,26 +727,28 @@
                 </div>
             </section>
 
-            <section>
+            <section class="actions-section">
                 <div class="section-body">
-                    <h2>Global Selection</h2>
+                        
 
-                    
-                    <div class="section-options actions">
-                        <button class="standard invert-selection" type="button">Invert <span class="hideontablet hideondesktop"><br></span>Selection</span></button>
-                        <button class="standard check-uncheck" type="button">Select <span class="hideontablet hideondesktop"><br></span>All</button>
-                        <button class="standard remove-checked" type="submit" name="messagecenter-action" value="remove_checked">Remove <span class="hideontablet hideondesktop"><br></span>Selected</button>
-                        <button class="standard nuke remove_nuke" type="submit" name="messagecenter-action" value="nuke_notifications"><div class="sprite-nuke"></div>Nuke</button>
-                    </div>
-                </div>
+    <div class="section-options actions">
+        <button class="standard invert-selection" type="button">Invert <span class="hideontablet hideondesktop"><br></span>Selection</span></button>
+        <button class="standard check-uncheck" type="button">Select <span class="hideontablet hideondesktop"><br></span>All</button>
+        <button class="standard remove-checked" type="submit" name="messagecenter-action" value="remove_checked">Remove <span class="hideontablet hideondesktop"><br></span>Selected</button>
+        <button class="standard nuke remove_nuke" type="submit" name="messagecenter-action" value="nuke_notifications"><div class="sprite-nuke"></div>Nuke</button>
+    </div>                </div>
             </section>
         </div>
     </div>
 </form>
 
-<script type="text/javascript">
-    var descriptions = {"35633431":{"title":"CM - happy!","description":"Icon commission for jammerlea (twitter), from a flash sale a did a few days ago...! \r\nIcons are so fun to do. thank you very much for buying and supporting~!! \u0669(*\u2022\u0348 \ua1f4 \u2022\u0348*)\u0648\r\n\r\n[b]- cheers, stay kawaii[\/b]\r\n\r\n\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605\r\n\r\n[b]TWITTER[\/b] -&gt; https:\/\/twitter.com\/mr_tiaa\/status .......","username":"tiaamaito","lower":"tiaamaito","avatar_mtime":"1645764042"},"35632416":{"title":"[CLOSED] Adopt Auction - Boni","description":"End auction: 48h after last bid.\r\n\r\n\r\nThe winner receives a full size image with background (and w\/o bg, w\/o text, w'o name too)\r\nI can change the text or name in connection with of the buyer request.\r\n\r\nPayment is made through Paypal.\r\nSB: $1 USD\r\nMI: $1 USD\r\nAB: $40 USD\r\n\r\n____________________\r\n\r\nSerious bidders only, please! No fakebids, no holds: don't bid what you cannot afford or pay when th .......","username":"Terriniss","lower":"terriniss","avatar_mtime":"1616615925"},"35630418":{"title":"[CLOSED] Adopt Auction - Huni","description":"End auction: 48h after last bid.\r\n\r\n\r\nThe winner receives a full size image with background (and w\/o bg, w\/o text, w'o name too)\r\nI can change the text or name in connection with of the buyer request.\r\n\r\nPayment is made through Paypal.\r\nSB: $20 USD\r\nMI: $2 USD\r\nAB: $60 USD\r\n\r\n____________________\r\n\r\nSerious bidders only, please! No fakebids, no holds: don't bid what you cannot afford or pay when t .......","username":"Terriniss","lower":"terriniss","avatar_mtime":"1616615925"},"35621296":{"title":"Rai-eeko-DJ-party","description":"redrawing an old OC I made back in he day.\r\n\r\nold pics of him&gt;&gt;&gt;\r\n\r\nhttps:\/\/www.furaffinity.net\/view\/9374714\/\r\n\r\nhttps:\/\/www.furaffinity.net\/view\/11125048\/\r\n\r\nhttps:\/\/www.furaffinity.net\/view\/10710878\/\r\n\r\nhttps:\/\/www.furaffinity.net\/view\/10266506\/\r\n\r\n\r\n\r\nhope to have more time to draw more OCs \r\n\r\nand If you were wondering, yes. the BG is a real pic. about 10 pic put in to one. testing out some mi .......","username":"RUdragon","lower":"rudragon","avatar_mtime":"1424255659"},"35617315":{"title":"[CLOSED] Adopt Auction - Merhu","description":"End auction: 48h after last bid.\r\n\r\n\r\nThe winner receives a full size image with background (and w\/o bg, w\/o text, w'o name too)\r\nI can change the text or name in connection with of the buyer request.\r\n\r\nPayment is made through Paypal.\r\nSB: $30 USD\r\nMI: $2 USD\r\nAB: $80 USD\r\n\r\n____________________\r\n\r\nSerious bidders only, please! No fakebids, no holds: don't bid what you cannot afford or pay when t .......","username":"Terriniss","lower":"terriniss","avatar_mtime":"1616615925"},"35611985":{"title":"[CLOSED] Adopt Auction - Aaani","description":"End auction: 48h after last bid.\r\n\r\n\r\nThe winner receives a full size image with background (and w\/o bg, w\/o text, w'o name too)\r\nI can change the text or name in connection with of the buyer request.\r\n\r\nPayment is made through Paypal.\r\nSB: $20 USD\r\nMI: $2 USD\r\nAB: $70 USD\r\n\r\n____________________\r\n\r\nSerious bidders only, please! No fakebids, no holds: don't bid what you cannot afford or pay when t .......","username":"Terriniss","lower":"terriniss","avatar_mtime":"1616615925"},"35602777":{"title":"Field of the fallen","description":"Hey, here is an update, was practicing some backgroud, and I think it turned great. This was inspired a lot on scottland background and celtic marking, that why there is a will of the whisp and a broken rock totem.\r\n\r\nHope you like.","username":"Hiorou","lower":"hiorou","avatar_mtime":"1424255659"},"35596329":{"title":"[Prompt] The Hallow Witch","description":"Prompt I did for Elnins! A spooky witch appears in the mist and my Elnin approaches to make an offering... oOoOoOo\r\n\r\nI liked how the hair and mist turned out. I don't usually do backgrounds but wanted to share!\r\n\r\nCreated October 5, 2019","username":"Mowen","lower":"mowen","avatar_mtime":"1564003983"},"35594138":{"title":"Relax","description":"Little gift for friend  :iconAnrih: &lt;3\r\n\r\nAnrih \u00a9 :iconAnrih:\r\n\r\n\r\n*******************************\r\n* [url=http:\/\/ko-fi.com\/J3J16KSH]Feed me with coffee?[\/url]\r\n* [url=https:\/\/www.furaffinity.net\/gallery\/annetpeas\/]My Gallery[\/url]\r\n* [url=https:\/\/twitter.com\/AnnetPeas_Art]Twitter[\/url]\r\n* [url=http:\/\/annetpeas.deviantart.com]Deviantart[\/url]","username":"AnnetPeas","lower":"annetpeas","avatar_mtime":"1670079651"},"35590474":{"title":"Kled sculpture","description":"Polymer clay sculpture, Art by me","username":"Maziurek","lower":"maziurek","avatar_mtime":"1637014756"},"35589868":{"title":"RUandME-taco","description":"me and RU eating tacos watching TV.\r\n\r\n\r\nwhat a nice chill time^^\r\n\r\nworking to&gt;&gt;&gt;\r\n\r\nhttps:\/\/www.youtube.com\/watch?v=jK1lQEZXtsM","username":"RUdragon","lower":"rudragon","avatar_mtime":"1424255659"},"35574963":{"title":"Walked together","description":"I just love this couple! \u2764\ufe0f\r\n\r\n\r\nNunki \u00a9 :iconAnnetPeas:\r\nSeth \u00a9 :iconLongDanger:\r\n\r\n\r\n\r\n\r\n*******************************\r\n* [url=http:\/\/ko-fi.com\/J3J16KSH]Feed me with coffee?[\/url]\r\n* [url=https:\/\/www.furaffinity.net\/gallery\/annetpeas\/]My Gallery[\/url]\r\n* [url=https:\/\/twitter.com\/AnnetPeas_Art]Twitter[\/url]\r\n* [url=http:\/\/annetpeas.deviantart.com]Deviantart[\/url]","username":"AnnetPeas","lower":"annetpeas","avatar_mtime":"1670079651"},"35573214":{"title":"Galelai","description":"Badge commission for the lovely Galelai. Gradient wings are a gorgeous A+ design decision everyone, just saying! You should put them on all your characters posthaste.","username":"Mewitti","lower":"mewitti","avatar_mtime":"1564195775"},"35568275":{"title":"[CLOSED] Adopt Auction - Talik","description":"End auction: 48h after last bid.\r\n\r\n\r\nThe winner receives a full size image with background (and w\/o bg, w\/o text, w'o name too)\r\nI can change the text or name in connection with of the buyer request.\r\n\r\nPayment is made through Paypal.\r\nSB: $20 USD\r\nMI: $2 USD\r\nAB: $80 USD\r\n\r\n____________________\r\n\r\nSerious bidders only, please! No fakebids, no holds: don't bid what you cannot afford or pay when t .......","username":"Terriniss","lower":"terriniss","avatar_mtime":"1616615925"},"35563822":{"title":"YCH Auction &quot;Yukata-2&quot; [CLOSED]","description":"-AUCTION ENDS: March 25th 6:00 PM Greenwich Mean Time\r\n-Payment within 48 hours.\r\n-PAYPAL only\r\n\r\n***Please reply to previous bidder so they are notified of being outbid!***\r\n\r\n***Please don't bids, if you are not sure that you will be able to pay!***\r\n\r\n***To prevent sniping, any bids made within the last 10 minutes will extend the auction by 15 minutes at a time until there are no further bids** .......","username":"AnnetPeas","lower":"annetpeas","avatar_mtime":"1670079651"},"35561829":{"title":"Celti","description":"The Raffle prize for :iconCeltii:\r\n\r\nCelti \u00a9 :iconCeltii:\r\n\r\n\r\n\r\n*******************************\r\n* [url=http:\/\/ko-fi.com\/J3J16KSH]Feed me with coffee?[\/url]\r\n* [url=https:\/\/www.furaffinity.net\/gallery\/annetpeas\/]My Gallery[\/url]\r\n* [url=https:\/\/twitter.com\/AnnetPeas_Art]Twitter[\/url]\r\n* [url=http:\/\/annetpeas.deviantart.com]Deviantart[\/url]","username":"AnnetPeas","lower":"annetpeas","avatar_mtime":"1670079651"},"35561079":{"title":"custom design","description":"for :iconunknown12x:","username":"Terriniss","lower":"terriniss","avatar_mtime":"1616615925"},"35560917":{"title":"custom design","description":"for  :iconunknown12x:","username":"Terriniss","lower":"terriniss","avatar_mtime":"1616615925"},"35554609":{"title":"Fall Furries! Cute Canines Edition [CLOSED]","description":"\ud83c\udf1f [url=https:\/\/www.patreon.com\/mowen]Support me on Patreon![\/url]\r\n\ud83d\udc26 [url=https:\/\/twitter.com\/MowenDesigns]Follow me on Twitter[\/url]\r\n\r\nBeen cooking these up since I'm so excited for Fall! It's been so hot where I live I can't wait for the cool weather (and hot lattes). :3 They're also featuring a new base I've made! I hope to make some more designs on this base later this year, and it was  .......","username":"Mowen","lower":"mowen","avatar_mtime":"1564003983"},"35554253":{"title":"YCH Auction &quot;Yukata-1&quot; [CLOSED]","description":"-AUCTION ENDS: March 25th 6:00 PM Greenwich Mean Time\r\n-Payment within 48 hours.\r\n-PAYPAL only\r\n\r\n***Please reply to previous bidder so they are notified of being outbid!***\r\n\r\n***Please don't bids, if you are not sure that you will be able to pay!***\r\n\r\n***To prevent sniping, any bids made within the last 10 minutes will extend the auction by 15 minutes at a time until there are no further bids** .......","username":"AnnetPeas","lower":"annetpeas","avatar_mtime":"1670079651"},"35553242":{"title":"RU-water-gun","description":"(guess ill post early today ^^ )\r\n\r\n\r\na lil pic of RU having fin in the SUN^^\r\n\r\nRU so adorable here^^\r\n\r\nworking to &gt;&gt;&gt; some really good music the last 2 are realllllly good)\r\n\r\nhttps:\/\/www.youtube.com\/watch?v=ICcFMBzOnYs\r\n\r\nhttps:\/\/www.youtube.com\/watch?v=HTldDtQrRxc\r\n\r\nhttps:\/\/www.youtube.com\/watch?v=pePOsagq-9M","username":"RUdragon","lower":"rudragon","avatar_mtime":"1424255659"},"35549291":{"title":"CM - Kito Stickers","description":"Set of 10 Telegram Stickers commissioned by Kitofoxkun (twitter)\r\n\r\nKito is so cute...!! I was so happy in draw him again ; O ; \u2665\r\nas per buyer request, those are base colors instead of the regular cell-shading and actually doesn't have the white border with dropped shadow (even though I put it on the preview img), maybe I should offer this style as an alternative on future!\r\nanyway, this was a  .......","username":"tiaamaito","lower":"tiaamaito","avatar_mtime":"1645764042"},"35547546":{"title":"[CLOSED] Adopt Auction - Ozil","description":"End auction: 48h after last bid.\r\n\r\n\r\nThe winner receives a full size image with background (and w\/o bg, w\/o text, w'o name too)\r\nI can change the text or name in connection with of the buyer request.\r\n\r\nPayment is made through Paypal.\r\nSB: $20 USD\r\nMI: $2 USD\r\nAB: $60 USD\r\n\r\n____________________\r\n\r\nSerious bidders only, please! No fakebids, no holds: don't bid what you cannot afford or pay when t .......","username":"Terriniss","lower":"terriniss","avatar_mtime":"1616615925"},"35545731":{"title":"Ice Cream","description":"Little gift for friends :iconlil-maj::iconLongDanger:  &lt;3\r\n\r\nDan \u00a9 :iconLongDanger:\r\n\r\nPrince Rigel \u00a9 :iconlil-maj:\r\n\r\n\r\n\r\n\r\n*******************************\r\n* [url=http:\/\/ko-fi.com\/J3J16KSH]Feed me with coffee?[\/url]\r\n* [url=https:\/\/www.furaffinity.net\/gallery\/annetpeas\/]My Gallery[\/url]\r\n* [url=https:\/\/twitter.com\/AnnetPeas_Art]Twitter[\/url]\r\n* [url=http:\/\/annetpeas.deviantart.com]Deviantart[\/ .......","username":"AnnetPeas","lower":"annetpeas","avatar_mtime":"1670079651"},"35544529":{"title":"\u30fd(*\u30fb\u03c9\u30fb)\uff89","description":"~Sketches#4","username":"Peach07","lower":"peach07","avatar_mtime":"1670086651"},"35533432":{"title":"YCH Auction &quot;The little black jacket&quot; [CLOSED]","description":"-AUCTION ENDS: March 23th 6:00 PM Greenwich Mean Time\r\n-Payment within 48 hours.\r\n-PAYPAL only\r\n\r\n***Please reply to previous bidder so they are notified of being outbid!***\r\n\r\n***Please don't bids, if you are not sure that you will be able to pay!***\r\n\r\n***To prevent sniping, any bids made within the last 10 minutes will extend the auction by 15 minutes at a time until there are no further bids** .......","username":"AnnetPeas","lower":"annetpeas","avatar_mtime":"1670079651"},"35533257":{"title":"Kyra","description":"Little gift for friend  :iconKeiava: &lt;3\r\n\r\nKyra \u00a9 :iconKeiava:\r\n\r\n\r\n*******************************\r\n* [url=http:\/\/ko-fi.com\/J3J16KSH]Feed me with coffee?[\/url]\r\n* [url=https:\/\/www.furaffinity.net\/gallery\/annetpeas\/]My Gallery[\/url]\r\n* [url=https:\/\/twitter.com\/AnnetPeas_Art]Twitter[\/url]\r\n* [url=http:\/\/annetpeas.deviantart.com]Deviantart[\/url]","username":"AnnetPeas","lower":"annetpeas","avatar_mtime":"1670079651"},"35533155":{"title":"Blinking","description":"No description\r\nArtwork :Freezyino18icon:\r\n\r\n[center]Zina belongs to:\r\n\u21e9\u21e9\u21e9\u21e9\u21e9\u21e9\u21e9\u21e9\u21e9\u21e9\u21e9\u21e9\u21e9\u21e9\r\n:Zinaglukicon::Venturicon:[\/center]","username":"ZinaGluk","lower":"zinagluk","avatar_mtime":"1657992951"},"35532620":{"title":"Feanora","description":"my old OC","username":"Slavdy","lower":"slavdy","avatar_mtime":"1584810180"},"35530707":{"title":"YCH Auction &quot;Coats are always in fashion&quot; [CLOSED]","description":"-AUCTION ENDS: March 23th 6:00 PM Greenwich Mean Time\r\n-Payment within 48 hours.\r\n-PAYPAL only\r\n\r\n***Please reply to previous bidder so they are notified of being outbid!***\r\n\r\n***Please don't bids, if you are not sure that you will be able to pay!***\r\n\r\n***To prevent sniping, any bids made within the last 10 minutes will extend the auction by 15 minutes at a time until there are no further bids** .......","username":"AnnetPeas","lower":"annetpeas","avatar_mtime":"1670079651"},"35516139":{"title":"Yancha","description":"The Twitter raffle prize for https:\/\/twitter.com\/kitsunekla &lt;3\r\n\r\n\r\n\r\n\r\n\r\n*******************************\r\n* [url=http:\/\/ko-fi.com\/J3J16KSH]Feed me with coffee?[\/url]\r\n* [url=https:\/\/www.furaffinity.net\/gallery\/annetpeas\/]My Gallery[\/url]\r\n* [url=https:\/\/twitter.com\/AnnetPeas_Art]Twitter[\/url]\r\n* [url=http:\/\/annetpeas.deviantart.com]Deviantart[\/url]","username":"AnnetPeas","lower":"annetpeas","avatar_mtime":"1670079651"},"35515585":{"title":"ALL-sket-2020-2","description":"made from 3-10-2019 to 3-19-2020\r\n\r\n30 pic\r\n\r\nwow I made a lot of sketches!\r\n\r\ndownload to see bigger. &gt;&gt;&gt; https:\/\/www.deviantart.com\/phation\/art\/ALL-sket-2020-2-834493952\r\n\r\nFIRST SET&gt;&gt;&gt;&gt;\r\nhttps:\/\/www.furaffinity.net\/view\/34504443\/","username":"RUdragon","lower":"rudragon","avatar_mtime":"1424255659"},"35510594":{"title":"Why not go for a ride?","description":"Litle gift for friend  \u2764\ufe0f\r\n\r\n\r\nGolden Ray  \u00a9 https:\/\/twitter.com\/_Golden_Ray_\r\n\r\n\r\n\r\n\r\n*******************************\r\n* [url=http:\/\/ko-fi.com\/J3J16KSH]Feed me with coffee?[\/url]\r\n* [url=https:\/\/www.furaffinity.net\/gallery\/annetpeas\/]My Gallery[\/url]\r\n* [url=https:\/\/twitter.com\/AnnetPeas_Art]Twitter[\/url]\r\n* [url=http:\/\/annetpeas.deviantart.com]Deviantart[\/url]","username":"AnnetPeas","lower":"annetpeas","avatar_mtime":"1670079651"},"35480026":{"title":"&quot;You Never Can Tell&quot;","description":"Little gift for  :iconlil-maj:  &lt;3\r\n\r\nPrince Rigel \u00a9 :iconlil-maj:\r\n\r\nAle \u00a9  :iconannetpeas:\r\n\r\n\r\n\r\n\r\n*******************************\r\n* [url=http:\/\/ko-fi.com\/J3J16KSH]Feed me with coffee?[\/url]\r\n* [url=https:\/\/www.furaffinity.net\/gallery\/annetpeas\/]My Gallery[\/url]\r\n* [url=https:\/\/twitter.com\/AnnetPeas_Art]Twitter[\/url]\r\n* [url=http:\/\/annetpeas.deviantart.com]Deviantart[\/url]","username":"AnnetPeas","lower":"annetpeas","avatar_mtime":"1670079651"},"35478551":{"title":"sea-dog","description":"-----------------------------------------\r\n\r\n\r\nlooks like this one is fetching a fish\r\n\r\n\r\n-----------------------------------------","username":"RUdragon","lower":"rudragon","avatar_mtime":"1424255659"},"35475003":{"title":"Cutie &lt;3","description":"Little gift for my ko-fi support :iconMislakane:, thank you! \u2615\ufe0f\u2764\ufe0f\r\n\r\n\r\nEurganent \u00a9 :iconMislakane:\r\n\r\n\r\n\r\n*******************************\r\n* [url=http:\/\/ko-fi.com\/J3J16KSH]Feed me with coffee?[\/url]\r\n* [url=https:\/\/www.furaffinity.net\/gallery\/annetpeas\/]My Gallery[\/url]\r\n* [url=https:\/\/twitter.com\/AnnetPeas_Art]Twitter[\/url]\r\n* [url=http:\/\/annetpeas.deviantart.com]Deviantart[\/url]","username":"AnnetPeas","lower":"annetpeas","avatar_mtime":"1670079651"},"35469700":{"title":"[Commission] Fireaze (3)","description":"Design-painting commission for  :iconFireaze: This boy was amazing to design!\r\n\r\nArt @ :iconToth-m: \r\n\r\nCharacter @ :iconFireaze:\r\n\r\nCommissions are open! Feel free to send a note!! :D\r\n\r\n\r\nCommission infos: https:\/\/toth-m-commissions.weebly.com\/prices.html","username":"Toth-M","lower":"toth-m","avatar_mtime":"1573814237"},"35465945":{"title":"Golden Ray","description":"","username":"AnnetPeas","lower":"annetpeas","avatar_mtime":"1670079651"},"35458543":{"title":"You're breathtaking! \u2764\ufe0f","description":"Gift for my dear friend :iconLongDanger: &lt;3\r\n\r\nSeth \u00a9 :iconLongDanger:\r\n\r\n\r\n\r\n*******************************\r\n* [url=http:\/\/ko-fi.com\/J3J16KSH]Feed me with coffee?[\/url]\r\n* [url=https:\/\/www.furaffinity.net\/gallery\/annetpeas\/]My Gallery[\/url]\r\n* [url=https:\/\/twitter.com\/AnnetPeas_Art]Twitter[\/url]\r\n* [url=http:\/\/annetpeas.deviantart.com]Deviantart[\/url]","username":"AnnetPeas","lower":"annetpeas","avatar_mtime":"1670079651"}};
+    <script id="js-submissionData" type="application/json">{"55682423":{"title":"[OPEN] MonsterFluffers - Adopts FixPrice - #1 Pack","description":"[center]\r\n\r\n[color=#e5e5e5]______________[\/color]\r\n[color=#000000]\ud83d\udd77[\/color] [color=#00bfff] PRICE: [\/color][color=#00bfff][b] $20 [\/b][\/color][color=#00bfff]USD[\/color]\r\n\r\n[color=#e5e5e5]____________________[\/color]\r\n\r\n[color=#fe642e]Serious bidders only, please! No fake bids: don\u0026#039;t bid what you cannot afford or pay when the auction ends.[\/color]\r\n[color=#e5e5e5]You must answer me within 2-3 da .......","username":"Terriniss","lower":"terriniss","avatar_mtime":"1616615925"},"55678491":{"title":"[CLOSED] Adopt Auction - Fizzgig","description":"[center]\r\n\r\nA bit of an experimental adopt\r\nI changed the drawing pipeline \r\nand also made something between a \u201cbig\u201d and a \u201csmall\u201d adopt ^^\r\n\r\n[color=#e5e5e5]______________[\/color]\r\n[color=#fe642e]End auction: 48h after last bid.[\/color]\r\n\r\n[color=#e5e5e5]The winner receives a full-size image, also versions without a name and without background.[\/color]\r\n[color=#e5e5e5]If the creature has  .......","username":"Terriniss","lower":"terriniss","avatar_mtime":"1616615925"},"55653799":{"title":"[CLOSED] Adopt Auction - Quix","description":"[center]\r\n\r\nA bit of an experimental adopt\r\nI changed the drawing pipeline \r\nand also made something between a \u201cbig\u201d and a \u201csmall\u201d adopt ^^\r\n\r\n[color=#e5e5e5]______________[\/color]\r\n[color=#fe642e]End auction: 48h after last bid.[\/color]\r\n\r\n[color=#e5e5e5]The winner receives a full-size image, also versions without a name and without background.[\/color]\r\n[color=#e5e5e5]If the creature has  .......","username":"Terriniss","lower":"terriniss","avatar_mtime":"1616615925"},"55633969":{"title":"[CLOSED] Adopt Auction - Gravax","description":"[center]\r\n\r\n[color=#e5e5e5]______________[\/color]\r\n[color=#fe642e]End auction: 48h after last bid.[\/color]\r\n\r\n[color=#e5e5e5]The winner receives a full-size image, also versions without a name and without background.[\/color]\r\n[color=#e5e5e5]If the creature has several forms, the buyer will receive each of them in a separate file on a transparent background.[\/color]\r\n[color=#e5e5e5]I can change the .......","username":"Terriniss","lower":"terriniss","avatar_mtime":"1616615925"},"55616595":{"title":"The book of Epitemnein: Electricity Spirit.","description":"[55434263, 9414054, 56369941]\r\n\r\nThe god that born from a prank is here. So here is some info:\r\n\r\nHis name come from a litle distorcion of the words Lightning roar in Norwegian. Originaly wanted more indonesian sounding name but turn out the words where insanely long.\r\n\r\nFor his shape he is a mix of various animals as it was harder to get to look right, went with an electric eel as a classic, but  .......","username":"Hiorou","lower":"hiorou","avatar_mtime":"1424255659"},"55609779":{"title":"[CLOSED] Adopt Auction - Grave fire","description":"[center]\r\n[b]\u2729\u2729\u2729\r\n[color=#000000] Are these candles burning at the graveyard, \r\nor are someone\u0026#039;s eyes aglow? \r\nDo trees sway in the wind, \r\nor does a sinister silhouette hide in the shadows? \r\nRetreat back to whence you came, trust me, \r\nyou do not wish to find out. [\/color]\r\n\u2729\u2729\u2729 [\/b]\r\n\r\n[color=#e5e5e5]______________[\/color]\r\n[color=#fe642e]End auction: 48h after last bid.[\/color]\r\n\r\n[ .......","username":"Terriniss","lower":"terriniss","avatar_mtime":"1616615925"},"55601769":{"title":"lil-blu-and-dragitail (2023)","description":"here an update on lil-blu-and-dragitail.\r\nshould draw them more if i can,\r\nthey have a fun look to them.\r\n\r\nold pics of them\u0026gt;\u0026gt;\u0026gt;\r\n\r\nhttps:\/\/www.furaffinity.net\/view\/20147964\/\r\n\r\nhttps:\/\/www.furaffinity.net\/view\/20157478\/","username":"RUdragon","lower":"rudragon","avatar_mtime":"1424255659"},"55573180":{"title":"[CLOSED] Adopt Auction - Vorastrix","description":"[center]\r\n[b]\u2729\u2729\u2729\r\n[color=#000000] Venture too deep into the forest, and the shadows thicken around you. \r\nUnnoticed, you cross a threshold where the woods are no longer just woods. \r\nSomewhere in that profound depth dwell beings you\u0026#039;d wish never to encounter. [\/color]\r\n\u2729\u2729\u2729 [\/b]\r\n\r\n[color=#e5e5e5]______________[\/color]\r\n[color=#fe642e]End auction: 48h after last bid.[\/color]\r\n\r\n[color=# .......","username":"Terriniss","lower":"terriniss","avatar_mtime":"1616615925"},"55548147":{"title":"[CLOSED] Cute Monsters - Adopts FixPrice - #3 Pack","description":"[center]\r\n\r\n[color=#e5e5e5]______________[\/color]\r\n[color=#000000]\ud83d\udd77[\/color] [color=#00bfff] PRICE: [\/color][color=#00bfff][b] $30 [\/b][\/color][color=#00bfff]USD[\/color]\r\n\r\n[color=#e5e5e5]____________________[\/color]\r\n\r\n[color=#fe642e]Serious bidders only, please! No fake bids: don\u0026#039;t bid what you cannot afford or pay when the auction ends.[\/color]\r\n[color=#e5e5e5]You must answer me within 2-3 da .......","username":"Terriniss","lower":"terriniss","avatar_mtime":"1616615925"},"55488521":{"title":"RUz YEAR OF THE DRAGON 2024","description":"heres a pic for the year of the dragon.\r\n\r\nalso a more work of Ruz DAD.\r\n\r\nhope to make even more dragon pic.\r\n\r\nENjoy^^","username":"RUdragon","lower":"rudragon","avatar_mtime":"1424255659"}}</script>
+    <script type="text/javascript">
+        var descriptions = JSON.parse(document.getElementById('js-submissionData').textContent);
+    </script>
 
+
+<script type="text/javascript">
     _fajs.push(function(){
         //
         function tile_set_state(elm, is_checked, titles_on) {
@@ -672,14 +862,12 @@
     </div>
     <!-- /<div id="site-content"> -->
 
-
-
     <div id="footer">
         <div class="auto_link footer-links">
             <span class="hideonmobile">
                 <a href="/advertising">Advertise</a> |
                 <a href="/plus"><img style="position:relative;top:4px" src="/themes/beta/img/the-golden-pawb.png"> Get FA+</a> |
-                <a href="https://shop.furaffinity.net/">Merch Store</a> |
+                <a href="https://shop.furaffinity.net/"><img style="position:relative;top:4px" src="/themes/beta/img/icons/merch_store_icon.png"> Merch Store</a> |
                 <a href="/tos">Terms of Service</a> |
                 <a href="/privacy">Privacy</a> |
                 <a href="/coc">Code of Conduct</a> |
@@ -706,19 +894,19 @@
 </div>
 
                     <div class="online-stats">
-                32257                <strong><span title="Measured in the last 900 seconds">Users online</span></strong> &mdash;
-                1837 <strong>guests</strong>,
-                                    10532 <strong>registered</strong>
-                    and 19888 <strong>other</strong>
-                                <!-- Online Counter Last Update: Sun, 11 Dec 2022 04:38:20 -0800 -->
+                69825                <strong><span title="Measured in the last 900 seconds">Users online</span></strong> &mdash;
+                3376 <strong>guests</strong>,
+                                    16099 <strong>registered</strong>
+                    and 50350 <strong>other</strong>
+                                <!-- Online Counter Last Update: Tue, 04 Mar 2025 13:16:00 -0800 -->
           </div>
           <small>Limit bot activity to periods with less than 10k registered users online.</small>
         
         <br><br>
-        <strong>&copy; 2005-2022 Frost Dragon Art LLC</strong>
+        <strong>&copy; 2005-2025 Frost Dragon Art LLC</strong>
 
         <div class="footnote">
-            Server Time: Dec 11, 2022 04:40 AM        </div>
+            Server Time: Mar 4, 2025 01:16 PM        </div>
     </div>
 
 
@@ -728,8 +916,8 @@
 <!-- <div id="main-window"> -->
 
 <!--
-    Server Local Time: Dec 11, 2022 04:40 AM    <br />
-    Page generated in 0.026 seconds [ 13.4% PHP, 86.6% SQL ] (17 queries)    -->
+    Server Local Time: Mar 4, 2025 01:16 PM    <br />
+    Page generated in 0.018 seconds [ 15.8% PHP, 84.2% SQL ] (17 queries)    -->
 
 
 
@@ -743,10 +931,13 @@
         });
     </script>
 
+
+        <script type="text/javascript" src="/themes/beta/js/censor.js?u=2025030401"></script>
+
     <script type="text/javascript" src="/themes/beta/js/prototype.1.7.3.min.js"></script>
-    <script type="text/javascript" src="/themes/beta/js/script.js?u=2022120703"></script>
+    <script type="text/javascript" src="/themes/beta/js/script.js?u=2025030401"></script>
     <script type="text/javascript">
-        var server_timestamp = 1670762444;
+        var server_timestamp = 1741122963;
         var client_timestamp = ((new Date()).getTime())/1000;
         var server_timestamp_delta  = server_timestamp - client_timestamp;
         var sfw_cookie_name = 'sfw';
@@ -755,7 +946,7 @@
 
 
         
-                    var adData = {"sizeConfig":[{"labels":["desktopWide"],"mediaQuery":"(min-width: 1065px)","sizesSupported":[[728,90],[300,250],[300,168],[300,600],[160,600]]},{"labels":["desktopNarrow"],"mediaQuery":"(min-width: 720px) and (max-width: 1064px)","sizesSupported":[[728,90],[300,250],[300,168]]},{"labels":["mobile"],"mediaQuery":"(min-width: 0px) and (max-width: 719px)","sizesSupported":[[320,50],[300,50],[320,100]]}],"slotConfig":{"header_middle":{"containerSize":{"desktopWide":[728,100],"desktopNarrow":[728,100],"mobile":[320,100]},"providerPriority":["prebid","playwire","inhouse"]},"above_content":{"containerSize":{"desktopWide":[728,100],"desktopNarrow":[728,100],"mobile":[320,100]},"providerPriority":["prebid","playwire","inhouse"]},"sidebar":{"containerSize":{"desktopWide":[300,250]},"providerPriority":["prebid","playwire","inhouse"]},"sidebar_tall":{"containerSize":{"desktopWide":[300,600]},"providerPriority":["prebid","playwire","inhouse"]},"footer_left":{"containerSize":{"desktopWide":[300,200],"desktopNarrow":[300,200],"mobile":[300,200]},"providerPriority":["inhouse"]},"footer_right_top":{"containerSize":{"desktopWide":[300,90],"desktopNarrow":[300,90],"mobile":[300,90]},"providerPriority":["inhouse"]},"footer_right_bottom":{"containerSize":{"desktopWide":[300,90],"desktopNarrow":[300,90],"mobile":[300,90]},"providerPriority":["inhouse"]},"header_right_left":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"header_right_right":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"sidebar_top":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"sidebar_bottom":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]}},"providerConfig":{"inhouse":{"domain":"https:\/\/rv.furaffinity.net","dataPath":"\/live\/www\/delivery\/spc.php","dataVariableName":"OA_output"},"prebid":{"libraryUrl":"\/themes\/beta\/js\/prebid-6.13.0-fa.js","prebidTimeout":2000,"failsafeTimeout":2000},"playwire":{"configUrl":"https:\/\/config.playwire.com\/1024443\/v2\/websites\/73185\/banner.json","libraryUrl":"https:\/\/cdn.intergient.com\/ramp.js"}},"adConfig":{"prebid":{"header_middle":{"code":"header_middle","mediaTypes":{"banner":{"sizes":[[728,90],[320,50],[300,50],[320,100]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.16}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":99690}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"header_middle","testMode":false}},{"bidder":"appnexus","params":{"placementId":22783959,"allowSmallerSizes":true,"position":"above"}}]},"above_content":{"code":"above_content","mediaTypes":{"banner":{"sizes":[[728,90],[320,50],[300,50],[320,100]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.16}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":99691}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"above_content","testMode":false}},{"bidder":"appnexus","params":{"placementId":22783959,"allowSmallerSizes":true,"position":"below"}}]},"sidebar":{"code":"sidebar","mediaTypes":{"banner":{"sizes":[[300,250],[300,168]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.16}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":98518}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"sidebar","testMode":false}},{"bidder":"appnexus","params":{"placementId":22783978,"allowSmallerSizes":true}}]},"sidebar_tall":{"code":"sidebar_tall","mediaTypes":{"banner":{"sizes":[[300,250],[300,168],[300,600],[160,600]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.16}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":98516}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"sidebar_tall","testMode":false}},{"bidder":"appnexus","params":{"placementId":22783993,"allowSmallerSizes":true}}]}},"playwire":{"header_middle":{"type":"leaderboard_atf"},"sidebar":{"type":"med_rect_atf"},"sidebar_tall":{"type":"sky_atf"}},"inhouse":{"header_middle":{"default":{"tagId":14,"tagSize":[728,90]},"sizeOverride":{"mobile":{"tagId":20,"tagSize":[300,90]}}},"above_content":{"default":{"tagId":16,"tagSize":[728,90]},"sizeOverride":{"mobile":{"tagId":18,"tagSize":[300,90]}}},"sidebar":{"default":{"tagId":12,"tagSize":[300,250]}},"sidebar_tall":{"default":{"tagId":12,"tagSize":[300,250]}},"footer_left":{"default":{"tagId":9,"tagSize":[300,200]}},"footer_right_top":{"default":{"tagId":7,"tagSize":[300,90]}},"footer_right_bottom":{"default":{"tagId":8,"tagSize":[300,90]}},"header_right_left":{"default":{"tagId":1,"tagSize":[300,90]}},"header_right_right":{"default":{"tagId":3,"tagSize":[300,90]}},"sidebar_top":{"default":{"tagId":1,"tagSize":[300,90]}},"sidebar_bottom":{"default":{"tagId":3,"tagSize":[300,90]}}}}};
+                    var adData = {"sizeConfig":[{"labels":["desktopWide"],"mediaQuery":"(min-width: 1065px)","sizesSupported":[[728,90],[300,250],[300,168],[300,600],[160,600]]},{"labels":["desktopNarrow"],"mediaQuery":"(min-width: 720px) and (max-width: 1064px)","sizesSupported":[[728,90],[300,250],[300,168]]},{"labels":["mobile"],"mediaQuery":"(min-width: 0px) and (max-width: 719px)","sizesSupported":[[320,50],[300,50],[320,100]]}],"slotConfig":{"header_middle":{"containerSize":{"desktopWide":[728,100],"desktopNarrow":[728,100],"mobile":[320,100]},"providerPriority":["prebid","playwire","inhouse"]},"above_content":{"containerSize":{"desktopWide":[728,100],"desktopNarrow":[728,100],"mobile":[320,100]},"providerPriority":["prebid","playwire","inhouse"]},"sidebar":{"containerSize":{"desktopWide":[300,250]},"providerPriority":["prebid","playwire","inhouse"]},"sidebar_tall":{"containerSize":{"desktopWide":[300,600]},"providerPriority":["prebid","playwire","inhouse"]},"footer_left":{"containerSize":{"desktopWide":[300,200],"desktopNarrow":[300,200],"mobile":[300,200]},"providerPriority":["inhouse"]},"footer_right_top":{"containerSize":{"desktopWide":[300,90],"desktopNarrow":[300,90],"mobile":[300,90]},"providerPriority":["inhouse"]},"footer_right_bottom":{"containerSize":{"desktopWide":[300,90],"desktopNarrow":[300,90],"mobile":[300,90]},"providerPriority":["inhouse"]},"header_right_left":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"header_right_right":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"sidebar_top":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"sidebar_bottom":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]}},"providerConfig":{"inhouse":{"domain":"https:\/\/rv.furaffinity.net","dataPath":"\/live\/www\/delivery\/spc.php","dataVariableName":"OA_output"},"prebid":{"libraryUrl":"\/themes\/beta\/js\/prebid-7.54.5-fa.js","prebidTimeout":1500,"failsafeTimeout":2500},"playwire":{"gtagLibraryUrl":"https:\/\/www.googletagmanager.com\/gtag\/js?id=G-SQ2KEBFB33","rampLibraryUrl":"https:\/\/cdn.intergient.com\/1024443\/73185\/ramp.js"}},"adConfig":{"prebid":{"header_middle":{"code":"header_middle","mediaTypes":{"banner":{"sizes":[[728,90],[320,50],[300,50],[320,100]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.12}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":99690}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"header_middle","testMode":false}},{"bidder":"appnexus","params":{"placement_id":22783959,"allow_smaller_sizes":true,"position":"above"}}]},"above_content":{"code":"above_content","mediaTypes":{"banner":{"sizes":[[728,90],[320,50],[300,50],[320,100]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.12}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":99691}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"above_content","testMode":false}},{"bidder":"appnexus","params":{"placement_id":22783959,"allow_smaller_sizes":true,"position":"below"}}]},"sidebar":{"code":"sidebar","mediaTypes":{"banner":{"sizes":[[300,250],[300,168]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.12}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":98518}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"sidebar","testMode":false}},{"bidder":"appnexus","params":{"placement_id":22783978,"allow_smaller_sizes":true}}]},"sidebar_tall":{"code":"sidebar_tall","mediaTypes":{"banner":{"sizes":[[300,250],[300,168],[300,600],[160,600]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.12}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":98516}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"sidebar_tall","testMode":false}},{"bidder":"appnexus","params":{"placement_id":22783993,"allow_smaller_sizes":true}}]}},"playwire":{"header_middle":{"type":"leaderboard_atf"},"above_content":{"type":"leaderboard_btf"},"sidebar":{"type":"med_rect_atf"},"sidebar_tall":{"type":"sky_atf"}},"inhouse":{"header_middle":{"default":{"tagId":14,"tagSize":[728,90]},"sizeOverride":{"mobile":{"tagId":20,"tagSize":[300,90]}}},"above_content":{"default":{"tagId":16,"tagSize":[728,90]},"sizeOverride":{"mobile":{"tagId":18,"tagSize":[300,90]}}},"sidebar":{"default":{"tagId":12,"tagSize":[300,250]}},"sidebar_tall":{"default":{"tagId":12,"tagSize":[300,250]}},"footer_left":{"default":{"tagId":9,"tagSize":[300,200]}},"footer_right_top":{"default":{"tagId":7,"tagSize":[300,90]}},"footer_right_bottom":{"default":{"tagId":8,"tagSize":[300,90]}},"header_right_left":{"default":{"tagId":1,"tagSize":[300,90]}},"header_right_right":{"default":{"tagId":3,"tagSize":[300,90]}},"sidebar_top":{"default":{"tagId":1,"tagSize":[300,90]}},"sidebar_bottom":{"default":{"tagId":3,"tagSize":[300,90]}}}}};
             window.fad = new adManager(adData.sizeConfig, adData.slotConfig, adData.providerConfig, adData.adConfig, 1);
             </script>
 

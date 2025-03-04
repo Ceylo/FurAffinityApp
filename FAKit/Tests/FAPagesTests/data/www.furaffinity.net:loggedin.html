@@ -11,6 +11,7 @@
     <meta name="keywords"           content="fur furry furries fursuit fursuits cosplay brony bronies zootopia scalies kemono anthro anthropormophic art online gallery portfolio" />
     <meta name="distribution"       content="global" />
     <meta name="copyright"          content="Frost Dragon Art LLC" />
+    <meta name="robots"             content="noai, noimageai" />
 
     <link rel="icon" href="/themes/beta/img/favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="/themes/beta/img/favicon.ico" type="image/x-icon" />
@@ -27,10 +28,10 @@
         <meta name="twitter:image" content="https://www.furaffinity.net/themes/beta/img/banners/fa_logo.png?v2" />
     
     <script type="text/javascript">
-        var _faurl={d:'//d.furaffinity.net',a:'//a.furaffinity.net',r:'//rv.furaffinity.net',t:'//t.furaffinity.net',pb:'/themes/beta/js/prebid-6.13.0-fa.js'};
+        var _faurl={d:'//d.furaffinity.net',a:'//a.furaffinity.net',r:'//rv.furaffinity.net',t:'//t.furaffinity.net',pb:'/themes/beta/js/prebid-7.54.5-fa.js'};
     </script>
-    <script type="text/javascript" src="/themes/beta/js/common.js?u=2022120703"></script>
-    <link type="text/css" rel="stylesheet" href="/themes/beta/css/ui_theme_dark.css?u=2022120703" />
+    <script type="text/javascript" src="/themes/beta/js/common.js?u=2025030401"></script>
+    <link type="text/css" rel="stylesheet" href="/themes/beta/css/ui_theme_dark.css?u=2025030401" />
 
     <!-- browser hints -->
     <link rel="preconnect" href="//t.furaffinity.net" />
@@ -39,15 +40,25 @@
     <link rel="preconnect" href="https://www15.smartadserver.com" />
 
     <link rel="preload" href="/themes/beta/js/prototype.1.7.3.min.js" as="script" />
-    <link rel="preload" href="/themes/beta/js/script.js?u=2022120703" as="script" />
-    <link rel="preload" href="/themes/beta/js/prebid-6.13.0-fa.js" as="script" />
-    <link rel="preload" href="https://cdn.intergient.com/ramp.js" as="script" />
-    <link rel="preload" href="https://config.playwire.com/1024443/v2/websites/73185/banner.json" as="fetch" type="application/json" crossorigin="anonymous" />
+    <link rel="preload" href="/themes/beta/js/script.js?u=2025030401" as="script" />
+    <link rel="preload" href="/themes/beta/js/prebid-7.54.5-fa.js" as="script" />
+
+    <!-- Playwire Pre-connect <head> links -->
+    <link rel="preconnect" href="https://cdn.intergient.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.intergi.com" crossorigin />
+    <link rel="preconnect" href="https://config.playwire.com" crossorigin />
+    <link rel="preconnect" href="https://securepubads.g.doubleclick.net" crossorigin />
+    <link rel="preconnect" href="https://z.moatads.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.playwire.com" crossorigin />
 
 </head>
 
 <!-- EU request: yes -->
-<body data-static-path="/themes/beta" id="pageid-frontpage">
+<body id="pageid-frontpage" data-static-path="/themes/beta" data-user-logged-in="1" data-tag-blocklist="" data-tag-blocklist-hide-tagless="0" data-tag-blocklist-nonce="e3cfcae324f14c04d579f4533e36332d30de37c1">
+    <script type="text/javascript">
+        0; // attempted fix for fouc in ff
+    </script>
+
     
     <!-- sidebar -->
     <div class="mobile-navigation">
@@ -71,12 +82,13 @@
 
         <div class="mobile-nav-content-container">
                             <div class="aligncenter">
-                    <a href="/user/furrycount/"><img class="loggedin_user_avatar avatar" alt="Furrycount" src="//a.furaffinity.net/20221211/furrycount.gif"/></a>
+                    <a href="/user/furrycount/"><img class="loggedin_user_avatar avatar" alt="Furrycount" src="//a.furaffinity.net/20250304/furrycount.gif"/></a>
                     <h2 style="margin-bottom:0"><a href="/user/furrycount/">Furrycount</a></h2>
                     <a href="/user/furrycount/">Userpage</a> |
                     <a href="/msg/pms/">Notes</a> |
                     <a href="/controls/journal/">Journals</a> |
-                    <a href="/plus/"><img style="position:relative;top:4px" src="/themes/beta/img/the-golden-pawb.png"> FA+</a>
+                    <a href="/plus/"><img style="position:relative;top:4px" src="/themes/beta/img/the-golden-pawb.png"> FA+</a> |
+                    <a href="https://shop.furaffinity.net" target="_blank"><img style="position:relative;top:3px" src="/themes/beta/img/icons/merch_store_icon.png"> Shop</a>
                     <br>
                 </div>
                 <hr>
@@ -95,7 +107,7 @@
 
                     <h3>SUPPORT FA</h3>
                     <a href="/plus/">Subscribe to FA+ </a><br>
-                    <a href="https://shop.furaffinity.net/">FA Merch Store</a>
+                    <a href="https://shop.furaffinity.net/" target="_blank">FA Merch Store</a>
 
 
                     <h3>RULES & POLICIES</h3>
@@ -105,7 +117,7 @@
                     <a href="/aup">Upload Policy</a>
 
                     <h3>SOCIAL</h3>
-                    <a href="https://forums.furaffinity.net">Forums</a><br>
+                    <a href="https://discord.gg/furaffinity">Discord</a><br>
                     <a href="https://www.twitter.com/furaffinity/">Twitter</a>
 
                                             <h3>Support</h3>
@@ -148,7 +160,7 @@
             
             <hr>
 
-            <h2><form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="3aafa57efa5834c504e6de6cdd56b6b79d53c8b2"/></form>
+            <h2><form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="f2a46542d9a4ca120b678a41ae164f8933ab69b0"/></form>
 <script type="text/javascript">
     _fajs.push(['init_logout_button', '.logout-link button']);
 </script>
@@ -164,10 +176,10 @@
 
 
     <div class="mobile-notification-bar">
-                    <a class="notification-container inline" href="/msg/submissions/" title="2,487 Submission Notifications">2487S</a>
-                                                    <a class="notification-container inline" href="/msg/others/#journals" title="308 Journal Notifications">308J</a>
-                            <a class="notification-container inline" href="/msg/pms/" title="1 Unread Notes">1N</a>
-                    </div>
+                    <a class="notification-container inline" href="/msg/submissions/" title="227 Submission Notifications">227S</a>
+                                    <a class="notification-container inline" href="/msg/others/#comments" title="2 Comment Notifications">2C</a>
+                                    <a class="notification-container inline" href="/msg/others/#journals" title="21 Journal Notifications">21J</a>
+                            </div>
 
 
 
@@ -208,7 +220,7 @@
                         <a href="/aup">Upload Policy</a>
 
                         <h3>Social</h3>
-                        <a href="https://forums.furaffinity.net">Forums</a>
+                        <a href="https://discord.gg/furaffinity">Discord</a>
                         <a href="https://www.twitter.com/furaffinity/">Twitter</a>
 
                                                     <h3>Trouble Tickets</h3>
@@ -218,8 +230,9 @@
             </div>
         </li>
 
-                    <li class="lileft menu-space-saver"><a class="top-heading hideontablet" href="/plus/"><img style="position:relative;top:3px" src="/themes/beta/img/the-golden-pawb.png"> FA+</a></li>
-        
+                    <li class="lileft"><a class="top-heading" href="/plus/" title="FA+"><img style="position:relative;top:3px" src="/themes/beta/img/the-golden-pawb.png"><span class="hidebrowselowres"> FA+</span></a></li>
+                <li class="lileft"><a class="top-heading" href="https://shop.furaffinity.net" title="Shop" target="_blank"><img style="position:relative;top:3px" src="/themes/beta/img/icons/merch_store_icon.png"><span class="hidebrowselowres"> Shop</span></a></li>
+
         <div class="lileft hideonmobile">
             <form id="searchbox" method="get" action="/search/">
                 <input type="search" name="q" placeholder="SEARCH">
@@ -235,14 +248,14 @@
         
             <li class="message-bar-desktop">
 
-                                            <a class="notification-container inline" href="/msg/submissions/" title="2,487 Submission Notifications">2487S</a>
-                                                                                                                            <a class="notification-container inline" href="/msg/others/#journals" title="308 Journal Notifications">308J</a>
-                                                                <a class="notification-container inline" href="/msg/pms/" title="1 Unread Notes">1N</a>
-                                                    </li>
+                                            <a class="notification-container inline" href="/msg/submissions/" title="227 Submission Notifications">227S</a>
+                                                                                    <a class="notification-container inline" href="/msg/others/#comments" title="2 Comment Notifications">2C</a>
+                                                                                    <a class="notification-container inline" href="/msg/others/#journals" title="21 Journal Notifications">21J</a>
+                                                                        </li>
 
             <li>
                 <div class="floatleft hideonmobile">
-                    <a href="/user/furrycount"><img class="loggedin_user_avatar menubar-icon-resize avatar" style="cursor:pointer" alt="Furrycount" src="//a.furaffinity.net/20221211/furrycount.gif"/></a>
+                    <a href="/user/furrycount"><img class="loggedin_user_avatar menubar-icon-resize avatar" style="cursor:pointer" alt="Furrycount" src="//a.furaffinity.net/20250304/furrycount.gif"/></a>
                 </div>
             </li>
 
@@ -251,7 +264,7 @@
                     <svg class="avatar-submenu-trigger banner-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"></path></svg>
                 </div>
                 <a id="my-username" class="top-heading hideondesktop" href="#"><span class="hideondesktop">My FA ( </span>Furrycount<span class="hideondesktop"> )</span></a>
-               
+
                 <div class="dropdown dropdown-right">
                     <div class="dd-inner">
                         <div class="column">
@@ -263,13 +276,13 @@
 
                             <h3>Support Fur Affinity</h3>
                             <a href="/plus/">Subscribe to FA+ </a>
-                            <a href="https://shop.furaffinity.net/">Merch Store</a>
+                            <a href="https://shop.furaffinity.net/" target="_blank">Merch Store</a>
 
                             <h3>Trouble Tickets</h3>
                             <a href="/controls/troubletickets/">Report a Problem</a>
 
                                                                                     <hr>
-                            <form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="3aafa57efa5834c504e6de6cdd56b6b79d53c8b2"/></form>
+                            <form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="f2a46542d9a4ca120b678a41ae164f8933ab69b0"/></form>
 <script type="text/javascript">
     _fajs.push(['init_logout_button', '.logout-link button']);
 </script>
@@ -337,8 +350,8 @@
 </script>
 
     <div class="news-block">
-                                <div id="news" class="newsBlock" data-date="1669683525">
-    <strong>News:</strong><span class="hideondesktop hideontablet"><br></span> <a href="/journal/10396110">Nov 28, 2022 - Site Update, Known Issues</a>
+                                <div id="news" class="newsBlock" data-date="1741049554">
+    <strong>News:</strong><span class="hideondesktop hideontablet"><br></span> <a href="/journal/11085097">March 3rd 2025- Memorial Badge, Update, and Display Names</a>
     <span class="jsClose newsBlock__closeBtn" title="Close"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="transform: ;msFilter:;" title="Dismiss" ><path d="M20 3H4c-1.103 0-2 .897-2 2v14c0 1.103.897 2 2 2h16c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2zM4 19V7h16l.001 12H4z"></path><path d="m15.707 10.707-1.414-1.414L12 11.586 9.707 9.293l-1.414 1.414L10.586 13l-2.293 2.293 1.414 1.414L12 14.414l2.293 2.293 1.414-1.414L13.414 13z"></path></svg></span>
 </div>
 
@@ -353,14 +366,15 @@
 
                             <!-- site banner -->
                 <site-banner>
-                    <a href="/"><img src="/themes/beta/img/banners/logo/fa-banner-fall.jpg"></a>
+                    <a href="/"><img src="/themes/beta/img/banners/logo/fa-banner-winter.jpg"></a>
                 </site-banner>
             
             <a name="top"></a>
         </div>
 
         <div id="site-content">
-<!-- /header -->
+
+            <!-- /header -->
 
 <div id="frontpage">
     <div id="columnpage">
@@ -371,54 +385,694 @@
     <div data-id="header_middle" class="leaderboardAd__slot format--leaderboard jsAdSlot"></div>
 </div>
 
-            <section>
+            <section class="gallery-section">
                 <div class="section-header">
                     <h2>Recent Submissions</h2>
                 </div>
                 <div class="section-body">
                     <div class="gallery-frontpage-submission-margin">
                         <section id="gallery-frontpage-submissions" class="gallery no-padding submissions rows-3 s-200 nodesc">
-                            <figure id="sid-50175319" class="r-general t-image u-dyrafti"><b><u><a href="/view/50175319/"><img alt="" src="//t.furaffinity.net/50175319@300-1670761905.jpg"  data-width="265.267" data-height="200" style="width:265.267px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175319/" title="Rey">Rey</a></p><p><i>by</i> <a href="/user/dyrafti/" title="Dyrafti">Dyrafti</a></p></figcaption></figure><!--
---><figure id="sid-50175318" class="r-general t-image u-the-arkadan"><b><u><a href="/view/50175318/"><img alt="" src="//t.furaffinity.net/50175318@200-1670761900.jpg"  data-width="174.684" data-height="200" style="width:174.684px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175318/" title="Panther Design 3/4">Panther Design 3/4</a></p><p><i>by</i> <a href="/user/the-arkadan/" title="the-arkadan">the-arkadan</a></p></figcaption></figure><!--
---><figure id="sid-50175316" class="r-general t-image u-evgentalanov"><b><u><a href="/view/50175316/"><img alt="" src="//t.furaffinity.net/50175316@300-1670761882.jpg"  data-width="266.787" data-height="200" style="width:266.787px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175316/" title="Reminder [end in a few hours!]">Reminder [end in a few hours!]</a></p><p><i>by</i> <a href="/user/evgentalanov/" title="Evgen_Talanov">Evgen_Talanov</a></p></figcaption></figure><!--
---><figure id="sid-50175313" class="r-general t-image u-bigonionbean"><b><u><a href="/view/50175313/"><img alt="" src="//t.furaffinity.net/50175313@400-1670761850.jpg"  data-width="400" data-height="165.333" style="width:400px; height:165.333px"/></a></u></b><figcaption><p><a href="/view/50175313/" title="MLP: Attack on an Alicorn page 3 progress 1">MLP: Attack on an Alicorn page 3 progress 1</a></p><p><i>by</i> <a href="/user/bigonionbean/" title="bigonionbean">bigonionbean</a></p></figcaption></figure><!--
---><figure id="sid-50175311" class="r-general t-image u-bolzanthetwilightguardian"><b><u><a href="/view/50175311/"><img alt="" src="//t.furaffinity.net/50175311@200-1670761842.jpg"  data-width="140" data-height="200" style="width:140px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175311/" title="Blankie!">Blankie!</a></p><p><i>by</i> <a href="/user/bolzanthetwilightguardian/" title="bolzan_the_twilight_guardian">bolzan_the_twilight_guardian</a></p></figcaption></figure><!--
---><figure id="sid-50175310" class="r-general t-image u-kodabi"><b><u><a href="/view/50175310/"><img alt="" src="//t.furaffinity.net/50175310@400-1670761807.jpg"  data-width="377.581" data-height="200" style="width:377.581px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175310/" title="Happy Sunday">Happy Sunday</a></p><p><i>by</i> <a href="/user/kodabi/" title="Kodabi">Kodabi</a></p></figcaption></figure><!--
---><figure id="sid-50175309" class="r-general t-image u-nastybluepal"><b><u><a href="/view/50175309/"><img alt="" src="//t.furaffinity.net/50175309@300-1670761768.jpg"  data-width="249.971" data-height="200" style="width:249.971px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175309/" title="Big scrapbunny">Big scrapbunny</a></p><p><i>by</i> <a href="/user/nastybluepal/" title="nastybluepal">nastybluepal</a></p></figcaption></figure><!--
---><figure id="sid-50175307" class="r-general t-image u-moonlightbell"><b><u><a href="/view/50175307/"><img alt="" src="//t.furaffinity.net/50175307@300-1670761754.jpg"  data-width="248.028" data-height="200" style="width:248.028px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175307/" title="Patreon: redesign plus Tf">Patreon: redesign plus Tf</a></p><p><i>by</i> <a href="/user/moonlightbell/" title="moonlightbell">moonlightbell</a></p></figcaption></figure><!--
---><figure id="sid-50175306" class="r-general t-image u-nagireart"><b><u><a href="/view/50175306/"><img alt="" src="//t.furaffinity.net/50175306@300-1670761729.jpg"  data-width="282.9" data-height="200" style="width:282.9px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175306/" title="Outfit commission design">Outfit commission design</a></p><p><i>by</i> <a href="/user/nagireart/" title="Nagireart">Nagireart</a></p></figcaption></figure><!--
---><figure id="sid-50175305" class="r-general t-image u-axelferdinan"><b><u><a href="/view/50175305/"><img alt="" src="//t.furaffinity.net/50175305@200-1670761768.jpg"  data-width="200" data-height="200" style="width:200px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175305/" title="Crush">Crush</a></p><p><i>by</i> <a href="/user/axelferdinan/" title="axelferdinan">axelferdinan</a></p></figcaption></figure><!--
---><figure id="sid-50175303" class="r-general t-image u-taigokatsuki"><b><u><a href="/view/50175303/"><img alt="" src="//t.furaffinity.net/50175303@400-1670761702.jpg"  data-width="400" data-height="194.909" style="width:400px; height:194.909px"/></a></u></b><figcaption><p><a href="/view/50175303/" title="Adopt [open]">Adopt [open]</a></p><p><i>by</i> <a href="/user/taigokatsuki/" title="TaigoKatsuki">TaigoKatsuki</a></p></figcaption></figure><!--
---><figure id="sid-50175302" class="r-general t-image u-zacharyunderwood"><b><u><a href="/view/50175302/"><img alt="" src="//t.furaffinity.net/50175302@200-1670761693.jpg"  data-width="157.603" data-height="200" style="width:157.603px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175302/" title="Clover reindeer games">Clover reindeer games</a></p><p><i>by</i> <a href="/user/zacharyunderwood/" title="zacharyunderwood">zacharyunderwood</a></p></figcaption></figure><!--
---><figure id="sid-50175301" class="r-general t-image u-bigonionbean"><b><u><a href="/view/50175301/"><img alt="" src="//t.furaffinity.net/50175301@400-1670761668.jpg"  data-width="400" data-height="168.667" style="width:400px; height:168.667px"/></a></u></b><figcaption><p><a href="/view/50175301/" title="MLP: Attack on an Alicorn page 2 progress 2">MLP: Attack on an Alicorn page 2 progress 2</a></p><p><i>by</i> <a href="/user/bigonionbean/" title="bigonionbean">bigonionbean</a></p></figcaption></figure><!--
---><figure id="sid-50175299" class="r-general t-image u-the-arkadan"><b><u><a href="/view/50175299/"><img alt="" src="//t.furaffinity.net/50175299@300-1670761695.jpg"  data-width="250.758" data-height="200" style="width:250.758px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175299/" title="Wolf Sit">Wolf Sit</a></p><p><i>by</i> <a href="/user/the-arkadan/" title="the-arkadan">the-arkadan</a></p></figcaption></figure><!--
---><figure id="sid-50175298" class="r-general t-image u-nykunsreminders"><b><u><a href="/view/50175298/"><img alt="" src="//t.furaffinity.net/50175298@400-1670761654.jpg"  data-width="338.983" data-height="200" style="width:338.983px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175298/" title="Added 1 Same Day YCH Slot.">Added 1 Same Day YCH Slot.</a></p><p><i>by</i> <a href="/user/nykunsreminders/" title="NykunsReminders">NykunsReminders</a></p></figcaption></figure><!--
---><figure id="sid-50175297" class="r-general t-image u-kuroli"><b><u><a href="/view/50175297/"><img alt="" src="//t.furaffinity.net/50175297@400-1670761648.jpg"  data-width="347.014" data-height="200" style="width:347.014px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175297/" title="REMINDER ADOPT OPEN">REMINDER ADOPT OPEN</a></p><p><i>by</i> <a href="/user/kuroli/" title="KurOli">KurOli</a></p></figcaption></figure><!--
---><figure id="sid-50175295" class="r-general t-image u-kodabi"><b><u><a href="/view/50175295/"><img alt="" src="//t.furaffinity.net/50175295@400-1670761602.jpg"  data-width="377.581" data-height="200" style="width:377.581px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175295/" title="Morning snuggles">Morning snuggles</a></p><p><i>by</i> <a href="/user/kodabi/" title="Kodabi">Kodabi</a></p></figcaption></figure><!--
---><figure id="sid-50175294" class="r-general t-image u-bigonionbean"><b><u><a href="/view/50175294/"><img alt="" src="//t.furaffinity.net/50175294@200-1670761557.jpg"  data-width="152.688" data-height="200" style="width:152.688px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175294/" title="Attack on an Alicorn production example">Attack on an Alicorn production example</a></p><p><i>by</i> <a href="/user/bigonionbean/" title="bigonionbean">bigonionbean</a></p></figcaption></figure><!--
---><figure id="sid-50175292" class="r-general t-image u-nykunsreminders"><b><u><a href="/view/50175292/"><img alt="" src="//t.furaffinity.net/50175292@300-1670761543.jpg"  data-width="217.493" data-height="200" style="width:217.493px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175292/" title="Sea Bunnies Adopts Reminder">Sea Bunnies Adopts Reminder</a></p><p><i>by</i> <a href="/user/nykunsreminders/" title="NykunsReminders">NykunsReminders</a></p></figcaption></figure><!--
---><figure id="sid-50175288" class="r-general t-image u-hatchthepigeon"><b><u><a href="/view/50175288/"><img alt="" src="//t.furaffinity.net/50175288@200-1670761523.jpg"  data-width="142.267" data-height="200" style="width:142.267px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175288/" title="Heart">Heart</a></p><p><i>by</i> <a href="/user/hatchthepigeon/" title="HatchThePigeon">HatchThePigeon</a></p></figcaption></figure><!--
---><figure id="sid-50175285" class="r-general t-image u-how-did-we-get-here"><b><u><a href="/view/50175285/"><img alt="" src="//t.furaffinity.net/50175285@300-1670761474.jpg"  data-width="250" data-height="200" style="width:250px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175285/" title="Commission - Kalas &amp; Azaz">Commission - Kalas &amp; Azaz</a></p><p><i>by</i> <a href="/user/how-did-we-get-here/" title="How-did-we-get-here">How-did-we-get-here</a></p></figcaption></figure><!--
---><figure id="sid-50175283" class="r-general t-image u-max-dragon"><b><u><a href="/view/50175283/"><img alt="" src="//t.furaffinity.net/50175283@400-1670761454.jpg"  data-width="320" data-height="200" style="width:320px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175283/" title="YCH reminder">YCH reminder</a></p><p><i>by</i> <a href="/user/max-dragon/" title="Max-Dragon">Max-Dragon</a></p></figcaption></figure><!--
---><figure id="sid-50175282" class="r-general t-image u-5n0vvv4n"><b><u><a href="/view/50175282/"><img alt="" src="//t.furaffinity.net/50175282@200-1670761422.jpg"  data-width="107.246" data-height="200" style="width:107.246px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175282/" title="stitched doll">stitched doll</a></p><p><i>by</i> <a href="/user/5n0vvv4n/" title="5N0VvV4N">5N0VvV4N</a></p></figcaption></figure><!--
---><figure id="sid-50175279" class="r-general t-image u-k9manx90"><b><u><a href="/view/50175279/"><img alt="" src="//t.furaffinity.net/50175279@300-1670761388.jpg"  data-width="214.286" data-height="200" style="width:214.286px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175279/" title="Alexander Lusterfang">Alexander Lusterfang</a></p><p><i>by</i> <a href="/user/k9manx90/" title="k9manx90">k9manx90</a></p></figcaption></figure><!--
---><figure id="sid-50175277" class="r-general t-image u-bigonionbean"><b><u><a href="/view/50175277/"><img alt="" src="//t.furaffinity.net/50175277@400-1670761364.jpg"  data-width="394.737" data-height="200" style="width:394.737px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175277/" title="MLP: Attack on an Alicorn page 2 progress 1">MLP: Attack on an Alicorn page 2 progress 1</a></p><p><i>by</i> <a href="/user/bigonionbean/" title="bigonionbean">bigonionbean</a></p></figcaption></figure><!--
---><figure id="sid-50175275" class="r-general t-image u-5n0vvv4n"><b><u><a href="/view/50175275/"><img alt="" src="//t.furaffinity.net/50175275@200-1670761332.jpg"  data-width="128.256" data-height="200" style="width:128.256px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175275/" title="armed bnuuy">armed bnuuy</a></p><p><i>by</i> <a href="/user/5n0vvv4n/" title="5N0VvV4N">5N0VvV4N</a></p></figcaption></figure><!--
---><figure id="sid-50175268" class="r-general t-image u-elswere"><b><u><a href="/view/50175268/"><img alt="" src="//t.furaffinity.net/50175268@200-1670761242.jpg"  data-width="149.932" data-height="200" style="width:149.932px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175268/" title="Necromancer">Necromancer</a></p><p><i>by</i> <a href="/user/elswere/" title="Elswere">Elswere</a></p></figcaption></figure><!--
---><figure id="sid-50175266" class="r-general t-image u-melimedame"><b><u><a href="/view/50175266/"><img alt="" src="//t.furaffinity.net/50175266@200-1670761232.jpg"  data-width="141.393" data-height="200" style="width:141.393px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175266/" title="1st price art raffle">1st price art raffle</a></p><p><i>by</i> <a href="/user/melimedame/" title="MelimeDame">MelimeDame</a></p></figcaption></figure><!--
---><figure id="sid-50175265" class="r-general t-image u-aestas"><b><u><a href="/view/50175265/"><img alt="" src="//t.furaffinity.net/50175265@200-1670761230.jpg"  data-width="160.019" data-height="200" style="width:160.019px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175265/" title="High Kick">High Kick</a></p><p><i>by</i> <a href="/user/aestas/" title="Aestas">Aestas</a></p></figcaption></figure><!--
---><figure id="sid-50175264" class="r-general t-image u-aussiekitten"><b><u><a href="/view/50175264/"><img alt="" src="//t.furaffinity.net/50175264@200-1670761225.jpg"  data-width="141.817" data-height="200" style="width:141.817px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175264/" title="WTF moment | [Comic]">WTF moment | [Comic]</a></p><p><i>by</i> <a href="/user/aussiekitten/" title="AussieKitten">AussieKitten</a></p></figcaption></figure><!--
---><figure id="sid-50175263" class="r-general t-image u-bigonionbean"><b><u><a href="/view/50175263/"><img alt="" src="//t.furaffinity.net/50175263@400-1670761202.jpg"  data-width="400" data-height="126" style="width:400px; height:126px"/></a></u></b><figcaption><p><a href="/view/50175263/" title="MLP: Attack on an Alicorn page 1 sketch 7">MLP: Attack on an Alicorn page 1 sketch 7</a></p><p><i>by</i> <a href="/user/bigonionbean/" title="bigonionbean">bigonionbean</a></p></figcaption></figure><!--
---><figure id="sid-50175260" class="r-general t-image u-5n0vvv4n"><b><u><a href="/view/50175260/"><img alt="" src="//t.furaffinity.net/50175260@200-1670761177.jpg"  data-width="110.35" data-height="200" style="width:110.35px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175260/" title="the truth...">the truth...</a></p><p><i>by</i> <a href="/user/5n0vvv4n/" title="5N0VvV4N">5N0VvV4N</a></p></figcaption></figure><!--
---><figure id="sid-50175258" class="r-general t-image u-nisaku"><b><u><a href="/view/50175258/"><img alt="" src="//t.furaffinity.net/50175258@300-1670761157.jpg"  data-width="268.72" data-height="200" style="width:268.72px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175258/" title="Tiger twins adopts (open)">Tiger twins adopts (open)</a></p><p><i>by</i> <a href="/user/nisaku/" title="Nisaku">Nisaku</a></p></figcaption></figure><!--
---><figure id="sid-50175257" class="r-general t-image u-wokq"><b><u><a href="/view/50175257/"><img alt="" src="//t.furaffinity.net/50175257@400-1670761135.jpg"  data-width="328.657" data-height="200" style="width:328.657px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175257/" title="Adopt [OPEN]">Adopt [OPEN]</a></p><p><i>by</i> <a href="/user/wokq/" title="WOKQ">WOKQ</a></p></figcaption></figure><!--
---><figure id="sid-50175256" class="r-general t-image u-sibirly"><b><u><a href="/view/50175256/"><img alt="" src="//t.furaffinity.net/50175256@300-1670761100.jpg"  data-width="220.109" data-height="200" style="width:220.109px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175256/" title="🍭🍧Candy world🍧🍭">🍭🍧Candy world🍧🍭</a></p><p><i>by</i> <a href="/user/sibirly/" title="Sibirly">Sibirly</a></p></figcaption></figure><!--
---><figure id="sid-50175251" class="r-general t-image u-isupportprotection"><b><u><a href="/view/50175251/"><img alt="" src="//t.furaffinity.net/50175251@300-1670761064.jpg"  data-width="266.787" data-height="200" style="width:266.787px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175251/" title="NICK04">NICK04</a></p><p><i>by</i> <a href="/user/isupportprotection/" title="Isupportprotection">Isupportprotection</a></p></figcaption></figure><!--
---><figure id="sid-50175248" class="r-general t-image u-bigonionbean"><b><u><a href="/view/50175248/"><img alt="" src="//t.furaffinity.net/50175248@400-1670761025.jpg"  data-width="382.166" data-height="200" style="width:382.166px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175248/" title="MLP: Attack on an Alicorn page 1 sketch 6">MLP: Attack on an Alicorn page 1 sketch 6</a></p><p><i>by</i> <a href="/user/bigonionbean/" title="bigonionbean">bigonionbean</a></p></figcaption></figure><!--
---><figure id="sid-50175246" class="r-general t-image u-akkisa"><b><u><a href="/view/50175246/"><img alt="" src="//t.furaffinity.net/50175246@400-1670761016.jpg"  data-width="328.767" data-height="200" style="width:328.767px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175246/" title="REMINDER YCH">REMINDER YCH</a></p><p><i>by</i> <a href="/user/akkisa/" title="Akkisa">Akkisa</a></p></figcaption></figure><!--
---><figure id="sid-50175241" class="r-general t-image u-5n0vvv4n"><b><u><a href="/view/50175241/"><img alt="" src="//t.furaffinity.net/50175241@200-1670760978.jpg"  data-width="155.642" data-height="200" style="width:155.642px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175241/" title="howling horror">howling horror</a></p><p><i>by</i> <a href="/user/5n0vvv4n/" title="5N0VvV4N">5N0VvV4N</a></p></figcaption></figure><!--
---><figure id="sid-50175240" class="r-general t-image u-akkisa"><b><u><a href="/view/50175240/"><img alt="" src="//t.furaffinity.net/50175240@400-1670760977.jpg"  data-width="331.261" data-height="200" style="width:331.261px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175240/" title="REMINDER YCH">REMINDER YCH</a></p><p><i>by</i> <a href="/user/akkisa/" title="Akkisa">Akkisa</a></p></figcaption></figure><!--
--->                        </section>
+                            <figure id="sid-60099018" class="r-general t-image u-iresuds">
+    <b>
+        <u>
+            <a href="/view/60099018/">
+                <img data-tags="shapes hexagon triangle cube square sphere circle waterfall water ocean number line math stairs commission illustration toy blocks primary colors" class="blocked-content" alt="" src="//t.furaffinity.net/60099018@200-1741121396.jpg"  data-width="160.019" data-height="200" style="width:160.019px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60099018/" title="Commission-13">Commission-13</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/iresuds/" title="iresuds">iresuds</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60099015" class="r-general t-image u-vupiqueen">
+    <b>
+        <u>
+            <a href="/view/60099015/">
+                <img data-tags="" class="blocked-content" alt="" src="//t.furaffinity.net/60099015@400-1741121384.jpg"  data-width="400" data-height="150.591" style="width:400px; height:150.591px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60099015/" title="I got roasted about my Reddit profile! 😂🤣">I got roasted about my Reddit profile! 😂🤣</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/vupiqueen/" title="Vupi_Queen">Vupi_Queen</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60099014" class="r-general t-image u-alexgrabov">
+    <b>
+        <u>
+            <a href="/view/60099014/">
+                <img data-tags="adopt adoptable auction manul pallas cat original design magic wizard enchantress" class="blocked-content" alt="" src="//t.furaffinity.net/60099014@300-1741121380.jpg"  data-width="285.714" data-height="200" style="width:285.714px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60099014/" title="adopt reminder">adopt reminder</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/alexgrabov/" title="AlexGrabov">AlexGrabov</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60099013" class="r-general t-image u-asthmatic">
+    <b>
+        <u>
+            <a href="/view/60099013/">
+                <img data-tags="adopt adopts adoption lot feral anthro fix price furry adoptable colorful ref reference dragon reptile lizard scaly scales" class="blocked-content" alt="" src="//t.furaffinity.net/60099013@200-1741121377.jpg"  data-width="183.533" data-height="200" style="width:183.533px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60099013/" title="ADOPT">ADOPT</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/asthmatic/" title="Asthmatic">Asthmatic</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60099012" class="r-general t-image u-wmdiscovery93">
+    <b>
+        <u>
+            <a href="/view/60099012/">
+                <img data-tags="" class="blocked-content" alt="" src="//t.furaffinity.net/60099012@300-1741121376.jpg"  data-width="292.96" data-height="200" style="width:292.96px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60099012/" title="Streaming">Streaming</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/wmdiscovery93/" title="WMDiscovery93">WMDiscovery93</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60099011" class="r-general t-image u-demont">
+    <b>
+        <u>
+            <a href="/view/60099011/">
+                <img data-tags="" class="blocked-content" alt="" src="//t.furaffinity.net/60099011@200-1741121374.jpg"  data-width="150.147" data-height="200" style="width:150.147px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60099011/" title="Slynamon">Slynamon</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/demont/" title="Demont">Demont</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60099010" class="r-general t-image u-kohichi">
+    <b>
+        <u>
+            <a href="/view/60099010/">
+                <img data-tags="femboy wolf sfw ref reference sheet sale same day commission bust fullbody flat color render full detail slots open illustration scenery background simple complex any gender species hot sexy lick toon toony toy" class="blocked-content" alt="" src="//t.furaffinity.net/60099010@400-1741121373.jpg"  data-width="355.556" data-height="200" style="width:355.556px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60099010/" title="[ 2/2 OPEN! ] - SAME DAY Stream Sketch Slots !">[ 2/2 OPEN! ] - SAME DAY Stream Sketch Slots !</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/kohichi/" title="kohichi">kohichi</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60099008" class="r-general t-image u-speechlessyeen">
+    <b>
+        <u>
+            <a href="/view/60099008/">
+                <img data-tags="ych commission open macro micro nano boots boot sock socks sweaty musky after work paws paw loom stomp" class="blocked-content" alt="" src="//t.furaffinity.net/60099008@200-1741121367.jpg"  data-width="97.455" data-height="200" style="width:97.455px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60099008/" title="Comic YCH 👀">Comic YCH 👀</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/speechlessyeen/" title="speechlessyeen">speechlessyeen</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60099007" class="r-general t-image u-bigboylrmlop123">
+    <b>
+        <u>
+            <a href="/view/60099007/">
+                <img data-tags="bear muscles bara big huge" class="blocked-content" alt="" src="//t.furaffinity.net/60099007@200-1741121365.jpg"  data-width="190.442" data-height="200" style="width:190.442px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60099007/" title="it&#039;s bear">it&#039;s bear</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/bigboylrmlop123/" title="BIGboy_lrmlop123">BIGboy_lrmlop123</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60099000" class="r-general t-image u-lpdaemonium">
+    <b>
+        <u>
+            <a href="/view/60099000/">
+                <img data-tags="adopt arcane league_of_legends zaun" class="blocked-content" alt="" src="//t.furaffinity.net/60099000@300-1741121317.jpg"  data-width="228.635" data-height="200" style="width:228.635px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60099000/" title="Adopt Reminder">Adopt Reminder</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/lpdaemonium/" title="LPDaemonium">LPDaemonium</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098999" class="r-general t-image u-jordanfazzy">
+    <b>
+        <u>
+            <a href="/view/60098999/">
+                <img data-tags="clock" class="blocked-content" alt="" src="//t.furaffinity.net/60098999@300-1741121316.jpg"  data-width="265.546" data-height="200" style="width:265.546px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098999/" title="9pm">9pm</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/jordanfazzy/" title="Jordanfazzy">Jordanfazzy</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098996" class="r-general t-image u-beedragon">
+    <b>
+        <u>
+            <a href="/view/60098996/">
+                <img data-tags="human male clown cute tease commission sketch color lgbtq gay romance" class="blocked-content" alt="" src="//t.furaffinity.net/60098996@300-1741121281.jpg"  data-width="208.946" data-height="200" style="width:208.946px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098996/" title="Commission for X/Twitter">Commission for X/Twitter</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/beedragon/" title="BeeDragon">BeeDragon</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098992" class="r-general t-image u-rouxysorawolf">
+    <b>
+        <u>
+            <a href="/view/60098992/">
+                <img data-tags="digitalart digitalartist rouxysorawolf -suzy- jackalope fox wolf nsfw yaoi couple bestfriend" class="blocked-content" alt="" src="//t.furaffinity.net/60098992@300-1741121246.jpg"  data-width="216.703" data-height="200" style="width:216.703px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098992/" title="Devon x Seth(2)">Devon x Seth(2)</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/rouxysorawolf/" title="RouxySoraWolf">RouxySoraWolf</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098991" class="r-general t-image u-dirtypinky">
+    <b>
+        <u>
+            <a href="/view/60098991/">
+                <img data-tags="adopts" class="blocked-content" alt="" src="//t.furaffinity.net/60098991@200-1741121238.jpg"  data-width="197.287" data-height="200" style="width:197.287px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098991/" title="Adopts For Sale [REMINDER]">Adopts For Sale [REMINDER]</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/dirtypinky/" title="Dirty_Pinky">Dirty_Pinky</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098989" class="r-general t-image u-nastyvweed">
+    <b>
+        <u>
+            <a href="/view/60098989/">
+                <img data-tags="adoptable adopt male damn devil supernatural" class="blocked-content" alt="" src="//t.furaffinity.net/60098989@200-1741121233.jpg"  data-width="151.875" data-height="200" style="width:151.875px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098989/" title="/// Darn ADOPT ///">/// Darn ADOPT ///</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/nastyvweed/" title="nastyVweed">nastyVweed</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098984" class="r-general t-image u-chopangigante">
+    <b>
+        <u>
+            <a href="/view/60098984/">
+                <img data-tags="wizard druid otter human vore healing effect spell bluep hollow internal external" class="blocked-content" alt="" src="//t.furaffinity.net/60098984@400-1741121209.jpg"  data-width="333.289" data-height="200" style="width:333.289px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098984/" title="Healing Stomach">Healing Stomach</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/chopangigante/" title="Chopangigante">Chopangigante</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098983" class="r-general t-image u-coldmist-nival">
+    <b>
+        <u>
+            <a href="/view/60098983/">
+                <img data-tags="ych auction sale anthro furry feline canine wolf lion cat dog tiger cheetah vulpine fox jaguar leopard puma border collie macro micro macromarch macrofurry microfurry paws paw" class="blocked-content" alt="" src="//t.furaffinity.net/60098983@400-1741121209.jpg"  data-width="325.771" data-height="200" style="width:325.771px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098983/" title="🔥 OPEN YCH | no bets 🔥">🔥 OPEN YCH | no bets 🔥</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/coldmist-nival/" title="coldmist-Nival">coldmist-Nival</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098979" class="r-general t-image u-mothermort">
+    <b>
+        <u>
+            <a href="/view/60098979/">
+                <img data-tags="" class="blocked-content" alt="" src="//t.furaffinity.net/60098979@400-1741121203.jpg"  data-width="349.966" data-height="200" style="width:349.966px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098979/" title="REMINDER | EXTRA SLOT!">REMINDER | EXTRA SLOT!</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/mothermort/" title="MotherMort">MotherMort</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098976" class="r-general t-image u-mattgaufur">
+    <b>
+        <u>
+            <a href="/view/60098976/">
+                <img data-tags="cherry coke coca_cola drink soft_drink cola soda pop beverage hug hugging fox red_fox matt gaufur don bluth style don_bluth donbluth" class="blocked-content" alt="" src="//t.furaffinity.net/60098976@300-1741121198.jpg"  data-width="300" data-height="200" style="width:300px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098976/" title="I LOVE CHERRY COKE!">I LOVE CHERRY COKE!</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/mattgaufur/" title="MattGauFur">MattGauFur</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098975" class="r-general t-image u-madkittennicky">
+    <b>
+        <u>
+            <a href="/view/60098975/">
+                <img data-tags="" class="blocked-content" alt="" src="//t.furaffinity.net/60098975@200-1741121197.jpg"  data-width="190.728" data-height="200" style="width:190.728px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098975/" title="Queen Zhiva">Queen Zhiva</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/madkittennicky/" title="MadKittenNicky">MadKittenNicky</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098973" class="r-general t-image u-foxoverdose">
+    <b>
+        <u>
+            <a href="/view/60098973/">
+                <img data-tags="characterdesign adoptable adoptablesopen adoptableauction digitalart originalcharacter fantasycharacter characterconcept warrior referencesheet adopt artist character dnd fantasyart furry furryart rpg art fox" class="blocked-content" alt="" src="//t.furaffinity.net/60098973@400-1741121193.jpg"  data-width="349.966" data-height="200" style="width:349.966px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098973/" title="[Reminder][OPEN] Fox warrior|Adopt auction">[Reminder][OPEN] Fox warrior|Adopt auction</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/foxoverdose/" title="FoxOverdose">FoxOverdose</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098971" class="r-general t-image u-thecuriouskaiju">
+    <b>
+        <u>
+            <a href="/view/60098971/">
+                <img data-tags="oekaki dragon dragon_headshot fantasy art_dump" class="blocked-content" alt="" src="//t.furaffinity.net/60098971@200-1741121184.jpg"  data-width="100" data-height="200" style="width:100px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098971/" title="Old Art: 2013 (10)">Old Art: 2013 (10)</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/thecuriouskaiju/" title="TheCuriousKaiju">TheCuriousKaiju</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098970" class="r-general t-image u-beaniebabybum">
+    <b>
+        <u>
+            <a href="/view/60098970/">
+                <img data-tags="chibi ych sale commission custom digital_art dog small cute cheap" class="blocked-content" alt="" src="//t.furaffinity.net/60098970@400-1741121171.jpg"  data-width="305.148" data-height="200" style="width:305.148px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098970/" title="Chibi comms!">Chibi comms!</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/beaniebabybum/" title="beaniebabybum">beaniebabybum</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098968" class="r-general t-image u-animakl">
+    <b>
+        <u>
+            <a href="/view/60098968/">
+                <img data-tags="terapagos anthro pokemon anthropokemon male paws feet tease shiny footdex terestal" class="blocked-content" alt="" src="//t.furaffinity.net/60098968@400-1741121157.jpg"  data-width="355.556" data-height="200" style="width:355.556px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098968/" title="number your thumb, impossible sum (Footdex #1024)">number your thumb, impossible sum (Footdex #1024)</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/animakl/" title="Animakl">Animakl</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098966" class="r-general t-image u-saryuki-the-japanese">
+    <b>
+        <u>
+            <a href="/view/60098966/">
+                <img data-tags="cole lydia violeta ragatha hare bunny rabbit cat feline doll werewolf lycanthrope furry transformation tadc theamazingdigitalcircus male female" class="blocked-content" alt="" src="//t.furaffinity.net/60098966@400-1741121143.jpg"  data-width="319.489" data-height="200" style="width:319.489px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098966/" title="Lydia and Cole turn into Werewolves #6">Lydia and Cole turn into Werewolves #6</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/saryuki-the-japanese/" title="Saryuki-The-Japanese">Saryuki-The-Japanese</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098965" class="r-general t-image u-janetkwallace">
+    <b>
+        <u>
+            <a href="/view/60098965/">
+                <img data-tags="fanart artwork traditional drawing black white rain burmecian sir fratley final fantasy ix ff9 javelin" class="blocked-content" alt="" src="//t.furaffinity.net/60098965@200-1741121141.jpg"  data-width="110.492" data-height="200" style="width:110.492px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098965/" title="Sir Fratley Irontail (Revisited)">Sir Fratley Irontail (Revisited)</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/janetkwallace/" title="JanetKWallace">JanetKWallace</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098963" class="r-general t-image u-shiharuru">
+    <b>
+        <u>
+            <a href="/view/60098963/">
+                <img data-tags="commission lightning light commissions portrait portraits lion otter owl hyena victorian night space lioness" class="blocked-content" alt="" src="//t.furaffinity.net/60098963@400-1741121137.jpg"  data-width="327.984" data-height="200" style="width:327.984px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098963/" title="✶ REMINDER commission ✶">✶ REMINDER commission ✶</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/shiharuru/" title="ShiHaruru">ShiHaruru</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098962" class="r-general t-image u-denwardo">
+    <b>
+        <u>
+            <a href="/view/60098962/">
+                <img data-tags="fun funny wolf ych animation" class="blocked-content" alt="" src="//t.furaffinity.net/60098962@300-1741121129.jpg"  data-width="240.096" data-height="200" style="width:240.096px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098962/" title="Dumb (funny ych) YCH reminder">Dumb (funny ych) YCH reminder</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/denwardo/" title="DenWardo">DenWardo</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098961" class="r-general t-image u-fromageophage">
+    <b>
+        <u>
+            <a href="/view/60098961/">
+                <img data-tags="dracostryx stryx bird owl dragon avian feathers arpg" class="blocked-content" alt="" src="//t.furaffinity.net/60098961@200-1741121126.jpg"  data-width="144.596" data-height="200" style="width:144.596px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098961/" title="Anandi">Anandi</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/fromageophage/" title="Fromageophage">Fromageophage</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098958" class="r-general t-image u-darkdaviddarkdragon">
+    <b>
+        <u>
+            <a href="/view/60098958/">
+                <img data-tags="wasp taur happy buzz love heart charity furcon con nfc" class="blocked-content" alt="" src="//t.furaffinity.net/60098958@300-1741121109.jpg"  data-width="266.787" data-height="200" style="width:266.787px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098958/" title="NFC Charity #3">NFC Charity #3</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/darkdaviddarkdragon/" title="DarkDavid_DarkDragon">DarkDavid_DarkDragon</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098956" class="r-general t-image u-madaraoluv2">
+    <b>
+        <u>
+            <a href="/view/60098956/">
+                <img data-tags="lent catholic religion lockdown god holy season easter ash wednesday" class="blocked-content" alt="" src="//t.furaffinity.net/60098956@300-1741121102.jpg"  data-width="247.761" data-height="200" style="width:247.761px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098956/" title="&quot;Fat Tuesday&quot; Art">&quot;Fat Tuesday&quot; Art</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/madaraoluv2/" title="madaraoluv2">madaraoluv2</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098954" class="r-general t-image u-isachenkoartist">
+    <b>
+        <u>
+            <a href="/view/60098954/">
+                <img data-tags="bagheera the jungle book thejunglebook blackpanther panther leopard" class="blocked-content" alt="" src="//t.furaffinity.net/60098954@300-1741121096.jpg"  data-width="271.073" data-height="200" style="width:271.073px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098954/" title="Bagheera the Panther">Bagheera the Panther</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/isachenkoartist/" title="IsachenkoArtist">IsachenkoArtist</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098953" class="r-general t-image u-not-fun">
+    <b>
+        <u>
+            <a href="/view/60098953/">
+                <img data-tags="lego anthro furry cat demon calico leggodt" class="blocked-content" alt="" src="//t.furaffinity.net/60098953@200-1741121078.jpg"  data-width="133.83" data-height="200" style="width:133.83px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098953/" title="lego-fied leggodt">lego-fied leggodt</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/not-fun/" title="not-fun">not-fun</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098948" class="r-general t-image u-returnmemory">
+    <b>
+        <u>
+            <a href="/view/60098948/">
+                <img data-tags="imp" class="blocked-content" alt="" src="//t.furaffinity.net/60098948@200-1741121059.jpg"  data-width="181.378" data-height="200" style="width:181.378px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098948/" title="[Price down] Imp adoptable auction reminder">[Price down] Imp adoptable auction reminder</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/returnmemory/" title="Returnmemory">Returnmemory</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098947" class="r-general t-image u-feve">
+    <b>
+        <u>
+            <a href="/view/60098947/">
+                <img data-tags="cozy night train ride aesthetic" class="blocked-content" alt="" src="//t.furaffinity.net/60098947@200-1741121057.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098947/" title="Night Train Layonthehorn">Night Train Layonthehorn</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/feve/" title="feve">feve</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098945" class="r-general t-image u-vulturex-ff">
+    <b>
+        <u>
+            <a href="/view/60098945/">
+                <img data-tags="oc originalcharacter cartoon cartoons dog dogoc dogcharacter pitbull" class="blocked-content" alt="" src="//t.furaffinity.net/60098945@400-1741121045.jpg"  data-width="333.647" data-height="200" style="width:333.647px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098945/" title="Spottie and Dottie Watch a Movie">Spottie and Dottie Watch a Movie</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/vulturex-ff/" title="VultureX-FF">VultureX-FF</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098944" class="r-general t-image u-anofus">
+    <b>
+        <u>
+            <a href="/view/60098944/">
+                <img data-tags="discord server community post" class="blocked-content" alt="" src="//t.furaffinity.net/60098944@300-1741121043.jpg"  data-width="294.681" data-height="200" style="width:294.681px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098944/" title="🔞 I got my own discord server! 🔞">🔞 I got my own discord server! 🔞</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/anofus/" title="Anofus">Anofus</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098938" class="r-general t-image u-returnmemory">
+    <b>
+        <u>
+            <a href="/view/60098938/">
+                <img data-tags="imp" class="blocked-content" alt="" src="//t.furaffinity.net/60098938@200-1741121005.jpg"  data-width="181.378" data-height="200" style="width:181.378px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098938/" title="[Price down] Imp adoptable auction reminder">[Price down] Imp adoptable auction reminder</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/returnmemory/" title="Returnmemory">Returnmemory</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098936" class="r-general t-image u-russy">
+    <b>
+        <u>
+            <a href="/view/60098936/">
+                <img data-tags="miat car o cute" class="blocked-content" alt="" src="//t.furaffinity.net/60098936@200-1741120996.jpg"  data-width="175.625" data-height="200" style="width:175.625px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098936/" title="miat reference paint">miat reference paint</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/russy/" title="Russy">Russy</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098935" class="r-general t-image u-slowten">
+    <b>
+        <u>
+            <a href="/view/60098935/">
+                <img data-tags="wip sketch von lycaon zzz zenless zone zero" class="blocked-content" alt="" src="//t.furaffinity.net/60098935@200-1741120994.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098935/" title="wip">wip</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/slowten/" title="slowten">slowten</a>
+        </p>
+    </figcaption>
+</figure>
+                        </section>
                     </div>
                     <script type="text/javascript">
                         _fajs.push(['init_gallery', 'gallery-frontpage-submissions']);
@@ -426,38 +1080,422 @@
                 </div>
             </section>
 
-            <section>
+            <section class="gallery-section">
                 <div class="section-header">
                     <h2>Recent Writing & Poetry</h2>
                 </div>
                 <div class="section-body">
                     <div class="gallery-frontpage-submission-margin">
                         <section id="gallery-frontpage-writing" class="gallery stories rows-2 s-200">
-                            <figure id="sid-50174585" class="r-general t-text u-juicelime"><b><u><a href="/view/50174585/"><img alt="" src="//t.furaffinity.net/50174585@300-1670754819.jpg"  data-width="204.211" data-height="200" style="width:204.211px; height:200px"/></a></u></b><figcaption><p><a href="/view/50174585/" title="GHOST: Familar yet Alien">GHOST: Familar yet Alien</a></p><p><i>by</i> <a href="/user/juicelime/" title="Juice_Lime">Juice_Lime</a></p></figcaption></figure><!--
---><figure id="sid-50173852" class="r-general t-text u-europeanvisitor"><b><u><a href="/view/50173852/"><img alt="" src="//t.furaffinity.net/50173852@75-1670745888.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50173852/" title="Working as a furry – hobby or a career?">Working as a furry – hobby or a career?</a></p><p><i>by</i> <a href="/user/europeanvisitor/" title="Europeanvisitor">Europeanvisitor</a></p></figcaption></figure><!--
---><figure id="sid-50173761" class="r-general t-text u-11net11"><b><u><a href="/view/50173761/"><img alt="" src="//t.furaffinity.net/50173761@120-1670744929.jpg"  data-width="120" data-height="120" style="width:120px; height:120px"/></a></u></b><figcaption><p><a href="/view/50173761/" title="A Tale at the Salon">A Tale at the Salon</a></p><p><i>by</i> <a href="/user/11net11/" title="11Net11">11Net11</a></p></figcaption></figure><!--
---><figure id="sid-50173749" class="r-general t-text u-mallary"><b><u><a href="/view/50173749/"><img alt="" src="//t.furaffinity.net/50173749@75-1670744782.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50173749/" title="Sweet (Anteater (Cuphead) FTM TFTG)">Sweet (Anteater (Cuphead) FTM TFTG)</a></p><p><i>by</i> <a href="/user/mallary/" title="mallary">mallary</a></p></figcaption></figure><!--
---><figure id="sid-50173692" class="r-general t-text u-eightysix"><b><u><a href="/view/50173692/"><img alt="" src="//t.furaffinity.net/50173692@120-1670744305.jpg"  data-width="120" data-height="112" style="width:120px; height:112px"/></a></u></b><figcaption><p><a href="/view/50173692/" title="Tribal Kriat - Tique Natutaya">Tribal Kriat - Tique Natutaya</a></p><p><i>by</i> <a href="/user/eightysix/" title="EightySix">EightySix</a></p></figcaption></figure><!--
---><figure id="sid-50173397" class="r-general t-text u-gogmagogthejirae"><b><u><a href="/view/50173397/"><img alt="" src="//t.furaffinity.net/50173397@75-1670740970.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50173397/" title="Names">Names</a></p><p><i>by</i> <a href="/user/gogmagogthejirae/" title="Gogmagog_The_Jirae">Gogmagog_The_Jirae</a></p></figcaption></figure><!--
---><figure id="sid-50173066" class="r-general t-text u-elilb8"><b><u><a href="/view/50173066/"><img alt="" src="//t.furaffinity.net/50173066@75-1670737671.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50173066/" title="Sweet Treats and Big Bees">Sweet Treats and Big Bees</a></p><p><i>by</i> <a href="/user/elilb8/" title="ElilB8">ElilB8</a></p></figcaption></figure><!--
---><figure id="sid-50172916" class="r-general t-text u-cptsamanthasteele"><b><u><a href="/view/50172916/"><img alt="" src="//t.furaffinity.net/50172916@75-1670736295.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50172916/" title="Edit update Notice for How Samantha Saved Christmas.">Edit update Notice for How Samantha Saved Christmas.</a></p><p><i>by</i> <a href="/user/cptsamanthasteele/" title="CPT_Samantha_Steele">CPT_Samantha_Steele</a></p></figcaption></figure><!--
---><figure id="sid-50172556" class="r-general t-text u-whatevenisnovascotia"><b><u><a href="/view/50172556/"><img alt="" src="//t.furaffinity.net/50172556@75-1670733110.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50172556/" title="AU - Regression">AU - Regression</a></p><p><i>by</i> <a href="/user/whatevenisnovascotia/" title="whatevenisnovascotia">whatevenisnovascotia</a></p></figcaption></figure><!--
---><figure id="sid-50172551" class="r-general t-text u-jon825lazery7"><b><u><a href="/view/50172551/"><img alt="" src="//t.furaffinity.net/50172551@120-1670733085.jpg"  data-width="120" data-height="90" style="width:120px; height:90px"/></a></u></b><figcaption><p><a href="/view/50172551/" title="The Wolf, the Lamb, the Dog, and the Dorian Gray">The Wolf, the Lamb, the Dog, and the Dorian Gray</a></p><p><i>by</i> <a href="/user/jon825lazery7/" title="Jon825lazery7">Jon825lazery7</a></p></figcaption></figure><!--
---><figure id="sid-50172501" class="r-general t-text u-silverallaway"><b><u><a href="/view/50172501/"><img alt="" src="//t.furaffinity.net/50172501@75-1670732597.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50172501/" title="Connor+Kaio (Champagne TF... sorta)">Connor+Kaio (Champagne TF... sorta)</a></p><p><i>by</i> <a href="/user/silverallaway/" title="SilverAllaway">SilverAllaway</a></p></figcaption></figure><!--
---><figure id="sid-50172155" class="r-general t-text u-monsterlord-18"><b><u><a href="/view/50172155/"><img alt="" src="//t.furaffinity.net/50172155@75-1670729777.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50172155/" title="Tales from Dragenia Prologue">Tales from Dragenia Prologue</a></p><p><i>by</i> <a href="/user/monsterlord-18/" title="monsterlord-18">monsterlord-18</a></p></figcaption></figure><!--
---><figure id="sid-50171757" class="r-general t-text u-asterthedeer"><b><u><a href="/view/50171757/"><img alt="" src="//t.furaffinity.net/50171757@120-1670732019.jpg"  data-width="120" data-height="109" style="width:120px; height:109px"/></a></u></b><figcaption><p><a href="/view/50171757/" title="&quot;Cover Up&quot;">&quot;Cover Up&quot;</a></p><p><i>by</i> <a href="/user/asterthedeer/" title="AsterTheDeer">AsterTheDeer</a></p></figcaption></figure><!--
---><figure id="sid-50171462" class="r-general t-text u-gold4gaming"><b><u><a href="/view/50171462/"><img alt="" src="//t.furaffinity.net/50171462@75-1670724619.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50171462/" title="Lucy's Job as a Maid">Lucy's Job as a Maid</a></p><p><i>by</i> <a href="/user/gold4gaming/" title="Gold4gaming">Gold4gaming</a></p></figcaption></figure><!--
---><figure id="sid-50171214" class="r-general t-text u-rockiesretriever"><b><u><a href="/view/50171214/"><img alt="" src="//t.furaffinity.net/50171214@120-1670723015.jpg"  data-width="77" data-height="120" style="width:77px; height:120px"/></a></u></b><figcaption><p><a href="/view/50171214/" title="Dog Boy - Chapter 17">Dog Boy - Chapter 17</a></p><p><i>by</i> <a href="/user/rockiesretriever/" title="RockiesRetriever">RockiesRetriever</a></p></figcaption></figure><!--
---><figure id="sid-50171149" class="r-general t-text u-broka"><b><u><a href="/view/50171149/"><img alt="" src="//t.furaffinity.net/50171149@75-1670722618.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50171149/" title="broken bottles stare into space vampire">broken bottles stare into space vampire</a></p><p><i>by</i> <a href="/user/broka/" title="Broka">Broka</a></p></figcaption></figure><!--
---><figure id="sid-50171143" class="r-general t-text u-kirbutt50"><b><u><a href="/view/50171143/"><img alt="" src="//t.furaffinity.net/50171143@120-1670722548.jpg"  data-width="120" data-height="67" style="width:120px; height:67px"/></a></u></b><figcaption><p><a href="/view/50171143/" title="Castlevania Shorts: Expansion of Sorrow">Castlevania Shorts: Expansion of Sorrow</a></p><p><i>by</i> <a href="/user/kirbutt50/" title="Kirbutt50">Kirbutt50</a></p></figcaption></figure><!--
---><figure id="sid-50171015" class="r-general t-text u-putra"><b><u><a href="/view/50171015/"><img alt="" src="//t.furaffinity.net/50171015@75-1670721799.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50171015/" title="Enlarging Employees">Enlarging Employees</a></p><p><i>by</i> <a href="/user/putra/" title="Putra">Putra</a></p></figcaption></figure><!--
---><figure id="sid-50170752" class="r-general t-text u-emmyblubonic"><b><u><a href="/view/50170752/"><img alt="" src="//t.furaffinity.net/50170752@120-1670720228.jpg"  data-width="120" data-height="120" style="width:120px; height:120px"/></a></u></b><figcaption><p><a href="/view/50170752/" title="AI-Generated Midas Fanfics">AI-Generated Midas Fanfics</a></p><p><i>by</i> <a href="/user/emmyblubonic/" title="EmmyBlubonic">EmmyBlubonic</a></p></figcaption></figure><!--
---><figure id="sid-50170528" class="r-general t-text u-thesnekburrow"><b><u><a href="/view/50170528/"><img alt="" src="//t.furaffinity.net/50170528@75-1670718750.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50170528/" title="Warped Wish - Dog Version">Warped Wish - Dog Version</a></p><p><i>by</i> <a href="/user/thesnekburrow/" title="TheSnekBurrow">TheSnekBurrow</a></p></figcaption></figure><!--
---><figure id="sid-50170502" class="r-general t-text u-thesnekburrow"><b><u><a href="/view/50170502/"><img alt="" src="//t.furaffinity.net/50170502@75-1670718563.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50170502/" title="Warped Wish - Cat Version">Warped Wish - Cat Version</a></p><p><i>by</i> <a href="/user/thesnekburrow/" title="TheSnekBurrow">TheSnekBurrow</a></p></figcaption></figure><!--
---><figure id="sid-50170218" class="r-general t-text u-morpheuskibbe"><b><u><a href="/view/50170218/"><img alt="" src="//t.furaffinity.net/50170218@75-1670716945.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50170218/" title="Next Top Breeder S3C12 Calling Home">Next Top Breeder S3C12 Calling Home</a></p><p><i>by</i> <a href="/user/morpheuskibbe/" title="morpheuskibbe">morpheuskibbe</a></p></figcaption></figure><!--
---><figure id="sid-50169627" class="r-general t-text u-caelanj13"><b><u><a href="/view/50169627/"><img alt="" src="//t.furaffinity.net/50169627@120-1670713835.jpg"  data-width="120" data-height="100" style="width:120px; height:100px"/></a></u></b><figcaption><p><a href="/view/50169627/" title="A quick, frustrated indulgence, by LunarKeys">A quick, frustrated indulgence, by LunarKeys</a></p><p><i>by</i> <a href="/user/caelanj13/" title="caelanj13">caelanj13</a></p></figcaption></figure><!--
---><figure id="sid-50169140" class="r-general t-text u-kirbutt50"><b><u><a href="/view/50169140/"><img alt="" src="//t.furaffinity.net/50169140@120-1670711474.jpg"  data-width="120" data-height="68" style="width:120px; height:68px"/></a></u></b><figcaption><p><a href="/view/50169140/" title="Yo-Kai Watch: Berried Couple">Yo-Kai Watch: Berried Couple</a></p><p><i>by</i> <a href="/user/kirbutt50/" title="Kirbutt50">Kirbutt50</a></p></figcaption></figure><!--
--->                        </section>
+                            <figure id="sid-60098982" class="r-general t-text u-kissylambtfs">
+    <b>
+        <u>
+            <a href="/view/60098982/">
+                <img data-tags="unwilling f2m red_tailed_river_otter ftm punishment tgsc the_great_seagull_community transformation transgender story" class="blocked-content" alt="" src="//t.furaffinity.net/60098982@200-1741121207.jpg"  data-width="120" data-height="120" style="width:120px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098982/" title="Tales from Pawlington: What she deserved.">Tales from Pawlington: What she deserved.</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/kissylambtfs/" title="kissylambTFs">kissylambTFs</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098358" class="r-general t-text u-dravid3460">
+    <b>
+        <u>
+            <a href="/view/60098358/">
+                <img data-tags="potion imp transformation" class="blocked-content" alt="" src="//t.furaffinity.net/60098358@200-1741118194.jpg"  data-width="113" data-height="100" style="width:113px; height:100px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098358/" title="Potion of True Form">Potion of True Form</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/dravid3460/" title="Dravid3460">Dravid3460</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098342" class="r-general t-text u-ftwkcomic">
+    <b>
+        <u>
+            <a href="/view/60098342/">
+                <img data-tags="sonic_the_hedgehog sonic_comic page comic_page tasth amy_rose sally_acorn miles_tails_prower tails frigate space_ship wasps egg_wasps eggbots robots tornado plane biplane comic_page_47 page_47 pg47 ftwk_comic frostbite frostbitewhiteknight" class="blocked-content" alt="" src="//t.furaffinity.net/60098342@200-1741118135.jpg"  data-width="135.304" data-height="200" style="width:135.304px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098342/" title="The Adventures of Sonic the Hedgehog #2 page 47">The Adventures of Sonic the Hedgehog #2 page 47</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/ftwkcomic/" title="FTWK_Comic">FTWK_Comic</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098318" class="r-general t-text u-acebunny">
+    <b>
+        <u>
+            <a href="/view/60098318/">
+                <img data-tags="potion imp transformation" class="blocked-content" alt="" src="//t.furaffinity.net/60098318@200-1741118055.jpg"  data-width="113" data-height="100" style="width:113px; height:100px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098318/" title="Potion of True Form">Potion of True Form</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/acebunny/" title="AceBunny">AceBunny</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60097807" class="r-general t-text u-coggerd">
+    <b>
+        <u>
+            <a href="/view/60097807/">
+                <img data-tags="transgender tf tg male_to_female mtf wholesome witch music magic goth willing" class="blocked-content" alt="" src="//t.furaffinity.net/60097807@200-1741115897.jpg"  data-width="50" data-height="50" style="width:50px; height:50px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60097807/" title="Night Music">Night Music</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/coggerd/" title="CoggerD">CoggerD</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60097721" class="r-general t-text u-brestonhiman12">
+    <b>
+        <u>
+            <a href="/view/60097721/">
+                <img data-tags="werewolf base freebase" class="blocked-content" alt="" src="//t.furaffinity.net/60097721@200-1741115487.jpg"  data-width="195.68" data-height="200" style="width:195.68px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60097721/" title="Common Werewolf Base Face">Common Werewolf Base Face</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/brestonhiman12/" title="BrestonHiMan12">BrestonHiMan12</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60097619" class="r-general t-text u-voreiscooz">
+    <b>
+        <u>
+            <a href="/view/60097619/">
+                <img data-tags="gravity falls batman fusion incorrect quotes copycat hatter clock king crazy quill william tackman" class="blocked-content" alt="" src="//t.furaffinity.net/60097619@300-1741114977.jpg"  data-width="257.923" data-height="200" style="width:257.923px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60097619/" title="Incorrect quote: Gotham Falls">Incorrect quote: Gotham Falls</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/voreiscooz/" title="voreiscooz">voreiscooz</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60097550" class="r-general t-text u-xxeda">
+    <b>
+        <u>
+            <a href="/view/60097550/">
+                <img data-tags="wam vore gore latex rubber tf transformation scat diaper inflation exhibitionism human weight gain paws feet macro micro fantasy size difference stories story commission open literature fiction writing storycommissions cheap sale christmas" class="blocked-content" alt="" src="//t.furaffinity.net/60097550@400-1741114719.jpg"  data-width="320.619" data-height="200" style="width:320.619px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60097550/" title="EMERGENCY STORY COMMISSIONS ―  About to be homeless!!">EMERGENCY STORY COMMISSIONS ―  About to be homeless!!</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/xxeda/" title="xxeda">xxeda</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60097048" class="r-general t-text u-dr.demuertos">
+    <b>
+        <u>
+            <a href="/view/60097048/">
+                <img data-tags="ancient greece anthro fiction furries furry greek historical historicalfiction religion shortstory symbolism brokenhalos" class="blocked-content" alt="" src="//t.furaffinity.net/60097048@200-1741112330.jpg"  data-width="150.19" data-height="200" style="width:150.19px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60097048/" title="The Exiles Ep.3 (Grk Vrs) - The Treasure">The Exiles Ep.3 (Grk Vrs) - The Treasure</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/dr.demuertos/" title="Dr.DeMuertos">Dr.DeMuertos</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60096336" class="r-general t-text u-brestonhiman12">
+    <b>
+        <u>
+            <a href="/view/60096336/">
+                <img data-tags="base werewolf" class="blocked-content" alt="" src="//t.furaffinity.net/60096336@200-1741108500.jpg"  data-width="139.843" data-height="200" style="width:139.843px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60096336/" title="Free Werewolf Guie Base Drawing">Free Werewolf Guie Base Drawing</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/brestonhiman12/" title="BrestonHiMan12">BrestonHiMan12</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60095839" class="r-general t-text u-vupiqueen">
+    <b>
+        <u>
+            <a href="/view/60095839/">
+                <img data-tags="" class="blocked-content" alt="" src="//t.furaffinity.net/60095839@200-1741105986.jpg"  data-width="141.393" data-height="200" style="width:141.393px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60095839/" title="My Last Wish.">My Last Wish.</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/vupiqueen/" title="Vupi_Queen">Vupi_Queen</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60095112" class="r-general t-text u-vupiqueen">
+    <b>
+        <u>
+            <a href="/view/60095112/">
+                <img data-tags="" class="blocked-content" alt="" src="//t.furaffinity.net/60095112@200-1741101153.jpg"  data-width="141.393" data-height="200" style="width:141.393px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60095112/" title="The Forgetful Boy.">The Forgetful Boy.</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/vupiqueen/" title="Vupi_Queen">Vupi_Queen</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60094876" class="r-general t-text u-jan955">
+    <b>
+        <u>
+            <a href="/view/60094876/">
+                <img data-tags="infos original cover german" class="blocked-content" alt="" src="//t.furaffinity.net/60094876@200-1741099161.jpg"  data-width="120" data-height="120" style="width:120px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60094876/" title="Carousel Organ - Infos">Carousel Organ - Infos</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/jan955/" title="Jan955">Jan955</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60094529" class="r-general t-text u-tricorgs">
+    <b>
+        <u>
+            <a href="/view/60094529/">
+                <img data-tags="wild_west tf transformation object_transformation wolf coyote cat horse tiger fox ferret rabbit stag" class="blocked-content" alt="" src="//t.furaffinity.net/60094529@200-1741096015.jpg"  data-width="120" data-height="120" style="width:120px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60094529/" title="Extrasensory Gambling">Extrasensory Gambling</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/tricorgs/" title="Tricorgs">Tricorgs</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60094313" class="r-general t-text u-rose83">
+    <b>
+        <u>
+            <a href="/view/60094313/">
+                <img data-tags="commissions writing" class="blocked-content" alt="" src="//t.furaffinity.net/60094313@200-1741106023.jpg"  data-width="50" data-height="50" style="width:50px; height:50px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60094313/" title="Rose83&#039;s Written Commission Information">Rose83&#039;s Written Commission Information</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/rose83/" title="Rose83">Rose83</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60093161" class="r-general t-text u-prince-dedede">
+    <b>
+        <u>
+            <a href="/view/60093161/">
+                <img data-tags="human-mermaid dolphin-mermaid dolphinmaid pokemon-trainer" class="blocked-content" alt="" src="//t.furaffinity.net/60093161@200-1741078722.jpg"  data-width="50" data-height="50" style="width:50px; height:50px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60093161/" title="Pokemon Trainer Lethe">Pokemon Trainer Lethe</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/prince-dedede/" title="Prince-Dedede">Prince-Dedede</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60092824" class="r-general t-text u-sudou">
+    <b>
+        <u>
+            <a href="/view/60092824/">
+                <img data-tags="comic hare chibi style comedy" class="blocked-content" alt="" src="//t.furaffinity.net/60092824@200-1741073636.jpg"  data-width="143.833" data-height="200" style="width:143.833px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60092824/" title="#1">#1</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/sudou/" title="Sudou">Sudou</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60092661" class="r-general t-text u-skyclaweallec">
+    <b>
+        <u>
+            <a href="/view/60092661/">
+                <img data-tags="sfw faraelyan wolf wolves original_species" class="blocked-content" alt="" src="//t.furaffinity.net/60092661@200-1741071395.jpg"  data-width="50" data-height="50" style="width:50px; height:50px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60092661/" title="Faraelyan Investigative Report 4: Clan Dawnrunner Overview">Faraelyan Investigative Report 4: Clan Dawnrunner Overview</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/skyclaweallec/" title="Skyclaw_Eallec">Skyclaw_Eallec</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60092400" class="r-general t-text u-wolf-9">
+    <b>
+        <u>
+            <a href="/view/60092400/">
+                <img data-tags="lunar wolf-9 wolf 9 red black intersex shemale story bar lounge bartender alcohol slice of life" class="blocked-content" alt="" src="//t.furaffinity.net/60092400@200-1741068282.jpg"  data-width="117" data-height="120" style="width:117px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60092400/" title="The midnight Rose Lounge">The midnight Rose Lounge</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/wolf-9/" title="wolf-9">wolf-9</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60092382" class="r-general t-text u-virtualsonic18">
+    <b>
+        <u>
+            <a href="/view/60092382/">
+                <img data-tags="summer_fanfic oc_character_living_their_vacations casual_fanfic" class="blocked-content" alt="" src="//t.furaffinity.net/60092382@200-1741068092.jpg"  data-width="50" data-height="50" style="width:50px; height:50px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60092382/" title="Fanfic de Verano 2025 Ep 31">Fanfic de Verano 2025 Ep 31</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/virtualsonic18/" title="Virtualsonic18">Virtualsonic18</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60091846" class="r-general t-text u-tewst">
+    <b>
+        <u>
+            <a href="/view/60091846/">
+                <img data-tags="mecalia automi synthetic spirit kynard raossi phoebe maxol kendra korvik fly screwdriver maltipoo messer pureau revertianni mannedesen monster hunter mh wilds" class="blocked-content" alt="" src="//t.furaffinity.net/60091846@200-1741064012.jpg"  data-width="120" data-height="120" style="width:120px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60091846/" title="Tea Time with Tewst #70">Tea Time with Tewst #70</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/tewst/" title="Tewst">Tewst</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60091518" class="r-general t-text u-mpnsfwreviews">
+    <b>
+        <u>
+            <a href="/view/60091518/">
+                <img data-tags="xthatgreenendermanx kaleo fox grosso skunk comic furry artist gag preston cat jacques samson estella brutus interview digitalcomic" class="blocked-content" alt="" src="//t.furaffinity.net/60091518@200-1741061636.jpg"  data-width="100" data-height="92" style="width:100px; height:92px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60091518/" title="TheEnderToonist: An interview with the furry Artist">TheEnderToonist: An interview with the furry Artist</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/mpnsfwreviews/" title="mp_nsfwreviews">mp_nsfwreviews</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60091332" class="r-general t-text u-monstermaster13">
+    <b>
+        <u>
+            <a href="/view/60091332/">
+                <img data-tags="" class="blocked-content" alt="" src="//t.furaffinity.net/60091332@200-1741059879.jpg"  data-width="50" data-height="50" style="width:50px; height:50px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60091332/" title="Planning the Squishmallow Day Play.">Planning the Squishmallow Day Play.</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/monstermaster13/" title="Monstermaster13">Monstermaster13</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60091206" class="r-general t-text u-kazdy">
+    <b>
+        <u>
+            <a href="/view/60091206/">
+                <img data-tags="poetry nein by nine rhyming lgbtq" class="blocked-content" alt="" src="//t.furaffinity.net/60091206@200-1741058954.jpg"  data-width="73" data-height="120" style="width:73px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60091206/" title="Trepidation">Trepidation</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/kazdy/" title="Kazdy">Kazdy</a>
+        </p>
+    </figcaption>
+</figure>
+                        </section>
                     </div>
                     <script type="text/javascript">
                         _fajs.push(['init_gallery', 'gallery-frontpage-writing']);
@@ -465,38 +1503,422 @@
                 </div>
             </section>
 
-            <section>
+            <section class="gallery-section">
                 <div class="section-header">
                     <h2>Recent Music & Audio</h2>
                 </div>
                 <div class="section-body">
                     <div class="gallery-frontpage-submission-margin">
                         <section id="gallery-frontpage-music" class="gallery music rows-2 s-200">
-                            <figure id="sid-50175034" class="r-general t-audio u-meowsandstuff"><b><u><a href="/view/50175034/"><img alt="" src="//t.furaffinity.net/50175034@120-1670758949.jpg"  data-width="120" data-height="120" style="width:120px; height:120px"/></a></u></b><figcaption><p><a href="/view/50175034/" title="Jellyfish Jam / Stadium Rave A [2022]">Jellyfish Jam / Stadium Rave A [2022]</a></p><p><i>by</i> <a href="/user/meowsandstuff/" title="meowsandstuff">meowsandstuff</a></p></figcaption></figure><!--
---><figure id="sid-50174579" class="r-general t-audio u-yomama9183"><b><u><a href="/view/50174579/"><img alt="" src="//t.furaffinity.net/50174579@120-1670754326.jpg"  data-width="120" data-height="120" style="width:120px; height:120px"/></a></u></b><figcaption><p><a href="/view/50174579/" title="Bitchface Rich Spirit Alternate Version">Bitchface Rich Spirit Alternate Version</a></p><p><i>by</i> <a href="/user/yomama9183/" title="Yomama9183">Yomama9183</a></p></figcaption></figure><!--
---><figure id="sid-50174342" class="r-general t-audio u-sneknuzzles"><b><u><a href="/view/50174342/"><img alt="" src="//t.furaffinity.net/50174342@75-1670751899.jpg"  data-width="44" data-height="67" style="width:44px; height:67px"/></a></u></b><figcaption><p><a href="/view/50174342/" title="outside">outside</a></p><p><i>by</i> <a href="/user/sneknuzzles/" title="SnekNuzzles">SnekNuzzles</a></p></figcaption></figure><!--
---><figure id="sid-50174125" class="r-general t-audio u-arturianfynx"><b><u><a href="/view/50174125/"><img alt="" src="//t.furaffinity.net/50174125@120-1670749228.jpg"  data-width="120" data-height="120" style="width:120px; height:120px"/></a></u></b><figcaption><p><a href="/view/50174125/" title="MONSTER ~ ArturianFYNX">MONSTER ~ ArturianFYNX</a></p><p><i>by</i> <a href="/user/arturianfynx/" title="ArturianFYNX">ArturianFYNX</a></p></figcaption></figure><!--
---><figure id="sid-50173859" class="r-general t-audio u-nouns"><b><u><a href="/view/50173859/"><img alt="" src="//t.furaffinity.net/50173859@120-1670745961.jpg"  data-width="120" data-height="91" style="width:120px; height:91px"/></a></u></b><figcaption><p><a href="/view/50173859/" title="sigh">sigh</a></p><p><i>by</i> <a href="/user/nouns/" title="nouns">nouns</a></p></figcaption></figure><!--
---><figure id="sid-50172324" class="r-general t-audio u-protogenposting"><b><u><a href="/view/50172324/"><img alt="" src="//t.furaffinity.net/50172324@75-1670731123.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50172324/" title="fnf vs scratchy - tic tac toe">fnf vs scratchy - tic tac toe</a></p><p><i>by</i> <a href="/user/protogenposting/" title="Protogen_posting">Protogen_posting</a></p></figcaption></figure><!--
---><figure id="sid-50171776" class="r-general t-audio u-leothetiger"><b><u><a href="/view/50171776/"><img alt="" src="//t.furaffinity.net/50171776@120-1670726963.jpg"  data-width="120" data-height="120" style="width:120px; height:120px"/></a></u></b><figcaption><p><a href="/view/50171776/" title="Arrangement: Chim Chim Cher-ee (Mary Poppins)">Arrangement: Chim Chim Cher-ee (Mary Poppins)</a></p><p><i>by</i> <a href="/user/leothetiger/" title="Leo_the_Tiger">Leo_the_Tiger</a></p></figcaption></figure><!--
---><figure id="sid-50171443" class="r-general t-audio u-jessefurry1999"><b><u><a href="/view/50171443/"><img alt="" src="//t.furaffinity.net/50171443@120-1670724451.jpg"  data-width="120" data-height="90" style="width:120px; height:90px"/></a></u></b><figcaption><p><a href="/view/50171443/" title="Me gagging lol">Me gagging lol</a></p><p><i>by</i> <a href="/user/jessefurry1999/" title="JesseFurry1999">JesseFurry1999</a></p></figcaption></figure><!--
---><figure id="sid-50171166" class="r-general t-audio u-vorochi"><b><u><a href="/view/50171166/"><img alt="" src="//t.furaffinity.net/50171166@75-1670722738.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50171166/" title="Sky Theme">Sky Theme</a></p><p><i>by</i> <a href="/user/vorochi/" title="Vorochi">Vorochi</a></p></figcaption></figure><!--
---><figure id="sid-50170232" class="r-general t-audio u-darkhorseartie89"><b><u><a href="/view/50170232/"><img alt="" src="//t.furaffinity.net/50170232@120-1670717006.jpg"  data-width="120" data-height="120" style="width:120px; height:120px"/></a></u></b><figcaption><p><a href="/view/50170232/" title="30MC: Lonely Piano Riff">30MC: Lonely Piano Riff</a></p><p><i>by</i> <a href="/user/darkhorseartie89/" title="DarkHorseArtie89">DarkHorseArtie89</a></p></figcaption></figure><!--
---><figure id="sid-50168674" class="r-general t-audio u-rambrissot"><b><u><a href="/view/50168674/"><img alt="" src="//t.furaffinity.net/50168674@120-1670709320.jpg"  data-width="120" data-height="120" style="width:120px; height:120px"/></a></u></b><figcaption><p><a href="/view/50168674/" title="into the sea">into the sea</a></p><p><i>by</i> <a href="/user/rambrissot/" title="rambrissot">rambrissot</a></p></figcaption></figure><!--
---><figure id="sid-50168655" class="r-general t-audio u-hixbi.fox"><b><u><a href="/view/50168655/"><img alt="" src="//t.furaffinity.net/50168655@120-1670709217.jpg"  data-width="120" data-height="117" style="width:120px; height:117px"/></a></u></b><figcaption><p><a href="/view/50168655/" title="Empty">Empty</a></p><p><i>by</i> <a href="/user/hixbi.fox/" title="Hixbi.Fox">Hixbi.Fox</a></p></figcaption></figure><!--
---><figure id="sid-50166436" class="r-general t-audio u-titmousedistribution"><b><u><a href="/view/50166436/"><img alt="" src="//t.furaffinity.net/50166436@120-1670699915.jpg"  data-width="120" data-height="97" style="width:120px; height:97px"/></a></u></b><figcaption><p><a href="/view/50166436/" title="Seeburg B13B previously identified track">Seeburg B13B previously identified track</a></p><p><i>by</i> <a href="/user/titmousedistribution/" title="Titmouse_Distribution">Titmouse_Distribution</a></p></figcaption></figure><!--
---><figure id="sid-50165398" class="r-general t-audio u-jessefurry1999"><b><u><a href="/view/50165398/"><img alt="" src="//t.furaffinity.net/50165398@120-1670695045.jpg"  data-width="120" data-height="90" style="width:120px; height:90px"/></a></u></b><figcaption><p><a href="/view/50165398/" title="Velma (2023) Teaser Reaction/Rant">Velma (2023) Teaser Reaction/Rant</a></p><p><i>by</i> <a href="/user/jessefurry1999/" title="JesseFurry1999">JesseFurry1999</a></p></figcaption></figure><!--
---><figure id="sid-50165338" class="r-general t-audio u-keenyfox"><b><u><a href="/view/50165338/"><img alt="" src="//t.furaffinity.net/50165338@120-1670694707.jpg"  data-width="120" data-height="120" style="width:120px; height:120px"/></a></u></b><figcaption><p><a href="/view/50165338/" title="Do It All Again">Do It All Again</a></p><p><i>by</i> <a href="/user/keenyfox/" title="KeenyFox">KeenyFox</a></p></figcaption></figure><!--
---><figure id="sid-50164821" class="r-general t-audio u-lihem"><b><u><a href="/view/50164821/"><img alt="" src="//t.furaffinity.net/50164821@120-1670692207.jpg"  data-width="120" data-height="120" style="width:120px; height:120px"/></a></u></b><figcaption><p><a href="/view/50164821/" title="Reminiscence (Full Version)">Reminiscence (Full Version)</a></p><p><i>by</i> <a href="/user/lihem/" title="Lihem">Lihem</a></p></figcaption></figure><!--
---><figure id="sid-50164616" class="r-general t-audio u-xandern"><b><u><a href="/view/50164616/"><img alt="" src="//t.furaffinity.net/50164616@120-1670702660.jpg"  data-width="120" data-height="120" style="width:120px; height:120px"/></a></u></b><figcaption><p><a href="/view/50164616/" title="John Freeman (Shit Remix)">John Freeman (Shit Remix)</a></p><p><i>by</i> <a href="/user/xandern/" title="XanderN">XanderN</a></p></figcaption></figure><!--
---><figure id="sid-50163599" class="r-general t-audio u-carlolombardi"><b><u><a href="/view/50163599/"><img alt="" src="//t.furaffinity.net/50163599@75-1670684682.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50163599/" title="Veni Veni Emmanuel">Veni Veni Emmanuel</a></p><p><i>by</i> <a href="/user/carlolombardi/" title="Carlo_Lombardi">Carlo_Lombardi</a></p></figcaption></figure><!--
---><figure id="sid-50163199" class="r-general t-audio u-frisky17532"><b><u><a href="/view/50163199/"><img alt="" src="//t.furaffinity.net/50163199@120-1670681810.jpg"  data-width="120" data-height="120" style="width:120px; height:120px"/></a></u></b><figcaption><p><a href="/view/50163199/" title="green jello in the shape of the state of Connecticut">green jello in the shape of the state of Connecticut</a></p><p><i>by</i> <a href="/user/frisky17532/" title="Frisky17532">Frisky17532</a></p></figcaption></figure><!--
---><figure id="sid-50161759" class="r-general t-audio u-darkdragonguardianx"><b><u><a href="/view/50161759/"><img alt="" src="//t.furaffinity.net/50161759@120-1670666268.jpg"  data-width="120" data-height="102" style="width:120px; height:102px"/></a></u></b><figcaption><p><a href="/view/50161759/" title="Energy Light by HuNexus">Energy Light by HuNexus</a></p><p><i>by</i> <a href="/user/darkdragonguardianx/" title="DarkDragonGuardianX">DarkDragonGuardianX</a></p></figcaption></figure><!--
---><figure id="sid-50160811" class="r-general t-audio u-tallfluffer"><b><u><a href="/view/50160811/"><img alt="" src="//t.furaffinity.net/50160811@120-1670654266.jpg"  data-width="120" data-height="120" style="width:120px; height:120px"/></a></u></b><figcaption><p><a href="/view/50160811/" title="Fallback">Fallback</a></p><p><i>by</i> <a href="/user/tallfluffer/" title="TallFluffer">TallFluffer</a></p></figcaption></figure><!--
---><figure id="sid-50160810" class="r-general t-audio u-reddywolf"><b><u><a href="/view/50160810/"><img alt="" src="//t.furaffinity.net/50160810@120-1670654284.jpg"  data-width="120" data-height="80" style="width:120px; height:80px"/></a></u></b><figcaption><p><a href="/view/50160810/" title="The Polar Express written by Chris Van Allsburg">The Polar Express written by Chris Van Allsburg</a></p><p><i>by</i> <a href="/user/reddywolf/" title="ReddyWolf">ReddyWolf</a></p></figcaption></figure><!--
---><figure id="sid-50160271" class="r-general t-audio u-buttmutt707"><b><u><a href="/view/50160271/"><img alt="" src="//t.furaffinity.net/50160271@120-1670649622.jpg"  data-width="120" data-height="95" style="width:120px; height:95px"/></a></u></b><figcaption><p><a href="/view/50160271/" title="Unwritten">Unwritten</a></p><p><i>by</i> <a href="/user/buttmutt707/" title="ButtMutt707">ButtMutt707</a></p></figcaption></figure><!--
---><figure id="sid-50159961" class="r-general t-audio u-thedemoman45"><b><u><a href="/view/50159961/"><img alt="" src="//t.furaffinity.net/50159961@75-1670646945.jpg"  data-width="50" data-height="50" style="width:50px; height:50px"/></a></u></b><figcaption><p><a href="/view/50159961/" title="Music number 2">Music number 2</a></p><p><i>by</i> <a href="/user/thedemoman45/" title="TheDemoman45">TheDemoman45</a></p></figcaption></figure><!--
--->                        </section>
+                            <figure id="sid-60098899" class="r-general t-audio u-david31">
+    <b>
+        <u>
+            <a href="/view/60098899/">
+                <img data-tags="lucas thump liam howler louisiana gay couple wolf bunny rabbit comic review the adventures of superman 497 death storyline meijimeowth cover image" class="blocked-content" alt="" src="//t.furaffinity.net/60098899@200-1741120846.jpg"  data-width="120" data-height="97" style="width:120px; height:97px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098899/" title="Lucas and Liam Review The Adventures of Superman #497">Lucas and Liam Review The Adventures of Superman #497</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/david31/" title="david31">david31</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098692" class="r-general t-audio u-dimenbi">
+    <b>
+        <u>
+            <a href="/view/60098692/">
+                <img data-tags="antitrance darkwave garbage industrial noise techno" class="blocked-content" alt="" src="//t.furaffinity.net/60098692@200-1741119859.jpg"  data-width="120" data-height="120" style="width:120px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098692/" title="Stranger FT. Dazazel- Jack Smackerz">Stranger FT. Dazazel- Jack Smackerz</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/dimenbi/" title="Dimenbi">Dimenbi</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098282" class="r-general t-audio u-itzlifelol">
+    <b>
+        <u>
+            <a href="/view/60098282/">
+                <img data-tags="violin garageband trap remix chops chill instrumental reflections tonshifumi hinata sample lofi hip hop rap beat" class="blocked-content" alt="" src="//t.furaffinity.net/60098282@200-1741118086.jpg"  data-width="120" data-height="67" style="width:120px; height:67px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098282/" title="RAINDROPS">RAINDROPS</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/itzlifelol/" title="ItzLifeLol">ItzLifeLol</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60097068" class="r-general t-audio u-mmdashigaru">
+    <b>
+        <u>
+            <a href="/view/60097068/">
+                <img data-tags="game music ost remastered soundtrack" class="blocked-content" alt="" src="//t.furaffinity.net/60097068@200-1741112446.jpg"  data-width="120" data-height="84" style="width:120px; height:84px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60097068/" title="Dragon quest VI: Battle theme - remastered">Dragon quest VI: Battle theme - remastered</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/mmdashigaru/" title="mmdashigaru">mmdashigaru</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60096778" class="r-general t-audio u-seemsiamalone">
+    <b>
+        <u>
+            <a href="/view/60096778/">
+                <img data-tags="electronic vaporwave slushwave ambient" class="blocked-content" alt="" src="//t.furaffinity.net/60096778@200-1741110883.jpg"  data-width="120" data-height="120" style="width:120px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60096778/" title="神性 (Divinity)">神性 (Divinity)</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/seemsiamalone/" title="seemsiamalone">seemsiamalone</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60096708" class="r-general t-audio u-mmdashigaru">
+    <b>
+        <u>
+            <a href="/view/60096708/">
+                <img data-tags="music ost remastered soundtrack game" class="blocked-content" alt="" src="//t.furaffinity.net/60096708@200-1741110510.jpg"  data-width="120" data-height="106" style="width:120px; height:106px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60096708/" title="Dragon quest V: Battle theme - Remastered">Dragon quest V: Battle theme - Remastered</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/mmdashigaru/" title="mmdashigaru">mmdashigaru</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60096403" class="r-general t-audio u-mmdashigaru">
+    <b>
+        <u>
+            <a href="/view/60096403/">
+                <img data-tags="game music ost snes soundtrack" class="blocked-content" alt="" src="//t.furaffinity.net/60096403@200-1741108789.jpg"  data-width="89" data-height="120" style="width:89px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60096403/" title="Skyward sword: ballad of the goddess - SNES">Skyward sword: ballad of the goddess - SNES</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/mmdashigaru/" title="mmdashigaru">mmdashigaru</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60096008" class="r-general t-audio u-carlolombardi">
+    <b>
+        <u>
+            <a href="/view/60096008/">
+                <img data-tags="" class="blocked-content" alt="" src="//t.furaffinity.net/60096008@200-1741106950.jpg"  data-width="50" data-height="50" style="width:50px; height:50px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60096008/" title="Rag in B-flat Major">Rag in B-flat Major</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/carlolombardi/" title="Carlo_Lombardi">Carlo_Lombardi</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60096006" class="r-general t-audio u-itzlifelol">
+    <b>
+        <u>
+            <a href="/view/60096006/">
+                <img data-tags="travis scott metro boomin make it boom raindrops auto tune rap garageband violin sample trap hip hop strings lofi chill grooving disney reflection tonshifumi hinata" class="blocked-content" alt="" src="//t.furaffinity.net/60096006@200-1741117520.jpg"  data-width="112" data-height="120" style="width:112px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60096006/" title="raindrops (feat. Travis Scott and Metro Boomin)">raindrops (feat. Travis Scott and Metro Boomin)</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/itzlifelol/" title="ItzLifeLol">ItzLifeLol</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60095786" class="r-general t-audio u-mmdashigaru">
+    <b>
+        <u>
+            <a href="/view/60095786/">
+                <img data-tags="game ost soundtrack remastered music" class="blocked-content" alt="" src="//t.furaffinity.net/60095786@200-1741105690.jpg"  data-width="120" data-height="84" style="width:120px; height:84px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60095786/" title="F-Zero: Big blue - Remastered">F-Zero: Big blue - Remastered</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/mmdashigaru/" title="mmdashigaru">mmdashigaru</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60094857" class="r-general t-audio u-wown00bify">
+    <b>
+        <u>
+            <a href="/view/60094857/">
+                <img data-tags="music dark synthwave dark_synth dark_synthwave edm electronic" class="blocked-content" alt="" src="//t.furaffinity.net/60094857@200-1741098990.jpg"  data-width="120" data-height="120" style="width:120px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60094857/" title="20XX">20XX</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/wown00bify/" title="wown00bify">wown00bify</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60094823" class="r-general t-audio u-wown00bify">
+    <b>
+        <u>
+            <a href="/view/60094823/">
+                <img data-tags="edm music electronic" class="blocked-content" alt="" src="//t.furaffinity.net/60094823@200-1741098720.jpg"  data-width="120" data-height="120" style="width:120px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60094823/" title="Gated">Gated</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/wown00bify/" title="wown00bify">wown00bify</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60094597" class="r-general t-audio u-fletcher.fox">
+    <b>
+        <u>
+            <a href="/view/60094597/">
+                <img data-tags="fl_studio" class="blocked-content" alt="" src="//t.furaffinity.net/60094597@200-1741096619.jpg"  data-width="120" data-height="105" style="width:120px; height:105px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60094597/" title="PLACEMENT">PLACEMENT</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/fletcher.fox/" title="Fletcher.Fox">Fletcher.Fox</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60094458" class="r-general t-audio u-jan955">
+    <b>
+        <u>
+            <a href="/view/60094458/">
+                <img data-tags="music mp3 downloadable original" class="blocked-content" alt="" src="//t.furaffinity.net/60094458@200-1741095208.jpg"  data-width="120" data-height="120" style="width:120px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60094458/" title="Carousel Organ - Steel Drum">Carousel Organ - Steel Drum</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/jan955/" title="Jan955">Jan955</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60093185" class="r-general t-audio u-superluxhd681">
+    <b>
+        <u>
+            <a href="/view/60093185/">
+                <img data-tags="" class="blocked-content" alt="" src="//t.furaffinity.net/60093185@200-1741079095.jpg"  data-width="120" data-height="120" style="width:120px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60093185/" title="Bad Apple (arranged for a nuclear siren)">Bad Apple (arranged for a nuclear siren)</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/superluxhd681/" title="Superlux_HD681">Superlux_HD681</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60093091" class="r-general t-audio u-kingkirby">
+    <b>
+        <u>
+            <a href="/view/60093091/">
+                <img data-tags="music piano guitar rip" class="blocked-content" alt="" src="//t.furaffinity.net/60093091@200-1741077838.jpg"  data-width="119" data-height="120" style="width:119px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60093091/" title="Linger in the Rain (UK Mix) - YonKaGor">Linger in the Rain (UK Mix) - YonKaGor</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/kingkirby/" title="King_Kirby">King_Kirby</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60092893" class="r-general t-audio u-kingtig4r">
+    <b>
+        <u>
+            <a href="/view/60092893/">
+                <img data-tags="everestthetiger everest the tiger if only things can be better dance electronic edm" class="blocked-content" alt="" src="//t.furaffinity.net/60092893@200-1741074529.jpg"  data-width="50" data-height="50" style="width:50px; height:50px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60092893/" title="EverestTheTiger - If Only Things Can be Better">EverestTheTiger - If Only Things Can be Better</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/kingtig4r/" title="KiNGTiG4R">KiNGTiG4R</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60092389" class="r-general t-audio u-superluxhd681">
+    <b>
+        <u>
+            <a href="/view/60092389/">
+                <img data-tags="" class="blocked-content" alt="" src="//t.furaffinity.net/60092389@200-1741068141.jpg"  data-width="50" data-height="50" style="width:50px; height:50px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60092389/" title="Papers Please Theme (Cover V2)">Papers Please Theme (Cover V2)</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/superluxhd681/" title="Superlux_HD681">Superlux_HD681</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60092385" class="r-general t-audio u-dmf">
+    <b>
+        <u>
+            <a href="/view/60092385/">
+                <img data-tags="chiptune chip tune 8-bit 8bit 8 bit nsf 0cc-famitracker 0cc famitracker fami tracker vrc6 mmc5 n163 remix mp3 final fantasy vii ffvii ff7 its difficult hard to stand on both feet isnt it two legs nothin cargo ship red xiii nanaki nobuo uematsu" class="blocked-content" alt="" src="//t.furaffinity.net/60092385@200-1741068107.jpg"  data-width="120" data-height="120" style="width:120px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60092385/" title="Chip|It&#039;s Difficult to Stand on Both Feet!|VRC6+MMC5+N163">Chip|It&#039;s Difficult to Stand on Both Feet!|VRC6+MMC5+N163</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/dmf/" title="dmf">dmf</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60091824" class="r-general t-audio u-undertoegarden">
+    <b>
+        <u>
+            <a href="/view/60091824/">
+                <img data-tags="mp3" class="blocked-content" alt="" src="//t.furaffinity.net/60091824@200-1741063870.jpg"  data-width="120" data-height="117" style="width:120px; height:117px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60091824/" title="CHETTA  YOURE GOING TO DIE TONIGHT">CHETTA  YOURE GOING TO DIE TONIGHT</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/undertoegarden/" title="UnderToeGarden">UnderToeGarden</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60091475" class="r-general t-audio u-shanefrost">
+    <b>
+        <u>
+            <a href="/view/60091475/">
+                <img data-tags="coraline music plunderphonics glitch" class="blocked-content" alt="" src="//t.furaffinity.net/60091475@200-1741061158.jpg"  data-width="120" data-height="77" style="width:120px; height:77px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60091475/" title="Smuffy - Coralaroline / Shane Frost mix">Smuffy - Coralaroline / Shane Frost mix</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/shanefrost/" title="Shane_Frost">Shane_Frost</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60091458" class="r-general t-audio u-crus4d3r">
+    <b>
+        <u>
+            <a href="/view/60091458/">
+                <img data-tags="eurobeat" class="blocked-content" alt="" src="//t.furaffinity.net/60091458@200-1741061029.jpg"  data-width="120" data-height="120" style="width:120px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60091458/" title="eurobeat bootleg">eurobeat bootleg</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/crus4d3r/" title="CRUS4D3R">CRUS4D3R</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60090754" class="r-general t-audio u-kodytyphlosion">
+    <b>
+        <u>
+            <a href="/view/60090754/">
+                <img data-tags="" class="blocked-content" alt="" src="//t.furaffinity.net/60090754@200-1741055878.jpg"  data-width="120" data-height="120" style="width:120px; height:120px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60090754/" title="[2001-03-03] Turning Japanese">[2001-03-03] Turning Japanese</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/kodytyphlosion/" title="KodyTyphlosion">KodyTyphlosion</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60090521" class="r-general t-audio u-redreynart">
+    <b>
+        <u>
+            <a href="/view/60090521/">
+                <img data-tags="tb-303 roland tr-909 collaboration underdog_music 303_day techno acid edm music redreynart manlo bassline 3-03-25" class="blocked-content" alt="" src="//t.furaffinity.net/60090521@200-1741054299.jpg"  data-width="120" data-height="63" style="width:120px; height:63px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60090521/" title="T-221 (ft. Manlo)">T-221 (ft. Manlo)</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/redreynart/" title="RedReynart">RedReynart</a>
+        </p>
+    </figcaption>
+</figure>
+                        </section>
                     </div>
                     <script type="text/javascript">
                         _fajs.push(['init_gallery', 'gallery-frontpage-music']);
@@ -504,38 +1926,422 @@
                 </div>
             </section>
 
-            <section>
+            <section class="gallery-section">
                 <div class="section-header">
                     <h2>Fursuiting & Crafts</h2>
                 </div>
                 <div class="section-body">
                     <div class="gallery-frontpage-submission-margin">
                         <section id="gallery-frontpage-crafts" class="gallery crafts rows-2 s-200 nodesc">
-                            <figure id="sid-50175239" class="r-general t-image u-rooskidingo"><b><u><a href="/view/50175239/"><img alt="" src="//t.furaffinity.net/50175239@200-1670760956.jpg"  data-width="149.932" data-height="200" style="width:149.932px; height:200px"/></a></u></b><figcaption><p><a href="/view/50175239/" title="D">D</a></p><p><i>by</i> <a href="/user/rooskidingo/" title="RooskiDingo">RooskiDingo</a></p></figcaption></figure><!--
---><figure id="sid-50174987" class="r-general t-image u-breachofreality"><b><u><a href="/view/50174987/"><img alt="" src="//t.furaffinity.net/50174987@200-1670758395.jpg"  data-width="112.5" data-height="200" style="width:112.5px; height:200px"/></a></u></b><figcaption><p><a href="/view/50174987/" title="White Koi Merman">White Koi Merman</a></p><p><i>by</i> <a href="/user/breachofreality/" title="BreachofReality">BreachofReality</a></p></figcaption></figure><!--
---><figure id="sid-50174980" class="r-general t-image u-atlasthedragon"><b><u><a href="/view/50174980/"><img alt="" src="//t.furaffinity.net/50174980@200-1670758339.jpg"  data-width="136.548" data-height="200" style="width:136.548px; height:200px"/></a></u></b><figcaption><p><a href="/view/50174980/" title="Eternatus Plush Commission (4/6)">Eternatus Plush Commission (4/6)</a></p><p><i>by</i> <a href="/user/atlasthedragon/" title="AtlasTheDragon">AtlasTheDragon</a></p></figcaption></figure><!--
---><figure id="sid-50174936" class="r-general t-image u-breachofreality"><b><u><a href="/view/50174936/"><img alt="" src="//t.furaffinity.net/50174936@200-1670757902.jpg"  data-width="112.5" data-height="200" style="width:112.5px; height:200px"/></a></u></b><figcaption><p><a href="/view/50174936/" title="Ocean Sprite">Ocean Sprite</a></p><p><i>by</i> <a href="/user/breachofreality/" title="BreachofReality">BreachofReality</a></p></figcaption></figure><!--
---><figure id="sid-50174902" class="r-general t-image u-breachofreality"><b><u><a href="/view/50174902/"><img alt="" src="//t.furaffinity.net/50174902@200-1670757615.jpg"  data-width="112.5" data-height="200" style="width:112.5px; height:200px"/></a></u></b><figcaption><p><a href="/view/50174902/" title="Rainbow Mermaid">Rainbow Mermaid</a></p><p><i>by</i> <a href="/user/breachofreality/" title="BreachofReality">BreachofReality</a></p></figcaption></figure><!--
---><figure id="sid-50174475" class="r-general t-image u-thebluefoyote"><b><u><a href="/view/50174475/"><img alt="" src="//t.furaffinity.net/50174475@300-1670753263.jpg"  data-width="266.667" data-height="200" style="width:266.667px; height:200px"/></a></u></b><figcaption><p><a href="/view/50174475/" title="Orange Ball Corner Pocket">Orange Ball Corner Pocket</a></p><p><i>by</i> <a href="/user/thebluefoyote/" title="TheBlueFoYoTe">TheBlueFoYoTe</a></p></figcaption></figure><!--
---><figure id="sid-50174418" class="r-general t-image u-caliconeko90"><b><u><a href="/view/50174418/"><img alt="" src="//t.furaffinity.net/50174418@300-1670752674.jpg"  data-width="223.691" data-height="200" style="width:223.691px; height:200px"/></a></u></b><figcaption><p><a href="/view/50174418/" title="Baby penguin ornament 3">Baby penguin ornament 3</a></p><p><i>by</i> <a href="/user/caliconeko90/" title="CalicoNeko90">CalicoNeko90</a></p></figcaption></figure><!--
---><figure id="sid-50174403" class="r-general t-image u-caliconeko90"><b><u><a href="/view/50174403/"><img alt="" src="//t.furaffinity.net/50174403@300-1670752490.jpg"  data-width="219.847" data-height="200" style="width:219.847px; height:200px"/></a></u></b><figcaption><p><a href="/view/50174403/" title="Mute Swan box">Mute Swan box</a></p><p><i>by</i> <a href="/user/caliconeko90/" title="CalicoNeko90">CalicoNeko90</a></p></figcaption></figure><!--
---><figure id="sid-50174356" class="r-general t-image u-caliconeko90"><b><u><a href="/view/50174356/"><img alt="" src="//t.furaffinity.net/50174356@200-1670752007.jpg"  data-width="160.019" data-height="200" style="width:160.019px; height:200px"/></a></u></b><figcaption><p><a href="/view/50174356/" title="Orange tabby ornament">Orange tabby ornament</a></p><p><i>by</i> <a href="/user/caliconeko90/" title="CalicoNeko90">CalicoNeko90</a></p></figcaption></figure><!--
---><figure id="sid-50174339" class="r-general t-image u-caliconeko90"><b><u><a href="/view/50174339/"><img alt="" src="//t.furaffinity.net/50174339@200-1670751866.jpg"  data-width="171.442" data-height="200" style="width:171.442px; height:200px"/></a></u></b><figcaption><p><a href="/view/50174339/" title="American bulldog Bookmark">American bulldog Bookmark</a></p><p><i>by</i> <a href="/user/caliconeko90/" title="CalicoNeko90">CalicoNeko90</a></p></figcaption></figure><!--
---><figure id="sid-50174336" class="r-general t-image u-ixzet"><b><u><a href="/view/50174336/"><img alt="" src="//t.furaffinity.net/50174336@200-1670751791.jpg"  data-width="170.751" data-height="200" style="width:170.751px; height:200px"/></a></u></b><figcaption><p><a href="/view/50174336/" title="Reminder Fox Partial for Sale">Reminder Fox Partial for Sale</a></p><p><i>by</i> <a href="/user/ixzet/" title="iXZet">iXZet</a></p></figcaption></figure><!--
---><figure id="sid-50174292" class="r-general t-image u-icefumy"><b><u><a href="/view/50174292/"><img alt="" src="//t.furaffinity.net/50174292@200-1670751321.jpg"  data-width="200" data-height="200" style="width:200px; height:200px"/></a></u></b><figcaption><p><a href="/view/50174292/" title="Icefumy Plush by HellishTarn">Icefumy Plush by HellishTarn</a></p><p><i>by</i> <a href="/user/icefumy/" title="ICeFuMy">ICeFuMy</a></p></figcaption></figure><!--
---><figure id="sid-50174106" class="r-general t-image u-piercethereindeer"><b><u><a href="/view/50174106/"><img alt="" src="//t.furaffinity.net/50174106@200-1670748943.jpg"  data-width="149.932" data-height="200" style="width:149.932px; height:200px"/></a></u></b><figcaption><p><a href="/view/50174106/" title="Winter Angel Necklace">Winter Angel Necklace</a></p><p><i>by</i> <a href="/user/piercethereindeer/" title="PierceTheReindeer">PierceTheReindeer</a></p></figcaption></figure><!--
---><figure id="sid-50174063" class="r-general t-image u-piercethereindeer"><b><u><a href="/view/50174063/"><img alt="" src="//t.furaffinity.net/50174063@200-1670748475.jpg"  data-width="149.932" data-height="200" style="width:149.932px; height:200px"/></a></u></b><figcaption><p><a href="/view/50174063/" title="Snowflake Teardrop Necklace Earring Set">Snowflake Teardrop Necklace Earring Set</a></p><p><i>by</i> <a href="/user/piercethereindeer/" title="PierceTheReindeer">PierceTheReindeer</a></p></figcaption></figure><!--
---><figure id="sid-50173502" class="r-general t-image u-trishabeisam"><b><u><a href="/view/50173502/"><img alt="" src="//t.furaffinity.net/50173502@200-1670742030.jpg"  data-width="149.932" data-height="200" style="width:149.932px; height:200px"/></a></u></b><figcaption><p><a href="/view/50173502/" title="The 1st Beast Island Convention 2nd（獣ｹ島2）">The 1st Beast Island Convention 2nd（獣ｹ島2）</a></p><p><i>by</i> <a href="/user/trishabeisam/" title="Trishabeisam">Trishabeisam</a></p></figcaption></figure><!--
---><figure id="sid-50173443" class="r-general t-image u-trishabeisam"><b><u><a href="/view/50173443/"><img alt="" src="//t.furaffinity.net/50173443@400-1670741542.jpg"  data-width="304.37" data-height="200" style="width:304.37px; height:200px"/></a></u></b><figcaption><p><a href="/view/50173443/" title="The 1st Beast Island Convention 2nd（獣ｹ島2）">The 1st Beast Island Convention 2nd（獣ｹ島2）</a></p><p><i>by</i> <a href="/user/trishabeisam/" title="Trishabeisam">Trishabeisam</a></p></figcaption></figure><!--
---><figure id="sid-50173290" class="r-general t-image u-deemendesart"><b><u><a href="/view/50173290/"><img alt="" src="//t.furaffinity.net/50173290@300-1670739789.jpg"  data-width="206.143" data-height="200" style="width:206.143px; height:200px"/></a></u></b><figcaption><p><a href="/view/50173290/" title="hands for scale">hands for scale</a></p><p><i>by</i> <a href="/user/deemendesart/" title="DeeMendesArt">DeeMendesArt</a></p></figcaption></figure><!--
---><figure id="sid-50173272" class="r-general t-image u-deemendesart"><b><u><a href="/view/50173272/"><img alt="" src="//t.furaffinity.net/50173272@300-1670739547.jpg"  data-width="200" data-height="200" style="width:200px; height:200px"/></a></u></b><figcaption><p><a href="/view/50173272/" title="Fox stained glass">Fox stained glass</a></p><p><i>by</i> <a href="/user/deemendesart/" title="DeeMendesArt">DeeMendesArt</a></p></figcaption></figure><!--
---><figure id="sid-50173227" class="r-general t-image u-deemendesart"><b><u><a href="/view/50173227/"><img alt="" src="//t.furaffinity.net/50173227@200-1670739182.jpg"  data-width="199.113" data-height="200" style="width:199.113px; height:200px"/></a></u></b><figcaption><p><a href="/view/50173227/" title="LOLquilt">LOLquilt</a></p><p><i>by</i> <a href="/user/deemendesart/" title="DeeMendesArt">DeeMendesArt</a></p></figcaption></figure><!--
---><figure id="sid-50173045" class="r-general t-image u-hornedhut"><b><u><a href="/view/50173045/"><img alt="" src="//t.furaffinity.net/50173045@400-1670737488.jpg"  data-width="312.8" data-height="200" style="width:312.8px; height:200px"/></a></u></b><figcaption><p><a href="/view/50173045/" title="Commissions Cross-stitch embroidery [REMINDER]">Commissions Cross-stitch embroidery [REMINDER]</a></p><p><i>by</i> <a href="/user/hornedhut/" title="Horned_Hut">Horned_Hut</a></p></figcaption></figure><!--
---><figure id="sid-50172617" class="r-general t-image u-eternalskyy"><b><u><a href="/view/50172617/"><img alt="" src="//t.furaffinity.net/50172617@200-1670733584.jpg"  data-width="200" data-height="200" style="width:200px; height:200px"/></a></u></b><figcaption><p><a href="/view/50172617/" title="SALE: Cherry Blossom Chibi Dragon Monster Dino Paw Tail S...">SALE: Cherry Blossom Chibi Dragon Monster Dino Paw Tail S...</a></p><p><i>by</i> <a href="/user/eternalskyy/" title="EternalSkyy">EternalSkyy</a></p></figcaption></figure><!--
---><figure id="sid-50172529" class="r-general t-image u-trishabeisam"><b><u><a href="/view/50172529/"><img alt="" src="//t.furaffinity.net/50172529@200-1670732887.jpg"  data-width="133.788" data-height="200" style="width:133.788px; height:200px"/></a></u></b><figcaption><p><a href="/view/50172529/" title="The 1st Beast Island Convention 2nd（獣ｹ島2）">The 1st Beast Island Convention 2nd（獣ｹ島2）</a></p><p><i>by</i> <a href="/user/trishabeisam/" title="Trishabeisam">Trishabeisam</a></p></figcaption></figure><!--
---><figure id="sid-50172503" class="r-general t-image u-trishabeisam"><b><u><a href="/view/50172503/"><img alt="" src="//t.furaffinity.net/50172503@300-1670732612.jpg"  data-width="272.34" data-height="200" style="width:272.34px; height:200px"/></a></u></b><figcaption><p><a href="/view/50172503/" title="The 1st Beast Island Convention 2nd（獣ｹ島2）">The 1st Beast Island Convention 2nd（獣ｹ島2）</a></p><p><i>by</i> <a href="/user/trishabeisam/" title="Trishabeisam">Trishabeisam</a></p></figcaption></figure><!--
---><figure id="sid-50172355" class="r-general t-image u-trishabeisam"><b><u><a href="/view/50172355/"><img alt="" src="//t.furaffinity.net/50172355@300-1670731451.jpg"  data-width="276.01" data-height="200" style="width:276.01px; height:200px"/></a></u></b><figcaption><p><a href="/view/50172355/" title="The 1st Beast Island Convention 2nd（獣ｹ島2）">The 1st Beast Island Convention 2nd（獣ｹ島2）</a></p><p><i>by</i> <a href="/user/trishabeisam/" title="Trishabeisam">Trishabeisam</a></p></figcaption></figure><!--
--->                        </section>
+                            <figure id="sid-60098768" class="r-general t-image u-sutured">
+    <b>
+        <u>
+            <a href="/view/60098768/">
+                <img data-tags="mlp my little pony trixie lulamoon phone case decoden" class="blocked-content" alt="" src="//t.furaffinity.net/60098768@200-1741120238.jpg"  data-width="165.324" data-height="200" style="width:165.324px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098768/" title="trixie lulamoon phone case!">trixie lulamoon phone case!</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/sutured/" title="sutured">sutured</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098685" class="r-general t-image u-kodokreations">
+    <b>
+        <u>
+            <a href="/view/60098685/">
+                <img data-tags="fursuit head commission wickerbeast brown tan teeth horns partial custom" class="blocked-content" alt="" src="//t.furaffinity.net/60098685@400-1741119836.jpg"  data-width="300.501" data-height="200" style="width:300.501px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098685/" title="Thistle Fursuit Head Commission">Thistle Fursuit Head Commission</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/kodokreations/" title="KoDoKreations">KoDoKreations</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60098615" class="r-general t-image u-bearpawpatches">
+    <b>
+        <u>
+            <a href="/view/60098615/">
+                <img data-tags="rat ratfursona cartoon toon toony toonyfurry toonfur" class="blocked-content" alt="" src="//t.furaffinity.net/60098615@200-1741119408.jpg"  data-width="141.967" data-height="200" style="width:141.967px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60098615/" title="Satelite Rat!">Satelite Rat!</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/bearpawpatches/" title="Bear_Paw_Patches">Bear_Paw_Patches</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60097111" class="r-general t-image u-machinariuz">
+    <b>
+        <u>
+            <a href="/view/60097111/">
+                <img data-tags="figure figurine polymer clay craft crafting sculpture custom ych commission slot" class="blocked-content" alt="" src="//t.furaffinity.net/60097111@200-1741112623.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60097111/" title="Custom Figurine REMINDER">Custom Figurine REMINDER</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/machinariuz/" title="Machinariuz">Machinariuz</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60096860" class="r-general t-image u-sarahcat">
+    <b>
+        <u>
+            <a href="/view/60096860/">
+                <img data-tags="" class="blocked-content" alt="" src="//t.furaffinity.net/60096860@400-1741111290.jpg"  data-width="400" data-height="96.218" style="width:400px; height:96.218px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60096860/" title="Alicia Snow/Clouded Leopard">Alicia Snow/Clouded Leopard</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/sarahcat/" title="Sarahcat">Sarahcat</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60096840" class="r-general t-image u-la-lune-cramoisie">
+    <b>
+        <u>
+            <a href="/view/60096840/">
+                <img data-tags="lion feline realistic mask leather fursuit partial head larp" class="blocked-content" alt="" src="//t.furaffinity.net/60096840@200-1741111218.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60096840/" title="For sale - Leather lion mask">For sale - Leather lion mask</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/la-lune-cramoisie/" title="La-Lune-Cramoisie">La-Lune-Cramoisie</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60096759" class="r-general t-image u-la-lune-cramoisie">
+    <b>
+        <u>
+            <a href="/view/60096759/">
+                <img data-tags="bear brown realistic mask leather fursuit partial head larp" class="blocked-content" alt="" src="//t.furaffinity.net/60096759@200-1741110786.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60096759/" title="For sale - Leather bear mask">For sale - Leather bear mask</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/la-lune-cramoisie/" title="La-Lune-Cramoisie">La-Lune-Cramoisie</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60096681" class="r-general t-image u-la-lune-cramoisie">
+    <b>
+        <u>
+            <a href="/view/60096681/">
+                <img data-tags="cow bull realistic mask leather fursuit partial head larp" class="blocked-content" alt="" src="//t.furaffinity.net/60096681@200-1741110385.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60096681/" title="For sale - Leather cow/bull mask">For sale - Leather cow/bull mask</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/la-lune-cramoisie/" title="La-Lune-Cramoisie">La-Lune-Cramoisie</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60096670" class="r-general t-image u-raccoonlover">
+    <b>
+        <u>
+            <a href="/view/60096670/">
+                <img data-tags="bunny rabbit partial suit fursuit bakapawcreation pokemon cinderace" class="blocked-content" alt="" src="//t.furaffinity.net/60096670@200-1741110338.jpg"  data-width="117.92" data-height="200" style="width:117.92px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60096670/" title="Kaito says hello [Partial by BakapawCreation]">Kaito says hello [Partial by BakapawCreation]</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/raccoonlover/" title="RaccoonLover">RaccoonLover</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60096595" class="r-general t-image u-la-lune-cramoisie">
+    <b>
+        <u>
+            <a href="/view/60096595/">
+                <img data-tags="wolf black realistic mask leather fursuit partial head larp" class="blocked-content" alt="" src="//t.furaffinity.net/60096595@200-1741109894.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60096595/" title="For sale - Leather wolf mask">For sale - Leather wolf mask</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/la-lune-cramoisie/" title="La-Lune-Cramoisie">La-Lune-Cramoisie</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60096509" class="r-general t-image u-la-lune-cramoisie">
+    <b>
+        <u>
+            <a href="/view/60096509/">
+                <img data-tags="wolf grey realistic mask leather fursuit partial head larp" class="blocked-content" alt="" src="//t.furaffinity.net/60096509@200-1741109438.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60096509/" title="For sale - Leather wolf mask">For sale - Leather wolf mask</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/la-lune-cramoisie/" title="La-Lune-Cramoisie">La-Lune-Cramoisie</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60096365" class="r-general t-image u-la-lune-cramoisie">
+    <b>
+        <u>
+            <a href="/view/60096365/">
+                <img data-tags="hyena spotted realistic mask leather fursuit partial head larp" class="blocked-content" alt="" src="//t.furaffinity.net/60096365@200-1741108603.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60096365/" title="For sale - Spotted hyena mask">For sale - Spotted hyena mask</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/la-lune-cramoisie/" title="La-Lune-Cramoisie">La-Lune-Cramoisie</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60096220" class="r-general t-image u-la-lune-cramoisie">
+    <b>
+        <u>
+            <a href="/view/60096220/">
+                <img data-tags="goat realistic leather mask fursuit partial larp" class="blocked-content" alt="" src="//t.furaffinity.net/60096220@200-1741107973.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60096220/" title="For sale - Leather goat mask">For sale - Leather goat mask</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/la-lune-cramoisie/" title="La-Lune-Cramoisie">La-Lune-Cramoisie</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60095912" class="r-general t-image u-defiance">
+    <b>
+        <u>
+            <a href="/view/60095912/">
+                <img data-tags="wing de fiancee snow glow fox knight fursuit" class="blocked-content" alt="" src="//t.furaffinity.net/60095912@300-1741106440.jpg"  data-width="266.787" data-height="200" style="width:266.787px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60095912/" title="Mardi Gras 2025">Mardi Gras 2025</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/defiance/" title="Defiance">Defiance</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60095465" class="r-general t-image u-wereren">
+    <b>
+        <u>
+            <a href="/view/60095465/">
+                <img data-tags="donkey horse hand hooves hoofs pony play ponyplay petplay" class="blocked-content" alt="" src="//t.furaffinity.net/60095465@200-1741103620.jpg"  data-width="149.932" data-height="200" style="width:149.932px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60095465/" title="Clippity Cloppity Hand Hooves">Clippity Cloppity Hand Hooves</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/wereren/" title="WereRen">WereRen</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60095350" class="r-general t-image u-tanukii9">
+    <b>
+        <u>
+            <a href="/view/60095350/">
+                <img data-tags="crochet plush plushie plushies custom sona anthro furry" class="blocked-content" alt="" src="//t.furaffinity.net/60095350@300-1741102932.jpg"  data-width="296.296" data-height="200" style="width:296.296px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60095350/" title="Crochet sona commissions REMINDER">Crochet sona commissions REMINDER</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/tanukii9/" title="tanukii9">tanukii9</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60095346" class="r-general t-image u-pyrebee">
+    <b>
+        <u>
+            <a href="/view/60095346/">
+                <img data-tags="fursuit maker fox partial furry" class="blocked-content" alt="" src="//t.furaffinity.net/60095346@200-1741102910.jpg"  data-width="149.932" data-height="200" style="width:149.932px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60095346/" title="Tricky the Fox">Tricky the Fox</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/pyrebee/" title="pyrebee">pyrebee</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60095234" class="r-general t-image u-hazumu">
+    <b>
+        <u>
+            <a href="/view/60095234/">
+                <img data-tags="dr pepper sodaroo scotiacon 2025 25 sc25" class="blocked-content" alt="" src="//t.furaffinity.net/60095234@300-1741102077.jpg"  data-width="266.787" data-height="200" style="width:266.787px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60095234/" title="Scotiacon 2025 #5">Scotiacon 2025 #5</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/hazumu/" title="Hazumu">Hazumu</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60094325" class="r-general t-image u-trashcatt">
+    <b>
+        <u>
+            <a href="/view/60094325/">
+                <img data-tags="dragon cow fursuit" class="blocked-content" alt="" src="//t.furaffinity.net/60094325@300-1741093823.jpg"  data-width="266.787" data-height="200" style="width:266.787px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60094325/" title="mooo">mooo</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/trashcatt/" title="trashcatt">trashcatt</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60094026" class="r-general t-image u-frogtoes">
+    <b>
+        <u>
+            <a href="/view/60094026/">
+                <img data-tags="fursuit commission head paws bodysuit feet mursuit uk fursuiting maker" class="blocked-content" alt="" src="//t.furaffinity.net/60094026@400-1741089871.jpg"  data-width="302.111" data-height="200" style="width:302.111px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60094026/" title="Fursuit Applications OPEN Summer 25’">Fursuit Applications OPEN Summer 25’</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/frogtoes/" title="FrogToes">FrogToes</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60092823" class="r-general t-image u-unstablemagic">
+    <b>
+        <u>
+            <a href="/view/60092823/">
+                <img data-tags="furryfashion furrymerch cosplaywear unstablemagic" class="blocked-content" alt="" src="//t.furaffinity.net/60092823@200-1741073634.jpg"  data-width="142.813" data-height="200" style="width:142.813px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60092823/" title="🦖 Raptor Leg Warmers – Unleash the Prehistoric Power! ">🦖 Raptor Leg Warmers – Unleash the Prehistoric Power! </a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/unstablemagic/" title="UnstableMagic">UnstableMagic</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60092274" class="r-general t-image u-astormyboi">
+    <b>
+        <u>
+            <a href="/view/60092274/">
+                <img data-tags="furry fursuit fursuiter fursuitmaker fursuitmaking fursuitforsale premade premadefursuit dog blue canine toony cute" class="blocked-content" alt="" src="//t.furaffinity.net/60092274@200-1741067162.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60092274/" title="Premade Fursuit ON SALE WANT GONE">Premade Fursuit ON SALE WANT GONE</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/astormyboi/" title="AStormyBoi">AStormyBoi</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60091996" class="r-general t-image u-victoria10717">
+    <b>
+        <u>
+            <a href="/view/60091996/">
+                <img data-tags="fursuit hand paws for sale white with black pawpads" class="blocked-content" alt="" src="//t.furaffinity.net/60091996@300-1741065049.jpg"  data-width="248.263" data-height="200" style="width:248.263px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60091996/" title="5 finger puffy paws FOR SALE">5 finger puffy paws FOR SALE</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/victoria10717/" title="victoria10717">victoria10717</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-60091615" class="r-general t-image u-machinariuz">
+    <b>
+        <u>
+            <a href="/view/60091615/">
+                <img data-tags="ych custom figurine figure polymer clay sculpt sculpture poseable doll artdoll furry anthro fandom oc craft handmade gift bjd" class="blocked-content" alt="" src="//t.furaffinity.net/60091615@300-1741062369.jpg"  data-width="282.9" data-height="200" style="width:282.9px; height:200px" loading="lazy" decoding="async" />
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/60091615/" title="Custom ArtDoll YCH REMINDER">Custom ArtDoll YCH REMINDER</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/machinariuz/" title="Machinariuz">Machinariuz</a>
+        </p>
+    </figcaption>
+</figure>
+                        </section>
                     </div>
                     <script type="text/javascript">
                         _fajs.push(['init_gallery', 'gallery-frontpage-crafts']);
@@ -547,17 +2353,16 @@
     </div>
 </div>
 
+
     </div>
     <!-- /<div id="site-content"> -->
-
-
 
     <div id="footer">
         <div class="auto_link footer-links">
             <span class="hideonmobile">
                 <a href="/advertising">Advertise</a> |
                 <a href="/plus"><img style="position:relative;top:4px" src="/themes/beta/img/the-golden-pawb.png"> Get FA+</a> |
-                <a href="https://shop.furaffinity.net/">Merch Store</a> |
+                <a href="https://shop.furaffinity.net/"><img style="position:relative;top:4px" src="/themes/beta/img/icons/merch_store_icon.png"> Merch Store</a> |
                 <a href="/tos">Terms of Service</a> |
                 <a href="/privacy">Privacy</a> |
                 <a href="/coc">Code of Conduct</a> |
@@ -584,19 +2389,19 @@
 </div>
 
                     <div class="online-stats">
-                32650                <strong><span title="Measured in the last 900 seconds">Users online</span></strong> &mdash;
-                1860 <strong>guests</strong>,
-                                    10322 <strong>registered</strong>
-                    and 20468 <strong>other</strong>
-                                <!-- Online Counter Last Update: Sun, 11 Dec 2022 04:28:18 -0800 -->
+                65231                <strong><span title="Measured in the last 900 seconds">Users online</span></strong> &mdash;
+                3520 <strong>guests</strong>,
+                                    15913 <strong>registered</strong>
+                    and 45798 <strong>other</strong>
+                                <!-- Online Counter Last Update: Tue, 04 Mar 2025 12:50:00 -0800 -->
           </div>
           <small>Limit bot activity to periods with less than 10k registered users online.</small>
         
         <br><br>
-        <strong>&copy; 2005-2022 Frost Dragon Art LLC</strong>
+        <strong>&copy; 2005-2025 Frost Dragon Art LLC</strong>
 
         <div class="footnote">
-            Server Time: Dec 11, 2022 04:32 AM        </div>
+            Server Time: Mar 4, 2025 12:50 PM        </div>
     </div>
 
 
@@ -606,8 +2411,8 @@
 <!-- <div id="main-window"> -->
 
 <!--
-    Server Local Time: Dec 11, 2022 04:32 AM    <br />
-    Page generated in 0.019 seconds [ 42.5% PHP, 57.5% SQL ] (17 queries)    -->
+    Server Local Time: Mar 4, 2025 12:50 PM    <br />
+    Page generated in 0.016 seconds [ 45.9% PHP, 54.1% SQL ] (17 queries)    -->
 
 
 
@@ -621,10 +2426,13 @@
         });
     </script>
 
+
+        <script type="text/javascript" src="/themes/beta/js/censor.js?u=2025030401"></script>
+
     <script type="text/javascript" src="/themes/beta/js/prototype.1.7.3.min.js"></script>
-    <script type="text/javascript" src="/themes/beta/js/script.js?u=2022120703"></script>
+    <script type="text/javascript" src="/themes/beta/js/script.js?u=2025030401"></script>
     <script type="text/javascript">
-        var server_timestamp = 1670761920;
+        var server_timestamp = 1741121404;
         var client_timestamp = ((new Date()).getTime())/1000;
         var server_timestamp_delta  = server_timestamp - client_timestamp;
         var sfw_cookie_name = 'sfw';
@@ -633,7 +2441,7 @@
 
 
         
-                    var adData = {"sizeConfig":[{"labels":["desktopWide"],"mediaQuery":"(min-width: 1065px)","sizesSupported":[[728,90],[300,250],[300,168],[300,600],[160,600]]},{"labels":["desktopNarrow"],"mediaQuery":"(min-width: 720px) and (max-width: 1064px)","sizesSupported":[[728,90],[300,250],[300,168]]},{"labels":["mobile"],"mediaQuery":"(min-width: 0px) and (max-width: 719px)","sizesSupported":[[320,50],[300,50],[320,100]]}],"slotConfig":{"header_middle":{"containerSize":{"desktopWide":[728,100],"desktopNarrow":[728,100],"mobile":[320,100]},"providerPriority":["prebid","playwire","inhouse"]},"above_content":{"containerSize":{"desktopWide":[728,100],"desktopNarrow":[728,100],"mobile":[320,100]},"providerPriority":["prebid","playwire","inhouse"]},"sidebar":{"containerSize":{"desktopWide":[300,250]},"providerPriority":["prebid","playwire","inhouse"]},"sidebar_tall":{"containerSize":{"desktopWide":[300,600]},"providerPriority":["prebid","playwire","inhouse"]},"footer_left":{"containerSize":{"desktopWide":[300,200],"desktopNarrow":[300,200],"mobile":[300,200]},"providerPriority":["inhouse"]},"footer_right_top":{"containerSize":{"desktopWide":[300,90],"desktopNarrow":[300,90],"mobile":[300,90]},"providerPriority":["inhouse"]},"footer_right_bottom":{"containerSize":{"desktopWide":[300,90],"desktopNarrow":[300,90],"mobile":[300,90]},"providerPriority":["inhouse"]},"header_right_left":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"header_right_right":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"sidebar_top":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"sidebar_bottom":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]}},"providerConfig":{"inhouse":{"domain":"https:\/\/rv.furaffinity.net","dataPath":"\/live\/www\/delivery\/spc.php","dataVariableName":"OA_output"},"prebid":{"libraryUrl":"\/themes\/beta\/js\/prebid-6.13.0-fa.js","prebidTimeout":2000,"failsafeTimeout":2000},"playwire":{"configUrl":"https:\/\/config.playwire.com\/1024443\/v2\/websites\/73185\/banner.json","libraryUrl":"https:\/\/cdn.intergient.com\/ramp.js"}},"adConfig":{"prebid":{"header_middle":{"code":"header_middle","mediaTypes":{"banner":{"sizes":[[728,90],[320,50],[300,50],[320,100]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.16}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":99690}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"header_middle","testMode":false}},{"bidder":"appnexus","params":{"placementId":22783959,"allowSmallerSizes":true,"position":"above"}}]},"above_content":{"code":"above_content","mediaTypes":{"banner":{"sizes":[[728,90],[320,50],[300,50],[320,100]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.16}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":99691}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"above_content","testMode":false}},{"bidder":"appnexus","params":{"placementId":22783959,"allowSmallerSizes":true,"position":"below"}}]},"sidebar":{"code":"sidebar","mediaTypes":{"banner":{"sizes":[[300,250],[300,168]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.16}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":98518}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"sidebar","testMode":false}},{"bidder":"appnexus","params":{"placementId":22783978,"allowSmallerSizes":true}}]},"sidebar_tall":{"code":"sidebar_tall","mediaTypes":{"banner":{"sizes":[[300,250],[300,168],[300,600],[160,600]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.16}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":98516}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"sidebar_tall","testMode":false}},{"bidder":"appnexus","params":{"placementId":22783993,"allowSmallerSizes":true}}]}},"playwire":{"header_middle":{"type":"leaderboard_atf"},"sidebar":{"type":"med_rect_atf"},"sidebar_tall":{"type":"sky_atf"}},"inhouse":{"header_middle":{"default":{"tagId":14,"tagSize":[728,90]},"sizeOverride":{"mobile":{"tagId":20,"tagSize":[300,90]}}},"above_content":{"default":{"tagId":16,"tagSize":[728,90]},"sizeOverride":{"mobile":{"tagId":18,"tagSize":[300,90]}}},"sidebar":{"default":{"tagId":12,"tagSize":[300,250]}},"sidebar_tall":{"default":{"tagId":12,"tagSize":[300,250]}},"footer_left":{"default":{"tagId":9,"tagSize":[300,200]}},"footer_right_top":{"default":{"tagId":7,"tagSize":[300,90]}},"footer_right_bottom":{"default":{"tagId":8,"tagSize":[300,90]}},"header_right_left":{"default":{"tagId":1,"tagSize":[300,90]}},"header_right_right":{"default":{"tagId":3,"tagSize":[300,90]}},"sidebar_top":{"default":{"tagId":1,"tagSize":[300,90]}},"sidebar_bottom":{"default":{"tagId":3,"tagSize":[300,90]}}}}};
+                    var adData = {"sizeConfig":[{"labels":["desktopWide"],"mediaQuery":"(min-width: 1065px)","sizesSupported":[[728,90],[300,250],[300,168],[300,600],[160,600]]},{"labels":["desktopNarrow"],"mediaQuery":"(min-width: 720px) and (max-width: 1064px)","sizesSupported":[[728,90],[300,250],[300,168]]},{"labels":["mobile"],"mediaQuery":"(min-width: 0px) and (max-width: 719px)","sizesSupported":[[320,50],[300,50],[320,100]]}],"slotConfig":{"header_middle":{"containerSize":{"desktopWide":[728,100],"desktopNarrow":[728,100],"mobile":[320,100]},"providerPriority":["prebid","playwire","inhouse"]},"above_content":{"containerSize":{"desktopWide":[728,100],"desktopNarrow":[728,100],"mobile":[320,100]},"providerPriority":["prebid","playwire","inhouse"]},"sidebar":{"containerSize":{"desktopWide":[300,250]},"providerPriority":["prebid","playwire","inhouse"]},"sidebar_tall":{"containerSize":{"desktopWide":[300,600]},"providerPriority":["prebid","playwire","inhouse"]},"footer_left":{"containerSize":{"desktopWide":[300,200],"desktopNarrow":[300,200],"mobile":[300,200]},"providerPriority":["inhouse"]},"footer_right_top":{"containerSize":{"desktopWide":[300,90],"desktopNarrow":[300,90],"mobile":[300,90]},"providerPriority":["inhouse"]},"footer_right_bottom":{"containerSize":{"desktopWide":[300,90],"desktopNarrow":[300,90],"mobile":[300,90]},"providerPriority":["inhouse"]},"header_right_left":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"header_right_right":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"sidebar_top":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"sidebar_bottom":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]}},"providerConfig":{"inhouse":{"domain":"https:\/\/rv.furaffinity.net","dataPath":"\/live\/www\/delivery\/spc.php","dataVariableName":"OA_output"},"prebid":{"libraryUrl":"\/themes\/beta\/js\/prebid-7.54.5-fa.js","prebidTimeout":1500,"failsafeTimeout":2500},"playwire":{"gtagLibraryUrl":"https:\/\/www.googletagmanager.com\/gtag\/js?id=G-SQ2KEBFB33","rampLibraryUrl":"https:\/\/cdn.intergient.com\/1024443\/73185\/ramp.js"}},"adConfig":{"prebid":{"header_middle":{"code":"header_middle","mediaTypes":{"banner":{"sizes":[[728,90],[320,50],[300,50],[320,100]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.12}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":99690}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"header_middle","testMode":false}},{"bidder":"appnexus","params":{"placement_id":22783959,"allow_smaller_sizes":true,"position":"above"}}]},"above_content":{"code":"above_content","mediaTypes":{"banner":{"sizes":[[728,90],[320,50],[300,50],[320,100]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.12}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":99691}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"above_content","testMode":false}},{"bidder":"appnexus","params":{"placement_id":22783959,"allow_smaller_sizes":true,"position":"below"}}]},"sidebar":{"code":"sidebar","mediaTypes":{"banner":{"sizes":[[300,250],[300,168]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.12}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":98518}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"sidebar","testMode":false}},{"bidder":"appnexus","params":{"placement_id":22783978,"allow_smaller_sizes":true}}]},"sidebar_tall":{"code":"sidebar_tall","mediaTypes":{"banner":{"sizes":[[300,250],[300,168],[300,600],[160,600]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.12}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":98516}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"sidebar_tall","testMode":false}},{"bidder":"appnexus","params":{"placement_id":22783993,"allow_smaller_sizes":true}}]}},"playwire":{"header_middle":{"type":"leaderboard_atf"},"above_content":{"type":"leaderboard_btf"},"sidebar":{"type":"med_rect_atf"},"sidebar_tall":{"type":"sky_atf"}},"inhouse":{"header_middle":{"default":{"tagId":14,"tagSize":[728,90]},"sizeOverride":{"mobile":{"tagId":20,"tagSize":[300,90]}}},"above_content":{"default":{"tagId":16,"tagSize":[728,90]},"sizeOverride":{"mobile":{"tagId":18,"tagSize":[300,90]}}},"sidebar":{"default":{"tagId":12,"tagSize":[300,250]}},"sidebar_tall":{"default":{"tagId":12,"tagSize":[300,250]}},"footer_left":{"default":{"tagId":9,"tagSize":[300,200]}},"footer_right_top":{"default":{"tagId":7,"tagSize":[300,90]}},"footer_right_bottom":{"default":{"tagId":8,"tagSize":[300,90]}},"header_right_left":{"default":{"tagId":1,"tagSize":[300,90]}},"header_right_right":{"default":{"tagId":3,"tagSize":[300,90]}},"sidebar_top":{"default":{"tagId":1,"tagSize":[300,90]}},"sidebar_bottom":{"default":{"tagId":3,"tagSize":[300,90]}}}}};
             window.fad = new adManager(adData.sizeConfig, adData.slotConfig, adData.providerConfig, adData.adConfig, 1);
             </script>
 
