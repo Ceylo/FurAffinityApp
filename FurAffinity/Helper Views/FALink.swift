@@ -11,22 +11,22 @@ import Combine
 import FAKit
 
 extension EnvironmentValues {
-    @Entry var navigationStream: PassthroughSubject<FAURL, Never> = .init()
+    @Entry var navigationStream: PassthroughSubject<FATarget, Never> = .init()
 }
 
 /// - Warning: This view should be avoided in scrolling content,
 /// if it is likely to be touched during the scroll, as it'll display
 /// a background style.
 struct FALink<ContentView: View>: View {
-    var destination: FAURL?
+    var target: FATarget?
     var contentView: ContentView
     
     @Environment(\.navigationStream) private var navigationStream
     
     var body: some View {
-        if let destination {
+        if let target {
             Button {
-                navigationStream.send(destination)
+                navigationStream.send(target)
             } label: {
                 contentView
             }
@@ -37,8 +37,8 @@ struct FALink<ContentView: View>: View {
         }
     }
     
-    init(destination: FAURL?, @ViewBuilder contentViewBuilder: () -> ContentView) {
-        self.destination = destination
+    init(destination: FATarget?, @ViewBuilder contentViewBuilder: () -> ContentView) {
+        self.target = destination
         self.contentView = contentViewBuilder()
     }
 }

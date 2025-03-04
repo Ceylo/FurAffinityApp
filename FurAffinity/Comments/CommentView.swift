@@ -38,7 +38,7 @@ struct CommentView: View {
         }
     }
     
-    func userURL(for comment: FAVisibleComment) -> FAURL? {
+    func userFATarget(for comment: FAVisibleComment) -> FATarget? {
         guard let userUrl = FAURLs.userpageUrl(for: comment.author) else {
             return nil
         }
@@ -55,7 +55,7 @@ struct CommentView: View {
     
     func commentView(_ comment: FAVisibleComment) -> some View {
         HStack(alignment: .top) {
-            FALink(destination: userURL(for: comment)) {
+            FALink(destination: userFATarget(for: comment)) {
                 AvatarView(avatarUrl: FAURLs.avatarUrl(for: comment.author))
                     .frame(width: avatarSize, height: avatarSize)
             }

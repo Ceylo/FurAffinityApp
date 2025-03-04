@@ -8,7 +8,7 @@
 import Foundation
 import FAKit
 
-enum FAURL: Hashable {
+enum FATarget: Hashable {
     case submission(url: URL, previewData: FASubmissionPreview?)
     case note(url: URL)
     case journal(url: URL)
@@ -17,14 +17,14 @@ enum FAURL: Hashable {
     case favorites(url: URL)
     case journals(url: URL)
     case watchlist(url: URL)
-    case submissionInfo(FASubmission.Metadata)
+    case submissionMetadata(FASubmission.Metadata)
 }
 
 fileprivate func ~=(regex: Regex<Substring>, str: String) -> Bool {
     (try? regex.firstMatch(in: str)) != nil
 }
 
-extension FAURL {
+extension FATarget {
     init?(with url: URL) {
         guard let url = url.replacingScheme(with: "https"),
               let components = URLComponents(url: url, resolvingAgainstBaseURL: false),

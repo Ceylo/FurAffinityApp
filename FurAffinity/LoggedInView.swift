@@ -12,7 +12,7 @@ import Combine
 struct LoggedInView: View {
     @EnvironmentObject var model: Model
     @State private var selectedTab: Tab = .submissions
-    @State private var navigationStream = PassthroughSubject<FAURL, Never>()
+    @State private var navigationStream = PassthroughSubject<FATarget, Never>()
     @State private var submissionsNavigationStack = NavigationPath()
     @State private var notesNavigationStack = NavigationPath()
     @State private var notificationsNavigationStack = NavigationPath()
@@ -26,16 +26,16 @@ struct LoggedInView: View {
         case settings
     }
     
-    func handleURL(_ url: FAURL) {
+    func handleTarget(_ target: FATarget) {
         switch selectedTab {
         case .submissions:
-            submissionsNavigationStack.append(url)
+            submissionsNavigationStack.append(target)
         case .notes:
-            notesNavigationStack.append(url)
+            notesNavigationStack.append(target)
         case .notifications:
-            notificationsNavigationStack.append(url)
+            notificationsNavigationStack.append(target)
         case .userpage:
-            userpageNavigationStack.append(url)
+            userpageNavigationStack.append(target)
         case .settings:
             fatalError("Internal inconsistency")
         }
@@ -46,7 +46,7 @@ struct LoggedInView: View {
             if model.session != nil {
                 NavigationStack(path: $submissionsNavigationStack) {
                     SubmissionsFeedView()
-                        .navigationDestination(for: FAURL.self) { nav in
+                        .navigationDestination(for: FATarget.self) { nav in
                             view(for: nav)
                         }
                 }
@@ -57,7 +57,7 @@ struct LoggedInView: View {
                 
                 NavigationStack(path: $notesNavigationStack) {
                     NotesView()
-                        .navigationDestination(for: FAURL.self) { nav in
+                        .navigationDestination(for: FATarget.self) { nav in
                             view(for: nav)
                         }
                 }
@@ -69,7 +69,7 @@ struct LoggedInView: View {
                 
                 NavigationStack(path: $notificationsNavigationStack) {
                     RemoteNotificationsView()
-                        .navigationDestination(for: FAURL.self) { nav in
+                        .navigationDestination(for: FATarget.self) { nav in
                             view(for: nav)
                         }
                 }
@@ -81,7 +81,7 @@ struct LoggedInView: View {
                 
                 NavigationStack(path: $userpageNavigationStack) {
                     CurrentUserView()
-                        .navigationDestination(for: FAURL.self) { nav in
+                        .navigationDestination(for: FATarget.self) { nav in
                             view(for: nav)
                         }
                 }
@@ -99,11 +99,11 @@ struct LoggedInView: View {
                 .tag(Tab.settings)
         }
         .onOpenURL { url in
-            FAURL(with: url).map(handleURL)
+            FATarget(with: url).map(handleTarget)
         }
         .environment(\.navigationStream, navigationStream)
         .onReceive(navigationStream, perform: { url in
-            handleURL(url)
+            handleTarget(url)
         })
         .onAppear {
             let tabBarAppearance = UITabBarAppearance()

@@ -23,7 +23,7 @@ struct NoteView: View {
         note = await model.session?.note(for: url)
     }
     
-    func userURL(for note: FANote) -> FAURL? {
+    func userFATarget(for note: FANote) -> FATarget? {
         guard let userUrl = FAURLs.userpageUrl(for: note.author) else {
             return nil
         }
@@ -44,7 +44,7 @@ struct NoteView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     VStack(alignment: .leading) {
                         HStack {
-                            FALink(destination: userURL(for: note)) {
+                            FALink(destination: userFATarget(for: note)) {
                                 HStack {
                                     AvatarView(avatarUrl: FAURLs.avatarUrl(for: note.author))
                                         .frame(width: 42, height: 42)

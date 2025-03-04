@@ -23,7 +23,7 @@ struct ListedSection<T: FANavigable & Identifiable, ItemView: View> : View {
             Section {
                 ForEach(list) { item in
                     HStack {
-                        NavigationLink(value: FAURL(with: item.url)) {
+                        NavigationLink(value: FATarget(with: item.url)) {
                             itemViewProvider(item)
                         }
                     }
@@ -75,7 +75,7 @@ struct NotificationsView: View {
         notifications.journals.isEmpty
     }
     
-    private func userFAURL(for notification: FANotificationPreview) -> FAURL? {
+    private func userFATarget(for notification: FANotificationPreview) -> FATarget? {
         guard let userUrl = FAURLs.userpageUrl(for: notification.author) else {
             return nil
         }
@@ -96,7 +96,7 @@ struct NotificationsView: View {
                           onDelete: actions.deleteSubmissionCommentNotifications) { item in
                 CommentNotificationItemView(
                     notification: item,
-                    url: userFAURL(for: item)
+                    target: userFATarget(for: item)
                 )
             }
             
@@ -104,7 +104,7 @@ struct NotificationsView: View {
                           onDelete: actions.deleteJournalCommentNotifications) { item in
                 CommentNotificationItemView(
                     notification: item,
-                    url: userFAURL(for: item)
+                    target: userFATarget(for: item)
                 )
             }
             
@@ -112,7 +112,7 @@ struct NotificationsView: View {
                           onDelete: actions.deleteShoutNotifications) { item in
                 ShoutNotificationItemView(
                     shout: item,
-                    url: userFAURL(for: item)
+                    target: userFATarget(for: item)
                 )
             }
             
@@ -120,7 +120,7 @@ struct NotificationsView: View {
                           onDelete: actions.deleteJournalNotifications) { item in
                 JournalNotificationItemView(
                     journal: item,
-                    url: userFAURL(for: item)
+                    target: userFATarget(for: item)
                 )
             }
         }

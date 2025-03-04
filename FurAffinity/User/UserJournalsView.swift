@@ -34,7 +34,7 @@ struct UserJournalsView: View {
     
     var body: some View {
         List(journals.journals) { journal in
-            NavigationLink(value: FAURL.journal(url: journal.url)) {
+            NavigationLink(value: FATarget.journal(url: journal.url)) {
                 JournalItemView(journal: journal)
             }
         }

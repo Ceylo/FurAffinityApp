@@ -15,7 +15,7 @@ struct AuthoredHeaderView: View {
     var avatarUrl: URL?
     var datetime: DatetimePair?
     
-    var userFAURL: FAURL? {
+    var userFATarget: FATarget? {
         guard let userUrl = FAURLs.userpageUrl(for: username) else {
             return nil
         }
@@ -32,7 +32,7 @@ struct AuthoredHeaderView: View {
     
     var body: some View {
         HStack(alignment: .top) {
-            FALink(destination: userFAURL) {
+            FALink(destination: userFATarget) {
                 AvatarView(avatarUrl: avatarUrl)
                     .frame(width: 38, height: 38)
             }

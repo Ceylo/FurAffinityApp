@@ -53,7 +53,7 @@ struct SubmissionView: View {
             replyAction: {
                 replySession = .init(parentCid: nil, among: [])
             },
-            infoLink: .submissionInfo(submission.metadata)
+            metadataTarget: .submissionMetadata(submission.metadata)
         )
     }
     

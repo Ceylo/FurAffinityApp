@@ -100,7 +100,7 @@ struct SubmissionsFeedView: View {
         case let .fetchTrigger(targetScrollItem):
             fetchTriggerView(with: targetScrollItem, scrollProxy: scrollProxy)
         case let .submissionPreview(preview):
-            NavigationLink(value: FAURL.submission(
+            NavigationLink(value: FATarget.submission(
                 url: preview.url, previewData: preview
             )) {
                 SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)

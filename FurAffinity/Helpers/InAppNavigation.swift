@@ -12,7 +12,7 @@ let appNavigationScheme = "furaffinity-app-navigation"
 
 extension URL {
     var convertedForInAppNavigation: URL {
-        guard FAURL(with: self) != nil else {
+        guard FATarget(with: self) != nil else {
             return self
         }
         
@@ -31,8 +31,8 @@ extension AttributedString {
 }
 
 @MainActor @ViewBuilder
-func view(for url: FAURL) -> some View {
-    switch url {
+func view(for target: FATarget) -> some View {
+    switch target {
     case let .submission(url, previewData):
         RemoteSubmissionView(url: url, previewData: previewData)
     case let .note(url):
@@ -49,7 +49,7 @@ func view(for url: FAURL) -> some View {
         RemoteUserJournalsView(url: url)
     case let .watchlist(url):
         RemoteWatchlistView(url: url)
-    case let .submissionInfo(metadata):
+    case let .submissionMetadata(metadata):
         SubmissionMetadataView(metadata: metadata)
     }
 }

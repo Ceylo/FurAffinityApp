@@ -43,7 +43,7 @@ struct SubmissionControlsView: View {
     var repliesCount: Int
     var acceptsNewReplies: Bool
     var replyAction: () -> Void
-    var infoLink: FAURL?
+    var metadataTarget: FATarget?
         
     @StateObject private var saveHandler = MediaSaveHandler()
     
@@ -92,7 +92,7 @@ struct SubmissionControlsView: View {
                 replyAction: replyAction
             )
             
-            FALink(destination: infoLink) {
+            FALink(destination: metadataTarget) {
                 Image(systemName: "text.badge.star")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -124,7 +124,7 @@ struct SubmissionControlsView: View {
             replyAction: {
                 print("Reply")
             },
-            infoLink: nil
+            metadataTarget: nil
         )
         SubmissionControlsView(
             submissionUrl: OfflineFASession.default.submissionPreviews[0].url,
@@ -139,7 +139,7 @@ struct SubmissionControlsView: View {
             replyAction: {
                 print("Reply")
             },
-            infoLink: nil
+            metadataTarget: nil
         )
     }
     .preferredColorScheme(.dark)
