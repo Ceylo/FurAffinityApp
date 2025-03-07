@@ -31,14 +31,16 @@ extension FANotePage {
             
             self.title = try noteContainerNode.select("div.section-header h2").text()
             
-            let authorQuery = "div.section-header div.message-center-note-information div.addresses a"
+            let authorQuery = "div.section-header div.message-center-note-information div.addresses div.c-usernameBlock a.c-usernameBlock__displayName"
             let authorNodes = try noteContainerNode.select(authorQuery)
             if authorNodes.count == 2 {
-                guard let authorNode = authorNodes.first(),
-                      let author = try authorNode.attr("href").substring(matching: "/user/(.+)/")
-                else { return nil }
+                let authorNode = try authorNodes.first().unwrap()
+                let author = try authorNode
+                    .attr("href")
+                    .substring(matching: "/user/(.+)/")
+                    .unwrap()
                 self.author = author
-                self.displayAuthor = try authorNode.select("strong").text()
+                self.displayAuthor = try authorNode.text()
             } else {
                 let deletedQuery = "div.section-header div.message-center-note-information.addresses span.user-name-deleted"
                 let deletedNode = try noteContainerNode.select(deletedQuery)
