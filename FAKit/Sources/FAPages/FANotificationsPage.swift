@@ -56,7 +56,7 @@ extension FANotificationsPage {
     }
     
     static private func decodeNodes<T: Sendable>(_ nodes: SwiftSoup.Elements, _ headerDecoder: @escaping @Sendable (SwiftSoup.Element) throws -> T) async -> [T] {
-        nodes.map { node in
+        await nodes.parallelMap { node in
             do {
                 return try headerDecoder(node)
             } catch {
