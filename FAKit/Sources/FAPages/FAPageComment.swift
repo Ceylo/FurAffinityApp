@@ -69,7 +69,6 @@ extension CommentType {
         let commentIdRegex: String
         let messageQuery: String
         let fallbackMessageQuery: String
-        let displayAuthorQuery: String
     }
     
     var decodingDonfig: DecodingConfig {
@@ -79,15 +78,13 @@ extension CommentType {
             return DecodingConfig(
                 commentIdRegex: "cid:(.+)",
                 messageQuery: "comment-container div.comment-content comment-user-text div.user-submitted-links",
-                fallbackMessageQuery: defaultMessageQuery,
-                displayAuthorQuery: "comment-container div.comment-content comment-username a.inline strong.comment_username"
+                fallbackMessageQuery: defaultMessageQuery
             )
         case .shout:
             return DecodingConfig(
                 commentIdRegex: "shout-(.+)",
                 messageQuery: defaultMessageQuery,
-                fallbackMessageQuery: defaultMessageQuery,
-                displayAuthorQuery: "comment-container div.comment-content comment-username div.comment_username a.inline h3"
+                fallbackMessageQuery: defaultMessageQuery
             )
         }
     }
@@ -109,9 +106,12 @@ extension FAPageComment {
         }
         
         do {
-            let authorNode = try node.select("comment-container div.avatar a")
-            let author = try authorNode.attr("href").substring(matching: "/user/(.+)/").unwrap()
-            let displayAuthor = try node.select(config.displayAuthorQuery).text()
+            let authorNode = try node.select("comment-container comment-username div.c-usernameBlock a.c-usernameBlock__displayName")
+            let author = try authorNode
+                .attr("href")
+                .substring(matching: "/user/(.+)/")
+                .unwrap()
+            let displayAuthor = try authorNode.text()
             let datetimeNode = try node.select("comment-container div.comment-content comment-date span.popup_date")
             let naturalDatetime = try datetimeNode.text()
             let datetime = try datetimeNode.attr("title")

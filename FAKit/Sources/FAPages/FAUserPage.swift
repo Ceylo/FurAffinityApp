@@ -47,17 +47,13 @@ extension FAUserPage {
             let mainWindowNode = try doc.select("body div#main-window")
             let navHeaderNode = try mainWindowNode.select("div#site-content userpage-nav-header")
             
-            let navAvatarNode = try navHeaderNode.select("userpage-nav-avatar a")
-            let username = try navAvatarNode
+            let authorNode = try navHeaderNode.select("username div.c-usernameBlock a.c-usernameBlock__displayName")
+            let username = try authorNode
                 .attr("href")
                 .substring(matching: "\\/user\\/(.+)\\/")
                 .unwrap()
             self.name = username
-            
-            let displayNameQuery = "userpage-nav-user-details h1 username"
-            let displayNameNode = try navHeaderNode.select(displayNameQuery).first().unwrap()
-            let rawDisplayName = try displayNameNode.text()
-            self.displayName = try Self.parseDisplayName(in: rawDisplayName)
+            self.displayName = try authorNode.text()
             
             let bannerNode = try mainWindowNode.select("div#header a img")
             let bannerStringUrl = try bannerNode.attr("src")
