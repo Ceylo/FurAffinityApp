@@ -58,9 +58,9 @@ extension FAUserGalleryLikePage {
             async let previews = items.parallelMap { FASubmissionsPage.Submission($0) }
             
             let userNode = try siteContentNode.select(
-                "userpage-nav-header userpage-nav-user-details h1 username"
+                "userpage-nav-header userpage-nav-user-details username div.c-usernameBlock a.c-usernameBlock__displayName"
             )
-            self.displayAuthor = try String(userNode.text().dropFirst())
+            self.displayAuthor = try userNode.text()
             self.previews = await previews
             
             let navigationFormsQuery = "section.gallery-section div.section-body div.gallery-navigation div form"

@@ -84,11 +84,11 @@ final class FAUserGalleryLikePageTests: XCTestCase {
         XCTAssertEqual(page.displayAuthor, "tiaamaito")
         
         let preview = FASubmissionsPage.Submission(
-            sid: 59265003,
-            url: URL(string: "https://www.furaffinity.net/view/59265003/")!,
-            thumbnailUrl: URL(string: "https://t.furaffinity.net/59265003@300-1734913553.jpg")!,
-            thumbnailWidthOnHeightRatio: 1.4705901,
-            title: "CM - Houseboat",
+            sid: 60072465,
+            url: URL(string: "https://www.furaffinity.net/view/60072465/")!,
+            thumbnailUrl: URL(string: "https://t.furaffinity.net/60072465@300-1740934298.jpg")!,
+            thumbnailWidthOnHeightRatio: 1.47754,
+            title: "CM - Beach time with the Dragon Girls",
             author: "tiaamaito",
             displayAuthor: "tiaamaito"
         )
@@ -108,7 +108,26 @@ final class FAUserGalleryLikePageTests: XCTestCase {
         XCTAssertEqual(page.previews.count, 0)
         XCTAssertEqual(page.displayAuthor, "Furrycount")
         XCTAssertEqual(page.nextPageUrl, nil)
-        XCTAssertEqual(page.folderGroups, [])
+        XCTAssertEqual(page.folderGroups.ignoringUUID(), [
+            .init(
+                title: "Gallery Folders",
+                folders: [
+                    .init(
+                        title: "Main Gallery",
+                        url: URL(string: "https://www.furaffinity.net/gallery/furrycount/")!,
+                        isActive: true,
+                        id: UUID()
+                    ),
+                    .init(
+                        title: "Scraps",
+                        url: URL(string: "https://www.furaffinity.net/scraps/furrycount/")!,
+                        isActive: false,
+                        id: UUID()
+                    )
+                ],
+                id: UUID()
+            )
+        ].ignoringUUID())
     }
     
     func testScrapsPage_72itemsParsed() async throws {
@@ -145,17 +164,17 @@ final class FAUserGalleryLikePageTests: XCTestCase {
         XCTAssertEqual(page.displayAuthor, "tiaamaito")
         
         let preview = FASubmissionsPage.Submission(
-            sid: 59039707,
-            url: URL(string: "https://www.furaffinity.net/view/59039707/")!,
-            thumbnailUrl: URL(string: "https://t.furaffinity.net/59039707@300-1733178293.jpg")!,
-            thumbnailWidthOnHeightRatio: 1.081205,
-            title: "WI - Comfort/No Hurt",
-            author: "shiroganeryo",
-            displayAuthor: "ShiroganeRyo"
+            sid: 59999998,
+            url: URL(string: "https://www.furaffinity.net/view/59999998/")!,
+            thumbnailUrl: URL(string: "https://t.furaffinity.net/59999998@400-1740409221.jpg")!,
+            thumbnailWidthOnHeightRatio: 1.516685,
+            title: "CM | Moss",
+            author: "astarcis",
+            displayAuthor: "astarcis"
         )
         XCTAssertEqual(preview, page.previews[0])
         XCTAssertEqual(
-            URL(string: "https://www.furaffinity.net/favorites/tiaamaito/1528468491/next")!,
+            URL(string: "https://www.furaffinity.net/favorites/tiaamaito/1614183951/next")!,
             page.nextPageUrl
         )
         XCTAssertEqual(page.folderGroups, [])
