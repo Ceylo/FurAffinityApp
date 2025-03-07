@@ -60,7 +60,7 @@ final class FASubmissionPageTests: XCTestCase {
         let data = testData("www.furaffinity.net:view:49338772-nocomment.html")
         let page = try await FASubmissionPage(data: data, url: url).unwrap()
         
-        let htmlDescription = "YCH for \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20250302/lil-maj.gif\" align=\"middle\" title=\"lil-maj\" alt=\"lil-maj\" />&nbsp;lil-maj</a> \n<br /> \n<br /> Cody © \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20250302/lil-maj.gif\" align=\"middle\" title=\"lil-Maj\" alt=\"lil-Maj\" />&nbsp;lil-Maj</a>\n<br /> \n<br /> \n<br /> \n<br /> \n<br /> \n<br /> *******************************\n<br /> * \n<a class=\"auto_link named_url\" href=\"http://ko-fi.com/J3J16KSH\">Feed me with coffee?</a>\n<br /> * \n<a class=\"auto_link named_url\" href=\"https://www.furaffinity.net/gallery/annetpeas/\">My Gallery</a>\n<br /> * \n<a class=\"auto_link named_url\" href=\"https://twitter.com/AnnetPeas_Art\">Twitter</a>"
+        let htmlDescription = "YCH for \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20250304/lil-maj.gif\" align=\"middle\" title=\"lil-maj\" alt=\"lil-maj\" />&nbsp;lil-maj</a> \n<br /> \n<br /> Cody © \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20250304/lil-maj.gif\" align=\"middle\" title=\"lil-Maj\" alt=\"lil-Maj\" />&nbsp;lil-Maj</a>\n<br /> \n<br /> \n<br /> \n<br /> \n<br /> \n<br /> *******************************\n<br /> * \n<a class=\"auto_link named_url\" href=\"http://ko-fi.com/J3J16KSH\">Feed me with coffee?</a>\n<br /> * \n<a class=\"auto_link named_url\" href=\"https://www.furaffinity.net/gallery/annetpeas/\">My Gallery</a>\n<br /> * \n<a class=\"auto_link named_url\" href=\"https://twitter.com/AnnetPeas_Art\">Twitter</a>"
         let expected = FASubmissionPage(
             previewImageUrl: URL(string: "https://t.furaffinity.net/49338772@600-1665402309.jpg")!,
             fullResolutionMediaUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1665402309/1665402309.annetpeas_the_hookah_fa.png")!,
@@ -71,7 +71,7 @@ final class FASubmissionPageTests: XCTestCase {
                 displayAuthor: "AnnetPeas",
                 datetime: "Oct 10, 2022 02:45 PM",
                 naturalDatetime: "2 years ago",
-                viewCount: 706,
+                viewCount: 709,
                 commentCount: 0,
                 favoriteCount: 67,
                 rating: .general,
@@ -89,7 +89,7 @@ final class FASubmissionPageTests: XCTestCase {
             ),
             htmlDescription: htmlDescription,
             isFavorite: false,
-            favoriteUrl: URL(string: "https://www.furaffinity.net/fav/49338772/?key=12a5f243b46625d69903529353b7a9805815a1d6")!,
+            favoriteUrl: URL(string: "https://www.furaffinity.net/fav/49338772/?key=6555a9bf1579c4306b298b3280308fcc7914d545")!,
             comments: [],
             targetCommentId: nil,
             acceptsNewComments: true
