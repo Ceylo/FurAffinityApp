@@ -9,6 +9,9 @@ import Foundation
 
 func testData(_ filename: String) -> Data {
     let url = Bundle.module
-        .url(forResource: filename, withExtension: nil, subdirectory: "data")!
+        .url(forResource: filename, withExtension: nil, subdirectory: "data")
+    guard let url else {
+        return Data()
+    }
     return try! Data(contentsOf: url)
 }

@@ -56,7 +56,7 @@ extension FANotificationsPage {
     }
     
     static private func decodeNodes<T: Sendable>(_ nodes: SwiftSoup.Elements, _ headerDecoder: @escaping @Sendable (SwiftSoup.Element) throws -> T) async -> [T] {
-        await nodes.parallelMap { node in
+        nodes.map { node in
             do {
                 return try headerDecoder(node)
             } catch {
@@ -79,16 +79,17 @@ extension FANotificationsPage.Header {
         let url = try URL(unsafeString: FAURLs.homeUrl.absoluteString + urlStr)
         
         let id = try Int(urlStr.substring(matching: "/journal/(\\d+)/").unwrap()).unwrap()
-        let title = try baseNode.select("a strong.journal_subject").text()
+        let title = try baseNode.select("em.journal_subject").text()
         
-        let authorNode = try node.select("a").dropFirst().first.unwrap()
+        let authorNode = try node.select("span.c-usernameBlockSimple a")
         let author = try authorNode.attr("href")
             .substring(matching: "/user/(.+)/")
             .unwrap()
-        let displayAuthor = try authorNode.text()
+        
+        let displayAuthor = try authorNode.select("span.c-usernameBlockSimple__displayName").text()
         
         let datetimeNode = try node.select("span span.popup_date")
-        let datetime = try datetimeNode.attr("title")
+        let datetime = try String(datetimeNode.attr("title").trimmingPrefix("on "))
         let naturalDatetime = try datetimeNode.text()
         
         return .init(id: id, author: author, displayAuthor: displayAuthor, title: title, datetime: datetime, naturalDatetime: naturalDatetime, url: url)
@@ -108,10 +109,10 @@ extension FANotificationsPage.Header {
     
     static private func comment(_ node: SwiftSoup.Element, urlNodeSelector: String, idMatchingPattern: String) throws -> Self {
         let datetimeNode = try node.select("div span.popup_date")
-        let datetime = try datetimeNode.attr("title")
+        let datetime = try String(datetimeNode.attr("title").trimmingPrefix("on "))
         let naturalDatetime = try datetimeNode.text()
         
-        let authorNode = try node.select("> a")
+        let authorNode = try node.select("span.c-usernameBlockSimple a")
         let author = try authorNode.attr("href")
             .substring(matching: "/user/(.+)/")
             .unwrap()
