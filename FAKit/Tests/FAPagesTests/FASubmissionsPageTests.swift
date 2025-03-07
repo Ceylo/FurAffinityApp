@@ -15,14 +15,15 @@ final class FASubmissionsPageTests: XCTestCase {
         XCTAssertNotNil(page)
         XCTAssertEqual(page?.submissions.count, 72)
         
-        let submission = FASubmissionsPage
-            .Submission(sid: 50170538,
-                        url: URL(string: "https://www.furaffinity.net/view/50170538/")!,
-                        thumbnailUrl: URL(string: "https://t.furaffinity.net/50170538@300-1670718829.jpg")!,
-                        thumbnailWidthOnHeightRatio: 1.2658249,
-                        title: "Cyberpunk Kitsune",
-                        author: "holt-odium",
-                        displayAuthor: "Holt-Odium")
+        let submission = FASubmissionsPage.Submission(
+            sid: 60097041,
+            url: URL(string: "https://www.furaffinity.net/view/60097041/")!,
+            thumbnailUrl: URL(string: "https://t.furaffinity.net/60097041@400-1741112300.jpg")!,
+            thumbnailWidthOnHeightRatio: 1.94175,
+            title: "On The Wings of Light",
+            author: "leilryu",
+            displayAuthor: "leilryu"
+        )
         XCTAssertEqual(submission, page?.submissions[0])
     }
     
@@ -31,7 +32,7 @@ final class FASubmissionsPageTests: XCTestCase {
         let page = await FASubmissionsPage(data: data, baseUri: FAURLs.submissionsUrl)
         XCTAssertNotNil(page)
         XCTAssertNil(page?.previousPageUrl)
-        XCTAssertEqual(page?.nextPageUrl?.absoluteString, "https://www.furaffinity.net/msg/submissions/new~49867956@72/")
+        XCTAssertEqual(page?.nextPageUrl?.absoluteString, "https://www.furaffinity.net/msg/submissions/new~58873864@72/")
     }
     
     func testLastSubmissionsPage_PreviousPageUrlParsed() async throws {
@@ -39,14 +40,14 @@ final class FASubmissionsPageTests: XCTestCase {
         let page = await FASubmissionsPage(data: data, baseUri: FAURLs.submissionsUrl)
         XCTAssertNotNil(page)
         XCTAssertNil(page?.nextPageUrl)
-        XCTAssertEqual(page?.previousPageUrl?.absoluteString, "https://www.furaffinity.net/msg/submissions/new~36003843@72/")
+        XCTAssertEqual(page?.previousPageUrl?.absoluteString, "https://www.furaffinity.net/msg/submissions/new~57208617@72/")
     }
     
     func testMiddleSubmissionsPage_PreviousAndNextPageUrlsParsed() async throws {
         let data = testData("www.furaffinity.net:msg:submissions-middlepage.html")
         let page = await FASubmissionsPage(data: data, baseUri: FAURLs.submissionsUrl)
         XCTAssertNotNil(page)
-        XCTAssertEqual(page?.nextPageUrl?.absoluteString, "https://www.furaffinity.net/msg/submissions/new~49522964@72/")
-        XCTAssertEqual(page?.previousPageUrl?.absoluteString, "https://www.furaffinity.net/msg/submissions/new~50170538@72/")
+        XCTAssertEqual(page?.nextPageUrl?.absoluteString, "https://www.furaffinity.net/msg/submissions/new~57208617@72/")
+        XCTAssertEqual(page?.previousPageUrl?.absoluteString, "https://www.furaffinity.net/msg/submissions/new~60097041@72/")
     }
 }
