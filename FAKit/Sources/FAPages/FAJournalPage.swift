@@ -30,18 +30,14 @@ extension FAJournalPage {
             let siteContentNode = try doc.select(
                 "html body#pageid-journal div#main-window div#site-content"
             )
-            let avatarNode = try siteContentNode.select(
-                "userpage-nav-header userpage-nav-avatar a.current"
-            )
-            
-            self.author = try avatarNode.attr("href")
-                .substring(matching: "/user/(.+)/")
-                .unwrap()
             
             let userNode = try siteContentNode.select(
-                "userpage-nav-header userpage-nav-user-details h1 username"
+                "userpage-nav-header userpage-nav-user-details username div.c-usernameBlock a.c-usernameBlock__displayName"
             )
-            self.displayAuthor = try String(userNode.text().dropFirst())
+            self.author = try userNode.attr("href")
+                .substring(matching: "/user/(.+)/")
+                .unwrap()
+            self.displayAuthor = try String(userNode.text())
             
             let sectionNode = try siteContentNode.select(
                 "div#columnpage div.content section"

@@ -22,12 +22,16 @@ final class FANotesPageTests: XCTestCase {
         XCTAssertNotNil(page)
         
         let expected: [FANotesPage.NoteHeader] = [
-            .init(id: 129953494, author: "someuser", displayAuthor: "SomeUser", title: "Another message",
-                  datetime: "Apr 7, 2022 12:09PM", naturalDatetime: "8 months ago", unread: true,
-                  noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953494/#message")!),
-            .init(id: 129953262, author: "someuser", displayAuthor: "SomeUser", title: "Title with some spéciäl çhãrāčtęrs",
-                  datetime: "Apr 7, 2022 11:58AM", naturalDatetime: "8 months ago", unread: false,
-                  noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953262/#message")!)
+            .init(
+                id: 141712666,
+                author: "someuser",
+                displayAuthor: "SomeUser",
+                title: "Fur Affinity app update",
+                datetime: "May 10, 2024 04:41AM",
+                naturalDatetime: "9 months ago",
+                unread: true,
+                noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/141712666/#message")!
+            )
         ]
         XCTAssertEqual(expected, page!.noteHeaders)
     }

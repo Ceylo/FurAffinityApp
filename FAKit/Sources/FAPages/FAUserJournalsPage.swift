@@ -36,9 +36,8 @@ extension FAUserJournalsPage {
         
         do {
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
-            let authorQuery = "#site-content > userpage-nav-header > userpage-nav-user-details > h1 > username"
-            let rawDisplayAuthor = try doc.select(authorQuery).text()
-            let displayAuthor = try FAUserPage.parseDisplayName(in: rawDisplayAuthor)
+            let authorQuery = "#site-content > userpage-nav-header > userpage-nav-user-details username > div.c-usernameBlock > a.c-usernameBlock__displayName"
+            let displayAuthor = try doc.select(authorQuery).text()
             
             let journalsQuery = "html body#pageid-journals-list div#main-window div#site-content div#columnpage div.content section"
             let journalNodes = try doc.select(journalsQuery)

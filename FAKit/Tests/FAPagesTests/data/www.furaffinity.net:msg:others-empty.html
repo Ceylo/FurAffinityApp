@@ -28,10 +28,10 @@
         <meta name="twitter:image" content="https://www.furaffinity.net/themes/beta/img/banners/fa_logo.png?v2" />
     
     <script type="text/javascript">
-        var _faurl={d:'//d.furaffinity.net',a:'//a.furaffinity.net',r:'//rv.furaffinity.net',t:'//t.furaffinity.net',pb:'/themes/beta/js/prebid-6.13.0-fa.js'};
+        var _faurl={d:'//d.furaffinity.net',a:'//a.furaffinity.net',r:'//rv.furaffinity.net',t:'//t.furaffinity.net',pb:'/themes/beta/js/prebid-7.54.5-fa.js'};
     </script>
-    <script type="text/javascript" src="/themes/beta/js/common.js?u=2023031400"></script>
-    <link type="text/css" rel="stylesheet" href="/themes/beta/css/ui_theme_dark.css?u=2023031400" />
+    <script type="text/javascript" src="/themes/beta/js/common.js?u=2025030401"></script>
+    <link type="text/css" rel="stylesheet" href="/themes/beta/css/ui_theme_aurora.css?u=2025030401" />
 
     <!-- browser hints -->
     <link rel="preconnect" href="//t.furaffinity.net" />
@@ -40,8 +40,8 @@
     <link rel="preconnect" href="https://www15.smartadserver.com" />
 
     <link rel="preload" href="/themes/beta/js/prototype.1.7.3.min.js" as="script" />
-    <link rel="preload" href="/themes/beta/js/script.js?u=2023031400" as="script" />
-    <link rel="preload" href="/themes/beta/js/prebid-6.13.0-fa.js" as="script" />
+    <link rel="preload" href="/themes/beta/js/script.js?u=2025030401" as="script" />
+    <link rel="preload" href="/themes/beta/js/prebid-7.54.5-fa.js" as="script" />
 
     <!-- Playwire Pre-connect <head> links -->
     <link rel="preconnect" href="https://cdn.intergient.com" crossorigin />
@@ -54,7 +54,11 @@
 </head>
 
 <!-- EU request: yes -->
-<body data-static-path="/themes/beta" id="pageid-messagecenter-other">
+<body id="pageid-messagecenter-other" data-static-path="/themes/beta" data-user-logged-in="1" data-tag-blocklist="" data-tag-blocklist-hide-tagless="0" data-tag-blocklist-nonce="fa0e86cefef694a1ce7d3fc8fec15e50d7eec31f">
+    <script type="text/javascript">
+        0; // attempted fix for fouc in ff
+    </script>
+
     
     <!-- sidebar -->
     <div class="mobile-navigation">
@@ -78,12 +82,13 @@
 
         <div class="mobile-nav-content-container">
                             <div class="aligncenter">
-                    <a href="/user/furrycount/"><img class="loggedin_user_avatar avatar" alt="Furrycount" src="//a.furaffinity.net/20230415/furrycount.gif"/></a>
-                    <h2 style="margin-bottom:0"><a href="/user/furrycount/">Furrycount</a></h2>
-                    <a href="/user/furrycount/">Userpage</a> |
+                    <a href="/user/someuser/"><img class="loggedin_user_avatar avatar" alt="SomeUser" src="//a.furaffinity.net/1722027735/someuser.gif"/></a>
+                    <h2 style="margin-bottom:0"><a href="/user/someuser/">SomeUser</a></h2>
+                    <a href="/user/someuser/">Userpage</a> |
                     <a href="/msg/pms/">Notes</a> |
                     <a href="/controls/journal/">Journals</a> |
-                    <a href="/plus/"><img style="position:relative;top:4px" src="/themes/beta/img/the-golden-pawb.png"> FA+</a>
+                    <a href="/plus/"><img style="position:relative;top:4px" src="/themes/beta/img/the-golden-pawb.png"> FA+</a> |
+                    <a href="https://shop.furaffinity.net" target="_blank"><img style="position:relative;top:3px" src="/themes/beta/img/icons/merch_store_icon.png"> Shop</a>
                     <br>
                 </div>
                 <hr>
@@ -102,7 +107,7 @@
 
                     <h3>SUPPORT FA</h3>
                     <a href="/plus/">Subscribe to FA+ </a><br>
-                    <a href="https://shop.furaffinity.net/">FA Merch Store</a>
+                    <a href="https://shop.furaffinity.net/" target="_blank">FA Merch Store</a>
 
 
                     <h3>RULES & POLICIES</h3>
@@ -112,7 +117,7 @@
                     <a href="/aup">Upload Policy</a>
 
                     <h3>SOCIAL</h3>
-                    <a href="https://discord.gg/fur-affinity">Discord</a><br>
+                    <a href="https://discord.gg/furaffinity">Discord</a><br>
                     <a href="https://www.twitter.com/furaffinity/">Twitter</a>
 
                                             <h3>Support</h3>
@@ -155,7 +160,7 @@
             
             <hr>
 
-            <h2><form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="10e4aff9e34b8c2313df4aa1327f9d2adb48a924"/></form>
+            <h2><form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="19d43a8f4910952020afdb11d78702c37a5553ab"/></form>
 <script type="text/javascript">
     _fajs.push(['init_logout_button', '.logout-link button']);
 </script>
@@ -168,11 +173,6 @@
     </div>
 
 </div>
-
-
-    <div class="mobile-notification-bar">
-                    <a class="notification-container inline" href="/msg/submissions/" title="216 Submission Notifications">216S</a>
-                                                            </div>
 
 
 
@@ -213,7 +213,7 @@
                         <a href="/aup">Upload Policy</a>
 
                         <h3>Social</h3>
-                        <a href="https://discord.gg/fur-affinity">Discord</a>
+                        <a href="https://discord.gg/furaffinity">Discord</a>
                         <a href="https://www.twitter.com/furaffinity/">Twitter</a>
 
                                                     <h3>Trouble Tickets</h3>
@@ -223,8 +223,9 @@
             </div>
         </li>
 
-                    <li class="lileft menu-space-saver"><a class="top-heading hideontablet" href="/plus/"><img style="position:relative;top:3px" src="/themes/beta/img/the-golden-pawb.png"> FA+</a></li>
-        
+                    <li class="lileft"><a class="top-heading" href="/plus/" title="FA+"><img style="position:relative;top:3px" src="/themes/beta/img/the-golden-pawb.png"><span class="hidebrowselowres"> FA+</span></a></li>
+                <li class="lileft"><a class="top-heading" href="https://shop.furaffinity.net" title="Shop" target="_blank"><img style="position:relative;top:3px" src="/themes/beta/img/icons/merch_store_icon.png"><span class="hidebrowselowres"> Shop</span></a></li>
+
         <div class="lileft hideonmobile">
             <form id="searchbox" method="get" action="/search/">
                 <input type="search" name="q" placeholder="SEARCH">
@@ -238,14 +239,10 @@
 
 
         
-            <li class="message-bar-desktop">
-
-                                            <a class="notification-container inline" href="/msg/submissions/" title="216 Submission Notifications">216S</a>
-                                                                                                                                                        </li>
 
             <li>
                 <div class="floatleft hideonmobile">
-                    <a href="/user/furrycount"><img class="loggedin_user_avatar menubar-icon-resize avatar" style="cursor:pointer" alt="Furrycount" src="//a.furaffinity.net/20230415/furrycount.gif"/></a>
+                    <a href="/user/someuser"><img class="loggedin_user_avatar menubar-icon-resize avatar" style="cursor:pointer" alt="SomeUser" src="//a.furaffinity.net/1722027735/someuser.gif"/></a>
                 </div>
             </li>
 
@@ -253,26 +250,26 @@
                 <div class="floatleft hideonmobile">
                     <svg class="avatar-submenu-trigger banner-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"></path></svg>
                 </div>
-                <a id="my-username" class="top-heading hideondesktop" href="#"><span class="hideondesktop">My FA ( </span>Furrycount<span class="hideondesktop"> )</span></a>
-               
+                <a id="my-username" class="top-heading hideondesktop" href="#"><span class="hideondesktop">My FA ( </span>SomeUser<span class="hideondesktop"> )</span></a>
+
                 <div class="dropdown dropdown-right">
                     <div class="dd-inner">
                         <div class="column">
                             <h3>Account</h3>
-                            <a href="/user/furrycount/">My Userpage</a>
+                            <a href="/user/someuser/">My Userpage</a>
                             <a href="/msg/pms/">Check My Notes</a>
                             <a href="/controls/journal/">Create a Journal</a>
-                            <a href="/commissions/furrycount/">My Commission Info</a>
+                            <a href="/commissions/someuser/">My Commission Info</a>
 
                             <h3>Support Fur Affinity</h3>
                             <a href="/plus/">Subscribe to FA+ </a>
-                            <a href="https://shop.furaffinity.net/">Merch Store</a>
+                            <a href="https://shop.furaffinity.net/" target="_blank">Merch Store</a>
 
                             <h3>Trouble Tickets</h3>
                             <a href="/controls/troubletickets/">Report a Problem</a>
 
                                                                                     <hr>
-                            <form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="10e4aff9e34b8c2313df4aa1327f9d2adb48a924"/></form>
+                            <form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="19d43a8f4910952020afdb11d78702c37a5553ab"/></form>
 <script type="text/javascript">
     _fajs.push(['init_logout_button', '.logout-link button']);
 </script>
@@ -340,7 +337,15 @@
 </script>
 
     <div class="news-block">
-                                    </div>
+                                <div id="news" class="newsBlock" data-date="1741049554">
+    <strong>News:</strong><span class="hideondesktop hideontablet"><br></span> <a href="/journal/11085097">March 3rd 2025- Memorial Badge, Update, and Display Names</a>
+    <span class="jsClose newsBlock__closeBtn" title="Close"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="transform: ;msFilter:;" title="Dismiss" ><path d="M20 3H4c-1.103 0-2 .897-2 2v14c0 1.103.897 2 2 2h16c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2zM4 19V7h16l.001 12H4z"></path><path d="m15.707 10.707-1.414-1.414L12 11.586 9.707 9.293l-1.414 1.414L10.586 13l-2.293 2.293 1.414 1.414L12 14.414l2.293 2.293 1.414-1.414L13.414 13z"></path></svg></span>
+</div>
+
+<script type="text/javascript">
+    _fajs.push(['init_news_block', 'news']);
+</script>
+    </div>
 
 
     <div id="main-window" class="footer-mobile-tweak g-wrapper">
@@ -348,14 +353,15 @@
 
                             <!-- site banner -->
                 <site-banner>
-                    <a href="/"><img src="/themes/beta/img/banners/logo/fa-banner-spring.jpg"></a>
+                    <a href="/"><img src="/themes/beta/img/banners/logo/fa-banner-winter.jpg"></a>
                 </site-banner>
             
             <a name="top"></a>
         </div>
 
         <div id="site-content">
-<!-- /header -->
+
+            <!-- /header -->
 
 <div id="messagecenter-other">
     <div id="columnpage">
@@ -421,14 +427,12 @@
     </div>
     <!-- /<div id="site-content"> -->
 
-
-
     <div id="footer">
         <div class="auto_link footer-links">
             <span class="hideonmobile">
                 <a href="/advertising">Advertise</a> |
                 <a href="/plus"><img style="position:relative;top:4px" src="/themes/beta/img/the-golden-pawb.png"> Get FA+</a> |
-                <a href="https://shop.furaffinity.net/">Merch Store</a> |
+                <a href="https://shop.furaffinity.net/"><img style="position:relative;top:4px" src="/themes/beta/img/icons/merch_store_icon.png"> Merch Store</a> |
                 <a href="/tos">Terms of Service</a> |
                 <a href="/privacy">Privacy</a> |
                 <a href="/coc">Code of Conduct</a> |
@@ -455,30 +459,43 @@
 </div>
 
                     <div class="online-stats">
-                43447                <strong><span title="Measured in the last 900 seconds">Users online</span></strong> &mdash;
-                3045 <strong>guests</strong>,
-                                    16845 <strong>registered</strong>
-                    and 23557 <strong>other</strong>
-                                <!-- Online Counter Last Update: Sat, 15 Apr 2023 13:24:00 -0700 -->
+                71191                <strong><span title="Measured in the last 900 seconds">Users online</span></strong> &mdash;
+                3407 <strong>guests</strong>,
+                                    16219 <strong>registered</strong>
+                    and 51565 <strong>other</strong>
+                                <!-- Online Counter Last Update: Tue, 04 Mar 2025 13:26:00 -0800 -->
           </div>
           <small>Limit bot activity to periods with less than 10k registered users online.</small>
         
         <br><br>
-        <strong>&copy; 2005-2023 Frost Dragon Art LLC</strong>
+        <strong>&copy; 2005-2025 Frost Dragon Art LLC</strong>
 
         <div class="footnote">
-            Server Time: Apr 15, 2023 01:24 PM        </div>
+            Server Time: Mar 4, 2025 01:26 PM        </div>
     </div>
 
 
+    <div id="cookie-notification" class="default-hidden">
+        <div class="text-container">This website uses cookies to enhance your browsing experience. <a href="/privacy" target="_blank">Learn More</a></div>
+        <div class="button-container"><button class="accept">I Consent</button></div>
+    </div>
+    <script type="text/javascript">
+        _fajs.push(function(){
+            $$('#cookie-notification button').invoke('observe', 'click', function() {
+                setCookie('cc', 1, expiryyear, '/');
+                $('cookie-notification').addClassName('default-hidden');
+            });
+            $('cookie-notification').removeClassName('default-hidden');
+        });
+    </script>
 
 
 </div>
 <!-- <div id="main-window"> -->
 
 <!--
-    Server Local Time: Apr 15, 2023 01:24 PM    <br />
-    Page generated in 0.011 seconds [ 19.4% PHP, 80.6% SQL ] (21 queries)    -->
+    Server Local Time: Mar 4, 2025 01:26 PM    <br />
+    Page generated in 0.01 seconds [ 23.4% PHP, 76.6% SQL ] (21 queries)    -->
 
 
 
@@ -492,10 +509,13 @@
         });
     </script>
 
+
+        <script type="text/javascript" src="/themes/beta/js/censor.js?u=2025030401"></script>
+
     <script type="text/javascript" src="/themes/beta/js/prototype.1.7.3.min.js"></script>
-    <script type="text/javascript" src="/themes/beta/js/script.js?u=2023031400"></script>
+    <script type="text/javascript" src="/themes/beta/js/script.js?u=2025030401"></script>
     <script type="text/javascript">
-        var server_timestamp = 1681590279;
+        var server_timestamp = 1741123571;
         var client_timestamp = ((new Date()).getTime())/1000;
         var server_timestamp_delta  = server_timestamp - client_timestamp;
         var sfw_cookie_name = 'sfw';
@@ -504,7 +524,7 @@
 
 
         
-                    var adData = {"sizeConfig":[{"labels":["desktopWide"],"mediaQuery":"(min-width: 1065px)","sizesSupported":[[728,90],[300,250],[300,168],[300,600],[160,600]]},{"labels":["desktopNarrow"],"mediaQuery":"(min-width: 720px) and (max-width: 1064px)","sizesSupported":[[728,90],[300,250],[300,168]]},{"labels":["mobile"],"mediaQuery":"(min-width: 0px) and (max-width: 719px)","sizesSupported":[[320,50],[300,50],[320,100]]}],"slotConfig":{"header_middle":{"containerSize":{"desktopWide":[728,100],"desktopNarrow":[728,100],"mobile":[320,100]},"providerPriority":["prebid","playwire","inhouse"]},"above_content":{"containerSize":{"desktopWide":[728,100],"desktopNarrow":[728,100],"mobile":[320,100]},"providerPriority":["prebid","playwire","inhouse"]},"sidebar":{"containerSize":{"desktopWide":[300,250]},"providerPriority":["prebid","playwire","inhouse"]},"sidebar_tall":{"containerSize":{"desktopWide":[300,600]},"providerPriority":["prebid","playwire","inhouse"]},"footer_left":{"containerSize":{"desktopWide":[300,200],"desktopNarrow":[300,200],"mobile":[300,200]},"providerPriority":["inhouse"]},"footer_right_top":{"containerSize":{"desktopWide":[300,90],"desktopNarrow":[300,90],"mobile":[300,90]},"providerPriority":["inhouse"]},"footer_right_bottom":{"containerSize":{"desktopWide":[300,90],"desktopNarrow":[300,90],"mobile":[300,90]},"providerPriority":["inhouse"]},"header_right_left":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"header_right_right":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"sidebar_top":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"sidebar_bottom":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]}},"providerConfig":{"inhouse":{"domain":"https:\/\/rv.furaffinity.net","dataPath":"\/live\/www\/delivery\/spc.php","dataVariableName":"OA_output"},"prebid":{"libraryUrl":"\/themes\/beta\/js\/prebid-6.13.0-fa.js","prebidTimeout":2000,"failsafeTimeout":2000},"playwire":{"gtagLibraryUrl":"https:\/\/www.googletagmanager.com\/gtag\/js?id=G-SQ2KEBFB33","rampLibraryUrl":"https:\/\/cdn.intergient.com\/1024443\/73185\/ramp.js"}},"adConfig":{"prebid":{"header_middle":{"code":"header_middle","mediaTypes":{"banner":{"sizes":[[728,90],[320,50],[300,50],[320,100]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.16}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":99690}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"header_middle","testMode":false}},{"bidder":"appnexus","params":{"placementId":22783959,"allowSmallerSizes":true,"position":"above"}}]},"above_content":{"code":"above_content","mediaTypes":{"banner":{"sizes":[[728,90],[320,50],[300,50],[320,100]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.16}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":99691}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"above_content","testMode":false}},{"bidder":"appnexus","params":{"placementId":22783959,"allowSmallerSizes":true,"position":"below"}}]},"sidebar":{"code":"sidebar","mediaTypes":{"banner":{"sizes":[[300,250],[300,168]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.16}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":98518}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"sidebar","testMode":false}},{"bidder":"appnexus","params":{"placementId":22783978,"allowSmallerSizes":true}}]},"sidebar_tall":{"code":"sidebar_tall","mediaTypes":{"banner":{"sizes":[[300,250],[300,168],[300,600],[160,600]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.16}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":98516}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"sidebar_tall","testMode":false}},{"bidder":"appnexus","params":{"placementId":22783993,"allowSmallerSizes":true}}]}},"playwire":{"header_middle":{"type":"leaderboard_atf"},"above_content":{"type":"leaderboard_btf"},"sidebar":{"type":"med_rect_atf"},"sidebar_tall":{"type":"sky_atf"}},"inhouse":{"header_middle":{"default":{"tagId":14,"tagSize":[728,90]},"sizeOverride":{"mobile":{"tagId":20,"tagSize":[300,90]}}},"above_content":{"default":{"tagId":16,"tagSize":[728,90]},"sizeOverride":{"mobile":{"tagId":18,"tagSize":[300,90]}}},"sidebar":{"default":{"tagId":12,"tagSize":[300,250]}},"sidebar_tall":{"default":{"tagId":12,"tagSize":[300,250]}},"footer_left":{"default":{"tagId":9,"tagSize":[300,200]}},"footer_right_top":{"default":{"tagId":7,"tagSize":[300,90]}},"footer_right_bottom":{"default":{"tagId":8,"tagSize":[300,90]}},"header_right_left":{"default":{"tagId":1,"tagSize":[300,90]}},"header_right_right":{"default":{"tagId":3,"tagSize":[300,90]}},"sidebar_top":{"default":{"tagId":1,"tagSize":[300,90]}},"sidebar_bottom":{"default":{"tagId":3,"tagSize":[300,90]}}}}};
+                    var adData = {"sizeConfig":[{"labels":["desktopWide"],"mediaQuery":"(min-width: 1065px)","sizesSupported":[[728,90],[300,250],[300,168],[300,600],[160,600]]},{"labels":["desktopNarrow"],"mediaQuery":"(min-width: 720px) and (max-width: 1064px)","sizesSupported":[[728,90],[300,250],[300,168]]},{"labels":["mobile"],"mediaQuery":"(min-width: 0px) and (max-width: 719px)","sizesSupported":[[320,50],[300,50],[320,100]]}],"slotConfig":{"header_middle":{"containerSize":{"desktopWide":[728,100],"desktopNarrow":[728,100],"mobile":[320,100]},"providerPriority":["prebid","playwire","inhouse"]},"above_content":{"containerSize":{"desktopWide":[728,100],"desktopNarrow":[728,100],"mobile":[320,100]},"providerPriority":["prebid","playwire","inhouse"]},"sidebar":{"containerSize":{"desktopWide":[300,250]},"providerPriority":["prebid","playwire","inhouse"]},"sidebar_tall":{"containerSize":{"desktopWide":[300,600]},"providerPriority":["prebid","playwire","inhouse"]},"footer_left":{"containerSize":{"desktopWide":[300,200],"desktopNarrow":[300,200],"mobile":[300,200]},"providerPriority":["inhouse"]},"footer_right_top":{"containerSize":{"desktopWide":[300,90],"desktopNarrow":[300,90],"mobile":[300,90]},"providerPriority":["inhouse"]},"footer_right_bottom":{"containerSize":{"desktopWide":[300,90],"desktopNarrow":[300,90],"mobile":[300,90]},"providerPriority":["inhouse"]},"header_right_left":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"header_right_right":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"sidebar_top":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]},"sidebar_bottom":{"containerSize":{"desktopWide":[300,90]},"providerPriority":["inhouse"]}},"providerConfig":{"inhouse":{"domain":"https:\/\/rv.furaffinity.net","dataPath":"\/live\/www\/delivery\/spc.php","dataVariableName":"OA_output"},"prebid":{"libraryUrl":"\/themes\/beta\/js\/prebid-7.54.5-fa.js","prebidTimeout":1500,"failsafeTimeout":2500},"playwire":{"gtagLibraryUrl":"https:\/\/www.googletagmanager.com\/gtag\/js?id=G-SQ2KEBFB33","rampLibraryUrl":"https:\/\/cdn.intergient.com\/1024443\/73185\/ramp.js"}},"adConfig":{"prebid":{"header_middle":{"code":"header_middle","mediaTypes":{"banner":{"sizes":[[728,90],[320,50],[300,50],[320,100]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.12}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":99690}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"header_middle","testMode":false}},{"bidder":"appnexus","params":{"placement_id":22783959,"allow_smaller_sizes":true,"position":"above"}}]},"above_content":{"code":"above_content","mediaTypes":{"banner":{"sizes":[[728,90],[320,50],[300,50],[320,100]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.12}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":99691}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"above_content","testMode":false}},{"bidder":"appnexus","params":{"placement_id":22783959,"allow_smaller_sizes":true,"position":"below"}}]},"sidebar":{"code":"sidebar","mediaTypes":{"banner":{"sizes":[[300,250],[300,168]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.12}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":98518}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"sidebar","testMode":false}},{"bidder":"appnexus","params":{"placement_id":22783978,"allow_smaller_sizes":true}}]},"sidebar_tall":{"code":"sidebar_tall","mediaTypes":{"banner":{"sizes":[[300,250],[300,168],[300,600],[160,600]]}},"floors":{"currency":"USD","skipRate":5,"modelVersion":"VersionPriceFloorsReasonable","schema":{"fields":["mediaType"]},"values":{"banner":0.12}},"bids":[{"bidder":"smartadserver","params":{"siteId":395697,"pageId":1352961,"formatId":98516}},{"bidder":"amx","params":{"tagId":"ZnVyYWZmaW5pdHkubmV0","adUnitId":"sidebar_tall","testMode":false}},{"bidder":"appnexus","params":{"placement_id":22783993,"allow_smaller_sizes":true}}]}},"playwire":{"header_middle":{"type":"leaderboard_atf"},"above_content":{"type":"leaderboard_btf"},"sidebar":{"type":"med_rect_atf"},"sidebar_tall":{"type":"sky_atf"}},"inhouse":{"header_middle":{"default":{"tagId":14,"tagSize":[728,90]},"sizeOverride":{"mobile":{"tagId":20,"tagSize":[300,90]}}},"above_content":{"default":{"tagId":16,"tagSize":[728,90]},"sizeOverride":{"mobile":{"tagId":18,"tagSize":[300,90]}}},"sidebar":{"default":{"tagId":12,"tagSize":[300,250]}},"sidebar_tall":{"default":{"tagId":12,"tagSize":[300,250]}},"footer_left":{"default":{"tagId":9,"tagSize":[300,200]}},"footer_right_top":{"default":{"tagId":7,"tagSize":[300,90]}},"footer_right_bottom":{"default":{"tagId":8,"tagSize":[300,90]}},"header_right_left":{"default":{"tagId":1,"tagSize":[300,90]}},"header_right_right":{"default":{"tagId":3,"tagSize":[300,90]}},"sidebar_top":{"default":{"tagId":1,"tagSize":[300,90]}},"sidebar_bottom":{"default":{"tagId":3,"tagSize":[300,90]}}}}};
             window.fad = new adManager(adData.sizeConfig, adData.slotConfig, adData.providerConfig, adData.adConfig, 1);
             </script>
 

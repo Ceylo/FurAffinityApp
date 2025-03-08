@@ -31,9 +31,8 @@ extension FANotesPage {
         do {
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
             
-            let notesContainerQuery = "body div#main-window div#site-content div.messagecenter-mail-container div.messagecenter-mail-content-pane div.messagecenter-mail-list form#pms-form div.messagecenter-mail-list-pane div#notes-list div.message-center-pms-note-list-view"
+            let notesQuery = "div#main-window div#site-content div.messagecenter-mail-container div.messagecenter-mail-content-pane div.messagecenter-mail-list form#pms-form div.messagecenter-mail-list-pane div#notes-list div.c-noteListItem div.note-list-container"
             
-            let notesQuery = notesContainerQuery + " div.note-list-container"
             let noteNodes = try doc.select(notesQuery)
             self.noteHeaders = try await noteNodes.parallelMap { try NoteHeader($0) }            
         } catch {
@@ -55,11 +54,11 @@ extension FANotesPage.NoteHeader {
         let noteUrlStr = try baseNode.attr("href")
         let noteUrl = try URL(unsafeString: FAURLs.homeUrl.absoluteString + noteUrlStr)
         
-        let idStr = try node.select("div.note-list-selectgroup div.note-list-checkbox-desktop input").attr("value")
+        let idStr = try node.select("div.note-list-subjectgroup div.note-list-checkbox input").attr("value")
         guard let id = Int(idStr) else { throw FAPagesError.parserFailureError() }
-        let noteTitle = try baseNode.select("div.note-list-subject").text()
+        let noteTitle = try baseNode.select("div.c-noteListItem__subject").text()
         
-        let authorQuery = "div.note-list-sendgroup div.note-list-sender-container div.note-list-sender div a"
+        let authorQuery = "div.note-list-sendgroup div.note-list-sender-container div.note-list-sender div a.c-usernameBlock__displayName"
         let authorNode = try node.select(authorQuery)
         var author: String
         let displayAuthor: String

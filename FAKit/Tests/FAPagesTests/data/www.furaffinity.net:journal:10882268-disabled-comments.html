@@ -45,8 +45,8 @@
     <script type="text/javascript">
         var _faurl={d:'//d.furaffinity.net',a:'//a.furaffinity.net',r:'//rv.furaffinity.net',t:'//t.furaffinity.net',pb:'/themes/beta/js/prebid-7.54.5-fa.js'};
     </script>
-    <script type="text/javascript" src="/themes/beta/js/common.js?u=202410160"></script>
-    <link type="text/css" rel="stylesheet" href="/themes/beta/css/ui_theme_dark.css?u=202410160" />
+    <script type="text/javascript" src="/themes/beta/js/common.js?u=2025030401"></script>
+    <link type="text/css" rel="stylesheet" href="/themes/beta/css/ui_theme_dark.css?u=2025030401" />
 
     <!-- browser hints -->
     <link rel="preconnect" href="//t.furaffinity.net" />
@@ -55,7 +55,7 @@
     <link rel="preconnect" href="https://www15.smartadserver.com" />
 
     <link rel="preload" href="/themes/beta/js/prototype.1.7.3.min.js" as="script" />
-    <link rel="preload" href="/themes/beta/js/script.js?u=202410160" as="script" />
+    <link rel="preload" href="/themes/beta/js/script.js?u=2025030401" as="script" />
     <link rel="preload" href="/themes/beta/js/prebid-7.54.5-fa.js" as="script" />
 
     <!-- Playwire Pre-connect <head> links -->
@@ -69,7 +69,11 @@
 </head>
 
 <!-- EU request: yes -->
-<body data-static-path="/themes/beta" id="pageid-journal">
+<body id="pageid-journal" data-static-path="/themes/beta" data-user-logged-in="1" data-tag-blocklist="" data-tag-blocklist-hide-tagless="0" data-tag-blocklist-nonce="2f0f3457b16b4fc22088878c38b67e2ad01505c2">
+    <script type="text/javascript">
+        0; // attempted fix for fouc in ff
+    </script>
+
     
     <!-- sidebar -->
     <div class="mobile-navigation">
@@ -93,7 +97,7 @@
 
         <div class="mobile-nav-content-container">
                             <div class="aligncenter">
-                    <a href="/user/furrycount/"><img class="loggedin_user_avatar avatar" alt="Furrycount" src="//a.furaffinity.net/20241101/furrycount.gif"/></a>
+                    <a href="/user/furrycount/"><img class="loggedin_user_avatar avatar" alt="Furrycount" src="//a.furaffinity.net/20250304/furrycount.gif"/></a>
                     <h2 style="margin-bottom:0"><a href="/user/furrycount/">Furrycount</a></h2>
                     <a href="/user/furrycount/">Userpage</a> |
                     <a href="/msg/pms/">Notes</a> |
@@ -171,7 +175,7 @@
             
             <hr>
 
-            <h2><form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="78b4a6b847c7c3616e28da352c8b2af4cc7981f9"/></form>
+            <h2><form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="c5bf32c2ed84e5f6950ded2a8d4f5850de41abe0"/></form>
 <script type="text/javascript">
     _fajs.push(['init_logout_button', '.logout-link button']);
 </script>
@@ -187,8 +191,9 @@
 
 
     <div class="mobile-notification-bar">
-                    <a class="notification-container inline" href="/msg/submissions/" title="150 Submission Notifications">150S</a>
-                                                    <a class="notification-container inline" href="/msg/others/#journals" title="13 Journal Notifications">13J</a>
+                    <a class="notification-container inline" href="/msg/submissions/" title="227 Submission Notifications">227S</a>
+                                    <a class="notification-container inline" href="/msg/others/#comments" title="2 Comment Notifications">2C</a>
+                                    <a class="notification-container inline" href="/msg/others/#journals" title="21 Journal Notifications">21J</a>
                             </div>
 
 
@@ -258,13 +263,14 @@
         
             <li class="message-bar-desktop">
 
-                                            <a class="notification-container inline" href="/msg/submissions/" title="150 Submission Notifications">150S</a>
-                                                                                                                            <a class="notification-container inline" href="/msg/others/#journals" title="13 Journal Notifications">13J</a>
+                                            <a class="notification-container inline" href="/msg/submissions/" title="227 Submission Notifications">227S</a>
+                                                                                    <a class="notification-container inline" href="/msg/others/#comments" title="2 Comment Notifications">2C</a>
+                                                                                    <a class="notification-container inline" href="/msg/others/#journals" title="21 Journal Notifications">21J</a>
                                                                         </li>
 
             <li>
                 <div class="floatleft hideonmobile">
-                    <a href="/user/furrycount"><img class="loggedin_user_avatar menubar-icon-resize avatar" style="cursor:pointer" alt="Furrycount" src="//a.furaffinity.net/20241101/furrycount.gif"/></a>
+                    <a href="/user/furrycount"><img class="loggedin_user_avatar menubar-icon-resize avatar" style="cursor:pointer" alt="Furrycount" src="//a.furaffinity.net/20250304/furrycount.gif"/></a>
                 </div>
             </li>
 
@@ -273,7 +279,7 @@
                     <svg class="avatar-submenu-trigger banner-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"></path></svg>
                 </div>
                 <a id="my-username" class="top-heading hideondesktop" href="#"><span class="hideondesktop">My FA ( </span>Furrycount<span class="hideondesktop"> )</span></a>
-               
+
                 <div class="dropdown dropdown-right">
                     <div class="dd-inner">
                         <div class="column">
@@ -291,7 +297,7 @@
                             <a href="/controls/troubletickets/">Report a Problem</a>
 
                                                                                     <hr>
-                            <form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="78b4a6b847c7c3616e28da352c8b2af4cc7981f9"/></form>
+                            <form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="c5bf32c2ed84e5f6950ded2a8d4f5850de41abe0"/></form>
 <script type="text/javascript">
     _fajs.push(['init_logout_button', '.logout-link button']);
 </script>
@@ -359,26 +365,31 @@
 </script>
 
     <div class="news-block">
-                
-<div id="admin_notice_do_not_adblock2" class="newsBlock">
-    <!--strong>Notice:</strong><span class="hideondesktop hideontablet"><br></span-->
-    <a href="https://gofund.me/0a0b27ba">Support Fur Affinity: Honoring Dragoneer's Legacy. https://gofund.me/0a0b27ba</a></div>
-                    </div>
+                                <div id="news" class="newsBlock" data-date="1741049554">
+    <strong>News:</strong><span class="hideondesktop hideontablet"><br></span> <a href="/journal/11085097">March 3rd 2025- Memorial Badge, Update, and Display Names</a>
+    <span class="jsClose newsBlock__closeBtn" title="Close"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="transform: ;msFilter:;" title="Dismiss" ><path d="M20 3H4c-1.103 0-2 .897-2 2v14c0 1.103.897 2 2 2h16c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2zM4 19V7h16l.001 12H4z"></path><path d="m15.707 10.707-1.414-1.414L12 11.586 9.707 9.293l-1.414 1.414L10.586 13l-2.293 2.293 1.414 1.414L12 14.414l2.293 2.293 1.414-1.414L13.414 13z"></path></svg></span>
+</div>
+
+<script type="text/javascript">
+    _fajs.push(['init_news_block', 'news']);
+</script>
+    </div>
 
 
     <div id="main-window" class="footer-mobile-tweak g-wrapper">
-        <div id="header" class="has-adminmessage">
+        <div id="header">
 
                             <!-- site banner -->
                 <site-banner>
-                    <a href="/"><img src="/themes/beta/img/banners/logo/fa-banner-fall.jpg"></a>
+                    <a href="/"><img src="/themes/beta/img/banners/logo/fa-banner-winter.jpg"></a>
                 </site-banner>
             
             <a name="top"></a>
         </div>
 
         <div id="site-content">
-<!-- /header -->
+
+            <!-- /header -->
 
 
     <userpage-nav-header>
@@ -387,38 +398,51 @@
             <a class="current" href="/user/fender/"><img alt="fender" src="//a.furaffinity.net/1424255659/fender.gif"/></a>
         </userpage-nav-avatar>
 
+
         <userpage-nav-user-details>
-            <h1><username>
-                <usericon-block-before><img class="userIcon type-admin" src="/themes/beta/img/admin-shield.png" title="Fur Affinity Staff"/><img class="userIcon faplus-icon" src="/themes/beta/img/the-golden-pawb.png" title="FA+ Member"/></usericon-block-before>                Fender                <usericon-block-after><img class="userIcon verified-icon" src="/themes/beta/img/icons/furrified.png" title="I paid $8 for this"/></usericon-block-after>
-                            </username></h1>
+            <div class="top-bar">
+                <username>
+                    <div class="c-usernameBlock username-in-nav-bar">
+    <usericon-block-before><img class="userIcon type-admin" src="/themes/beta/img/admin-shield.png?u=2025030401" title="Fur Affinity Staff"/><img class="userIcon faplus-icon" src="/themes/beta/img/the-golden-pawb.png?u=2025030401" title="FA+ Member"/></usericon-block-before>
+    <a class="c-usernameBlock__displayName js-displayName-block" href="/user/fender/">
+        <span class="js-displayName">Fender</span>
+    </a>
+    <usericon-block-after><img class="userIcon verified-icon" src="/themes/beta/img/icons/furrified.png?u=2025030401" title="I paid $8 for this"/></usericon-block-after>
+    <a class="c-usernameBlock__userName js-userName-block" href="/user/fender/">
+        <span><span class="c-usernameBlock__symbol">@</span>fender</span>
+    </a>
+</div>
+                    
+                                    </username>
+            </div>
 
             <div class="font-small">
-                <username class="user-title">
-                    Watcher |                     <span class="hideonmobile">Registered:</span> Dec 5, 2005 12:49                </username>
+                <span class="user-title">
+                    Watcher |                     <span class="hideonmobile">Registered:</span> Dec 5, 2005 01:49                                    </span>
             </div>
+
+            <userpage-nav-links>
+                <ul class="user-nav-page-links">
+                    <li><h3><a  href="/user/fender/">Home</a></h3></li>
+                    <li><h3><a  href="/gallery/fender/">Gallery</a></h3></li>
+                    <li><h3><a  href="/scraps/fender/">Scraps</a></h3></li>
+                    <li><h3><a  href="/favorites/fender/">Favs</a></h3></li>
+                    <li><h3><a class="current" href="/journals/fender/">Journals</a></h3></li>
+
+                                            <li><h3><a  href="/commissions/fender/">Commissions</a></h3></li>
+                    
+                    
+                                    </ul>
+            </userpage-nav-links>
         </userpage-nav-user-details>
 
 
                     <userpage-nav-interface-buttons>
-                <a class="button standard go" href="/watch/fender/?key=167b7904a62bcfa17ed8d71aff1aba74bd0d5d70">+Watch</a>
+                <a class="button standard samewidth go" href="/watch/fender/?key=4befc3b6e826d317db8cb00d1a35fb7360df235a">+Watch</a>
                 <a class="button standard" href="/newpm/fender/"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="transform: ;msFilter:;"><path d="M20 4H4c-1.103 0-2 .897-2 2v12c0 1.103.897 2 2 2h16c1.103 0 2-.897 2-2V6c0-1.103-.897-2-2-2zm0 2v.511l-8 6.223-8-6.222V6h16zM4 18V9.044l7.386 5.745a.994.994 0 0 0 1.228 0L20 9.044 20.002 18H4z"></path></svg></a>
 
                             </userpage-nav-interface-buttons>
-        
-        <userpage-nav-links>
-            <ul style="display:flex">
-                <li><h3><a  href="/user/fender/">Home</a></h3></li>
-                <li><h3><a  href="/gallery/fender/">Gallery</a></h3></li>
-                <li><h3><a  href="/scraps/fender/">Scraps</a></h3></li>
-                <li><h3><a  href="/favorites/fender/">Favs</a></h3></li>
-                <li><h3><a                       class="current" href="/journals/fender/">Journals</a></h3></li>
-                                    <li><h3><a  href="/commissions/fender/">Commissions</a></h3></li>
-                                                
-            </ul>
-        </userpage-nav-links>
-
-    </userpage-nav-header>
-
+            </userpage-nav-header>
 
 
     
@@ -428,9 +452,10 @@
 <!--- /USER NAV --->
 
 <script type="text/javascript">
-    _fajs.push(function(){
-        $$('#jsBlockUnblockButton').invoke('observe', 'click', function(evt){
-            var message = 'Are you sure you want to ' + (evt.findElement('a').href.indexOf('/unblock') != -1 ? 'unblock' : 'block') + ' this user?';
+    _fajs.push(() => {
+        $$('#jsBlockUnblockButton').invoke('observe', 'click', (evt) => {
+            var message = 'Are you sure you want to ' + (evt.findElement('a').href.indexOf('/unblock') != -1 ? 'un' : '') + 'block this user?';
+
             if (!confirm(message)) {
                 evt.stop();
             }
@@ -449,31 +474,33 @@
 
                     <div class="shinies-promo">
                 <div class="shinies-promo-star">★</div>
-                <div class="shinies-promo-text"><a href="/user/fender/#tip">Like Fender's stuff? Support them by sending some Shinies their way!</a></div>
+                <div class="shinies-promo-text">
+                    <a href="/user/fender/#tip">Like <span class="c-usernameBlockSimple username-underlined"><span class="c-usernameBlockSimple__displayName" title=" fender&#039;s ">Fender&#039;s</span></span> stuff? Support them by sending some Shinies their way!</a>
+                </div>
             </div>
         
         <div class="latest-journals" style="margin: 10px 0 20px 0;">
             <h2>Recent Journals</h2>
             <ul>
                 <li class="page-controls-journal-links" style="list-style-type:none; padding:0;padding:5px 0">
-    <strong><a href="/journal/10989833"> Oct 30th, 2024 - 2.7 Hold, Apology, and Open Letter</a></strong><br>
-    <span title="Oct 30, 2024 08:28 PM" class="popup_date">2 days ago</span>    <div><span class="font-large">0</span> Comments | <a href="/journal/10989833">View Journal</a>
+    <strong><a href="/journal/11085097"> March 3rd 2025- Memorial Badge, Update, and Display Names</a></strong><br>
+    <span title="Mar 4, 2025 02:52 AM" class="popup_date">20 hours ago</span>    <div><span class="font-large">347</span> Comments | <a href="/journal/11085097">View Journal</a>
 </li>
 <li class="page-controls-journal-links" style="list-style-type:none; padding:0;padding:5px 0">
-    <strong><a href="/journal/10983144"> Oct 22, 2024 - Upload Policy 2.7 Revision and New Feature</a></strong><br>
-    <span title="Oct 22, 2024 06:40 PM" class="popup_date">10 days ago</span>    <div><span class="font-large">0</span> Comments | <a href="/journal/10983144">View Journal</a>
+    <strong><a href="/journal/11072917"> Feb 14th 2025- Furry Musicians Contest</a></strong><br>
+    <span title="Feb 15, 2025 04:11 AM" class="popup_date">2 weeks ago</span>    <div><span class="font-large">47</span> Comments | <a href="/journal/11072917">View Journal</a>
 </li>
 <li class="page-controls-journal-links" style="list-style-type:none; padding:0;padding:5px 0">
-    <strong><a href="/journal/10949592"> Sept 6th, 2024 - GoFundMe Update</a></strong><br>
-    <span title="Sep 6, 2024 08:56 PM" class="popup_date">2 months ago</span>    <div><span class="font-large">0</span> Comments | <a href="/journal/10949592">View Journal</a>
+    <strong><a href="/journal/11071668"> Feb 13th- Tag FAQ, Memorial Reminder, &amp; Town Hall</a></strong><br>
+    <span title="Feb 13, 2025 09:42 PM" class="popup_date">2 weeks ago</span>    <div><span class="font-large">474</span> Comments | <a href="/journal/11071668">View Journal</a>
 </li>
 <li class="page-controls-journal-links" style="list-style-type:none; padding:0;padding:5px 0">
-    <strong><a href="/journal/10936501"> Aug 22nd - All Our Base Are Belong To Us</a></strong><br>
-    <span title="Aug 22, 2024 07:47 PM" class="popup_date">2 months ago</span>    <div><span class="font-large">0</span> Comments | <a href="/journal/10936501">View Journal</a>
+    <strong><a href="/journal/11050801"> Jan 16th 2025- Dragoneer Memorial Community Project</a></strong><br>
+    <span title="Jan 16, 2025 08:00 PM" class="popup_date">a month ago</span>    <div><span class="font-large">466</span> Comments | <a href="/journal/11050801">View Journal</a>
 </li>
 <li class="page-controls-journal-links" style="list-style-type:none; padding:0;padding:5px 0">
-    <strong><a href="/journal/10933053"> Aug 15th - Update on GoFundMe for Dragoneer's Legacy</a></strong><br>
-    <span title="Aug 15, 2024 08:59 PM" class="popup_date">2 months ago</span>    <div><span class="font-large">0</span> Comments | <a href="/journal/10933053">View Journal</a>
+    <strong><a href="/journal/11045804"> Jan 9th, 2025 - Tag Blocking and Policy Update</a></strong><br>
+    <span title="Jan 10, 2025 12:51 AM" class="popup_date">a month ago</span>    <div><span class="font-large">0</span> Comments | <a href="/journal/11045804">View Journal</a>
 </li>
             </ul>
         </div>
@@ -495,7 +522,7 @@
             <div class="section-header">
                 <div class="floatright"><h3></h3></div>
                 <h2 class="journal-title">June 7, 2024: Scammer Safety Reminder</h2>
-                <div style="margin-top:-6px"><span title="Jun 7, 2024 05:12 PM" class="popup_date">5 months ago</span></div>
+                <div style="margin-top:-6px"><span title="Jun 7, 2024 06:12 PM" class="popup_date">9 months ago</span></div>
             </div>
             <div class="section-body journal-body-theme">
                 <div class="journal-item no-padding">
@@ -516,6 +543,14 @@
 Stay safe, and happy FA-ing!</div>
                     </div>
 
+                                            <div class="journal-footer user-submitted-links">
+                            <code class="bbcode bbcode_center"><hr class="bbcode bbcode_hr"> Journal End <hr class="bbcode bbcode_hr">
+<br />
+🏳️‍🌈💖Enjoy the site? Please consider supporting us via the links below!💖🏳️‍🌈<br />
+<br />
+⭐ <a class="auto_link named_url" href="https://www.furaffinity.net/plus/">FA+</a> ⭐ <a class="auto_link named_url" href="https://shop.furaffinity.net/">SHOP</a> ⭐ <a class="auto_link named_url" href="https://ko-fi.com/fenderfa">KO-FI</a> ⭐<br />
+<br />
+</code>                        </div>
                                     </div>
             </div>
             <div class="section-footer aligncenter">
@@ -568,8 +603,6 @@ Stay safe, and happy FA-ing!</div>
     </div>
     <!-- /<div id="site-content"> -->
 
-
-
     <div id="footer">
         <div class="auto_link footer-links">
             <span class="hideonmobile">
@@ -602,19 +635,19 @@ Stay safe, and happy FA-ing!</div>
 </div>
 
                     <div class="online-stats">
-                58833                <strong><span title="Measured in the last 900 seconds">Users online</span></strong> &mdash;
-                2359 <strong>guests</strong>,
-                                    13444 <strong>registered</strong>
-                    and 43030 <strong>other</strong>
-                                <!-- Online Counter Last Update: Fri, 01 Nov 2024 08:18:00 -0700 -->
+                69118                <strong><span title="Measured in the last 900 seconds">Users online</span></strong> &mdash;
+                3391 <strong>guests</strong>,
+                                    16122 <strong>registered</strong>
+                    and 49605 <strong>other</strong>
+                                <!-- Online Counter Last Update: Tue, 04 Mar 2025 13:09:00 -0800 -->
           </div>
           <small>Limit bot activity to periods with less than 10k registered users online.</small>
         
         <br><br>
-        <strong>&copy; 2005-2024 Frost Dragon Art LLC</strong>
+        <strong>&copy; 2005-2025 Frost Dragon Art LLC</strong>
 
         <div class="footnote">
-            Server Time: Nov 1, 2024 08:18 AM        </div>
+            Server Time: Mar 4, 2025 01:09 PM        </div>
     </div>
 
 
@@ -624,8 +657,8 @@ Stay safe, and happy FA-ing!</div>
 <!-- <div id="main-window"> -->
 
 <!--
-    Server Local Time: Nov 1, 2024 08:18 AM    <br />
-    Page generated in 0.014 seconds [ 20.4% PHP, 79.6% SQL ] (23 queries)    -->
+    Server Local Time: Mar 4, 2025 01:09 PM    <br />
+    Page generated in 0.013 seconds [ 26.3% PHP, 73.7% SQL ] (24 queries)    -->
 
 
 
@@ -639,10 +672,13 @@ Stay safe, and happy FA-ing!</div>
         });
     </script>
 
+
+        <script type="text/javascript" src="/themes/beta/js/censor.js?u=2025030401"></script>
+
     <script type="text/javascript" src="/themes/beta/js/prototype.1.7.3.min.js"></script>
-    <script type="text/javascript" src="/themes/beta/js/script.js?u=202410160"></script>
+    <script type="text/javascript" src="/themes/beta/js/script.js?u=2025030401"></script>
     <script type="text/javascript">
-        var server_timestamp = 1730474294;
+        var server_timestamp = 1741122548;
         var client_timestamp = ((new Date()).getTime())/1000;
         var server_timestamp_delta  = server_timestamp - client_timestamp;
         var sfw_cookie_name = 'sfw';
