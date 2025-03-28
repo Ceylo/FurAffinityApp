@@ -18,42 +18,51 @@
       "iconURL": "https://get.furaffinity.app/altstore/fa-app-icon.heic",
       "tintColor": null,
       "category": "social",
-      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.11/FurAffinity-1.11-037de74.ipa",
+      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.12/FurAffinity-1.12-7146d2d.ipa",
       "screenshots": [
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.11/screenshots/feed.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.12/screenshots/feed.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.11/screenshots/submission.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.12/screenshots/submission.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.11/screenshots/comments.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.12/screenshots/comments.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.11/screenshots/notifications.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.12/screenshots/notifications.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.11/screenshots/search-field.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.12/screenshots/search-field.heic",
           "width": 1170
         }
       ],
       "screenshotURLs": [
-        "https://get.furaffinity.app/altstore/releases/1.11/screenshots/feed.heic",
-        "https://get.furaffinity.app/altstore/releases/1.11/screenshots/submission.heic",
-        "https://get.furaffinity.app/altstore/releases/1.11/screenshots/comments.heic",
-        "https://get.furaffinity.app/altstore/releases/1.11/screenshots/notifications.heic",
-        "https://get.furaffinity.app/altstore/releases/1.11/screenshots/search-field.heic"
+        "https://get.furaffinity.app/altstore/releases/1.12/screenshots/feed.heic",
+        "https://get.furaffinity.app/altstore/releases/1.12/screenshots/submission.heic",
+        "https://get.furaffinity.app/altstore/releases/1.12/screenshots/comments.heic",
+        "https://get.furaffinity.app/altstore/releases/1.12/screenshots/notifications.heic",
+        "https://get.furaffinity.app/altstore/releases/1.12/screenshots/search-field.heic"
       ],
       "versions": [
+        {
+          "version": "1.12",
+          "date": "2025-03-08T23:20:00+02:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n📱 FEATURES\n- Support for user gallery folders: a new folder icon is displayed in the toolbar when navigating to any user gallery or folder. It provides a menu to navigate to any other folder of this user’s gallery, including to their Scraps.\n- When tapping on a shout or comment notification, in addition to opening the relevant page, the app will now scroll and highlight the relevant comment.\n- Submissions in the Submissions tab can now be removed one by one through a swipe action.\n- Submissions display a new metadata control. It allows viewing all the submission metadata, such as image resolution, rating, category, view count, keywords and the folders to which this submission belongs. The folder items are interactive and can be used to navigate to the chosen folder.\n\n🐞 BUGFIXES\n- On 3rd March 2025, furaffinity.net website was updated in order to support the new display name feature. This affected many parts of the app with missing information or the inability to load user profiles or notes, or missing notifications. This has been resolved.\n- The app includes an auto-refresh feature for the Submissions feed, Notes and Notifications tab, when you open the app again and after some delay. This behavior was not working for the Notes and Notifications tab if the tab had never been opened since the app was launched. This is now resolved.",
+          "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.12/FurAffinity-1.12-7146d2d.ipa",
+          "size": 2565738,
+          "sha256": "e4921ee3f23b14058afd89a77047971bd18dc94b018df149684a0ae4f8e4b356",
+          "minOSVersion": "17.4"
+        },
         {
           "version": "1.11",
           "date": "2025-01-10T23:20:00+02:00",
