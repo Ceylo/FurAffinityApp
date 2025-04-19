@@ -72,6 +72,16 @@ struct UserView: View {
         }
     }
     
+    static func nameView(username: String, displayName: String) -> some View {
+        VStack(alignment: .leading) {
+            Text(displayName)
+                .font(.title)
+            Text("@\(username)")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+        }
+    }
+    
     var body: some View {
         List {
             Group {
@@ -80,22 +90,22 @@ struct UserView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
                         AvatarView(avatarUrl: FAURLs.avatarUrl(for: user.name))
-                            .frame(width: 42, height: 42)
-                        Text(user.displayName)
-                            .font(.title)
+                            .cornerRadius(12)
+                            .frame(width: 64, height: 64)
+                        Self.nameView(username: user.name, displayName: user.displayName)
                         watchControl
                     }
                     .padding(.vertical, 5)
+                    .padding(.horizontal, 10)
                     
                     UserProfileControlView(username: user.name)
-                        .padding(.horizontal, -15)
                         .padding(.vertical, 5)
                     
                     if let description = description.wrappedValue {
                         HTMLView(text: description, initialHeight: 300)
+                            .padding(.horizontal, 15)
                     }
                 }
-                .padding(.horizontal, 15)
                 .padding(.top, 5)
                 
                 if !user.shouts.isEmpty {

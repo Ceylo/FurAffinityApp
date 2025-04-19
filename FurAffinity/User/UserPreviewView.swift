@@ -33,19 +33,18 @@ struct UserPreviewView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
                         AvatarView(avatarUrl: preview.avatarUrl)
-                            .frame(width: 42, height: 42)
+                            .cornerRadius(12)
+                            .frame(width: 64, height: 64)
                         if let displayName = preview.displayName {
-                            Text(displayName)
-                                .font(.title)
+                            UserView.nameView(username: preview.username, displayName: displayName)
                         }
                     }
                     .padding(.vertical, 5)
+                    .padding(.horizontal, 10)
                     
                     UserProfileControlView(username: preview.username)
-                        .padding(.horizontal, -15)
                         .padding(.vertical, 5)
                 }
-                .padding(.horizontal, 15)
                 .padding(.top, 5)
             }
             .listRowSeparator(.hidden)

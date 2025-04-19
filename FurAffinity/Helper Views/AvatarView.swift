@@ -13,6 +13,17 @@ import Defaults
 struct AvatarView: View {
     var avatarUrl: URL?
     @Default(.animateAvatars) var animateAvatars
+    private var cornerRadius: CGFloat = 5
+    
+    init(avatarUrl: URL? = nil) {
+        self.avatarUrl = avatarUrl
+    }
+    
+    func cornerRadius(_ radius: CGFloat) -> Self {
+        var copy = self
+        copy.cornerRadius = radius
+        return copy
+    }
     
     private func configure(_ image: some KFImageProtocol) -> some KFImageProtocol {
         image
@@ -32,9 +43,9 @@ struct AvatarView: View {
                 configure(FAImage(avatarUrl))
             }
         }
-        .cornerRadius(5)
+        .cornerRadius(cornerRadius)
         .overlay {
-            RoundedRectangle(cornerRadius: 5)
+            RoundedRectangle(cornerRadius: cornerRadius)
                 .stroke(Color.borderOverlay, lineWidth: 1)
         }
     }
