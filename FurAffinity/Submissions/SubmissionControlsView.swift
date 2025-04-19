@@ -76,16 +76,6 @@ struct SubmissionControlsView: View {
                 $1 == .succeeded
             })
             
-            Button {
-                share([submissionUrl])
-            } label: {
-                Image(systemName: "square.and.arrow.up")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .padding()
-            }
-            .frame(height: buttonsSize)
-            
             ReplyButton(
                 repliesCount: repliesCount,
                 acceptsNewReplies: acceptsNewReplies,

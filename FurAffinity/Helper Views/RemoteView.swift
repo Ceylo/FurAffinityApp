@@ -112,8 +112,18 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Link(destination: url) {
-                    Image(systemName: "safari")
+                Menu {
+                    Link(destination: url) {
+                        Label("Open in Web Browser", systemImage: "safari")
+                    }
+                    ShareLink(
+                        item: url,
+                        message: Text("Sent from the unofficial FurAffinity App for iPhone (https://furaffinity.app/)")
+                    ) {
+                        Label("Share Link", systemImage: "square.and.arrow.up")
+                    }
+                } label: {
+                    ActionControl()
                 }
             }
         }
@@ -139,16 +149,18 @@ typealias RemoteView<Data: Sendable, ContentsView: View> = PreviewableRemoteView
     @Previewable
     @State var url = URL(string: "https://www.furaffinity.net/")!
     
-    RemoteView(url: url) { sourceUrl in
-        try await Task.sleep(for: .seconds(1))
-        return sourceUrl
-    } view: { data, updateHandler in
-        VStack {
-            Text(data.absoluteString)
-            Button("Update") {
-                url = url.appending(component: "hi")
+    NavigationStack {
+        RemoteView(url: url) { sourceUrl in
+            try await Task.sleep(for: .seconds(1))
+            return sourceUrl
+        } view: { data, updateHandler in
+            VStack {
+                Text(data.absoluteString)
+                Button("Update") {
+                    url = url.appending(component: "hi")
+                }
             }
+            .border(.red)
         }
-        .border(.red)
     }
 }
