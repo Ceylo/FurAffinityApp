@@ -31,6 +31,7 @@
 		8741BA2F29EC3FF700501A84 /* JournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8741BA2C29EC3FF700501A84 /* JournalView.swift */; };
 		8741BA3129EC3FF700501A84 /* RemoteJournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8741BA2E29EC3FF700501A84 /* RemoteJournalView.swift */; };
 		874D69BD2804D20600DF91E7 /* NoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 874D69BC2804D20600DF91E7 /* NoteView.swift */; };
+		875180582DB5544A00331762 /* RemoteContentToolbarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 875180572DB553FC00331762 /* RemoteContentToolbarItem.swift */; };
 		87566B82297DC71600FD3199 /* CommentEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87566B81297DC71600FD3199 /* CommentEditor.swift */; };
 		87566B84297DD02300FD3199 /* SubmissionMainImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87566B83297DD02300FD3199 /* SubmissionMainImage.swift */; };
 		875EF2C72C1CABDC000D4BFB /* SubmissionPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 875EF2C62C1CABDC000D4BFB /* SubmissionPreviewView.swift */; };
@@ -139,6 +140,7 @@
 		8741BA2C29EC3FF700501A84 /* JournalView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JournalView.swift; sourceTree = "<group>"; };
 		8741BA2E29EC3FF700501A84 /* RemoteJournalView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteJournalView.swift; sourceTree = "<group>"; };
 		874D69BC2804D20600DF91E7 /* NoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteView.swift; sourceTree = "<group>"; };
+		875180572DB553FC00331762 /* RemoteContentToolbarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteContentToolbarItem.swift; sourceTree = "<group>"; };
 		87566B81297DC71600FD3199 /* CommentEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentEditor.swift; sourceTree = "<group>"; };
 		87566B83297DD02300FD3199 /* SubmissionMainImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionMainImage.swift; sourceTree = "<group>"; };
 		875EF2C62C1CABDC000D4BFB /* SubmissionPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionPreviewView.swift; sourceTree = "<group>"; };
@@ -425,6 +427,7 @@
 				87A4DA612A097D9000704857 /* NukeAlert.swift */,
 				87A4DA632A097ECB00704857 /* ActionControl.swift */,
 				87346B362B0A658F000407C7 /* RemoteView.swift */,
+				875180572DB553FC00331762 /* RemoteContentToolbarItem.swift */,
 				879536D82BE29CE1004A50B0 /* SectionHeader.swift */,
 				87C4435B2C73F29600200991 /* AlignedLabel.swift */,
 				87D64FC42C886F0200AB6F44 /* ProgressiveLoadItem.swift */,
@@ -643,6 +646,7 @@
 				87A587452CD8152B005F8D3B /* ListCounter.swift in Sources */,
 				872EF3C42CCFDAEA00251EB5 /* View+pullableScreenCover.swift in Sources */,
 				87E528372CE8D3D800CAFDC0 /* Zoomable.swift in Sources */,
+				875180582DB5544A00331762 /* RemoteContentToolbarItem.swift in Sources */,
 				875FDC7E2D21D31B00CF8AE5 /* DelayedToggle.swift in Sources */,
 				874D69BD2804D20600DF91E7 /* NoteView.swift in Sources */,
 				877226B52740361C00245DF0 /* SubmissionsFeedView.swift in Sources */,

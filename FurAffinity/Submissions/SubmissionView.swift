@@ -106,6 +106,33 @@ struct SubmissionView: View {
             prefetchAvatars(for: submission.comments)
         }
         .scrollToItem(id: submission.targetCommentId)
+        .toolbar {
+            RemoteContentToolbarItem(url: submission.url) {
+                Button {
+                    favoriteAction()
+                } label: {
+                    let title = submission.isFavorite ? "Unfavorite" : "Favorite"
+                    let image = submission.isFavorite ? "heart.fill" : "heart"
+                    Label(title, systemImage: image)
+                }
+                
+                Button {
+                    Task {
+                        await MediaSaveHandler().saveMedia(atFileUrl: fullResolutionMediaFileUrl!)
+                    }
+                } label: {
+                    Label("Save Image", systemImage: "square.and.arrow.down")
+                }
+                .disabled(fullResolutionMediaFileUrl == nil)
+                
+                Button {
+                    replySession = .init(parentCid: nil, among: [])
+                } label: {
+                    Label("Reply", systemImage: "bubble")
+                }
+                .disabled(!submission.acceptsNewComments)
+            }
+        }
     }
 }
 

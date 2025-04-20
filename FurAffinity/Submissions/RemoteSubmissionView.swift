@@ -53,7 +53,8 @@ struct RemoteSubmissionView: View {
                         )
                         updateHandler.update(with: updated)
                         return updated != nil
-                    })
+                    }
+                )
             }
         )
         .onAppear {

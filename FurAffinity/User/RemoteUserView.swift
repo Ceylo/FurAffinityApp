@@ -66,6 +66,9 @@ struct RemoteUserView: View {
                         return updatedUser != nil
                     }
                 )
+                .toolbar {
+                    RemoteContentToolbarItem(url: url)
+                }
             }
         )
     }

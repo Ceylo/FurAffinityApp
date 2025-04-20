@@ -19,6 +19,13 @@ protocol UpdateHandler<Data> {
 /// - displaying a incomplete view until the content is loaded
 /// - allowing pull to refresh
 /// - giving web access to the content
+///
+/// - Note: By using `PreviewableRemoteView` instead of `RemoteView`, you take over the
+/// responsibility of providing a primary toolbar item on `ContentsView`.
+/// For consistency, it is recommended to reuse `RemoteContentToolbarItem`, eventually
+/// giving it your own custom additional items.
+/// A default primary toolbar item is already provided for all other states
+/// (preview, loading, failure).
 struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: View>: View, UpdateHandler {
     init(
         url: URL,
@@ -77,14 +84,18 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
                 case .failed:
                     ScrollView {
                         LoadingFailedView(url: url)
+                            .toolbar { RemoteContentToolbarItem(url: url) }
                     }
                 }
             } else {
-                if let preview = preview() {
-                    preview
-                } else {
-                    loadingView
+                Group {
+                    if let preview = preview() {
+                        preview
+                    } else {
+                        loadingView
+                    }
                 }
+                .toolbar { RemoteContentToolbarItem(url: url) }
             }
         }
         .task {
@@ -110,23 +121,6 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
                 await update()
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Menu {
-                    Link(destination: url) {
-                        Label("Open in Web Browser", systemImage: "safari")
-                    }
-                    ShareLink(
-                        item: url,
-                        message: Text("Sent from the unofficial FurAffinity App for iPhone (https://furaffinity.app/)")
-                    ) {
-                        Label("Share Link", systemImage: "square.and.arrow.up")
-                    }
-                } label: {
-                    ActionControl()
-                }
-            }
-        }
     }
     
     func update() async {
@@ -143,7 +137,21 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
     }
 }
 
-typealias RemoteView<Data: Sendable, ContentsView: View> = PreviewableRemoteView<Data, ContentsView, EmptyView>
+@MainActor
+func RemoteView<Data: Sendable, ContentsView: View>(
+    url: URL,
+    dataSource: @escaping (_ sourceUrl: URL) async throws -> Data?,
+    view: @escaping (Data, any UpdateHandler<Data>) -> ContentsView
+) -> some View {
+    PreviewableRemoteView<_, _, EmptyView>(
+        url: url,
+        dataSource: dataSource,
+        view: { data, updateHandler in
+            view(data, updateHandler)
+                .toolbar { RemoteContentToolbarItem(url: url) }
+        }
+    )
+}
 
 #Preview {
     @Previewable
