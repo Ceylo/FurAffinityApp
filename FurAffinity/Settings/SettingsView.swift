@@ -19,6 +19,7 @@ struct SettingsView: View {
     @Default(.notifyJournalComments) private var notifyJournalComments
     @Default(.notifyShouts) private var notifyShouts
     @Default(.notifyJournals) private var notifyJournals
+    @Default(.addMessageToSharedItems) private var addMessageToSharedItems
     
     @State private var cachedFileSize = "unknown"
     
@@ -61,6 +62,14 @@ struct SettingsView: View {
                 Text("Notification badge")
             } footer: {
                 Text("iOS notifications are not supported. These settings change the badge displayed on the Notifications tab.")
+            }
+            
+            Section {
+                Toggle("Advertise the app", isOn: $addMessageToSharedItems)
+            } header: {
+                Text("Sharing")
+            } footer: {
+                Text("When enabled, sharing a link adds a message in order to let the recipient know about this app.")
             }
             
             Section {

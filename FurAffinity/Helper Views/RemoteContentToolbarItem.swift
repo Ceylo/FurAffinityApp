@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Defaults
 
 struct RemoteContentToolbarItem<ContentsView: View>: ToolbarContent {
     init(url: URL, @ViewBuilder additionalToolbarItems: @escaping () -> ContentsView = { EmptyView() }) {
@@ -15,6 +16,14 @@ struct RemoteContentToolbarItem<ContentsView: View>: ToolbarContent {
     
     var url: URL
     var additionalToolbarItems: () -> ContentsView
+    @Default(.addMessageToSharedItems) private var addMessageToSharedItems
+    
+    private var shareMessage: Text? {
+        guard addMessageToSharedItems else {
+            return nil
+        }
+        return Text("Sent from the FurAffinity unofficial App for iPhone (https://furaffinity.app/)")
+    }
     
     var body: some ToolbarContent {
         ToolbarItem(placement: .primaryAction) {
@@ -24,7 +33,7 @@ struct RemoteContentToolbarItem<ContentsView: View>: ToolbarContent {
                 }
                 ShareLink(
                     item: url,
-                    message: Text("Sent from the unofficial FurAffinity App for iPhone (https://furaffinity.app/)")
+                    message: shareMessage
                 ) {
                     Label("Share Link", systemImage: "square.and.arrow.up")
                 }

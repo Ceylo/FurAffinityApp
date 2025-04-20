@@ -9,22 +9,17 @@ import SwiftUI
 import Defaults
 
 extension Defaults.Keys {
-    // Persistence
+    // MARK: - Persistence
     static let lastViewedSubmissionID = Key<Int?>("lastViewedSubmissionID")
     
-    // Display
+    // MARK: - Display
     static let animateAvatars = Key<Bool>("animateAvatars", default: true)
     
-    // Notifications
+    // MARK: - Notifications
     static let notifySubmissionComments = Key<Bool>("notifySubmissionComments", default: true)
     static let notifyJournalComments = Key<Bool>("notifyJournalComments", default: true)
     static let notifyShouts = Key<Bool>("notifyShouts", default: true)
     static let notifyJournals = Key<Bool>("notifyJournals", default: false)
-    
-    static let all = [
-        lastViewedSubmissionID,
-        animateAvatars
-    ] + notifications
     
     static let notifications = [
         notifySubmissionComments,
@@ -32,4 +27,13 @@ extension Defaults.Keys {
         notifyShouts,
         notifyJournals
     ]
+    
+    // MARK: - Sharing
+    static let addMessageToSharedItems = Key<Bool>("addMessageToSharedItems", default: true)
+    
+    // MARK: - Convenience
+    static let all = [
+        lastViewedSubmissionID,
+        animateAvatars
+    ] + notifications
 }
