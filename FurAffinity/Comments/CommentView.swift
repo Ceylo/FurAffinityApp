@@ -65,6 +65,10 @@ struct CommentView: View {
                     Text(comment.displayAuthor)
                         .font(.subheadline)
                         .bold()
+                    +
+                    Text(" @\(comment.author)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     Spacer()
                     DateTimeButton(datetime: comment.datetime,
                                    naturalDatetime: comment.naturalDatetime)
