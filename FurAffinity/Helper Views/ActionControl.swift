@@ -17,6 +17,7 @@ struct ActionControl: View {
             .padding(5)
             .background(.thinMaterial)
             .clipShape(Circle())
+            .padding(5)
     }
 }
 
