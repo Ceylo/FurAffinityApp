@@ -49,8 +49,15 @@ struct NoteView: View {
                                     AvatarView(avatarUrl: FAURLs.avatarUrl(for: note.author))
                                         .frame(width: 42, height: 42)
                                     
-                                    Text(note.displayAuthor)
-                                        .foregroundColor(.primary)
+                                    VStack(alignment: .leading) {
+                                        Text(note.displayAuthor)
+                                            .font(.headline)
+                                            .foregroundColor(.primary)
+                                        Text("@\(note.author)")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    
                                 }
                             }
                             Spacer()
