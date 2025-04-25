@@ -36,7 +36,7 @@ func view(for target: FATarget) -> some View {
     case let .submission(url, previewData):
         RemoteSubmissionView(url: url, previewData: previewData)
     case let .note(url):
-        NoteView(url: url)
+        RemoteNoteView(url: url)
     case let .journal(url):
         RemoteJournalView(url: url)
     case let .user(url, previewData):

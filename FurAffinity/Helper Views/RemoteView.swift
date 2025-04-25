@@ -54,6 +54,7 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
     }
     @State private var dataState: DataState?
     @State private var showUpdateLoadingView = false
+    @State private var activity: NSUserActivity?
     
     var loadingView: some View {
         VStack(spacing: 20) {
@@ -120,6 +121,27 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
             Task {
                 await update()
             }
+            
+            if let activity {
+                activity.resignCurrent()
+                let newActivity = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
+                newActivity.webpageURL = url
+                self.activity = newActivity
+            }
+        }
+        .onAppear {
+            if activity == nil {
+                let activity = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
+                activity.webpageURL = url
+                self.activity = activity
+            }
+        }
+        .onDisappear {
+            activity = nil
+        }
+        .onChange(of: activity) { oldValue, newValue in
+            oldValue?.resignCurrent()
+            newValue?.becomeCurrent()
         }
     }
     

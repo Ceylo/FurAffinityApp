@@ -392,6 +392,7 @@ extension FANote {
     static var demo: FANote {
         get async {
             try! await FANote(
+                url: URL(string: "https://www.furaffinity.net/msg/pms/1/123456789/#message")!,
                 author: "someuser", displayAuthor: "SomeUser",
                 title: "RE: Title with some spéciäl çhãrāčtęrs",
                 datetime: "Apr 7th, 2022, 11:58 AM",

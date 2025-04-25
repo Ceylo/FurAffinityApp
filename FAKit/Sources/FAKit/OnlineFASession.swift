@@ -160,7 +160,7 @@ public class OnlineFASession: FASession {
               let page = FANotePage(data: data)
         else { return nil }
         
-        return try? await FANote(page)
+        return try? await FANote(page, url: url)
     }
     
     // MARK: - Notifications

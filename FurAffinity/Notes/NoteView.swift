@@ -9,21 +9,9 @@ import SwiftUI
 import FAKit
 
 struct NoteView: View {
-    var url: URL
-    @EnvironmentObject var model: Model
+    var note: FANote
     
-    @State private var note: FANote?
-    @State private var activity: NSUserActivity?
-    
-    func loadNote(forceReload: Bool) async {
-        guard note == nil || forceReload else {
-            return
-        }
-        
-        note = await model.session?.note(for: url)
-    }
-    
-    func userFATarget(for note: FANote) -> FATarget? {
+    var userFATarget: FATarget? {
         guard let userUrl = FAURLs.userpageUrl(for: note.author) else {
             return nil
         }
@@ -40,73 +28,45 @@ struct NoteView: View {
     
     var body: some View {
         ScrollView {
-            if let note {
-                VStack(alignment: .leading, spacing: 0) {
-                    VStack(alignment: .leading) {
-                        HStack {
-                            FALink(destination: userFATarget(for: note)) {
-                                HStack {
-                                    AvatarView(avatarUrl: FAURLs.avatarUrl(for: note.author))
-                                        .frame(width: 42, height: 42)
-                                    
-                                    VStack(alignment: .leading) {
-                                        Text(note.displayAuthor)
-                                            .font(.headline)
-                                            .foregroundColor(.primary)
-                                        Text("@\(note.author)")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    
+            VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading) {
+                    HStack {
+                        FALink(destination: userFATarget) {
+                            HStack {
+                                AvatarView(avatarUrl: FAURLs.avatarUrl(for: note.author))
+                                    .frame(width: 42, height: 42)
+                                
+                                VStack(alignment: .leading) {
+                                    Text(note.displayAuthor)
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                    Text("@\(note.author)")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
                                 }
                             }
-                            Spacer()
-                            DateTimeButton(datetime: note.datetime,
-                                           naturalDatetime: note.naturalDatetime)
                         }
-                        
-                        Text(note.title)
-                            .font(.title2)
+                        Spacer()
+                        DateTimeButton(datetime: note.datetime,
+                                       naturalDatetime: note.naturalDatetime)
                     }
-                    Divider()
-                        .padding(.vertical, 5)
                     
-                    HTMLView(text: note.message.convertingLinksForInAppNavigation())
-                    // for text view inset
-                        .padding(.horizontal, -5)
+                    Text(note.title)
+                        .font(.title2)
                 }
-                .padding()
-                .navigationTitle(note.title)
-                .navigationBarTitleDisplayMode(.inline)
+                Divider()
+                    .padding(.vertical, 5)
+                
+                HTMLView(text: note.message.convertingLinksForInAppNavigation())
+                // for text view inset
+                    .padding(.horizontal, -5)
             }
-        }
-        .task {
-            await loadNote(forceReload: false)
+            .padding()
+            .navigationTitle(note.title)
+            .navigationBarTitleDisplayMode(.inline)
         }
         .toolbar {
-            ToolbarItem {
-                Link(destination: url) {
-                    Image(systemName: "safari")
-                }
-            }
-        }
-        .onAppear {
-            if activity == nil {
-                let activity = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
-                activity.webpageURL = url
-                self.activity = activity
-            }
-            
-            activity?.becomeCurrent()
-        }
-        .onDisappear {
-            activity?.resignCurrent()
+            RemoteContentToolbarItem(url: note.url)
         }
     }
-}
-
-#Preview {
-    NoteView(url: OfflineFASession.default.notePreviews[1].noteUrl)
-//        .preferredColorScheme(.dark)
-        .environmentObject(Model.demo)
 }

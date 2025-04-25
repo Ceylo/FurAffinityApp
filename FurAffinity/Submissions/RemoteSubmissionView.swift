@@ -13,7 +13,6 @@ struct RemoteSubmissionView: View {
     
     var url: URL
     var previewData: FASubmissionPreview?
-    @State private var activity: NSUserActivity?
     
     private var username: String? {
         previewData?.author ?? FAURLs.usernameFrom(userUrl: url)
@@ -57,18 +56,6 @@ struct RemoteSubmissionView: View {
                 )
             }
         )
-        .onAppear {
-            if activity == nil {
-                let activity = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
-                activity.webpageURL = url
-                self.activity = activity
-            }
-            
-            activity?.becomeCurrent()
-        }
-        .onDisappear {
-            activity?.resignCurrent()
-        }
     }
 }
 
