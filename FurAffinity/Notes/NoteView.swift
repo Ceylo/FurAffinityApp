@@ -35,15 +35,13 @@ struct NoteView: View {
                             HStack {
                                 AvatarView(avatarUrl: FAURLs.avatarUrl(for: note.author))
                                     .frame(width: 42, height: 42)
-                                
-                                VStack(alignment: .leading) {
-                                    Text(note.displayAuthor)
-                                        .font(.headline)
-                                        .foregroundColor(.primary)
-                                    Text("@\(note.author)")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
+                                UserNameView(
+                                    name: note.author,
+                                    displayName: note.displayAuthor
+                                )
+                                .displayStyle(.multiline)
+                                // Overwrite blue of FALink
+                                .foregroundColor(.primary)
                             }
                         }
                         Spacer()
@@ -69,4 +67,13 @@ struct NoteView: View {
             RemoteContentToolbarItem(url: note.url)
         }
     }
+}
+
+#Preview {
+    NavigationStack {
+        withAsync({ await FANote.demo }) { note in
+            NoteView(note: note)
+        }
+    }
+//        .preferredColorScheme(.dark)
 }

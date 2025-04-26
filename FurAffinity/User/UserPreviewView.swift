@@ -36,7 +36,11 @@ struct UserPreviewView: View {
                             .cornerRadius(12)
                             .frame(width: 64, height: 64)
                         if let displayName = preview.displayName {
-                            UserView.nameView(username: preview.username, displayName: displayName)
+                            UserNameView(
+                                name: preview.username,
+                                displayName: displayName
+                            )
+                            .displayStyle(.multilineProminent)
                         }
                     }
                     .padding(.vertical, 5)

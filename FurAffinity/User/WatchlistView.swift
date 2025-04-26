@@ -54,7 +54,13 @@ struct WatchlistView: View {
     var body: some View {
         List {
             ForEach(filteredUsers) { user in
-                NavigationLink(user.displayName, value: userFATarget(for: user))
+                NavigationLink(value: userFATarget(for: user)) {
+                    UserNameView(
+                        name: user.name,
+                        displayName: user.displayName
+                    )
+                    .displayStyle(.compactRegularSize)
+                }
             }
             
             ProgressiveLoadItem(

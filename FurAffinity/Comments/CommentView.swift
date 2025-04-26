@@ -62,13 +62,11 @@ struct CommentView: View {
             
             VStack(alignment: .leading, spacing: 5) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(comment.displayAuthor)
-                        .font(.subheadline)
-                        .bold()
-                    +
-                    Text(" @\(comment.author)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    UserNameView(
+                        name: comment.author,
+                        displayName: comment.displayAuthor
+                    )
+                    .displayStyle(.compactHighlightedDisplayName)
                     Spacer()
                     DateTimeButton(datetime: comment.datetime,
                                    naturalDatetime: comment.naturalDatetime)

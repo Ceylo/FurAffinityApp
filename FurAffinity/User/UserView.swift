@@ -72,16 +72,6 @@ struct UserView: View {
         }
     }
     
-    static func nameView(username: String, displayName: String) -> some View {
-        VStack(alignment: .leading) {
-            Text(displayName)
-                .font(.title)
-            Text("@\(username)")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-        }
-    }
-    
     var body: some View {
         List {
             Group {
@@ -92,7 +82,11 @@ struct UserView: View {
                         AvatarView(avatarUrl: FAURLs.avatarUrl(for: user.name))
                             .cornerRadius(12)
                             .frame(width: 64, height: 64)
-                        Self.nameView(username: user.name, displayName: user.displayName)
+                        UserNameView(
+                            name: user.name,
+                            displayName: user.displayName
+                        )
+                        .displayStyle(.multilineProminent)
                         watchControl
                     }
                     .padding(.vertical, 5)

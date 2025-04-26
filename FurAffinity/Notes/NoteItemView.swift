@@ -29,12 +29,10 @@ struct NoteItemView: View {
                 }
                 
                 HStack {
-                    Text(notePreview.displayAuthor)
-                        .font(.subheadline)
-                    +
-                    Text(" @\(notePreview.author)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    UserNameView(
+                        name: notePreview.author,
+                        displayName: notePreview.displayAuthor
+                    )
                     Spacer()
                     DateTimeButton(datetime: notePreview.datetime,
                                    naturalDatetime: notePreview.naturalDatetime)

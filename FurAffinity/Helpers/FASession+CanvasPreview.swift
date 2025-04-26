@@ -161,10 +161,10 @@ extension OfflineFASession {
                   author: "hiorou",
                   displayAuthor: "Hiorou")
         ], notes: [
-            .init(id: 129953494, author: "someuser", displayAuthor: "SomeUser", title: "Another message",
+            .init(id: 129953494, author: "someuser", displayAuthor: "Some User", title: "Another message",
                   datetime: "Apr 7, 2022 12:09PM", naturalDatetime: "an hour ago", unread: true,
                   noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953494/#message")!),
-            .init(id: 129953262, author: "someuser", displayAuthor: "SomeUser", title: "Title with some spéciäl çhãrāčtęrs",
+            .init(id: 129953262, author: "someuser", displayAuthor: "Some User", title: "Title with some spéciäl çhãrāčtęrs",
                   datetime: "Apr 7, 2022 11:58AM", naturalDatetime: "an hour ago", unread: false,
                   noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/129953262/#message")!)
         ], notifications: .init(submissionComments: [
@@ -393,7 +393,7 @@ extension FANote {
         get async {
             try! await FANote(
                 url: URL(string: "https://www.furaffinity.net/msg/pms/1/123456789/#message")!,
-                author: "someuser", displayAuthor: "SomeUser",
+                author: "someuser", displayAuthor: "Some User",
                 title: "RE: Title with some spéciäl çhãrāčtęrs",
                 datetime: "Apr 7th, 2022, 11:58 AM",
                 naturalDatetime: "8 months ago",
