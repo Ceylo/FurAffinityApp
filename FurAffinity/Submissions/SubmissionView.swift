@@ -126,6 +126,13 @@ struct SubmissionView: View {
                 .disabled(fullResolutionMediaFileUrl == nil)
                 
                 Button {
+                    share([fullResolutionMediaFileUrl!])
+                } label: {
+                    Label("Share Image", systemImage: "square.and.arrow.up")
+                }
+                .disabled(fullResolutionMediaFileUrl == nil)
+                
+                Button {
                     replySession = .init(parentCid: nil, among: [])
                 } label: {
                     Label("Reply", systemImage: "bubble")
@@ -137,11 +144,13 @@ struct SubmissionView: View {
 }
 
 #Preview {
-    withAsync({ await FASubmission.demo }) {
-        SubmissionView(
-            submission: $0,
-            favoriteAction: {},
-            replyAction: { _, _ in true }
-        )
+    NavigationStack {
+        withAsync({ await FASubmission.demo }) {
+            SubmissionView(
+                submission: $0,
+                favoriteAction: {},
+                replyAction: { _, _ in true }
+            )
+        }
     }
 }
