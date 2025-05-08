@@ -40,18 +40,31 @@ struct UserNameView: View {
         return copy
     }
     
+    private var usernameText: String {
+        if name.isEmpty {
+            ""
+        } else {
+            switch _displayStyle {
+            case .compactRegularSize, .compact, .compactHighlightedDisplayName:
+                " @\(name)"
+            case .multiline, .multilineProminent:
+                "@\(name)"
+            }
+        }
+    }
+    
     var body: some View {
         switch _displayStyle {
         case .compactRegularSize:
             Text(displayName)
             +
-            Text(" @\(name)")
+            Text(usernameText)
                 .foregroundStyle(.secondary)
         case .compact:
             Group {
                 Text(displayName)
                 +
-                Text(" @\(name)")
+                Text(usernameText)
                     .foregroundStyle(.secondary)
             }
             .font(.subheadline)
@@ -60,7 +73,7 @@ struct UserNameView: View {
                 Text(displayName)
                     .bold()
                 +
-                Text(" @\(name)")
+                Text(usernameText)
                     .foregroundStyle(.secondary)
             }
             .font(.subheadline)
@@ -68,7 +81,7 @@ struct UserNameView: View {
             VStack(alignment: .leading) {
                 Text(displayName)
                     .font(.headline)
-                Text("@\(name)")
+                Text(usernameText)
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -79,7 +92,7 @@ struct UserNameView: View {
                     .font(.largeTitle)
                     .bold()
                 HStack {
-                    Text("@\(name)")
+                    Text(usernameText)
                         .foregroundStyle(.secondary)
                     
                     if let _label {
