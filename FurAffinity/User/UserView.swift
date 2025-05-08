@@ -33,61 +33,20 @@ struct UserView: View {
         .frame(height: bannerHeight)
     }
     
-    private struct WatchControlStyle: LabelStyle {
-        func makeBody(configuration: Configuration) -> some View {
-            HStack(spacing: 5) {
-                configuration.icon
-                configuration.title
-            }
-            .font(.callout)
-            .padding(5)
-            .background {
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke()
-            }
-            .foregroundStyle(Color.accentColor)
-        }
-    }
-    
-    @ViewBuilder
-    var watchControl: some View {
-        if let watchData = user.watchData {
-            Spacer()
-            Button {
-                Task {
-                    await toggleWatchAction()
-                }
-            } label: {
-                Label(
-                    watchData.watching ? "Unwatch" : "Watch",
-                    systemImage: watchData.watching ? "bookmark.fill": "bookmark"
-                )
-                .labelStyle(WatchControlStyle())
-            }
-            // 🫠 https://forums.developer.apple.com/forums/thread/747558
-            .buttonStyle(BorderlessButtonStyle())
-            .sensoryFeedback(.impact, trigger: user.watchData?.watching, condition: {
-                $1 == true
-            })
-        }
-    }
-    
     var body: some View {
         List {
             Group {
                 banner
-                
                 VStack(alignment: .leading, spacing: 0) {
-                    HStack {
-                        AvatarView(avatarUrl: FAURLs.avatarUrl(for: user.name))
-                            .cornerRadius(12)
-                            .frame(width: 64, height: 64)
-                        UserNameView(
-                            name: user.name,
-                            displayName: user.displayName
-                        )
-                        .displayStyle(.multilineProminent)
-                        watchControl
+                    UserHeader(
+                        avatarUrl: FAURLs.avatarUrl(for: user.name),
+                        username: user.name,
+                        displayName: user.displayName
+                    )
+                    .label {
+                        if let watchData = user.watchData, watchData.watching {
+                            WatchingPill()
+                        }
                     }
                     .padding(.vertical, 5)
                     .padding(.horizontal, 10)
@@ -123,23 +82,36 @@ struct UserView: View {
             prefetchAvatars(for: user.shouts)
         }
         .scrollToItem(id: user.targetShoutId)
+        .toolbar {
+            if let url = FAURLs.userpageUrl(for: user.name) {
+                RemoteContentToolbarItem(url: url) {
+                    if let watchData = user.watchData {
+                        WatchButton(watchData: watchData) {
+                            _ = await toggleWatchAction()
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
 #Preview {
-    withAsync({
-        await (
-            FAUser.demo,
-            try! AttributedString(
-                FAHTML: FAUser.demo.htmlDescription
-            ).convertingLinksForInAppNavigation()
-        )
-    }) { user, description in
-        UserView(
-            user: user,
-            description: .constant(description),
-            toggleWatchAction: { true }
-        )
+    NavigationStack {
+        withAsync({
+            await (
+                FAUser.demo,
+                try! AttributedString(
+                    FAHTML: FAUser.demo.htmlDescription
+                ).convertingLinksForInAppNavigation()
+            )
+        }) { user, description in
+            UserView(
+                user: user,
+                description: .constant(description),
+                toggleWatchAction: { true }
+            )
+        }
     }
     //        .preferredColorScheme(.dark)
 }

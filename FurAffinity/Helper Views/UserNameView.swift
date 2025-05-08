@@ -33,6 +33,13 @@ struct UserNameView: View {
         return copy
     }
     
+    private var _label: AnyView?
+    func label(@ViewBuilder _ view: () -> some View) -> Self {
+        var copy = self
+        copy._label = AnyView(view())
+        return copy
+    }
+    
     var body: some View {
         switch _displayStyle {
         case .compactRegularSize:
@@ -67,12 +74,19 @@ struct UserNameView: View {
             }
             
         case .multilineProminent:
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 5) {
                 Text(displayName)
                     .font(.largeTitle)
                     .bold()
-                Text("@\(name)")
-                    .foregroundStyle(.secondary)
+                HStack {
+                    Text("@\(name)")
+                        .foregroundStyle(.secondary)
+                    
+                    if let _label {
+                        Spacer()
+                        _label
+                    }
+                }
             }
         }
     }
@@ -81,7 +95,6 @@ struct UserNameView: View {
 #Preview {
     List {
         ForEach(UserNameView.DisplayStyle.allCases, id: \.hashValue) { displayStyle in
-            
             HStack {
                 Text("\(displayStyle)")
                     .font(.caption)
@@ -92,6 +105,9 @@ struct UserNameView: View {
                     displayName: "Some User"
                 )
                 .displayStyle(displayStyle)
+                .label {
+                    WatchingPill()
+                }
                 .border(.tertiary)
             }
         }

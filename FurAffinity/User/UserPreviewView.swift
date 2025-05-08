@@ -31,18 +31,11 @@ struct UserPreviewView: View {
                 banner
                 
                 VStack(alignment: .leading, spacing: 0) {
-                    HStack {
-                        AvatarView(avatarUrl: preview.avatarUrl)
-                            .cornerRadius(12)
-                            .frame(width: 64, height: 64)
-                        if let displayName = preview.displayName {
-                            UserNameView(
-                                name: preview.username,
-                                displayName: displayName
-                            )
-                            .displayStyle(.multilineProminent)
-                        }
-                    }
+                    UserHeader(
+                        avatarUrl: preview.avatarUrl,
+                        username: preview.username,
+                        displayName: preview.displayName ?? " "
+                    )
                     .padding(.vertical, 5)
                     .padding(.horizontal, 10)
                     

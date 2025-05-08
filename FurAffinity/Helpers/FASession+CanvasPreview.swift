@@ -413,7 +413,7 @@ extension FAUser {
         get async {
             try! await FAUser(
                 name: "demo",
-                displayName: "Demo",
+                displayName: "Demo Long Name",
                 bannerUrl: URL(string: "https://www.furaffinity.net/themes/beta/img/banners/logo/fa-banner-winter.jpg")!,
                 htmlDescription: htmlDescription,
                 shouts: [
