@@ -93,6 +93,9 @@ struct UserView: View {
                 }
             }
         }
+        .sensoryFeedback(.impact, trigger: user.watchData?.watching, condition: {
+            $1 == true
+        })
     }
 }
 

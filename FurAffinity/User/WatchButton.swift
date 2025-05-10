@@ -31,9 +31,6 @@ struct WatchButton: View {
         }
         // 🫠 https://forums.developer.apple.com/forums/thread/747558
         .buttonStyle(BorderlessButtonStyle())
-        .sensoryFeedback(.impact, trigger: watchData?.watching, condition: {
-            $1 == true
-        })
     }
 }
 
