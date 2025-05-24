@@ -16,6 +16,7 @@ public struct FANotePage: Equatable {
     public let naturalDatetime: String
     public let htmlMessage: String
     public let answerKey: String
+    public let answerPlaceholderMessage: String
 }
 
 extension FANotePage {
@@ -66,6 +67,11 @@ extension FANotePage {
             
             let keyNode = try doc.select("form#note-form input[name=\"key\"]")
             self.answerKey = try keyNode.attr("value")
+            
+            let placeholderMessageNodeQuery = "div#main-window div#site-content div.messagecenter-mail-container div.messagecenter-mail-content-pane div.messagecenter-mail-note-preview-pane form#note-form section div.section-body div.table div.table-cell.user-submitted-links textarea#JSMessage_reply"
+            let placeholderMessageNode = try doc.select(placeholderMessageNodeQuery)
+            self.answerPlaceholderMessage = try "\n\n" + placeholderMessageNode.text()
+                .replacingOccurrences(of: "\r\n", with: "\n")
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil

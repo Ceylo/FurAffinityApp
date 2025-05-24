@@ -398,7 +398,15 @@ extension FANote {
                 datetime: "Apr 7th, 2022, 11:58 AM",
                 naturalDatetime: "8 months ago",
                 message: AttributedString(FAHTML: "Message with some spéciäl çhãrāčtęrs.\n<br> And a newline!".selfContainedFAHtmlSubmission),
-                answerKey: "84b24b5f34cdfaec56a3679144f6907a98576a57"
+                answerKey: "84b24b5f34cdfaec56a3679144f6907a98576a57",
+                answerPlaceholderMessage: """
+
+
+—————————
+original post by Some User (@someuser):
+
+Message with some spéciäl çhãrāčtęrs.\n<br> And a newline!
+"""
             )
         }
     }
