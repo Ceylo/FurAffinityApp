@@ -11,10 +11,27 @@ import FAKit
 struct NoteItemView: View {
     var notePreview: FANotePreview
     
+    private var target: FATarget? {
+        guard let url = FAURLs.userpageUrl(for: notePreview.author) else {
+            return nil
+        }
+        
+        return .user(
+            url: url,
+            previewData: .init(
+                username: notePreview.author,
+                displayName: notePreview.displayAuthor,
+                avatarUrl: FAURLs.avatarUrl(for: notePreview.author)
+            )
+        )
+    }
+    
     var body: some View {
         HStack(alignment: .top) {
-            AvatarView(avatarUrl: FAURLs.avatarUrl(for: notePreview.author))
-                .frame(width: 42, height: 42)
+            FALink(destination: target) {
+                AvatarView(avatarUrl: FAURLs.avatarUrl(for: notePreview.author))
+                    .frame(width: 42, height: 42)
+            }
             
             VStack(alignment: .leading, spacing: 5) {
                 HStack {
