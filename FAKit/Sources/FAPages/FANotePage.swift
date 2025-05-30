@@ -15,6 +15,7 @@ public struct FANotePage: Equatable {
     public let datetime: String
     public let naturalDatetime: String
     public let htmlMessage: String
+    public let htmlMessageWithoutWarning: String
     public let answerKey: String
     public let answerPlaceholderMessage: String
 }
@@ -53,13 +54,21 @@ extension FANotePage {
                 }
             }
             
-            _ = try noteContainerNode
-                .select("div.section-body > div.user-submitted-links > div.noteWarningMessage")
-                .wrap("<i style=\"color: red;\"></i>")
-                .append("<br />")
-            self.htmlMessage = try noteContainerNode
+            let noteMessageNode = try noteContainerNode
                 .select("div.section-body > div.user-submitted-links")
-                .html()
+            try noteMessageNode
+                .select("div.noteWarningMessage")
+                .wrap("<i class=\"fa-app-warning\" style=\"color: red;\"></i>")
+                .append("<br />")
+            self.htmlMessage = try noteMessageNode.html()
+            let warningNode = try noteMessageNode.select("i.fa-app-warning")
+            if !warningNode.isEmpty(){
+                try warningNode.remove()
+                self.htmlMessageWithoutWarning = try noteMessageNode.html()
+            } else {
+                self.htmlMessageWithoutWarning = self.htmlMessage
+            }
+            
             let dateNode = try noteContainerNode
                 .select("div.section-header div.message-center-note-information div.addresses span.popup_date")
             self.datetime = try dateNode.attr("title")

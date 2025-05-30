@@ -13,17 +13,25 @@ struct Commenting: ViewModifier {
     struct ReplySession {
         let parentCid: Int?
         let parentComment: FAComment?
+        let parentNote: FANote?
         
         init(parentCid: Int?, among comments: [FAComment]) {
             self.parentCid = parentCid
             self.parentComment = parentCid.flatMap { cid in
                 comments.recursiveFirst { $0.cid == cid }
             }
+            self.parentNote = nil
+        }
+        
+        init(parentNote: FANote) {
+            self.parentCid = nil
+            self.parentComment = nil
+            self.parentNote = parentNote
         }
     }
 
     @Binding var replySession: ReplySession?
-    var replyAction: (_ parentCid: Int?, _ text: String) async -> Bool
+    var replyAction: (_ replySession: ReplySession, _ text: String) async -> Bool
     @State private var commentText: String = ""
     @State private var replySent: Bool?
     
@@ -62,10 +70,11 @@ struct Commenting: ViewModifier {
         
         return CommentEditor(
             text: $commentText,
-            parentComment: replySession.parentComment
+            parentComment: replySession.parentComment,
+            parentNote: replySession.parentNote
         ) { action in
             if case .submit = action, !commentText.isEmpty {
-                let result = await replyAction(replySession.parentCid, commentText)
+                let result = await replyAction(replySession, commentText)
                 // Preserve user text unless submitted
                 commentText = ""
                 replySent = result
@@ -83,7 +92,21 @@ extension View {
     ) -> some View {
         modifier(Commenting(
             replySession: replySession,
-            replyAction: replyAction
+            replyAction: { session, text in
+                await replyAction(session.parentCid, text)
+            }
+        ))
+    }
+    
+    func noteReplySheet(
+        on replySession: Binding<Commenting.ReplySession?>,
+        _ replyAction: @escaping (_ note: FANote?, _ text: String) async -> Bool
+    ) -> some View {
+        modifier(Commenting(
+            replySession: replySession,
+            replyAction: { session, text in
+                await replyAction(session.parentNote, text)
+            }
         ))
     }
 }

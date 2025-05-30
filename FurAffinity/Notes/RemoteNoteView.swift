@@ -16,7 +16,21 @@ struct RemoteNoteView: View {
             url: url,
             dataSource: { await model.session?.note(for: $0) },
             view: { note, updateHandler in
-                NoteView(note: note)
+                NoteView(
+                    note: note,
+                    replyAction: { text in
+                        guard let session = model.session else {
+                            return false
+                        }
+                        
+                        return await session.sendNote(
+                            apiKey: note.answerKey,
+                            toUsername: note.author,
+                            subject: note.title,
+                            message: text + note.answerPlaceholderMessage
+                        )
+                    }
+                )
             }
         )
     }

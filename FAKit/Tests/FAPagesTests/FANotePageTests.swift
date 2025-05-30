@@ -20,7 +20,7 @@ struct FANotePageTests {
             datetime: "May 10th, 2024, 04:41 AM",
             naturalDatetime: "a year ago",
             htmlMessage: """
-<i style="color: red;">
+<i class="fa-app-warning" style="color: red;">
  <div class="noteWarningMessage noteWarningMessage--scam user-submitted-links"> 
   <div class="noteWarningMessage__icon"> 
    <img src="/themes/beta/img/icons/Error_l.png" /> 
@@ -32,6 +32,13 @@ struct FANotePageTests {
   </div> 
   <br />
  </div></i> Hey there,
+<br /> I hope you enjoyed the changes in the latest app version!
+<br /> If you'd like to see specific changes or have some troubles with it, please let me know! 💕
+<br /> 
+<br /> Have a nice day 🎉
+""",
+            htmlMessageWithoutWarning: """
+Hey there,
 <br /> I hope you enjoyed the changes in the latest app version!
 <br /> If you'd like to see specific changes or have some troubles with it, please let me know! 💕
 <br /> 
@@ -58,6 +65,7 @@ Have a nice day 🎉
         #expect(expected.datetime == page?.datetime)
         #expect(expected.naturalDatetime == page?.naturalDatetime)
         #expect(expected.htmlMessage == page?.htmlMessage)
+        #expect(expected.htmlMessageWithoutWarning == page?.htmlMessageWithoutWarning)
         #expect(expected.answerKey == page?.answerKey)
         #expect(expected.answerPlaceholderMessage == page?.answerPlaceholderMessage)
     }

@@ -80,6 +80,10 @@ class OfflineFASession: FASession {
         await FANote.demo
     }
     
+    func sendNote(apiKey: String, toUsername: String, subject: String, message: String) async -> Bool {
+        false
+    }
+    
     func notificationPreviews() async -> FANotificationPreviews {
         notificationPreviews
     }
@@ -398,6 +402,7 @@ extension FANote {
                 datetime: "Apr 7th, 2022, 11:58 AM",
                 naturalDatetime: "8 months ago",
                 message: AttributedString(FAHTML: "Message with some spéciäl çhãrāčtęrs.\n<br> And a newline!".selfContainedFAHtmlSubmission),
+                messageWithoutWarning: AttributedString(FAHTML: "Message with some spéciäl çhãrāčtęrs.\n<br> And a newline!".selfContainedFAHtmlSubmission),
                 answerKey: "84b24b5f34cdfaec56a3679144f6907a98576a57",
                 answerPlaceholderMessage: """
 

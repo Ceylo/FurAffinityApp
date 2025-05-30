@@ -8,9 +8,10 @@
 import SwiftUI
 import FAKit
 
-struct NoteView: View {
+struct NoteContentsView: View {
     var note: FANote
-    
+    var showWarning: Bool
+
     var userFATarget: FATarget? {
         guard let userUrl = FAURLs.userpageUrl(for: note.author) else {
             return nil
@@ -26,45 +27,70 @@ struct NoteView: View {
         )
     }
     
+    private var message: AttributedString {
+        (showWarning ? note.message : note.messageWithoutWarning)
+            .convertingLinksForInAppNavigation()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading) {
+                HStack {
+                    FALink(destination: userFATarget) {
+                        HStack {
+                            AvatarView(avatarUrl: FAURLs.avatarUrl(for: note.author))
+                                .frame(width: 42, height: 42)
+                            UserNameView(
+                                name: note.author,
+                                displayName: note.displayAuthor
+                            )
+                            .displayStyle(.multiline)
+                            // Overwrite blue of FALink
+                            .foregroundColor(.primary)
+                        }
+                    }
+                    Spacer()
+                    DateTimeButton(datetime: note.datetime,
+                                   naturalDatetime: note.naturalDatetime)
+                }
+                
+                Text(note.title)
+                    .font(.title2)
+            }
+            Divider()
+                .padding(.vertical, 5)
+            
+            HTMLView(text: message)
+            // for text view inset
+                .padding(.horizontal, -5)
+        }
+    }
+}
+
+struct NoteView: View {
+    var note: FANote
+    var replyAction: (_ text: String) async -> Bool
+
+    @State private var replySession: Commenting.ReplySession?
+    
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                VStack(alignment: .leading) {
-                    HStack {
-                        FALink(destination: userFATarget) {
-                            HStack {
-                                AvatarView(avatarUrl: FAURLs.avatarUrl(for: note.author))
-                                    .frame(width: 42, height: 42)
-                                UserNameView(
-                                    name: note.author,
-                                    displayName: note.displayAuthor
-                                )
-                                .displayStyle(.multiline)
-                                // Overwrite blue of FALink
-                                .foregroundColor(.primary)
-                            }
-                        }
-                        Spacer()
-                        DateTimeButton(datetime: note.datetime,
-                                       naturalDatetime: note.naturalDatetime)
-                    }
-                    
-                    Text(note.title)
-                        .font(.title2)
-                }
-                Divider()
-                    .padding(.vertical, 5)
-                
-                HTMLView(text: note.message.convertingLinksForInAppNavigation())
-                // for text view inset
-                    .padding(.horizontal, -5)
-            }
+            NoteContentsView(note: note, showWarning: true)
             .padding()
             .navigationTitle(note.title)
             .navigationBarTitleDisplayMode(.inline)
+            .noteReplySheet(on: $replySession) { _, text in
+                await replyAction(text)
+            }
         }
         .toolbar {
-            RemoteContentToolbarItem(url: note.url)
+            RemoteContentToolbarItem(url: note.url) {
+                Button {
+                    replySession = .init(parentNote: note)
+                } label: {
+                    Label("Reply", systemImage: "bubble")
+                }
+            }
         }
     }
 }
@@ -72,7 +98,13 @@ struct NoteView: View {
 #Preview {
     NavigationStack {
         withAsync({ await FANote.demo }) { note in
-            NoteView(note: note)
+            NoteView(
+                note: note,
+                replyAction: { text in
+                    print(text)
+                    return true
+                }
+            )
         }
     }
 //        .preferredColorScheme(.dark)

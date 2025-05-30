@@ -16,11 +16,16 @@ public struct FANote: Equatable, Sendable {
     public let datetime: String
     public let naturalDatetime: String
     public let message: AttributedString
+    public let messageWithoutWarning: AttributedString
     public let answerKey: String
     public let answerPlaceholderMessage: String
     
-    public init(url: URL, author: String, displayAuthor: String, title: String, datetime: String,
-                naturalDatetime: String, message: AttributedString, answerKey: String, answerPlaceholderMessage: String) {
+    public init(
+        url: URL, author: String, displayAuthor: String, title: String,
+        datetime: String, naturalDatetime: String,
+        message: AttributedString, messageWithoutWarning: AttributedString,
+        answerKey: String, answerPlaceholderMessage: String
+    ) {
         self.url = url
         self.author = author
         self.displayAuthor = displayAuthor
@@ -28,6 +33,7 @@ public struct FANote: Equatable, Sendable {
         self.datetime = datetime
         self.naturalDatetime = naturalDatetime
         self.message = message
+        self.messageWithoutWarning = messageWithoutWarning
         self.answerKey = answerKey
         self.answerPlaceholderMessage = answerPlaceholderMessage
     }
@@ -43,6 +49,7 @@ public extension FANote {
             datetime: notePage.datetime,
             naturalDatetime: notePage.naturalDatetime,
             message: await AttributedString(FAHTML: notePage.htmlMessage.selfContainedFAHtmlSubmission),
+            messageWithoutWarning: await AttributedString(FAHTML: notePage.htmlMessageWithoutWarning.selfContainedFAHtmlSubmission),
             answerKey: notePage.answerKey,
             answerPlaceholderMessage: notePage.answerPlaceholderMessage
         )

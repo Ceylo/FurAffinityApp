@@ -163,6 +163,24 @@ public class OnlineFASession: FASession {
         return try? await FANote(page, url: url)
     }
     
+    public func sendNote(apiKey: String, toUsername: String, subject: String, message: String) async -> Bool {
+        let url = URL(string: "https://www.furaffinity.net/msg/send/")!
+        let params: [URLQueryItem] = [
+            .init(name: "key", value: apiKey),
+            .init(name: "to", value: toUsername),
+            .init(name: "subject", value: subject),
+            .init(name: "message", value: message),
+        ]
+        
+        guard let data = await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params),
+              await FANotesPage(data: data) != nil else {
+            return false
+        }
+        
+        logger.debug("Note successfully delivered to \(toUsername)")
+        return true
+    }
+    
     // MARK: - Notifications
     public func notificationPreviews() async -> FANotificationPreviews {
         await notificationPreviews(method: .GET, parameters: [])

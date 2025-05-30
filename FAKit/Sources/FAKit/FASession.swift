@@ -61,6 +61,7 @@ public protocol FASession: AnyObject, Equatable {
     // MARK: - Notes
     func notePreviews() async -> [FANotePreview]
     func note(for url: URL) async -> FANote?
+    func sendNote(apiKey: String, toUsername: String, subject: String, message: String) async -> Bool
     
     // MARK: - Notifications
     func notificationPreviews() async -> FANotificationPreviews

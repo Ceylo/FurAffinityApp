@@ -16,6 +16,7 @@ struct CommentEditor: View {
     
     @Binding var text: String
     var parentComment: FAComment?
+    var parentNote: FANote?
     var handler: (_ action: Action) async -> Void
     @FocusState private var editorHasFocus: Bool
     @State private var actionInProgress: Action?
@@ -63,6 +64,12 @@ struct CommentEditor: View {
                                 .allowsHitTesting(false)
                                 .padding()
                             Divider()
+                        } else if let parentNote {
+                            NoteContentsView(note: parentNote, showWarning: false)
+                                .allowsHitTesting(false)
+                                .padding([.leading, .trailing, .top])
+                                .padding(.bottom, -10)
+                            Divider()
                         }
                         
                         TextEditor(text: $text)
@@ -79,12 +86,20 @@ struct CommentEditor: View {
     }
 }
 
-#Preview {
+#Preview("Reply to journal/submission") {
     withAsync({ await FAComment.demo[0] }) {
         CommentEditor(text: .constant("Hello"), parentComment: $0) { action in
             try! await Task.sleep(for: .seconds(1))
             print(action as Any)
         }
-        .border(.red)
+    }
+}
+
+#Preview("Reply to note") {
+    withAsync({ await FANote.demo }) {
+        CommentEditor(text: .constant(""), parentNote: $0) { action in
+            try! await Task.sleep(for: .seconds(1))
+            print(action as Any)
+        }
     }
 }
