@@ -40,12 +40,12 @@ extension CommentEditor: ReplyEditor {
     typealias SomeReplySession = CommentReplySession
     
     init(
-        replyStorage: ObservedObject<CommentReply>,
+        replyStorage: CommentReply,
         displayData: CommentReplySession.DisplayData,
         actionHandler: @escaping (_ action: ReplyEditorAction) async -> Void
     ) {
         self.init(
-            text: replyStorage.projectedValue.commentText,
+            reply: replyStorage,
             parentComment: displayData,
             handler: actionHandler
         )

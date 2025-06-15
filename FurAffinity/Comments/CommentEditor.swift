@@ -9,7 +9,7 @@ import SwiftUI
 import FAKit
 
 struct CommentEditor: View {
-    @Binding var text: String
+    @ObservedObject var reply: CommentReply
     var parentComment: FAComment?
     var handler: (_ action: ReplyEditorAction) async -> Void
     @FocusState private var editorHasFocus: Bool
@@ -39,7 +39,7 @@ struct CommentEditor: View {
                         actionInProgress = nil
                     }
                 }
-                .disabled(text.isEmpty || actionInProgress != nil)
+                .disabled(!reply.isValidForSubmission || actionInProgress != nil)
                 
                 if actionInProgress == .submit {
                     ProgressView()
@@ -60,7 +60,7 @@ struct CommentEditor: View {
                             Divider()
                         }
                         
-                        TextEditor(text: $text)
+                        TextEditor(text: $reply.commentText)
                             .focused($editorHasFocus)
                             .onAppear {
                                 editorHasFocus = true
@@ -76,10 +76,10 @@ struct CommentEditor: View {
 
 #Preview("Reply to journal/submission") {
     @Previewable
-    @State var text: String = ""
+    @ObservedObject var reply = CommentReply()
     
     withAsync({ await FAComment.demo[0] }) {
-        CommentEditor(text: $text, parentComment: $0) { action in
+        CommentEditor(reply: reply, parentComment: $0) { action in
             try! await Task.sleep(for: .seconds(1))
             print(action as Any)
         }

@@ -29,7 +29,7 @@ protocol ReplyEditor<SomeReplyStorage>: View {
     associatedtype SomeReplySession: ReplySession
     
     init(
-        replyStorage: ObservedObject<SomeReplyStorage>,
+        replyStorage: SomeReplyStorage,
         displayData: SomeReplySession.DisplayData,
         actionHandler: @escaping (_ action: ReplyEditorAction) async -> Void
     )
@@ -75,7 +75,7 @@ struct Replying<SomeReplyEditor: ReplyEditor>: ViewModifier {
         }
         
         return SomeReplyEditor(
-            replyStorage: _replyStorage,
+            replyStorage: replyStorage,
             displayData: replySession.displayData
         ) { action in
             if case .submit = action, replyStorage.isValidForSubmission {

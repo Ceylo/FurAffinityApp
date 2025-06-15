@@ -9,9 +9,7 @@ import SwiftUI
 import FAKit
 
 struct NoteEditor: View {
-    @Binding var destinationUser: String
-    @Binding var subject: String
-    @Binding var text: String
+    @ObservedObject var reply: NoteReply
     var defaultContents: NoteReplySession.DefaultContents
     var handler: (_ action: ReplyEditorAction) async -> Void
     
@@ -26,7 +24,7 @@ struct NoteEditor: View {
             return false
         }
         
-        return !destinationUser.isEmpty && !subject.isEmpty && !text.isEmpty
+        return reply.isValidForSubmission
     }
     
     var body: some View {
@@ -69,7 +67,7 @@ struct NoteEditor: View {
                     VStack(spacing: 0) {
                         VStack {
                             LabeledContent("To:") {
-                                TextField("user static name", text: $destinationUser)
+                                TextField("user static name", text: $reply.destinationUser)
                                     .textInputAutocapitalization(.never)
                                     .autocorrectionDisabled()
                                     .foregroundStyle(.primary)
@@ -79,7 +77,7 @@ struct NoteEditor: View {
                             
                             Divider()
                             LabeledContent("Subject:") {
-                                TextField("Note title", text: $subject)
+                                TextField("Note title", text: $reply.subject)
                                     .foregroundStyle(.primary)
                             }
                             .focused($subjectHasFocus)
@@ -89,28 +87,28 @@ struct NoteEditor: View {
                         
                         Divider()
                         
-                        TextEditor(text: $text)
+                        TextEditor(text: $reply.text)
                             .autocorrectionDisabled()
                             .focused($textEditorHasFocus)
                             .padding()
                     }
                     .frame(minHeight: geometry.size.height)
                     .onAppear {
-                        if destinationUser.isEmpty {
-                            destinationUser = defaultContents.destinationUser
+                        if reply.destinationUser.isEmpty {
+                            reply.destinationUser = defaultContents.destinationUser
                         }
                         
-                        if subject.isEmpty {
-                            subject = defaultContents.subject
+                        if reply.subject.isEmpty {
+                            reply.subject = defaultContents.subject
                         }
                         
-                        if text.isEmpty {
-                            text = defaultContents.text
+                        if reply.text.isEmpty {
+                            reply.text = defaultContents.text
                         }
                         
-                        if destinationUser.isEmpty {
+                        if reply.destinationUser.isEmpty {
                             destinationUserHasFocus = true
-                        } else if subject.isEmpty {
+                        } else if reply.subject.isEmpty {
                             subjectHasFocus = true
                         } else {
                             textEditorHasFocus = true
@@ -123,14 +121,11 @@ struct NoteEditor: View {
 }
 
 #Preview("New note") {
-    @Previewable @State var destinationUser: String = ""
-    @Previewable @State var subject: String = ""
-    @Previewable @State var text: String = ""
+    @Previewable
+    @ObservedObject var reply = NoteReply()
     
     NoteEditor(
-        destinationUser: $destinationUser,
-        subject: $subject,
-        text: $text,
+        reply: reply,
         defaultContents: .init() //.init(destinationUser: "tata", subject: "titi", text: "toto")
     ) { action in
         try! await Task.sleep(for: .seconds(1))

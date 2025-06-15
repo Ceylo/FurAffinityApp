@@ -46,14 +46,12 @@ extension NoteEditor: ReplyEditor {
     typealias SomeReplySession = NoteReplySession
     
     init(
-        replyStorage: ObservedObject<NoteReply>,
+        replyStorage: NoteReply,
         displayData: NoteReplySession.DisplayData,
         actionHandler: @escaping (_ action: ReplyEditorAction) async -> Void
     ) {
         self.init(
-            destinationUser: replyStorage.projectedValue.destinationUser,
-            subject: replyStorage.projectedValue.subject,
-            text: replyStorage.projectedValue.text,
+            reply: replyStorage,
             defaultContents: displayData,
             handler: actionHandler
         )
