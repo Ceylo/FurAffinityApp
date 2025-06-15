@@ -17,11 +17,12 @@ struct RemoteJournalView: View {
             await model.session?.journal(for: url)
         }) { journal, updateHandler in
             JournalView(journal: journal,
-                        replyAction: { parentCid, text in
-                let updatedJournal = try? await model
-                    .postComment(on: journal,
-                                 replytoCid: parentCid,
-                                 contents: text)
+                        replyAction: { parentCid, reply in
+                let updatedJournal = try? await model.postComment(
+                    on: journal,
+                    replytoCid: parentCid,
+                    contents: reply.commentText
+                )
                 updateHandler.update(with: updatedJournal)
                 return updatedJournal != nil
             })

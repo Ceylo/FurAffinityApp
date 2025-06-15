@@ -44,11 +44,11 @@ struct RemoteSubmissionView: View {
                             updateHandler.update(with: updated)
                         }
                     },
-                    replyAction: { parentCid, text in
+                    replyAction: { parentCid, reply in
                         let updated = try? await model.postComment(
                             on: submission,
                             replytoCid: parentCid,
-                            contents: text
+                            contents: reply.commentText
                         )
                         updateHandler.update(with: updated)
                         return updated != nil

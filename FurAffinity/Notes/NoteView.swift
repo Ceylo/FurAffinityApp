@@ -69,9 +69,9 @@ struct NoteContentsView: View {
 
 struct NoteView: View {
     var note: FANote
-    var replyAction: (_ text: String) async -> Bool
+    var replyAction: (_ destinationUser: String, _ subject: String, _ text: String) async -> Bool
 
-    @State private var replySession: Commenting.ReplySession?
+    @State private var replySession: NoteReplySession?
     
     var body: some View {
         ScrollView {
@@ -79,14 +79,20 @@ struct NoteView: View {
             .padding()
             .navigationTitle(note.title)
             .navigationBarTitleDisplayMode(.inline)
-            .noteReplySheet(on: $replySession) { _, text in
-                await replyAction(text)
+            .noteReplySheet(on: $replySession) { reply in
+                await replyAction(reply.destinationUser, reply.subject, reply.text)
             }
         }
         .toolbar {
             RemoteContentToolbarItem(url: note.url) {
                 Button {
-                    replySession = .init(parentNote: note)
+                    replySession = .init(
+                        defaultContents: .init(
+                            destinationUser: note.author,
+                            subject: note.title,
+                            text: note.answerPlaceholderMessage
+                        )
+                    )
                 } label: {
                     Label("Reply", systemImage: "bubble")
                 }
@@ -100,8 +106,8 @@ struct NoteView: View {
         withAsync({ await FANote.demo }) { note in
             NoteView(
                 note: note,
-                replyAction: { text in
-                    print(text)
+                replyAction: { destinationUser, subject, text in
+                    print(destinationUser, subject, text)
                     return true
                 }
             )

@@ -13,12 +13,12 @@ struct SubmissionView: View {
     var avatarUrl: URL?
     var thumbnail: DynamicThumbnail?
     var favoriteAction: () -> Void
-    var replyAction: (_ parentCid: Int?, _ text: String) async -> Bool
+    var replyAction: @MainActor (_ parentCid: Int?, _ text: CommentReply) async -> Bool
     
     struct ReplySession {
         let parentCid: Int?
     }
-    @State private var replySession: Commenting.ReplySession?
+    @State private var replySession: CommentReplySession?
     @State private var fullResolutionMediaFileUrl: URL?
     
     var header: some View {

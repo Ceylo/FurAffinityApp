@@ -11,9 +11,9 @@ import Combine
 
 struct JournalView: View {
     var journal: FAJournal
-    var replyAction: (_ parentCid: Int?, _ text: String) async -> Bool
+    var replyAction: @MainActor (_ parentCid: Int?, _ reply: CommentReply) async -> Bool
     
-    @State private var replySession: Commenting.ReplySession?
+    @State private var replySession: CommentReplySession?
     
     var header: some View {
         AuthoredHeaderView(

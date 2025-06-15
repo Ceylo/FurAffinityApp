@@ -9,17 +9,11 @@ import SwiftUI
 import FAKit
 
 struct CommentEditor: View {
-    enum Action {
-        case submit
-        case cancel
-    }
-    
     @Binding var text: String
     var parentComment: FAComment?
-    var parentNote: FANote?
-    var handler: (_ action: Action) async -> Void
+    var handler: (_ action: ReplyEditorAction) async -> Void
     @FocusState private var editorHasFocus: Bool
-    @State private var actionInProgress: Action?
+    @State private var actionInProgress: ReplyEditorAction?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -64,12 +58,6 @@ struct CommentEditor: View {
                                 .allowsHitTesting(false)
                                 .padding()
                             Divider()
-                        } else if let parentNote {
-                            NoteContentsView(note: parentNote, showWarning: false)
-                                .allowsHitTesting(false)
-                                .padding([.leading, .trailing, .top])
-                                .padding(.bottom, -10)
-                            Divider()
                         }
                         
                         TextEditor(text: $text)
@@ -87,17 +75,11 @@ struct CommentEditor: View {
 }
 
 #Preview("Reply to journal/submission") {
+    @Previewable
+    @State var text: String = ""
+    
     withAsync({ await FAComment.demo[0] }) {
-        CommentEditor(text: .constant("Hello"), parentComment: $0) { action in
-            try! await Task.sleep(for: .seconds(1))
-            print(action as Any)
-        }
-    }
-}
-
-#Preview("Reply to note") {
-    withAsync({ await FANote.demo }) {
-        CommentEditor(text: .constant(""), parentNote: $0) { action in
+        CommentEditor(text: $text, parentComment: $0) { action in
             try! await Task.sleep(for: .seconds(1))
             print(action as Any)
         }
