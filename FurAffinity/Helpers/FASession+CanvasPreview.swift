@@ -341,7 +341,6 @@ extension FASubmission {
                     rating: .general,
                     category: "Artwork (Digital) / All",
                     species: "Unspecified / Any",
-                    gender: "Female",
                     size: "888 x 1280",
                     fileSize: "949.8 kB",
                     keywords: ["mikazukihellfire", "medea", "female", "cute", "chibi", "annetpeas", "halloween", "witch", "grimoire", "magic", "books"],

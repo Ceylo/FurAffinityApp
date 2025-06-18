@@ -45,7 +45,6 @@ extension FASubmissionPage.Metadata {
             rating: rating,
             category: category,
             species: species,
-            gender: gender,
             size: size,
             fileSize: fileSize,
             keywords: keywords,
@@ -60,7 +59,7 @@ final class FASubmissionPageTests: XCTestCase {
         let data = testData("www.furaffinity.net:view:49338772-nocomment.html")
         let page = try await FASubmissionPage(data: data, url: url).unwrap()
         
-        let htmlDescription = "YCH for \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20250304/lil-maj.gif\" align=\"middle\" title=\"lil-maj\" alt=\"lil-maj\" />&nbsp;lil-maj</a> \n<br /> \n<br /> Cody © \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20250304/lil-maj.gif\" align=\"middle\" title=\"lil-Maj\" alt=\"lil-Maj\" />&nbsp;lil-Maj</a>\n<br /> \n<br /> \n<br /> \n<br /> \n<br /> \n<br /> *******************************\n<br /> * \n<a class=\"auto_link named_url\" href=\"http://ko-fi.com/J3J16KSH\">Feed me with coffee?</a>\n<br /> * \n<a class=\"auto_link named_url\" href=\"https://www.furaffinity.net/gallery/annetpeas/\">My Gallery</a>\n<br /> * \n<a class=\"auto_link named_url\" href=\"https://twitter.com/AnnetPeas_Art\">Twitter</a>"
+        let htmlDescription = "YCH for \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20250618/lil-maj.gif\" align=\"middle\" title=\"lil-maj\" alt=\"lil-maj\" />&nbsp;lil-maj</a> \n<br /> \n<br /> Cody © \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20250618/lil-maj.gif\" align=\"middle\" title=\"lil-Maj\" alt=\"lil-Maj\" />&nbsp;lil-Maj</a>\n<br /> \n<br /> \n<br /> \n<br /> \n<br /> \n<br /> *******************************\n<br /> * \n<a class=\"auto_link named_url external\" href=\"http://ko-fi.com/J3J16KSH\" rel=\"nofollow ugc noreferrer noopener\">Feed me with coffee?</a>\n<br /> * \n<a class=\"auto_link named_url\" href=\"https://www.furaffinity.net/gallery/annetpeas/\">My Gallery</a>\n<br /> * \n<a class=\"auto_link named_url external\" href=\"https://twitter.com/AnnetPeas_Art\" rel=\"nofollow ugc noreferrer noopener\">Twitter</a>"
         let expected = FASubmissionPage(
             previewImageUrl: URL(string: "https://t.furaffinity.net/49338772@600-1665402309.jpg")!,
             fullResolutionMediaUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1665402309/1665402309.annetpeas_the_hookah_fa.png")!,
@@ -69,15 +68,14 @@ final class FASubmissionPageTests: XCTestCase {
                 title: "The hookah",
                 author: "annetpeas",
                 displayAuthor: "AnnetPeas",
-                datetime: "Oct 10, 2022 02:45 PM",
+                datetime: "Oct 10, 2022 01:45 PM",
                 naturalDatetime: "2 years ago",
-                viewCount: 709,
+                viewCount: 735,
                 commentCount: 0,
                 favoriteCount: 67,
                 rating: .general,
                 category: "Artwork (Digital) / All",
                 species: "Rabbit / Hare",
-                gender: "Female",
                 size: "1217 x 1280",
                 fileSize: "1.22 MB",
                 keywords: ["lil-maj", "cody", "female", "girl", "rabbit", "cute", "chibi", "annetpeas", "smoke", "smoking", "hookah"],
@@ -89,7 +87,7 @@ final class FASubmissionPageTests: XCTestCase {
             ),
             htmlDescription: htmlDescription,
             isFavorite: false,
-            favoriteUrl: URL(string: "https://www.furaffinity.net/fav/49338772/?key=6555a9bf1579c4306b298b3280308fcc7914d545")!,
+            favoriteUrl: URL(string: "https://www.furaffinity.net/fav/49338772/?key=f9e1b3524adb4300b2f18830056c36f5e6deca0ca570d1a0323498f98a75802d")!,
             comments: [],
             targetCommentId: nil,
             acceptsNewComments: true
