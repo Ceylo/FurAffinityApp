@@ -31,7 +31,7 @@ extension Rating {
 
 public struct FASubmissionPage: Equatable, Sendable {
     public struct Metadata: Hashable, Sendable {
-        public init(title: String, author: String, displayAuthor: String, datetime: String, naturalDatetime: String, viewCount: Int, commentCount: Int, favoriteCount: Int, rating: Rating, category: String, species: String, gender: String, size: String, fileSize: String, keywords: [String], folders: [FAFolder]) {
+        public init(title: String, author: String, displayAuthor: String, datetime: String, naturalDatetime: String, viewCount: Int, commentCount: Int, favoriteCount: Int, rating: Rating, category: String, species: String, size: String, fileSize: String, keywords: [String], folders: [FAFolder]) {
             self.title = title
             self.author = author
             self.displayAuthor = displayAuthor
@@ -43,7 +43,6 @@ public struct FASubmissionPage: Equatable, Sendable {
             self.rating = rating
             self.category = category
             self.species = species
-            self.gender = gender
             self.size = size
             self.fileSize = fileSize
             self.keywords = keywords
@@ -63,7 +62,6 @@ public struct FASubmissionPage: Equatable, Sendable {
         
         public let category: String
         public let species: String
-        public let gender: String
         public let size: String
         public let fileSize: String
         public let keywords: [String]
@@ -168,7 +166,6 @@ extension FASubmissionPage {
             }
             let category = try readRow("Category", "div")
             let species = try readRow("Species", "span")
-            let gender = try readRow("Gender", "span")
             let fileSize = try readRow("File Size", "span")
             
             let keywordNodes = try sidebarNode.select("section.tags-row > span.tags")
@@ -198,7 +195,6 @@ extension FASubmissionPage {
                 rating: rating,
                 category: category,
                 species: species,
-                gender: gender,
                 size: sizeText,
                 fileSize: fileSize,
                 keywords: keywords,
@@ -226,7 +222,6 @@ extension FASubmissionPage.Metadata {
             rating: rating,
             category: category,
             species: species,
-            gender: gender,
             size: size,
             fileSize: fileSize,
             keywords: keywords,

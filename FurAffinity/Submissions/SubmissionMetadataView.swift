@@ -45,7 +45,6 @@ struct SubmissionMetadataView: View {
                 LabeledContent("Rating", value: metadata.rating.displayDescription)
                 LabeledContent("Category", value: metadata.category)
                 LabeledContent("Species", value: metadata.species)
-                LabeledContent("Gender", value: metadata.gender)
             }
             
             Section("Statistics") {
