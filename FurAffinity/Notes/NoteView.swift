@@ -94,7 +94,7 @@ struct NoteView: View {
                         )
                     )
                 } label: {
-                    Label("Reply", systemImage: "bubble")
+                    Label("Reply", systemImage: "message")
                 }
             }
         }

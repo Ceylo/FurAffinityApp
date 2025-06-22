@@ -49,7 +49,7 @@ struct UserView: View {
                     destinationUser: user.name
                 ))
             } label: {
-                Label("Send a Note", systemImage: "bubble")
+                Label("Send a Note", systemImage: "message")
             }
         }
     }

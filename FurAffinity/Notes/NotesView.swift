@@ -10,6 +10,8 @@ import FAKit
 
 struct NotesView: View {
     var notes: [FANotePreview]
+    var sendNoteAction: (_ destinationUser: String, _ subject: String, _ message: String) async throws -> Void
+    @State private var noteReplySession: NoteReplySession?
     
     var body: some View {
         List(notes) { preview in
@@ -22,7 +24,6 @@ struct NotesView: View {
         .listStyle(.plain)
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("Notes")
-        .toolbar(.hidden, for: .navigationBar)
         .swap(when: notes.isEmpty) {
             ScrollView {
                 VStack(spacing: 10) {
@@ -37,17 +38,37 @@ struct NotesView: View {
                 .padding()
             }
         }
+        .toolbar {
+            Menu {
+                Button {
+                    noteReplySession = .init(defaultContents: .init())
+                } label: {
+                    Label("Send a Note", systemImage: "message")
+                }
+            } label: {
+                ActionControl()
+            }
+            .noteReplySheet(on: $noteReplySession) { reply in
+                try await sendNoteAction(reply.destinationUser, reply.subject, reply.text)
+            }
+        }
     }
 }
 
 #Preview {
     NavigationStack {
-        NotesView(notes: OfflineFASession.default.notePreviews)
+        NotesView(
+            notes: OfflineFASession.default.notePreviews,
+            sendNoteAction: { _, _, _ in }
+        )
     }
 }
 
 #Preview {
     NavigationStack {
-        NotesView(notes: OfflineFASession.empty.notePreviews)
+        NotesView(
+            notes: OfflineFASession.empty.notePreviews,
+            sendNoteAction: { _, _, _ in }
+        )
     }
 }
