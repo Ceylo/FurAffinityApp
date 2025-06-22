@@ -117,12 +117,16 @@ struct SettingsView: View {
                 Section("Account") {
                     Button("Disconnect from \(session.displayUsername)", role: .destructive) {
                         Task {
-                            await FALoginView.logout()
-                            let newSession = await FALoginView.makeSession()
-                            assert(newSession == nil)
-                            DispatchQueue.main.async {
-                                model.clearSessionData()
-                                model.session = newSession
+                            await withTaskCancellationHandler {
+                                await FALoginView.logout()
+                                let newSession = await FALoginView.makeSession()
+                                assert(newSession == nil)
+                                DispatchQueue.main.async {
+                                    model.clearSessionData()
+                                    model.session = newSession
+                                }
+                            } onCancel: {
+                                logger.warning("logout was cancelled")
                             }
                         }
                     }
