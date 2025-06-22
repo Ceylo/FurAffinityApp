@@ -249,6 +249,16 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         return fetchedNotes
     }
     
+    func markInboxNoteAsRead(_ note: FANote) {
+        let idx = inboxNotePreviews?.firstIndex { preview in
+            preview.noteUrl == note.url
+        }
+        if let idx, let inboxNotePreviews {
+            self.inboxNotePreviews![idx] = inboxNotePreviews[idx].asRead()
+            unreadInboxNoteCount = self.inboxNotePreviews!.filter { $0.unread }.count
+        }
+    }
+    
     // MARK: - Notifications feed
     func fetchNotificationPreviews() async {
         await fetchNotificationPreviews { session in

@@ -32,13 +32,28 @@ public struct FANotePreview: Hashable, Identifiable, Sendable {
 
 public extension FANotePreview {
     init(_ header: FANotesPage.NoteHeader) {
-        self.init(id: header.id,
-                  author: header.author,
-                  displayAuthor: header.displayAuthor,
-                  title: header.title,
-                  datetime: header.datetime,
-                  naturalDatetime: header.naturalDatetime,
-                  unread: header.unread,
-                  noteUrl: header.noteUrl)
+        self.init(
+            id: header.id,
+            author: header.author,
+            displayAuthor: header.displayAuthor,
+            title: header.title,
+            datetime: header.datetime,
+            naturalDatetime: header.naturalDatetime,
+            unread: header.unread,
+            noteUrl: header.noteUrl
+        )
+    }
+    
+    func asRead() -> Self {
+        Self.init(
+            id: id,
+            author: author,
+            displayAuthor: displayAuthor,
+            title: title,
+            datetime: datetime,
+            naturalDatetime: naturalDatetime,
+            unread: false,
+            noteUrl: noteUrl
+        )
     }
 }
