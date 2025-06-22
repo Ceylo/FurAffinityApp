@@ -14,6 +14,7 @@ struct AvatarView: View {
     var avatarUrl: URL?
     @Default(.animateAvatars) var animateAvatars
     private var cornerRadius: CGFloat = 5
+    private var fadeDuration = 0.25
     
     init(avatarUrl: URL? = nil) {
         self.avatarUrl = avatarUrl
@@ -25,6 +26,12 @@ struct AvatarView: View {
         return copy
     }
     
+    func fadeDuration(_ duration: Double) -> Self {
+        var copy = self
+        copy.fadeDuration = duration
+        return copy
+    }
+    
     private func configure(_ image: some KFImageProtocol) -> some KFImageProtocol {
         image
             .placeholder {
@@ -32,7 +39,7 @@ struct AvatarView: View {
                     .foregroundColor(.white.opacity(0.1))
             }
             .onFailureImage(.defaultAvatar)
-            .fade(duration: 0.25)
+            .fade(duration: fadeDuration)
     }
     
     var body: some View {

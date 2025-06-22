@@ -7,6 +7,7 @@
 
 import SwiftUI
 import FAKit
+import Combine
 
 struct NoteEditor: View {
     @ObservedObject var reply: NoteReply
@@ -17,6 +18,7 @@ struct NoteEditor: View {
     @FocusState private var subjectHasFocus: Bool
     @FocusState private var textEditorHasFocus: Bool
     @State private var actionInProgress: ReplyEditorAction?
+    @State private var avatarUrl: URL?
     
     var canCancel: Bool { actionInProgress == nil }
     var canSubmit: Bool {
@@ -27,38 +29,103 @@ struct NoteEditor: View {
         return reply.isValidForSubmission
     }
     
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                Button("Cancel") {
-                    actionInProgress = .cancel
-                    Task {
-                        await handler(.cancel)
-                        actionInProgress = nil
-                    }
-                }
-                .disabled(!canCancel)
-                
-                if actionInProgress == .cancel {
-                    ProgressView()
-                }
-                
-                Spacer()
-                Button("Send Note") {
-                    actionInProgress = .submit
-                    Task {
-                        await handler(.submit)
-                        actionInProgress = nil
-                    }
-                }
-                .disabled(!canSubmit)
-                
-                if actionInProgress == .submit {
-                    ProgressView()
+    var controls: some View {
+        HStack(spacing: 10) {
+            Button("Cancel") {
+                actionInProgress = .cancel
+                Task {
+                    await handler(.cancel)
+                    actionInProgress = nil
                 }
             }
+            .disabled(!canCancel)
+            
+            if actionInProgress == .cancel {
+                ProgressView()
+            }
+            
+            Spacer()
+            Button("Send Note") {
+                actionInProgress = .submit
+                Task {
+                    await handler(.submit)
+                    actionInProgress = nil
+                }
+            }
+            .disabled(!canSubmit)
+            
+            if actionInProgress == .submit {
+                ProgressView()
+            }
+        }
+        .padding()
+        .font(.title3)
+    }
+    
+    var toField: some View {
+        LabeledContent("To:") {
+            AvatarView(avatarUrl: avatarUrl)
+                .fadeDuration(0)
+                .frame(width: 32, height: 32)
+            TextField("static user name", text: $reply.destinationUser)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .foregroundStyle(.primary)
+                .onReceive(
+                    reply.$destinationUser
+                        .debounce(for: 1.0, scheduler: RunLoop.main)
+                ) { user in
+                    avatarUrl = FAURLs.avatarUrl(for: user)
+                }
+        }
+        .focused($destinationUserHasFocus)
+        .foregroundStyle(.secondary)
+    }
+    
+    var subjectField: some View {
+        LabeledContent("Subject:") {
+            TextField("", text: $reply.subject)
+                .foregroundStyle(.primary)
+        }
+        .focused($subjectHasFocus)
+        .foregroundStyle(.secondary)
+    }
+    
+    var messageField: some View {
+        TextEditor(text: $reply.text)
+            .autocorrectionDisabled()
+            .focused($textEditorHasFocus)
             .padding()
-            .font(.title3)
+    }
+    
+    func setDefaultFieldContents() {
+        if reply.destinationUser.isEmpty && !defaultContents.destinationUser.isEmpty {
+            reply.destinationUser = defaultContents.destinationUser
+            avatarUrl = FAURLs.avatarUrl(for: defaultContents.destinationUser)
+        }
+        
+        if reply.subject.isEmpty {
+            reply.subject = defaultContents.subject
+        }
+        
+        if reply.text.isEmpty {
+            reply.text = defaultContents.text
+        }
+    }
+    
+    func chooseFocusedField() {
+        if reply.destinationUser.isEmpty {
+            destinationUserHasFocus = true
+        } else if reply.subject.isEmpty {
+            subjectHasFocus = true
+        } else {
+            textEditorHasFocus = true
+        }
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            controls
             
             Divider()
             
@@ -66,53 +133,19 @@ struct NoteEditor: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         VStack {
-                            LabeledContent("To:") {
-                                TextField("static user name", text: $reply.destinationUser)
-                                    .textInputAutocapitalization(.never)
-                                    .autocorrectionDisabled()
-                                    .foregroundStyle(.primary)
-                            }
-                            .focused($destinationUserHasFocus)
-                            .foregroundStyle(.secondary)
-                            
+                            toField
                             Divider()
-                            LabeledContent("Subject:") {
-                                TextField("", text: $reply.subject)
-                                    .foregroundStyle(.primary)
-                            }
-                            .focused($subjectHasFocus)
-                            .foregroundStyle(.secondary)
+                            subjectField
                         }
                         .padding()
                         
                         Divider()
-                        
-                        TextEditor(text: $reply.text)
-                            .autocorrectionDisabled()
-                            .focused($textEditorHasFocus)
-                            .padding()
+                        messageField
                     }
                     .frame(minHeight: geometry.size.height)
                     .onAppear {
-                        if reply.destinationUser.isEmpty {
-                            reply.destinationUser = defaultContents.destinationUser
-                        }
-                        
-                        if reply.subject.isEmpty {
-                            reply.subject = defaultContents.subject
-                        }
-                        
-                        if reply.text.isEmpty {
-                            reply.text = defaultContents.text
-                        }
-                        
-                        if reply.destinationUser.isEmpty {
-                            destinationUserHasFocus = true
-                        } else if reply.subject.isEmpty {
-                            subjectHasFocus = true
-                        } else {
-                            textEditorHasFocus = true
-                        }
+                        setDefaultFieldContents()
+                        chooseFocusedField()
                     }
                 }
             }
