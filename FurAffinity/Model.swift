@@ -381,13 +381,13 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     }
     
     // MARK: - Submission
-    func toggleFavorite(for submission: FASubmission) async throws -> FASubmission? {
+    func toggleFavorite(for submission: FASubmission) async throws -> FASubmission {
         guard let session else {
             throw ModelError.disconnected
         }
         
-        let updated = await session.toggleFavorite(for: submission)
-        if let updated, updated.isFavorite == submission.isFavorite {
+        let updated = try await session.toggleFavorite(for: submission)
+        if updated.isFavorite == submission.isFavorite {
             logger.error("\(#function, privacy: .public) did not change favorite state: \(submission.isFavorite)")
         }
         return updated

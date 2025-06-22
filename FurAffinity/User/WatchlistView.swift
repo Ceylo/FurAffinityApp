@@ -41,7 +41,7 @@ struct WatchlistView: View {
     }
     
     private func userFATarget(for user: FAWatchlist.User) -> FATarget? {
-        guard let userUrl = FAURLs.userpageUrl(for: user.name) else {
+        guard let userUrl = try? FAURLs.userpageUrl(for: user.name) else {
             return nil
         }
         

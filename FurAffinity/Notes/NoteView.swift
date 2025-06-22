@@ -13,7 +13,7 @@ struct NoteContentsView: View {
     var showWarning: Bool
 
     var userFATarget: FATarget? {
-        guard let userUrl = FAURLs.userpageUrl(for: note.author) else {
+        guard let userUrl = try? FAURLs.userpageUrl(for: note.author) else {
             return nil
         }
         

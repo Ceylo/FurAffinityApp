@@ -16,7 +16,7 @@ struct AuthoredHeaderView: View {
     var datetime: DatetimePair?
     
     var userFATarget: FATarget? {
-        guard let userUrl = FAURLs.userpageUrl(for: username) else {
+        guard let userUrl = try? FAURLs.userpageUrl(for: username) else {
             return nil
         }
         

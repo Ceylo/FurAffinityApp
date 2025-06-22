@@ -18,7 +18,7 @@ struct RemoteUserGalleryLikeView: View {
         RemoteView(
             url: modifiedUrl ?? url,
             dataSource: { url in
-                await model.session?.galleryLike(for: url)
+                try await model.session.unwrap().galleryLike(for: url)
             },
             view: { gallery, updateHandler in
                 UserGalleryLikeView(
@@ -31,8 +31,9 @@ struct RemoteUserGalleryLikeView: View {
                         }
                         
                         Task {
-                            let nextGallery = await model.session?.galleryLike(for: nextUrl)
-                            let updated = nextGallery.map { latestGallery.appending($0) }
+                            let session = try model.session.unwrap()
+                            let nextGallery = try await session.galleryLike(for: nextUrl)
+                            let updated = latestGallery.appending(nextGallery)
                             updateHandler.update(with: updated)
                         }
                     },

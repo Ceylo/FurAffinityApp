@@ -12,7 +12,7 @@ struct NoteItemView: View {
     var notePreview: FANotePreview
     
     private var target: FATarget? {
-        guard let url = FAURLs.userpageUrl(for: notePreview.author) else {
+        guard let url = try? FAURLs.userpageUrl(for: notePreview.author) else {
             return nil
         }
         

@@ -12,7 +12,7 @@ import Kingfisher
 struct UserView: View {
     var user: FAUser
     var description: Binding<AttributedString?>
-    var toggleWatchAction: () async -> Bool
+    var toggleWatchAction: () async throws -> Void
     var sendNoteAction: (_ destinationUser: String, _ subject: String, _ text: String) async throws -> Void
     
     private let bannerHeight = 100.0
@@ -33,6 +33,25 @@ struct UserView: View {
                 .clipped()
         }
         .frame(height: bannerHeight)
+    }
+    
+    @ToolbarContentBuilder
+    var toolbar: some ToolbarContent {
+        let url = try! FAURLs.userpageUrl(for: user.name)
+        RemoteContentToolbarItem(url: url) {
+            if let watchData = user.watchData {
+                WatchButton(watchData: watchData) {
+                    try? await toggleWatchAction()
+                }
+            }
+            Button {
+                noteReplySession = .init(defaultContents: .init(
+                    destinationUser: user.name
+                ))
+            } label: {
+                Label("Send a Note", systemImage: "bubble")
+            }
+        }
     }
     
     var body: some View {
@@ -85,22 +104,7 @@ struct UserView: View {
         }
         .scrollToItem(id: user.targetShoutId)
         .toolbar {
-            if let url = FAURLs.userpageUrl(for: user.name) {
-                RemoteContentToolbarItem(url: url) {
-                    if let watchData = user.watchData {
-                        WatchButton(watchData: watchData) {
-                            _ = await toggleWatchAction()
-                        }
-                    }
-                    Button {
-                        noteReplySession = .init(defaultContents: .init(
-                            destinationUser: user.name
-                        ))
-                    } label: {
-                        Label("Send a Note", systemImage: "bubble")
-                    }
-                }
-            }
+            toolbar
         }
         .sensoryFeedback(.impact, trigger: user.watchData?.watching, condition: {
             $1 == true
@@ -124,7 +128,7 @@ struct UserView: View {
             UserView(
                 user: user,
                 description: .constant(description),
-                toggleWatchAction: { true },
+                toggleWatchAction: { },
                 sendNoteAction: { _, _, _ in }
             )
         }

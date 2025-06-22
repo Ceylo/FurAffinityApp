@@ -39,7 +39,7 @@ struct CommentView: View {
     }
     
     func userFATarget(for comment: FAVisibleComment) -> FATarget? {
-        guard let userUrl = FAURLs.userpageUrl(for: comment.author) else {
+        guard let userUrl = try? FAURLs.userpageUrl(for: comment.author) else {
             return nil
         }
         

@@ -14,7 +14,7 @@ struct RemoteJournalView: View {
     
     var body: some View {
         RemoteView(url: url, dataSource: { url in
-            await model.session?.journal(for: url)
+            try await model.session.unwrap().journal(for: url)
         }) { journal, updateHandler in
             JournalView(journal: journal,
                         replyAction: { parentCid, reply in

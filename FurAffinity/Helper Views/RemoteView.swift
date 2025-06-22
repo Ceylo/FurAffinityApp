@@ -11,7 +11,7 @@ protocol UpdateHandler<Data> {
     associatedtype Data: Sendable
     
     @MainActor
-    func update(with data: Data?)
+    func update(with data: Data)
 }
 
 /// `PreviewableRemoteView` provides common behavior for remotely loaded content, such as:
@@ -29,7 +29,7 @@ protocol UpdateHandler<Data> {
 struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: View>: View, UpdateHandler {
     init(
         url: URL,
-        dataSource: @escaping (_ sourceUrl: URL) async throws -> Data?,
+        dataSource: @escaping (_ sourceUrl: URL) async throws -> Data,
         @ViewBuilder preview: @escaping () -> PreviewView? = { nil },
         view: @escaping (Data, any UpdateHandler<Data>) -> ContentsView
     ) {
@@ -40,7 +40,7 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
     }
     
     var url: URL
-    var dataSource: (_ sourceUrl: URL) async throws -> Data?
+    var dataSource: (_ sourceUrl: URL) async throws -> Data
     @ViewBuilder var preview: () -> PreviewView?
     var view: (
         _ data: Data,
@@ -146,23 +146,23 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
     }
     
     func update() async {
-        let data = try? await dataSource(url)
-        update(with: data)
-    }
-
-    func update(with data: Data?) {
-        if let data {
-            self.dataState = .loaded(data)
-        } else {
+        do {
+            let data = try await dataSource(url)
+            update(with: data)
+        } catch {
             self.dataState = .failed
         }
+    }
+
+    func update(with data: Data) {
+        self.dataState = .loaded(data)
     }
 }
 
 @MainActor
 func RemoteView<Data: Sendable, ContentsView: View>(
     url: URL,
-    dataSource: @escaping (_ sourceUrl: URL) async throws -> Data?,
+    dataSource: @escaping (_ sourceUrl: URL) async throws -> Data,
     view: @escaping (Data, any UpdateHandler<Data>) -> ContentsView
 ) -> some View {
     PreviewableRemoteView<_, _, EmptyView>(

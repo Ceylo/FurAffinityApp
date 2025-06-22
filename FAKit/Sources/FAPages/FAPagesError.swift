@@ -7,6 +7,7 @@
 
 enum FAPagesError: Error {
     case unexpectedStructure
+    case invalidParameter
     case parserFailure(String, Int)
     
     static func parserFailureError(_ file: String = #file, _ line: Int = #line) -> FAPagesError {

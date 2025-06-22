@@ -14,7 +14,7 @@ struct CurrentUserView: View {
     var body: some View {
         Group {
             if let session = model.session,
-               let url = FAURLs.userpageUrl(for: session.username) {
+               let url = try? FAURLs.userpageUrl(for: session.username) {
                 RemoteUserView(
                     url: url,
                     previewData: .init(

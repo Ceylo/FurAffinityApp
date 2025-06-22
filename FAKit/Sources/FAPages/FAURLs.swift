@@ -28,11 +28,11 @@ public enum FAURLs {
         string: "https://www.furaffinity.net/msg/others/"
     )!
     
-    public static func userpageUrl(for username: String) -> URL? {
+    public static func userpageUrl(for username: String) throws -> URL {
         guard !username.isEmpty else {
-            return nil
+            throw FAPagesError.invalidParameter
         }
-        return try? URL(unsafeString: "https://www.furaffinity.net/user/\(username)/")
+        return try URL(unsafeString: "https://www.furaffinity.net/user/\(username)/")
     }
     
     public static func avatarUrl(for username: String) -> URL? {

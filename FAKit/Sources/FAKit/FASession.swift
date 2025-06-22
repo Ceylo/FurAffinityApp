@@ -47,20 +47,20 @@ public protocol FASession: AnyObject, Equatable {
     func nukeSubmissions() async throws
     
     // MARK: - User gallery
-    func galleryLike(for url: URL) async -> FAUserGalleryLike?
+    func galleryLike(for url: URL) async throws -> FAUserGalleryLike
     
     // MARK: - Submissions
-    func submission(for url: URL) async -> FASubmission?
-    func toggleFavorite(for submission: FASubmission) async -> FASubmission?
+    func submission(for url: URL) async throws -> FASubmission
+    func toggleFavorite(for submission: FASubmission) async throws -> FASubmission
     func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async throws -> C
     
     // MARK: - Journals
-    func journals(for url: URL) async -> FAUserJournals?
-    func journal(for url: URL) async -> FAJournal?
+    func journals(for url: URL) async throws -> FAUserJournals
+    func journal(for url: URL) async throws -> FAJournal
     
     // MARK: - Notes
     func notePreviews() async -> [FANotePreview]
-    func note(for url: URL) async -> FANote?
+    func note(for url: URL) async throws -> FANote
     func sendNote(toUsername: String, subject: String, message: String) async throws -> Void
     func sendNote(apiKey: String, toUsername: String, subject: String, message: String) async throws -> Void
     
@@ -77,40 +77,35 @@ public protocol FASession: AnyObject, Equatable {
     func nukeAllJournalNotifications() async -> FANotificationPreviews
     
     // MARK: - Users
-    func user(for url: URL) async -> FAUser?
-    func toggleWatch(for user: FAUser) async -> FAUser?
-    func watchlist(for username: String, direction: FAWatchlist.WatchDirection) async -> FAWatchlist?
+    func user(for url: URL) async throws -> FAUser
+    func toggleWatch(for user: FAUser) async throws -> FAUser
+    func watchlist(for username: String, direction: FAWatchlist.WatchDirection) async throws -> FAWatchlist
 }
 
 extension FASession {
-    public func galleryLike(for user: String) async -> FAUserGalleryLike? {
-        await galleryLike(for: FAURLs.galleryUrl(for: user))
+    public func galleryLike(for user: String) async throws -> FAUserGalleryLike {
+        try await galleryLike(for: FAURLs.galleryUrl(for: user))
     }
     
-    public func submission(for preview: FASubmissionPreview) async -> FASubmission? {
-        await submission(for: preview.url)
+    public func submission(for preview: FASubmissionPreview) async throws -> FASubmission {
+        try await submission(for: preview.url)
     }
     
-    public func journal(for preview: FANotificationPreview) async -> FAJournal? {
-        await journal(for: preview.url)
+    public func journal(for preview: FANotificationPreview) async throws -> FAJournal {
+        try await journal(for: preview.url)
     }
     
-    public func note(for preview: FANotePreview) async -> FANote? {
-        await note(for: preview.noteUrl)
+    public func note(for preview: FANotePreview) async throws -> FANote {
+        try await note(for: preview.noteUrl)
     }
     
-    public func user(for username: String) async -> FAUser? {
-        guard let userpageUrl = FAURLs.userpageUrl(for: username) else {
-            return nil
-        }
-        return await user(for: userpageUrl)
+    public func user(for username: String) async throws -> FAUser {
+        let userpageUrl = try FAURLs.userpageUrl(for: username)
+        return try await user(for: userpageUrl)
     }
     
-    public func watchlist(for url: URL) async -> FAWatchlist? {
-        guard let parsed = FAURLs.parseWatchlistUrl(url) else {
-            return nil
-        }
-        
-        return await watchlist(for: parsed.username, direction: parsed.watchDirection)
+    public func watchlist(for url: URL) async throws -> FAWatchlist {
+        let parsed = try FAURLs.parseWatchlistUrl(url).unwrap()
+        return try await watchlist(for: parsed.username, direction: parsed.watchDirection)
     }
 }

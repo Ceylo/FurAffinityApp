@@ -14,7 +14,7 @@ struct RemoteUserJournalsView: View {
     
     var body: some View {
         RemoteView(url: url) { url in
-            await model.session?.journals(for: url)
+            try await model.session.unwrap().journals(for: url)
         } view: { journals, _ in
             UserJournalsView(journals: journals)
         }

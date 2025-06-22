@@ -22,7 +22,7 @@ struct RemoteSubmissionView: View {
         PreviewableRemoteView(
             url: url,
             dataSource: { url in
-                await model.session?.submission(for: url)
+                try await model.session.unwrap().submission(for: url)
             },
             preview: {
                 previewData.map {

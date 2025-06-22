@@ -14,7 +14,7 @@ struct RemoteNoteView: View {
     var body: some View {
         PreviewableRemoteView<_, _, EmptyView>(
             url: url,
-            dataSource: { await model.session?.note(for: $0) },
+            dataSource: { try await model.session.unwrap().note(for: $0) },
             view: { note, updateHandler in
                 NoteView(
                     note: note,

@@ -30,11 +30,11 @@ class OfflineFASession: FASession {
         self.notificationPreviews = notifications
     }
     
-    func user(for url: URL) async -> FAUser? {
+    func user(for url: URL) async throws -> FAUser {
         await FAUser.demo
     }
     
-    func toggleWatch(for user: FAUser) async -> FAUser? {
+    func toggleWatch(for user: FAUser) async throws -> FAUser {
         user
     }
     
@@ -44,7 +44,7 @@ class OfflineFASession: FASession {
         print(#function)
     }
     
-    func submission(for url: URL) async -> FASubmission? {
+    func submission(for url: URL) async throws -> FASubmission {
         await FASubmission.demo
     }
     
@@ -52,8 +52,8 @@ class OfflineFASession: FASession {
         print(#function)
     }
     
-    func galleryLike(for url: URL) async -> FAUserGalleryLike? {
-        nil
+    func galleryLike(for url: URL) async throws -> FAUserGalleryLike {
+        .init(displayAuthor: displayUsername, previews: [], nextPageUrl: nil, folderGroups: [])
     }
     
     func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async -> C {
@@ -61,22 +61,22 @@ class OfflineFASession: FASession {
         return commentable
     }
     
-    func toggleFavorite(for submission: FASubmission) async -> FASubmission? {
+    func toggleFavorite(for submission: FASubmission) async throws -> FASubmission {
         print(#function)
         return submission
     }
     
-    func journals(for url: URL) async -> FAUserJournals? {
-        nil
+    func journals(for url: URL) async throws -> FAUserJournals {
+        .init(displayAuthor: displayUsername, journals: [])
     }
     
-    func journal(for url: URL) async -> FAJournal? {
-        nil
+    func journal(for url: URL) async throws -> FAJournal {
+        await FAJournal.demo
     }
     
     func notePreviews() async -> [FANotePreview] { notePreviews }
     
-    func note(for url: URL) async -> FANote? {
+    func note(for url: URL) async throws -> FANote {
         await FANote.demo
     }
     
@@ -122,7 +122,7 @@ class OfflineFASession: FASession {
         notificationPreviews
     }
     
-    func watchlist(for username: String, direction: FAWatchlist.WatchDirection) async -> FAWatchlist? {
+    func watchlist(for username: String, direction: FAWatchlist.WatchDirection) async throws -> FAWatchlist {
         FAWatchlist.demo
     }
 }

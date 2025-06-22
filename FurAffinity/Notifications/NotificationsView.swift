@@ -76,7 +76,7 @@ struct NotificationsView: View {
     }
     
     private func userFATarget(for notification: FANotificationPreview) -> FATarget? {
-        guard let userUrl = FAURLs.userpageUrl(for: notification.author) else {
+        guard let userUrl = try? FAURLs.userpageUrl(for: notification.author) else {
             return nil
         }
         

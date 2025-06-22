@@ -14,14 +14,11 @@ struct RemoteUserView: View {
     @EnvironmentObject var model: Model
     @State private var description: AttributedString?
     
-    private func loadUser(from url: URL) async -> FAUser? {
-        guard let session = model.session else { return nil }
-        
-        let user = await session.user(for: url)
-        if let user {
-            description = try? await AttributedString(FAHTML: user.htmlDescription)
-                .convertingLinksForInAppNavigation()
-        }
+    private func loadUser(from url: URL) async throws -> FAUser {
+        let session = try model.session.unwrap()
+        let user = try await session.user(for: url)
+        description = try await AttributedString(FAHTML: user.htmlDescription)
+            .convertingLinksForInAppNavigation()
         return user
     }
     
@@ -61,9 +58,8 @@ struct RemoteUserView: View {
                     user: user,
                     description: $description,
                     toggleWatchAction: {
-                        let updatedUser = await model.session?.toggleWatch(for: user)
+                        let updatedUser = try await model.session.unwrap().toggleWatch(for: user)
                         updateHandler.update(with: updatedUser)
-                        return updatedUser != nil
                     },
                     sendNoteAction: { destinationUser, subject, text in
                         let session = try model.session.unwrap()
@@ -81,7 +77,7 @@ struct RemoteUserView: View {
 
 #Preview {
     NavigationStack {
-        RemoteUserView(url: FAURLs.userpageUrl(for: "terriniss")!)
+        RemoteUserView(url: try! FAURLs.userpageUrl(for: "terriniss"))
     }
     .environmentObject(Model.demo)
 //    .preferredColorScheme(.dark)

@@ -14,7 +14,7 @@ struct RemoteWatchlistView: View {
     
     var body: some View {
         RemoteView(url: url) { url in
-            await model.session?.watchlist(for: url)
+            try await model.session.unwrap().watchlist(for: url)
         } view: { watchlist, updateHandler in
             WatchlistView(watchlist: watchlist) { latestWatchlist in
                 guard let nextUrl = latestWatchlist.nextPageUrl else {
@@ -23,8 +23,9 @@ struct RemoteWatchlistView: View {
                 }
                 
                 Task {
-                    let nextList = await model.session?.watchlist(for: nextUrl)
-                    let updatedList = nextList.map { latestWatchlist.appending($0) }
+                    let session = try model.session.unwrap()
+                    let nextList = try await session.watchlist(for: nextUrl)
+                    let updatedList = latestWatchlist.appending(nextList)
                     updateHandler.update(with: updatedList)
                 }
             }

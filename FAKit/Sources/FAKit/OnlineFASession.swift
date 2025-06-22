@@ -93,10 +93,10 @@ public class OnlineFASession: FASession {
     }
     
     // MARK: - User gallery
-    public func galleryLike(for url: URL) async -> FAUserGalleryLike? {
+    public func galleryLike(for url: URL) async throws -> FAUserGalleryLike {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
               let page = await FAUserGalleryLikePage(data: data, url: url)
-        else { return nil }
+        else { throw Error.requestFailure }
         
         let gallery = FAUserGalleryLike(page)
         logger.info("Got \(page.previews.count) submission previews (\(gallery.previews.count) after filter)")
@@ -104,20 +104,20 @@ public class OnlineFASession: FASession {
     }
     
     // MARK: - Submissions
-    public func submission(for url: URL) async -> FASubmission? {
+    public func submission(for url: URL) async throws -> FASubmission {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
               let page = await FASubmissionPage(data: data, url: url)
-        else { return nil }
+        else { throw Error.requestFailure }
         
-        return try? await FASubmission(page, url: url)
+        return try await FASubmission(page, url: url)
     }
     
-    public func toggleFavorite(for submission: FASubmission) async -> FASubmission? {
+    public func toggleFavorite(for submission: FASubmission) async throws -> FASubmission {
         guard let data = await dataSource.httpData(from: submission.favoriteUrl, cookies: cookies),
               let page = await FASubmissionPage(data: data, url: submission.url)
-        else { return nil }
+        else { throw Error.requestFailure }
         
-        return try? await FASubmission(page, url: submission.url)
+        return try await FASubmission(page, url: submission.url)
     }
     
     public func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async throws -> C {
@@ -140,20 +140,20 @@ public class OnlineFASession: FASession {
     }
     
     // MARK: - Journals
-    public func journals(for url: URL) async -> FAUserJournals? {
+    public func journals(for url: URL) async throws -> FAUserJournals {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
               let page = await FAUserJournalsPage(data: data) else {
-            return nil
+            throw Error.requestFailure
         }
         return FAUserJournals(page)
     }
     
-    public func journal(for url: URL) async -> FAJournal? {
+    public func journal(for url: URL) async throws -> FAJournal {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
               let page = await FAJournalPage(data: data, url: url)
-        else { return nil }
+        else { throw Error.requestFailure }
         
-        return try? await FAJournal(page, url: url)
+        return try await FAJournal(page, url: url)
     }
     
     // MARK: - Notes
@@ -170,12 +170,12 @@ public class OnlineFASession: FASession {
         return headers
     }
     
-    public func note(for url: URL) async -> FANote? {
+    public func note(for url: URL) async throws -> FANote {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
               let page = FANotePage(data: data)
-        else { return nil }
+        else { throw Error.requestFailure }
         
-        return try? await FANote(page, url: url)
+        return try await FANote(page, url: url)
     }
     
     public func sendNote(toUsername: String, subject: String, message: String) async throws -> Void {
@@ -310,34 +310,34 @@ public class OnlineFASession: FASession {
     }
     
     // MARK: - Users
-    public func user(for url: URL) async -> FAUser? {
+    public func user(for url: URL) async throws -> FAUser {
         guard let data = await dataSource.httpData(from: url, cookies: cookies) else {
-            return nil
+            throw Error.requestFailure
         }
         
-        return try? await loadUser(from: data, url: url)
+        return try await loadUser(from: data, url: url)
     }
     
-    private nonisolated func loadUser(from data: Data, url: URL) async throws -> FAUser? {
+    private nonisolated func loadUser(from data: Data, url: URL) async throws -> FAUser {
         let page = try await FAUserPage(data: data, url: url).unwrap()
         return try await FAUser(page)
     }
     
-    public func toggleWatch(for user: FAUser) async -> FAUser? {
+    public func toggleWatch(for user: FAUser) async throws -> FAUser {
         guard let watchData = user.watchData else {
             logger.error("Tried to toggle watch on user \(user.name, privacy: .public) without watch data")
             return user
         }
         
         _ = await dataSource.httpData(from: watchData.watchUrl, cookies: cookies)
-        return await self.user(for: user.name)
+        return try await self.user(for: user.name)
     }
     
-    public func watchlist(for username: String, direction: FAWatchlist.WatchDirection) async -> FAWatchlist? {
-        let url = FAURLs.watchlistUrl(for: username, direction: direction)        
+    public func watchlist(for username: String, direction: FAWatchlist.WatchDirection) async throws -> FAWatchlist {
+        let url = FAURLs.watchlistUrl(for: username, direction: direction)
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
               let page = await FAWatchlistPage(data: data, baseUri: url) else {
-            return nil
+            throw Error.requestFailure
         }
         
         return FAWatchlist(page)
