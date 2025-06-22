@@ -33,6 +33,15 @@ struct NotesView: View {
     var notes: [FANotePreview]
     var sendNoteAction: (_ destinationUser: String, _ subject: String, _ message: String) async throws -> Void
     @State private var noteReplySession: NoteReplySession?
+    @State private var showUnreadNotesOnly = false
+    
+    var filteredNotes: [FANotePreview] {
+        if showUnreadNotesOnly {
+            notes.filter { $0.unread }
+        } else {
+            notes
+        }
+    }
     
     @ToolbarContentBuilder
     var toolbar: some ToolbarContent {
@@ -41,6 +50,17 @@ struct NotesView: View {
                 Image(systemName: displayedBox.systemImageName)
                 Text(displayedBox.displayName)
                     .font(.headline)
+            }
+        }
+        
+        ToolbarItem(placement: .topBarLeading) {
+            Button {
+                showUnreadNotesOnly.toggle()
+            } label: {
+                Label(
+                    "Filter",
+                    systemImage: showUnreadNotesOnly ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle"
+                )
             }
         }
 
@@ -74,7 +94,7 @@ struct NotesView: View {
     }
     
     var body: some View {
-        List(notes) { preview in
+        List(filteredNotes) { preview in
             HStack {
                 NavigationLink(value: FATarget.note(url: preview.noteUrl)) {
                     NoteItemView(notePreview: preview)
