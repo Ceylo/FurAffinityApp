@@ -14,10 +14,14 @@ struct RemoteNotesView: View {
     @State private var sourceUrl = FAURLs.notesInboxUrl
     @State private var displayedBox: NotesBox = .inbox
     
+    var cachedInboxNotePreview: [FANotePreview] {
+        model.inboxNotePreviews ?? []
+    }
+    
     var body: some View {
         PreviewableRemoteView<_, _, EmptyView>(
             url: sourceUrl,
-            preloadedData: model.inboxNotePreviews,
+            preloadedData: cachedInboxNotePreview,
             dataSource: { url in
                 try await model.fetchNotePreviews(from: displayedBox)
             },
@@ -34,6 +38,10 @@ struct RemoteNotesView: View {
                         )
                     }
                 )
+                .onChange(of: cachedInboxNotePreview) { oldValue, newValue in
+                    guard displayedBox == .inbox else { return }
+                    updateHandler.update(with: newValue)
+                }
             }
         )
         .onChange(of: displayedBox) { oldValue, newValue in
