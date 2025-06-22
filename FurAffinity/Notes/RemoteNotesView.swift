@@ -11,15 +11,19 @@ import FAKit
 struct RemoteNotesView: View {
     @EnvironmentObject var model: Model
     
+    @State private var sourceUrl = FAURLs.notesInboxUrl
+    @State private var displayedBox: NotesBox = .inbox
+    
     var body: some View {
         PreviewableRemoteView<_, _, EmptyView>(
-            url: FAURLs.notesInboxUrl,
-            preloadedData: model.notePreviews,
+            url: sourceUrl,
+            preloadedData: model.inboxNotePreviews,
             dataSource: { url in
-                try await model.fetchNotePreviews()
+                try await model.fetchNotePreviews(from: displayedBox)
             },
             view: { notes, updateHandler in
                 NotesView(
+                    displayedBox: $displayedBox,
                     notes: notes,
                     sendNoteAction: { destinationUser, subject, message in
                         let session = try model.session.unwrap()
@@ -32,6 +36,14 @@ struct RemoteNotesView: View {
                 )
             }
         )
+        .onChange(of: displayedBox) { oldValue, newValue in
+            switch newValue {
+            case .inbox:
+                sourceUrl = FAURLs.notesInboxUrl
+            case .sent:
+                sourceUrl = FAURLs.notesSentUrl
+            }
+        }
     }
 }
 

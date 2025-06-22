@@ -74,7 +74,7 @@ class OfflineFASession: FASession {
         await FAJournal.demo
     }
     
-    func notePreviews() async -> [FANotePreview] { notePreviews }
+    func notePreviews(from box: NotesBox) async -> [FANotePreview] { notePreviews }
     
     func note(for url: URL) async throws -> FANote {
         await FANote.demo

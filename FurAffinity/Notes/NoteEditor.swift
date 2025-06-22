@@ -67,7 +67,7 @@ struct NoteEditor: View {
                     VStack(spacing: 0) {
                         VStack {
                             LabeledContent("To:") {
-                                TextField("user static name", text: $reply.destinationUser)
+                                TextField("static user name", text: $reply.destinationUser)
                                     .textInputAutocapitalization(.never)
                                     .autocorrectionDisabled()
                                     .foregroundStyle(.primary)

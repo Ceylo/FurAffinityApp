@@ -157,8 +157,8 @@ public class OnlineFASession: FASession {
     }
     
     // MARK: - Notes
-    public func notePreviews() async -> [FANotePreview] {
-        guard let data = await dataSource.httpData(from: FAURLs.notesInboxUrl, cookies: cookies),
+    public func notePreviews(from box: NotesBox) async -> [FANotePreview] {
+        guard let data = await dataSource.httpData(from: box.url, cookies: cookies),
               let page = await FANotesPage(data: data)
         else { return [] }
         

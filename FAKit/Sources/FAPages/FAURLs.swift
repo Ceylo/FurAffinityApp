@@ -24,6 +24,10 @@ public enum FAURLs {
         string: "https://www.furaffinity.net/controls/switchbox/inbox/"
     )!
     
+    public static let notesSentUrl = URL(
+        string: "https://www.furaffinity.net/controls/switchbox/sent/"
+    )!
+    
     public static let notificationsUrl = URL(
         string: "https://www.furaffinity.net/msg/others/"
     )!

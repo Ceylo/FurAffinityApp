@@ -37,10 +37,10 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     /// `nil` until a fetch actually happened.
     /// After a fetch it contains all found notes, or an empty array if none was found.
     @Published
-    private(set) var notePreviews: [FANotePreview]?
+    private(set) var inboxNotePreviews: [FANotePreview]?
     @Published
-    private(set) var unreadNoteCount = 0
-    private(set) var lastNotePreviewsFetchDate: Date?
+    private(set) var unreadInboxNoteCount = 0
+    private(set) var lastInboxNotePreviewsFetchDate: Date?
     
     /// nil until a fetch actually happened
     /// After a fetch it contains all found notifications, or an empty array if none was found
@@ -98,9 +98,9 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         guard session != nil else {
             lastSubmissionPreviewsFetchDate = nil
             submissionPreviews = nil
-            lastNotePreviewsFetchDate = nil
-            notePreviews = nil
-            unreadNoteCount = 0
+            lastInboxNotePreviewsFetchDate = nil
+            inboxNotePreviews = nil
+            unreadInboxNoteCount = 0
             notificationPreviews = nil
             lastNotificationPreviewsFetchDate = nil
             significantNotificationCount = 0
@@ -110,7 +110,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         
         Task {
             _ = await fetchSubmissionPreviews()
-            _ = try? await fetchNotePreviews()
+            _ = try? await fetchNotePreviews(from: .inbox)
             await fetchNotificationPreviews()
             await updateAppInfo()
             
@@ -141,8 +141,8 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         // - SubmissionsFeedView is always loaded first, so there's no risk that it
         // cannot subscribe to willEnterForegroundNotification
         
-        if Self.shouldAutoRefresh(with: lastNotePreviewsFetchDate) {
-            _ = try? await fetchNotePreviews()
+        if Self.shouldAutoRefresh(with: lastInboxNotePreviewsFetchDate) {
+            _ = try? await fetchNotePreviews(from: .inbox)
         }
         
         if Self.shouldAutoRefresh(with: lastNotificationPreviewsFetchDate) {
@@ -233,16 +233,19 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     
     // MARK: - Notes
     @discardableResult
-    func fetchNotePreviews() async throws -> [FANotePreview] {
+    func fetchNotePreviews(from box: NotesBox) async throws -> [FANotePreview] {
         guard let session else {
             logger.error("Tried to fetch notes with no active session, skipping")
             throw ModelError.disconnected
         }
         
-        let fetchedNotes = await session.notePreviews()
-        notePreviews = fetchedNotes
-        unreadNoteCount = fetchedNotes.filter { $0.unread }.count
-        lastNotePreviewsFetchDate = Date()
+        let fetchedNotes = await session.notePreviews(from: box)
+        
+        if box == .inbox {
+            inboxNotePreviews = fetchedNotes
+            unreadInboxNoteCount = fetchedNotes.filter { $0.unread }.count
+            lastInboxNotePreviewsFetchDate = Date()
+        }
         return fetchedNotes
     }
     

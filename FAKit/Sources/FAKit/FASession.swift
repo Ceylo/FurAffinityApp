@@ -34,6 +34,20 @@ public struct FANotificationPreviews: Equatable, Sendable {
     }
 }
 
+public enum NotesBox {
+    case inbox
+    case sent
+    
+    var url: URL {
+        switch self {
+        case .inbox:
+            FAURLs.notesInboxUrl
+        case .sent:
+            FAURLs.notesSentUrl
+        }
+    }
+}
+
 @MainActor
 public protocol FASession: AnyObject, Equatable {
     var username: String { get }
@@ -59,7 +73,7 @@ public protocol FASession: AnyObject, Equatable {
     func journal(for url: URL) async throws -> FAJournal
     
     // MARK: - Notes
-    func notePreviews() async -> [FANotePreview]
+    func notePreviews(from box: NotesBox) async -> [FANotePreview]
     func note(for url: URL) async throws -> FANote
     func sendNote(toUsername: String, subject: String, message: String) async throws -> Void
     func sendNote(apiKey: String, toUsername: String, subject: String, message: String) async throws -> Void

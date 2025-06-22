@@ -61,7 +61,7 @@ struct LoggedInView: View {
                             view(for: nav)
                         }
                 }
-                .badge(model.unreadNoteCount)
+                .badge(model.unreadInboxNoteCount)
                 .tabItem {
                     Label("Notes", systemImage: "message")
                 }
