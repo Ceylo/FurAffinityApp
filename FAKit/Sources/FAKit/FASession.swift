@@ -52,7 +52,7 @@ public protocol FASession: AnyObject, Equatable {
     // MARK: - Submissions
     func submission(for url: URL) async -> FASubmission?
     func toggleFavorite(for submission: FASubmission) async -> FASubmission?
-    func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async -> C?
+    func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async throws -> C
     
     // MARK: - Journals
     func journals(for url: URL) async -> FAUserJournals?
@@ -61,7 +61,8 @@ public protocol FASession: AnyObject, Equatable {
     // MARK: - Notes
     func notePreviews() async -> [FANotePreview]
     func note(for url: URL) async -> FANote?
-    func sendNote(apiKey: String, toUsername: String, subject: String, message: String) async -> Bool
+    func sendNote(toUsername: String, subject: String, message: String) async throws -> Void
+    func sendNote(apiKey: String, toUsername: String, subject: String, message: String) async throws -> Void
     
     // MARK: - Notifications
     func notificationPreviews() async -> FANotificationPreviews

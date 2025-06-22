@@ -223,12 +223,12 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     }
     
     // MARK: - Commentable
-    func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async throws -> C? {
+    func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async throws -> C {
         guard let session else {
             throw ModelError.disconnected
         }
         
-        return await session.postComment(on: commentable, replytoCid: replytoCid, contents: contents)
+        return try await session.postComment(on: commentable, replytoCid: replytoCid, contents: contents)
     }
     
     // MARK: - Notes

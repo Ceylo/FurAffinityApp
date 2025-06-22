@@ -69,7 +69,7 @@ struct NoteContentsView: View {
 
 struct NoteView: View {
     var note: FANote
-    var replyAction: (_ destinationUser: String, _ subject: String, _ text: String) async -> Bool
+    var replyAction: (_ destinationUser: String, _ subject: String, _ text: String) async throws -> Void
 
     @State private var replySession: NoteReplySession?
     
@@ -80,7 +80,7 @@ struct NoteView: View {
             .navigationTitle(note.title)
             .navigationBarTitleDisplayMode(.inline)
             .noteReplySheet(on: $replySession) { reply in
-                await replyAction(reply.destinationUser, reply.subject, reply.text)
+                try await replyAction(reply.destinationUser, reply.subject, reply.text)
             }
         }
         .toolbar {
@@ -108,7 +108,6 @@ struct NoteView: View {
                 note: note,
                 replyAction: { destinationUser, subject, text in
                     print(destinationUser, subject, text)
-                    return true
                 }
             )
         }

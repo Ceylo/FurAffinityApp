@@ -64,6 +64,14 @@ struct RemoteUserView: View {
                         let updatedUser = await model.session?.toggleWatch(for: user)
                         updateHandler.update(with: updatedUser)
                         return updatedUser != nil
+                    },
+                    sendNoteAction: { destinationUser, subject, text in
+                        let session = try model.session.unwrap()
+                        try await session.sendNote(
+                            toUsername: destinationUser,
+                            subject: subject,
+                            message: text
+                        )
                     }
                 )
             }

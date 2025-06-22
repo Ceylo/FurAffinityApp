@@ -26,21 +26,24 @@ final class NoteReply: ObservableObject, ReplyStorage {
 
 struct NoteReplySession: ReplySession {
     struct DefaultContents {
-        let destinationUser: String 
+        let destinationUser: String
         let subject: String
         let text: String
+        
+        init(
+            destinationUser: String = "",
+            subject: String = "",
+            text: String = ""
+        ) {
+            self.destinationUser = destinationUser
+            self.subject = subject
+            self.text = text
+        }
     }
     
     var displayData: DefaultContents { defaultContents }
     let defaultContents: DefaultContents
 }
-
-extension NoteReplySession.DefaultContents {
-    init() {
-        self.init(destinationUser: "", subject: "", text: "")
-    }
-}
-
 
 extension NoteEditor: ReplyEditor {
     typealias SomeReplySession = NoteReplySession
@@ -63,12 +66,12 @@ typealias NoteReplying = Replying<NoteEditor>
 extension View {
     func noteReplySheet(
         on replySession: Binding<NoteReplySession?>,
-        _ replyAction: @MainActor @escaping (_ reply: NoteReply) async -> Bool
+        _ replyAction: @MainActor @escaping (_ reply: NoteReply) async throws -> Void
     ) -> some View {
         modifier(NoteReplying(
             replySession: replySession,
             replyAction: { session, reply in
-                await replyAction(reply)
+                try await replyAction(reply)
             }
         ))
     }

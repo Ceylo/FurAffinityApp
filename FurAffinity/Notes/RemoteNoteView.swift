@@ -19,12 +19,10 @@ struct RemoteNoteView: View {
                 NoteView(
                     note: note,
                     replyAction: { destinationUser, subject, text in
-                        guard let session = model.session else {
-                            return false
-                        }
+                        let session = try model.session.unwrap()
                         assert(destinationUser == note.author)
                         
-                        return await session.sendNote(
+                        return try await session.sendNote(
                             apiKey: note.answerKey,
                             toUsername: note.author,
                             subject: subject,

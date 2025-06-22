@@ -13,7 +13,7 @@ struct SubmissionView: View {
     var avatarUrl: URL?
     var thumbnail: DynamicThumbnail?
     var favoriteAction: () -> Void
-    var replyAction: @MainActor (_ parentCid: Int?, _ text: CommentReply) async -> Bool
+    var replyAction: @MainActor (_ parentCid: Int?, _ text: CommentReply) async throws -> Void
     
     struct ReplySession {
         let parentCid: Int?
@@ -149,7 +149,7 @@ struct SubmissionView: View {
             SubmissionView(
                 submission: $0,
                 favoriteAction: {},
-                replyAction: { _, _ in true }
+                replyAction: { _, _ in }
             )
         }
     }

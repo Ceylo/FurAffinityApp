@@ -56,7 +56,7 @@ class OfflineFASession: FASession {
         nil
     }
     
-    func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async -> C? {
+    func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async -> C {
         print(#function)
         return commentable
     }
@@ -80,8 +80,10 @@ class OfflineFASession: FASession {
         await FANote.demo
     }
     
-    func sendNote(apiKey: String, toUsername: String, subject: String, message: String) async -> Bool {
-        false
+    func sendNote(toUsername: String, subject: String, message: String) async throws -> Void {
+    }
+    
+    func sendNote(apiKey: String, toUsername: String, subject: String, message: String) async throws -> Void {
     }
     
     func notificationPreviews() async -> FANotificationPreviews {

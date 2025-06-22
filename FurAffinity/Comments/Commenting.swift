@@ -57,12 +57,12 @@ typealias Commenting = Replying<CommentEditor>
 extension View {
     func commentSheet(
         on replySession: Binding<CommentReplySession?>,
-        _ replyAction: @MainActor @escaping (_ parentCid: Int?, _ reply: CommentReply) async -> Bool
+        _ replyAction: @MainActor @escaping (_ parentCid: Int?, _ reply: CommentReply) async throws -> Void
     ) -> some View {
         modifier(Commenting(
             replySession: replySession,
             replyAction: { session, reply in
-                await replyAction(session.parentCid, reply)
+                try await replyAction(session.parentCid, reply)
             }
         ))
     }

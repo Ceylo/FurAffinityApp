@@ -77,7 +77,7 @@ struct NoteEditor: View {
                             
                             Divider()
                             LabeledContent("Subject:") {
-                                TextField("Note title", text: $reply.subject)
+                                TextField("", text: $reply.subject)
                                     .foregroundStyle(.primary)
                             }
                             .focused($subjectHasFocus)

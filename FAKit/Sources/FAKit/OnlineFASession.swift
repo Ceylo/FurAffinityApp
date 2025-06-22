@@ -9,8 +9,21 @@ import Foundation
 import FAPages
 
 public class OnlineFASession: FASession {
-    enum Error: String, Swift.Error {
+    enum Error: LocalizedError, Swift.Error {
         case requestFailure
+        case invalidParameter
+        case FAErrorResponse(String)
+        
+        var errorDescription: String? {
+            switch self {
+            case let .FAErrorResponse(message):
+                return "The action could not be completed. furaffinity.net provided the following error message:\n\(message)"
+            case .requestFailure:
+                return "The action could not be completed. A network or application error occured."
+            case .invalidParameter:
+                return "The action could not be completed. An invalid input was provided."
+            }
+        }
     }
     
     public let username: String
@@ -107,7 +120,7 @@ public class OnlineFASession: FASession {
         return try? await FASubmission(page, url: submission.url)
     }
     
-    public func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async -> C? {
+    public func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async throws -> C {
         let replyToValue = replytoCid.flatMap { "\($0)" } ?? ""
         let params: [URLQueryItem] = [
             .init(name: "f", value: "0"), // Not needed for all commentable types but doesn't harm
@@ -119,9 +132,11 @@ public class OnlineFASession: FASession {
         
         guard let data = await dataSource.httpData(from: commentable.url, cookies: cookies, method: .POST, parameters: params),
               let page = await C.PageType(data: data, url: commentable.url)
-        else { return nil }
+        else {
+            throw Error.requestFailure
+        }
         
-        return try? await C(page, url: commentable.url)
+        return try await C(page, url: commentable.url)
     }
     
     // MARK: - Journals
@@ -163,7 +178,26 @@ public class OnlineFASession: FASession {
         return try? await FANote(page, url: url)
     }
     
-    public func sendNote(apiKey: String, toUsername: String, subject: String, message: String) async -> Bool {
+    public func sendNote(toUsername: String, subject: String, message: String) async throws -> Void {
+        guard let newNoteUrl = FAURLs.newNoteUrl(for: toUsername) else {
+            logger.error("Failed getting new note url for user \"\(toUsername)\"")
+            throw Error.invalidParameter
+        }
+        
+        guard let data = await dataSource.httpData(from: newNoteUrl, cookies: cookies),
+              let page = FANewNotePage(data: data) else {
+            throw Error.requestFailure
+        }
+        
+        try await sendNote(
+            apiKey: page.apiKey,
+            toUsername: toUsername,
+            subject: subject,
+            message: message
+        )
+    }
+    
+    public func sendNote(apiKey: String, toUsername: String, subject: String, message: String) async throws -> Void {
         let url = URL(string: "https://www.furaffinity.net/msg/send/")!
         let params: [URLQueryItem] = [
             .init(name: "key", value: apiKey),
@@ -172,13 +206,21 @@ public class OnlineFASession: FASession {
             .init(name: "message", value: message),
         ]
         
-        guard let data = await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params),
-              await FANotesPage(data: data) != nil else {
-            return false
+        guard let data = await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params) else {
+            throw Error.requestFailure
+        }
+        
+        if let errorPage = FASystemErrorPage(data: data) {
+            logger.error("Failed sending note: \(errorPage.message)")
+            throw Error.FAErrorResponse(errorPage.message)
+        }
+        
+        guard await FANotesPage(data: data) != nil else {
+            logger.error("Failed sending note")
+            throw Error.requestFailure
         }
         
         logger.debug("Note successfully delivered to \(toUsername)")
-        return true
     }
     
     // MARK: - Notifications

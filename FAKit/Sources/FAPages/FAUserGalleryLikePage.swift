@@ -86,15 +86,11 @@ extension FAUserGalleryLikePage {
     }
     
     static func parseFolderGroups(from node: SwiftSoup.Elements, currentUrl: URL) throws -> [FAFolderGroup] {
-        enum Error: Swift.Error {
-            case unexpectedStructure
-        }
-        
         guard node.count == 1 else {
             if node.count == 0 {
                 return []
             } else {
-                throw Error.unexpectedStructure
+                throw FAPagesError.unexpectedStructure
             }
         }
         
@@ -133,7 +129,7 @@ extension FAUserGalleryLikePage {
             } else {
                 let html = (try? child.html()) ?? ""
                 logger.error("Unhandled tag \(child.tagName(), privacy: .public) in \(html, privacy: .public)")
-                throw Error.unexpectedStructure
+                throw FAPagesError.unexpectedStructure
             }
         }
         

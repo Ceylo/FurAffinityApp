@@ -44,6 +44,13 @@ public enum FAURLs {
         return try? URL(unsafeString: str)
     }
     
+    public static func newNoteUrl(for username: String) -> URL? {
+        guard !username.isEmpty else {
+            return nil
+        }
+        return try? URL(unsafeString: "https://www.furaffinity.net/newpm/\(username)/")
+    }
+    
     public static func usernameFrom(userUrl: URL) -> String? {
         var urlString = userUrl.absoluteString
         if urlString.suffix(1) != "/" {

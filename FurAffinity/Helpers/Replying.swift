@@ -37,9 +37,11 @@ protocol ReplyEditor<SomeReplyStorage>: View {
 
 struct Replying<SomeReplyEditor: ReplyEditor>: ViewModifier {
     @Binding var replySession: SomeReplyEditor.SomeReplySession?
-    var replyAction: @MainActor (_ replySession: SomeReplyEditor.SomeReplySession, _ text: SomeReplyEditor.SomeReplyStorage) async -> Bool
+    var replyAction: @MainActor (_ replySession: SomeReplyEditor.SomeReplySession, _ text: SomeReplyEditor.SomeReplyStorage) async throws -> Void
     @ObservedObject private var replyStorage = SomeReplyEditor.SomeReplyStorage()
     @State private var replySent: Bool?
+    @State private var showError = false
+    @State private var error: Error?
     
     func body(content: Content) -> some View {
         content
@@ -78,14 +80,33 @@ struct Replying<SomeReplyEditor: ReplyEditor>: ViewModifier {
             replyStorage: replyStorage,
             displayData: replySession.displayData
         ) { action in
-            if case .submit = action, replyStorage.isValidForSubmission {
-                let result = await replyAction(replySession, replyStorage)
-                // Preserve user data unless submitted
-                replyStorage.reset()
-                replySent = result
+            do {
+                if case .submit = action, replyStorage.isValidForSubmission {
+                    try await replyAction(replySession, replyStorage)
+                    // Preserve user data unless submitted
+                    replyStorage.reset()
+                    replySent = true
+                }
+                
+                self.replySession = nil
+            } catch {
+                self.error = error
+                showError = true
             }
-            
-            self.replySession = nil
         }
+        .alert(
+            "Oops",
+            isPresented: $showError,
+            presenting: error,
+            actions: { _ in
+                Button("Dismiss") {
+                    showError = false
+                    error = nil
+                }
+            },
+            message: { error in
+                Text(error.localizedDescription)
+            }
+        )
     }
 }

@@ -11,7 +11,7 @@ import Combine
 
 struct JournalView: View {
     var journal: FAJournal
-    var replyAction: @MainActor (_ parentCid: Int?, _ reply: CommentReply) async -> Bool
+    var replyAction: @MainActor (_ parentCid: Int?, _ reply: CommentReply) async throws -> Void
     
     @State private var replySession: CommentReplySession?
     
@@ -94,7 +94,7 @@ struct JournalView: View {
     withAsync({ await FAJournal.demo }) {
         JournalView(
             journal: $0,
-            replyAction: { _, _ in true }
+            replyAction: { _, _ in }
         )
     }
 }

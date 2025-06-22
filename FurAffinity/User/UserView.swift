@@ -13,8 +13,10 @@ struct UserView: View {
     var user: FAUser
     var description: Binding<AttributedString?>
     var toggleWatchAction: () async -> Bool
+    var sendNoteAction: (_ destinationUser: String, _ subject: String, _ text: String) async throws -> Void
     
     private let bannerHeight = 100.0
+    @State private var noteReplySession: NoteReplySession?
     
     var banner: some View {
         GeometryReader { geometry in
@@ -90,12 +92,22 @@ struct UserView: View {
                             _ = await toggleWatchAction()
                         }
                     }
+                    Button {
+                        noteReplySession = .init(defaultContents: .init(
+                            destinationUser: user.name
+                        ))
+                    } label: {
+                        Label("Send a Note", systemImage: "bubble")
+                    }
                 }
             }
         }
         .sensoryFeedback(.impact, trigger: user.watchData?.watching, condition: {
             $1 == true
         })
+        .noteReplySheet(on: $noteReplySession) { reply in
+            try await sendNoteAction(reply.destinationUser, reply.subject, reply.text)
+        }
     }
 }
 
@@ -112,7 +124,8 @@ struct UserView: View {
             UserView(
                 user: user,
                 description: .constant(description),
-                toggleWatchAction: { true }
+                toggleWatchAction: { true },
+                sendNoteAction: { _, _, _ in }
             )
         }
     }
