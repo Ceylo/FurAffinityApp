@@ -29,17 +29,20 @@ protocol UpdateHandler<Data> {
 struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: View>: View, UpdateHandler {
     init(
         url: URL,
+        preloadedData: Data? = nil,
         dataSource: @escaping (_ sourceUrl: URL) async throws -> Data,
         @ViewBuilder preview: @escaping () -> PreviewView? = { nil },
         view: @escaping (Data, any UpdateHandler<Data>) -> ContentsView
     ) {
         self.url = url
+        self.preloadedData = preloadedData
         self.dataSource = dataSource
         self.preview = preview
         self.view = view
     }
     
     var url: URL
+    var preloadedData: Data?
     var dataSource: (_ sourceUrl: URL) async throws -> Data
     @ViewBuilder var preview: () -> PreviewView?
     var view: (
@@ -101,7 +104,11 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
         }
         .task {
             if dataState == nil {
-                await update()
+                if let preloadedData {
+                    update(with: preloadedData)
+                } else {
+                    await update()
+                }
             }
         }
         .refreshable {
@@ -162,11 +169,13 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
 @MainActor
 func RemoteView<Data: Sendable, ContentsView: View>(
     url: URL,
+    preloadedData: Data? = nil,
     dataSource: @escaping (_ sourceUrl: URL) async throws -> Data,
     view: @escaping (Data, any UpdateHandler<Data>) -> ContentsView
 ) -> some View {
     PreviewableRemoteView<_, _, EmptyView>(
         url: url,
+        preloadedData: preloadedData,
         dataSource: dataSource,
         view: { data, updateHandler in
             view(data, updateHandler)

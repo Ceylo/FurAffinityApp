@@ -110,7 +110,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         
         Task {
             _ = await fetchSubmissionPreviews()
-            await fetchNotePreviews()
+            _ = try? await fetchNotePreviews()
             await fetchNotificationPreviews()
             await updateAppInfo()
             
@@ -142,7 +142,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         // cannot subscribe to willEnterForegroundNotification
         
         if Self.shouldAutoRefresh(with: lastNotePreviewsFetchDate) {
-            await fetchNotePreviews()
+            _ = try? await fetchNotePreviews()
         }
         
         if Self.shouldAutoRefresh(with: lastNotificationPreviewsFetchDate) {
@@ -232,16 +232,18 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     }
     
     // MARK: - Notes
-    func fetchNotePreviews() async {
+    @discardableResult
+    func fetchNotePreviews() async throws -> [FANotePreview] {
         guard let session else {
             logger.error("Tried to fetch notes with no active session, skipping")
-            return
+            throw ModelError.disconnected
         }
         
         let fetchedNotes = await session.notePreviews()
         notePreviews = fetchedNotes
         unreadNoteCount = fetchedNotes.filter { $0.unread }.count
         lastNotePreviewsFetchDate = Date()
+        return fetchedNotes
     }
     
     // MARK: - Notifications feed

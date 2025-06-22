@@ -56,7 +56,7 @@ struct LoggedInView: View {
                 .tag(Tab.submissions)
                 
                 NavigationStack(path: $notesNavigationStack) {
-                    NotesView()
+                    RemoteNotesView()
                         .navigationDestination(for: FATarget.self) { nav in
                             view(for: nav)
                         }
