@@ -9,8 +9,22 @@ import SwiftUI
 import FAKit
 
 final class NoteReply: ObservableObject, ReplyStorage {
+    static let allowedCharset = CharacterSet
+        .lowercaseLetters
+        .union(.decimalDigits)
+        .union(.init(charactersIn: "^~`"))
+
     var isValidForSubmission: Bool {
-        !destinationUser.isEmpty && !subject.isEmpty && !text.isEmpty
+        isUsernameValid && !subject.isEmpty && !text.isEmpty
+    }
+    
+    var isUsernameValid: Bool {
+        guard !destinationUser.isEmpty else {
+            return false
+        }
+        
+        let actualCharset = CharacterSet(charactersIn: destinationUser)
+        return Self.allowedCharset.isSuperset(of: actualCharset)
     }
     
     func reset() {

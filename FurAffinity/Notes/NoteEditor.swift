@@ -19,6 +19,10 @@ struct NoteEditor: View {
     @FocusState private var textEditorHasFocus: Bool
     @State private var actionInProgress: ReplyEditorAction?
     @State private var avatarUrl: URL?
+    // Should not be needed but looks like
+    // https://www.hackingwithswift.com/forums/100-days-of-swiftui/unusual-behavior-when-trying-to-change-the-style-of-the-text-in-a-swiftui-textfield/28414
+    // is not solved…
+    @State private var isUsernameValid = false
     
     var canCancel: Bool { actionInProgress == nil }
     var canSubmit: Bool {
@@ -70,12 +74,16 @@ struct NoteEditor: View {
             TextField("static user name", text: $reply.destinationUser)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-                .foregroundStyle(.primary)
+                .foregroundStyle(isUsernameValid ? Color.primary : Color.red)
                 .onReceive(
                     reply.$destinationUser
                         .debounce(for: 1.0, scheduler: RunLoop.main)
                 ) { user in
+                    guard reply.isUsernameValid else { return }
                     avatarUrl = FAURLs.avatarUrl(for: user)
+                }
+                .onChange(of: reply.isUsernameValid) { _, newValue in
+                    isUsernameValid = newValue
                 }
         }
         .focused($destinationUserHasFocus)
