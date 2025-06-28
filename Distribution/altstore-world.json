@@ -18,42 +18,60 @@
       "iconURL": "https://get.furaffinity.app/altstore/fa-app-icon.heic",
       "tintColor": null,
       "category": "social",
-      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.12/FurAffinity-1.12-7146d2d.ipa",
+      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.13/FurAffinity-1.13-fcc946e.ipa",
       "screenshots": [
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.12/screenshots/feed.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.13/screenshots/feed.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.12/screenshots/submission.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.13/screenshots/submission.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.12/screenshots/comments.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.13/screenshots/notifications.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.12/screenshots/notifications.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.13/screenshots/notes.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.12/screenshots/search-field.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.13/screenshots/send note.heic",
           "width": 1170
         }
       ],
       "screenshotURLs": [
-        "https://get.furaffinity.app/altstore/releases/1.12/screenshots/feed.heic",
-        "https://get.furaffinity.app/altstore/releases/1.12/screenshots/submission.heic",
-        "https://get.furaffinity.app/altstore/releases/1.12/screenshots/comments.heic",
-        "https://get.furaffinity.app/altstore/releases/1.12/screenshots/notifications.heic",
-        "https://get.furaffinity.app/altstore/releases/1.12/screenshots/search-field.heic"
+        "https://get.furaffinity.app/altstore/releases/1.13/screenshots/feed.heic",
+        "https://get.furaffinity.app/altstore/releases/1.13/screenshots/submission.heic",
+        "https://get.furaffinity.app/altstore/releases/1.13/screenshots/notifications.heic",
+        "https://get.furaffinity.app/altstore/releases/1.13/screenshots/notes.heic",
+        "https://get.furaffinity.app/altstore/releases/1.13/screenshots/send note.heic"
       ],
       "versions": [
+        {
+          "version": "1.13",
+          "date": "2025-06-28T13:00:00+02:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\nVersion 1.13 is focused on social interactions!\n\n📱 FEATURES\n- The app fully embraces FA's Display Names update: Notes tab, Notes, User pages, shouts and comments now show both the Display Name and the user's static name, to better let you know who you're actually interacting with\n- The app now allows sending notes, either from the revamped Notes tab, when viewing a Note or from a user's page\n- The Notes tab now allows switching between your Inbox or Sent notes\n- The Notes tab gets a new filter control to only display unread notes\n- The toolbar is widely revisited with many more actions available from the top right icon:\n  - most pages now have a Share Link action\n  - submission pages also get a Favorite, Save Image, Share Image and Reply actions\n  - user pages get a Watch and Send a Note actions\n  - notes get a Reply action\n  - Notes tab gets Inbox, Sent and Send a Note actions\n\n📦 MISCELLANEOUS\n- User page design is slightly revisited\n- Tapping a user icon in the Notes tab now opens the user's page\n- Error reporting has been improved: if posting a comment or sending a note fails, an alert gives a more useful error description\n- Reading a note now immediately marks it as read in the app",
+          "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.13/FurAffinity-1.13-fcc946e.ipa",
+          "size": 2635002,
+          "sha256": "1142ed99b9f78e7c04159a612d613a45bad2faa02722caab08dfb6f7a740507f",
+          "minOSVersion": "17.4"
+        },
+        {
+          "version": "1.12.1",
+          "date": "2025-06-18T20:00:00+02:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n🐞 BUGFIXES\n- Around 17th June 2025, furaffinity.net website was updated and removed the Gender information on submissions. This prevented submissions from displaying in the app and has now been resolved.",
+          "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.12.1/FurAffinity-1.12.1-57dc12a.ipa",
+          "size": 2564535,
+          "sha256": "ce58e54e7c34edbc3d4709b71fbdcea9645a772fe99e5224447aaa66997493bf",
+          "minOSVersion": "17.4"
+        },
         {
           "version": "1.12",
           "date": "2025-03-08T23:20:00+02:00",
