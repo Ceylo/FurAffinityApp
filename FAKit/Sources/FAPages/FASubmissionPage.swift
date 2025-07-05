@@ -169,11 +169,16 @@ extension FASubmissionPage {
             let fileSize = try readRow("File Size", "span")
             
             let keywordNodes = try sidebarNode.select("section.tags-row > span.tags")
-            let keywords = try keywordNodes.map { node in
-                try node.select("a")
-                    .first(where: { !$0.hasClass("tag-block") })
-                    .unwrap()
-                    .text()
+            let keywords = try keywordNodes.compactMap { node in
+                if let tag = try node.getElementsByClass("tag-block").first() {
+                    return try tag.attr("data-tag-name")
+                } else if let tag = try node.getElementsByClass("tag-invalid").first() {
+                    return try tag.text()
+                } else {
+                    let html = (try? node.html()) ?? "exception throw while retrieving html"
+                    logger.error("Failed parsing keyword. Node: \(html)")
+                    return nil
+                }
             }
             
             let folderNodes = try sidebarNode.select("section.folder-list-container > div > a")

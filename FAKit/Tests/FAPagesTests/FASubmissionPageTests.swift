@@ -59,7 +59,7 @@ final class FASubmissionPageTests: XCTestCase {
         let data = testData("www.furaffinity.net:view:49338772-nocomment.html")
         let page = try await FASubmissionPage(data: data, url: url).unwrap()
         
-        let htmlDescription = "YCH for \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20250618/lil-maj.gif\" align=\"middle\" title=\"lil-maj\" alt=\"lil-maj\" />&nbsp;lil-maj</a> \n<br /> \n<br /> Cody © \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20250618/lil-maj.gif\" align=\"middle\" title=\"lil-Maj\" alt=\"lil-Maj\" />&nbsp;lil-Maj</a>\n<br /> \n<br /> \n<br /> \n<br /> \n<br /> \n<br /> *******************************\n<br /> * \n<a class=\"auto_link named_url external\" href=\"http://ko-fi.com/J3J16KSH\" rel=\"nofollow ugc noreferrer noopener\">Feed me with coffee?</a>\n<br /> * \n<a class=\"auto_link named_url\" href=\"https://www.furaffinity.net/gallery/annetpeas/\">My Gallery</a>\n<br /> * \n<a class=\"auto_link named_url external\" href=\"https://twitter.com/AnnetPeas_Art\" rel=\"nofollow ugc noreferrer noopener\">Twitter</a>"
+        let htmlDescription = "YCH for \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20250705/lil-maj.gif\" align=\"middle\" title=\"lil-maj\" alt=\"lil-maj\" />&nbsp;lil-maj</a> \n<br /> \n<br /> Cody © \n<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/20250705/lil-maj.gif\" align=\"middle\" title=\"lil-Maj\" alt=\"lil-Maj\" />&nbsp;lil-Maj</a>\n<br /> \n<br /> \n<br /> \n<br /> \n<br /> \n<br /> *******************************\n<br /> * \n<a class=\"auto_link named_url external\" href=\"http://ko-fi.com/J3J16KSH\" rel=\"nofollow ugc noreferrer noopener\">Feed me with coffee?</a>\n<br /> * \n<a class=\"auto_link named_url\" href=\"https://www.furaffinity.net/gallery/annetpeas/\">My Gallery</a>\n<br /> * \n<a class=\"auto_link named_url external\" href=\"https://twitter.com/AnnetPeas_Art\" rel=\"nofollow ugc noreferrer noopener\">Twitter</a>"
         let expected = FASubmissionPage(
             previewImageUrl: URL(string: "https://t.furaffinity.net/49338772@600-1665402309.jpg")!,
             fullResolutionMediaUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1665402309/1665402309.annetpeas_the_hookah_fa.png")!,
@@ -70,7 +70,7 @@ final class FASubmissionPageTests: XCTestCase {
                 displayAuthor: "AnnetPeas",
                 datetime: "Oct 10, 2022 01:45 PM",
                 naturalDatetime: "2 years ago",
-                viewCount: 735,
+                viewCount: 739,
                 commentCount: 0,
                 favoriteCount: 67,
                 rating: .general,
@@ -87,7 +87,7 @@ final class FASubmissionPageTests: XCTestCase {
             ),
             htmlDescription: htmlDescription,
             isFavorite: false,
-            favoriteUrl: URL(string: "https://www.furaffinity.net/fav/49338772/?key=f9e1b3524adb4300b2f18830056c36f5e6deca0ca570d1a0323498f98a75802d")!,
+            favoriteUrl: URL(string: "https://www.furaffinity.net/fav/49338772/?key=58793db7d6063c05ffb82d48c75b22597ca9ce6249a645a1609590f835e11db3")!,
             comments: [],
             targetCommentId: nil,
             acceptsNewComments: true
