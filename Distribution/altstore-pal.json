@@ -46,6 +46,15 @@
       ],
       "versions": [
         {
+          "version": "1.13.1",
+          "buildVersion": "1",
+          "date": "2025-07-06T10:00:00+02:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n🐞 BUGFIXES\n- Fixed loading of submissions that contain tags considered as invalid since June 30th website update",
+          "downloadURL": "https://get.furaffinity.app/altstore/releases/1.13.1/adp/",
+          "size": 2634993,
+          "minOSVersion": "17.4"
+        },
+        {
           "version": "1.13",
           "buildVersion": "1",
           "date": "2025-06-28T13:00:00+02:00",
