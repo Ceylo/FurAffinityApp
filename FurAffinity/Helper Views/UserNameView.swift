@@ -109,7 +109,7 @@ struct UserNameView: View {
     List {
         ForEach(UserNameView.DisplayStyle.allCases, id: \.hashValue) { displayStyle in
             HStack {
-                Text("\(displayStyle)")
+                Text("\(String(describing: displayStyle))")
                     .font(.caption)
                 Spacer()
                 

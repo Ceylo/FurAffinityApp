@@ -8,12 +8,21 @@
 import SwiftUI
 import FAKit
 
-enum GalleryType {
+enum GalleryType: CustomLocalizedStringResourceConvertible {
     case gallery
     case favorites
     
     var shouldDisplayAuthor: Bool {
         self == .favorites
+    }
+    
+    var localizedStringResource: LocalizedStringResource {
+        switch self {
+        case .gallery:
+                .init(stringLiteral: "Gallery")
+        case .favorites:
+                .init(stringLiteral: "Favorites")
+        }
     }
 }
 
@@ -82,7 +91,7 @@ struct UserGalleryLikeView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .navigationTitle("\(gallery.displayAuthor)'s \(galleryType)")
+        .navigationTitle("\(gallery.displayAuthor)'s \(galleryType.localizedStringResource)")
         .toolbar { foldersMenu }
         
     }
