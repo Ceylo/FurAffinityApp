@@ -45,7 +45,7 @@ jobs:
       - uses: mxcl/xcodebuild@v3
         with:
           action: none
-          xcode: ~16.0
+          xcode: ~26.0
       - name: Build App
         run: |
           xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 16' -configuration Release build
