@@ -98,7 +98,13 @@ struct LoggedInView: View {
                 }
                 .tag(Tab.settings)
         }
-        .tabBarMinimizeBehavior(.onScrollDown)
+        .applying {
+            if #available(iOS 26, *) {
+                $0.tabBarMinimizeBehavior(.onScrollDown)
+            } else {
+                $0
+            }
+        }
         .onOpenURL { url in
             FATarget(with: url).map(handleTarget)
         }

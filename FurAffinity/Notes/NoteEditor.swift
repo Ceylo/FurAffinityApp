@@ -42,7 +42,13 @@ struct NoteEditor: View {
                     actionInProgress = nil
                 }
             }
-            .buttonStyle(.glass)
+            .applying {
+                if #available(iOS 26, *) {
+                    $0.buttonStyle(.glass)
+                } else {
+                    $0.buttonStyle(.bordered)
+                }
+            }
             .disabled(!canCancel)
             
             if actionInProgress == .cancel {
@@ -57,7 +63,13 @@ struct NoteEditor: View {
                     actionInProgress = nil
                 }
             }
-            .buttonStyle(.glassProminent)
+            .applying {
+                if #available(iOS 26, *) {
+                    $0.buttonStyle(.glassProminent)
+                } else {
+                    $0.buttonStyle(.borderedProminent)
+                }
+            }
             .disabled(!canSubmit)
             
             if actionInProgress == .submit {
