@@ -135,7 +135,7 @@ struct SubmissionView: View {
                 Button {
                     replySession = .init(parentCid: nil, among: [])
                 } label: {
-                    Label("Reply", systemImage: "bubble")
+                    Label("Comment", systemImage: "bubble")
                 }
                 .disabled(!submission.acceptsNewComments)
             }
