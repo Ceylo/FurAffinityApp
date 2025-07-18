@@ -35,13 +35,14 @@ struct NoteEditor: View {
     
     var controls: some View {
         HStack(spacing: 10) {
-            Button("Cancel") {
+            SheetButton(symbol: "xmark") {
                 actionInProgress = .cancel
                 Task {
                     await handler(.cancel)
                     actionInProgress = nil
                 }
             }
+            .buttonStyle(.glass)
             .disabled(!canCancel)
             
             if actionInProgress == .cancel {
@@ -49,13 +50,14 @@ struct NoteEditor: View {
             }
             
             Spacer()
-            Button("Send Note") {
+            SheetButton(symbol: "arrow.up") {
                 actionInProgress = .submit
                 Task {
                     await handler(.submit)
                     actionInProgress = nil
                 }
             }
+            .buttonStyle(.glassProminent)
             .disabled(!canSubmit)
             
             if actionInProgress == .submit {
