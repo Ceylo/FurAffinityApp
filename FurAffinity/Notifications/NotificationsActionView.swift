@@ -63,6 +63,7 @@ struct NotificationsActionView: View {
                 }
             } label: {
                 ActionControl()
+                    .opaque()
             }
             .nukeAlert("Submission Comments", "submission comment notifications",
                        show: $showNukeSubmissionCommentsAlert) {
