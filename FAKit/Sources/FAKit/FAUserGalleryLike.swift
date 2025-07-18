@@ -13,17 +13,20 @@ public struct FAUserGalleryLike: Sendable, Equatable {
     public typealias FolderGroup = FAFolderGroup
     public typealias Folder = FAFolder
     
+    public let url: URL
     public let displayAuthor: String
     public let previews: [FASubmissionPreview]
     public let nextPageUrl: URL?
     public let folderGroups: [FolderGroup]
     
     public init(
+        url: URL,
         displayAuthor: String,
         previews: [FASubmissionPreview],
         nextPageUrl: URL?,
         folderGroups: [FolderGroup]
     ) {
+        self.url = url
         self.displayAuthor = displayAuthor
         self.previews = previews
         self.nextPageUrl = nextPageUrl
@@ -32,6 +35,7 @@ public struct FAUserGalleryLike: Sendable, Equatable {
     
     public func appending(_ gallery: Self) -> Self {
         .init(
+            url: url,
             displayAuthor: displayAuthor,
             previews: previews + gallery.previews,
             nextPageUrl: gallery.nextPageUrl,
@@ -41,8 +45,9 @@ public struct FAUserGalleryLike: Sendable, Equatable {
 }
 
 extension FAUserGalleryLike {
-    public init(_ page: FAUserGalleryLikePage) {
+    public init(_ page: FAUserGalleryLikePage, url: URL) {
         self.init(
+            url: url,
             displayAuthor: page.displayAuthor,
             previews: page.previews
                 .compactMap { $0 }

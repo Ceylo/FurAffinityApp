@@ -146,6 +146,7 @@ struct UserGalleryLikeView: View {
         UserGalleryLikeView(
             galleryType: .favorites,
             gallery: .init(
+                url: URL(string: "https://www.furaffinity.net/gallery/someuser/")!,
                 displayAuthor: "Some User",
                 previews: OfflineFASession.default.submissionPreviews,
                 nextPageUrl: nil,
@@ -162,7 +163,13 @@ struct UserGalleryLikeView: View {
     NavigationStack {
         UserGalleryLikeView(
             galleryType: .favorites,
-            gallery: .init(displayAuthor: "Some User", previews: [], nextPageUrl: nil, folderGroups: []),
+            gallery: .init(
+                url: URL(string: "https://www.furaffinity.net/gallery/someuser/")!,
+                displayAuthor: "Some User",
+                previews: [],
+                nextPageUrl: nil,
+                folderGroups: []
+            ),
             loadMore: { _ in },
             updateSource: { _ in }
         )
