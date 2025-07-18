@@ -98,6 +98,7 @@ struct LoggedInView: View {
                 }
                 .tag(Tab.settings)
         }
+        .tabBarMinimizeBehavior(.onScrollDown)
         .onOpenURL { url in
             FATarget(with: url).map(handleTarget)
         }
