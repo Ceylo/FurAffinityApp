@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ActionControl: View {
     private var _opaque: Bool = false
+    private var size: Double = 18
     
     func opaque(_ opaque: Bool = true) -> some View {
         var copy = self
@@ -17,16 +18,26 @@ struct ActionControl: View {
     }
     
     var body: some View {
-        if #available(iOS 26, *), !_opaque {
-            Image(systemName: "ellipsis")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 18, height: 18)
+        if #available(iOS 26, *) {
+            if _opaque {
+                Image(systemName: "ellipsis")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .tint(.primary)
+                    .frame(width: size, height: size)
+                    .padding(13)
+                    .glassEffect()
+            } else {
+                Image(systemName: "ellipsis")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: size, height: size)
+            }
         } else {
             Image(systemName: "ellipsis")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 18, height: 18)
+                .frame(width: size, height: size)
                 .foregroundColor(.accentColor)
                 .padding(5)
                 .background(.thinMaterial)
@@ -38,9 +49,23 @@ struct ActionControl: View {
 
 #Preview {
     NavigationStack {
-        Text("")
+        HStack {
+            Spacer()
+            
+            Button {
+                
+            } label: {
+                ActionControl()
+                    .opaque()
+            }
+            .padding(.trailing, 16)
+        }
+        
+        Spacer()
+        
+        Text("Hi")
             .toolbar {
-                ToolbarItem(placement: .primaryAction) {
+                ToolbarItem {
                     Button {
                         
                     } label: {
