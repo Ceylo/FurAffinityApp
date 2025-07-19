@@ -38,20 +38,20 @@ struct AuthoredHeaderView: View {
             }
             
             VStack(alignment: .leading) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                
                 HStack(alignment: .firstTextBaseline) {
                     Text(displayName)
-                        .font(.headline)
-                        .foregroundColor(.primary)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                     Spacer()
                     if let datetime {
                         DateTimeButton(datetime: datetime.datetime,
                                        naturalDatetime: datetime.naturalDatetime)
                     }
                 }
-                
-                Text(title)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
             }
         }
     }
