@@ -16,8 +16,8 @@ struct SubmissionPreviewView: View {
     var avatarUrl: URL?
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 10) {
+        List {
+            Group {
                 AuthoredHeaderView(
                     username: submission.author,
                     displayName: submission.displayAuthor,
@@ -25,6 +25,8 @@ struct SubmissionPreviewView: View {
                     avatarUrl: avatarUrl,
                     datetime: nil
                 )
+                .padding(.horizontal, 10)
+                
                 GeometryReader { geometry in
                     SubmissionMainImage(
                         widthOnHeightRatio: submission.thumbnailWidthOnHeightRatio,
@@ -36,16 +38,19 @@ struct SubmissionPreviewView: View {
                 }
                 .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
             }
-            .padding(.horizontal, 10)
-            .padding(.top, 5)
+            .listRowSeparator(.hidden)
+            .listRowInsets(.init(top: 5, leading: 0, bottom: 5, trailing: 0))
         }
+        .listStyle(.plain)
         .navigationTitle(submission.title)
         .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 #Preview {
-    SubmissionPreviewView(
-        submission: FASubmissionPreview.demo
-    )
+    NavigationStack {
+        SubmissionPreviewView(
+            submission: FASubmissionPreview.demo
+        )
+    }
 }

@@ -88,6 +88,7 @@ struct SubmissionView: View {
                 Group {
                     header
                     mainImage
+                        .padding(.horizontal, -10)
                     submissionControls
                     submissionDescription
                 }
