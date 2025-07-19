@@ -130,7 +130,7 @@ struct SubmissionsFeedView: View {
                         model.deleteSubmissionPreviews(atOffsets: offsets)
                     }
                     .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 0, trailing: 0))
+                    .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
                 }
                 .introspect(.scrollView, on: .iOS(.v16...)) { scrollView in
                     self.scrollView = scrollView

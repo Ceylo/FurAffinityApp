@@ -73,7 +73,7 @@ struct UserGalleryLikeView: View {
                         }
                         .id(preview.sid)
                         .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                        .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
                     }
                     
                     ProgressiveLoadItem(
