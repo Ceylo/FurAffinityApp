@@ -21,7 +21,7 @@ struct SubmissionsFeedView: View {
     var noPreview: some View {
         ScrollView {
             VStack(spacing: 10) {
-                Text("It's a bit empty in here.")
+                Text("No submission to display yet.")
                     .font(.headline)
                 Text("Watch artists and wait for them to post new art. Submissions from [www.furaffinity.net/msg/submissions/](https://www.furaffinity.net/msg/submissions/) will be displayed here.")
                     .multilineTextAlignment(.center)
@@ -100,14 +100,21 @@ struct SubmissionsFeedView: View {
         case let .fetchTrigger(targetScrollItem):
             fetchTriggerView(with: targetScrollItem, scrollProxy: scrollProxy)
         case let .submissionPreview(preview):
-            NavigationLink(value: FATarget.submission(
-                url: preview.url, previewData: preview
-            )) {
+            ZStack(alignment: .leading) {
+                NavigationLink(value: FATarget.submission(
+                    url: preview.url, previewData: preview
+                )) {
+                    // Empty navigation link with 0 opacity is a trick to have full width
+                    // navigation without a trailing chevron
+                    EmptyView()
+                }
+                .opacity(0)
+                
                 SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
                     .id(preview.sid)
-            }
-            .onItemFrameChanged(listGeometry: geometry) { frame in
-                followItem(preview, frame: frame, geometry: geometry)
+                    .onItemFrameChanged(listGeometry: geometry) { frame in
+                        followItem(preview, frame: frame, geometry: geometry)
+                    }
             }
         }
     }
