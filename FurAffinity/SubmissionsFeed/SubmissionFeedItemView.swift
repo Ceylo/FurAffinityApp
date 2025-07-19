@@ -8,7 +8,6 @@
 import SwiftUI
 import FAKit
 import Kingfisher
-import Glur
 
 protocol SubmissionHeaderView: View {
     @MainActor
