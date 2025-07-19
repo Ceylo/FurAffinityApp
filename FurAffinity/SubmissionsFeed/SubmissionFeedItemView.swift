@@ -8,6 +8,7 @@
 import SwiftUI
 import FAKit
 import Kingfisher
+import Glur
 
 protocol SubmissionHeaderView: View {
     @MainActor
@@ -52,11 +53,13 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HeaderView(preview: submission, avatarUrl: FAURLs.avatarUrl(for: submission.author))
-                .padding(.leading, 10)
+            HeaderView(
+                preview: submission,
+                avatarUrl: FAURLs.avatarUrl(for: submission.author)
+            )
+            .padding(.horizontal, 10)
             previewImage
         }
-        .padding(.vertical, 10)
     }
     
     func controlCacheBehavior(for url: URL) async {
