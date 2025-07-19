@@ -53,6 +53,8 @@ jobs:
         with:
           action: none
           xcode: ~26.0
+      - name: Install iOS support
+        run: xcodebuild -downloadPlatform iOS
       - name: Archive App
         run: |
           git_hash=$(git rev-parse --short "$GITHUB_SHA")

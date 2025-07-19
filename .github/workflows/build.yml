@@ -46,6 +46,8 @@ jobs:
         with:
           action: none
           xcode: ~26.0
+      - name: Install iOS support
+        run: xcodebuild -downloadPlatform iOS
       - name: Build App
         run: |
           xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 16' -configuration Release build
