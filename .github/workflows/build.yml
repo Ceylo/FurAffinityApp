@@ -50,7 +50,7 @@ jobs:
         run: xcodebuild -downloadPlatform iOS
       - name: Build App
         run: |
-          xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 16' -configuration Release build
+          xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 16' -configuration Debug build
       - name: Run Tests
         run: |
           git_hash=$(git rev-parse --short "$GITHUB_SHA")
