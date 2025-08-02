@@ -34,7 +34,7 @@ struct AuthoredHeaderView: View {
         HStack(alignment: .top) {
             FALink(destination: userFATarget) {
                 AvatarView(avatarUrl: avatarUrl)
-                    .frame(width: 38, height: 38)
+                    .frame(width: 42, height: 42)
             }
             
             VStack(alignment: .leading) {
