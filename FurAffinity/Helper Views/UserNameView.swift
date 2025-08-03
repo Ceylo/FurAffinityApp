@@ -24,6 +24,7 @@ struct UserNameView: View {
         case compactHighlightedDisplayName
         case multiline
         case multilineProminent
+        case prominent
     }
     
     private var _displayStyle: DisplayStyle = .compact
@@ -49,6 +50,8 @@ struct UserNameView: View {
                 " @\(name)"
             case .multiline, .multilineProminent:
                 "@\(name)"
+            case .prominent:
+                ""
             }
         }
     }
@@ -101,6 +104,10 @@ struct UserNameView: View {
                     }
                 }
             }
+            
+        case .prominent:
+            Text(displayName)
+                .font(.largeTitle)
         }
     }
 }

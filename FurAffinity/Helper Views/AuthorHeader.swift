@@ -13,8 +13,21 @@ struct AuthorHeader: View {
     var displayName: String
     var datetime: DatetimePair?
     
+    init(username: String, displayName: String, datetime: DatetimePair? = nil, _displayStaticName: Bool = false) {
+        self.username = username
+        self.displayName = displayName
+        self.datetime = datetime
+    }
+    
     var avatarUrl: URL? {
         FAURLs.avatarUrl(for: username)
+    }
+    
+    private var _displayStaticName = false
+    func displayingStaticName(_ display: Bool = true) -> Self {
+        var copy = self
+        copy._displayStaticName = display
+        return copy
     }
     
     var userFATarget: FATarget? {
@@ -39,16 +52,23 @@ struct AuthorHeader: View {
                     .frame(width: 42, height: 42)
             }
             
-            HStack(alignment: .firstTextBaseline) {
-                Text(displayName)
-                    .font(.largeTitle)
-                Spacer()
+            HStack(alignment: .lastTextBaseline) {
+                FALink(destination: userFATarget) {
+                    UserNameView(
+                        name: username,
+                        displayName: displayName
+                    )
+                    .displayStyle(_displayStaticName ? .multiline : .prominent)
+                    Spacer()
+                }
                 
                 if let datetime {
                     DateTimeButton(datetime: datetime.datetime,
                                    naturalDatetime: datetime.naturalDatetime)
                 }
             }
+            // Overwrite blue of FALink
+            .foregroundColor(.primary)
         }
     }
 }
@@ -65,4 +85,12 @@ struct AuthorHeader: View {
         datetime: .init("Apr 7th, 2022, 11:58 AM",
                         "8 months ago")
     )
+    
+    AuthorHeader(
+        username: "ceylo",
+        displayName: "Ceylo",
+        datetime: .init("Apr 7th, 2022, 11:58 AM",
+                        "8 months ago")
+    )
+    .displayingStaticName()
 }
