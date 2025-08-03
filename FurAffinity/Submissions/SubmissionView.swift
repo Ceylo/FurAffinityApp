@@ -22,7 +22,7 @@ struct SubmissionView: View {
     @State private var fullResolutionMediaFileUrl: URL?
     
     var header: some View {
-        AuthoredHeaderView(
+        TitleAuthorHeader(
             username: submission.author,
             displayName: submission.displayAuthor,
             title: submission.title,

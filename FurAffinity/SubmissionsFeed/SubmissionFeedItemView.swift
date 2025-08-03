@@ -74,6 +74,6 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
 }
 
 #Preview {
-    SubmissionFeedItemView<AuthoredHeaderView>(submission: OfflineFASession.default.submissionPreviews[0])
+    SubmissionFeedItemView<TitleAuthorHeader>(submission: OfflineFASession.default.submissionPreviews[0])
         .preferredColorScheme(.dark)
 }

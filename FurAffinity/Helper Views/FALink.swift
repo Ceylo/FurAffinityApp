@@ -47,13 +47,13 @@ struct FALink<ContentView: View>: View {
     NavigationStack {
         List {
             FALink(destination: .favorites(url: URL(string: "https://foo.com")!)) {
-                SubmissionFeedItemView<AuthoredHeaderView>(submission: FASubmissionPreview.demo)
+                SubmissionFeedItemView<TitleAuthorHeader>(submission: FASubmissionPreview.demo)
                     .border(.primary)
             }
             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
             
             NavigationLink(value: 42) {
-                SubmissionFeedItemView<AuthoredHeaderView>(submission: FASubmissionPreview.demo)
+                SubmissionFeedItemView<TitleAuthorHeader>(submission: FASubmissionPreview.demo)
                     .border(.primary)
             }
             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))

@@ -8,7 +8,7 @@
 import SwiftUI
 import FAKit
 
-struct AuthoredHeaderView: View {
+struct TitleAuthorHeader: View {
     var username: String
     var displayName: String
     var title: String
@@ -57,7 +57,7 @@ struct AuthoredHeaderView: View {
     }
 }
 
-extension AuthoredHeaderView: SubmissionHeaderView {
+extension TitleAuthorHeader: SubmissionHeaderView {
     init(preview: FASubmissionPreview, avatarUrl: URL?) {
         self.init(
             username: preview.author,
@@ -71,7 +71,7 @@ extension AuthoredHeaderView: SubmissionHeaderView {
 #Preview(traits: .sizeThatFitsLayout) {
     NavigationStack {
         List {
-            AuthoredHeaderView(
+            TitleAuthorHeader(
                 username: "author",
                 displayName: "The Author", title: "Great Content but with very very very very long description",
                 avatarUrl: nil,

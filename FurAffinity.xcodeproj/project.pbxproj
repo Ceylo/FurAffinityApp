@@ -77,7 +77,7 @@
 		87A9C34129C788350001D1D6 /* CurrentUserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A9C34029C788350001D1D6 /* CurrentUserView.swift */; };
 		87A9C34329C788A00001D1D6 /* RemoteUserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A9C34229C788A00001D1D6 /* RemoteUserView.swift */; };
 		87B0233F2CD54F9200F4D400 /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 87B0233E2CD54F9200F4D400 /* Defaults */; };
-		87B0933A2AED6CEA008DFDE7 /* TitledHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B093392AED6CEA008DFDE7 /* TitledHeaderView.swift */; };
+		87B0933A2AED6CEA008DFDE7 /* TitleHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B093392AED6CEA008DFDE7 /* TitleHeader.swift */; };
 		87B0933C2AED6D53008DFDE7 /* DatetimePair.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B0933B2AED6D53008DFDE7 /* DatetimePair.swift */; };
 		87B0933E2AED7C47008DFDE7 /* URL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B0933D2AED7C47008DFDE7 /* URL.swift */; };
 		87B7972E2E08413D00F10339 /* RemoteNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B7972D2E08413D00F10339 /* RemoteNotesView.swift */; };
@@ -108,7 +108,7 @@
 		87EAA2DD29EB4F3700677446 /* JournalNotificationItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87EAA2DC29EB4F3700677446 /* JournalNotificationItemView.swift */; };
 		87F074A82C91AF0C00218D0E /* RemoteSubmissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F074A72C91AF0C00218D0E /* RemoteSubmissionView.swift */; };
 		87F5EE8F29C5D9DD00649C5B /* DateTimeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */; };
-		87F8FA342761347200CDD985 /* AuthoredHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA332761347200CDD985 /* AuthoredHeaderView.swift */; };
+		87F8FA342761347200CDD985 /* TitleAuthorHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA332761347200CDD985 /* TitleAuthorHeader.swift */; };
 		87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA3527613DD900CDD985 /* Extensions.swift */; };
 		87F960CB2801EFF3000B30A3 /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F960CA2801EFF3000B30A3 /* AvatarView.swift */; };
 		87FE0DA72974609E005713DB /* SubmissionsFeedActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FE0DA62974609E005713DB /* SubmissionsFeedActionView.swift */; };
@@ -197,7 +197,7 @@
 		87A587442CD8152B005F8D3B /* ListCounter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListCounter.swift; sourceTree = "<group>"; };
 		87A9C34029C788350001D1D6 /* CurrentUserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentUserView.swift; sourceTree = "<group>"; };
 		87A9C34229C788A00001D1D6 /* RemoteUserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteUserView.swift; sourceTree = "<group>"; };
-		87B093392AED6CEA008DFDE7 /* TitledHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TitledHeaderView.swift; sourceTree = "<group>"; };
+		87B093392AED6CEA008DFDE7 /* TitleHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TitleHeader.swift; sourceTree = "<group>"; };
 		87B0933B2AED6D53008DFDE7 /* DatetimePair.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatetimePair.swift; sourceTree = "<group>"; };
 		87B0933D2AED7C47008DFDE7 /* URL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URL.swift; sourceTree = "<group>"; };
 		87B7972D2E08413D00F10339 /* RemoteNotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteNotesView.swift; sourceTree = "<group>"; };
@@ -226,7 +226,7 @@
 		87EAA2DC29EB4F3700677446 /* JournalNotificationItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalNotificationItemView.swift; sourceTree = "<group>"; };
 		87F074A72C91AF0C00218D0E /* RemoteSubmissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteSubmissionView.swift; sourceTree = "<group>"; };
 		87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateTimeButton.swift; sourceTree = "<group>"; };
-		87F8FA332761347200CDD985 /* AuthoredHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthoredHeaderView.swift; sourceTree = "<group>"; };
+		87F8FA332761347200CDD985 /* TitleAuthorHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TitleAuthorHeader.swift; sourceTree = "<group>"; };
 		87F8FA3527613DD900CDD985 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		87F960CA2801EFF3000B30A3 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
 		87FE0DA62974609E005713DB /* SubmissionsFeedActionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionsFeedActionView.swift; sourceTree = "<group>"; };
@@ -446,9 +446,9 @@
 				8733DDFE28FAD58D00CD8BCF /* SwapView.swift */,
 				87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */,
 				87292E44297DD3FB00BE39B8 /* LoadingFailedView.swift */,
-				87F8FA332761347200CDD985 /* AuthoredHeaderView.swift */,
+				87F8FA332761347200CDD985 /* TitleAuthorHeader.swift */,
 				87D64FCC2C88B00100AB6F44 /* FALink.swift */,
-				87B093392AED6CEA008DFDE7 /* TitledHeaderView.swift */,
+				87B093392AED6CEA008DFDE7 /* TitleHeader.swift */,
 				87A4DA612A097D9000704857 /* NukeAlert.swift */,
 				87A4DA632A097ECB00704857 /* ActionControl.swift */,
 				87346B362B0A658F000407C7 /* RemoteView.swift */,
@@ -632,7 +632,7 @@
 				879536D92BE29CE1004A50B0 /* SectionHeader.swift in Sources */,
 				87C4435C2C73F29600200991 /* AlignedLabel.swift in Sources */,
 				87D64FC72C88790E00AB6F44 /* UserPreviewView.swift in Sources */,
-				87F8FA342761347200CDD985 /* AuthoredHeaderView.swift in Sources */,
+				87F8FA342761347200CDD985 /* TitleAuthorHeader.swift in Sources */,
 				87B0933E2AED7C47008DFDE7 /* URL.swift in Sources */,
 				8725335F274A70BB007FEF3B /* Model.swift in Sources */,
 				8719C1782DE9C25F0090C6E7 /* NoteEditor.swift in Sources */,
@@ -694,7 +694,7 @@
 				87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */,
 				878401452CB9747D0099CAC8 /* UserJournalsView.swift in Sources */,
 				8733DDFD28F75C1200CD8BCF /* Sharing.swift in Sources */,
-				87B0933A2AED6CEA008DFDE7 /* TitledHeaderView.swift in Sources */,
+				87B0933A2AED6CEA008DFDE7 /* TitleHeader.swift in Sources */,
 				87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */,
 				87566B82297DC71600FD3199 /* CommentEditor.swift in Sources */,
 				87C94A542AA893BA0049CA81 /* UserGalleryLikeView.swift in Sources */,

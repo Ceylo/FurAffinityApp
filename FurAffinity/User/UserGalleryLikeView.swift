@@ -66,9 +66,9 @@ struct UserGalleryLikeView: View {
                             .opacity(0)
                             
                             if galleryType.shouldDisplayAuthor {
-                                SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
+                                SubmissionFeedItemView<TitleAuthorHeader>(submission: preview)
                             } else {
-                                SubmissionFeedItemView<TitledHeaderView>(submission: preview)
+                                SubmissionFeedItemView<TitleHeader>(submission: preview)
                             }
                         }
                         .id(preview.sid)

@@ -13,7 +13,7 @@ struct JournalNotificationItemView: View {
     var target: FATarget?
     
     var body: some View {
-        AuthoredHeaderView(
+        TitleAuthorHeader(
             username: journal.author,
             displayName: journal.displayAuthor,
             title: journal.title,

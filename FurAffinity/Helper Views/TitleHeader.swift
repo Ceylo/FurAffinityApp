@@ -8,7 +8,7 @@
 import SwiftUI
 import FAKit
 
-struct TitledHeaderView: View {
+struct TitleHeader: View {
     var title: String
     
     var body: some View {
@@ -21,7 +21,7 @@ struct TitledHeaderView: View {
     }
 }
 
-extension TitledHeaderView: SubmissionHeaderView {
+extension TitleHeader: SubmissionHeaderView {
     init(preview: FAKit.FASubmissionPreview, avatarUrl: URL?) {
         self.init(
             title: preview.title
@@ -30,6 +30,6 @@ extension TitledHeaderView: SubmissionHeaderView {
 }
 
 #Preview(traits: .sizeThatFitsLayout) {
-    TitledHeaderView(title: "Great Content")
+    TitleHeader(title: "Great Content")
         .preferredColorScheme(.dark)
 }

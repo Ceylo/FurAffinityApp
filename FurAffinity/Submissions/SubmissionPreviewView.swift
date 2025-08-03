@@ -18,7 +18,7 @@ struct SubmissionPreviewView: View {
     var body: some View {
         List {
             Group {
-                AuthoredHeaderView(
+                TitleAuthorHeader(
                     username: submission.author,
                     displayName: submission.displayAuthor,
                     title: submission.title,

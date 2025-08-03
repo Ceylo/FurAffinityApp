@@ -110,7 +110,7 @@ struct SubmissionsFeedView: View {
                 }
                 .opacity(0)
                 
-                SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
+                SubmissionFeedItemView<TitleAuthorHeader>(submission: preview)
                     .id(preview.sid)
                     .onItemFrameChanged(listGeometry: geometry) { frame in
                         followItem(preview, frame: frame, geometry: geometry)
