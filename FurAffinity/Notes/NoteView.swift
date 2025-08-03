@@ -66,7 +66,6 @@ struct NoteView: View {
             NoteContentsView(note: note, showWarning: true)
             .padding()
             .navigationTitle(note.title)
-            .navigationBarTitleDisplayMode(.inline)
             .noteReplySheet(on: $replySession) { reply in
                 try await replyAction(reply.destinationUser, reply.subject, reply.text)
             }
