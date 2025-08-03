@@ -45,14 +45,6 @@ struct NotesView: View {
     
     @ToolbarContentBuilder
     var toolbar: some ToolbarContent {
-        ToolbarItem(placement: .principal) {
-            HStack {
-                Image(systemName: displayedBox.systemImageName)
-                Text(displayedBox.displayName)
-                    .font(.headline)
-            }
-        }
-        
         ToolbarItem(placement: .topBarLeading) {
             Button {
                 showUnreadNotesOnly.toggle()
@@ -65,30 +57,10 @@ struct NotesView: View {
         }
 
         ToolbarItem {
-            Menu {
-                Picker("Boxes", systemImage: "folder", selection: $displayedBox) {
-                    Button {
-                    } label: {
-                        Label("Inbox", systemImage: "tray")
-                    }
-                    .tag(NotesBox.inbox)
-                    
-                    Button {
-                    } label: {
-                        Label("Sent", systemImage: "paperplane")
-                    }
-                    .tag(NotesBox.sent)
-                }
-                
-                Divider()
-                
-                Button {
-                    noteReplySession = .init(defaultContents: .init())
-                } label: {
-                    Label("Send a Note", systemImage: "message")
-                }
+            Button {
+                noteReplySession = .init(defaultContents: .init())
             } label: {
-                ActionControl()
+                Label("Send a Note", systemImage: "square.and.pencil")
             }
         }
     }
@@ -116,6 +88,21 @@ struct NotesView: View {
                         .foregroundColor(.secondary)
                 }
                 .padding()
+            }
+        }
+        .toolbarTitleMenu {
+            Picker("Boxes", systemImage: "folder", selection: $displayedBox) {
+                Button {
+                } label: {
+                    Label("Inbox", systemImage: "tray")
+                }
+                .tag(NotesBox.inbox)
+                
+                Button {
+                } label: {
+                    Label("Sent", systemImage: "paperplane")
+                }
+                .tag(NotesBox.sent)
             }
         }
         .toolbar {
