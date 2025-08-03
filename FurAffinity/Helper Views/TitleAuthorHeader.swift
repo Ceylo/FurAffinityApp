@@ -43,7 +43,7 @@ struct TitleAuthorHeader: View {
                     .foregroundColor(.primary)
                 
                 HStack(alignment: .firstTextBaseline) {
-                    Text(displayName)
+                    Text("by " + displayName)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     Spacer()
