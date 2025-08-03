@@ -15,35 +15,53 @@ struct SubmissionPreviewView: View {
     var submission: FASubmissionPreview
     var avatarUrl: URL?
     
+    var mainImage: some View {
+        GeometryReader { geometry in
+            SubmissionMainImage(
+                widthOnHeightRatio: submission.thumbnailWidthOnHeightRatio,
+                fullResolutionMediaUrl: submission.dynamicThumbnail.bestThumbnailUrl(for: geometry),
+                displayProgress: false,
+                allowZoomableSheet: false,
+                fullResolutionMediaFileUrl: .constant(nil)
+            )
+        }
+        .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
+    }
+    
+    var submissionControlsSpace: some View {
+        SubmissionControlsView(
+            submissionUrl: submission.url,
+            favoritesCount: 0,
+            isFavorite: false,
+            favoriteAction: {},
+            repliesCount: 0,
+            acceptsNewReplies: true,
+            replyAction: {}
+        )
+        .hidden()
+    }
+    
+    var author: some View {
+        AuthorHeader(
+            username: submission.author,
+            displayName: submission.displayAuthor
+        )
+    }
+    
     var body: some View {
         List {
             Group {
-                TitleAuthorHeader(
-                    username: submission.author,
-                    displayName: submission.displayAuthor,
-                    title: submission.title,
-                    avatarUrl: avatarUrl,
-                    datetime: nil
-                )
-                .padding(.horizontal, 10)
-                
-                GeometryReader { geometry in
-                    SubmissionMainImage(
-                        widthOnHeightRatio: submission.thumbnailWidthOnHeightRatio,
-                        fullResolutionMediaUrl: submission.dynamicThumbnail.bestThumbnailUrl(for: geometry),
-                        displayProgress: false,
-                        allowZoomableSheet: false,
-                        fullResolutionMediaFileUrl: .constant(nil)
-                    )
-                }
-                .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
+                mainImage
+                    .padding(.horizontal, -10)
+                submissionControlsSpace
+                author
             }
+            .padding(.horizontal, 10)
             .listRowSeparator(.hidden)
             .listRowInsets(.init(top: 5, leading: 0, bottom: 5, trailing: 0))
         }
         .listStyle(.plain)
         .navigationTitle(submission.title)
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

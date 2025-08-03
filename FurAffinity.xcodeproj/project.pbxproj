@@ -13,6 +13,7 @@
 		87098D382CB19E4D00E7BD94 /* Kingfisher+FA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */; };
 		87098D3A2CB2BEF000E7BD94 /* UserDefaultKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87098D392CB2BEF000E7BD94 /* UserDefaultKeys.swift */; };
 		870B2AA12DFDD29E00B48AC3 /* NoteReplying.swift in Sources */ = {isa = PBXBuildFile; fileRef = 870B2AA02DFDD29500B48AC3 /* NoteReplying.swift */; };
+		870BCA212E3FBC6600E5FC0B /* AuthorHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 870BCA202E3FBC6100E5FC0B /* AuthorHeader.swift */; };
 		8716E7EC271C659C00C0BC4A /* FurAffinityApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8716E7EB271C659C00C0BC4A /* FurAffinityApp.swift */; };
 		8716E7EE271C659C00C0BC4A /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8716E7ED271C659C00C0BC4A /* HomeView.swift */; };
 		8716E7F0271C659D00C0BC4A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8716E7EF271C659D00C0BC4A /* Assets.xcassets */; };
@@ -130,6 +131,7 @@
 		87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Kingfisher+FA.swift"; sourceTree = "<group>"; };
 		87098D392CB2BEF000E7BD94 /* UserDefaultKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultKeys.swift; sourceTree = "<group>"; };
 		870B2AA02DFDD29500B48AC3 /* NoteReplying.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteReplying.swift; sourceTree = "<group>"; };
+		870BCA202E3FBC6100E5FC0B /* AuthorHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorHeader.swift; sourceTree = "<group>"; };
 		8716E7E8271C659C00C0BC4A /* Fur Affinity.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Fur Affinity.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8716E7EB271C659C00C0BC4A /* FurAffinityApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FurAffinityApp.swift; sourceTree = "<group>"; };
 		8716E7ED271C659C00C0BC4A /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -447,6 +449,7 @@
 				87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */,
 				87292E44297DD3FB00BE39B8 /* LoadingFailedView.swift */,
 				87F8FA332761347200CDD985 /* TitleAuthorHeader.swift */,
+				870BCA202E3FBC6100E5FC0B /* AuthorHeader.swift */,
 				87D64FCC2C88B00100AB6F44 /* FALink.swift */,
 				87B093392AED6CEA008DFDE7 /* TitleHeader.swift */,
 				87A4DA612A097D9000704857 /* NukeAlert.swift */,
@@ -693,6 +696,7 @@
 				87098D382CB19E4D00E7BD94 /* Kingfisher+FA.swift in Sources */,
 				87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */,
 				878401452CB9747D0099CAC8 /* UserJournalsView.swift in Sources */,
+				870BCA212E3FBC6600E5FC0B /* AuthorHeader.swift in Sources */,
 				8733DDFD28F75C1200CD8BCF /* Sharing.swift in Sources */,
 				87B0933A2AED6CEA008DFDE7 /* TitleHeader.swift in Sources */,
 				87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */,

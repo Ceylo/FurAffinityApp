@@ -142,7 +142,6 @@ struct SubmissionsFeedView: View {
                         .padding(.trailing, 20)
                         .padding(.top, 6)
                 }
-                .navigationBarTitleDisplayMode(.inline)
                 // Toolbar needs to be setup before refresh control…
                 // https://stackoverflow.com/a/64700545/869385
                 .navigationTitle("Submissions")
