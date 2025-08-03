@@ -43,6 +43,22 @@ struct NotesView: View {
         }
     }
     
+    var boxPicker: some View {
+        Picker("Boxes", systemImage: "folder", selection: $displayedBox) {
+            Button {
+            } label: {
+                Label("Inbox", systemImage: "tray")
+            }
+            .tag(NotesBox.inbox)
+            
+            Button {
+            } label: {
+                Label("Sent", systemImage: "paperplane")
+            }
+            .tag(NotesBox.sent)
+        }
+    }
+    
     @ToolbarContentBuilder
     var toolbar: some ToolbarContent {
         ToolbarItem(placement: .principal) {
@@ -66,29 +82,21 @@ struct NotesView: View {
 
         ToolbarItem {
             Menu {
-                Picker("Boxes", systemImage: "folder", selection: $displayedBox) {
-                    Button {
-                    } label: {
-                        Label("Inbox", systemImage: "tray")
-                    }
-                    .tag(NotesBox.inbox)
-                    
-                    Button {
-                    } label: {
-                        Label("Sent", systemImage: "paperplane")
-                    }
-                    .tag(NotesBox.sent)
-                }
-                
-                Divider()
-                
-                Button {
-                    noteReplySession = .init(defaultContents: .init())
-                } label: {
-                    Label("Send a Note", systemImage: "message")
-                }
+                boxPicker
             } label: {
-                ActionControl()
+                Image(systemName: "folder")
+            }
+        }
+        
+        if #available(iOS 26, *) {
+            ToolbarSpacer()
+        }
+        
+        ToolbarItem {
+            Button {
+                noteReplySession = .init(defaultContents: .init())
+            } label: {
+                Label("Send a Note", systemImage: "square.and.pencil")
             }
         }
     }
