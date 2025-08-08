@@ -11,7 +11,7 @@ import Kingfisher
 
 protocol SubmissionHeaderView: View {
     @MainActor
-    init(preview: FASubmissionPreview, avatarUrl: URL?)
+    init(preview: FASubmissionPreview)
 }
 
 struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
@@ -52,11 +52,8 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HeaderView(
-                preview: submission,
-                avatarUrl: FAURLs.avatarUrl(for: submission.author)
-            )
-            .padding(.horizontal, 10)
+            HeaderView(preview: submission)
+                .padding(.horizontal, 10)
             previewImage
         }
     }

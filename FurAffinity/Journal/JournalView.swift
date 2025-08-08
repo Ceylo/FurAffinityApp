@@ -20,7 +20,6 @@ struct JournalView: View {
             username: journal.author,
             displayName: journal.displayAuthor,
             title: journal.title,
-            avatarUrl: FAURLs.avatarUrl(for: journal.author),
             datetime: .init(journal.datetime,
                             journal.naturalDatetime)
         )

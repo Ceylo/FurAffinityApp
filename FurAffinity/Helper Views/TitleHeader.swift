@@ -22,7 +22,7 @@ struct TitleHeader: View {
 }
 
 extension TitleHeader: SubmissionHeaderView {
-    init(preview: FAKit.FASubmissionPreview, avatarUrl: URL?) {
+    init(preview: FAKit.FASubmissionPreview) {
         self.init(
             title: preview.title
         )

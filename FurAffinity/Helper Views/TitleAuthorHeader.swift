@@ -12,7 +12,6 @@ struct TitleAuthorHeader: View {
     var username: String
     var displayName: String
     var title: String
-    var avatarUrl: URL?
     var datetime: DatetimePair?
     
     var userFATarget: FATarget? {
@@ -30,6 +29,18 @@ struct TitleAuthorHeader: View {
         )
     }
     
+    var avatarUrl: URL? {
+        FAURLs.avatarUrl(for: username)
+    }
+    
+    var primaryText: String {
+        title
+    }
+    
+    var secondaryText: String {
+        "by " + displayName
+    }
+    
     var body: some View {
         HStack(alignment: .top) {
             FALink(destination: userFATarget) {
@@ -38,12 +49,12 @@ struct TitleAuthorHeader: View {
             }
             
             VStack(alignment: .leading) {
-                Text(title)
+                Text(primaryText)
                     .font(.headline)
                     .foregroundColor(.primary)
                 
-                HStack(alignment: .firstTextBaseline) {
-                    Text("by " + displayName)
+                HStack(alignment: .lastTextBaseline) {
+                    Text(secondaryText)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     Spacer()
@@ -58,12 +69,11 @@ struct TitleAuthorHeader: View {
 }
 
 extension TitleAuthorHeader: SubmissionHeaderView {
-    init(preview: FASubmissionPreview, avatarUrl: URL?) {
+    init(preview: FASubmissionPreview) {
         self.init(
             username: preview.author,
             displayName: preview.displayAuthor,
-            title: preview.title,
-            avatarUrl: avatarUrl
+            title: preview.title
         )
     }
 }
@@ -74,7 +84,6 @@ extension TitleAuthorHeader: SubmissionHeaderView {
             TitleAuthorHeader(
                 username: "author",
                 displayName: "The Author", title: "Great Content but with very very very very long description",
-                avatarUrl: nil,
                 datetime: .init("Apr 7th, 2022, 11:58 AM",
                                 "8 months ago")
             )
