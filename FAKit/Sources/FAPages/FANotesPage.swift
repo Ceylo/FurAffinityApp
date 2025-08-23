@@ -24,42 +24,52 @@ public struct FANotesPage: Equatable, Sendable {
 }
 
 extension FANotesPage {
-    public init?(data: Data) async {
+    private static let notesQuery = createEvaluator("div.c-noteListItem div.note-list-container")
+    
+    public init?(data: Data) {
         let state = signposter.beginInterval("All Notes Preview Parsing")
         defer { signposter.endInterval("All Notes Preview Parsing", state) }
         
         do {
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
             
-            let notesQuery = "div#main-window div#site-content div.messagecenter-mail-container div.messagecenter-mail-content-pane div.messagecenter-mail-list form#pms-form div.messagecenter-mail-list-pane div#notes-list div.c-noteListItem div.note-list-container"
+            // Get the parent node containing the list of notes by ID, which is speeds up finding the
+            // the individual notes.
+            guard let notesList = try doc.getElementById("notes-list") else {
+                return nil
+            }
             
-            let noteNodes = try doc.select(notesQuery)
-            self.noteHeaders = try await noteNodes.parallelMap { try NoteHeader($0) }            
+            let noteNodes = try CssSelector.select(Self.notesQuery, notesList)
+            self.noteHeaders = try noteNodes.map { try NoteHeader($0) }
         } catch {
             logger.error("Decoding failure in \(#file, privacy: .public): \(error, privacy: .public)")
             return nil
         }
-            
     }
 }
 
 extension FANotesPage.NoteHeader {
+    private static let baseQuery = createEvaluator("div.note-list-subjectgroup div.note-list-subject-container a.notelink")
+    private static let inputQuery = createEvaluator("div.note-list-subjectgroup div.note-list-checkbox input")
+    private static let titleQuery = createEvaluator("div.c-noteListItem__subject")
+    private static let authorQuery = createEvaluator("div.note-list-sendgroup div.note-list-sender-container div.note-list-sender div a.c-usernameBlock__displayName")
+    private static let deletedUserQuery = createEvaluator("div.note-list-sendgroup div.note-list-sender-container div.note-list-sender div span.user-name-deleted")
+    private static let datetimeQuery = createEvaluator("div.note-list-sendgroup div.note-list-senddate span.popup_date")
+    
     init(_ node: SwiftSoup.Element) throws {
         let state = signposter.beginInterval("Note Preview Parsing")
         defer { signposter.endInterval("Note Preview Parsing", state) }
         
-        let baseQuery = "div.note-list-subjectgroup div.note-list-subject-container a.notelink"
-        let baseNode = try node.select(baseQuery)
+        let baseNode = try CssSelector.select(Self.baseQuery, node)
         let unread = baseNode.hasClass("note-unread")
         let noteUrlStr = try baseNode.attr("href")
         let noteUrl = try URL(unsafeString: FAURLs.homeUrl.absoluteString + noteUrlStr)
         
-        let idStr = try node.select("div.note-list-subjectgroup div.note-list-checkbox input").attr("value")
+        let idStr = try CssSelector.select(Self.inputQuery, node).attr("value")
         guard let id = Int(idStr) else { throw FAPagesError.parserFailureError() }
-        let noteTitle = try baseNode.select("div.c-noteListItem__subject").text()
+        let noteTitle = try elementsSelect(Self.titleQuery, baseNode.array()).text()
         
-        let authorQuery = "div.note-list-sendgroup div.note-list-sender-container div.note-list-sender div a.c-usernameBlock__displayName"
-        let authorNode = try node.select(authorQuery)
+        let authorNode = try CssSelector.select(Self.authorQuery, node)
         var author: String
         let displayAuthor: String
         do {
@@ -68,8 +78,7 @@ extension FANotesPage.NoteHeader {
                 .unwrap()
             displayAuthor = try authorNode.text()
         } catch {
-            let deletedUserQuery = "div.note-list-sendgroup div.note-list-sender-container div.note-list-sender div span.user-name-deleted"
-            let result = try node.select(deletedUserQuery)
+            let result = try CssSelector.select(Self.deletedUserQuery, node)
                 .text(trimAndNormaliseWhitespace: true)
             guard result == "[deleted]" else {
                 throw FAPagesError.parserFailureError()
@@ -78,10 +87,38 @@ extension FANotesPage.NoteHeader {
             displayAuthor = "[deleted user]"
         }
         
-        let datetimeNode = try node.select("div.note-list-sendgroup div.note-list-senddate span.popup_date")
+        let datetimeNode = try CssSelector.select(Self.datetimeQuery, node)
         let datetime = try datetimeNode.attr("title")
         let naturalDatetime = try datetimeNode.text()
         
         self.init(id: id, author: author, displayAuthor: displayAuthor, title: noteTitle, datetime: datetime, naturalDatetime: naturalDatetime, unread: unread, noteUrl: noteUrl)
     }
+}
+
+/// Helper function to create an evaluator from a query string. Since all queries are static they must never throw an error.
+private func createEvaluator(_ query: String) -> Evaluator {
+    do {
+        return try QueryParser.parse(query)
+    } catch {
+        fatalError("Cannot evaluate query '\(query)': \(error)")
+    }
+}
+
+/// Helper function to query on an `Elements` instance.
+/// Once SwiftSoup > 2.10.3 is out, this function can be removed since `baseNode.select(Self.titleQuery)` will be supported.
+private func elementsSelect(_ evaluator: Evaluator, _ roots: Array<Element>)throws->Elements {
+    var elements: Array<Element> = Array<Element>()
+    var seenElements: Array<Element> = Array<Element>()
+    // dedupe elements by identity, not equality
+
+    for root: Element in roots {
+        let found: Elements = try CssSelector.select(evaluator, root)
+        for  el: Element in found.array() {
+            if (!seenElements.contains(el)) {
+                elements.append(el)
+                seenElements.append(el)
+            }
+        }
+    }
+    return Elements(elements)
 }
