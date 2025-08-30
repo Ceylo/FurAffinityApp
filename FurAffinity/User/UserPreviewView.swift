@@ -48,7 +48,6 @@ struct UserPreviewView: View {
             .listRowInsets(.init())
         }
         .navigationTitle(preview.displayName ?? preview.username)
-        .navigationBarTitleDisplayMode(.inline)
         .listStyle(.plain)
     }
 }

@@ -52,7 +52,9 @@ jobs:
       - uses: mxcl/xcodebuild@v3
         with:
           action: none
-          xcode: ~16.0
+          xcode: ~26.0
+      - name: Install iOS support
+        run: xcodebuild -downloadPlatform iOS
       - name: Archive App
         run: |
           git_hash=$(git rev-parse --short "$GITHUB_SHA")

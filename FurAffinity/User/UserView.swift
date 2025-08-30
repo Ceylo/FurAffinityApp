@@ -97,7 +97,6 @@ struct UserView: View {
             .listRowInsets(.init())
         }
         .navigationTitle(user.displayName)
-        .navigationBarTitleDisplayMode(.inline)
         .listStyle(.plain)
         .onAppear {
             prefetchAvatars(for: user.shouts)

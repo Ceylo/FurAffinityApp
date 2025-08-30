@@ -8,6 +8,25 @@
 import SwiftUI
 import FAKit
 
+struct SheetButton: View {
+    var symbol: String
+    var action: () -> Void
+    var size: Double = 16
+    
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .renderingMode(.template)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .tint(.blue)
+                .frame(width: size, height: size)
+                .padding(2)
+        }
+        .buttonBorderShape(.circle)
+    }
+}
+
 struct CommentEditor: View {
     @ObservedObject var reply: CommentReply
     var parentComment: FAComment?
@@ -18,11 +37,18 @@ struct CommentEditor: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Button("Cancel") {
+                SheetButton(symbol: "xmark") {
                     actionInProgress = .cancel
                     Task {
                         await handler(.cancel)
                         actionInProgress = nil
+                    }
+                }
+                .applying {
+                    if #available(iOS 26, *) {
+                        $0.buttonStyle(.glass)
+                    } else {
+                        $0.buttonStyle(.bordered)
                     }
                 }
                 .disabled(actionInProgress != nil)
@@ -32,11 +58,18 @@ struct CommentEditor: View {
                 }
                 
                 Spacer()
-                Button("Submit") {
+                SheetButton(symbol: "arrow.up") {
                     actionInProgress = .submit
                     Task {
                         await handler(.submit)
                         actionInProgress = nil
+                    }
+                }
+                .applying {
+                    if #available(iOS 26, *) {
+                        $0.buttonStyle(.glassProminent)
+                    } else {
+                        $0.buttonStyle(.borderedProminent)
                     }
                 }
                 .disabled(!reply.isValidForSubmission || actionInProgress != nil)

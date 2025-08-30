@@ -8,11 +8,10 @@
 import SwiftUI
 import FAKit
 
-struct AuthoredHeaderView: View {
+struct TitleAuthorHeader: View {
     var username: String
     var displayName: String
     var title: String
-    var avatarUrl: URL?
     var datetime: DatetimePair?
     
     var userFATarget: FATarget? {
@@ -30,40 +29,51 @@ struct AuthoredHeaderView: View {
         )
     }
     
+    var avatarUrl: URL? {
+        FAURLs.avatarUrl(for: username)
+    }
+    
+    var primaryText: String {
+        title
+    }
+    
+    var secondaryText: String {
+        "by " + displayName
+    }
+    
     var body: some View {
         HStack(alignment: .top) {
             FALink(destination: userFATarget) {
                 AvatarView(avatarUrl: avatarUrl)
-                    .frame(width: 38, height: 38)
+                    .frame(width: 42, height: 42)
             }
             
             VStack(alignment: .leading) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(displayName)
-                        .font(.headline)
-                        .foregroundColor(.primary)
+                Text(primaryText)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                
+                HStack(alignment: .lastTextBaseline) {
+                    Text(secondaryText)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                     Spacer()
                     if let datetime {
                         DateTimeButton(datetime: datetime.datetime,
                                        naturalDatetime: datetime.naturalDatetime)
                     }
                 }
-                
-                Text(title)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
             }
         }
     }
 }
 
-extension AuthoredHeaderView: SubmissionHeaderView {
-    init(preview: FASubmissionPreview, avatarUrl: URL?) {
+extension TitleAuthorHeader: SubmissionHeaderView {
+    init(preview: FASubmissionPreview) {
         self.init(
             username: preview.author,
             displayName: preview.displayAuthor,
-            title: preview.title,
-            avatarUrl: avatarUrl
+            title: preview.title
         )
     }
 }
@@ -71,10 +81,9 @@ extension AuthoredHeaderView: SubmissionHeaderView {
 #Preview(traits: .sizeThatFitsLayout) {
     NavigationStack {
         List {
-            AuthoredHeaderView(
+            TitleAuthorHeader(
                 username: "author",
                 displayName: "The Author", title: "Great Content but with very very very very long description",
-                avatarUrl: nil,
                 datetime: .init("Apr 7th, 2022, 11:58 AM",
                                 "8 months ago")
             )

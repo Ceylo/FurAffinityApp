@@ -96,11 +96,6 @@ struct SubmissionMainImage: View {
             }
         }
         .aspectRatio(CGFloat(widthOnHeightRatio), contentMode: .fit)
-        .cornerRadius(10)
-        .overlay {
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.borderOverlay, lineWidth: 1)
-        }
     }
     
     func prepareFullResolutionMedia(sourceUrl: URL, loadedImage: UIImage) {

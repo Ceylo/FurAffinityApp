@@ -8,12 +8,21 @@
 import SwiftUI
 import FAKit
 
-enum GalleryType {
+enum GalleryType: CustomLocalizedStringResourceConvertible {
     case gallery
     case favorites
     
     var shouldDisplayAuthor: Bool {
         self == .favorites
+    }
+    
+    var localizedStringResource: LocalizedStringResource {
+        switch self {
+        case .gallery:
+                .init(stringLiteral: "Gallery")
+        case .favorites:
+                .init(stringLiteral: "Favorites")
+        }
     }
 }
 
@@ -48,18 +57,23 @@ struct UserGalleryLikeView: View {
             GeometryReader { geometry in
                 List {
                     ForEach(filteredPreviews) { preview in
-                        NavigationLink(
-                            value: FATarget.submission(url: preview.url, previewData: preview)
-                        ) {
+                        ZStack(alignment: .leading) {
+                            NavigationLink(
+                                value: FATarget.submission(url: preview.url, previewData: preview)
+                            ) {
+                                EmptyView()
+                            }
+                            .opacity(0)
+                            
                             if galleryType.shouldDisplayAuthor {
-                                SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
+                                SubmissionFeedItemView<TitleAuthorHeader>(submission: preview)
                             } else {
-                                SubmissionFeedItemView<TitledHeaderView>(submission: preview)
+                                SubmissionFeedItemView<TitleHeader>(submission: preview)
                             }
                         }
                         .id(preview.sid)
                         .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                        .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
                     }
                     
                     ProgressiveLoadItem(
@@ -81,8 +95,7 @@ struct UserGalleryLikeView: View {
                 }
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationTitle("\(gallery.displayAuthor)'s \(galleryType)")
+        .navigationTitle("\(gallery.displayAuthor)'s \(galleryType.localizedStringResource)")
         .toolbar { foldersMenu }
         
     }
@@ -137,6 +150,7 @@ struct UserGalleryLikeView: View {
         UserGalleryLikeView(
             galleryType: .favorites,
             gallery: .init(
+                url: URL(string: "https://www.furaffinity.net/gallery/someuser/")!,
                 displayAuthor: "Some User",
                 previews: OfflineFASession.default.submissionPreviews,
                 nextPageUrl: nil,
@@ -153,7 +167,13 @@ struct UserGalleryLikeView: View {
     NavigationStack {
         UserGalleryLikeView(
             galleryType: .favorites,
-            gallery: .init(displayAuthor: "Some User", previews: [], nextPageUrl: nil, folderGroups: []),
+            gallery: .init(
+                url: URL(string: "https://www.furaffinity.net/gallery/someuser/")!,
+                displayAuthor: "Some User",
+                previews: [],
+                nextPageUrl: nil,
+                folderGroups: []
+            ),
             loadMore: { _ in },
             updateSource: { _ in }
         )

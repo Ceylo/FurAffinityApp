@@ -38,8 +38,7 @@ public final class CodableHTTPCookie: HTTPCookie, Codable, @unchecked Sendable {
     }
 }
 
-/// `HTTPCookiePropertyKey` conformacy to `Codable`.
-extension HTTPCookiePropertyKey: Codable {
+extension HTTPCookiePropertyKey: @retroactive Codable {
     /// Init.
     /// - parameter decoder: A valid `Decoder`.
     public init(from decoder: Decoder) throws {

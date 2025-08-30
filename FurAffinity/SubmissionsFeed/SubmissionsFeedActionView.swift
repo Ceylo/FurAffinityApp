@@ -20,6 +20,7 @@ struct SubmissionsFeedActionView: View {
             }
         } label: {
             ActionControl()
+                .opaque()
         }
         .nukeAlert("Submissions", "submission notifications", show: $showNukeAlert) {
             await model.nukeAllSubmissions()

@@ -98,7 +98,7 @@ public class OnlineFASession: FASession {
               let page = await FAUserGalleryLikePage(data: data, url: url)
         else { throw Error.requestFailure }
         
-        let gallery = FAUserGalleryLike(page)
+        let gallery = FAUserGalleryLike(page, url: url)
         logger.info("Got \(page.previews.count) submission previews (\(gallery.previews.count) after filter)")
         return gallery
     }

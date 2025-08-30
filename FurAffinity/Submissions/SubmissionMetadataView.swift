@@ -76,7 +76,6 @@ struct SubmissionMetadataView: View {
             }
         }
         .navigationTitle("Submission Metadata")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

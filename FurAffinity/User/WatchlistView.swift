@@ -76,7 +76,6 @@ struct WatchlistView: View {
             )
         }
         .searchable(text: $searchText)
-        .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(navigationTitle)
     }
 }

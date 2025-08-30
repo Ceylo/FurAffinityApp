@@ -35,24 +35,12 @@ struct NoteContentsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading) {
-                HStack {
-                    FALink(destination: userFATarget) {
-                        HStack {
-                            AvatarView(avatarUrl: FAURLs.avatarUrl(for: note.author))
-                                .frame(width: 42, height: 42)
-                            UserNameView(
-                                name: note.author,
-                                displayName: note.displayAuthor
-                            )
-                            .displayStyle(.multiline)
-                            // Overwrite blue of FALink
-                            .foregroundColor(.primary)
-                        }
-                    }
-                    Spacer()
-                    DateTimeButton(datetime: note.datetime,
-                                   naturalDatetime: note.naturalDatetime)
-                }
+                AuthorHeader(
+                    username: note.author,
+                    displayName: note.displayAuthor,
+                    datetime: .init(note.datetime, note.naturalDatetime)
+                )
+                .displayingStaticName()
                 
                 Text(note.title)
                     .font(.title2)
@@ -78,7 +66,6 @@ struct NoteView: View {
             NoteContentsView(note: note, showWarning: true)
             .padding()
             .navigationTitle(note.title)
-            .navigationBarTitleDisplayMode(.inline)
             .noteReplySheet(on: $replySession) { reply in
                 try await replyAction(reply.destinationUser, reply.subject, reply.text)
             }

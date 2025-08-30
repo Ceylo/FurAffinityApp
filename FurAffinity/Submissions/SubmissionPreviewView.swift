@@ -15,37 +15,47 @@ struct SubmissionPreviewView: View {
     var submission: FASubmissionPreview
     var avatarUrl: URL?
     
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 10) {
-                AuthoredHeaderView(
-                    username: submission.author,
-                    displayName: submission.displayAuthor,
-                    title: submission.title,
-                    avatarUrl: avatarUrl,
-                    datetime: nil
-                )
-                GeometryReader { geometry in
-                    SubmissionMainImage(
-                        widthOnHeightRatio: submission.thumbnailWidthOnHeightRatio,
-                        fullResolutionMediaUrl: submission.dynamicThumbnail.bestThumbnailUrl(for: geometry),
-                        displayProgress: false,
-                        allowZoomableSheet: false,
-                        fullResolutionMediaFileUrl: .constant(nil)
-                    )
-                }
-                .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
-            }
-            .padding(.horizontal, 10)
-            .padding(.top, 5)
+    var header: some View {
+        TitleAuthorHeader(
+            username: submission.author,
+            displayName: submission.displayAuthor,
+            title: submission.title,
+            datetime: nil
+        )
+        .padding(.horizontal, 10)
+    }
+    
+    var mainImage: some View {
+        GeometryReader { geometry in
+            SubmissionMainImage(
+                widthOnHeightRatio: submission.thumbnailWidthOnHeightRatio,
+                fullResolutionMediaUrl: submission.dynamicThumbnail.bestThumbnailUrl(for: geometry),
+                displayProgress: false,
+                allowZoomableSheet: false,
+                fullResolutionMediaFileUrl: .constant(nil)
+            )
         }
+        .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
+    }
+    
+    var body: some View {
+        List {
+            Group {
+                header
+                mainImage
+            }
+            .listRowSeparator(.hidden)
+            .listRowInsets(.init(top: 5, leading: 0, bottom: 5, trailing: 0))
+        }
+        .listStyle(.plain)
         .navigationTitle(submission.title)
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 #Preview {
-    SubmissionPreviewView(
-        submission: FASubmissionPreview.demo
-    )
+    NavigationStack {
+        SubmissionPreviewView(
+            submission: FASubmissionPreview.demo
+        )
+    }
 }

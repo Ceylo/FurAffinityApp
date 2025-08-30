@@ -8,7 +8,8 @@
 import SwiftUI
 import FAKit
 
-protocol ReplyStorage: ObservableObject {
+@MainActor
+protocol ReplyStorage: ObservableObject, Sendable {
     init()
     var isValidForSubmission: Bool { get }
     func reset()

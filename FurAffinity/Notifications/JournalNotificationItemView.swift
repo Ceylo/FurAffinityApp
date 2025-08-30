@@ -13,28 +13,12 @@ struct JournalNotificationItemView: View {
     var target: FATarget?
     
     var body: some View {
-        HStack(alignment: .top) {
-            FALink(destination: target) {
-                AvatarView(avatarUrl: FAURLs.avatarUrl(for: journal.author))
-                    .frame(width: 42, height: 42)
-            }
-            
-            VStack(alignment: .leading, spacing: 5) {
-                HStack {
-                    Text(journal.title)
-                        .font(.headline)
-                }
-                
-                HStack {
-                    Text(journal.displayAuthor)
-                    Spacer()
-                    DateTimeButton(datetime: journal.datetime,
-                                   naturalDatetime: journal.naturalDatetime)
-                }
-                .foregroundStyle(.secondary)
-                .font(.subheadline)
-            }
-        }
+        TitleAuthorHeader(
+            username: journal.author,
+            displayName: journal.displayAuthor,
+            title: journal.title,
+            datetime: .init(journal.datetime, journal.naturalDatetime)
+        )
     }
 }
 

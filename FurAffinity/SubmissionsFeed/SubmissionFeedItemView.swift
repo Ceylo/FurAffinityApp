@@ -11,7 +11,7 @@ import Kingfisher
 
 protocol SubmissionHeaderView: View {
     @MainActor
-    init(preview: FASubmissionPreview, avatarUrl: URL?)
+    init(preview: FASubmissionPreview)
 }
 
 struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
@@ -39,10 +39,6 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
                             errorMessage = error.localizedDescription
                         }
                         .fade(duration: 0.25)
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.borderOverlay, lineWidth: 1)
-                        }
                         .onAppear {
                             Task {
                                 await controlCacheBehavior(for: url)
@@ -52,15 +48,14 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
             }
         }
         .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
-        .cornerRadius(10)
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HeaderView(preview: submission, avatarUrl: FAURLs.avatarUrl(for: submission.author))
+            HeaderView(preview: submission)
+                .padding(.horizontal, 10)
             previewImage
         }
-        .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 0))
     }
     
     func controlCacheBehavior(for url: URL) async {
@@ -76,6 +71,6 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
 }
 
 #Preview {
-    SubmissionFeedItemView<AuthoredHeaderView>(submission: OfflineFASession.default.submissionPreviews[0])
+    SubmissionFeedItemView<TitleAuthorHeader>(submission: OfflineFASession.default.submissionPreviews[0])
         .preferredColorScheme(.dark)
 }

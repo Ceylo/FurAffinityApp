@@ -46,9 +46,11 @@ struct RemoteUserGalleryLikeView: View {
 }
 
 #Preview {
-    RemoteUserGalleryLikeView(
-        galleryType: .gallery,
-        url: URL(string: "https://www.furaffinity.net/gallery/tiaamaito/")!
-    )
+    NavigationStack {
+        RemoteUserGalleryLikeView(
+            galleryType: .gallery,
+            url: URL(string: "https://www.furaffinity.net/gallery/tiaamaito/")!
+        )
+    }
     .environmentObject(Model.demo)
 }

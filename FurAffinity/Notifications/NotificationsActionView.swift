@@ -8,7 +8,7 @@
 import SwiftUI
 
 @MainActor
-protocol NotificationsNuker {
+protocol NotificationsNuker: Sendable {
     func nukeAllSubmissionCommentNotifications() async -> Void
     func nukeAllJournalCommentNotifications() async -> Void
     func nukeAllShoutNotifications() async -> Void
@@ -63,6 +63,7 @@ struct NotificationsActionView: View {
                 }
             } label: {
                 ActionControl()
+                    .opaque()
             }
             .nukeAlert("Submission Comments", "submission comment notifications",
                        show: $showNukeSubmissionCommentsAlert) {

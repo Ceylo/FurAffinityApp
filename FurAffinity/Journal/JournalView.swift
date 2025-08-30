@@ -16,11 +16,10 @@ struct JournalView: View {
     @State private var replySession: CommentReplySession?
     
     var header: some View {
-        AuthoredHeaderView(
+        TitleAuthorHeader(
             username: journal.author,
             displayName: journal.displayAuthor,
             title: journal.title,
-            avatarUrl: FAURLs.avatarUrl(for: journal.author),
             datetime: .init(journal.datetime,
                             journal.naturalDatetime)
         )
@@ -81,7 +80,6 @@ struct JournalView: View {
         }
         .commentSheet(on: $replySession, replyAction)
         .navigationTitle(journal.title)
-        .navigationBarTitleDisplayMode(.inline)
         .listStyle(.plain)
         .onAppear {
             prefetchAvatars(for: journal.comments)

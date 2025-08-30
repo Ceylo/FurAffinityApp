@@ -21,7 +21,7 @@ struct SubmissionsFeedView: View {
     var noPreview: some View {
         ScrollView {
             VStack(spacing: 10) {
-                Text("It's a bit empty in here.")
+                Text("No submission to display yet.")
                     .font(.headline)
                 Text("Watch artists and wait for them to post new art. Submissions from [www.furaffinity.net/msg/submissions/](https://www.furaffinity.net/msg/submissions/) will be displayed here.")
                     .multilineTextAlignment(.center)
@@ -100,14 +100,21 @@ struct SubmissionsFeedView: View {
         case let .fetchTrigger(targetScrollItem):
             fetchTriggerView(with: targetScrollItem, scrollProxy: scrollProxy)
         case let .submissionPreview(preview):
-            NavigationLink(value: FATarget.submission(
-                url: preview.url, previewData: preview
-            )) {
-                SubmissionFeedItemView<AuthoredHeaderView>(submission: preview)
+            ZStack(alignment: .leading) {
+                NavigationLink(value: FATarget.submission(
+                    url: preview.url, previewData: preview
+                )) {
+                    // Empty navigation link with 0 opacity is a trick to have full width
+                    // navigation without a trailing chevron
+                    EmptyView()
+                }
+                .opacity(0)
+                
+                SubmissionFeedItemView<TitleAuthorHeader>(submission: preview)
                     .id(preview.sid)
-            }
-            .onItemFrameChanged(listGeometry: geometry) { frame in
-                followItem(preview, frame: frame, geometry: geometry)
+                    .onItemFrameChanged(listGeometry: geometry) { frame in
+                        followItem(preview, frame: frame, geometry: geometry)
+                    }
             }
         }
     }
@@ -123,7 +130,7 @@ struct SubmissionsFeedView: View {
                         model.deleteSubmissionPreviews(atOffsets: offsets)
                     }
                     .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
                 }
                 .introspect(.scrollView, on: .iOS(.v16...)) { scrollView in
                     self.scrollView = scrollView
@@ -135,10 +142,10 @@ struct SubmissionsFeedView: View {
                         .padding(.trailing, 20)
                         .padding(.top, 6)
                 }
-                .navigationBarTitleDisplayMode(.inline)
                 // Toolbar needs to be setup before refresh control…
                 // https://stackoverflow.com/a/64700545/869385
                 .navigationTitle("Submissions")
+                .navigationBarTitleDisplayMode(.inline)
                 .toolbar(.hidden, for: .navigationBar)
                 .refreshable {
                     refresh(pulled: true)

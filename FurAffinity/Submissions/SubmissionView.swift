@@ -22,14 +22,14 @@ struct SubmissionView: View {
     @State private var fullResolutionMediaFileUrl: URL?
     
     var header: some View {
-        AuthoredHeaderView(
+        TitleAuthorHeader(
             username: submission.author,
             displayName: submission.displayAuthor,
             title: submission.title,
-            avatarUrl: avatarUrl,
             datetime: .init(submission.datetime,
                             submission.naturalDatetime)
         )
+        .padding(.horizontal, 10)
     }
     
     var mainImage: some View {
@@ -55,6 +55,7 @@ struct SubmissionView: View {
             },
             metadataTarget: .submissionMetadata(submission.metadata)
         )
+        .padding(.horizontal, 10)
     }
     
     var submissionDescription: some View {
@@ -85,14 +86,10 @@ struct SubmissionView: View {
     var body: some View {
         List {
             Group {
-                Group {
-                    header
-                    mainImage
-                    submissionControls
-                    submissionDescription
-                }
-                .padding(.horizontal, 10)
-                
+                header
+                mainImage
+                submissionControls
+                submissionDescription
                 submissionComments
             }
             .listRowSeparator(.hidden)
@@ -100,7 +97,6 @@ struct SubmissionView: View {
         }
         .commentSheet(on: $replySession, replyAction)
         .navigationTitle(submission.title)
-        .navigationBarTitleDisplayMode(.inline)
         .listStyle(.plain)
         .onAppear {
             prefetchAvatars(for: submission.comments)
@@ -135,7 +131,7 @@ struct SubmissionView: View {
                 Button {
                     replySession = .init(parentCid: nil, among: [])
                 } label: {
-                    Label("Reply", systemImage: "bubble")
+                    Label("Comment", systemImage: "bubble")
                 }
                 .disabled(!submission.acceptsNewComments)
             }
@@ -148,6 +144,7 @@ struct SubmissionView: View {
         withAsync({ await FASubmission.demo }) {
             SubmissionView(
                 submission: $0,
+                avatarUrl: FAURLs.avatarUrl(for: $0.author),
                 favoriteAction: {},
                 replyAction: { _, _ in }
             )

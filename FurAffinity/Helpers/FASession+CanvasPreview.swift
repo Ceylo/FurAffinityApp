@@ -53,7 +53,18 @@ class OfflineFASession: FASession {
     }
     
     func galleryLike(for url: URL) async throws -> FAUserGalleryLike {
-        .init(displayAuthor: displayUsername, previews: [], nextPageUrl: nil, folderGroups: [])
+        .init(
+            url: url,
+            displayAuthor: displayUsername,
+            previews: submissionPreviews,
+            nextPageUrl: nil,
+            folderGroups: [
+                .init(title: "Gallery Folders", folders: [
+                    .init(title: "Gallery", url: url, isActive: true),
+                    .init(title: "Scraps", url: url, isActive: false)
+                ])
+            ]
+        )
     }
     
     func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async -> C {
