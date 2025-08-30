@@ -159,7 +159,7 @@ public class OnlineFASession: FASession {
     // MARK: - Notes
     public func notePreviews(from box: NotesBox) async -> [FANotePreview] {
         guard let data = await dataSource.httpData(from: box.url, cookies: cookies),
-              let page = await FANotesPage(data: data)
+              let page = FANotesPage(data: data)
         else { return [] }
         
         let headers = page.noteHeaders
@@ -215,7 +215,7 @@ public class OnlineFASession: FASession {
             throw Error.FAErrorResponse(errorPage.message)
         }
         
-        guard await FANotesPage(data: data) != nil else {
+        guard FANotesPage(data: data) != nil else {
             logger.error("Failed sending note")
             throw Error.requestFailure
         }
