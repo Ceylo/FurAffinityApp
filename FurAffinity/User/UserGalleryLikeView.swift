@@ -95,7 +95,6 @@ struct UserGalleryLikeView: View {
                 }
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("\(gallery.displayAuthor)'s \(galleryType.localizedStringResource)")
         .toolbar { foldersMenu }
         

@@ -15,6 +15,17 @@ struct SubmissionPreviewView: View {
     var submission: FASubmissionPreview
     var avatarUrl: URL?
     
+    var header: some View {
+        TitleAuthorHeader(
+            username: submission.author,
+            displayName: submission.displayAuthor,
+            title: submission.title,
+            avatarUrl: avatarUrl,
+            datetime: nil
+        )
+        .padding(.horizontal, 10)
+    }
+    
     var mainImage: some View {
         GeometryReader { geometry in
             SubmissionMainImage(
@@ -28,35 +39,12 @@ struct SubmissionPreviewView: View {
         .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
     }
     
-    var submissionControlsSpace: some View {
-        SubmissionControlsView(
-            submissionUrl: submission.url,
-            favoritesCount: 0,
-            isFavorite: false,
-            favoriteAction: {},
-            repliesCount: 0,
-            acceptsNewReplies: true,
-            replyAction: {}
-        )
-        .hidden()
-    }
-    
-    var author: some View {
-        AuthorHeader(
-            username: submission.author,
-            displayName: submission.displayAuthor
-        )
-    }
-    
     var body: some View {
         List {
             Group {
+                header
                 mainImage
-                    .padding(.horizontal, -10)
-                submissionControlsSpace
-                author
             }
-            .padding(.horizontal, 10)
             .listRowSeparator(.hidden)
             .listRowInsets(.init(top: 5, leading: 0, bottom: 5, trailing: 0))
         }

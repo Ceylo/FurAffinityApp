@@ -81,7 +81,6 @@ struct JournalView: View {
         }
         .commentSheet(on: $replySession, replyAction)
         .navigationTitle(journal.title)
-        .navigationBarTitleDisplayMode(.inline)
         .listStyle(.plain)
         .onAppear {
             prefetchAvatars(for: journal.comments)

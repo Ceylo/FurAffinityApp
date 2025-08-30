@@ -145,6 +145,7 @@ struct SubmissionsFeedView: View {
                 // Toolbar needs to be setup before refresh control…
                 // https://stackoverflow.com/a/64700545/869385
                 .navigationTitle("Submissions")
+                .navigationBarTitleDisplayMode(.inline)
                 .toolbar(.hidden, for: .navigationBar)
                 .refreshable {
                     refresh(pulled: true)

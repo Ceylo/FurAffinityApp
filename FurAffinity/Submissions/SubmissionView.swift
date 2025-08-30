@@ -21,6 +21,18 @@ struct SubmissionView: View {
     @State private var replySession: CommentReplySession?
     @State private var fullResolutionMediaFileUrl: URL?
     
+    var header: some View {
+        TitleAuthorHeader(
+            username: submission.author,
+            displayName: submission.displayAuthor,
+            title: submission.title,
+            avatarUrl: avatarUrl,
+            datetime: .init(submission.datetime,
+                            submission.naturalDatetime)
+        )
+        .padding(.horizontal, 10)
+    }
+    
     var mainImage: some View {
         SubmissionMainImage(
             widthOnHeightRatio: submission.widthOnHeightRatio,
@@ -44,14 +56,7 @@ struct SubmissionView: View {
             },
             metadataTarget: .submissionMetadata(submission.metadata)
         )
-    }
-    
-    var author: some View {
-        AuthorHeader(
-            username: submission.author,
-            displayName: submission.displayAuthor,
-            datetime: .init(submission.datetime, submission.naturalDatetime)
-        )
+        .padding(.horizontal, 10)
     }
     
     var submissionDescription: some View {
@@ -82,14 +87,9 @@ struct SubmissionView: View {
     var body: some View {
         List {
             Group {
+                header
                 mainImage
-                
-                Group {
-                    submissionControls
-                    author
-                }
-                .padding(.horizontal, 10)
-                
+                submissionControls
                 submissionDescription
                 submissionComments
             }

@@ -39,7 +39,6 @@ struct UserJournalsView: View {
             }
         }
         .listStyle(.plain)
-        .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("\(journals.displayAuthor)'s journals")
         .swap(when: journals.journals.isEmpty) {
             VStack(spacing: 10) {
