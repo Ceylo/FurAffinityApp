@@ -26,7 +26,6 @@ struct SubmissionView: View {
             username: submission.author,
             displayName: submission.displayAuthor,
             title: submission.title,
-            avatarUrl: avatarUrl,
             datetime: .init(submission.datetime,
                             submission.naturalDatetime)
         )

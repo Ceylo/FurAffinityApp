@@ -20,7 +20,6 @@ struct SubmissionPreviewView: View {
             username: submission.author,
             displayName: submission.displayAuthor,
             title: submission.title,
-            avatarUrl: avatarUrl,
             datetime: nil
         )
         .padding(.horizontal, 10)
