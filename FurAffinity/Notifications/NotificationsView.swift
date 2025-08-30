@@ -36,8 +36,8 @@ struct ListedSection<T: FANavigable & Identifiable, ItemView: View> : View {
                     }
                 }
             } header: {
-                SectionHeader(text: title, font: .title2, verticalInset: 0)
-                    .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
+                Text(title)
+                    .font(.title2)
             }
         }
     }
