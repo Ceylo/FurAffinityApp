@@ -12,7 +12,7 @@ final class NoteReply: ObservableObject, ReplyStorage {
     static let allowedCharset = CharacterSet
         .lowercaseLetters
         .union(.decimalDigits)
-        .union(.init(charactersIn: "^~`"))
+        .union(.init(charactersIn: "^~`."))
 
     var isValidForSubmission: Bool {
         isUsernameValid && !subject.isEmpty && !text.isEmpty
