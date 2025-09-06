@@ -80,25 +80,49 @@ public enum FAURLs {
         URL(string: "https://www.furaffinity.net/journals/\(username)/")!
     }
     
-    public static func watchlistUrl(for username: String, direction: FAWatchlistPage.WatchDirection) -> URL {
+    public static func watchlistUrl(for username: String, page: Int, direction: FAWatchlistPage.WatchDirection) -> URL {
         switch direction {
         case .watchedBy:
-            URL(string: "https://www.furaffinity.net/watchlist/to/\(username)/")!
+            URL(string: "https://www.furaffinity.net/watchlist/to/\(username)")!
+                .appending(queryItems: [.init(name: "page", value: "\(page)")])
         case .watching:
-            URL(string: "https://www.furaffinity.net/watchlist/by/\(username)/")!
+            URL(string: "https://www.furaffinity.net/watchlist/by/\(username)")!
+                .appending(queryItems: [.init(name: "page", value: "\(page)")])
         }
     }
     
-    public static func parseWatchlistUrl(_ url: URL) -> (username: String, watchDirection: FAWatchlistPage.WatchDirection)? {
+    public static func parseWatchlistUrl(_ url: URL) -> (username: String, page: Int, watchDirection: FAWatchlistPage.WatchDirection)? {
         do {
-            // https://www.furaffinity.net/watchlist/to/xxx/
-            // https://www.furaffinity.net/watchlist/by/xxx/
-            let username = try url.absoluteString
-                .substring(matching: "\\/watchlist\\/[toby]{2}\\/(.+)\\/")
+            // https://www.furaffinity.net/watchlist/to/xxx
+            // https://www.furaffinity.net/watchlist/by/xxx
+            // https://www.furaffinity.net/watchlist/by/xxx?page=n
+            // https://www.furaffinity.net/watchlist/by/xxx/n/
+            let components = url.pathComponents
+            guard components.count >= 4 else {
+                logger.warning("\(url) not recognized as a watchlist url, expected at least 4 components but got \(components.count)")
+                return nil
+            }
+            
+            guard components[1] == "watchlist" else {
+                logger.warning("\(url) not recognized as a watchlist url, expected /watchlist/ but got \(components[1])")
+                return nil
+            }
+            
+            let direction = components[2]
+            let username = components[3]
+            
+            let queryItems = try URLComponents(url: url, resolvingAgainstBaseURL: false)
                 .unwrap()
-            let direction = try url.absoluteString
-                .substring(matching: "\\/watchlist\\/([toby]{2})\\/")
-                .unwrap()
+                .queryItems
+            
+            let pageNumber: Int
+            if let pageQueryItem = queryItems?.first(where: { $0.name == "page" }) {
+                pageNumber = pageQueryItem.value.flatMap { Int($0) } ?? 1
+            } else if components.count >= 5, let number = Int(components[4]) {
+                pageNumber = number
+            } else {
+                pageNumber = 1
+            }
             
             let watchDirection: FAWatchlistPage.WatchDirection
             switch direction {
@@ -111,7 +135,7 @@ public enum FAURLs {
                 return nil
             }
             
-            return (username, watchDirection)
+            return (username, pageNumber, watchDirection)
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil

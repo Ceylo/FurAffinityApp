@@ -133,7 +133,7 @@ class OfflineFASession: FASession {
         notificationPreviews
     }
     
-    func watchlist(for username: String, direction: FAWatchlist.WatchDirection) async throws -> FAWatchlist {
+    func watchlist(for username: String, page: Int, direction: FAWatchlist.WatchDirection) async throws -> FAWatchlist {
         FAWatchlist.demo
     }
 }

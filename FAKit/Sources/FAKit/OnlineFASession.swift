@@ -333,8 +333,8 @@ public class OnlineFASession: FASession {
         return try await self.user(for: user.name)
     }
     
-    public func watchlist(for username: String, direction: FAWatchlist.WatchDirection) async throws -> FAWatchlist {
-        let url = FAURLs.watchlistUrl(for: username, direction: direction)
+    public func watchlist(for username: String, page: Int, direction: FAWatchlist.WatchDirection) async throws -> FAWatchlist {
+        let url = FAURLs.watchlistUrl(for: username, page: page, direction: direction)
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
               let page = await FAWatchlistPage(data: data, baseUri: url) else {
             throw Error.requestFailure

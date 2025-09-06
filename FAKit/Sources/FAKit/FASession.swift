@@ -93,7 +93,7 @@ public protocol FASession: AnyObject, Equatable {
     // MARK: - Users
     func user(for url: URL) async throws -> FAUser
     func toggleWatch(for user: FAUser) async throws -> FAUser
-    func watchlist(for username: String, direction: FAWatchlist.WatchDirection) async throws -> FAWatchlist
+    func watchlist(for username: String, page: Int, direction: FAWatchlist.WatchDirection) async throws -> FAWatchlist
 }
 
 extension FASession {
@@ -120,6 +120,6 @@ extension FASession {
     
     public func watchlist(for url: URL) async throws -> FAWatchlist {
         let parsed = try FAURLs.parseWatchlistUrl(url).unwrap()
-        return try await watchlist(for: parsed.username, direction: parsed.watchDirection)
+        return try await watchlist(for: parsed.username, page: parsed.page, direction: parsed.watchDirection)
     }
 }

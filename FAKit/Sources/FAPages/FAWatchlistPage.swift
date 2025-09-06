@@ -44,19 +44,35 @@ extension FAWatchlistPage {
                 .parallelMap { User($0) }
                 .compactMap { $0 }
             
-            let nextPageRelLink = try doc
-                .select("div.section-footer > div.floatright > form")
-                .attr("action")
+            // As of 6th September 2025
+            // When there's a next page:
+            // <form method="get" action="/watchlist/to/username">
+            //     <input type="hidden" name="page" value="2">
+            //     <button class="button" type="submit">Next 200</button>
+            // </form>
             
-            let nextPageUrl: URL? = if !baseUri.absoluteString.contains(nextPageRelLink) {
-                try URL(unsafeString: FAURLs.homeUrl.absoluteString + nextPageRelLink)
-            } else {
+            // When there's not:
+            // <form method="get" action="/watchlist/to/username">
+            //     <input type="hidden" name="page" value="12">
+            //     <button class="button" type="submit" disabled="">Next 200</button>
+            // </form>
+            let nextPageFormNode = try doc
+                .select("div.section-footer > div.floatright > form")
+            let nextPageRelativeLink = try nextPageFormNode.attr("action")
+            let nextPageNumberStr = try nextPageFormNode.select("input[name=\"page\"]").attr("value")
+            let nextPageButtonDisabled = try nextPageFormNode.select("button[type=\"submit\"]").hasAttr("disabled")
+            
+            let nextPageUrl: URL? = if nextPageButtonDisabled {
                 nil
+            } else {
+                // https://www.furaffinity.net/watchlist/to/username?page=12
+                try URL(unsafeString: FAURLs.homeUrl.absoluteString + nextPageRelativeLink)
+                    .appending(queryItems: [.init(name: "page", value: nextPageNumberStr)])
             }
             
-            let (username, watchDirection) = try FAURLs.parseWatchlistUrl(baseUri).unwrap()
+            let (username, _, watchDirection) = try FAURLs.parseWatchlistUrl(baseUri).unwrap()
             
-            let title = try doc.select("body > div > section > div.section-header > h2").text()
+            let title = try doc.select("div#main-window > div#site-content > section > div.section-header > h2").text()
             let displayName = switch watchDirection {
             case .watchedBy:
                 try title.substring(matching: "Users that are watching (.+)").unwrap()

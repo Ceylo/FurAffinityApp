@@ -41,10 +41,10 @@ extension UserProfileControl {
             FAURLs.journalsUrl(for: user)
                 .convertedForInAppNavigation
         case .watching:
-            FAURLs.watchlistUrl(for: user, direction: .watching)
+            FAURLs.watchlistUrl(for: user, page: 1, direction: .watching)
                 .convertedForInAppNavigation
         case .watchedBy:
-            FAURLs.watchlistUrl(for: user, direction: .watchedBy)
+            FAURLs.watchlistUrl(for: user, page: 1, direction: .watchedBy)
                 .convertedForInAppNavigation
         }
     }
