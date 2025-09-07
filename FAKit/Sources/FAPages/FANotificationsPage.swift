@@ -6,7 +6,7 @@
 //
 
 import Foundation
-@preconcurrency import SwiftSoup
+import SwiftSoup
 
 public struct FANotificationsPage: Equatable, Sendable {
     public struct Header: Equatable, Sendable {

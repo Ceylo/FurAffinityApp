@@ -5,7 +5,7 @@
 //  Created by Ceylo on 05/12/2021.
 //
 
-@preconcurrency import SwiftSoup
+import SwiftSoup
 import Foundation
 
 public struct FAUserPage: Equatable {

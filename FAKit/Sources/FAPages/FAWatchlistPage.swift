@@ -5,7 +5,7 @@
 //  Created by Ceylo on 02/09/2024.
 //
 
-@preconcurrency import SwiftSoup
+import SwiftSoup
 import Foundation
 
 public struct FAWatchlistPage: Equatable, Sendable {

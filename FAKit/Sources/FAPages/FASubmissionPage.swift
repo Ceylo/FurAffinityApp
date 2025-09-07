@@ -6,7 +6,7 @@
 //
 
 import Foundation
-@preconcurrency import SwiftSoup
+import SwiftSoup
 
 public enum Rating: Sendable {
     case general

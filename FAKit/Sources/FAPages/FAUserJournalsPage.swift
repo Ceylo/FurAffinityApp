@@ -6,7 +6,7 @@
 //
 
 import Foundation
-@preconcurrency import SwiftSoup
+import SwiftSoup
 
 public struct FAUserJournalsPage: Equatable, Sendable {
     public struct Journal: Equatable, Sendable, Identifiable {

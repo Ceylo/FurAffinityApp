@@ -6,7 +6,7 @@
 //
 
 import Foundation
-@preconcurrency import SwiftSoup
+import SwiftSoup
 
 public struct FAFolderGroup: Sendable, Hashable, Identifiable {
     public let title: String?

@@ -6,7 +6,7 @@
 //
 
 import Foundation
-@preconcurrency import SwiftSoup
+import SwiftSoup
 
 public struct FASubmissionsPage: Sendable {
     public struct Submission: Equatable, Sendable {

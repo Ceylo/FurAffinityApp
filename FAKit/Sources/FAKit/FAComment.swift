@@ -7,7 +7,7 @@
 
 import Foundation
 import FAPages
-@preconcurrency import SwiftGraph
+import SwiftGraph
 import OrderedCollections
 
 public enum FAComment: Equatable, Sendable {
