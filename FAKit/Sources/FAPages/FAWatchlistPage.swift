@@ -41,7 +41,7 @@ extension FAWatchlistPage {
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
             let items = try doc.select("div.watch-list-items")
             let users = await items
-                .parallelMap { User($0) }
+                .map { User($0) }
                 .compactMap { $0 }
             
             // As of 6th September 2025

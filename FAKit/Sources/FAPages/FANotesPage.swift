@@ -34,7 +34,7 @@ extension FANotesPage {
             let notesQuery = "div#main-window div#site-content div.messagecenter-mail-container div.messagecenter-mail-content-pane div.messagecenter-mail-list form#pms-form div.messagecenter-mail-list-pane div#notes-list div.c-noteListItem div.note-list-container"
             
             let noteNodes = try doc.select(notesQuery)
-            self.noteHeaders = try await noteNodes.parallelMap { try NoteHeader($0) }            
+            self.noteHeaders = try await noteNodes.map { try NoteHeader($0) }            
         } catch {
             logger.error("Decoding failure in \(#file, privacy: .public): \(error, privacy: .public)")
             return nil

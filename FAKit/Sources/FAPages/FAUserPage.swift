@@ -70,7 +70,7 @@ extension FAUserPage {
             let shoutsQuery = "div#site-content div#page-userpage section.userpage-right-column div.userpage-section-right div.comment_container"
             let shoutsNodes = try mainWindowNode.select(shoutsQuery)
             self.shouts = try await shoutsNodes
-                .parallelMap { try FAPageComment($0, type: .shout) }
+                .map { try FAPageComment($0, type: .shout) }
                 .compactMap { $0 }
             
             self.targetShoutId = url.absoluteString

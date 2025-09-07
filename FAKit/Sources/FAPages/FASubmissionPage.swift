@@ -138,7 +138,7 @@ extension FASubmissionPage {
             
             let commentNodes = try submissionContentNode.select("div.comments-list div#comments-submission div.comment_container")
             self.comments = try await commentNodes
-                .parallelMap { try FAPageComment($0, type: .comment) }
+                .map { try FAPageComment($0, type: .comment) }
                 .compactMap { $0 }
             
             self.targetCommentId = url.absoluteString

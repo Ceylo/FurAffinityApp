@@ -140,8 +140,8 @@ extension FAComment {
             .map { graph.vertexAtIndex($0.v) }
         
         return try await children
-            .parallelMap { (try await FAComment(index[$0]!), index[$0]!) }
-            .parallelMap { comment, rawComment in
+            .asyncMap { (try await FAComment(index[$0]!), index[$0]!) }
+            .asyncMap { comment, rawComment in
                 await comment.withAnswers(
                     try childrenOf(comment: rawComment, in: graph, index: index)
                 )
@@ -174,7 +174,7 @@ extension FAComment {
             }
         }
         
-        return try await rootCommentIDs.parallelMap { cid in
+        return try await rootCommentIDs.asyncMap { cid in
             try await FAComment(commentsIndex[cid]!)
                 .withAnswers(childrenOf(comment: commentsIndex[cid]!,
                                         in: graph, index: commentsIndex))

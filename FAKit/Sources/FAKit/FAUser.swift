@@ -40,7 +40,7 @@ public extension FAUser {
             displayName: page.displayName,
             bannerUrl: page.bannerUrl,
             htmlDescription: page.htmlDescription,
-            shouts: try await page.shouts.parallelMap(FAComment.init),
+            shouts: try await page.shouts.asyncMap(FAComment.init),
             targetShoutId: page.targetShoutId,
             watchData: page.watchData
         )

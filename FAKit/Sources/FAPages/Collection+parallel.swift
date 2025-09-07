@@ -50,4 +50,12 @@ extension Collection where Element: Sendable {
     public func parallelMap<T: Sendable>(_ transform: @Sendable @escaping (Element) async throws -> T) async rethrows -> [T] {
         try await Self.parallelMap(of: self, transform)
     }
+    
+    @inlinable public func asyncMap<T, E>(_ transform: (Element) async throws(E) -> T) async throws(E) -> [T] where E : Error {
+        var results = [T]()
+        for element in self {
+            results.append(try await transform(element))
+        }
+        return results
+    }
 }

@@ -41,7 +41,7 @@ extension FAUserJournalsPage {
             
             let journalsQuery = "html body#pageid-journals-list div#main-window div#site-content div#columnpage div.content section"
             let journalNodes = try doc.select(journalsQuery)
-            let journals = try await journalNodes.parallelMap(Self.decodeJournal)
+            let journals = try await journalNodes.map(Self.decodeJournal)
             
             self.init(displayAuthor: displayAuthor, journals: journals)
         } catch {
