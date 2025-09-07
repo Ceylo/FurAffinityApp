@@ -1000,7 +1000,7 @@
 			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 8.0.3;
+				minimumVersion = 8.5.0;
 			};
 		};
 		877173732C35878700B84624 /* XCRemoteSwiftPackageReference "Amplitude-Swift" */ = {
@@ -1023,8 +1023,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/Defaults.git";
 			requirement = {
-				kind = revision;
-				revision = 38925e3cfacf3fb89a81a35b1cd44fd5a5b7e0fa;
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.3;
 			};
 		};
 		87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */ = {
