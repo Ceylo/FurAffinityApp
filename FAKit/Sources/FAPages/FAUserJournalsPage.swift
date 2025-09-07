@@ -30,7 +30,7 @@ public struct FAUserJournalsPage: Equatable, Sendable {
 }
 
 extension FAUserJournalsPage {
-    public init?(data: Data) async {
+    public init?(data: Data) {
         let state = signposter.beginInterval("All Journals Preview Parsing")
         defer { signposter.endInterval("All Journals Preview Parsing", state) }
         
@@ -41,7 +41,7 @@ extension FAUserJournalsPage {
             
             let journalsQuery = "html body#pageid-journals-list div#main-window div#site-content div#columnpage div.content section"
             let journalNodes = try doc.select(journalsQuery)
-            let journals = try await journalNodes.map(Self.decodeJournal)
+            let journals = try journalNodes.map(Self.decodeJournal)
             
             self.init(displayAuthor: displayAuthor, journals: journals)
         } catch {

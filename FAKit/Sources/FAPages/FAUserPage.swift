@@ -38,7 +38,7 @@ extension FAUserPage {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    public init?(data: Data, url: URL) async {
+    public init?(data: Data, url: URL) {
         let state = signposter.beginInterval("User Page Parsing")
         defer { signposter.endInterval("User Page Parsing", state) }
         
@@ -69,7 +69,7 @@ extension FAUserPage {
             
             let shoutsQuery = "div#site-content div#page-userpage section.userpage-right-column div.userpage-section-right div.comment_container"
             let shoutsNodes = try mainWindowNode.select(shoutsQuery)
-            self.shouts = try await shoutsNodes
+            self.shouts = try shoutsNodes
                 .map { try FAPageComment($0, type: .shout) }
                 .compactMap { $0 }
             

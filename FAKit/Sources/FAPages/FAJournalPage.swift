@@ -21,7 +21,7 @@ public struct FAJournalPage: Equatable, Sendable {
 }
 
 extension FAJournalPage {
-    public init?(data: Data, url: URL) async {
+    public init?(data: Data, url: URL) {
         let state = signposter.beginInterval("Journal Parsing")
         defer { signposter.endInterval("Journal Parsing", state) }
         
@@ -57,7 +57,7 @@ extension FAJournalPage {
             let commentNodes = try siteContentNode.select(
                 "div#columnpage div.content div#comments-journal div.comment_container"
             )
-            self.comments = try await commentNodes
+            self.comments = try commentNodes
                 .map { try FAPageComment($0, type: .comment) }
                 .compactMap { $0 }
             

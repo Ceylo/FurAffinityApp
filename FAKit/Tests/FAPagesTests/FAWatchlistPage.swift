@@ -9,9 +9,9 @@ import XCTest
 @testable import FAPages
 
 final class FAWatchlistPageTests: XCTestCase {
-    func testSinglePageWatchlist_returnsUsers() async throws {
+    func testSinglePageWatchlist_returnsUsers() throws {
         let data = testData("www.furaffinity.net:watchlist:by:terriniss.html")
-        let pageOpt = await FAWatchlistPage(
+        let pageOpt = FAWatchlistPage(
             data: data,
             baseUri: URL(string: "https://www.furaffinity.net/watchlist/by/terriniss/")!
         )
@@ -150,9 +150,9 @@ final class FAWatchlistPageTests: XCTestCase {
         XCTAssertEqual(page, expected)
     }
     
-    func testMultiPageWatchlist_returnsUsersAndPage() async throws {
+    func testMultiPageWatchlist_returnsUsersAndPage() throws {
         let data = testData("www.furaffinity.net:watchlist:to:terriniss.html")
-        let pageOpt = await FAWatchlistPage(
+        let pageOpt = FAWatchlistPage(
             data: data,
             baseUri: URL(string: "https://www.furaffinity.net/watchlist/to/terriniss/")!
         )

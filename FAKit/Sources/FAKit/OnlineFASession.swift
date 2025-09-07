@@ -55,7 +55,7 @@ public class OnlineFASession: FASession {
             FAURLs.latest72SubmissionsUrl
         }
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = await FASubmissionsPage(data: data, baseUri: url)
+              let page = FASubmissionsPage(data: data, baseUri: url)
         else { return [] }
         
         let previews = page.submissions
@@ -74,7 +74,7 @@ public class OnlineFASession: FASession {
         }
         
         guard let data = await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params),
-              let page = await FASubmissionsPage(data: data, baseUri: url),
+              let page = FASubmissionsPage(data: data, baseUri: url),
               !page.submissions.compactMap({ $0 }).map({ FASubmissionPreview($0) }).contains(previews) else {
             throw Error.requestFailure
         }
@@ -87,7 +87,7 @@ public class OnlineFASession: FASession {
         ]
         
         guard let data = await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params),
-              await FASubmissionsPage(data: data, baseUri: url) != nil else {
+              FASubmissionsPage(data: data, baseUri: url) != nil else {
             throw Error.requestFailure
         }
     }
@@ -95,7 +95,7 @@ public class OnlineFASession: FASession {
     // MARK: - User gallery
     public func galleryLike(for url: URL) async throws -> FAUserGalleryLike {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = await FAUserGalleryLikePage(data: data, url: url)
+              let page = FAUserGalleryLikePage(data: data, url: url)
         else { throw Error.requestFailure }
         
         let gallery = FAUserGalleryLike(page, url: url)
@@ -106,7 +106,7 @@ public class OnlineFASession: FASession {
     // MARK: - Submissions
     public func submission(for url: URL) async throws -> FASubmission {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = await FASubmissionPage(data: data, url: url)
+              let page = FASubmissionPage(data: data, url: url)
         else { throw Error.requestFailure }
         
         return try await FASubmission(page, url: url)
@@ -114,7 +114,7 @@ public class OnlineFASession: FASession {
     
     public func toggleFavorite(for submission: FASubmission) async throws -> FASubmission {
         guard let data = await dataSource.httpData(from: submission.favoriteUrl, cookies: cookies),
-              let page = await FASubmissionPage(data: data, url: submission.url)
+              let page = FASubmissionPage(data: data, url: submission.url)
         else { throw Error.requestFailure }
         
         return try await FASubmission(page, url: submission.url)
@@ -142,7 +142,7 @@ public class OnlineFASession: FASession {
     // MARK: - Journals
     public func journals(for url: URL) async throws -> FAUserJournals {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = await FAUserJournalsPage(data: data) else {
+              let page = FAUserJournalsPage(data: data) else {
             throw Error.requestFailure
         }
         return FAUserJournals(page)
@@ -150,7 +150,7 @@ public class OnlineFASession: FASession {
     
     public func journal(for url: URL) async throws -> FAJournal {
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = await FAJournalPage(data: data, url: url)
+              let page = FAJournalPage(data: data, url: url)
         else { throw Error.requestFailure }
         
         return try await FAJournal(page, url: url)
@@ -159,7 +159,7 @@ public class OnlineFASession: FASession {
     // MARK: - Notes
     public func notePreviews(from box: NotesBox) async -> [FANotePreview] {
         guard let data = await dataSource.httpData(from: box.url, cookies: cookies),
-              let page = await FANotesPage(data: data)
+              let page = FANotesPage(data: data)
         else { return [] }
         
         let headers = page.noteHeaders
@@ -215,7 +215,7 @@ public class OnlineFASession: FASession {
             throw Error.FAErrorResponse(errorPage.message)
         }
         
-        guard await FANotesPage(data: data) != nil else {
+        guard FANotesPage(data: data) != nil else {
             logger.error("Failed sending note")
             throw Error.requestFailure
         }
@@ -286,7 +286,7 @@ public class OnlineFASession: FASession {
     
     private func notificationPreviews(method: HTTPMethod, parameters: [URLQueryItem]) async -> FANotificationPreviews {
         guard let data = await dataSource.httpData(from: FAURLs.notificationsUrl, cookies: cookies, method: method, parameters: parameters),
-              let page = await FANotificationsPage(data: data)
+              let page = FANotificationsPage(data: data)
         else { return .init() }
         
         let notificationCount = page.submissionCommentHeaders.count + page.journalCommentHeaders.count + page.journalHeaders.count
@@ -319,7 +319,7 @@ public class OnlineFASession: FASession {
     }
     
     private nonisolated func loadUser(from data: Data, url: URL) async throws -> FAUser {
-        let page = try await FAUserPage(data: data, url: url).unwrap()
+        let page = try FAUserPage(data: data, url: url).unwrap()
         return try await FAUser(page)
     }
     
@@ -336,7 +336,7 @@ public class OnlineFASession: FASession {
     public func watchlist(for username: String, page: Int, direction: FAWatchlist.WatchDirection) async throws -> FAWatchlist {
         let url = FAURLs.watchlistUrl(for: username, page: page, direction: direction)
         guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = await FAWatchlistPage(data: data, baseUri: url) else {
+              let page = FAWatchlistPage(data: data, baseUri: url) else {
             throw Error.requestFailure
         }
         

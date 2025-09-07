@@ -75,10 +75,10 @@ final class FAUserGalleryLikePageTests: XCTestCase {
         ])
     ]
     
-    func testFirstGalleryPage_72itemsParsed() async throws {
+    func testFirstGalleryPage_72itemsParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/gallery/tiaamaito/")!
         let data = testData("www.furaffinity.net:gallery:tiaamaito:.html")
-        let asyncPage = await FAUserGalleryLikePage(data: data, url: url)
+        let asyncPage = FAUserGalleryLikePage(data: data, url: url)
         let page = try XCTUnwrap(asyncPage)
         XCTAssertEqual(page.previews.count, 72)
         XCTAssertEqual(page.displayAuthor, "tiaamaito")
@@ -100,10 +100,10 @@ final class FAUserGalleryLikePageTests: XCTestCase {
         XCTAssertEqual(tiaamaitoFolders.ignoringUUID(), page.folderGroups.ignoringUUID())
     }
     
-    func testEmptyGalleryPage_parsedWithNoContent() async throws {
+    func testEmptyGalleryPage_parsedWithNoContent() throws {
         let url = URL(string: "https://www.furaffinity.net/gallery/furrycount/")!
         let data = testData("www.furaffinity.net:gallery:furrycount:.html")
-        let asyncPage = await FAUserGalleryLikePage(data: data, url: url)
+        let asyncPage = FAUserGalleryLikePage(data: data, url: url)
         let page = try XCTUnwrap(asyncPage)
         XCTAssertEqual(page.previews.count, 0)
         XCTAssertEqual(page.displayAuthor, "Furrycount")
@@ -130,10 +130,10 @@ final class FAUserGalleryLikePageTests: XCTestCase {
         ].ignoringUUID())
     }
     
-    func testScrapsPage_72itemsParsed() async throws {
+    func testScrapsPage_72itemsParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/scraps/tiaamaito/")!
         let data = testData("www.furaffinity.net:scraps:tiaamaito:.html")
-        let asyncPage = await FAUserGalleryLikePage(data: data, url: url)
+        let asyncPage = FAUserGalleryLikePage(data: data, url: url)
         let page = try XCTUnwrap(asyncPage)
         XCTAssertEqual(page.previews.count, 72)
         XCTAssertEqual(page.displayAuthor, "tiaamaito")
@@ -155,10 +155,10 @@ final class FAUserGalleryLikePageTests: XCTestCase {
         XCTAssertEqual(page.folderGroups.count, 6)
     }
     
-    func testFavoritesPage_72itemsParsed() async throws {
+    func testFavoritesPage_72itemsParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/favorites/tiaamaito/")!
         let data = testData("www.furaffinity.net:favorites:tiaamaito:.html")
-        let asyncPage = await FAUserGalleryLikePage(data: data, url: url)
+        let asyncPage = FAUserGalleryLikePage(data: data, url: url)
         let page = try XCTUnwrap(asyncPage)
         XCTAssertEqual(page.previews.count, 72)
         XCTAssertEqual(page.displayAuthor, "tiaamaito")

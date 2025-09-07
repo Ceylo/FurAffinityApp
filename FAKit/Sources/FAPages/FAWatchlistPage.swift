@@ -33,14 +33,14 @@ public struct FAWatchlistPage: Equatable, Sendable {
 }
 
 extension FAWatchlistPage {
-    public init?(data: Data, baseUri: URL) async {
+    public init?(data: Data, baseUri: URL) {
         let state = signposter.beginInterval("Watchlist Parsing")
         defer { signposter.endInterval("Watchlist Parsing", state) }
         
         do {
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
             let items = try doc.select("div.watch-list-items")
-            let users = await items
+            let users = items
                 .map { User($0) }
                 .compactMap { $0 }
             

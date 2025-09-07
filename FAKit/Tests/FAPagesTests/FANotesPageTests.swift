@@ -9,16 +9,16 @@ import XCTest
 @testable import FAPages
 
 final class FANotesPageTests: XCTestCase {
-    func testEmptyInbox_returnsNoNote() async throws {
+    func testEmptyInbox_returnsNoNote() throws {
         let data = testData("www.furaffinity.net:msg:pms-empty.html")
-        let page = await FANotesPage(data: data)
+        let page = FANotesPage(data: data)
         XCTAssertNotNil(page)
         XCTAssertEqual([], page!.noteHeaders)
     }
     
-    func testMessagesInInbox_returnsNotes() async throws {
+    func testMessagesInInbox_returnsNotes() throws {
         let data = testData("www.furaffinity.net:msg:pms-unread.html")
-        let page = await FANotesPage(data: data)
+        let page = FANotesPage(data: data)
         XCTAssertNotNil(page)
         
         let expected: [FANotesPage.NoteHeader] = [
