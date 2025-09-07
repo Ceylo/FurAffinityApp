@@ -14,7 +14,7 @@ public struct FAHomePage: Equatable, Sendable {
 }
 
 extension FAHomePage {
-    public init?(data: Data, baseUri: URL) async {
+    public init?(data: Data, baseUri: URL) {
         let state = signposter.beginInterval("Home Parsing")
         defer { signposter.endInterval("Home Parsing", state) }
         
