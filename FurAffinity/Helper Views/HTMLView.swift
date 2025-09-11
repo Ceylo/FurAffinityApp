@@ -47,7 +47,7 @@ struct HTMLView: View {
                 .underlineColor : UIColor(white: 0.5, alpha: 0.8),
             ]
             view.backgroundColor = nil
-            view.textContainerInset = .init(top: 3, left: 3, bottom: 3, right: 0)
+            view.textContainerInset = .init(top: 3, left: 3, bottom: 3, right: 3)
             
             return view
         }
