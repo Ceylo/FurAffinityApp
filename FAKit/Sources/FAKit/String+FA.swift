@@ -29,7 +29,7 @@ extension String {
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <link type="text/css" rel="stylesheet" href="/themes/beta/css/ui_theme_dark.css" />
         </head>
-        <body data-static-path="/themes/beta">
+        <body data-static-path="/themes/beta" class="c-bodyColor">
             <div class="section-body">
                 <div class="submission-description user-submitted-links">
         """
@@ -46,7 +46,7 @@ extension String {
         <meta charset="utf-8" />
         <link type="text/css" rel="stylesheet" href="/themes/beta/css/ui_theme_dark.css" />
     </head>
-    <body>\(self)</body>
+    <body class="c-bodyColor">\(self)</body>
 </html>
 """.fixingLinks
     }

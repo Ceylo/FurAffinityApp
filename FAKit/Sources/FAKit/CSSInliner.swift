@@ -39,7 +39,7 @@ actor CSSInliner {
                 with: inlinedCSS(for: .dark)
             )
             .replacingOccurrences(
-                of: #"<link type="text/css" rel="stylesheet" href="https://www.furaffinity.net/themes/beta/css/ui_theme_light.css />"#,
+                of: #"<link type="text/css" rel="stylesheet" href="https://www.furaffinity.net/themes/beta/css/ui_theme_light.css" />"#,
                 with: inlinedCSS(for: .light)
             )
     }
