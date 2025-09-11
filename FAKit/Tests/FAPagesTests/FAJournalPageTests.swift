@@ -9,10 +9,10 @@ import XCTest
 @testable import FAPages
 
 final class FAJournalPageTests: XCTestCase {
-    func testSubmissionPageWithComments_isParsed() async throws {
+    func testSubmissionPageWithComments_isParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/journal/10516170/")!
         let data = testData("www.furaffinity.net:journal:10516170-withcomments.html")
-        let page = await FAJournalPage(data: data, url: url)
+        let page = FAJournalPage(data: data, url: url)
         XCTAssertNotNil(page)
         
         let expectedComments: [FAPageComment] = [
@@ -53,10 +53,10 @@ final class FAJournalPageTests: XCTestCase {
         XCTAssertEqual(expectedPage, page)
     }
     
-    func testSubmissionPageWithCommentsDisabled_isParsed() async throws {
+    func testSubmissionPageWithCommentsDisabled_isParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/journal/10882268/")!
         let data = testData("www.furaffinity.net:journal:10882268-disabled-comments.html")
-        let page = try await FAJournalPage(data: data, url: url).unwrap()
+        let page = try FAJournalPage(data: data, url: url).unwrap()
         
         XCTAssertEqual(page.acceptsNewComments, false)
     }

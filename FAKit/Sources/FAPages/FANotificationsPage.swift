@@ -6,7 +6,7 @@
 //
 
 import Foundation
-@preconcurrency import SwiftSoup
+import SwiftSoup
 
 public struct FANotificationsPage: Equatable, Sendable {
     public struct Header: Equatable, Sendable {
@@ -26,7 +26,7 @@ public struct FANotificationsPage: Equatable, Sendable {
 }
 
 extension FANotificationsPage {
-    public init?(data: Data) async {
+    public init?(data: Data) {
         let state = signposter.beginInterval("All Notifications Preview Parsing")
         defer { signposter.endInterval("All Notifications Preview Parsing", state) }
         
@@ -40,23 +40,18 @@ extension FANotificationsPage {
             let shoutNodes = try notificationsNode.select("section#messages-shouts > div.section-body > ul.message-stream > li")
             let journalNodes = try notificationsNode.select("section#messages-journals ul.message-stream li div.table")
 
-            async let submissionCommentHeaders = Self.decodeNodes(submissionCommentNodes, Header.submissionComment)
-            async let journalCommentHeaders = Self.decodeNodes(journalCommentNodes, Header.journalComment)
-            async let shoutHeaders = Self.decodeNodes(shoutNodes, { try Header.shout($0, page: doc) })
-            async let journalHeaders = Self.decodeNodes(journalNodes, Header.journal)
-            
-            self.submissionCommentHeaders = await submissionCommentHeaders
-            self.journalCommentHeaders = await journalCommentHeaders
-            self.shoutHeaders = await shoutHeaders
-            self.journalHeaders = await journalHeaders
+            self.submissionCommentHeaders = Self.decodeNodes(submissionCommentNodes, Header.submissionComment)
+            self.journalCommentHeaders = Self.decodeNodes(journalCommentNodes, Header.journalComment)
+            self.shoutHeaders = Self.decodeNodes(shoutNodes, { try Header.shout($0, page: doc) })
+            self.journalHeaders = Self.decodeNodes(journalNodes, Header.journal)
         } catch {
             logger.error("Decoding failure in \(#file, privacy: .public): \(error, privacy: .public)")
             return nil
         }
     }
     
-    static private func decodeNodes<T: Sendable>(_ nodes: SwiftSoup.Elements, _ headerDecoder: @escaping @Sendable (SwiftSoup.Element) throws -> T) async -> [T] {
-        await nodes.parallelMap { node in
+    static private func decodeNodes<T>(_ nodes: SwiftSoup.Elements, _ headerDecoder: (SwiftSoup.Element) throws -> T) -> [T] {
+        nodes.map { node in
             do {
                 return try headerDecoder(node)
             } catch {

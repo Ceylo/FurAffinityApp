@@ -6,7 +6,7 @@
 //
 
 import Foundation
-@preconcurrency import SwiftSoup
+import SwiftSoup
 
 public struct FASubmissionsPage: Sendable {
     public struct Submission: Equatable, Sendable {
@@ -35,7 +35,7 @@ public struct FASubmissionsPage: Sendable {
 }
 
 extension FASubmissionsPage {
-    public init?(data: Data, baseUri: URL) async {
+    public init?(data: Data, baseUri: URL) {
         let state = signposter.beginInterval("All Submission Previews Parsing")
         defer { signposter.endInterval("All Submission Previews Parsing", state) }
         
@@ -46,7 +46,7 @@ extension FASubmissionsPage {
             let itemsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div#messages-comments-submission div#messagecenter-submissions section figure"
             let items = try doc.select(itemsQuery)
             
-            async let submissions = items.parallelMap { Submission($0) }
+            self.submissions = items.map { Submission($0) }
             let buttonsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div.aligncenter a"
             let buttonItems = try doc.select(buttonsQuery).array()
             let prevButton = try buttonItems.first { try $0.text().starts(with: "Prev") }
@@ -65,8 +65,6 @@ extension FASubmissionsPage {
             } else {
                 self.nextPageUrl = nil
             }
-            
-            self.submissions = await submissions
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             return nil

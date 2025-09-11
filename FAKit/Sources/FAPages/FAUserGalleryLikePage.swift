@@ -6,7 +6,7 @@
 //
 
 import Foundation
-@preconcurrency import SwiftSoup
+import SwiftSoup
 
 public struct FAFolderGroup: Sendable, Hashable, Identifiable {
     public let title: String?
@@ -42,7 +42,7 @@ public struct FAUserGalleryLikePage: Sendable {
 }
 
 extension FAUserGalleryLikePage {
-    public init?(data: Data, url: URL) async {
+    public init?(data: Data, url: URL) {
         let state = signposter.beginInterval("User Gallery Parsing")
         defer { signposter.endInterval("User Gallery Parsing", state) }
         
@@ -55,13 +55,12 @@ extension FAUserGalleryLikePage {
             )
             let itemsQuery = "section.gallery-section div.section-body section figure"
             let items = try siteContentNode.select(itemsQuery)
-            async let previews = items.parallelMap { FASubmissionsPage.Submission($0) }
+            self.previews = items.map { FASubmissionsPage.Submission($0) }
             
             let userNode = try siteContentNode.select(
                 "userpage-nav-header userpage-nav-user-details username div.c-usernameBlock a.c-usernameBlock__displayName"
             )
             self.displayAuthor = try userNode.text()
-            self.previews = await previews
             
             let navigationFormsQuery = "section.gallery-section div.section-body div.gallery-navigation div form"
             let nextButtonForm = try? siteContentNode

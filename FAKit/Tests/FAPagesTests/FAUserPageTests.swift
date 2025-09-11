@@ -9,10 +9,10 @@ import XCTest
 @testable import FAPages
 
 class FAUserPageTests: XCTestCase {
-    func testUserPage_isParsed() async throws {
+    func testUserPage_isParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/user/terriniss")!
         let data = testData("www.furaffinity.net:user:terriniss.html")
-        let page = await FAUserPage(data: data, url: url)
+        let page = FAUserPage(data: data, url: url)
         XCTAssertNotNil(page)
         
         let htmlDescription = """
@@ -140,7 +140,7 @@ class FAUserPageTests: XCTestCase {
         XCTAssertEqual(page, expected)
         
         let urlWithAnchor = URL(string: "https://www.furaffinity.net/user/terriniss#shout-53552229")!
-        let pageWithShoutAnchor = await FAUserPage(data: data, url: urlWithAnchor)
+        let pageWithShoutAnchor = FAUserPage(data: data, url: urlWithAnchor)
         
         let expectedWithShout = FAUserPage(
             name: "terriniss",

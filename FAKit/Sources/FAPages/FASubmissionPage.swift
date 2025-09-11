@@ -6,7 +6,7 @@
 //
 
 import Foundation
-@preconcurrency import SwiftSoup
+import SwiftSoup
 
 public enum Rating: Sendable {
     case general
@@ -81,7 +81,7 @@ public struct FASubmissionPage: Equatable, Sendable {
 }
 
 extension FASubmissionPage {
-    public init?(data: Data, url: URL) async {
+    public init?(data: Data, url: URL) {
         do {
             let state = signposter.beginInterval("Submission Parsing")
             defer { signposter.endInterval("Submission Parsing", state) }
@@ -137,8 +137,8 @@ extension FASubmissionPage {
             self.htmlDescription = htmlContent
             
             let commentNodes = try submissionContentNode.select("div.comments-list div#comments-submission div.comment_container")
-            self.comments = try await commentNodes
-                .parallelMap { try FAPageComment($0, type: .comment) }
+            self.comments = try commentNodes
+                .map { try FAPageComment($0, type: .comment) }
                 .compactMap { $0 }
             
             self.targetCommentId = url.absoluteString
