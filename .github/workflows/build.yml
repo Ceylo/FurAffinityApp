@@ -2,7 +2,7 @@ name: Build App
 on: [push, workflow_dispatch]
 jobs:
   Build-App:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -46,11 +46,6 @@ jobs:
         with:
           action: none
           xcode: ~26.0
-      - name: Install iOS support
-        run: |
-          xcrun simctl list runtimes devices
-          xcodebuild -downloadPlatform iOS
-          xcrun simctl list runtimes devices
       - name: Build App
         run: |
           xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 16' -configuration Debug build
@@ -61,7 +56,7 @@ jobs:
           qualified_app_name="FurAffinity-${fsfriendly_git_ref}-${git_hash}"
           results_path=$(pwd)/${qualified_app_name}.xcresult
           xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 16' -resultBundlePath "${results_path}" test
-          zip -r "${qualified_app_name}.xcresult.zip" "${qualified_app_name}.xcresult"
+          zip -rq "${qualified_app_name}.xcresult.zip" "${qualified_app_name}.xcresult"
       - name: Upload Tests Results
         uses: actions/upload-artifact@v4
         with:
