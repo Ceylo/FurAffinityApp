@@ -48,15 +48,21 @@ jobs:
           xcode: ~26.0
       - name: Build App
         run: |
-          xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17' -configuration Debug build
+          xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17' -configuration Debug build | tee BuildLogs.txt | xcbeautify
       - name: Run Tests
         run: |
           git_hash=$(git rev-parse --short "$GITHUB_SHA")
           fsfriendly_git_ref=$(echo "${GITHUB_REF_NAME}" | tr '/' '-')
           qualified_app_name="FurAffinity-${fsfriendly_git_ref}-${git_hash}"
           results_path=$(pwd)/${qualified_app_name}.xcresult
-          xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17' -resultBundlePath "${results_path}" test
+          xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17' -resultBundlePath "${results_path}" test  | tee TestLogs.txt | xcbeautify
           zip -rq "${qualified_app_name}.xcresult.zip" "${qualified_app_name}.xcresult"
+      - name: Upload Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: Xcode Logs
+          path: ./*Logs.txt
+          if-no-files-found: error
       - name: Upload Tests Results
         uses: actions/upload-artifact@v4
         with:
