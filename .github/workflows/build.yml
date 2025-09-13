@@ -58,12 +58,14 @@ jobs:
           NSUnbufferedIO=YES set -o pipefail && xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17' -resultBundlePath "${results_path}" test 2>&1 | tee TestLogs.txt | xcbeautify
           zip -rq "${qualified_app_name}.xcresult.zip" "${qualified_app_name}.xcresult"
       - name: Upload Logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Xcode Logs
           path: ./*Logs.txt
           if-no-files-found: error
       - name: Upload Tests Results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Xcode Test Results
