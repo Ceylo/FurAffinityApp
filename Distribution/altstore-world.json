@@ -18,42 +18,51 @@
       "iconURL": "https://get.furaffinity.app/altstore/fa-app-icon.heic",
       "tintColor": null,
       "category": "social",
-      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.13.1/FurAffinity-1.13.1-549a33b.ipa",
+      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.14/FurAffinity-1.14-2a8463b.ipa",
       "screenshots": [
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.13/screenshots/feed.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.14/screenshots/feed.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.13/screenshots/submission.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.14/screenshots/submission.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.13/screenshots/notifications.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.14/screenshots/notifications.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.13/screenshots/notes.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.14/screenshots/notes.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.13/screenshots/send note.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.14/screenshots/note reply.heic",
           "width": 1170
         }
       ],
       "screenshotURLs": [
-        "https://get.furaffinity.app/altstore/releases/1.13/screenshots/feed.heic",
-        "https://get.furaffinity.app/altstore/releases/1.13/screenshots/submission.heic",
-        "https://get.furaffinity.app/altstore/releases/1.13/screenshots/notifications.heic",
-        "https://get.furaffinity.app/altstore/releases/1.13/screenshots/notes.heic",
-        "https://get.furaffinity.app/altstore/releases/1.13/screenshots/send note.heic"
+        "https://get.furaffinity.app/altstore/releases/1.14/screenshots/feed.heic",
+        "https://get.furaffinity.app/altstore/releases/1.14/screenshots/submission.heic",
+        "https://get.furaffinity.app/altstore/releases/1.14/screenshots/notifications.heic",
+        "https://get.furaffinity.app/altstore/releases/1.14/screenshots/notes.heic",
+        "https://get.furaffinity.app/altstore/releases/1.14/screenshots/note reply.heic"
       ],
       "versions": [
+        {
+          "version": "1.14",
+          "date": "2025-09-14T12:00:00+02:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n📱 FEATURES\n- iOS 26 support: adopted Liquid Glass design\n- Submissions and submission previews are now displayed full width\n- The submissions feed now highlights the submission title rather than the author\n\n🐞 BUGFIXES\n- Note editor now allows the . (dot) and - (dash) characters in static name field\n- Fixes following furaffinity.net website updates:\n  - Fixed loading of users Watching and Watched By lists\n  - Fixed text color in dark mode on comments and submission and journal descriptions",
+          "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.14/FurAffinity-1.14-2a8463b.ipa",
+          "size": 3039727,
+          "sha256": "2a73b791c42b929c7c6a4c3b0b4b34a3938e6bb2618cd2ae78de71fccdac654a",
+          "minOSVersion": "17.4"
+        },
         {
           "version": "1.13.1",
           "date": "2025-07-06T10:00:00+02:00",

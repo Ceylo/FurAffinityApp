@@ -20,31 +20,40 @@
       "screenshots": [
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.13/screenshots/feed.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.14/screenshots/feed.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.13/screenshots/submission.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.14/screenshots/submission.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.13/screenshots/notifications.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.14/screenshots/notifications.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.13/screenshots/notes.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.14/screenshots/notes.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.13/screenshots/send note.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.14/screenshots/note reply.heic",
           "width": 1170
         }
       ],
       "versions": [
+        {
+          "version": "1.14",
+          "buildVersion": "1",
+          "date": "2025-09-14T12:00:00+02:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n📱 FEATURES\n- iOS 26 support: adopted Liquid Glass design\n- Submissions and submission previews are now displayed full width\n- The submissions feed now highlights the submission title rather than the author\n\n🐞 BUGFIXES\n- Note editor now allows the . (dot) and - (dash) characters in static name field\n- Fixes following furaffinity.net website updates:\n  - Fixed loading of users Watching and Watched By lists\n  - Fixed text color in dark mode on comments and submission and journal descriptions",
+          "downloadURL": "https://get.furaffinity.app/altstore/releases/1.14/adp/",
+          "size": 3062101,
+          "minOSVersion": "17.4"
+        },
         {
           "version": "1.13.1",
           "buildVersion": "1",
