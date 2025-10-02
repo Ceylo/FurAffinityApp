@@ -56,7 +56,7 @@ func prefetch(_ urls: [URL], priority: Float = URLSessionTask.lowPriority) {
 }
 
 @MainActor
-func prefetchAvatars(for comments: [FAComment]) {
+func prefetchAvatars(for comments: some Collection<FAComment>) {
     var allComments = [FAVisibleComment]()
     comments.recursiveForEach { comment in
         if case let .visible(visibleComment) = comment {
@@ -70,7 +70,7 @@ func prefetchAvatars(for comments: [FAComment]) {
 }
 
 @MainActor
-func prefetchAvatars(for previews: [FASubmissionPreview]) {
+func prefetchAvatars(for previews: some Collection<FASubmissionPreview>) {
     let avatars = previews.compactMap { preview in
         FAURLs.avatarUrl(for: preview.author)
     }
@@ -78,7 +78,7 @@ func prefetchAvatars(for previews: [FASubmissionPreview]) {
 }
 
 @MainActor
-func prefetchThumbnails(for previews: [FASubmissionPreview], availableWidth: CGFloat) {
+func prefetchThumbnails(for previews: some Collection<FASubmissionPreview>, availableWidth: CGFloat) {
     let thumbnails = previews.map { preview in
         let size = CGSize(
             width: availableWidth,

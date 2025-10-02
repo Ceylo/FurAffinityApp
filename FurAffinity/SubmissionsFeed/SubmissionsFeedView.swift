@@ -10,6 +10,7 @@ import FAKit
 @_spi(Advanced) import SwiftUIIntrospect
 import UIKit
 import Defaults
+import Collections
 
 struct SubmissionsFeedView: View {
     @EnvironmentObject var model: Model
@@ -127,7 +128,13 @@ struct SubmissionsFeedView: View {
                         itemView(for: item, geometry: geometry, scrollProxy: scrollProxy)
                     }
                     .onDelete { offsets in
-                        model.deleteSubmissionPreviews(atOffsets: offsets)
+                        let previewsToRemove = offsets
+                            .map { items[$0] }
+                            .compactMap { item -> FASubmissionPreview? in
+                                guard case let .submissionPreview(preview) = item else { return nil }
+                                return preview
+                            }
+                        model.deleteSubmissionPreviews(previewsToRemove)
                     }
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
@@ -153,7 +160,7 @@ struct SubmissionsFeedView: View {
                 .swap(when: items.isEmpty) {
                     noPreview
                 }
-                .onReceive(model.$submissionPreviews.compactMap { $0 }) { previews in
+                .onReceive(model.$submissionPreviews.compactMap { $0 }) { (previews: OrderedSet<FASubmissionPreview>) in
                     let thumbnailsWidth = geometry.size.width - 28.333
                     prefetchThumbnails(for: previews, availableWidth: thumbnailsWidth)
                     prefetchAvatars(for: previews)

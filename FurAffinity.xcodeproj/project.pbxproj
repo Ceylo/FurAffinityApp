@@ -14,6 +14,7 @@
 		87098D3A2CB2BEF000E7BD94 /* UserDefaultKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87098D392CB2BEF000E7BD94 /* UserDefaultKeys.swift */; };
 		870B2AA12DFDD29E00B48AC3 /* NoteReplying.swift in Sources */ = {isa = PBXBuildFile; fileRef = 870B2AA02DFDD29500B48AC3 /* NoteReplying.swift */; };
 		870BCA212E3FBC6600E5FC0B /* AuthorHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 870BCA202E3FBC6100E5FC0B /* AuthorHeader.swift */; };
+		871034822E8F12A80030F36E /* Collections in Frameworks */ = {isa = PBXBuildFile; productRef = 871034812E8F12A80030F36E /* Collections */; };
 		8716E7EC271C659C00C0BC4A /* FurAffinityApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8716E7EB271C659C00C0BC4A /* FurAffinityApp.swift */; };
 		8716E7EE271C659C00C0BC4A /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8716E7ED271C659C00C0BC4A /* HomeView.swift */; };
 		8716E7F0271C659D00C0BC4A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8716E7EF271C659D00C0BC4A /* Assets.xcassets */; };
@@ -242,6 +243,7 @@
 			files = (
 				87E796172C99994D0020EACD /* SwiftUIIntrospect in Frameworks */,
 				87C1A0AD284B6E5400529F8C /* Version in Frameworks */,
+				871034822E8F12A80030F36E /* Collections in Frameworks */,
 				8708DA292D74D4D4000B419C /* WrappingHStack in Frameworks */,
 				87098D362CB14F1000E7BD94 /* Kingfisher in Frameworks */,
 				877173752C35878700B84624 /* AmplitudeSwift in Frameworks */,
@@ -517,6 +519,7 @@
 				87098D352CB14F1000E7BD94 /* Kingfisher */,
 				87B0233E2CD54F9200F4D400 /* Defaults */,
 				8708DA282D74D4D4000B419C /* WrappingHStack */,
+				871034812E8F12A80030F36E /* Collections */,
 			);
 			productName = FurAffinity;
 			productReference = 8716E7E8271C659C00C0BC4A /* Fur Affinity.app */;
@@ -578,6 +581,7 @@
 				87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults" */,
 				8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack" */,
+				871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms" */,
 			);
 			productRefGroup = 8716E7E9271C659C00C0BC4A /* Products */;
 			projectDirPath = "";
@@ -1003,6 +1007,14 @@
 				minimumVersion = 8.5.0;
 			};
 		};
+		871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-algorithms.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.1;
+			};
+		};
 		877173732C35878700B84624 /* XCRemoteSwiftPackageReference "Amplitude-Swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/amplitude/Amplitude-Swift";
@@ -1047,6 +1059,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */;
 			productName = Kingfisher;
+		};
+		871034812E8F12A80030F36E /* Collections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms" */;
+			productName = Collections;
 		};
 		8761834D271F5E570021A051 /* FAKit */ = {
 			isa = XCSwiftPackageProductDependency;

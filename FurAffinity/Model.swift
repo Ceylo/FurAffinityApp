@@ -9,6 +9,7 @@ import SwiftUI
 import FAKit
 import Combine
 import Defaults
+import OrderedCollections
 
 enum ModelError: Error {
     case disconnected
@@ -31,7 +32,8 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     /// `nil` until a fetch actually happened.
     /// After a fetch it contains all found submissions, or an empty array if none was found.
     @Published
-    private(set) var submissionPreviews: [FASubmissionPreview]?
+    private(set) var submissionPreviews: OrderedSet<FASubmissionPreview>?
+    private var submissionPreviewsPendingDeletion = Set<FASubmissionPreview>()
     private(set) var lastSubmissionPreviewsFetchDate: Date?
     
     /// `nil` until a fetch actually happened.
@@ -98,6 +100,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         guard session != nil else {
             lastSubmissionPreviewsFetchDate = nil
             submissionPreviews = nil
+            submissionPreviewsPendingDeletion = []
             lastInboxNotePreviewsFetchDate = nil
             inboxNotePreviews = nil
             unreadInboxNoteCount = 0
@@ -177,21 +180,27 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         let lastKnownSid = submissionPreviews?.first?.sid ?? 0
         // We take advantage of the fact that submission IDs are always increasing
         // to know which one are new.
-        let newSubmissions = latestSubmissions.filter { $0.sid > lastKnownSid }
+        let newSubmissions = OrderedSet(latestSubmissions)
+            .filter { $0.sid > lastKnownSid }
+        // We also take into account any preview deletion that may have happened since the fetch started
+            .filter { !submissionPreviewsPendingDeletion.contains($0) }
+        submissionPreviewsPendingDeletion.removeAll()
         
         if !newSubmissions.isEmpty {
-            submissionPreviews = newSubmissions + (submissionPreviews ?? [])
+            submissionPreviews = OrderedSet(newSubmissions).appending(contentsOf: submissionPreviews ?? [])
         } else if submissionPreviews == nil {
             submissionPreviews = []
         }
         return newSubmissions.count
     }
     
-    func deleteSubmissionPreviews(atOffsets offsets: IndexSet) {
+    func deleteSubmissionPreviews(_ previews: [FASubmissionPreview]) {
         precondition(submissionPreviews != nil)
-        
-        let previews = offsets.map { submissionPreviews![$0] }
-        submissionPreviews!.remove(atOffsets: offsets)
+        submissionPreviewsPendingDeletion.formUnion(previews)
+
+        for preview in previews {
+            submissionPreviews!.remove(preview)
+        }
         
         Task {
             do {
@@ -202,7 +211,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
                 let rollback = ((submissionPreviews ?? []) + previews)
                     .sorted()
                     .reversed()
-                submissionPreviews = rollback
+                submissionPreviews = OrderedSet(rollback)
             }
         }
     }

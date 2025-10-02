@@ -182,7 +182,7 @@ extension FAComment {
     }
 }
 
-extension [FAComment] {
+extension Collection<FAComment> {
     public func recursiveFirst(where predicate: (FAComment) -> Bool) -> FAComment? {
         for comment in self {
             if predicate(comment) {
