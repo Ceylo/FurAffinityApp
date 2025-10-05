@@ -161,8 +161,7 @@ struct SubmissionsFeedView: View {
                     noPreview
                 }
                 .onReceive(model.$submissionPreviews.compactMap { $0 }) { (previews: OrderedSet<FASubmissionPreview>) in
-                    let thumbnailsWidth = geometry.size.width - 28.333
-                    prefetchThumbnails(for: previews, availableWidth: thumbnailsWidth)
+                    prefetchThumbnails(for: previews, availableWidth: geometry.size.width)
                     prefetchAvatars(for: previews)
                 }
             }

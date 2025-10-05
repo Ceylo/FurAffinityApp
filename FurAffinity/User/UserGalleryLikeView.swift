@@ -130,7 +130,7 @@ struct UserGalleryLikeView: View {
     }
     
     func prefetch(with geometry: GeometryProxy) {
-        let thumbnailsWidth = geometry.size.width - 28.333
+        let thumbnailsWidth = geometry.size.width
         guard thumbnailsWidth > 0 else {
             logger.error("Skipping prefetch due to too small geometry: \(String(describing: geometry.size))")
             return
