@@ -17,24 +17,21 @@ struct JournalControlsView: View {
     private let buttonsSize: CGFloat = 55
     
     var body: some View {
-        HStack(spacing: 0) {
+        HStack {
             Spacer()
-            
-            Button {
-                share([journalUrl])
-            } label: {
-                Image(systemName: "square.and.arrow.up")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .padding()
-            }
-            .frame(height: buttonsSize)
             
             ReplyButton(
                 repliesCount: repliesCount,
                 acceptsNewReplies: acceptsNewReplies,
                 replyAction: replyAction
             )
+            .applying {
+                if #available(iOS 26, *) {
+                    $0.offset(y: -3)
+                        .padding(-5)
+                        .glassEffect(.regular.interactive())
+                } else { $0 }
+            }
             
             Spacer()
         }
@@ -65,11 +62,17 @@ struct JournalControlsView: View {
             )
         }
         .preferredColorScheme(.dark)
-        .background {
+        .overlay {
             Rectangle()
                 .fill(.clear)
                 .border(.secondary)
-                .offset(y: 3)
+                .applying {
+                    if #available(iOS 26, *) {
+                        $0
+                    } else {
+                        $0.offset(y: 3)
+                    }
+                }
                 .frame(height: 18)
         }
     }
