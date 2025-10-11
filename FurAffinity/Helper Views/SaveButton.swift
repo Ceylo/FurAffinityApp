@@ -21,7 +21,7 @@ fileprivate extension ActionState {
     }
     
     var saveButtonColor: Color {
-        return self == .failed ? Color.red : Color.accentColor
+        self == .failed ? Color.red : Color.buttonTint
     }
 }
 

@@ -9,6 +9,16 @@ import SwiftUI
 
 private let buttonsSize: CGFloat = 55
 
+extension Color {
+    static let buttonTint: Color = {
+        if #available(iOS 26, *) {
+            Color.primary
+        } else {
+            Color.accentColor
+        }
+    }()
+}
+
 struct ReplyButton: View {
     var repliesCount: Int
     var acceptsNewReplies: Bool
@@ -20,6 +30,7 @@ struct ReplyButton: View {
                 replyAction()
             } label: {
                 AlignedLabel(value: repliesCount, systemImage: "bubble", imageYOffset: -1)
+                    .tint(Color.buttonTint)
             }
             .frame(height: buttonsSize-4)
         } else {
@@ -27,7 +38,7 @@ struct ReplyButton: View {
                 Text("Comment posting has been disabled")
             } label: {
                 AlignedLabel(value: repliesCount, systemImage: "exclamationmark.bubble", imageYOffset: -1)
-                    .foregroundStyle(.orange)
+                    .tint(.orange)
             }
             .frame(height: buttonsSize-3)
         }
@@ -44,53 +55,69 @@ struct SubmissionControlsView: View {
     var acceptsNewReplies: Bool
     var replyAction: () -> Void
     var metadataTarget: FATarget?
-        
+    
     @StateObject private var saveHandler = MediaSaveHandler()
     
     var body: some View {
-        HStack(spacing: 0) {
+        HStack {
             Spacer()
-            
-            Button {
-                favoriteAction()
-            } label: {
-                AlignedLabel(
-                    value: favoritesCount,
-                    systemImage: isFavorite ? "heart.fill" : "heart",
-                    imageYOffset: -2
+            HStack(spacing: 0) {
+                Button {
+                    favoriteAction()
+                } label: {
+                    AlignedLabel(
+                        value: favoritesCount,
+                        systemImage: isFavorite ? "heart.fill" : "heart",
+                        imageYOffset: -2
+                    )
+                    .tint(Color.buttonTint)
+                }
+                .frame(height: buttonsSize-4)
+                .sensoryFeedback(.impact, trigger: isFavorite, condition: {
+                    $1 == true
+                })
+                
+                SaveButton(state: saveHandler.state) {
+                    Task {
+                        await saveHandler.saveMedia(atFileUrl: mediaFileUrl!)
+                    }
+                }
+                .frame(height: buttonsSize)
+                .disabled(mediaFileUrl == nil)
+                .sensoryFeedback(.impact, trigger: saveHandler.state, condition: {
+                    $1 == .succeeded
+                })
+                
+                ReplyButton(
+                    repliesCount: repliesCount,
+                    acceptsNewReplies: acceptsNewReplies,
+                    replyAction: replyAction
                 )
             }
-            .frame(height: buttonsSize-4)
-            .sensoryFeedback(.impact, trigger: isFavorite, condition: {
-                $1 == true
-            })
-            
-            SaveButton(state: saveHandler.state) {
-                Task {
-                    await saveHandler.saveMedia(atFileUrl: mediaFileUrl!)
-                }
+            .applying {
+                if #available(iOS 26, *) {
+                    $0.offset(y: -3)
+                        .padding(-5)
+                        .glassEffect(.regular.interactive())
+                } else { $0 }
             }
-            .frame(height: buttonsSize)
-            .disabled(mediaFileUrl == nil)
-            .sensoryFeedback(.impact, trigger: saveHandler.state, condition: {
-                $1 == .succeeded
-            })
-            
-            ReplyButton(
-                repliesCount: repliesCount,
-                acceptsNewReplies: acceptsNewReplies,
-                replyAction: replyAction
-            )
             
             FALink(destination: metadataTarget) {
                 Image(systemName: "text.badge.star")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .foregroundStyle(Color.accentColor)
                     .padding()
                     .offset(y: 2)
+                    .foregroundStyle(Color.buttonTint)
             }
             .frame(height: buttonsSize)
+            .applying {
+                if #available(iOS 26, *) {
+                    $0.offset(y: -3)
+                        .padding(-5)
+                        .glassEffect(.regular.interactive())
+                } else { $0 }
+            }
             
             Spacer()
         }
@@ -133,11 +160,17 @@ struct SubmissionControlsView: View {
         )
     }
     .preferredColorScheme(.dark)
-    .background {
+    .overlay {
         Rectangle()
             .fill(.clear)
             .border(.secondary)
-            .offset(y: 3)
+            .applying {
+                if #available(iOS 26, *) {
+                    $0
+                } else {
+                    $0.offset(y: 3)
+                }
+            }
             .frame(height: 18)
     }
 }

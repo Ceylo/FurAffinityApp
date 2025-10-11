@@ -89,6 +89,11 @@ struct SubmissionView: View {
                 header
                 mainImage
                 submissionControls
+                // When glass effect is used in a list with light mode, shadow gets clipped.
+                // This padding is a workaround to prevent clipping.
+                // It would not happen if using a ScrollView instead of a list,
+                // but we'd then lose swipe actions.
+                    .padding(.bottom, 30)
                 submissionDescription
                 submissionComments
             }
