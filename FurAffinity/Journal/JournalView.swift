@@ -64,19 +64,21 @@ struct JournalView: View {
     var body: some View {
         List {
             Group {
-                Group {
+                // VStack is a workaround for broken divider on iOS 26
+                VStack {
                     header
                     Divider()
-                        .padding(.vertical, 5)
-                    journalContents
-                    journalControls
+                        .padding(.bottom, 5)
                 }
-                .padding(.horizontal, 10)
                 
+                journalContents
+                journalControls
                 journalComments
+                    .padding(.horizontal, -10)
             }
             .listRowSeparator(.hidden)
             .listRowInsets(.init())
+            .padding(.horizontal, 10)
         }
         .commentSheet(on: $replySession, replyAction)
         .navigationTitle(journal.title)
