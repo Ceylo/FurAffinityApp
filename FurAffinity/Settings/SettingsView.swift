@@ -100,7 +100,7 @@ struct SettingsView: View {
                     cleaningCache = true
                     
                     Task {
-                        await ImageCache.default.clearDiskCache()
+                        await ImageCache.default.clearCache()
                         updateCachedFileSize()
                         cleaningCache = false
                     }
