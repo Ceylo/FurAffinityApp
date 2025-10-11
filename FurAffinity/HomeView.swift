@@ -21,10 +21,10 @@ private struct HomeViewButtonContents: View {
             Spacer()
         }
         .background(Color.borderOverlay.opacity(0.5))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(.capsule(style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.buttonBorderOverlay.opacity(0.5), lineWidth: 0.5)
+            Capsule(style: .continuous)
+                .stroke(Color.buttonBorderOverlay.opacity(0.25), lineWidth: 1)
         }
     }
 }
@@ -58,15 +58,30 @@ struct HomeView: View {
                 if model.session == nil {
                     AppIcon()
                     
-                    VStack(spacing: 20) {
-                        Button {
-                            showLoginView = true
-                        } label: {
-                            HomeViewButtonContents(text: "Login with furaffinity.net")
-                        }
-                        
-                        Link(destination: FAURLs.signupUrl) {
-                            HomeViewButtonContents(text: "Register")
+                    VStack(spacing: 30) {
+                        if #available(iOS 26, *) {
+                            Button("Login with furaffinity.net  ") {
+                                showLoginView = true
+                            }
+                            .buttonStyle(.glassProminent)
+                            .font(.title2)
+                            
+                            Link(destination: FAURLs.signupUrl) {
+                                Text("Register")
+                                    .padding(.horizontal, 5)
+                            }
+                            .buttonStyle(.glass)
+                            .font(.title2)
+                        } else {
+                            Button {
+                                showLoginView = true
+                            } label: {
+                                HomeViewButtonContents(text: "Login with furaffinity.net")
+                            }
+                            
+                            Link(destination: FAURLs.signupUrl) {
+                                HomeViewButtonContents(text: "Register")
+                            }
                         }
                     }
                     .padding(.horizontal)
