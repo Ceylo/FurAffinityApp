@@ -29,15 +29,25 @@ struct NotificationOverlay: View {
         }
     }
     
+    @ViewBuilder
     func badge(_ count: Int) -> some View {
-        Text(text(count: count))
-            .font(.callout)
-            .foregroundColor(Color.primary)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(.thinMaterial)
-            .cornerRadius(16)
-            .shadow(color: .black.opacity(0.33) , radius: 5, x: 0, y: 0)
+        if #available(iOS 26, *) {
+            Text(text(count: count))
+                .font(.callout)
+                .foregroundColor(Color.primary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .glassEffect()
+        } else {
+            Text(text(count: count))
+                .font(.callout)
+                .foregroundColor(Color.primary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(.thinMaterial)
+                .cornerRadius(16)
+                .shadow(color: .black.opacity(0.33) , radius: 5, x: 0, y: 0)
+        }
     }
     
     var body: some View {
