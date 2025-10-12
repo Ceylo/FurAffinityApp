@@ -47,6 +47,7 @@ struct NoteContentsView: View {
             }
             Divider()
                 .padding(.vertical, 5)
+                .padding(.bottom, 5)
             
             HTMLView(text: message)
             // for text view inset
@@ -64,11 +65,11 @@ struct NoteView: View {
     var body: some View {
         ScrollView {
             NoteContentsView(note: note, showWarning: true)
-            .padding()
-            .navigationTitle(note.title)
-            .noteReplySheet(on: $replySession) { reply in
-                try await replyAction(reply.destinationUser, reply.subject, reply.text)
-            }
+                .padding(10)
+                .navigationTitle(note.title)
+                .noteReplySheet(on: $replySession) { reply in
+                    try await replyAction(reply.destinationUser, reply.subject, reply.text)
+                }
         }
         .toolbar {
             RemoteContentToolbarItem(url: note.url) {

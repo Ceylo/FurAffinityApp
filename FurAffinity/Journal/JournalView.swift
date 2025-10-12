@@ -68,7 +68,7 @@ struct JournalView: View {
                 VStack {
                     header
                     Divider()
-                        .padding(.bottom, 5)
+                        .padding(.bottom, 10)
                 }
                 
                 journalContents
