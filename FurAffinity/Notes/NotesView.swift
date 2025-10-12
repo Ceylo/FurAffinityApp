@@ -73,10 +73,9 @@ struct NotesView: View {
             Button {
                 showUnreadNotesOnly.toggle()
             } label: {
-                Label(
-                    "Filter",
-                    systemImage: showUnreadNotesOnly ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle"
-                )
+                Image(systemName: "line.3.horizontal.decrease.circle")
+                    .symbolVariant(showUnreadNotesOnly ? .fill : .none)
+                    .foregroundStyle(showUnreadNotesOnly ? Color.accentColor : .buttonTint)
             }
         }
 
