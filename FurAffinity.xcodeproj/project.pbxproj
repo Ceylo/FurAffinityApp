@@ -891,7 +891,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.14;
+				MARKETING_VERSION = 1.15;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;
 				PRODUCT_NAME = "Fur Affinity";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -923,7 +923,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.14;
+				MARKETING_VERSION = 1.15;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;
 				PRODUCT_NAME = "Fur Affinity";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
