@@ -38,6 +38,8 @@
 		8741BA3129EC3FF700501A84 /* RemoteJournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8741BA2E29EC3FF700501A84 /* RemoteJournalView.swift */; };
 		874D69BD2804D20600DF91E7 /* NoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 874D69BC2804D20600DF91E7 /* NoteView.swift */; };
 		875180582DB5544A00331762 /* RemoteContentToolbarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 875180572DB553FC00331762 /* RemoteContentToolbarItem.swift */; };
+		87546E642EAE70430098BAA1 /* AppIconLG-debug.icon in Resources */ = {isa = PBXBuildFile; fileRef = 87546E632EAE70430098BAA1 /* AppIconLG-debug.icon */; };
+		87546E652EAE70430098BAA1 /* AppIconLG.icon in Resources */ = {isa = PBXBuildFile; fileRef = 87546E622EAE70430098BAA1 /* AppIconLG.icon */; };
 		87566B82297DC71600FD3199 /* CommentEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87566B81297DC71600FD3199 /* CommentEditor.swift */; };
 		87566B84297DD02300FD3199 /* SubmissionMainImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87566B83297DD02300FD3199 /* SubmissionMainImage.swift */; };
 		8758895C2DCD150F00CB7793 /* WatchingPill.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8758895B2DCD150F00CB7793 /* WatchingPill.swift */; };
@@ -158,6 +160,8 @@
 		8741BA2E29EC3FF700501A84 /* RemoteJournalView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteJournalView.swift; sourceTree = "<group>"; };
 		874D69BC2804D20600DF91E7 /* NoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteView.swift; sourceTree = "<group>"; };
 		875180572DB553FC00331762 /* RemoteContentToolbarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteContentToolbarItem.swift; sourceTree = "<group>"; };
+		87546E622EAE70430098BAA1 /* AppIconLG.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIconLG.icon; sourceTree = "<group>"; };
+		87546E632EAE70430098BAA1 /* AppIconLG-debug.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "AppIconLG-debug.icon"; sourceTree = "<group>"; };
 		87566B81297DC71600FD3199 /* CommentEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentEditor.swift; sourceTree = "<group>"; };
 		87566B83297DD02300FD3199 /* SubmissionMainImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionMainImage.swift; sourceTree = "<group>"; };
 		8758895B2DCD150F00CB7793 /* WatchingPill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchingPill.swift; sourceTree = "<group>"; };
@@ -305,6 +309,8 @@
 				87A9C33F29C788230001D1D6 /* User */,
 				875DD46D2843D15D00F3E5D9 /* Settings */,
 				8716E7EF271C659D00C0BC4A /* Assets.xcassets */,
+				87546E622EAE70430098BAA1 /* AppIconLG.icon */,
+				87546E632EAE70430098BAA1 /* AppIconLG-debug.icon */,
 				8716E7F1271C659D00C0BC4A /* Preview Content */,
 			);
 			path = FurAffinity;
@@ -598,6 +604,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				87546E642EAE70430098BAA1 /* AppIconLG-debug.icon in Resources */,
+				87546E652EAE70430098BAA1 /* AppIconLG.icon in Resources */,
 				8716E7F3271C659D00C0BC4A /* Preview Assets.xcassets in Resources */,
 				8716E7F0271C659D00C0BC4A /* Assets.xcassets in Resources */,
 			);
@@ -865,7 +873,7 @@
 		8716E7F7271C659D00C0BC4A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconDebug;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIconLG-debug";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -897,7 +905,7 @@
 		8716E7F8271C659D00C0BC4A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconLG;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;

@@ -12,12 +12,7 @@ struct AppIcon: View {
         Image("AppIcon")
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .frame(width: 100)
-            .cornerRadius(10)
-            .overlay {
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.borderOverlay, lineWidth: 1)
-            }
+            .frame(width: 150)
     }
 }
 

@@ -1,0 +1,231 @@
+{
+  "fill-specializations" : [
+    {
+      "value" : {
+        "linear-gradient" : [
+          "display-p3:0.96015,0.86807,0.00000,1.00000",
+          "display-p3:0.90059,0.68200,0.00000,1.00000"
+        ]
+      }
+    },
+    {
+      "appearance" : "dark",
+      "value" : "system-dark"
+    }
+  ],
+  "groups" : [
+    {
+      "hidden" : false,
+      "layers" : [
+        {
+          "glass" : false,
+          "image-name" : "debug3.svg",
+          "name" : "debug3"
+        },
+        {
+          "glass" : true,
+          "hidden" : true,
+          "image-name" : "debug2.svg",
+          "name" : "debug2",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              2.1484375,
+              9.1953125
+            ]
+          }
+        },
+        {
+          "glass" : false,
+          "hidden" : true,
+          "image-name" : "debug1.svg",
+          "name" : "debug1"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.5
+      }
+    },
+    {
+      "hidden-specializations" : [
+        {
+          "value" : false
+        },
+        {
+          "appearance" : "light",
+          "value" : true
+        }
+      ],
+      "layers" : [
+        {
+          "hidden" : true,
+          "image-name" : "01 nuit2.svg",
+          "name" : "01 nuit2"
+        },
+        {
+          "hidden" : true,
+          "image-name" : "02 nuit2.svg",
+          "name" : "02 nuit2"
+        },
+        {
+          "hidden" : false,
+          "image-name" : "01 nuit.svg",
+          "name" : "01 nuit"
+        },
+        {
+          "hidden" : false,
+          "image-name" : "02 nuit.svg",
+          "name" : "02 nuit"
+        },
+        {
+          "image-name" : "03 jour 2.svg",
+          "name" : "03 jour 2"
+        },
+        {
+          "image-name" : "04 jour2.svg",
+          "name" : "04 jour2"
+        },
+        {
+          "hidden" : true,
+          "image-name" : "04 jour 2.svg",
+          "name" : "04 jour 2"
+        },
+        {
+          "glass" : false,
+          "image-name" : "05 jour 2.svg",
+          "name" : "05 jour 2"
+        },
+        {
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "06 nuit.svg",
+          "name" : "06 nuit"
+        },
+        {
+          "hidden" : true,
+          "image-name" : "06 jour 2.svg",
+          "name" : "06 jour 2"
+        },
+        {
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "07 jour 2.svg",
+          "name" : "07 jour 2"
+        },
+        {
+          "hidden" : false,
+          "image-name" : "05 nuit3.svg",
+          "name" : "05 nuit3"
+        },
+        {
+          "hidden" : true,
+          "image-name" : "05 nuit2.svg",
+          "name" : "05 nuit2"
+        },
+        {
+          "hidden" : true,
+          "image-name" : "05 nuit.svg",
+          "name" : "05 nuit"
+        },
+        {
+          "image-name" : "09 jour 2.svg",
+          "name" : "09 jour 2"
+        }
+      ],
+      "position" : {
+        "scale" : 1.23,
+        "translation-in-points" : [
+          141,
+          -206
+        ]
+      },
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.5
+      }
+    },
+    {
+      "hidden-specializations" : [
+        {
+          "value" : false
+        },
+        {
+          "appearance" : "dark",
+          "value" : true
+        }
+      ],
+      "layers" : [
+        {
+          "image-name" : "01 jour.svg",
+          "name" : "01 jour"
+        },
+        {
+          "image-name" : "02 jour.svg",
+          "name" : "02 jour"
+        },
+        {
+          "image-name" : "03 jour.svg",
+          "name" : "03 jour"
+        },
+        {
+          "image-name" : "04 jour.svg",
+          "name" : "04 jour"
+        },
+        {
+          "glass" : false,
+          "image-name" : "05 jour.svg",
+          "name" : "05 jour"
+        },
+        {
+          "glass" : false,
+          "image-name" : "06 jour.svg",
+          "name" : "06 jour"
+        },
+        {
+          "glass" : false,
+          "image-name" : "07 jour.svg",
+          "name" : "07 jour"
+        },
+        {
+          "image-name" : "08 jour.svg",
+          "name" : "08 jour"
+        },
+        {
+          "image-name" : "09 jour.svg",
+          "name" : "09 jour"
+        }
+      ],
+      "position" : {
+        "scale" : 1.23,
+        "translation-in-points" : [
+          141,
+          -206
+        ]
+      },
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
