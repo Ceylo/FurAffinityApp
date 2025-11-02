@@ -12,7 +12,7 @@ struct AppIcon: View {
         Image("AppIcon")
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .frame(width: 150)
+            .frame(width: 100)
     }
 }
 

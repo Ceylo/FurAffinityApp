@@ -50,7 +50,7 @@ struct HomeView: View {
     }
     
     var center: some View {
-        VStack(spacing: 80) {
+        VStack(spacing: 100) {
             if checkingConnection {
                 AppIcon()
                 ProgressView("Checking connection…")
