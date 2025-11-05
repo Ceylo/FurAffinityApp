@@ -14,37 +14,46 @@
       "developerName": "Ceylo",
       "subtitle": "An unofficial native app for the furaffinity.net website.",
       "localizedDescription": "🐾 Connect with your furaffinity.net account and enjoy the furry community in a native app.\n\n📱 FEATURES\n- Browse the latest submissions from your followed artists, add favorites and leave comments!\n- Read and participate to artists journals.\n- Check received notes and notifications.\n- Browse user profiles to check their content and eventually follow them!\n\nThis app is opensource and its sources are available at https://github.com/Ceylo/FurAffinityApp\n\n🔗 Website: https://furaffinity.app\n🔗 Privacy policy: https://github.com/Ceylo/FurAffinityApp/blob/main/Privacy%20Policy.md",
-      "iconURL": "https://get.furaffinity.app/altstore/fa-app-icon.heic",
+      "iconURL": "https://get.furaffinity.app/altstore/AppIconLG.heic",
       "tintColor": null,
       "category": "social",
       "screenshots": [
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.14/screenshots/feed.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.15/screenshots/feed.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.14/screenshots/submission.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.15/screenshots/submission.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.14/screenshots/notifications.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.15/screenshots/notifications.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.14/screenshots/notes.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.15/screenshots/notes.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.14/screenshots/note reply.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.15/screenshots/note reply.heic",
           "width": 1170
         }
       ],
       "versions": [
+        {
+          "version": "1.15",
+          "buildVersion": "1",
+          "date": "2025-11-05T20:00:00+02:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n📱 FEATURES\n- Further improved iOS 26 integration\n- Updated app icon to support iOS 18 dark mode and iOS 26 transparent mode\n\n🐞 BUGFIXES\n- Fixed a crash happening when deleting the last submission during a refresh\n- Fixed submission previews still loading during scroll instead of being preloaded\n- Fixed the submission save control looking enabled too early on iOS 26\n- Fixed a crash when viewing a submission after clearing the app cache",
+          "downloadURL": "https://get.furaffinity.app/altstore/releases/1.15/adp/",
+          "size": 14075333,
+          "minOSVersion": "17.4"
+        },
         {
           "version": "1.14",
           "buildVersion": "1",
