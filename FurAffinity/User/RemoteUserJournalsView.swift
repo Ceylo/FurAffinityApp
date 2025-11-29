@@ -22,10 +22,12 @@ struct RemoteUserJournalsView: View {
 }
 
 #Preview {
-    NavigationStack {
-        RemoteUserJournalsView(
-            url: URL(string: "https://www.furaffinity.net/journals/tiaamaito/")!
-        )
+    withAsync({ try await Model.demo }) {
+        NavigationStack {
+            RemoteUserJournalsView(
+                url: URL(string: "https://www.furaffinity.net/journals/tiaamaito/")!
+            )
+        }
+        .environmentObject($0)
     }
-    .environmentObject(Model.demo)
 }

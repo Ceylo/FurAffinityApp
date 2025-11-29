@@ -79,17 +79,19 @@ extension TitleAuthorHeader: SubmissionHeaderView {
 }
 
 #Preview(traits: .sizeThatFitsLayout) {
-    NavigationStack {
-        List {
-            TitleAuthorHeader(
-                username: "author",
-                displayName: "The Author", title: "Great Content but with very very very very long description",
-                datetime: .init("Apr 7th, 2022, 11:58 AM",
-                                "8 months ago")
-            )
+    withAsync({ try await Model.empty }) {
+        NavigationStack {
+            List {
+                TitleAuthorHeader(
+                    username: "author",
+                    displayName: "The Author", title: "Great Content but with very very very very long description",
+                    datetime: .init("Apr 7th, 2022, 11:58 AM",
+                                    "8 months ago")
+                )
+            }
+            .listStyle(.plain)
         }
-        .listStyle(.plain)
+        .preferredColorScheme(.dark)
+        .environmentObject($0)
     }
-    .preferredColorScheme(.dark)
-    .environmentObject(Model.empty)
 }

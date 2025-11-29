@@ -13,8 +13,12 @@ public extension Optional {
     }
     
     func unwrap(file: String = #file, line: Int = #line) throws -> Wrapped {
+        try unwrap(throwing: Error.empty("Failed unwrapping optional at \(file):\(line)"))
+    }
+    
+    func unwrap(throwing error: Swift.Error) throws -> Wrapped {
         guard let self else {
-            throw Error.empty("Failed unwrapping optional at \(file):\(line)")
+            throw error
         }
         return self
     }

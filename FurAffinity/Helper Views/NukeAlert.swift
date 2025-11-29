@@ -11,30 +11,38 @@ struct NukeAlert: ViewModifier {
     var nukeTitle: String
     var nukeText: String
     @Binding var showAlert: Bool
-    var nukeAction: () async -> Void
+    var nukeAction: () async throws -> Void
+    @State private var errorStorage: LocalizedErrorWrapper?
+    private var actionTitle: String {
+        "Nuke All \(nukeTitle)"
+    }
     
     func body(content: Content) -> some View {
         content
-            .alert("Nuke All \(nukeTitle)", isPresented: $showAlert) {
+            .alert(actionTitle, isPresented: $showAlert) {
                 Button("Cancel", role: .cancel) {
                     showAlert = false
                 }
                 Button("Nuke", role: .destructive) {
                     Task {
-                        await nukeAction()
+                        await storeLocalizedError(in: $errorStorage, action: actionTitle) {
+                            try await nukeAction()
+                        }
+                        
                         showAlert = false
                     }
                 }
             } message: {
                 Text("All \(nukeText) will be removed from your FurAffinity account.")
             }
+            .displayError($errorStorage)
     }
 }
 
 extension View {
     func nukeAlert(_ nukeTitle: String, _ nukeText: String,
                    show: Binding<Bool>,
-                   _ nukeAction: @escaping () async -> Void) -> some View {
+                   _ nukeAction: @escaping () async throws -> Void) -> some View {
         modifier(
             NukeAlert(nukeTitle: nukeTitle, nukeText: nukeText,
                       showAlert: show, nukeAction: nukeAction)

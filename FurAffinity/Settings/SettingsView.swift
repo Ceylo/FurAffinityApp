@@ -116,19 +116,7 @@ struct SettingsView: View {
             if let session = model.session {
                 Section("Account") {
                     Button("Disconnect from \(session.displayUsername)", role: .destructive) {
-                        Task {
-                            await withTaskCancellationHandler {
-                                await FALoginView.logout()
-                                let newSession = await FALoginView.makeSession()
-                                assert(newSession == nil)
-                                DispatchQueue.main.async {
-                                    model.clearSessionData()
-                                    model.session = newSession
-                                }
-                            } onCancel: {
-                                logger.warning("logout was cancelled")
-                            }
-                        }
+                        logout()
                     }
                 }
             }
@@ -146,9 +134,27 @@ struct SettingsView: View {
             )
         }
     }
+    
+    func logout() {
+        Task { @MainActor in
+            await withTaskCancellationHandler {
+                do {
+                    await FALoginView.logout()
+                    try await Task.sleep(for: .milliseconds(100))
+                    try await model.setSession(nil)
+                } catch {
+                    logger.error("Caught error while logging out: \(error)")
+                }
+            } onCancel: {
+                logger.warning("logout was cancelled")
+            }
+        }
+    }
 }
 
 #Preview {
-    SettingsView()
-        .environmentObject(Model.demo)
+    withAsync({ try await Model.demo }) {
+        SettingsView()
+            .environmentObject($0)
+    }
 }

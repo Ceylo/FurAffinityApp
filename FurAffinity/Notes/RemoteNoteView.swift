@@ -40,9 +40,11 @@ struct RemoteNoteView: View {
 
 
 #Preview {
-    NavigationStack {
-        RemoteNoteView(url: OfflineFASession.default.notePreviews[1].noteUrl)
+    withAsync({ try await Model.demo }) {
+        NavigationStack {
+            RemoteNoteView(url: OfflineFASession.default.notePreviews[1].noteUrl)
+        }
+        //        .preferredColorScheme(.dark)
+        .environmentObject($0)
     }
-//        .preferredColorScheme(.dark)
-        .environmentObject(Model.demo)
 }

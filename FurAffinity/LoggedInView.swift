@@ -114,6 +114,8 @@ struct LoggedInView: View {
 }
 
 #Preview {
-    LoggedInView()
-        .environmentObject(Model.demo)
+    withAsync({ try await Model.demo }) {
+        LoggedInView()
+            .environmentObject($0)
+    }
 }

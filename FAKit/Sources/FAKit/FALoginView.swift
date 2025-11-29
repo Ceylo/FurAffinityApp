@@ -61,6 +61,9 @@ public struct FALoginView: View {
     public static func logout() async {
         await WebView.clearCookies()
         try! cookieCache.removeAll()
+        
+        let newSession = await makeSession()
+        assert(newSession == nil)
     }
 }
 

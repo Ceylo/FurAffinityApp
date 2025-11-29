@@ -29,8 +29,10 @@ struct SubmissionsFeedActionView: View {
 }
 
 #Preview {
-    SubmissionsFeedActionView()
-        .padding()
-        .background(.yellow)
-        .environmentObject(Model.demo)
+    withAsync({ try await Model.demo }) {
+        SubmissionsFeedActionView()
+            .padding()
+            .background(.yellow)
+            .environmentObject($0)
+    }
 }

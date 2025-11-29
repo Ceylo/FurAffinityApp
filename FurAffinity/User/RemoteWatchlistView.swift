@@ -34,10 +34,12 @@ struct RemoteWatchlistView: View {
 }
 
 #Preview {
-    NavigationStack {
-        RemoteWatchlistView(
-            url: URL(string: "https://www.furaffinity.net/watchlist/by/terriniss/")!
-        )
+    withAsync({ try await Model.demo }) {
+        NavigationStack {
+            RemoteWatchlistView(
+                url: URL(string: "https://www.furaffinity.net/watchlist/by/terriniss/")!
+            )
+        }
+        .environmentObject($0)
     }
-    .environmentObject(Model.demo)
 }

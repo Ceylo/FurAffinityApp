@@ -11,24 +11,23 @@ import Combine
 import Defaults
 import OrderedCollections
 
-enum ModelError: Error {
+enum ModelError: LocalizedError {
     case disconnected
+    
+    var errorDescription: String? {
+        switch self {
+        case .disconnected:
+            return "User is logged out."
+        }
+    }
 }
 
 @MainActor
 class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     static private let autorefreshDelay: TimeInterval = 15 * 60
     
-    @Published var session: (any FASession)? {
-        didSet {
-            guard oldValue !== session else { return }
-            if session != nil {
-                assert(oldValue == nil, "Session set twice")
-            }
-            processNewSession()
-        }
-    }
-
+    @Published private(set) var session: (any FASession)?
+    
     /// `nil` until a fetch actually happened.
     /// After a fetch it contains all found submissions, or an empty array if none was found.
     @Published
@@ -53,11 +52,10 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     @Published
     private(set) var appInfo = AppInformation()
     private var lastAppInfoUpdate: Date?
-
+    
     private var subscriptions = Set<AnyCancellable>()
     private var autorefreshSubscription: AnyCancellable?
-    init(session: (any FASession)? = nil) {
-        self.session = session
+    init() {
         appInfo.objectWillChange.sink {
             self.objectWillChange.send()
         }
@@ -83,20 +81,28 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
                 updateSignificantNotificationCount()
             }
             .store(in: &subscriptions)
+    }
+    
+    func setSession(_ session: (any FASession)?) async throws {
+        guard self.session !== session else { return }
+        if session != nil {
+            assert(self.session == nil, "Session set twice")
+        }
         
-        processNewSession()
+        self.session = session
+        try await processNewSession()
     }
     
     func updateAppInfo() async {
-        try? await appInfo.fetch()
-        lastAppInfoUpdate = Date()
+        do {
+            try await appInfo.fetch()
+            lastAppInfoUpdate = Date()
+        } catch {
+            // not a big deal if the above failed, no need to notify
+        }
     }
     
-    func clearSessionData() {
-        Defaults[.lastViewedSubmissionID] = nil
-    }
-    
-    private func processNewSession() {
+    private func processNewSession() async throws {
         guard session != nil else {
             lastSubmissionPreviewsFetchDate = nil
             submissionPreviews = nil
@@ -108,23 +114,22 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
             lastNotificationPreviewsFetchDate = nil
             significantNotificationCount = 0
             autorefreshSubscription = nil
+            Defaults[.lastViewedSubmissionID] = nil
             return
         }
         
-        Task {
-            _ = await fetchSubmissionPreviews()
-            _ = try? await fetchNotePreviews(from: .inbox)
-            await fetchNotificationPreviews()
-            await updateAppInfo()
-            
-            autorefreshSubscription = NotificationCenter.default
-                .publisher(for: UIApplication.willEnterForegroundNotification)
-                .sink { [unowned self] _ in
-                    Task {
-                        await autorefreshIfNeeded()
-                    }
+        _ = try await fetchSubmissionPreviews()
+        _ = try await fetchNotePreviews(from: .inbox)
+        try await fetchNotificationPreviews()
+        await updateAppInfo()
+        
+        autorefreshSubscription = NotificationCenter.default
+            .publisher(for: UIApplication.willEnterForegroundNotification)
+            .sink { [unowned self] _ in
+                Task {
+                    try await autorefreshIfNeeded()
                 }
-        }
+            }
     }
     
     static func shouldAutoRefresh(with lastRefreshDate: Date?) -> Bool {
@@ -137,7 +142,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         return true
     }
     
-    private func autorefreshIfNeeded() async {
+    private func autorefreshIfNeeded() async throws {
         // Note how submission previews are not checked here. This is for two reasons:
         // - SubmissionsFeedView has special scroll handling and needs to control
         // when refresh happens
@@ -145,11 +150,11 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         // cannot subscribe to willEnterForegroundNotification
         
         if Self.shouldAutoRefresh(with: lastInboxNotePreviewsFetchDate) {
-            _ = try? await fetchNotePreviews(from: .inbox)
+            _ = try await fetchNotePreviews(from: .inbox)
         }
         
         if Self.shouldAutoRefresh(with: lastNotificationPreviewsFetchDate) {
-            await fetchNotificationPreviews()
+            try await fetchNotificationPreviews()
         }
         
         if Self.shouldAutoRefresh(with: lastAppInfoUpdate) {
@@ -158,7 +163,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     }
     
     // MARK: - Submissions feed
-    func fetchSubmissionPreviews() async -> Int {
+    func fetchSubmissionPreviews() async throws -> Int {
         guard let session else {
             logger.error("Tried to fetch submissions with no active session, skipping")
             return 0
@@ -169,12 +174,12 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
             firstWantedSubmissionID = Defaults[.lastViewedSubmissionID]
         }
         
-        var latestSubmissions = await session.submissionPreviews(from: firstWantedSubmissionID)
+        var latestSubmissions = try await session.submissionPreviews(from: firstWantedSubmissionID)
         if latestSubmissions.isEmpty, let firstWantedSubmissionID {
             assert(submissionPreviews == nil)
             // Happens if submissions have been nuked
             logger.info("Fetching submissions from \(firstWantedSubmissionID) and older gave no result. Falling back to latest submissions.")
-            latestSubmissions = await session.submissionPreviews(from: nil)
+            latestSubmissions = try await session.submissionPreviews(from: nil)
         }
         lastSubmissionPreviewsFetchDate = Date()
         let lastKnownSid = submissionPreviews?.first?.sid ?? 0
@@ -197,7 +202,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     func deleteSubmissionPreviews(_ previews: [FASubmissionPreview]) {
         precondition(submissionPreviews != nil)
         submissionPreviewsPendingDeletion.formUnion(previews)
-
+        
         for preview in previews {
             submissionPreviews!.remove(preview)
         }
@@ -248,7 +253,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
             throw ModelError.disconnected
         }
         
-        let fetchedNotes = await session.notePreviews(from: box)
+        let fetchedNotes = try await session.notePreviews(from: box)
         
         if box == .inbox {
             inboxNotePreviews = fetchedNotes
@@ -269,12 +274,12 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
     }
     
     // MARK: - Notifications feed
-    func fetchNotificationPreviews() async {
-        await fetchNotificationPreviews { session in
-            await session.notificationPreviews()
+    func fetchNotificationPreviews() async throws {
+        try await fetchNotificationPreviews { session in
+            try await session.notificationPreviews()
         }
     }
-        
+    
     func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) {
         notificationPreviews = notificationPreviews.map { oldNotifications in
             FANotificationPreviews(
@@ -286,8 +291,11 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         }
         
         Task {
-            await fetchNotificationPreviews { session in
-                await session.deleteSubmissionCommentNotifications(notifications)
+            do {
+                try await fetchNotificationPreviews { session in
+                    try await session.deleteSubmissionCommentNotifications(notifications)
+                }
+            } catch {
             }
         }
     }
@@ -303,8 +311,11 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         }
         
         Task {
-            await fetchNotificationPreviews { session in
-                await session.deleteJournalCommentNotifications(notifications)
+            do {
+                try await fetchNotificationPreviews { session in
+                    try await session.deleteJournalCommentNotifications(notifications)
+                }
+            } catch {
             }
         }
     }
@@ -320,8 +331,11 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         }
         
         Task {
-            await fetchNotificationPreviews { session in
-                await session.deleteShoutNotifications(notifications)
+            do {
+                try await fetchNotificationPreviews { session in
+                    try await session.deleteShoutNotifications(notifications)
+                }
+            } catch {
             }
         }
     }
@@ -337,44 +351,47 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         }
         
         Task {
-            await fetchNotificationPreviews { session in
-                await session.deleteJournalNotifications(notifications)
+            do {
+                try await fetchNotificationPreviews { session in
+                    try await session.deleteJournalNotifications(notifications)
+                }
+            } catch {
             }
         }
     }
     
-    func nukeAllSubmissionCommentNotifications() async {
-        await fetchNotificationPreviews { session in
-            await session.nukeAllSubmissionCommentNotifications()
+    func nukeAllSubmissionCommentNotifications() async throws {
+        try await fetchNotificationPreviews { session in
+            try await session.nukeAllSubmissionCommentNotifications()
         }
     }
     
-    func nukeAllJournalCommentNotifications() async {
-        await fetchNotificationPreviews { session in
-            await session.nukeAllJournalCommentNotifications()
+    func nukeAllJournalCommentNotifications() async throws {
+        try await fetchNotificationPreviews { session in
+            try await session.nukeAllJournalCommentNotifications()
         }
     }
     
-    func nukeAllShoutNotifications() async {
-        await fetchNotificationPreviews { session in
-            await session.nukeAllShoutNotifications()
+    func nukeAllShoutNotifications() async throws {
+        try await fetchNotificationPreviews { session in
+            try await session.nukeAllShoutNotifications()
         }
     }
     
-    func nukeAllJournalNotifications() async {
-        await fetchNotificationPreviews { session in
-            await session.nukeAllJournalNotifications()
+    func nukeAllJournalNotifications() async throws {
+        try await fetchNotificationPreviews { session in
+            try await session.nukeAllJournalNotifications()
         }
     }
     
     
-    private func fetchNotificationPreviews(fetcher: (_ session: any FASession) async -> FANotificationPreviews) async {
+    private func fetchNotificationPreviews(fetcher: (_ session: any FASession) async throws -> FANotificationPreviews) async throws {
         guard let session else {
             logger.error("Tried to fetch notifications with no active session, skipping")
             return
         }
         
-        notificationPreviews = await fetcher(session)
+        notificationPreviews = try await fetcher(session)
         lastNotificationPreviewsFetchDate = Date()
         updateSignificantNotificationCount()
     }

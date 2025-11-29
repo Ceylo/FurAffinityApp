@@ -21,18 +21,22 @@ struct RemoteNotificationsView: View {
                 ProgressView()
             }
         }
-        .refreshable {
-            await model.fetchNotificationPreviews()
+        .refreshable(action: "Refresh notifications") {
+            try await model.fetchNotificationPreviews()
         }
     }
 }
 
 #Preview {
-    RemoteNotificationsView()
-        .environmentObject(Model.demo)
+    withAsync({ try await Model.demo }) {
+        RemoteNotificationsView()
+            .environmentObject($0)
+    }
 }
 
 #Preview("Empty") {
-    RemoteNotificationsView()
-        .environmentObject(Model.empty)
+    withAsync({ try await Model.empty }) {
+        RemoteNotificationsView()
+            .environmentObject($0)
+    }
 }

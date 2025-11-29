@@ -76,9 +76,11 @@ struct RemoteUserView: View {
 }
 
 #Preview {
-    NavigationStack {
-        RemoteUserView(url: try! FAURLs.userpageUrl(for: "terriniss"))
+    withAsync({ try await Model.demo }) {
+        NavigationStack {
+            RemoteUserView(url: try! FAURLs.userpageUrl(for: "terriniss"))
+        }
+        .environmentObject($0)
+        //    .preferredColorScheme(.dark)
     }
-    .environmentObject(Model.demo)
-//    .preferredColorScheme(.dark)
 }

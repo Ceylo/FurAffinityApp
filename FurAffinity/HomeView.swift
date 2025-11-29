@@ -35,7 +35,7 @@ struct HomeView: View {
     @State private var showLoginView = false
     @State private var localSession: OnlineFASession?
     
-    func updateSession() async {
+    func updateSession() async throws {
         checkingConnection = true
         let session: OnlineFASession?
 
@@ -45,7 +45,10 @@ struct HomeView: View {
             session = await FALoginView.makeSession()
         }
         
-        model.session = session
+        let task = Task.detached(name: "Session init") {
+            try await model.setSession(session)
+        }
+        try await task.value
         checkingConnection = false
     }
     
@@ -121,6 +124,8 @@ struct HomeView: View {
 }
 
 #Preview {
-    HomeView()
-        .environmentObject(Model.demo)
+    withAsync({ try await Model.demo }) {
+        HomeView()
+            .environmentObject($0)
+    }
 }

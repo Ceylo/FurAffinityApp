@@ -230,8 +230,8 @@ extension SubmissionsFeedView {
         }
     }
     
-    func fetchSubmissionPreviews() async {
-        let newSubmissionCount = await model
+    func fetchSubmissionPreviews() async throws {
+        let newSubmissionCount = try await model
             .fetchSubmissionPreviews()
         
         withAnimation {
@@ -242,16 +242,20 @@ extension SubmissionsFeedView {
 
 // MARK: - Previews
 #Preview {
-    NavigationStack {
-        SubmissionsFeedView()
+    withAsync({ try await Model.demo }) {
+        NavigationStack {
+            SubmissionsFeedView()
+        }
+        .environmentObject($0)
     }
-    .environmentObject(Model.demo)
 }
 
 #Preview("Empty feed") {
-    NavigationStack {
-        SubmissionsFeedView()
+    withAsync({ try await Model.empty }) {
+        NavigationStack {
+            SubmissionsFeedView()
+        }
+        .environmentObject($0)
+        .preferredColorScheme(.dark)
     }
-    .environmentObject(Model.empty)
-    .preferredColorScheme(.dark)
 }

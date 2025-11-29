@@ -167,21 +167,25 @@ private struct DummyActions: NotificationsNuker, NotificationsDeleter {
 }
 
 #Preview {
-    NavigationStack {
-        NotificationsView(
-            notifications: OfflineFASession.default.notificationPreviews,
-            actions: DummyActions()
-        )
+    withAsync({ try await Model.demo }) {
+        NavigationStack {
+            NotificationsView(
+                notifications: OfflineFASession.default.notificationPreviews,
+                actions: DummyActions()
+            )
+        }
+        .environmentObject($0)
     }
-    .environmentObject(Model.demo)
 }
 
 #Preview {
-    NavigationStack {
-        NotificationsView(
-            notifications: .init(),
-            actions: DummyActions()
-        )
+    withAsync({ try await Model.empty }) {
+        NavigationStack {
+            NotificationsView(
+                notifications: .init(),
+                actions: DummyActions()
+            )
+        }
+        .environmentObject($0)
     }
-    .environmentObject(Model.empty)
 }

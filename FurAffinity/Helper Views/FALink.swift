@@ -44,21 +44,23 @@ struct FALink<ContentView: View>: View {
 }
 
 #Preview {
-    NavigationStack {
-        List {
-            FALink(destination: .favorites(url: URL(string: "https://foo.com")!)) {
-                SubmissionFeedItemView<TitleAuthorHeader>(submission: FASubmissionPreview.demo)
-                    .border(.primary)
+    withAsync({ try await Model.demo }) {
+        NavigationStack {
+            List {
+                FALink(destination: .favorites(url: URL(string: "https://foo.com")!)) {
+                    SubmissionFeedItemView<TitleAuthorHeader>(submission: FASubmissionPreview.demo)
+                        .border(.primary)
+                }
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                
+                NavigationLink(value: 42) {
+                    SubmissionFeedItemView<TitleAuthorHeader>(submission: FASubmissionPreview.demo)
+                        .border(.primary)
+                }
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
             }
-            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-            
-            NavigationLink(value: 42) {
-                SubmissionFeedItemView<TitleAuthorHeader>(submission: FASubmissionPreview.demo)
-                    .border(.primary)
-            }
-            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+            .listStyle(.plain)
         }
-        .listStyle(.plain)
+        .environmentObject($0)
     }
-    .environmentObject(Model.demo)
 }

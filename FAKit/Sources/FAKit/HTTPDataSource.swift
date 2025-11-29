@@ -17,11 +17,11 @@ public enum HTTPMethod: String, CustomStringConvertible, Sendable {
 public protocol HTTPDataSource: Sendable {
     func httpData(from url: URL, cookies: [HTTPCookie]?,
                   method: HTTPMethod,
-                  parameters: [URLQueryItem]) async -> Data?
+                  parameters: [URLQueryItem]) async throws -> Data
 }
 
 public extension HTTPDataSource {
-    func httpData(from url: URL, cookies: [HTTPCookie]?) async -> Data? {
-        await httpData(from: url, cookies: cookies, method: .GET, parameters: [])
+    func httpData(from url: URL, cookies: [HTTPCookie]?) async throws -> Data {
+        try await httpData(from: url, cookies: cookies, method: .GET, parameters: [])
     }
 }

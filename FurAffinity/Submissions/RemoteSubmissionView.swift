@@ -59,10 +59,12 @@ struct RemoteSubmissionView: View {
 }
 
 #Preview {
-    RemoteSubmissionView(
-        url: FASubmissionPreview.demo.url,
-        previewData: .demo
-    )
-//    .preferredColorScheme(.dark)
-    .environmentObject(Model.demo)
+    withAsync({ try await Model.demo }) {
+        RemoteSubmissionView(
+            url: FASubmissionPreview.demo.url,
+            previewData: .demo
+        )
+        //    .preferredColorScheme(.dark)
+        .environmentObject($0)
+    }
 }

@@ -225,8 +225,20 @@ extension OfflineFASession {
 }
 
 extension Model {
-    static let demo = Model(session: OfflineFASession.default)
-    static let empty = Model(session: OfflineFASession.empty)
+    static var demo: Model {
+        get async throws {
+            let model = Model()
+            try await model.setSession(OfflineFASession.default)
+            return model
+        }
+    }
+    static var empty: Model {
+        get async throws {
+            let model = Model()
+            try await model.setSession(OfflineFASession.empty)
+            return model
+        }
+    }
 }
 
 extension FASubmissionPreview {

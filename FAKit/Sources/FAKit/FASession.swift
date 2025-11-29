@@ -57,7 +57,7 @@ public protocol FASession: AnyObject, Equatable {
     
     /// - Parameter sid: The first submission ID (in date order) that should be returned.
     /// If `nil`, the latest submission previews are provided.
-    func submissionPreviews(from sid: Int?) async -> [FASubmissionPreview]
+    func submissionPreviews(from sid: Int?) async throws -> [FASubmissionPreview]
     func nukeSubmissions() async throws
     
     // MARK: - User gallery
@@ -73,22 +73,22 @@ public protocol FASession: AnyObject, Equatable {
     func journal(for url: URL) async throws -> FAJournal
     
     // MARK: - Notes
-    func notePreviews(from box: NotesBox) async -> [FANotePreview]
+    func notePreviews(from box: NotesBox) async throws -> [FANotePreview]
     func note(for url: URL) async throws -> FANote
     func sendNote(toUsername: String, subject: String, message: String) async throws -> Void
     func sendNote(apiKey: String, toUsername: String, subject: String, message: String) async throws -> Void
     
     // MARK: - Notifications
-    func notificationPreviews() async -> FANotificationPreviews
+    func notificationPreviews() async throws -> FANotificationPreviews
     func deleteSubmissionPreviews(_ previews: [FASubmissionPreview]) async throws
-    func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews
-    func deleteJournalCommentNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews
-    func deleteShoutNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews
-    func deleteJournalNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews
-    func nukeAllSubmissionCommentNotifications() async -> FANotificationPreviews
-    func nukeAllJournalCommentNotifications() async -> FANotificationPreviews
-    func nukeAllShoutNotifications() async -> FANotificationPreviews
-    func nukeAllJournalNotifications() async -> FANotificationPreviews
+    func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) async throws -> FANotificationPreviews
+    func deleteJournalCommentNotifications(_ notifications: [FANotificationPreview]) async throws -> FANotificationPreviews
+    func deleteShoutNotifications(_ notifications: [FANotificationPreview]) async throws -> FANotificationPreviews
+    func deleteJournalNotifications(_ notifications: [FANotificationPreview]) async throws -> FANotificationPreviews
+    func nukeAllSubmissionCommentNotifications() async throws -> FANotificationPreviews
+    func nukeAllJournalCommentNotifications() async throws -> FANotificationPreviews
+    func nukeAllShoutNotifications() async throws -> FANotificationPreviews
+    func nukeAllJournalNotifications() async throws -> FANotificationPreviews
     
     // MARK: - Users
     func user(for url: URL) async throws -> FAUser

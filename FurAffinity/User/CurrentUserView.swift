@@ -33,6 +33,8 @@ struct CurrentUserView: View {
 }
 
 #Preview {
-    CurrentUserView()
-        .environmentObject(Model.demo)
+    withAsync({ try await Model.demo }) {
+        CurrentUserView()
+            .environmentObject($0)
+    }
 }

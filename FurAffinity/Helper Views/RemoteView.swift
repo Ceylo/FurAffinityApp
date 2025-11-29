@@ -53,7 +53,7 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
     private enum DataState {
         case loaded(Data)
         case updating(oldData: Data)
-        case failed
+        case failed(error: LocalizedError)
     }
     @State private var dataState: DataState?
     @State private var showUpdateLoadingView = false
@@ -85,9 +85,9 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
                         }
                     }
                     .modifier(DelayedToggle(toggle: $showUpdateLoadingView, delay: .seconds(1)))
-                case .failed:
+                case let .failed(error):
                     ScrollView {
-                        LoadingFailedView(url: url)
+                        LoadingFailedView(url: url, error: error)
                             .toolbar { RemoteContentToolbarItem(url: url) }
                     }
                 }
@@ -157,7 +157,7 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
             let data = try await dataSource(url)
             update(with: data)
         } catch {
-            self.dataState = .failed
+            self.dataState = .failed(error: LocalizedErrorWrapper(error))
         }
     }
 

@@ -56,15 +56,19 @@ struct RemoteNotesView: View {
 }
 
 #Preview {
-    NavigationStack {
-        RemoteNotesView()
+    withAsync({ try await Model.demo }) {
+        NavigationStack {
+            RemoteNotesView()
+        }
+        .environmentObject($0)
     }
-    .environmentObject(Model.demo)
 }
 
 #Preview {
-    NavigationStack {
-        RemoteNotesView()
+    withAsync({ try await Model.empty }) {
+        NavigationStack {
+            RemoteNotesView()
+        }
+        .environmentObject($0)
     }
-    .environmentObject(Model.empty)
 }

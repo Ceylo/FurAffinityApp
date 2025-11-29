@@ -9,10 +9,10 @@ import SwiftUI
 
 @MainActor
 protocol NotificationsNuker: Sendable {
-    func nukeAllSubmissionCommentNotifications() async -> Void
-    func nukeAllJournalCommentNotifications() async -> Void
-    func nukeAllShoutNotifications() async -> Void
-    func nukeAllJournalNotifications() async -> Void
+    func nukeAllSubmissionCommentNotifications() async throws -> Void
+    func nukeAllJournalCommentNotifications() async throws -> Void
+    func nukeAllShoutNotifications() async throws -> Void
+    func nukeAllJournalNotifications() async throws -> Void
 }
 
 struct NotificationsActionView: View {
@@ -67,17 +67,17 @@ struct NotificationsActionView: View {
             }
             .nukeAlert("Submission Comments", "submission comment notifications",
                        show: $showNukeSubmissionCommentsAlert) {
-                await nuker.nukeAllSubmissionCommentNotifications()
+                try await nuker.nukeAllSubmissionCommentNotifications()
             }
             .nukeAlert("Journal Comments", "journal comment notifications",
                        show: $showNukeJournalCommentsAlert) {
-                await nuker.nukeAllJournalCommentNotifications()
+                try await nuker.nukeAllJournalCommentNotifications()
             }
             .nukeAlert("Shouts", "shout notifications", show: $showNukeShoutsAlert) {
-                await nuker.nukeAllShoutNotifications()
+                try await nuker.nukeAllShoutNotifications()
             }
             .nukeAlert("Journals", "journal notifications", show: $showNukeJournalsAlert) {
-                await nuker.nukeAllJournalNotifications()
+                try await nuker.nukeAllJournalNotifications()
             }
         }
     }

@@ -10,18 +10,32 @@ import FAPages
 
 public class OnlineFASession: FASession {
     enum Error: LocalizedError, Swift.Error {
-        case requestFailure
-        case invalidParameter
+        /// A network error
+        case requestFailure(underlyingError: LocalizedError)
+        
+        /// An error caused by failing to parse the received data
+        case parsingError(sourceUrl: URL)
+        
+        /// An error caused by a request made with invalid data
+        case internalInconsistency
+        
+        /// An error with a message provided by furaffinity.net
         case FAErrorResponse(String)
         
         var errorDescription: String? {
             switch self {
             case let .FAErrorResponse(message):
-                return "The action could not be completed. furaffinity.net provided the following error message:\n\(message)"
-            case .requestFailure:
-                return "The action could not be completed. A network or application error occured."
-            case .invalidParameter:
-                return "The action could not be completed. An invalid input was provided."
+                "The action could not be completed. furaffinity.net provided the following error message:\n\(message)"
+            case let .parsingError(sourceUrl):
+                "The action could not be completed. The data read from \(sourceUrl) could not be interpreted by the application."
+            case let .requestFailure(underlyingError):
+                if let underlyingDescription = underlyingError.errorDescription {
+                    "The action could not be completed. A network request failed for the following reason: \(underlyingDescription)"
+                } else {
+                    "The action could not be completed. A network request failed."
+                }
+            case .internalInconsistency:
+                "The action could not be completed. An internal error happened."
             }
         }
     }
@@ -48,15 +62,15 @@ public class OnlineFASession: FASession {
     }
     
     // MARK: - Submissions feed
-    public func submissionPreviews(from sid: Int?) async -> [FASubmissionPreview] {
+    public func submissionPreviews(from sid: Int?) async throws -> [FASubmissionPreview] {
         let url = if let sid {
             FAURLs.submissionsUrl(from: sid)
         } else {
             FAURLs.latest72SubmissionsUrl
         }
-        guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = FASubmissionsPage(data: data, baseUri: url)
-        else { return [] }
+        let data = try await dataSource.httpData(from: url, cookies: cookies)
+        let page = try FASubmissionsPage(data: data, baseUri: url)
+            .unwrap(throwing: Error.parsingError(sourceUrl: url))
         
         let previews = page.submissions
             .compactMap { $0 }
@@ -73,10 +87,10 @@ public class OnlineFASession: FASession {
             URLQueryItem(name: "submissions[]", value: "\($0.id)")
         }
         
-        guard let data = await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params),
-              let page = FASubmissionsPage(data: data, baseUri: url),
+        let data = try await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params)
+        guard let page = FASubmissionsPage(data: data, baseUri: url),
               !page.submissions.compactMap({ $0 }).map({ FASubmissionPreview($0) }).contains(previews) else {
-            throw Error.requestFailure
+            throw Error.parsingError(sourceUrl: url)
         }
     }
     
@@ -86,17 +100,16 @@ public class OnlineFASession: FASession {
             .init(name: "messagecenter-action", value: "nuke_notifications"),
         ]
         
-        guard let data = await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params),
-              FASubmissionsPage(data: data, baseUri: url) != nil else {
-            throw Error.requestFailure
-        }
+        let data = try await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params)
+        _ = try FASubmissionsPage(data: data, baseUri: url)
+            .unwrap(throwing: Error.parsingError(sourceUrl: url))
     }
     
     // MARK: - User gallery
     public func galleryLike(for url: URL) async throws -> FAUserGalleryLike {
-        guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = FAUserGalleryLikePage(data: data, url: url)
-        else { throw Error.requestFailure }
+        let data = try await dataSource.httpData(from: url, cookies: cookies)
+        let page = try FAUserGalleryLikePage(data: data, url: url)
+            .unwrap(throwing: Error.parsingError(sourceUrl: url))
         
         let gallery = FAUserGalleryLike(page, url: url)
         logger.info("Got \(page.previews.count) submission previews (\(gallery.previews.count) after filter)")
@@ -105,17 +118,17 @@ public class OnlineFASession: FASession {
     
     // MARK: - Submissions
     public func submission(for url: URL) async throws -> FASubmission {
-        guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = FASubmissionPage(data: data, url: url)
-        else { throw Error.requestFailure }
+        let data = try await dataSource.httpData(from: url, cookies: cookies)
+        let page = try FASubmissionPage(data: data, url: url)
+            .unwrap(throwing: Error.parsingError(sourceUrl: url))
         
         return try await FASubmission(page, url: url)
     }
     
     public func toggleFavorite(for submission: FASubmission) async throws -> FASubmission {
-        guard let data = await dataSource.httpData(from: submission.favoriteUrl, cookies: cookies),
-              let page = FASubmissionPage(data: data, url: submission.url)
-        else { throw Error.requestFailure }
+        let data = try await dataSource.httpData(from: submission.favoriteUrl, cookies: cookies)
+        let page = try FASubmissionPage(data: data, url: submission.url)
+            .unwrap(throwing: Error.parsingError(sourceUrl: submission.favoriteUrl))
         
         return try await FASubmission(page, url: submission.url)
     }
@@ -130,37 +143,34 @@ public class OnlineFASession: FASession {
             .init(name: "submit", value: "Post Comment")
         ]
         
-        guard let data = await dataSource.httpData(from: commentable.url, cookies: cookies, method: .POST, parameters: params),
-              let page = await C.PageType(data: data, url: commentable.url)
-        else {
-            throw Error.requestFailure
-        }
+        let data = try await dataSource.httpData(from: commentable.url, cookies: cookies, method: .POST, parameters: params)
+        let page = try await C.PageType(data: data, url: commentable.url)
+            .unwrap(throwing: Error.parsingError(sourceUrl: commentable.url))
         
         return try await C(page, url: commentable.url)
     }
     
     // MARK: - Journals
     public func journals(for url: URL) async throws -> FAUserJournals {
-        guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = FAUserJournalsPage(data: data) else {
-            throw Error.requestFailure
-        }
+        let data = try await dataSource.httpData(from: url, cookies: cookies)
+        let page = try FAUserJournalsPage(data: data)
+            .unwrap(throwing: Error.parsingError(sourceUrl: url))
         return FAUserJournals(page)
     }
     
     public func journal(for url: URL) async throws -> FAJournal {
-        guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = FAJournalPage(data: data, url: url)
-        else { throw Error.requestFailure }
+        let data = try await dataSource.httpData(from: url, cookies: cookies)
+        let page = try FAJournalPage(data: data, url: url)
+            .unwrap(throwing: Error.parsingError(sourceUrl: url))
         
         return try await FAJournal(page, url: url)
     }
     
     // MARK: - Notes
-    public func notePreviews(from box: NotesBox) async -> [FANotePreview] {
-        guard let data = await dataSource.httpData(from: box.url, cookies: cookies),
-              let page = FANotesPage(data: data)
-        else { return [] }
+    public func notePreviews(from box: NotesBox) async throws -> [FANotePreview] {
+        let data = try await dataSource.httpData(from: box.url, cookies: cookies)
+        let page = try FANotesPage(data: data)
+            .unwrap(throwing: Error.parsingError(sourceUrl: box.url))
         
         let headers = page.noteHeaders
             .compactMap { $0 }
@@ -171,9 +181,9 @@ public class OnlineFASession: FASession {
     }
     
     public func note(for url: URL) async throws -> FANote {
-        guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = FANotePage(data: data)
-        else { throw Error.requestFailure }
+        let data = try await dataSource.httpData(from: url, cookies: cookies)
+        let page = try FANotePage(data: data)
+            .unwrap(throwing: Error.parsingError(sourceUrl: url))
         
         return try await FANote(page, url: url)
     }
@@ -181,13 +191,12 @@ public class OnlineFASession: FASession {
     public func sendNote(toUsername: String, subject: String, message: String) async throws -> Void {
         guard let newNoteUrl = FAURLs.newNoteUrl(for: toUsername) else {
             logger.error("Failed getting new note url for user \"\(toUsername)\"")
-            throw Error.invalidParameter
+            throw Error.internalInconsistency
         }
         
-        guard let data = await dataSource.httpData(from: newNoteUrl, cookies: cookies),
-              let page = FANewNotePage(data: data) else {
-            throw Error.requestFailure
-        }
+        let data = try await dataSource.httpData(from: newNoteUrl, cookies: cookies)
+        let page = try FANewNotePage(data: data)
+            .unwrap(throwing: Error.parsingError(sourceUrl: newNoteUrl))
         
         try await sendNote(
             apiKey: page.apiKey,
@@ -206,9 +215,7 @@ public class OnlineFASession: FASession {
             .init(name: "message", value: message),
         ]
         
-        guard let data = await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params) else {
-            throw Error.requestFailure
-        }
+        let data = try await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params)
         
         if let errorPage = FASystemErrorPage(data: data) {
             logger.error("Failed sending note: \(errorPage.message)")
@@ -217,77 +224,77 @@ public class OnlineFASession: FASession {
         
         guard FANotesPage(data: data) != nil else {
             logger.error("Failed sending note")
-            throw Error.requestFailure
+            throw Error.parsingError(sourceUrl: url)
         }
         
         logger.debug("Note successfully delivered to \(toUsername)")
     }
     
     // MARK: - Notifications
-    public func notificationPreviews() async -> FANotificationPreviews {
-        await notificationPreviews(method: .GET, parameters: [])
+    public func notificationPreviews() async throws -> FANotificationPreviews {
+        try await notificationPreviews(method: .GET, parameters: [])
     }
     
-    public func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews {
-        await notificationPreviews(method: .POST, parameters: [
+    public func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) async throws -> FANotificationPreviews {
+        try await notificationPreviews(method: .POST, parameters: [
             URLQueryItem(name: "remove-submission-comments", value: "Remove Selected Comments"),
         ] + notifications.map {
             URLQueryItem(name: "comments-submissions[]", value: "\($0.id)")
         })
     }
     
-    public func deleteJournalCommentNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews {
-        await notificationPreviews(method: .POST, parameters: [
+    public func deleteJournalCommentNotifications(_ notifications: [FANotificationPreview]) async throws -> FANotificationPreviews {
+        try await notificationPreviews(method: .POST, parameters: [
             URLQueryItem(name: "remove-journal-comments", value: "Remove Selected Comments"),
         ] + notifications.map {
             URLQueryItem(name: "comments-journals[]", value: "\($0.id)")
         })
     }
     
-    public func deleteShoutNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews {
-        await notificationPreviews(method: .POST, parameters: [
+    public func deleteShoutNotifications(_ notifications: [FANotificationPreview]) async throws -> FANotificationPreviews {
+        try await notificationPreviews(method: .POST, parameters: [
             URLQueryItem(name: "remove-shouts", value: "Remove Selected Shouts"),
         ] + notifications.map {
             URLQueryItem(name: "shouts[]", value: "\($0.id)")
         })
     }
     
-    public func deleteJournalNotifications(_ notifications: [FANotificationPreview]) async -> FANotificationPreviews {
-        await notificationPreviews(method: .POST, parameters: [
+    public func deleteJournalNotifications(_ notifications: [FANotificationPreview]) async throws -> FANotificationPreviews {
+        try await notificationPreviews(method: .POST, parameters: [
             URLQueryItem(name: "remove-journals", value: "Remove Selected Journals"),
         ] + notifications.map {
             URLQueryItem(name: "journals[]", value: "\($0.id)")
         })
     }
     
-    public func nukeAllSubmissionCommentNotifications() async -> FANotificationPreviews {
-        await notificationPreviews(method: .POST, parameters: [
+    public func nukeAllSubmissionCommentNotifications() async throws -> FANotificationPreviews {
+        try await notificationPreviews(method: .POST, parameters: [
             URLQueryItem(name: "nuke-submission-comments", value: "Nuke Submission Comments")
         ])
     }
     
-    public func nukeAllJournalCommentNotifications() async -> FANotificationPreviews {
-        await notificationPreviews(method: .POST, parameters: [
+    public func nukeAllJournalCommentNotifications() async throws -> FANotificationPreviews {
+        try await notificationPreviews(method: .POST, parameters: [
             URLQueryItem(name: "nuke-journal-comments", value: "Nuke Journal Comments")
         ])
     }
     
-    public func nukeAllShoutNotifications() async -> FANotificationPreviews {
-        await notificationPreviews(method: .POST, parameters: [
+    public func nukeAllShoutNotifications() async throws -> FANotificationPreviews {
+        try await notificationPreviews(method: .POST, parameters: [
             URLQueryItem(name: "nuke-shouts", value: "Nuke Shouts")
         ])
     }
     
-    public func nukeAllJournalNotifications() async -> FANotificationPreviews {
-        await notificationPreviews(method: .POST, parameters: [
+    public func nukeAllJournalNotifications() async throws -> FANotificationPreviews {
+        try await notificationPreviews(method: .POST, parameters: [
             URLQueryItem(name: "nuke-journals", value: "Nuke Journals")
         ])
     }
     
-    private func notificationPreviews(method: HTTPMethod, parameters: [URLQueryItem]) async -> FANotificationPreviews {
-        guard let data = await dataSource.httpData(from: FAURLs.notificationsUrl, cookies: cookies, method: method, parameters: parameters),
-              let page = FANotificationsPage(data: data)
-        else { return .init() }
+    private func notificationPreviews(method: HTTPMethod, parameters: [URLQueryItem]) async throws -> FANotificationPreviews {
+        let data = try await dataSource.httpData(from: FAURLs.notificationsUrl, cookies: cookies, method: method, parameters: parameters)
+        let page = try FANotificationsPage(data: data)
+            .unwrap(throwing: Error.parsingError(sourceUrl: FAURLs.notificationsUrl))
         
         let notificationCount = page.submissionCommentHeaders.count + page.journalCommentHeaders.count + page.journalHeaders.count
         logger.info("Got \(notificationCount) notification previews")
@@ -311,10 +318,7 @@ public class OnlineFASession: FASession {
     
     // MARK: - Users
     public func user(for url: URL) async throws -> FAUser {
-        guard let data = await dataSource.httpData(from: url, cookies: cookies) else {
-            throw Error.requestFailure
-        }
-        
+        let data = try await dataSource.httpData(from: url, cookies: cookies)
         return try await loadUser(from: data, url: url)
     }
     
@@ -326,19 +330,18 @@ public class OnlineFASession: FASession {
     public func toggleWatch(for user: FAUser) async throws -> FAUser {
         guard let watchData = user.watchData else {
             logger.error("Tried to toggle watch on user \(user.name, privacy: .public) without watch data")
-            return user
+            throw Error.internalInconsistency
         }
         
-        _ = await dataSource.httpData(from: watchData.watchUrl, cookies: cookies)
+        _ = try await dataSource.httpData(from: watchData.watchUrl, cookies: cookies)
         return try await self.user(for: user.name)
     }
     
     public func watchlist(for username: String, page: Int, direction: FAWatchlist.WatchDirection) async throws -> FAWatchlist {
         let url = FAURLs.watchlistUrl(for: username, page: page, direction: direction)
-        guard let data = await dataSource.httpData(from: url, cookies: cookies),
-              let page = FAWatchlistPage(data: data, baseUri: url) else {
-            throw Error.requestFailure
-        }
+        let data = try await dataSource.httpData(from: url, cookies: cookies)
+        let page = try FAWatchlistPage(data: data, baseUri: url)
+            .unwrap(throwing: Error.parsingError(sourceUrl: url))
         
         return FAWatchlist(page)
     }
@@ -350,7 +353,7 @@ extension OnlineFASession {
     /// in through a usual web browser.
     public convenience init?(cookies: [HTTPCookie], dataSource: HTTPDataSource = URLSession.sharedForFARequests) async {
         guard cookies.map(\.name).contains("a"),
-              let data = await dataSource.httpData(from: FAURLs.homeUrl, cookies: cookies)
+              let data = try? await dataSource.httpData(from: FAURLs.homeUrl, cookies: cookies)
         else {
             return nil
         }

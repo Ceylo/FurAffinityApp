@@ -146,37 +146,41 @@ struct UserGalleryLikeView: View {
 
 // MARK: - Previews
 #Preview {
-    NavigationStack {
-        UserGalleryLikeView(
-            galleryType: .favorites,
-            gallery: .init(
-                url: URL(string: "https://www.furaffinity.net/gallery/someuser/")!,
-                displayAuthor: "Some User",
-                previews: OfflineFASession.default.submissionPreviews,
-                nextPageUrl: nil,
-                folderGroups: FAUserGalleryLike.FolderGroup.demo
-            ),
-            loadMore: { _ in },
-            updateSource: { _ in }
-        )
+    withAsync({ try await Model.demo }) {
+        NavigationStack {
+            UserGalleryLikeView(
+                galleryType: .favorites,
+                gallery: .init(
+                    url: URL(string: "https://www.furaffinity.net/gallery/someuser/")!,
+                    displayAuthor: "Some User",
+                    previews: OfflineFASession.default.submissionPreviews,
+                    nextPageUrl: nil,
+                    folderGroups: FAUserGalleryLike.FolderGroup.demo
+                ),
+                loadMore: { _ in },
+                updateSource: { _ in }
+            )
+        }
+        .environmentObject($0)
     }
-    .environmentObject(Model.demo)
 }
 
 #Preview {
-    NavigationStack {
-        UserGalleryLikeView(
-            galleryType: .favorites,
-            gallery: .init(
-                url: URL(string: "https://www.furaffinity.net/gallery/someuser/")!,
-                displayAuthor: "Some User",
-                previews: [],
-                nextPageUrl: nil,
-                folderGroups: []
-            ),
-            loadMore: { _ in },
-            updateSource: { _ in }
-        )
+    withAsync({ try await Model.empty }) {
+        NavigationStack {
+            UserGalleryLikeView(
+                galleryType: .favorites,
+                gallery: .init(
+                    url: URL(string: "https://www.furaffinity.net/gallery/someuser/")!,
+                    displayAuthor: "Some User",
+                    previews: [],
+                    nextPageUrl: nil,
+                    folderGroups: []
+                ),
+                loadMore: { _ in },
+                updateSource: { _ in }
+            )
+        }
+        .environmentObject($0)
     }
-    .environmentObject(Model.empty)
 }

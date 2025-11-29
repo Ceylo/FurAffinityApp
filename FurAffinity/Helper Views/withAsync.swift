@@ -9,10 +9,10 @@
 import SwiftUI
 
 struct withAsync<DataType: Sendable, SomeView: View>: View {
-    var provider: () async -> DataType
+    var provider: () async throws -> DataType
     var contentsBuilder: (DataType) -> SomeView
     
-    init(_ provider: @escaping () async -> DataType, contentsBuilder: @escaping (DataType) -> SomeView) {
+    init(_ provider: @escaping () async throws -> DataType, contentsBuilder: @escaping (DataType) -> SomeView) {
         self.provider = provider
         self.contentsBuilder = contentsBuilder
     }
@@ -28,7 +28,7 @@ struct withAsync<DataType: Sendable, SomeView: View>: View {
             }
         }
         .task {
-            data = await provider()
+            data = try? await provider()
         }
     }
 }
