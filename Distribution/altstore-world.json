@@ -18,7 +18,7 @@
       "iconURL": "https://get.furaffinity.app/altstore/AppIconLG.heic",
       "tintColor": null,
       "category": "social",
-      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.15/FurAffinity-1.15-aefe23e.ipa",
+      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.15.1/FurAffinity-1.15.1-0c0d3ff.ipa",
       "screenshots": [
         {
           "height": 2532,
@@ -54,6 +54,15 @@
         "https://get.furaffinity.app/altstore/releases/1.15/screenshots/note reply.heic"
       ],
       "versions": [
+        {
+          "version": "1.15.1",
+          "date": "2025-11-29T11:00:00+02:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n🐞 BUGFIXES\n- Fixed submissions loading after 28th November furaffinity.net website update",
+          "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.15.1/FurAffinity-1.15.1-0c0d3ff.ipa",
+          "size": 22693828,
+          "sha256": "69e55f1be5fad996b6368e299fbc9f8f9506905a95c311de50452df37d522f86",
+          "minOSVersion": "17.4"
+        },
         {
           "version": "1.15",
           "date": "2025-11-05T20:00:00+02:00",
