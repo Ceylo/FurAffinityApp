@@ -156,7 +156,7 @@ extension FASubmissionPage {
             let commentCount = try Int(commentCountNode.text()).unwrap()
             let favoriteCountNode = try statsNode.select("div.favorites > span.font-large")
             let favoriteCount = try Int(favoriteCountNode.text()).unwrap()
-            let ratingNode = try statsNode.select("div.rating > span.rating-box")
+            let ratingNode = try statsNode.select("div.rating > span.font-large")
             let ratingStr = try ratingNode.text().trimmingCharacters(in: .whitespaces)
             let rating = try Rating(ratingStr).unwrap()
             
