@@ -14,13 +14,6 @@ struct WebView: UIViewRepresentable {
     @Binding var cookies: [HTTPCookie]
     var clearCookies: Bool
     
-    var onNavigateAction: ((URL?) -> Void)?
-    func onNagivate(perform action: @escaping (URL?) -> Void) -> Self {
-        var copy = self
-        copy.onNavigateAction = action
-        return copy
-    }
-    
     static func defaultCookies() async -> [HTTPCookie] {
         let task = Task { @MainActor in
             await WKWebsiteDataStore.default().httpCookieStore.allCookies()
@@ -61,6 +54,7 @@ struct WebView: UIViewRepresentable {
         weak var request: WKNavigation?
         
         let parent: WebView
+        var cookiePoller: Task<Void, Error>?
         init(_ webView: WebView) {
             self.parent = webView
             
@@ -82,17 +76,13 @@ struct WebView: UIViewRepresentable {
             if let store = observedCookieStore {
                 store.remove(self)
                 observedCookieStore = nil
+                cookiePoller?.cancel()
+                cookiePoller = nil
             }
         }
         
-        private var urlObservation: AnyCancellable?
         private weak var observedCookieStore: WKHTTPCookieStore?
         func bind(to view: WKWebView) {
-            urlObservation = view.publisher(for: \.url, options: [.initial, .new])
-                .sink { [weak self] url in
-                    self?.parent.onNavigateAction?(url)
-                }
-            
             let newStore = view.configuration.websiteDataStore.httpCookieStore
             if observedCookieStore != newStore {
                 if let store = observedCookieStore {
@@ -100,12 +90,33 @@ struct WebView: UIViewRepresentable {
                 }
                 newStore.add(self)
                 observedCookieStore = newStore
+                // Theoretically observing the cookie store through cookiesDidChange()
+                // should have been enough, however on iOS 26.2 it looks to sometimes
+                // not fire… the side effect is that user is logged in but the login
+                // sheet is not dismissed, since the parent is not notified of the cookie
+                // change.
+                cookiePoller = Task { [weak self] in
+                    try await Task.sleep(for: .seconds(1))
+                    
+                    while !Task.isCancelled {
+                        let cookies = await newStore.allCookies()
+                        if cookies != self?.parent.cookies {
+                            logger.debug("Cookies updated through polling: \(cookies.map(\.name))")
+                            self?.parent.cookies = cookies
+                        }
+                        
+                        try await Task.sleep(for: .seconds(1))
+                    }
+                }
             }
         }
         
         func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
             cookieStore.getAllCookies { [weak self] cookies in
-                self?.parent.cookies = cookies
+                if cookies != self?.parent.cookies {
+                    logger.debug("Cookies updated through observer: \(cookies.map(\.name))")
+                    self?.parent.cookies = cookies
+                }
             }
         }
     }
