@@ -280,6 +280,10 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         }
     }
     
+    var notificationPreviewsSourceUrl: URL {
+        FAURLs.notificationsUrl
+    }
+    
     func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) {
         notificationPreviews = notificationPreviews.map { oldNotifications in
             FANotificationPreviews(

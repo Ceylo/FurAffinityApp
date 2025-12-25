@@ -26,7 +26,7 @@ protocol UpdateHandler<Data> {
 /// giving it your own custom additional items.
 /// A default primary toolbar item is already provided for all other states
 /// (preview, loading, failure).
-struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: View>: View, UpdateHandler {
+struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, PreviewView: View>: View, UpdateHandler {
     init(
         url: URL,
         preloadedData: Data? = nil,
@@ -50,14 +50,27 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
         _ updateHandler: any UpdateHandler<Data>
     ) -> ContentsView
     
-    private enum DataState {
+    private enum DataState: Equatable {
+        case notLoadingYet
+        case loading
         case loaded(Data)
         case updating(oldData: Data)
-        case failed(error: LocalizedError)
+        
+        var lastKnownData: Data? {
+            switch self {
+            case let .loaded(data),
+                let .updating(oldData: data):
+                data
+            case .notLoadingYet, .loading:
+                nil
+            }
+        }
     }
-    @State private var dataState: DataState?
+    @State private var dataState: DataState = .notLoadingYet
     @State private var showUpdateLoadingView = false
     @State private var activity: NSUserActivity?
+    @State private var error: LocalizedErrorWrapper?
+    @State private var navigationPoppingError: LocalizedErrorWrapper?
     
     var loadingView: some View {
         VStack(spacing: 20) {
@@ -67,31 +80,24 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
         }
     }
     
+    var loadingViewWithBackground: some View {
+        loadingView
+            .padding(20)
+            .applying {
+                if #available(iOS 26, *) {
+                    $0.glassEffect(in: RoundedRectangle(cornerRadius: 10))
+                } else {
+                    $0
+                        .background(.thinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+            }
+    }
+    
     var body: some View {
         Group {
-            if let dataState {
-                switch dataState {
-                case .loaded(let data):
-                    view(data, self)
-                case .updating(let oldData):
-                    ZStack {
-                        view(oldData, self)
-                        
-                        if showUpdateLoadingView {
-                            loadingView
-                                .padding(20)
-                                .background(.thinMaterial)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        }
-                    }
-                    .modifier(DelayedToggle(toggle: $showUpdateLoadingView, delay: .seconds(1)))
-                case let .failed(error):
-                    ScrollView {
-                        LoadingFailedView(url: url, error: error)
-                            .toolbar { RemoteContentToolbarItem(url: url) }
-                    }
-                }
-            } else {
+            switch dataState {
+            case .notLoadingYet, .loading:
                 Group {
                     if let preview = preview() {
                         preview
@@ -100,33 +106,60 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
                     }
                 }
                 .toolbar { RemoteContentToolbarItem(url: url) }
+            case .loaded(let data):
+                view(data, self)
+            case .updating(let oldData):
+                ZStack {
+                    view(oldData, self)
+                    
+                    if showUpdateLoadingView {
+                        loadingViewWithBackground
+                    }
+                }
+                .modifier(DelayedToggle(toggle: $showUpdateLoadingView, delay: .seconds(1)))
             }
         }
         .task {
-            if dataState == nil {
-                if let preloadedData {
-                    update(with: preloadedData)
-                } else {
-                    await update()
+            // Dismissed alerts cause new tasks to be scheduled.
+            // We only want to trigger the code below on first appear
+            guard dataState == .notLoadingYet else { return }
+            dataState = .loading
+            if let preloadedData {
+                update(with: preloadedData)
+            } else {
+                await storeLocalizedError(in: $navigationPoppingError, action: "Loading", webBrowserURL: url) {
+                    try await update()
                 }
             }
         }
-        .refreshable {
-            await update()
+        .refreshable(actionTitle: "Refresh", webBrowserURL: url) {
+            try await update()
         }
         .onChange(of: url) {
-            let newState: DataState? = switch dataState {
+            dataState = switch dataState {
             case .loaded(let data):
                     .updating(oldData: data)
             case .updating(let oldData):
                     .updating(oldData: oldData)
-            case .failed, nil:
-                nil
+            case .notLoadingYet, .loading:
+                    .loading
             }
             
-            dataState = newState
             Task {
-                await update()
+                await storeLocalizedError(in: $error, action: "Data Update", webBrowserURL: url) {
+                    try await update()
+                }
+                
+                if error != nil {
+                    dataState = switch dataState {
+                    case .loaded(let data):
+                            .loaded(data)
+                    case .updating(let oldData):
+                            .loaded(oldData)
+                    case .notLoadingYet, .loading:
+                            .loading
+                    }
+                }
             }
             
             if let activity {
@@ -150,15 +183,13 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
             oldValue?.resignCurrent()
             newValue?.becomeCurrent()
         }
+        .displayError($error)
+        .displayError($navigationPoppingError, popNavigationStack: true)
     }
     
-    func update() async {
-        do {
-            let data = try await dataSource(url)
-            update(with: data)
-        } catch {
-            self.dataState = .failed(error: LocalizedErrorWrapper(error))
-        }
+    func update() async throws {
+        let data = try await dataSource(url)
+        update(with: data)
     }
 
     func update(with data: Data) {
@@ -167,7 +198,7 @@ struct PreviewableRemoteView<Data: Sendable, ContentsView: View, PreviewView: Vi
 }
 
 @MainActor
-func RemoteView<Data: Sendable, ContentsView: View>(
+func RemoteView<Data: Sendable & Equatable, ContentsView: View>(
     url: URL,
     preloadedData: Data? = nil,
     dataSource: @escaping (_ sourceUrl: URL) async throws -> Data,

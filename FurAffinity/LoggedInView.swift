@@ -27,15 +27,20 @@ struct LoggedInView: View {
     }
     
     func handleTarget(_ target: FATarget) {
+        let updateAction = if target == .popNavigationStack {
+            { (stack: inout NavigationPath) in stack.removeLast() }
+        } else {
+            { (stack: inout NavigationPath) in stack.append(target) }
+        }
         switch selectedTab {
         case .submissions:
-            submissionsNavigationStack.append(target)
+            updateAction(&submissionsNavigationStack)
         case .notes:
-            notesNavigationStack.append(target)
+            updateAction(&notesNavigationStack)
         case .notifications:
-            notificationsNavigationStack.append(target)
+            updateAction(&notificationsNavigationStack)
         case .userpage:
-            userpageNavigationStack.append(target)
+            updateAction(&userpageNavigationStack)
         case .settings:
             fatalError("Internal inconsistency")
         }
@@ -102,9 +107,9 @@ struct LoggedInView: View {
             FATarget(with: url).map(handleTarget)
         }
         .environment(\.navigationStream, navigationStream)
-        .onReceive(navigationStream, perform: { url in
-            handleTarget(url)
-        })
+        .onReceive(navigationStream) { target in
+            handleTarget(target)
+        }
         .onAppear {
             let tabBarAppearance = UITabBarAppearance()
             tabBarAppearance.configureWithDefaultBackground()

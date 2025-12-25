@@ -21,7 +21,7 @@ struct RemoteNotificationsView: View {
                 ProgressView()
             }
         }
-        .refreshable(action: "Refresh notifications") {
+        .refreshable(actionTitle: "Notifications Refresh", webBrowserURL: model.notificationPreviewsSourceUrl) {
             try await model.fetchNotificationPreviews()
         }
     }

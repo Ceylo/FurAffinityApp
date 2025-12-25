@@ -10,32 +10,74 @@ import SwiftUI
 fileprivate struct ErrorDisplay: ViewModifier {
     @Binding var error: LocalizedErrorWrapper?
     var delayed: Bool
+    var popNavigationStack: Bool
     @State private var showAlert = false
+    @Environment(\.navigationStream) private var navigationStream
+    
+    @ViewBuilder
+    func alertActions(for error: LocalizedErrorWrapper) -> some View {
+        alertActions()
+    }
+    
+    @ViewBuilder
+    func alertActions() -> some View {
+        if popNavigationStack {
+            Button("Go Back") {
+                navigationStream.send(.popNavigationStack)
+            }
+        }
+    }
     
     func body(content: Content) -> some View {
-        content
-            .alert(isPresented: $showAlert, error: error, actions: {})
-            .onChange(of: showAlert) {
-                if !showAlert {
-                    error = nil
-                }
+        Group {
+            if let relatedAction = error?.relatedAction {
+                content
+                    .alert("🥺 \(relatedAction) failed", isPresented: $showAlert, presenting: error, actions: alertActions(for:), message: { error in
+                        Text(error.aggregatedDescription)
+                    })
+            } else {
+                content
+                    .alert(isPresented: $showAlert, error: error,
+                           actions: alertActions)
             }
-            .onChange(of: error) {
-                if delayed {
-                    Task {
-                        try await Task.sleep(for: .seconds(1))
-                        showAlert = error != nil
-                    }
-                } else {
+        }
+        .onChange(of: showAlert) {
+            if !showAlert {
+                error = nil
+            }
+        }
+        .onChange(of: error) {
+            if delayed {
+                Task {
+                    try await Task.sleep(for: .seconds(1))
                     showAlert = error != nil
                 }
+            } else {
+                showAlert = error != nil
             }
+        }
+    }
+}
+
+private extension LocalizedErrorWrapper {
+    var aggregatedDescription: String {
+        var chunks: [String] = []
+        if let errorDescription {
+            chunks.append(errorDescription)
+        }
+        if let failureReason {
+            chunks.append(failureReason)
+        }
+        if let recoverySuggestion {
+            chunks.append(recoverySuggestion)
+        }
+        return chunks.joined(separator: "\n")
     }
 }
 
 extension View {
-    func displayError(_ error: Binding<LocalizedErrorWrapper?>, delayed: Bool = false) -> some View {
-        modifier(ErrorDisplay(error: error, delayed: delayed))
+    func displayError(_ error: Binding<LocalizedErrorWrapper?>, delayed: Bool = false, popNavigationStack: Bool = false) -> some View {
+        modifier(ErrorDisplay(error: error, delayed: delayed, popNavigationStack: popNavigationStack))
     }
 }
 
@@ -44,11 +86,43 @@ extension View {
     
     Button("Show error") {
         error = LocalizedErrorWrapper(
+            relatedAction: "Action",
+            webBrowserURL: URL(string: "https://www.furaffinity.net/")!,
             errorDescription: "err description",
             failureReason: "failure reason",
             recoverySuggestion: "recovery suggestion",
             helpAnchor: "help anchor"
         )
     }
+    
+    Button("Show smaller error") {
+        error = LocalizedErrorWrapper(
+            relatedAction: "Action",
+            webBrowserURL: nil,
+            errorDescription: "err description"
+        )
+    }
+    
+    Button("Show error without action") {
+        error = LocalizedErrorWrapper(
+            relatedAction: nil,
+            webBrowserURL: nil,
+            errorDescription: "err description",
+        )
+    }
     .displayError($error)
+    
+}
+
+#Preview {
+    @Previewable @State var dismissingError: LocalizedErrorWrapper?
+    
+    Button("Show smaller error with dismiss") {
+        dismissingError = LocalizedErrorWrapper(
+            relatedAction: "Action",
+            webBrowserURL: URL(string: "https://www.furaffinity.net/")!,
+            errorDescription: "err description"
+        )
+    }
+    .displayError($dismissingError, popNavigationStack: true)
 }

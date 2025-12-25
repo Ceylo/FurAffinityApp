@@ -52,12 +52,6 @@ struct FALink<ContentView: View>: View {
                         .border(.primary)
                 }
                 .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                
-                NavigationLink(value: 42) {
-                    SubmissionFeedItemView<TitleAuthorHeader>(submission: FASubmissionPreview.demo)
-                        .border(.primary)
-                }
-                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
             }
             .listStyle(.plain)
         }

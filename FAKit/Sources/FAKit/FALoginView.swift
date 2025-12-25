@@ -32,12 +32,12 @@ public struct FALoginView: View {
             .onChange(of: cookies) { _, newCookies in
                 Task {
                     guard session == nil else { return }
-                    session = await Self.makeSession(cookies: newCookies)
+                    session = try? await Self.makeSession(cookies: newCookies)
                 }
             }
     }
     
-    public static func makeSession(cookies: [HTTPCookie]? = nil) async -> OnlineFASession? {
+    public static func makeSession(cookies: [HTTPCookie]? = nil) async throws -> OnlineFASession? {
         let actualCookies: [HTTPCookie]
         if let cookies {
             actualCookies = cookies
@@ -49,7 +49,7 @@ public struct FALoginView: View {
             }
         }
         
-        let session = await OnlineFASession(cookies: actualCookies)
+        let session = try await OnlineFASession(cookies: actualCookies)
         if session != nil {
             let codableCookies = actualCookies.map { CodableHTTPCookie($0)! }
             try! cookieCache.setObject(codableCookies, forKey: 0)
@@ -62,7 +62,7 @@ public struct FALoginView: View {
         await WebView.clearCookies()
         try! cookieCache.removeAll()
         
-        let newSession = await makeSession()
+        let newSession = try? await makeSession()
         assert(newSession == nil)
     }
 }

@@ -25,7 +25,7 @@ struct NukeAlert: ViewModifier {
                 }
                 Button("Nuke", role: .destructive) {
                     Task {
-                        await storeLocalizedError(in: $errorStorage, action: actionTitle) {
+                        await storeLocalizedError(in: $errorStorage, action: actionTitle, webBrowserURL: nil) {
                             try await nukeAction()
                         }
                         

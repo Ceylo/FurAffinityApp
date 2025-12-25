@@ -351,17 +351,14 @@ extension OnlineFASession {
     /// Initialize a FASession from the given session cookies.
     /// - Parameter cookies: The cookies for furaffinity.net after the user is logged
     /// in through a usual web browser.
-    public convenience init?(cookies: [HTTPCookie], dataSource: HTTPDataSource = URLSession.sharedForFARequests) async {
-        guard cookies.map(\.name).contains("a"),
-              let data = try? await dataSource.httpData(from: FAURLs.homeUrl, cookies: cookies)
-        else {
+    public convenience init?(cookies: [HTTPCookie], dataSource: HTTPDataSource = URLSession.sharedForFARequests) async throws {
+        guard cookies.map(\.name).contains("a") else {
             return nil
         }
         
-        guard let page = FAHomePage(data: data, baseUri: FAURLs.homeUrl) else {
-            logger.info("User is not logged in")
-            return nil
-        }
+        let data = try await dataSource.httpData(from: FAURLs.homeUrl, cookies: cookies)
+        let page = try FAHomePage(data: data, baseUri: FAURLs.homeUrl)
+            .unwrapOrThrow(error: Error.parsingError(sourceUrl: FAURLs.homeUrl))
         logger.info("User is logged in")
         
         self.init(

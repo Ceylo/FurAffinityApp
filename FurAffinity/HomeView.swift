@@ -34,22 +34,25 @@ struct HomeView: View {
     @EnvironmentObject var model: Model
     @State private var showLoginView = false
     @State private var localSession: OnlineFASession?
+    @State private var errorStorage: LocalizedErrorWrapper?
     
     func updateSession() async throws {
         checkingConnection = true
+        defer {
+            checkingConnection = false
+        }
         let session: OnlineFASession?
 
         if let localSession {
             session = localSession
         } else {
-            session = await FALoginView.makeSession()
+            session = try await FALoginView.makeSession()
         }
         
         let task = Task.detached(name: "Session init") {
             try await model.setSession(session)
         }
         try await task.value
-        checkingConnection = false
     }
     
     var center: some View {
@@ -92,11 +95,15 @@ struct HomeView: View {
             }
         }
         .task {
-            await updateSession()
+            await storeLocalizedError(in: $errorStorage, action: "Auto-login", webBrowserURL: nil) {
+                try await updateSession()
+            }
         }
         .sheet(isPresented: $showLoginView) {
             Task {
-                await updateSession()
+                await storeLocalizedError(in: $errorStorage, action: "Login", webBrowserURL: nil) {
+                    try await updateSession()
+                }
             }
         } content: {
             FALoginView(session: $localSession)
@@ -104,6 +111,7 @@ struct HomeView: View {
                     showLoginView = newValue == nil
                 }
         }
+        .displayError($errorStorage)
     }
     
     var body: some View {
