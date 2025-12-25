@@ -22,8 +22,21 @@ fileprivate struct ErrorDisplay: ViewModifier {
     @ViewBuilder
     func alertActions() -> some View {
         if popNavigationStack {
+            if let url = error?.webBrowserURL {
+                Link("Open in web browser", destination: url)
+                    .environment(\.openURL, OpenURLAction { url in
+                        navigationStream.send(.popNavigationStack)
+                        return .systemAction
+                    })
+            }
+            
             Button("Go Back") {
                 navigationStream.send(.popNavigationStack)
+            }
+        } else {
+            if let url = error?.webBrowserURL {
+                Link("Open in web browser", destination: url)
+                Button("OK") {}
             }
         }
     }
