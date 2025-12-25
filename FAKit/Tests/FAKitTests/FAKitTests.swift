@@ -16,7 +16,7 @@ final class FAKitTests: XCTestCase {
             FAURLs.homeUrl: testData("www.furaffinity.net:loggedout.html")
         ])
         
-        let session = await OnlineFASession(cookies: [], dataSource: mock)
+        let session = try await OnlineFASession(cookies: [], dataSource: mock)
         XCTAssertNil(session)
     }
 }
