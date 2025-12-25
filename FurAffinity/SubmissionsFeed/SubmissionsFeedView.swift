@@ -74,7 +74,7 @@ struct SubmissionsFeedView: View {
                 scrollProxy.scrollTo(Item.submissionPreview(targetPreview), anchor: .top)
                 
                 Task {
-                    await fetchSubmissionPreviews()
+                    try await fetchSubmissionPreviews()
                     self.targetScrollItem = nil
                 }
             }
@@ -216,7 +216,7 @@ extension SubmissionsFeedView {
             } else {
                 // List has no item, so there's no scroll to preserve. Perform
                 // a direct fetch
-                await fetchSubmissionPreviews()
+                try await fetchSubmissionPreviews()
             }
         }
     }
