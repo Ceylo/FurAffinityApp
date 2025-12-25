@@ -35,6 +35,7 @@ struct HomeView: View {
     @State private var showLoginView = false
     @State private var localSession: OnlineFASession?
     @State private var errorStorage: LocalizedErrorWrapper?
+    @State private var didTryAutologin = false
     
     func updateSession() async throws {
         checkingConnection = true
@@ -95,6 +96,8 @@ struct HomeView: View {
             }
         }
         .task {
+            guard !didTryAutologin else { return }
+            didTryAutologin = true
             await storeLocalizedError(in: $errorStorage, action: "Auto-login", webBrowserURL: nil) {
                 try await updateSession()
             }
