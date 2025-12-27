@@ -9,7 +9,7 @@ import SwiftUI
 import FAKit
 
 struct CurrentUserView: View {
-    @EnvironmentObject var model: Model
+    @Environment(Model.self) private var model
     
     var body: some View {
         Group {
@@ -35,6 +35,6 @@ struct CurrentUserView: View {
 #Preview {
     withAsync({ try await Model.demo }) {
         CurrentUserView()
-            .environmentObject($0)
+            .environment($0)
     }
 }

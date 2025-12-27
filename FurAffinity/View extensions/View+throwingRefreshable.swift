@@ -7,8 +7,9 @@
 
 import SwiftUI
 
-struct LocalizedErrorWrapper: LocalizedError, Equatable {
+struct RichLocalizedError: LocalizedError, Equatable {
     var relatedAction: String?
+    var shouldPopNavigationStack = false
     
     /// A URL to be opened in a web browser for the user to attempt to continue outside of the app.
     var webBrowserURL: URL?
@@ -17,8 +18,9 @@ struct LocalizedErrorWrapper: LocalizedError, Equatable {
     var recoverySuggestion: String?
     var helpAnchor: String?
     
-    init(relatedAction: String?, webBrowserURL: URL?, errorDescription: String? = nil, failureReason: String? = nil, recoverySuggestion: String? = nil, helpAnchor: String? = nil) {
+    init(relatedAction: String?, shouldPopNavigationStack: Bool = false, webBrowserURL: URL?, errorDescription: String? = nil, failureReason: String? = nil, recoverySuggestion: String? = nil, helpAnchor: String? = nil) {
         self.relatedAction = relatedAction
+        self.shouldPopNavigationStack = shouldPopNavigationStack
         self.webBrowserURL = webBrowserURL
         self.errorDescription = errorDescription
         self.failureReason = failureReason
@@ -26,20 +28,22 @@ struct LocalizedErrorWrapper: LocalizedError, Equatable {
         self.helpAnchor = helpAnchor
     }
     
-    init(_ error: Error, for userAction: String? = nil, webBrowserURL: URL?) {
+    init(_ error: Error, for userAction: String? = nil, webBrowserURL: URL?, shouldPopNavigationStack: Bool) {
         if let userAction, !userAction.isEmpty {
             self.relatedAction = userAction
         }
         
+        self.shouldPopNavigationStack = shouldPopNavigationStack
         self.webBrowserURL = webBrowserURL
         self.errorDescription = error.localizedDescription
     }
     
-    init(_ error: LocalizedError, for userAction: String? = nil, webBrowserURL: URL?) {
+    init(_ error: LocalizedError, for userAction: String? = nil, webBrowserURL: URL?, shouldPopNavigationStack: Bool) {
         if let userAction, !userAction.isEmpty {
             self.relatedAction = userAction
         }
         
+        self.shouldPopNavigationStack = shouldPopNavigationStack
         self.webBrowserURL = webBrowserURL
         self.errorDescription = error.localizedDescription
         self.failureReason = error.failureReason
@@ -52,16 +56,15 @@ fileprivate struct RefreshableWithError : ViewModifier {
     var action: String
     var webBrowserURL: URL?
     var closure: () async throws -> Void
-    @State private var error: LocalizedErrorWrapper?
+    @Environment(ErrorStorage.self) private var errorStorage
     
     func body(content: Content) -> some View {
         content
             .refreshable {
-                await storeLocalizedError(in: $error, action: action, webBrowserURL: webBrowserURL) {
+                await storeLocalizedError(in: errorStorage, action: action, webBrowserURL: webBrowserURL) {
                     try await closure()
                 }
             }
-            .displayError($error, delayed: true)
     }
 }
 
@@ -72,13 +75,12 @@ extension View {
 }
 
 @MainActor
-func storeLocalizedError(in storage: Binding<LocalizedErrorWrapper?>, action: String, webBrowserURL: URL?, closure: () async throws -> Void) async {
+func storeLocalizedError(in storage: ErrorStorage, action: String, webBrowserURL: URL?, shouldPopNavigationStack: Bool = false, closure: () async throws -> Void) async {
     do {
         try await closure()
     } catch let error as LocalizedError {
-        storage.wrappedValue = LocalizedErrorWrapper(error, for: action, webBrowserURL: webBrowserURL)
+        storage.error = RichLocalizedError(error, for: action, webBrowserURL: webBrowserURL, shouldPopNavigationStack: shouldPopNavigationStack)
     } catch {
-        storage.wrappedValue = LocalizedErrorWrapper(error, for: action, webBrowserURL: webBrowserURL)
+        storage.error = RichLocalizedError(error, for: action, webBrowserURL: webBrowserURL, shouldPopNavigationStack: shouldPopNavigationStack)
     }
 }
-

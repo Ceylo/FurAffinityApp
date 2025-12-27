@@ -9,7 +9,7 @@ import SwiftUI
 
 struct RemoteNoteView: View {
     var url: URL
-    @EnvironmentObject var model: Model
+    @Environment(Model.self) private var model
     
     var body: some View {
         PreviewableRemoteView<_, _, EmptyView>(
@@ -45,6 +45,6 @@ struct RemoteNoteView: View {
             RemoteNoteView(url: OfflineFASession.default.notePreviews[1].noteUrl)
         }
         //        .preferredColorScheme(.dark)
-        .environmentObject($0)
+        .environment($0)
     }
 }

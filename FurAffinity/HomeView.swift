@@ -31,10 +31,10 @@ private struct HomeViewButtonContents: View {
 
 struct HomeView: View {
     @State private var checkingConnection = true
-    @EnvironmentObject var model: Model
+    @Environment(Model.self) private var model
+    @Environment(ErrorStorage.self) private var errorStorage
     @State private var showLoginView = false
     @State private var localSession: OnlineFASession?
-    @State private var errorStorage: LocalizedErrorWrapper?
     @State private var didTryAutologin = false
     
     func updateSession() async throws {
@@ -57,54 +57,57 @@ struct HomeView: View {
     }
     
     var center: some View {
-        VStack(spacing: 100) {
-            if checkingConnection {
-                AppIcon()
-                ProgressView("Checking connection…")
-            } else {
-                if model.session == nil {
+        ZStack {
+            VStack(spacing: 100) {
+                if checkingConnection {
                     AppIcon()
-                    
-                    VStack(spacing: 30) {
-                        if #available(iOS 26, *) {
-                            Button("Login with furaffinity.net  ") {
-                                showLoginView = true
-                            }
-                            .buttonStyle(.glassProminent)
-                            .font(.title2)
-                            
-                            Link(destination: FAURLs.signupUrl) {
-                                Text("Register")
-                                    .padding(.horizontal, 5)
-                            }
-                            .buttonStyle(.glass)
-                            .font(.title2)
-                        } else {
-                            Button {
-                                showLoginView = true
-                            } label: {
-                                HomeViewButtonContents(text: "Login with furaffinity.net")
-                            }
-                            
-                            Link(destination: FAURLs.signupUrl) {
-                                HomeViewButtonContents(text: "Register")
+                    ProgressView("Checking connection…")
+                } else {
+                    if model.session == nil {
+                        AppIcon()
+                        
+                        VStack(spacing: 30) {
+                            if #available(iOS 26, *) {
+                                Button("Login with furaffinity.net  ") {
+                                    showLoginView = true
+                                }
+                                .buttonStyle(.glassProminent)
+                                .font(.title2)
+                                
+                                Link(destination: FAURLs.signupUrl) {
+                                    Text("Register")
+                                        .padding(.horizontal, 5)
+                                }
+                                .buttonStyle(.glass)
+                                .font(.title2)
+                            } else {
+                                Button {
+                                    showLoginView = true
+                                } label: {
+                                    HomeViewButtonContents(text: "Login with furaffinity.net")
+                                }
+                                
+                                Link(destination: FAURLs.signupUrl) {
+                                    HomeViewButtonContents(text: "Register")
+                                }
                             }
                         }
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
                 }
             }
+            ErrorDisplay()
         }
         .task {
             guard !didTryAutologin else { return }
             didTryAutologin = true
-            await storeLocalizedError(in: $errorStorage, action: "Auto-login", webBrowserURL: nil) {
+            await storeLocalizedError(in: errorStorage, action: "Auto-login", webBrowserURL: nil) {
                 try await updateSession()
             }
         }
         .sheet(isPresented: $showLoginView) {
             Task {
-                await storeLocalizedError(in: $errorStorage, action: "Login", webBrowserURL: nil) {
+                await storeLocalizedError(in: errorStorage, action: "Login", webBrowserURL: nil) {
                     try await updateSession()
                 }
             }
@@ -114,7 +117,6 @@ struct HomeView: View {
                     showLoginView = newValue == nil
                 }
         }
-        .displayError($errorStorage)
     }
     
     var body: some View {
@@ -137,6 +139,6 @@ struct HomeView: View {
 #Preview {
     withAsync({ try await Model.demo }) {
         HomeView()
-            .environmentObject($0)
+            .environment($0)
     }
 }

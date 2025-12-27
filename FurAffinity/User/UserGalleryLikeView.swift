@@ -161,7 +161,7 @@ struct UserGalleryLikeView: View {
                 updateSource: { _ in }
             )
         }
-        .environmentObject($0)
+        .environment($0)
     }
 }
 
@@ -181,6 +181,6 @@ struct UserGalleryLikeView: View {
                 updateSource: { _ in }
             )
         }
-        .environmentObject($0)
+        .environment($0)
     }
 }

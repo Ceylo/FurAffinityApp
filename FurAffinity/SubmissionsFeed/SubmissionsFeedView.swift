@@ -13,12 +13,12 @@ import Defaults
 import Collections
 
 struct SubmissionsFeedView: View {
-    @EnvironmentObject var model: Model
+    @Environment(Model.self) private var model
+    @Environment(ErrorStorage.self) private var errorStorage
     @State private var newSubmissionsCount: Int?
     @Weak private var scrollView: UIScrollView?
     @State private var targetScrollItem: FASubmissionPreview?
     @State private var currentViewIsDisplayed = false
-    @State private var error: LocalizedErrorWrapper?
     
     var noPreview: some View {
         ScrollView {
@@ -75,7 +75,7 @@ struct SubmissionsFeedView: View {
                 scrollProxy.scrollTo(Item.submissionPreview(targetPreview), anchor: .top)
                 
                 Task {
-                    await storeLocalizedError(in: $error, action: "Submissions Refresh", webBrowserURL: FAURLs.submissionsUrl) {
+                    await storeLocalizedError(in: errorStorage, action: "Submissions Refresh", webBrowserURL: FAURLs.submissionsUrl) {
                         try await fetchSubmissionPreviews()
                     }
                     self.targetScrollItem = nil
@@ -163,7 +163,8 @@ struct SubmissionsFeedView: View {
                 .swap(when: items.isEmpty) {
                     noPreview
                 }
-                .onReceive(model.$submissionPreviews.compactMap { $0 }) { (previews: OrderedSet<FASubmissionPreview>) in
+                .onChange(of: model.submissionPreviews) { _, newValue in
+                    guard let previews = newValue else { return }
                     prefetchThumbnails(for: previews, availableWidth: geometry.size.width)
                     prefetchAvatars(for: previews)
                 }
@@ -193,7 +194,6 @@ struct SubmissionsFeedView: View {
         .onDisappear {
             currentViewIsDisplayed = false
         }
-        .displayError($error)
     }
 }
 
@@ -220,7 +220,7 @@ extension SubmissionsFeedView {
             } else {
                 // List has no item, so there's no scroll to preserve. Perform
                 // a direct fetch
-                await storeLocalizedError(in: $error, action: "Submissions Refresh", webBrowserURL: FAURLs.submissionsUrl) {
+                await storeLocalizedError(in: errorStorage, action: "Submissions Refresh", webBrowserURL: FAURLs.submissionsUrl) {
                     try await fetchSubmissionPreviews()
                 }
             }
@@ -252,7 +252,7 @@ extension SubmissionsFeedView {
         NavigationStack {
             SubmissionsFeedView()
         }
-        .environmentObject($0)
+        .environment($0)
     }
 }
 
@@ -261,7 +261,8 @@ extension SubmissionsFeedView {
         NavigationStack {
             SubmissionsFeedView()
         }
-        .environmentObject($0)
+        .environment($0)
         .preferredColorScheme(.dark)
     }
 }
+

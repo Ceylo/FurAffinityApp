@@ -9,7 +9,7 @@ import SwiftUI
 import FAKit
 
 struct RemoteNotesView: View {
-    @EnvironmentObject var model: Model
+    @Environment(Model.self) private var model
     
     @State private var sourceUrl = FAURLs.notesInboxUrl
     @State private var displayedBox: NotesBox = .inbox
@@ -60,7 +60,7 @@ struct RemoteNotesView: View {
         NavigationStack {
             RemoteNotesView()
         }
-        .environmentObject($0)
+        .environment($0)
     }
 }
 
@@ -69,6 +69,6 @@ struct RemoteNotesView: View {
         NavigationStack {
             RemoteNotesView()
         }
-        .environmentObject($0)
+        .environment($0)
     }
 }

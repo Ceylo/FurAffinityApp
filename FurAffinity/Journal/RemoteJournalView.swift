@@ -10,7 +10,7 @@ import FAKit
 
 struct RemoteJournalView: View {
     var url: URL
-    @EnvironmentObject var model: Model
+    @Environment(Model.self) private var model
     
     var body: some View {
         RemoteView(url: url, dataSource: { url in
@@ -33,6 +33,6 @@ struct RemoteJournalView: View {
 #Preview {
     withAsync({ try await Model.demo }) {
         RemoteJournalView(url: URL(string: "https://www.furaffinity.net/journal/10516170/")!)
-            .environmentObject($0)
+            .environment($0)
     }
 }

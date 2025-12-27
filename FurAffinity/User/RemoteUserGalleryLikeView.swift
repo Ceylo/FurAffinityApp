@@ -11,7 +11,7 @@ import FAKit
 struct RemoteUserGalleryLikeView: View {
     var galleryType: GalleryType
     var url: URL
-    @EnvironmentObject var model: Model
+    @Environment(Model.self) private var model
     @State private var modifiedUrl: URL?
     
     var body: some View {
@@ -53,6 +53,6 @@ struct RemoteUserGalleryLikeView: View {
                 url: URL(string: "https://www.furaffinity.net/gallery/tiaamaito/")!
             )
         }
-        .environmentObject($0)
+        .environment($0)
     }
 }

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct RemoteNotificationsView: View {
-    @EnvironmentObject var model: Model
+    @Environment(Model.self) private var model
     
     var body: some View {
         Group {
@@ -30,13 +30,13 @@ struct RemoteNotificationsView: View {
 #Preview {
     withAsync({ try await Model.demo }) {
         RemoteNotificationsView()
-            .environmentObject($0)
+            .environment($0)
     }
 }
 
 #Preview("Empty") {
     withAsync({ try await Model.empty }) {
         RemoteNotificationsView()
-            .environmentObject($0)
+            .environment($0)
     }
 }

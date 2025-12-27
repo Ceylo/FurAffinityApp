@@ -10,7 +10,7 @@ import FAKit
 import Combine
 
 struct LoggedInView: View {
-    @EnvironmentObject var model: Model
+    @Environment(Model.self) private var model
     @State private var selectedTab: Tab = .submissions
     @State private var navigationStream = PassthroughSubject<FATarget, Never>()
     @State private var submissionsNavigationStack = NavigationPath()
@@ -47,61 +47,64 @@ struct LoggedInView: View {
     }
     
     var body: some View {
-        TabView(selection: $selectedTab) {
-            if model.session != nil {
-                NavigationStack(path: $submissionsNavigationStack) {
-                    SubmissionsFeedView()
-                        .navigationDestination(for: FATarget.self) { nav in
-                            view(for: nav)
-                        }
+        ZStack {
+            TabView(selection: $selectedTab) {
+                if model.session != nil {
+                    NavigationStack(path: $submissionsNavigationStack) {
+                        SubmissionsFeedView()
+                            .navigationDestination(for: FATarget.self) { nav in
+                                view(for: nav)
+                            }
+                    }
+                    .tabItem {
+                        Label("Submissions", systemImage: "rectangle.grid.2x2")
+                    }
+                    .tag(Tab.submissions)
+                    
+                    NavigationStack(path: $notesNavigationStack) {
+                        RemoteNotesView()
+                            .navigationDestination(for: FATarget.self) { nav in
+                                view(for: nav)
+                            }
+                    }
+                    .badge(model.unreadInboxNoteCount)
+                    .tabItem {
+                        Label("Notes", systemImage: "message")
+                    }
+                    .tag(Tab.notes)
+                    
+                    NavigationStack(path: $notificationsNavigationStack) {
+                        RemoteNotificationsView()
+                            .navigationDestination(for: FATarget.self) { nav in
+                                view(for: nav)
+                            }
+                    }
+                    .badge(model.significantNotificationCount)
+                    .tabItem {
+                        Label("Notifications", systemImage: "bell")
+                    }
+                    .tag(Tab.notifications)
+                    
+                    NavigationStack(path: $userpageNavigationStack) {
+                        CurrentUserView()
+                            .navigationDestination(for: FATarget.self) { nav in
+                                view(for: nav)
+                            }
+                    }
+                    .tabItem {
+                        Label("Profile", systemImage: "person.crop.circle")
+                    }
+                    .tag(Tab.userpage)
                 }
-                .tabItem {
-                    Label("Submissions", systemImage: "rectangle.grid.2x2")
-                }
-                .tag(Tab.submissions)
                 
-                NavigationStack(path: $notesNavigationStack) {
-                    RemoteNotesView()
-                        .navigationDestination(for: FATarget.self) { nav in
-                            view(for: nav)
-                        }
-                }
-                .badge(model.unreadInboxNoteCount)
-                .tabItem {
-                    Label("Notes", systemImage: "message")
-                }
-                .tag(Tab.notes)
-                
-                NavigationStack(path: $notificationsNavigationStack) {
-                    RemoteNotificationsView()
-                        .navigationDestination(for: FATarget.self) { nav in
-                            view(for: nav)
-                        }
-                }
-                .badge(model.significantNotificationCount)
-                .tabItem {
-                    Label("Notifications", systemImage: "bell")
-                }
-                .tag(Tab.notifications)
-                
-                NavigationStack(path: $userpageNavigationStack) {
-                    CurrentUserView()
-                        .navigationDestination(for: FATarget.self) { nav in
-                            view(for: nav)
-                        }
-                }
-                .tabItem {
-                    Label("Profile", systemImage: "person.crop.circle")
-                }
-                .tag(Tab.userpage)
+                SettingsView()
+                    .badge(model.appInfo.isUpToDate ?? true ? nil : " ")
+                    .tabItem {
+                        Label("Settings", systemImage: "slider.horizontal.3")
+                    }
+                    .tag(Tab.settings)
             }
-            
-            SettingsView()
-                .badge(model.appInfo.isUpToDate ?? true ? nil : " ")
-                .tabItem {
-                    Label("Settings", systemImage: "slider.horizontal.3")
-                }
-                .tag(Tab.settings)
+            ErrorDisplay()
         }
         .onOpenURL { url in
             FATarget(with: url).map(handleTarget)
@@ -121,6 +124,6 @@ struct LoggedInView: View {
 #Preview {
     withAsync({ try await Model.demo }) {
         LoggedInView()
-            .environmentObject($0)
+            .environment($0)
     }
 }

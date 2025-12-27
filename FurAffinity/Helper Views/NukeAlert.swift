@@ -12,7 +12,7 @@ struct NukeAlert: ViewModifier {
     var nukeText: String
     @Binding var showAlert: Bool
     var nukeAction: () async throws -> Void
-    @State private var errorStorage: LocalizedErrorWrapper?
+    @Environment(ErrorStorage.self) private var errorStorage
     private var actionTitle: String {
         "Nuke All \(nukeTitle)"
     }
@@ -25,7 +25,7 @@ struct NukeAlert: ViewModifier {
                 }
                 Button("Nuke", role: .destructive) {
                     Task {
-                        await storeLocalizedError(in: $errorStorage, action: actionTitle, webBrowserURL: nil) {
+                        await storeLocalizedError(in: errorStorage, action: actionTitle, webBrowserURL: nil) {
                             try await nukeAction()
                         }
                         
@@ -35,7 +35,6 @@ struct NukeAlert: ViewModifier {
             } message: {
                 Text("All \(nukeText) will be removed from your FurAffinity account.")
             }
-            .displayError($errorStorage)
     }
 }
 

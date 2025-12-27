@@ -33,10 +33,11 @@ extension Version {
 }
 
 @MainActor
-class AppInformation: ObservableObject {
+@Observable
+class AppInformation {
     let currentVersion = Bundle.main.version
-    @Published var latestRelease: Release?
-    @Published var isUpToDate: Bool?
+    var latestRelease: Release?
+    var isUpToDate: Bool?
 
     func fetch() async throws {
         let url = URL(string: "https://api.github.com/repos/Ceylo/FurAffinityApp/releases/latest")!

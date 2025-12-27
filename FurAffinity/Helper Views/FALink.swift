@@ -55,6 +55,6 @@ struct FALink<ContentView: View>: View {
             }
             .listStyle(.plain)
         }
-        .environmentObject($0)
+        .environment($0)
     }
 }

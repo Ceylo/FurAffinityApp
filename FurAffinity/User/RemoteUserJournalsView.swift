@@ -10,7 +10,7 @@ import FAKit
 
 struct RemoteUserJournalsView: View {
     var url: URL
-    @EnvironmentObject var model: Model
+    @Environment(Model.self) private var model
     
     var body: some View {
         RemoteView(url: url) { url in
@@ -28,6 +28,6 @@ struct RemoteUserJournalsView: View {
                 url: URL(string: "https://www.furaffinity.net/journals/tiaamaito/")!
             )
         }
-        .environmentObject($0)
+        .environment($0)
     }
 }

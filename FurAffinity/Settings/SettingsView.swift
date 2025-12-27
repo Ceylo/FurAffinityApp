@@ -11,7 +11,7 @@ import Kingfisher
 import Defaults
 
 struct SettingsView: View {
-    @EnvironmentObject var model: Model
+    @Environment(Model.self) private var model
     @State private var dumpingLogs = false
     
     @Default(.animateAvatars) private var animateAvatars: Bool
@@ -155,6 +155,6 @@ struct SettingsView: View {
 #Preview {
     withAsync({ try await Model.demo }) {
         SettingsView()
-            .environmentObject($0)
+            .environment($0)
     }
 }

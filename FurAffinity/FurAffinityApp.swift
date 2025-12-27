@@ -52,9 +52,24 @@ private let amplitude: Amplitude? = {
     return Amplitude(configuration: config)
 }()
 
+struct RootView: View {
+    @Environment(Model.self) private var model
+    
+    var body: some View {
+        ZStack {
+            if model.session == nil {
+                HomeView()
+            } else {
+                LoggedInView()
+            }
+        }
+        .transition(.opacity.animation(.default))
+    }
+}
+
 @main
 struct FurAffinityApp: App {
-    @StateObject private var model = Model()
+    @State private var model = Model()
     
     init() {
         let device = UIDevice.current
@@ -65,15 +80,9 @@ struct FurAffinityApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if model.session == nil {
-                HomeView()
-                    .environmentObject(model)
-                    .transition(.opacity.animation(.default))
-            } else {
-                LoggedInView()
-                    .environmentObject(model)
-                    .transition(.opacity.animation(.default))
-            }
+            RootView()
+                .environment(model)
+                .environment(model.errorStorage)
         }
     }
 }

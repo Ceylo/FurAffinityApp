@@ -92,6 +92,6 @@ extension TitleAuthorHeader: SubmissionHeaderView {
             .listStyle(.plain)
         }
         .preferredColorScheme(.dark)
-        .environmentObject($0)
+        .environment($0)
     }
 }

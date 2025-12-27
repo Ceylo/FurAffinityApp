@@ -69,8 +69,7 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
     @State private var dataState: DataState = .notLoadingYet
     @State private var showUpdateLoadingView = false
     @State private var activity: NSUserActivity?
-    @State private var error: LocalizedErrorWrapper?
-    @State private var navigationPoppingError: LocalizedErrorWrapper?
+    @Environment(ErrorStorage.self) private var errorStorage
     
     var loadingView: some View {
         VStack(spacing: 20) {
@@ -127,7 +126,7 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
             if let preloadedData {
                 update(with: preloadedData)
             } else {
-                await storeLocalizedError(in: $navigationPoppingError, action: "Loading", webBrowserURL: url) {
+                await storeLocalizedError(in: errorStorage, action: "Loading", webBrowserURL: url, shouldPopNavigationStack: true) {
                     try await update()
                 }
             }
@@ -146,11 +145,11 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
             }
             
             Task {
-                await storeLocalizedError(in: $error, action: "Data Update", webBrowserURL: url) {
+                await storeLocalizedError(in: errorStorage, action: "Data Update", webBrowserURL: url) {
                     try await update()
                 }
                 
-                if error != nil {
+                if errorStorage.error != nil {
                     dataState = switch dataState {
                     case .loaded(let data):
                             .loaded(data)
@@ -183,8 +182,6 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
             oldValue?.resignCurrent()
             newValue?.becomeCurrent()
         }
-        .displayError($error)
-        .displayError($navigationPoppingError, popNavigationStack: true)
     }
     
     func update() async throws {

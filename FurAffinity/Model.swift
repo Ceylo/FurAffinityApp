@@ -22,45 +22,46 @@ enum ModelError: LocalizedError {
     }
 }
 
+@Observable
+class ErrorStorage {
+    var error: RichLocalizedError?
+}
+
 @MainActor
-class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
+@Observable
+class Model: NotificationsNuker, NotificationsDeleter {
     static private let autorefreshDelay: TimeInterval = 15 * 60
     
-    @Published private(set) var session: (any FASession)?
+    private(set) var session: (any FASession)?
     
     /// `nil` until a fetch actually happened.
     /// After a fetch it contains all found submissions, or an empty array if none was found.
-    @Published
     private(set) var submissionPreviews: OrderedSet<FASubmissionPreview>?
     private var submissionPreviewsPendingDeletion = Set<FASubmissionPreview>()
     private(set) var lastSubmissionPreviewsFetchDate: Date?
     
     /// `nil` until a fetch actually happened.
     /// After a fetch it contains all found notes, or an empty array if none was found.
-    @Published
     private(set) var inboxNotePreviews: [FANotePreview]?
-    @Published
     private(set) var unreadInboxNoteCount = 0
     private(set) var lastInboxNotePreviewsFetchDate: Date?
     
     /// nil until a fetch actually happened
     /// After a fetch it contains all found notifications, or an empty array if none was found
-    @Published private(set) var notificationPreviews: FANotificationPreviews?
-    @Published private(set) var lastNotificationPreviewsFetchDate: Date?
-    @Published private(set) var significantNotificationCount = 0
+    private(set) var notificationPreviews: FANotificationPreviews?
+    private(set) var lastNotificationPreviewsFetchDate: Date?
+    private(set) var significantNotificationCount = 0
     
-    @Published
     private(set) var appInfo = AppInformation()
     private var lastAppInfoUpdate: Date?
+    
+    /// This store any error encountered in the app, be it from model or views logic.
+    /// This is then displayed to the user in a unified way, through ErrorDisplay.
+    var errorStorage = ErrorStorage()
     
     private var subscriptions = Set<AnyCancellable>()
     private var autorefreshSubscription: AnyCancellable?
     init() {
-        appInfo.objectWillChange.sink {
-            self.objectWillChange.send()
-        }
-        .store(in: &subscriptions)
-        
         Defaults.publisher(keys: Defaults.Keys.all, options: [])
             .sink {
                 let userDefaults = UserDefaults.standard
@@ -127,7 +128,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
             .publisher(for: UIApplication.willEnterForegroundNotification)
             .sink { [unowned self] _ in
                 Task {
-                    try await autorefreshIfNeeded()
+                    await autorefreshIfNeeded()
                 }
             }
     }
@@ -142,7 +143,7 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         return true
     }
     
-    private func autorefreshIfNeeded() async throws {
+    private func autorefreshIfNeeded() async {
         // Note how submission previews are not checked here. This is for two reasons:
         // - SubmissionsFeedView has special scroll handling and needs to control
         // when refresh happens
@@ -150,11 +151,15 @@ class Model: ObservableObject, NotificationsNuker, NotificationsDeleter {
         // cannot subscribe to willEnterForegroundNotification
         
         if Self.shouldAutoRefresh(with: lastInboxNotePreviewsFetchDate) {
-            _ = try await fetchNotePreviews(from: .inbox)
+            await storeLocalizedError(in: errorStorage, action: "Notes Auto-Refresh", webBrowserURL: FAURLs.notesInboxUrl) {
+                _ = try await fetchNotePreviews(from: .inbox)
+            }
         }
         
         if Self.shouldAutoRefresh(with: lastNotificationPreviewsFetchDate) {
-            try await fetchNotificationPreviews()
+            await storeLocalizedError(in: errorStorage, action: "Notifications Auto-Refresh", webBrowserURL: FAURLs.notesInboxUrl) {
+                try await fetchNotificationPreviews()
+            }
         }
         
         if Self.shouldAutoRefresh(with: lastAppInfoUpdate) {

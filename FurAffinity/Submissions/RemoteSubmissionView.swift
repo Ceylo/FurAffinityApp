@@ -9,7 +9,7 @@ import SwiftUI
 import FAKit
 
 struct RemoteSubmissionView: View {
-    @EnvironmentObject var model: Model
+    @Environment(Model.self) private var model
     
     var url: URL
     var previewData: FASubmissionPreview?
@@ -65,6 +65,6 @@ struct RemoteSubmissionView: View {
             previewData: .demo
         )
         //    .preferredColorScheme(.dark)
-        .environmentObject($0)
+        .environment($0)
     }
 }

@@ -174,7 +174,7 @@ private struct DummyActions: NotificationsNuker, NotificationsDeleter {
                 actions: DummyActions()
             )
         }
-        .environmentObject($0)
+        .environment($0)
     }
 }
 
@@ -186,6 +186,6 @@ private struct DummyActions: NotificationsNuker, NotificationsDeleter {
                 actions: DummyActions()
             )
         }
-        .environmentObject($0)
+        .environment($0)
     }
 }

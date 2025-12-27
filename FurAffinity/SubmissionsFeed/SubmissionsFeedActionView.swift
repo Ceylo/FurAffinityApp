@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SubmissionsFeedActionView: View {
-    @EnvironmentObject var model: Model
+    @Environment(Model.self) private var model
     @State private var showNukeAlert = false
     
     var body: some View {
@@ -33,6 +33,6 @@ struct SubmissionsFeedActionView: View {
         SubmissionsFeedActionView()
             .padding()
             .background(.yellow)
-            .environmentObject($0)
+            .environment($0)
     }
 }

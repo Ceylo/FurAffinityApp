@@ -11,7 +11,7 @@ import FAKit
 struct RemoteUserView: View {
     var url: URL
     var previewData: UserPreviewData?
-    @EnvironmentObject var model: Model
+    @Environment(Model.self) private var model
     @State private var description: AttributedString?
     
     private func loadUser(from url: URL) async throws -> FAUser {
@@ -80,7 +80,7 @@ struct RemoteUserView: View {
         NavigationStack {
             RemoteUserView(url: try! FAURLs.userpageUrl(for: "terriniss"))
         }
-        .environmentObject($0)
+        .environment($0)
         //    .preferredColorScheme(.dark)
     }
 }
