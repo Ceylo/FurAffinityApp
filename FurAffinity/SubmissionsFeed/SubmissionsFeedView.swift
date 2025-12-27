@@ -18,6 +18,7 @@ struct SubmissionsFeedView: View {
     @Weak private var scrollView: UIScrollView?
     @State private var targetScrollItem: FASubmissionPreview?
     @State private var currentViewIsDisplayed = false
+    @State private var error: LocalizedErrorWrapper?
     
     var noPreview: some View {
         ScrollView {
@@ -74,7 +75,9 @@ struct SubmissionsFeedView: View {
                 scrollProxy.scrollTo(Item.submissionPreview(targetPreview), anchor: .top)
                 
                 Task {
-                    try await fetchSubmissionPreviews()
+                    await storeLocalizedError(in: $error, action: "Submissions Refresh", webBrowserURL: FAURLs.submissionsUrl) {
+                        try await fetchSubmissionPreviews()
+                    }
                     self.targetScrollItem = nil
                 }
             }
@@ -190,6 +193,7 @@ struct SubmissionsFeedView: View {
         .onDisappear {
             currentViewIsDisplayed = false
         }
+        .displayError($error)
     }
 }
 
@@ -216,7 +220,9 @@ extension SubmissionsFeedView {
             } else {
                 // List has no item, so there's no scroll to preserve. Perform
                 // a direct fetch
-                try await fetchSubmissionPreviews()
+                await storeLocalizedError(in: $error, action: "Submissions Refresh", webBrowserURL: FAURLs.submissionsUrl) {
+                    try await fetchSubmissionPreviews()
+                }
             }
         }
     }
