@@ -253,6 +253,7 @@ extension SubmissionsFeedView {
             SubmissionsFeedView()
         }
         .environment($0)
+        .environment($0.errorStorage)
     }
 }
 
@@ -262,6 +263,7 @@ extension SubmissionsFeedView {
             SubmissionsFeedView()
         }
         .environment($0)
+        .environment($0.errorStorage)
         .preferredColorScheme(.dark)
     }
 }

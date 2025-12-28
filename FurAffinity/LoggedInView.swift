@@ -125,5 +125,6 @@ struct LoggedInView: View {
     withAsync({ try await Model.demo }) {
         LoggedInView()
             .environment($0)
+            .environment($0.errorStorage)
     }
 }

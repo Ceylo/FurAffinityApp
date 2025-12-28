@@ -54,5 +54,6 @@ struct RemoteUserGalleryLikeView: View {
             )
         }
         .environment($0)
+        .environment($0.errorStorage)
     }
 }

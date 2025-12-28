@@ -36,5 +36,6 @@ struct CurrentUserView: View {
     withAsync({ try await Model.demo }) {
         CurrentUserView()
             .environment($0)
+            .environment($0.errorStorage)
     }
 }

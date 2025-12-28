@@ -46,5 +46,6 @@ struct RemoteNoteView: View {
         }
         //        .preferredColorScheme(.dark)
         .environment($0)
+        .environment($0.errorStorage)
     }
 }

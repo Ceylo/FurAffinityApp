@@ -213,8 +213,8 @@ func RemoteView<Data: Sendable & Equatable, ContentsView: View>(
 }
 
 #Preview {
-    @Previewable
-    @State var url = URL(string: "https://www.furaffinity.net/")!
+    @Previewable @State var url = URL(string: "https://www.furaffinity.net/")!
+    @Previewable @State var errorStorage = ErrorStorage()
     
     NavigationStack {
         RemoteView(url: url) { sourceUrl in
@@ -229,5 +229,6 @@ func RemoteView<Data: Sendable & Equatable, ContentsView: View>(
             }
             .border(.red)
         }
+        .environment(errorStorage)
     }
 }

@@ -91,6 +91,8 @@ private struct DummyNuker: NotificationsNuker {
 }
 
 #Preview {
+    @Previewable @State var errorStorage = ErrorStorage()
+    
     NotificationsActionView(
         hasSubmissionComments: true,
         hasJournalComments: true,
@@ -98,4 +100,5 @@ private struct DummyNuker: NotificationsNuker {
         hasJournals: true,
         nuker: DummyNuker()
     )
+    .environment(errorStorage)
 }

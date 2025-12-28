@@ -34,5 +34,6 @@ struct SubmissionsFeedActionView: View {
             .padding()
             .background(.yellow)
             .environment($0)
+            .environment($0.errorStorage)
     }
 }

@@ -140,5 +140,6 @@ struct HomeView: View {
     withAsync({ try await Model.demo }) {
         HomeView()
             .environment($0)
+            .environment($0.errorStorage)
     }
 }

@@ -81,6 +81,7 @@ struct RemoteUserView: View {
             RemoteUserView(url: try! FAURLs.userpageUrl(for: "terriniss"))
         }
         .environment($0)
+        .environment($0.errorStorage)
         //    .preferredColorScheme(.dark)
     }
 }

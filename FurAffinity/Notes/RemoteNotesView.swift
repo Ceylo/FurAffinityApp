@@ -61,6 +61,7 @@ struct RemoteNotesView: View {
             RemoteNotesView()
         }
         .environment($0)
+        .environment($0.errorStorage)
     }
 }
 
@@ -70,5 +71,6 @@ struct RemoteNotesView: View {
             RemoteNotesView()
         }
         .environment($0)
+        .environment($0.errorStorage)
     }
 }

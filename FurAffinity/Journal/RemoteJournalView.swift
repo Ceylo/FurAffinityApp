@@ -34,5 +34,6 @@ struct RemoteJournalView: View {
     withAsync({ try await Model.demo }) {
         RemoteJournalView(url: URL(string: "https://www.furaffinity.net/journal/10516170/")!)
             .environment($0)
+            .environment($0.errorStorage)
     }
 }

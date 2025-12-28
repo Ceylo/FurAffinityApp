@@ -175,6 +175,7 @@ private struct DummyActions: NotificationsNuker, NotificationsDeleter {
             )
         }
         .environment($0)
+        .environment($0.errorStorage)
     }
 }
 
@@ -187,5 +188,6 @@ private struct DummyActions: NotificationsNuker, NotificationsDeleter {
             )
         }
         .environment($0)
+        .environment($0.errorStorage)
     }
 }

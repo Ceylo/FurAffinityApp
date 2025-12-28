@@ -28,15 +28,21 @@ struct RemoteNotificationsView: View {
 }
 
 #Preview {
-    withAsync({ try await Model.demo }) {
-        RemoteNotificationsView()
-            .environment($0)
+    NavigationStack {
+        withAsync({ try await Model.demo }) {
+            RemoteNotificationsView()
+                .environment($0)
+                .environment($0.errorStorage)
+        }
     }
 }
 
 #Preview("Empty") {
-    withAsync({ try await Model.empty }) {
-        RemoteNotificationsView()
-            .environment($0)
+    NavigationStack {
+        withAsync({ try await Model.empty }) {
+            RemoteNotificationsView()
+                .environment($0)
+                .environment($0.errorStorage)
+        }
     }
 }
