@@ -290,6 +290,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
     }
     
     func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) {
+        let oldNotificationPreviews = notificationPreviews
         notificationPreviews = notificationPreviews.map { oldNotifications in
             FANotificationPreviews(
                 submissionComments: oldNotifications.submissionComments.filter { !notifications.contains($0) },
@@ -300,16 +301,18 @@ class Model: NotificationsNuker, NotificationsDeleter {
         }
         
         Task {
-            do {
+            await storeLocalizedError(in: errorStorage, action: "Delete Submission Comment Notification(s)", webBrowserURL: nil) {
                 try await fetchNotificationPreviews { session in
                     try await session.deleteSubmissionCommentNotifications(notifications)
                 }
-            } catch {
+            } onFailure: {
+                notificationPreviews = oldNotificationPreviews
             }
         }
     }
     
     func deleteJournalCommentNotifications(_ notifications: [FANotificationPreview]) {
+        let oldNotificationPreviews = notificationPreviews
         notificationPreviews = notificationPreviews.map { oldNotifications in
             FANotificationPreviews(
                 submissionComments: oldNotifications.submissionComments,
@@ -320,16 +323,18 @@ class Model: NotificationsNuker, NotificationsDeleter {
         }
         
         Task {
-            do {
+            await storeLocalizedError(in: errorStorage, action: "Delete Journal Comment Notification(s)", webBrowserURL: nil) {
                 try await fetchNotificationPreviews { session in
                     try await session.deleteJournalCommentNotifications(notifications)
                 }
-            } catch {
+            } onFailure: {
+                notificationPreviews = oldNotificationPreviews
             }
         }
     }
     
     func deleteShoutNotifications(_ notifications: [FANotificationPreview]) {
+        let oldNotificationPreviews = notificationPreviews
         notificationPreviews = notificationPreviews.map { oldNotifications in
             FANotificationPreviews(
                 submissionComments: oldNotifications.submissionComments,
@@ -340,16 +345,18 @@ class Model: NotificationsNuker, NotificationsDeleter {
         }
         
         Task {
-            do {
+            await storeLocalizedError(in: errorStorage, action: "Delete Shout Notification(s)", webBrowserURL: nil) {
                 try await fetchNotificationPreviews { session in
                     try await session.deleteShoutNotifications(notifications)
                 }
-            } catch {
+            } onFailure: {
+                notificationPreviews = oldNotificationPreviews
             }
         }
     }
     
     func deleteJournalNotifications(_ notifications: [FANotificationPreview]) {
+        let oldNotificationPreviews = notificationPreviews
         notificationPreviews = notificationPreviews.map { oldNotifications in
             FANotificationPreviews(
                 submissionComments: oldNotifications.submissionComments,
@@ -360,11 +367,12 @@ class Model: NotificationsNuker, NotificationsDeleter {
         }
         
         Task {
-            do {
+            await storeLocalizedError(in: errorStorage, action: "Delete Journal Notification(s)", webBrowserURL: nil) {
                 try await fetchNotificationPreviews { session in
                     try await session.deleteJournalNotifications(notifications)
                 }
-            } catch {
+            } onFailure: {
+                notificationPreviews = oldNotificationPreviews
             }
         }
     }
