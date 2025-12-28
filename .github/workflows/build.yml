@@ -45,7 +45,7 @@ jobs:
       - uses: mxcl/xcodebuild@v3
         with:
           action: none
-          xcode: ~26.0
+          xcode: ~26.2
       - name: Build App
         run: |
           NSUnbufferedIO=YES set -o pipefail && xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17' -configuration Debug build 2>&1 | tee BuildLogs.txt | xcbeautify
