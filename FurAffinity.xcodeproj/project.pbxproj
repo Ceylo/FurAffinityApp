@@ -89,6 +89,8 @@
 		87BF3EE32C9329C8000A837E /* ListItemTracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87BF3EE22C9329C8000A837E /* ListItemTracking.swift */; };
 		87C13F8729FF0A89001C7CB2 /* CommentNotificationItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C13F8629FF0A89001C7CB2 /* CommentNotificationItemView.swift */; };
 		87C1A0AD284B6E5400529F8C /* Version in Frameworks */ = {isa = PBXBuildFile; productRef = 87C1A0AC284B6E5400529F8C /* Version */; };
+		87C2ADEA2F017C200061F837 /* RichLocalizedError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C2ADE92F017C200061F837 /* RichLocalizedError.swift */; };
+		87C2ADEC2F017D5B0061F837 /* ErrorStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C2ADEB2F017D230061F837 /* ErrorStorage.swift */; };
 		87C4435A2C73C59900200991 /* ShoutNotificationItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C443592C73C59900200991 /* ShoutNotificationItemView.swift */; };
 		87C4435C2C73F29600200991 /* AlignedLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C4435B2C73F29600200991 /* AlignedLabel.swift */; };
 		87C94A542AA893BA0049CA81 /* UserGalleryLikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C94A532AA893BA0049CA81 /* UserGalleryLikeView.swift */; };
@@ -212,6 +214,8 @@
 		87B7972D2E08413D00F10339 /* RemoteNotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteNotesView.swift; sourceTree = "<group>"; };
 		87BF3EE22C9329C8000A837E /* ListItemTracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListItemTracking.swift; sourceTree = "<group>"; };
 		87C13F8629FF0A89001C7CB2 /* CommentNotificationItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentNotificationItemView.swift; sourceTree = "<group>"; };
+		87C2ADE92F017C200061F837 /* RichLocalizedError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RichLocalizedError.swift; sourceTree = "<group>"; };
+		87C2ADEB2F017D230061F837 /* ErrorStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorStorage.swift; sourceTree = "<group>"; };
 		87C443592C73C59900200991 /* ShoutNotificationItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoutNotificationItemView.swift; sourceTree = "<group>"; };
 		87C4435B2C73F29600200991 /* AlignedLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlignedLabel.swift; sourceTree = "<group>"; };
 		87C94A532AA893BA0049CA81 /* UserGalleryLikeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserGalleryLikeView.swift; sourceTree = "<group>"; };
@@ -295,6 +299,7 @@
 			children = (
 				871C66DE29B8C36700A2B2C2 /* Info.plist */,
 				8725335E274A70BB007FEF3B /* Model.swift */,
+				87C2ADEB2F017D230061F837 /* ErrorStorage.swift */,
 				8716E7EB271C659C00C0BC4A /* FurAffinityApp.swift */,
 				878B0B902970B18C00A08685 /* Secrets.swift */,
 				8716E7ED271C659C00C0BC4A /* HomeView.swift */,
@@ -439,6 +444,7 @@
 				87750CEA2D44F67B00A4A205 /* View+scrollToItem.swift */,
 				879C89FB2E2AFA8400F59A74 /* View+applying.swift */,
 				8750BF372ED904FC00B860C8 /* View+throwingRefreshable.swift */,
+				87C2ADE92F017C200061F837 /* RichLocalizedError.swift */,
 			);
 			path = "View extensions";
 			sourceTree = "<group>";
@@ -640,6 +646,7 @@
 				87A1859C27459FFE00B10D2A /* SettingsView.swift in Sources */,
 				8791D60D29C4DCE6003FDBBE /* InAppNavigation.swift in Sources */,
 				87A185A02745A83B00B10D2A /* Debugging.swift in Sources */,
+				87C2ADEC2F017D5B0061F837 /* ErrorStorage.swift in Sources */,
 				87E0E2B82801D967005207A8 /* NotesView.swift in Sources */,
 				87098D3A2CB2BEF000E7BD94 /* UserDefaultKeys.swift in Sources */,
 				871B05EF2C84BADA00302500 /* AppIcon.swift in Sources */,
@@ -704,6 +711,7 @@
 				877FD54D29EC939E00230996 /* JournalControlsView.swift in Sources */,
 				870B2AA12DFDD29E00B48AC3 /* NoteReplying.swift in Sources */,
 				873B2D1929EB2A0F00FA5F58 /* NotificationsView.swift in Sources */,
+				87C2ADEA2F017C200061F837 /* RichLocalizedError.swift in Sources */,
 				878401472CB994330099CAC8 /* RemoteUserJournalsView.swift in Sources */,
 				87566B84297DD02300FD3199 /* SubmissionMainImage.swift in Sources */,
 				873E65F227529866009C8767 /* SaveButton.swift in Sources */,

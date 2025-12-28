@@ -22,11 +22,6 @@ enum ModelError: LocalizedError {
     }
 }
 
-@Observable
-class ErrorStorage {
-    var error: RichLocalizedError?
-}
-
 @MainActor
 @Observable
 class Model: NotificationsNuker, NotificationsDeleter {
