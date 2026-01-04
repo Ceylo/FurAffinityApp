@@ -50,6 +50,8 @@ extension CommentEditor: ReplyEditor {
             handler: actionHandler
         )
     }
+    
+    static var sendActionTitle: String { "Sending Comment" }
 }
 
 typealias Commenting = Replying<CommentEditor>

@@ -73,6 +73,8 @@ extension NoteEditor: ReplyEditor {
             handler: actionHandler
         )
     }
+    
+    static var sendActionTitle: String { "Sending Note" }
 }
 
 typealias NoteReplying = Replying<NoteEditor>

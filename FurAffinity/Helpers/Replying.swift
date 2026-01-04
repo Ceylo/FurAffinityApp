@@ -34,6 +34,8 @@ protocol ReplyEditor<SomeReplyStorage>: View {
         displayData: SomeReplySession.DisplayData,
         actionHandler: @escaping (_ action: ReplyEditorAction) async -> Void
     )
+    
+    static var sendActionTitle: String { get }
 }
 
 struct Replying<SomeReplyEditor: ReplyEditor>: ViewModifier {
@@ -41,8 +43,7 @@ struct Replying<SomeReplyEditor: ReplyEditor>: ViewModifier {
     var replyAction: @MainActor (_ replySession: SomeReplyEditor.SomeReplySession, _ text: SomeReplyEditor.SomeReplyStorage) async throws -> Void
     @ObservedObject private var replyStorage = SomeReplyEditor.SomeReplyStorage()
     @State private var replySent: Bool?
-    @State private var showError = false
-    @State private var error: Error?
+    @State private var localErrorStorage = ErrorStorage()
     
     func body(content: Content) -> some View {
         content
@@ -77,37 +78,24 @@ struct Replying<SomeReplyEditor: ReplyEditor>: ViewModifier {
             fatalError()
         }
         
-        return SomeReplyEditor(
-            replyStorage: replyStorage,
-            displayData: replySession.displayData
-        ) { action in
-            do {
-                if case .submit = action, replyStorage.isValidForSubmission {
-                    try await replyAction(replySession, replyStorage)
-                    // Preserve user data unless submitted
-                    replyStorage.reset()
-                    replySent = true
+        return Group {
+            SomeReplyEditor(
+                replyStorage: replyStorage,
+                displayData: replySession.displayData
+            ) { action in
+                await storeLocalizedError(in: localErrorStorage, action: SomeReplyEditor.sendActionTitle, webBrowserURL: nil) {
+                    if case .submit = action, replyStorage.isValidForSubmission {
+                        try await replyAction(replySession, replyStorage)
+                        // Preserve user data unless submitted
+                        replyStorage.reset()
+                        replySent = true
+                    }
+                    
+                    self.replySession = nil
                 }
-                
-                self.replySession = nil
-            } catch {
-                self.error = error
-                showError = true
             }
+            ErrorDisplay()
+                .environment(localErrorStorage)
         }
-        .alert(
-            "Oops",
-            isPresented: $showError,
-            presenting: error,
-            actions: { _ in
-                Button("Dismiss") {
-                    showError = false
-                    error = nil
-                }
-            },
-            message: { error in
-                Text(error.localizedDescription)
-            }
-        )
     }
 }
