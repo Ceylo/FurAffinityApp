@@ -41,7 +41,7 @@ protocol ReplyEditor<SomeReplyStorage>: View {
 struct Replying<SomeReplyEditor: ReplyEditor>: ViewModifier {
     @Binding var replySession: SomeReplyEditor.SomeReplySession?
     var replyAction: @MainActor (_ replySession: SomeReplyEditor.SomeReplySession, _ text: SomeReplyEditor.SomeReplyStorage) async throws -> Void
-    @ObservedObject private var replyStorage = SomeReplyEditor.SomeReplyStorage()
+    @StateObject private var replyStorage = SomeReplyEditor.SomeReplyStorage()
     @State private var replySent: Bool?
     @State private var localErrorStorage = ErrorStorage()
     

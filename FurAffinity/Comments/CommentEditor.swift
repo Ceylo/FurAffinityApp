@@ -109,7 +109,7 @@ struct CommentEditor: View {
 
 #Preview("Reply to journal/submission") {
     @Previewable
-    @ObservedObject var reply = CommentReply()
+    @StateObject var reply = CommentReply()
     
     withAsync({ await FAComment.demo[0] }) {
         CommentEditor(reply: reply, parentComment: $0) { action in

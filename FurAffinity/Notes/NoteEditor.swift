@@ -177,7 +177,7 @@ struct NoteEditor: View {
 
 #Preview("New note") {
     @Previewable
-    @ObservedObject var reply = NoteReply()
+    @StateObject var reply = NoteReply()
     
     NoteEditor(
         reply: reply,
