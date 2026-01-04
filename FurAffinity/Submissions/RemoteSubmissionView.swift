@@ -10,6 +10,7 @@ import FAKit
 
 struct RemoteSubmissionView: View {
     @Environment(Model.self) private var model
+    @Environment(ErrorStorage.self) private var errorStorage
     
     var url: URL
     var previewData: FASubmissionPreview?
@@ -38,10 +39,15 @@ struct RemoteSubmissionView: View {
                     avatarUrl: FAURLs.avatarUrl(for: submission.author),
                     thumbnail: previewData?.dynamicThumbnail,
                     favoriteAction: {
+                        let originalState = submission
                         updateHandler.update(with: submission.togglingFavorite())
                         Task {
-                            let updated = try await model.toggleFavorite(for: submission)
-                            updateHandler.update(with: updated)
+                            await storeLocalizedError(in: errorStorage, action: "Toggle Favorite", webBrowserURL: nil) {
+                                let updated = try await model.toggleFavorite(for: submission)
+                                updateHandler.update(with: updated)
+                            } onFailure: {
+                                updateHandler.update(with: originalState)
+                            }
                         }
                     },
                     replyAction: { parentCid, reply in
