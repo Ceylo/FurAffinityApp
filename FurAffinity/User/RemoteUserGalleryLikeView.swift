@@ -12,6 +12,7 @@ struct RemoteUserGalleryLikeView: View {
     var galleryType: GalleryType
     var url: URL
     @Environment(Model.self) private var model
+    @Environment(ErrorStorage.self) private var errorStorage
     @State private var modifiedUrl: URL?
     
     var body: some View {
@@ -30,7 +31,7 @@ struct RemoteUserGalleryLikeView: View {
                             return
                         }
                         
-                        Task {
+                        await storeLocalizedError(in: errorStorage, action: "Load Next Gallery Page", webBrowserURL: nextUrl) {
                             let session = try model.session.unwrap()
                             let nextGallery = try await session.galleryLike(for: nextUrl)
                             let updated = latestGallery.appending(nextGallery)

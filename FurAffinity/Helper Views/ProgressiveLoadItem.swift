@@ -8,14 +8,14 @@
 import SwiftUI
 import FAKit
 
-protocol ProgressiveData: Equatable {
+protocol ProgressiveData: Equatable, Sendable {
     var canLoadMore: Bool { get }
 }
 
 struct ProgressiveLoadItem<DataType: ProgressiveData>: View {
     var label: String
     var currentData: DataType
-    var loadMoreData: (_ currentData: DataType) -> Void
+    var loadMoreData: (_ currentData: DataType) async -> Void
     var crawlingDelay: Duration = .seconds(1.0)
     @State private var needsMoreData = false
     
@@ -26,9 +26,9 @@ struct ProgressiveLoadItem<DataType: ProgressiveData>: View {
                     ProgressView()
                     Text(label)
                 }
-                .onAppear {
+                .task {
                     needsMoreData = true
-                    loadMoreData(currentData)
+                    await loadMoreData(currentData)
                 }
                 .onDisappear {
                     needsMoreData = false
@@ -41,7 +41,7 @@ struct ProgressiveLoadItem<DataType: ProgressiveData>: View {
                     guard needsMoreData else { return }
                     try await Task.sleep(for: crawlingDelay)
                     guard needsMoreData else { return }
-                    loadMoreData(newData)
+                    await loadMoreData(newData)
                 }
             }
         }

@@ -11,6 +11,7 @@ import FAKit
 struct RemoteWatchlistView: View {
     var url: URL
     @Environment(Model.self) private var model
+    @Environment(ErrorStorage.self) private var errorStorage
     
     var body: some View {
         RemoteView(url: url) { url in
@@ -22,7 +23,7 @@ struct RemoteWatchlistView: View {
                     return
                 }
                 
-                Task {
+                await storeLocalizedError(in: errorStorage, action: "Load Next Watchlist Page", webBrowserURL: nextUrl) {
                     let session = try model.session.unwrap()
                     let nextList = try await session.watchlist(for: nextUrl)
                     let updatedList = latestWatchlist.appending(nextList)

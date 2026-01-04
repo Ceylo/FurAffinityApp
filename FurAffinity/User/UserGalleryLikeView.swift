@@ -35,7 +35,7 @@ extension FAUserGalleryLike: ProgressiveData {
 struct UserGalleryLikeView: View {
     var galleryType: GalleryType
     var gallery: FAUserGalleryLike
-    var loadMore: (_ galleryLike: FAUserGalleryLike) -> Void
+    var loadMore: (_ galleryLike: FAUserGalleryLike) async -> Void
     var updateSource: (_ url: URL) -> Void
     @State private var searchText = ""
     

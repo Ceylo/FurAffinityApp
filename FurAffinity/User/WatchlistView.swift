@@ -16,7 +16,7 @@ extension FAWatchlist: ProgressiveData {
 
 struct WatchlistView: View {
     var watchlist: FAWatchlist
-    var loadMoreUsers: (_ watchlist: FAWatchlist) -> Void
+    var loadMoreUsers: (_ watchlist: FAWatchlist) async -> Void
     @State private var searchText = ""
     
     var navigationTitle: String {
