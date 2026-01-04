@@ -12,7 +12,7 @@ import Kingfisher
 struct UserView: View {
     var user: FAUser
     var description: Binding<AttributedString?>
-    var toggleWatchAction: () async throws -> Void
+    var toggleWatchAction: () async -> Void
     var sendNoteAction: (_ destinationUser: String, _ subject: String, _ text: String) async throws -> Void
     
     private let bannerHeight = 100.0
@@ -41,7 +41,7 @@ struct UserView: View {
         RemoteContentToolbarItem(url: url) {
             if let watchData = user.watchData {
                 WatchButton(watchData: watchData) {
-                    try? await toggleWatchAction()
+                    await toggleWatchAction()
                 }
             }
             Button {

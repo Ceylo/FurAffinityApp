@@ -12,6 +12,7 @@ struct RemoteUserView: View {
     var url: URL
     var previewData: UserPreviewData?
     @Environment(Model.self) private var model
+    @Environment(ErrorStorage.self) private var errorStorage
     @State private var description: AttributedString?
     
     private func loadUser(from url: URL) async throws -> FAUser {
@@ -58,8 +59,10 @@ struct RemoteUserView: View {
                     user: user,
                     description: $description,
                     toggleWatchAction: {
-                        let updatedUser = try await model.session.unwrap().toggleWatch(for: user)
-                        updateHandler.update(with: updatedUser)
+                        await storeLocalizedError(in: errorStorage, action: "Toggle Watch", webBrowserURL: nil) {
+                            let updatedUser = try await model.session.unwrap().toggleWatch(for: user)
+                            updateHandler.update(with: updatedUser)
+                        }
                     },
                     sendNoteAction: { destinationUser, subject, text in
                         let session = try model.session.unwrap()
