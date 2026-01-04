@@ -147,9 +147,7 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
             Task {
                 await storeLocalizedError(in: errorStorage, action: "Data Update", webBrowserURL: url) {
                     try await update()
-                }
-                
-                if errorStorage.error != nil {
+                    
                     dataState = switch dataState {
                     case .loaded(let data):
                             .loaded(data)
