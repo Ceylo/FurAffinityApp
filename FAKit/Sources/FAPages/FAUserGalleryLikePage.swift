@@ -42,7 +42,7 @@ public struct FAUserGalleryLikePage: Sendable {
 }
 
 extension FAUserGalleryLikePage {
-    public init?(data: Data, url: URL) {
+    public init(data: Data, url: URL) throws {
         let state = signposter.beginInterval("User Gallery Parsing")
         defer { signposter.endInterval("User Gallery Parsing", state) }
         
@@ -55,7 +55,7 @@ extension FAUserGalleryLikePage {
             )
             let itemsQuery = "section.gallery-section div.section-body section figure"
             let items = try siteContentNode.select(itemsQuery)
-            self.previews = items.map { FASubmissionsPage.Submission($0) }
+            self.previews = try items.map { try FASubmissionsPage.Submission($0) }
             
             let userNode = try siteContentNode.select(
                 "userpage-nav-header userpage-nav-user-details username div.c-usernameBlock a.c-usernameBlock__displayName"
@@ -80,7 +80,7 @@ extension FAUserGalleryLikePage {
             self.folderGroups = try Self.parseFolderGroups(from: userItems, currentUrl: url)
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
-            return nil
+            throw error
         }
     }
     

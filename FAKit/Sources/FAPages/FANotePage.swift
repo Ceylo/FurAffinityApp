@@ -8,7 +8,7 @@
 import Foundation
 import SwiftSoup
 
-public struct FANotePage: Equatable {
+public struct FANotePage: Equatable, Sendable {
     public let author: String
     public let displayAuthor: String
     public let title: String
@@ -21,7 +21,7 @@ public struct FANotePage: Equatable {
 }
 
 extension FANotePage {
-    public init?(data: Data) {
+    public init(data: Data) throws {
         let state = signposter.beginInterval("Note Parsing")
         defer { signposter.endInterval("Note Parsing", state) }
         
@@ -50,7 +50,7 @@ extension FANotePage {
                     self.author = ""
                     self.displayAuthor = "[deleted user]"
                 } else {
-                    return nil
+                    throw FAPagesError.parserFailureError()
                 }
             }
             
@@ -83,7 +83,7 @@ extension FANotePage {
                 .replacingOccurrences(of: "\r\n", with: "\n")
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
-            return nil
+            throw error
         }
     }
 }

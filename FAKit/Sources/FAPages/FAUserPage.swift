@@ -38,7 +38,7 @@ extension FAUserPage {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    public init?(data: Data, url: URL) {
+    public init(data: Data, url: URL) throws {
         let state = signposter.beginInterval("User Page Parsing")
         defer { signposter.endInterval("User Page Parsing", state) }
         
@@ -86,7 +86,7 @@ extension FAUserPage {
             }
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
-            return nil
+            throw error
         }
     }
 }

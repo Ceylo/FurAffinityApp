@@ -30,7 +30,7 @@ public struct FAUserJournalsPage: Equatable, Sendable {
 }
 
 extension FAUserJournalsPage {
-    public init?(data: Data) {
+    public init(data: Data) throws {
         let state = signposter.beginInterval("All Journals Preview Parsing")
         defer { signposter.endInterval("All Journals Preview Parsing", state) }
         
@@ -46,7 +46,7 @@ extension FAUserJournalsPage {
             self.init(displayAuthor: displayAuthor, journals: journals)
         } catch {
             logger.error("Decoding failure in \(#file, privacy: .public): \(error, privacy: .public)")
-            return nil
+            throw error
         }
     }
     

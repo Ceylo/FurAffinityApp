@@ -21,7 +21,7 @@ public struct FAJournalPage: Equatable, Sendable {
 }
 
 extension FAJournalPage {
-    public init?(data: Data, url: URL) {
+    public init(data: Data, url: URL) throws {
         let state = signposter.beginInterval("Journal Parsing")
         defer { signposter.endInterval("Journal Parsing", state) }
         
@@ -70,7 +70,7 @@ extension FAJournalPage {
             self.acceptsNewComments = !commentsDisabled
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
-            return nil
+            throw error
         }
     }
 }

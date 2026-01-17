@@ -9,12 +9,9 @@ import Foundation
 import FAPages
 
 public class OnlineFASession: FASession {
-    enum Error: LocalizedError, Swift.Error {
-        /// A network error
-        case requestFailure(underlyingError: LocalizedError)
-        
+    enum Error: LocalizedError {
         /// An error caused by failing to parse the received data
-        case parsingError(sourceUrl: URL)
+        case parsingError(sourceUrl: URL, underlyingError: Swift.Error?)
         
         /// An error caused by a request made with invalid data
         case internalInconsistency
@@ -25,17 +22,16 @@ public class OnlineFASession: FASession {
         var errorDescription: String? {
             switch self {
             case let .FAErrorResponse(message):
-                "The action could not be completed. furaffinity.net provided the following error message:\n\(message)"
-            case let .parsingError(sourceUrl):
-                "The action could not be completed. The data read from \(sourceUrl) could not be interpreted by the application."
-            case let .requestFailure(underlyingError):
-                if let underlyingDescription = underlyingError.errorDescription {
-                    "The action could not be completed. A network request failed for the following reason: \(underlyingDescription)"
+                return "furaffinity.net provided the following error message:\n\(message)"
+            case let .parsingError(sourceUrl, underlyingError):
+                let baseDescription = "The data read from \(sourceUrl) could not be interpreted by the application."
+                if let underlyingError {
+                    return baseDescription + "\nUnderlying error: \(underlyingError)."
                 } else {
-                    "The action could not be completed. A network request failed."
+                    return baseDescription
                 }
             case .internalInconsistency:
-                "The action could not be completed. An internal error happened."
+                return "An internal error happened."
             }
         }
     }
@@ -69,8 +65,7 @@ public class OnlineFASession: FASession {
             FAURLs.latest72SubmissionsUrl
         }
         let data = try await dataSource.httpData(from: url, cookies: cookies)
-        let page = try FASubmissionsPage(data: data, baseUri: url)
-            .unwrap(throwing: Error.parsingError(sourceUrl: url))
+        let page = try rethrow(for: url, FASubmissionsPage(data: data, baseUri: url))
         
         let previews = page.submissions
             .compactMap { $0 }
@@ -88,9 +83,9 @@ public class OnlineFASession: FASession {
         }
         
         let data = try await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params)
-        guard let page = FASubmissionsPage(data: data, baseUri: url),
-              !page.submissions.compactMap({ $0 }).map({ FASubmissionPreview($0) }).contains(previews) else {
-            throw Error.parsingError(sourceUrl: url)
+        let page = try rethrow(for: url, FASubmissionsPage(data: data, baseUri: url))
+        guard !page.submissions.compactMap({ $0 }).map({ FASubmissionPreview($0) }).contains(previews) else {
+            throw Error.parsingError(sourceUrl: url, underlyingError: nil)
         }
     }
     
@@ -101,15 +96,13 @@ public class OnlineFASession: FASession {
         ]
         
         let data = try await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params)
-        _ = try FASubmissionsPage(data: data, baseUri: url)
-            .unwrap(throwing: Error.parsingError(sourceUrl: url))
+        _ = try rethrow(for: url, FASubmissionsPage(data: data, baseUri: url))
     }
     
     // MARK: - User gallery
     public func galleryLike(for url: URL) async throws -> FAUserGalleryLike {
         let data = try await dataSource.httpData(from: url, cookies: cookies)
-        let page = try FAUserGalleryLikePage(data: data, url: url)
-            .unwrap(throwing: Error.parsingError(sourceUrl: url))
+        let page = try rethrow(for: url, FAUserGalleryLikePage(data: data, url: url))
         
         let gallery = FAUserGalleryLike(page, url: url)
         logger.info("Got \(page.previews.count) submission previews (\(gallery.previews.count) after filter)")
@@ -119,16 +112,14 @@ public class OnlineFASession: FASession {
     // MARK: - Submissions
     public func submission(for url: URL) async throws -> FASubmission {
         let data = try await dataSource.httpData(from: url, cookies: cookies)
-        let page = try FASubmissionPage(data: data, url: url)
-            .unwrap(throwing: Error.parsingError(sourceUrl: url))
+        let page = try rethrow(for: url, FASubmissionPage(data: data, url: url))
         
         return try await FASubmission(page, url: url)
     }
     
     public func toggleFavorite(for submission: FASubmission) async throws -> FASubmission {
         let data = try await dataSource.httpData(from: submission.favoriteUrl, cookies: cookies)
-        let page = try FASubmissionPage(data: data, url: submission.url)
-            .unwrap(throwing: Error.parsingError(sourceUrl: submission.favoriteUrl))
+        let page = try rethrow(for: submission.favoriteUrl, FASubmissionPage(data: data, url: submission.url))
         
         return try await FASubmission(page, url: submission.url)
     }
@@ -144,8 +135,7 @@ public class OnlineFASession: FASession {
         ]
         
         let data = try await dataSource.httpData(from: commentable.url, cookies: cookies, method: .POST, parameters: params)
-        let page = try await C.PageType(data: data, url: commentable.url)
-            .unwrap(throwing: Error.parsingError(sourceUrl: commentable.url))
+        let page = try await asyncRethrow(for: commentable.url, await C.PageType(data: data, url: commentable.url))
         
         return try await C(page, url: commentable.url)
     }
@@ -153,15 +143,13 @@ public class OnlineFASession: FASession {
     // MARK: - Journals
     public func journals(for url: URL) async throws -> FAUserJournals {
         let data = try await dataSource.httpData(from: url, cookies: cookies)
-        let page = try FAUserJournalsPage(data: data)
-            .unwrap(throwing: Error.parsingError(sourceUrl: url))
+        let page = try rethrow(for: url, FAUserJournalsPage(data: data))
         return FAUserJournals(page)
     }
     
     public func journal(for url: URL) async throws -> FAJournal {
         let data = try await dataSource.httpData(from: url, cookies: cookies)
-        let page = try FAJournalPage(data: data, url: url)
-            .unwrap(throwing: Error.parsingError(sourceUrl: url))
+        let page = try rethrow(for: url, FAJournalPage(data: data, url: url))
         
         return try await FAJournal(page, url: url)
     }
@@ -169,9 +157,7 @@ public class OnlineFASession: FASession {
     // MARK: - Notes
     public func notePreviews(from box: NotesBox) async throws -> [FANotePreview] {
         let data = try await dataSource.httpData(from: box.url, cookies: cookies)
-        let page = try FANotesPage(data: data)
-            .unwrap(throwing: Error.parsingError(sourceUrl: box.url))
-        
+        let page = try rethrow(for: box.url, FANotesPage(data: data))
         let headers = page.noteHeaders
             .compactMap { $0 }
             .map { FANotePreview($0) }
@@ -182,8 +168,7 @@ public class OnlineFASession: FASession {
     
     public func note(for url: URL) async throws -> FANote {
         let data = try await dataSource.httpData(from: url, cookies: cookies)
-        let page = try FANotePage(data: data)
-            .unwrap(throwing: Error.parsingError(sourceUrl: url))
+        let page = try rethrow(for: url, FANotePage(data: data))
         
         return try await FANote(page, url: url)
     }
@@ -195,8 +180,7 @@ public class OnlineFASession: FASession {
         }
         
         let data = try await dataSource.httpData(from: newNoteUrl, cookies: cookies)
-        let page = try FANewNotePage(data: data)
-            .unwrap(throwing: Error.parsingError(sourceUrl: newNoteUrl))
+        let page = try rethrow(for: newNoteUrl, FANewNotePage(data: data))
         
         try await sendNote(
             apiKey: page.apiKey,
@@ -217,15 +201,12 @@ public class OnlineFASession: FASession {
         
         let data = try await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params)
         
-        if let errorPage = FASystemErrorPage(data: data) {
+        if let errorPage = try? FASystemErrorPage(data: data) {
             logger.error("Failed sending note: \(errorPage.message)")
             throw Error.FAErrorResponse(errorPage.message)
         }
         
-        guard FANotesPage(data: data) != nil else {
-            logger.error("Failed sending note")
-            throw Error.parsingError(sourceUrl: url)
-        }
+        _ = try rethrow(for: url, FANotesPage(data: data))
         
         logger.debug("Note successfully delivered to \(toUsername)")
     }
@@ -293,8 +274,7 @@ public class OnlineFASession: FASession {
     
     private func notificationPreviews(method: HTTPMethod, parameters: [URLQueryItem]) async throws -> FANotificationPreviews {
         let data = try await dataSource.httpData(from: FAURLs.notificationsUrl, cookies: cookies, method: method, parameters: parameters)
-        let page = try FANotificationsPage(data: data)
-            .unwrap(throwing: Error.parsingError(sourceUrl: FAURLs.notificationsUrl))
+        let page = try rethrow(for: FAURLs.notificationsUrl, FANotificationsPage(data: data))
         
         let notificationCount = page.submissionCommentHeaders.count + page.journalCommentHeaders.count + page.journalHeaders.count
         logger.info("Got \(notificationCount) notification previews")
@@ -323,7 +303,7 @@ public class OnlineFASession: FASession {
     }
     
     private nonisolated func loadUser(from data: Data, url: URL) async throws -> FAUser {
-        let page = try FAUserPage(data: data, url: url).unwrap()
+        let page = try rethrow(for: url, FAUserPage(data: data, url: url))
         return try await FAUser(page)
     }
     
@@ -340,8 +320,7 @@ public class OnlineFASession: FASession {
     public func watchlist(for username: String, page: Int, direction: FAWatchlist.WatchDirection) async throws -> FAWatchlist {
         let url = FAURLs.watchlistUrl(for: username, page: page, direction: direction)
         let data = try await dataSource.httpData(from: url, cookies: cookies)
-        let page = try FAWatchlistPage(data: data, baseUri: url)
-            .unwrap(throwing: Error.parsingError(sourceUrl: url))
+        let page = try rethrow(for: url, FAWatchlistPage(data: data, baseUri: url))
         
         return FAWatchlist(page)
     }
@@ -357,8 +336,7 @@ extension OnlineFASession {
         }
         
         let data = try await dataSource.httpData(from: FAURLs.homeUrl, cookies: cookies)
-        let page = try FAHomePage(data: data, baseUri: FAURLs.homeUrl)
-            .unwrapOrThrow(error: Error.parsingError(sourceUrl: FAURLs.homeUrl))
+        let page = try rethrow(for: FAURLs.homeUrl, FAHomePage(data: data, baseUri: FAURLs.homeUrl))
         logger.info("User is logged in")
         
         self.init(
@@ -370,3 +348,18 @@ extension OnlineFASession {
     }
 }
 
+fileprivate func rethrow<R>(for url: URL, _ closure: @autoclosure () throws -> R) rethrows -> R {
+    do {
+        return try closure()
+    } catch {
+        throw OnlineFASession.Error.parsingError(sourceUrl: url, underlyingError: error)
+    }
+}
+
+fileprivate func asyncRethrow<R>(for url: URL, _ closure: @Sendable @autoclosure () async throws -> R) async rethrows -> R {
+    do {
+        return try await closure()
+    } catch {
+        throw OnlineFASession.Error.parsingError(sourceUrl: url, underlyingError: error)
+    }
+}

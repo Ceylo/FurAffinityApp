@@ -14,7 +14,7 @@ public struct FAHomePage: Equatable, Sendable {
 }
 
 extension FAHomePage {
-    public init?(data: Data, baseUri: URL) {
+    public init(data: Data, baseUri: URL) throws {
         let state = signposter.beginInterval("Home Parsing")
         defer { signposter.endInterval("Home Parsing", state) }
         
@@ -35,7 +35,7 @@ extension FAHomePage {
             )
         } catch {
             logger.error("\(#file, privacy: .public) - failed decoding or parsing: \(error, privacy: .public)")
-            return nil
+            throw error
         }
     }
 }

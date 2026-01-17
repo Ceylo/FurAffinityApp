@@ -26,7 +26,7 @@ public struct FANotificationsPage: Equatable, Sendable {
 }
 
 extension FANotificationsPage {
-    public init?(data: Data) {
+    public init(data: Data) throws {
         let state = signposter.beginInterval("All Notifications Preview Parsing")
         defer { signposter.endInterval("All Notifications Preview Parsing", state) }
         
@@ -46,7 +46,7 @@ extension FANotificationsPage {
             self.journalHeaders = Self.decodeNodes(journalNodes, Header.journal)
         } catch {
             logger.error("Decoding failure in \(#file, privacy: .public): \(error, privacy: .public)")
-            return nil
+            throw error
         }
     }
     

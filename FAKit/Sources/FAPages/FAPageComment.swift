@@ -91,7 +91,7 @@ extension CommentType {
 }
 
 extension FAPageComment {
-    init?(_ node: SwiftSoup.Element, type: CommentType) throws {
+    init(_ node: SwiftSoup.Element, type: CommentType) throws {
         let config = type.decodingDonfig
         let rawCidString = try node.select("a").attr("id")
         let cid = try Int(rawCidString.substring(matching: config.commentIdRegex).unwrap()).unwrap()

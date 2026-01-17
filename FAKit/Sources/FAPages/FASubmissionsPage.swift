@@ -35,7 +35,7 @@ public struct FASubmissionsPage: Sendable {
 }
 
 extension FASubmissionsPage {
-    public init?(data: Data, baseUri: URL) {
+    public init(data: Data, baseUri: URL) throws {
         let state = signposter.beginInterval("All Submission Previews Parsing")
         defer { signposter.endInterval("All Submission Previews Parsing", state) }
         
@@ -46,7 +46,7 @@ extension FASubmissionsPage {
             let itemsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div#messages-comments-submission div#messagecenter-submissions section figure"
             let items = try doc.select(itemsQuery)
             
-            self.submissions = items.map { Submission($0) }
+            self.submissions = try items.map { try Submission($0) }
             let buttonsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div.aligncenter a"
             let buttonItems = try doc.select(buttonsQuery).array()
             let prevButton = try buttonItems.first { try $0.text().starts(with: "Prev") }
@@ -67,44 +67,40 @@ extension FASubmissionsPage {
             }
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
-            return nil
+            throw error
         }
     }
 }
 
 extension FASubmissionsPage.Submission {
-    init?(_ node: SwiftSoup.Element) {
+    init(_ node: SwiftSoup.Element) throws {
         let state = signposter.beginInterval("Submission Preview Parsing")
         defer { signposter.endInterval("Submission Preview Parsing", state) }
         
-        do {
-            let sidStr = try node.attr("id")
-            guard sidStr.hasPrefix("sid-") else { return nil }
-            let index = sidStr.index(sidStr.startIndex, offsetBy: 4)
-            let sid = Int(String(sidStr[index...]))!
-            self.sid = sid
-            self.url = FAURLs.submissionUrl(sid: sid)
-            
-            let thumbNodes = try node.select("figure b u a img")
-            let thumbSrc = try thumbNodes.first().unwrap().attr("src")
-            let thumbWidthStr = try thumbNodes.first().unwrap().attr("data-width")
-            let thumbHeightStr = try thumbNodes.first().unwrap().attr("data-height")
-            let thumbWidth = try Float(thumbWidthStr).unwrap()
-            let thumbHeight = try Float(thumbHeightStr).unwrap()
-            self.thumbnailUrl = try URL(unsafeString: "https:\(thumbSrc)")
-            self.thumbnailWidthOnHeightRatio = thumbWidth / thumbHeight
-            
-            let captionNodes = try node.select("figcaption p a")
-            guard captionNodes.count >= 2 else {
-                logger.error("\(#file, privacy: .public) - invalid structure")
-                return nil
-            }
-            self.title = try captionNodes[0].text()
-            self.author = try captionNodes[1].attr("href")
-                .substring(matching: "/user/(.+)/")!
-            self.displayAuthor = try captionNodes[1].text()
-        } catch {
-            return nil
+        let sidStr = try node.attr("id")
+        guard sidStr.hasPrefix("sid-") else { throw FAPagesError.parserFailureError() }
+        let index = sidStr.index(sidStr.startIndex, offsetBy: 4)
+        let sid = Int(String(sidStr[index...]))!
+        self.sid = sid
+        self.url = FAURLs.submissionUrl(sid: sid)
+        
+        let thumbNodes = try node.select("figure b u a img")
+        let thumbSrc = try thumbNodes.first().unwrap().attr("src")
+        let thumbWidthStr = try thumbNodes.first().unwrap().attr("data-width")
+        let thumbHeightStr = try thumbNodes.first().unwrap().attr("data-height")
+        let thumbWidth = try Float(thumbWidthStr).unwrap()
+        let thumbHeight = try Float(thumbHeightStr).unwrap()
+        self.thumbnailUrl = try URL(unsafeString: "https:\(thumbSrc)")
+        self.thumbnailWidthOnHeightRatio = thumbWidth / thumbHeight
+        
+        let captionNodes = try node.select("figcaption p a")
+        guard captionNodes.count >= 2 else {
+            logger.error("\(#file, privacy: .public) - invalid structure")
+            throw FAPagesError.parserFailureError()
         }
+        self.title = try captionNodes[0].text()
+        self.author = try captionNodes[1].attr("href")
+            .substring(matching: "/user/(.+)/")!
+        self.displayAuthor = try captionNodes[1].text()
     }
 }

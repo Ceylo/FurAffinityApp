@@ -24,7 +24,7 @@ public struct FANotesPage: Equatable, Sendable {
 }
 
 extension FANotesPage {
-    public init?(data: Data) {
+    public init(data: Data) throws {
         let state = signposter.beginInterval("All Notes Preview Parsing")
         defer { signposter.endInterval("All Notes Preview Parsing", state) }
         
@@ -37,7 +37,7 @@ extension FANotesPage {
             self.noteHeaders = try noteNodes.map { try NoteHeader($0) }            
         } catch {
             logger.error("Decoding failure in \(#file, privacy: .public): \(error, privacy: .public)")
-            return nil
+            throw error
         }
             
     }

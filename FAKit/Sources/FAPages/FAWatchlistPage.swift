@@ -33,15 +33,15 @@ public struct FAWatchlistPage: Equatable, Sendable {
 }
 
 extension FAWatchlistPage {
-    public init?(data: Data, baseUri: URL) {
+    public init(data: Data, baseUri: URL) throws {
         let state = signposter.beginInterval("Watchlist Parsing")
         defer { signposter.endInterval("Watchlist Parsing", state) }
         
         do {
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
             let items = try doc.select("div.watch-list-items")
-            let users = items
-                .map { User($0) }
+            let users = try items
+                .map { try User($0) }
                 .compactMap { $0 }
             
             // As of 6th September 2025
@@ -88,13 +88,13 @@ extension FAWatchlistPage {
             )
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
-            return nil
+            throw error
         }
     }
 }
 
 extension FAWatchlistPage.User {
-    init?(_ node: SwiftSoup.Element) {
+    init(_ node: SwiftSoup.Element) throws {
         let state = signposter.beginInterval("Watchlist User Parsing")
         defer { signposter.endInterval("Watchlist User Parsing", state) }
         
@@ -109,7 +109,7 @@ extension FAWatchlistPage.User {
             self.init(name: name, displayName: displayName)
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
-            return nil
+            throw error
         }
     }
 }

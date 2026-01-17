@@ -81,7 +81,7 @@ public struct FASubmissionPage: Equatable, Sendable {
 }
 
 extension FASubmissionPage {
-    public init?(data: Data, url: URL) {
+    public init(data: Data, url: URL) throws {
         do {
             let state = signposter.beginInterval("Submission Parsing")
             defer { signposter.endInterval("Submission Parsing", state) }
@@ -208,7 +208,7 @@ extension FASubmissionPage {
             
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
-            return nil
+            throw error
         }
     }
 }

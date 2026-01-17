@@ -9,7 +9,7 @@ import Foundation
 import FAPages
 
 public protocol FAPage: Sendable {
-    init?(data: Data, url: URL) async
+    init(data: Data, url: URL) async throws
 }
 
 public protocol Commentable: Sendable {

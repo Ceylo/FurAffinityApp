@@ -8,8 +8,15 @@
 import Foundation
 
 public extension Optional {
-    enum Error: Swift.Error {
+    enum Error: LocalizedError {
         case empty(String)
+        
+        public var errorDescription: String? {
+            switch self {
+            case .empty(let string):
+                return string
+            }
+        }
     }
     
     func unwrap(file: String = #file, line: Int = #line) throws -> Wrapped {

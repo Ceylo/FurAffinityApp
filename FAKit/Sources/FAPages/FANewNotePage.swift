@@ -13,7 +13,7 @@ public struct FANewNotePage: Equatable {
 }
 
 extension FANewNotePage {
-    public init?(data: Data) {
+    public init(data: Data) throws {
         let state = signposter.beginInterval("New Note Parsing")
         defer { signposter.endInterval("New Note Parsing", state) }
         
@@ -25,7 +25,7 @@ extension FANewNotePage {
             self.apiKey = try apiKeyNode.attr("value")
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
-            return nil
+            throw error
         }
     }
 }

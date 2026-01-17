@@ -13,7 +13,7 @@ public struct FASystemErrorPage: Equatable {
 }
 
 extension FASystemErrorPage {
-    public init?(data: Data) {
+    public init(data: Data) throws {
         let state = signposter.beginInterval("New Note Parsing")
         defer { signposter.endInterval("New Note Parsing", state) }
         
@@ -37,7 +37,7 @@ extension FASystemErrorPage {
                 .trimmingCharacters(in: .whitespacesAndNewlines)
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
-            return nil
+            throw error
         }
     }
 }
