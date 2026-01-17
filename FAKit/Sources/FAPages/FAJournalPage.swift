@@ -43,7 +43,7 @@ extension FAJournalPage {
                 "div#columnpage div.content section"
             )
             self.title = try sectionNode
-                .select("div.section-header h2.journal-title")
+                .select("div.section-header div#c-journalTitleTop span#c-journalTitleTop__subject")
                 .text()
             let datetimeNode = try sectionNode
                 .select("div.section-header div span.popup_date")
