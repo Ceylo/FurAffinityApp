@@ -17,12 +17,12 @@ public class OnlineFASession: FASession {
         case internalInconsistency
         
         /// An error with a message provided by furaffinity.net
-        case FASystemErrorResponse(String)
+        case FASystemMessageResponse(String)
         
         var errorDescription: String? {
             switch self {
-            case let .FASystemErrorResponse(message):
-                return "furaffinity.net provided the following error message:\n\(message)"
+            case let .FASystemMessageResponse(message):
+                return "Message from furaffinity.net:\n\(message)"
             case let .parsingError(sourceUrl, underlyingError):
                 let baseDescription = "The data read from \(sourceUrl) could not be interpreted by the application."
                 if let underlyingError {
@@ -346,9 +346,14 @@ fileprivate func make<Page: FAPage>(_ page: Page.Type, with data: Data, url: URL
     do {
         return try await Page(data: data, url: url)
     } catch {
-        if let messagePage = try? FASystemErrorPage(data: data) {
-            logger.error("Got FA system error: \(messagePage.message)")
-            throw OnlineFASession.Error.FASystemErrorResponse(messagePage.message)
+        if let errorPage = try? FASystemErrorPage(data: data) {
+            logger.error("Got FA system error: \(errorPage.message)")
+            throw OnlineFASession.Error.FASystemMessageResponse(errorPage.message)
+        }
+        
+        if let messagePage = try? FASystemMessagePage(data: data) {
+            logger.error("Got FA system message: \(messagePage.message)")
+            throw OnlineFASession.Error.FASystemMessageResponse(messagePage.message)
         }
         
         throw OnlineFASession.Error.parsingError(sourceUrl: url, underlyingError: error)

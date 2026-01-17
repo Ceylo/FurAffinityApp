@@ -23,4 +23,19 @@ struct FASystemErrorPageTests {
         )
         #expect(page == expected)
     }
+    
+    @Test func parseDisabledUserPage_providesMessage() throws {
+        let data = testData("www.furaffinity.net:user:disabled-user-message.html")
+        let page = try FASystemMessagePage(data: data)
+        let expected = FASystemMessagePage(
+            message: """
+                Access has been disabled to the account and contents of user Misa.
+                
+                If this is your userpage and you would like to re-enable it, you may do so by contacting accounts[dot]furaffinity.net and requesting your account be re-enabled. 
+                
+                If you came here to unwatch this user you may do so by clicking the following link: unwatch Misa
+                """
+        )
+        #expect(page == expected)
+    }
 }

@@ -14,25 +14,25 @@ public struct FASystemErrorPage: Equatable {
 
 extension FASystemErrorPage {
     public init(data: Data) throws {
-        let state = signposter.beginInterval("New Note Parsing")
-        defer { signposter.endInterval("New Note Parsing", state) }
+        let state = signposter.beginInterval("FA System Error parsing")
+        defer { signposter.endInterval("FA System Error parsing", state) }
         
         do {
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
             //set pretty print to false, so \n is not removed
             doc.outputSettings(OutputSettings().prettyPrint(pretty: false))
             
-            let errorTitleQuery = "html > body > section > div.section-header"
-            let errorMessageQuery = "html > body > section > div.section-body"
-            let errorTitle = try doc.select(errorTitleQuery).text()
-            guard errorTitle == "System Error" else {
+            let titleQuery = "html > body > section > div.section-header"
+            let messageQuery = "html > body > section > div.section-body"
+            let title = try doc.select(titleQuery).text()
+            guard title == "System Error" else {
                 throw FAPagesError.parserFailureError()
             }
             
-            let errorMessageNode = try doc.select(errorMessageQuery)
-            try errorMessageNode.select("a.button")
+            let messageNode = try doc.select(messageQuery)
+            try messageNode.select("a.button")
                 .remove()
-            self.message = try errorMessageNode
+            self.message = try messageNode
                 .textWithNewLines()
                 .trimmingCharacters(in: .whitespacesAndNewlines)
         } catch {
