@@ -11,8 +11,7 @@ import Testing
 struct FANotePageTests {
     @Test func parseNote_returnsNoteDetails() throws {
         let data = testData("www.furaffinity.net:msg:pms-contents.html")
-        let page = FANotePage(data: data)
-        #expect(page != nil)
+        let page = try FANotePage(data: data)
         
         let expected = FANotePage(
             author: "ceylo", displayAuthor: "Ceylo",
@@ -59,14 +58,14 @@ Have a nice day 🎉
 """
         )
         #expect(expected == page)
-        #expect(expected.author == page?.author)
-        #expect(expected.displayAuthor == page?.displayAuthor)
-        #expect(expected.title == page?.title)
-        #expect(expected.datetime == page?.datetime)
-        #expect(expected.naturalDatetime == page?.naturalDatetime)
-        #expect(expected.htmlMessage == page?.htmlMessage)
-        #expect(expected.htmlMessageWithoutWarning == page?.htmlMessageWithoutWarning)
-        #expect(expected.answerKey == page?.answerKey)
-        #expect(expected.answerPlaceholderMessage == page?.answerPlaceholderMessage)
+        #expect(expected.author == page.author)
+        #expect(expected.displayAuthor == page.displayAuthor)
+        #expect(expected.title == page.title)
+        #expect(expected.datetime == page.datetime)
+        #expect(expected.naturalDatetime == page.naturalDatetime)
+        #expect(expected.htmlMessage == page.htmlMessage)
+        #expect(expected.htmlMessageWithoutWarning == page.htmlMessageWithoutWarning)
+        #expect(expected.answerKey == page.answerKey)
+        #expect(expected.answerPlaceholderMessage == page.answerPlaceholderMessage)
     }
 }

@@ -12,8 +12,7 @@ final class FAJournalPageTests: XCTestCase {
     func testSubmissionPageWithComments_isParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/journal/10516170/")!
         let data = testData("www.furaffinity.net:journal:10516170-withcomments.html")
-        let page = FAJournalPage(data: data, url: url)
-        XCTAssertNotNil(page)
+        let page = try FAJournalPage(data: data, url: url)
         
         let expectedComments: [FAPageComment] = [
             .visible(.init(cid: 59820550, indentation: 0, author: "fukothenimbat", displayAuthor: "FukoTheNimbat",
@@ -56,7 +55,7 @@ final class FAJournalPageTests: XCTestCase {
     func testSubmissionPageWithCommentsDisabled_isParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/journal/10882268/")!
         let data = testData("www.furaffinity.net:journal:10882268-disabled-comments.html")
-        let page = try FAJournalPage(data: data, url: url).unwrap()
+        let page = try FAJournalPage(data: data, url: url)
         
         XCTAssertEqual(page.acceptsNewComments, false)
     }

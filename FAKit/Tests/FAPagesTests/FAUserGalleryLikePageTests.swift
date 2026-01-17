@@ -78,8 +78,7 @@ final class FAUserGalleryLikePageTests: XCTestCase {
     func testFirstGalleryPage_72itemsParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/gallery/tiaamaito/")!
         let data = testData("www.furaffinity.net:gallery:tiaamaito:.html")
-        let asyncPage = FAUserGalleryLikePage(data: data, url: url)
-        let page = try XCTUnwrap(asyncPage)
+        let page = try FAUserGalleryLikePage(data: data, url: url)
         XCTAssertEqual(page.previews.count, 72)
         XCTAssertEqual(page.displayAuthor, "tiaamaito")
         
@@ -103,8 +102,7 @@ final class FAUserGalleryLikePageTests: XCTestCase {
     func testEmptyGalleryPage_parsedWithNoContent() throws {
         let url = URL(string: "https://www.furaffinity.net/gallery/furrycount/")!
         let data = testData("www.furaffinity.net:gallery:furrycount:.html")
-        let asyncPage = FAUserGalleryLikePage(data: data, url: url)
-        let page = try XCTUnwrap(asyncPage)
+        let page = try FAUserGalleryLikePage(data: data, url: url)
         XCTAssertEqual(page.previews.count, 0)
         XCTAssertEqual(page.displayAuthor, "Furrycount")
         XCTAssertEqual(page.nextPageUrl, nil)
@@ -133,8 +131,7 @@ final class FAUserGalleryLikePageTests: XCTestCase {
     func testScrapsPage_72itemsParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/scraps/tiaamaito/")!
         let data = testData("www.furaffinity.net:scraps:tiaamaito:.html")
-        let asyncPage = FAUserGalleryLikePage(data: data, url: url)
-        let page = try XCTUnwrap(asyncPage)
+        let page = try FAUserGalleryLikePage(data: data, url: url)
         XCTAssertEqual(page.previews.count, 72)
         XCTAssertEqual(page.displayAuthor, "tiaamaito")
         
@@ -158,8 +155,7 @@ final class FAUserGalleryLikePageTests: XCTestCase {
     func testFavoritesPage_72itemsParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/favorites/tiaamaito/")!
         let data = testData("www.furaffinity.net:favorites:tiaamaito:.html")
-        let asyncPage = FAUserGalleryLikePage(data: data, url: url)
-        let page = try XCTUnwrap(asyncPage)
+        let page = try FAUserGalleryLikePage(data: data, url: url)
         XCTAssertEqual(page.previews.count, 72)
         XCTAssertEqual(page.displayAuthor, "tiaamaito")
         

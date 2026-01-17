@@ -11,15 +11,13 @@ import XCTest
 final class FANotesPageTests: XCTestCase {
     func testEmptyInbox_returnsNoNote() throws {
         let data = testData("www.furaffinity.net:msg:pms-empty.html")
-        let page = FANotesPage(data: data)
-        XCTAssertNotNil(page)
-        XCTAssertEqual([], page!.noteHeaders)
+        let page = try FANotesPage(data: data)
+        XCTAssertEqual([], page.noteHeaders)
     }
     
     func testMessagesInInbox_returnsNotes() throws {
         let data = testData("www.furaffinity.net:msg:pms-unread.html")
-        let page = FANotesPage(data: data)
-        XCTAssertNotNil(page)
+        let page = try FANotesPage(data: data)
         
         let expected: [FANotesPage.NoteHeader] = [
             .init(
@@ -33,6 +31,6 @@ final class FANotesPageTests: XCTestCase {
                 noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/141712666/#message")!
             )
         ]
-        XCTAssertEqual(expected, page!.noteHeaders)
+        XCTAssertEqual(expected, page.noteHeaders)
     }
 }

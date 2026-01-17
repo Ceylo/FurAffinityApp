@@ -11,7 +11,7 @@ import Testing
 struct FASystemErrorPageTests {
     @Test func parseSystemErrorPage_providesErrorMessage() throws {
         let data = testData("www.furaffinity.net:user:username-system-error.html")
-        let page = FASystemErrorPage(data: data)
+        let page = try FASystemErrorPage(data: data)
         let expected = FASystemErrorPage(
             message: """
                 This user cannot be found.

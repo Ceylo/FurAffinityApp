@@ -12,7 +12,7 @@ import Testing
 struct FAJournalsPageTests {
     @Test func journalsPageWithNoJournal_isParsed() throws {
         let data = testData("www.furaffinity.net:journals:maziurek-empty.html")
-        let page = try FAUserJournalsPage(data: data).unwrap()
+        let page = try FAUserJournalsPage(data: data)
         let expected = FAUserJournalsPage(
             displayAuthor: "Maziurek",
             journals: []
@@ -22,7 +22,7 @@ struct FAJournalsPageTests {
     
     @Test func journalsPageWithJournals_isParsed() throws {
         let data = testData("www.furaffinity.net:journals:tiaamaito:.html")
-        let page = try FAUserJournalsPage(data: data).unwrap()
+        let page = try FAUserJournalsPage(data: data)
         #expect(page.displayAuthor == "tiaamaito")
         #expect(page.journals.count == 25)
         #expect(page.journals.prefix(5) == [

@@ -11,11 +11,10 @@ import XCTest
 final class FAWatchlistPageTests: XCTestCase {
     func testSinglePageWatchlist_returnsUsers() throws {
         let data = testData("www.furaffinity.net:watchlist:by:terriniss.html")
-        let pageOpt = FAWatchlistPage(
+        let page = try FAWatchlistPage(
             data: data,
             baseUri: URL(string: "https://www.furaffinity.net/watchlist/by/terriniss/")!
         )
-        let page = try XCTUnwrap(pageOpt)
         
         let expected = FAWatchlistPage(
             currentUser: .init(name: "terriniss", displayName: "Terriniss"),
@@ -152,11 +151,10 @@ final class FAWatchlistPageTests: XCTestCase {
     
     func testMultiPageWatchlist_returnsUsersAndPage() throws {
         let data = testData("www.furaffinity.net:watchlist:to:terriniss.html")
-        let pageOpt = FAWatchlistPage(
+        let page = try FAWatchlistPage(
             data: data,
             baseUri: URL(string: "https://www.furaffinity.net/watchlist/to/terriniss/")!
         )
-        let page = try XCTUnwrap(pageOpt)
         XCTAssertEqual(page.users.count, 200)
         XCTAssertEqual(
             page.nextPageUrl,
