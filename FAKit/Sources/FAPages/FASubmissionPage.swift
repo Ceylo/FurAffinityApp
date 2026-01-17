@@ -29,7 +29,7 @@ extension Rating {
     }
 }
 
-public struct FASubmissionPage: Equatable, Sendable {
+public struct FASubmissionPage: FAPage {
     public struct Metadata: Hashable, Sendable {
         public init(title: String, author: String, displayAuthor: String, datetime: String, naturalDatetime: String, viewCount: Int, commentCount: Int, favoriteCount: Int, rating: Rating, category: String, species: String, size: String, fileSize: String, keywords: [String], folders: [FAFolder]) {
             self.title = title

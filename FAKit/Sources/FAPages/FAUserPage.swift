@@ -8,7 +8,7 @@
 import SwiftSoup
 import Foundation
 
-public struct FAUserPage: Equatable {
+public struct FAUserPage: FAPage {
     public let name: String
     public let displayName: String
     public let bannerUrl: URL

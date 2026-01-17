@@ -8,19 +8,19 @@
 import SwiftSoup
 import Foundation
 
-public struct FAHomePage: Equatable, Sendable {
+public struct FAHomePage: FAPage {
     public let username: String
     public let displayUsername: String
 }
 
 extension FAHomePage {
-    public init(data: Data, baseUri: URL) throws {
+    public init(data: Data, url: URL) throws {
         let state = signposter.beginInterval("Home Parsing")
         defer { signposter.endInterval("Home Parsing", state) }
         
         do {
             let string = String(decoding: data, as: UTF8.self)
-            let doc = try SwiftSoup.parse(string, baseUri.absoluteString)
+            let doc = try SwiftSoup.parse(string, url.absoluteString)
             
             let usernameQuery = "body div.mobile-navigation div.nav-ac-container article.nav-ac-content div.mobile-nav-content-container div.aligncenter h2 a"
             let element = try doc.select(usernameQuery)

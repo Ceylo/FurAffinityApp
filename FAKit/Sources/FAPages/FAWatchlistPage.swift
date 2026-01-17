@@ -8,7 +8,7 @@
 import SwiftSoup
 import Foundation
 
-public struct FAWatchlistPage: Equatable, Sendable {
+public struct FAWatchlistPage: FAPage {
     public struct User: Equatable, Sendable, Identifiable {
         public init(name: String, displayName: String) {
             self.name = name
@@ -33,7 +33,7 @@ public struct FAWatchlistPage: Equatable, Sendable {
 }
 
 extension FAWatchlistPage {
-    public init(data: Data, baseUri: URL) throws {
+    public init(data: Data, url: URL) throws {
         let state = signposter.beginInterval("Watchlist Parsing")
         defer { signposter.endInterval("Watchlist Parsing", state) }
         
@@ -70,7 +70,7 @@ extension FAWatchlistPage {
                     .appending(queryItems: [.init(name: "page", value: nextPageNumberStr)])
             }
             
-            let (username, _, watchDirection) = try FAURLs.parseWatchlistUrl(baseUri).unwrap()
+            let (username, _, watchDirection) = try FAURLs.parseWatchlistUrl(url).unwrap()
             
             let title = try doc.select("div#main-window > div#site-content > section > div.section-header > h2").text()
             let displayName = switch watchDirection {

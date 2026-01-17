@@ -11,7 +11,7 @@ import XCTest
 final class FANotificationsPageTests: XCTestCase {
     func testWithAllNotifications_returnsAllNotifications() throws {
         let data = testData("www.furaffinity.net:msg:others-comments-journals-shout.html")
-        let page = try FANotificationsPage(data: data)
+        let page = try FANotificationsPage(data: data, url: URL(string: "https://www.furaffinity.net/msg:others")!)
         XCTAssertEqual(page.submissionCommentHeaders, [
             .init(
                 id: 183695893,
@@ -77,7 +77,7 @@ final class FANotificationsPageTests: XCTestCase {
     
     func testEmpty_returnsNoNotification() throws {
         let data = testData("www.furaffinity.net:msg:others-empty.html")
-        let page = try FANotificationsPage(data: data)
+        let page = try FANotificationsPage(data: data, url: URL(string: "https://www.furaffinity.net/msg/others")!)
         let expected = FANotificationsPage(
             submissionCommentHeaders: [],
             journalCommentHeaders: [],

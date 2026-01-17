@@ -13,7 +13,7 @@ final class FAWatchlistPageTests: XCTestCase {
         let data = testData("www.furaffinity.net:watchlist:by:terriniss.html")
         let page = try FAWatchlistPage(
             data: data,
-            baseUri: URL(string: "https://www.furaffinity.net/watchlist/by/terriniss/")!
+            url: URL(string: "https://www.furaffinity.net/watchlist/by/terriniss/")!
         )
         
         let expected = FAWatchlistPage(
@@ -153,7 +153,7 @@ final class FAWatchlistPageTests: XCTestCase {
         let data = testData("www.furaffinity.net:watchlist:to:terriniss.html")
         let page = try FAWatchlistPage(
             data: data,
-            baseUri: URL(string: "https://www.furaffinity.net/watchlist/to/terriniss/")!
+            url: URL(string: "https://www.furaffinity.net/watchlist/to/terriniss/")!
         )
         XCTAssertEqual(page.users.count, 200)
         XCTAssertEqual(

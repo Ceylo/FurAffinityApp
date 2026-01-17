@@ -8,12 +8,12 @@
 import Foundation
 import SwiftSoup
 
-public struct FANewNotePage: Equatable {
+public struct FANewNotePage: FAPage {
     public let apiKey: String
 }
 
 extension FANewNotePage {
-    public init(data: Data) throws {
+    public init(data: Data, url: URL) throws {
         let state = signposter.beginInterval("New Note Parsing")
         defer { signposter.endInterval("New Note Parsing", state) }
         

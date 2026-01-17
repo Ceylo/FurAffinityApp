@@ -6,12 +6,13 @@
 //
 
 import Testing
+import Foundation
 @testable import FAPages
 
 struct FANotePageTests {
     @Test func parseNote_returnsNoteDetails() throws {
         let data = testData("www.furaffinity.net:msg:pms-contents.html")
-        let page = try FANotePage(data: data)
+        let page = try FANotePage(data: data, url: URL(string: "https://www.furaffinity.net/msg/pms")!)
         
         let expected = FANotePage(
             author: "ceylo", displayAuthor: "Ceylo",

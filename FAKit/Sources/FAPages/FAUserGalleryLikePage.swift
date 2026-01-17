@@ -34,7 +34,7 @@ public struct FAFolder: Sendable, Hashable, Identifiable {
     }
 }
 
-public struct FAUserGalleryLikePage: Sendable {
+public struct FAUserGalleryLikePage: FAPage {
     public let previews: [FASubmissionsPage.Submission?]
     public let displayAuthor: String
     public let nextPageUrl: URL?

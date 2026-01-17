@@ -8,7 +8,7 @@
 import Foundation
 import SwiftSoup
 
-public struct FASubmissionsPage: Sendable {
+public struct FASubmissionsPage: FAPage {
     public struct Submission: Equatable, Sendable {
         public init(sid: Int, url: URL, thumbnailUrl: URL, thumbnailWidthOnHeightRatio: Float, title: String, author: String, displayAuthor: String) {
             self.sid = sid
@@ -35,13 +35,13 @@ public struct FASubmissionsPage: Sendable {
 }
 
 extension FASubmissionsPage {
-    public init(data: Data, baseUri: URL) throws {
+    public init(data: Data, url: URL) throws {
         let state = signposter.beginInterval("All Submission Previews Parsing")
         defer { signposter.endInterval("All Submission Previews Parsing", state) }
         
         do {
             let string = try String(data: data, encoding: .utf8).unwrap()
-            let doc = try SwiftSoup.parse(string, baseUri.absoluteString)
+            let doc = try SwiftSoup.parse(string, url.absoluteString)
             
             let itemsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div#messages-comments-submission div#messagecenter-submissions section figure"
             let items = try doc.select(itemsQuery)

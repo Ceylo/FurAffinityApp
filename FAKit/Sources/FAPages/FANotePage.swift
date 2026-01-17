@@ -8,7 +8,7 @@
 import Foundation
 import SwiftSoup
 
-public struct FANotePage: Equatable, Sendable {
+public struct FANotePage: FAPage {
     public let author: String
     public let displayAuthor: String
     public let title: String
@@ -21,7 +21,7 @@ public struct FANotePage: Equatable, Sendable {
 }
 
 extension FANotePage {
-    public init(data: Data) throws {
+    public init(data: Data, url: URL) throws {
         let state = signposter.beginInterval("Note Parsing")
         defer { signposter.endInterval("Note Parsing", state) }
         

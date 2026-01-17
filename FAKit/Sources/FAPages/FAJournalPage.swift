@@ -8,7 +8,7 @@
 import Foundation
 import SwiftSoup
 
-public struct FAJournalPage: Equatable, Sendable {
+public struct FAJournalPage: FAPage {
     public let author: String
     public let displayAuthor: String
     public let title: String

@@ -8,7 +8,7 @@
 import Foundation
 import SwiftSoup
 
-public struct FANotificationsPage: Equatable, Sendable {
+public struct FANotificationsPage: FAPage {
     public struct Header: Equatable, Sendable {
         public let id: Int
         public let author: String
@@ -26,7 +26,7 @@ public struct FANotificationsPage: Equatable, Sendable {
 }
 
 extension FANotificationsPage {
-    public init(data: Data) throws {
+    public init(data: Data, url: URL) throws {
         let state = signposter.beginInterval("All Notifications Preview Parsing")
         defer { signposter.endInterval("All Notifications Preview Parsing", state) }
         

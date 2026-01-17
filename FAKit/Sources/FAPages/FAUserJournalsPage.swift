@@ -8,7 +8,7 @@
 import Foundation
 import SwiftSoup
 
-public struct FAUserJournalsPage: Equatable, Sendable {
+public struct FAUserJournalsPage: FAPage {
     public struct Journal: Equatable, Sendable, Identifiable {
         public let id: Int
         public let title: String
@@ -30,7 +30,7 @@ public struct FAUserJournalsPage: Equatable, Sendable {
 }
 
 extension FAUserJournalsPage {
-    public init(data: Data) throws {
+    public init(data: Data, url: URL) throws {
         let state = signposter.beginInterval("All Journals Preview Parsing")
         defer { signposter.endInterval("All Journals Preview Parsing", state) }
         

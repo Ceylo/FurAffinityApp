@@ -6,12 +6,13 @@
 //
 
 import Testing
+import Foundation
 @testable import FAPages
 
 struct FANewNotePageTests {
     @Test func parseNewNotePage_providesAPIKey() throws {
         let data = testData("www.furaffinity.net:newpm:username.html")
-        let page = try FANewNotePage(data: data)
+        let page = try FANewNotePage(data: data, url: URL(string: "https://www.furaffinity.net/newpm/username")!)
         let expected = FANewNotePage(
             apiKey: "ef4475a2311353fd9f667ba9d6956af8ab721e63a2d73d855ebc51acef09e54d"
         )
