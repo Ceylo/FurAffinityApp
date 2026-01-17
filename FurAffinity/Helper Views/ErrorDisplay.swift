@@ -10,7 +10,6 @@ import SwiftUI
 struct ErrorDisplay: View {
     @State private var showAlert = false
     @Environment(ErrorStorage.self) private var errorStorage
-    @Environment(\.navigationStream) private var navigationStream
     
     @ViewBuilder
     func alertActions(for error: RichLocalizedError) -> some View {
@@ -19,25 +18,9 @@ struct ErrorDisplay: View {
     
     @ViewBuilder
     func alertActions() -> some View {
-        if let error = errorStorage.error {
-            if error.shouldPopNavigationStack {
-                if let url = error.webBrowserURL {
-                    Link("Open in web browser", destination: url)
-                        .environment(\.openURL, OpenURLAction { url in
-                            navigationStream.send(.popNavigationStack)
-                            return .systemAction
-                        })
-                }
-                
-                Button("Go Back") {
-                    navigationStream.send(.popNavigationStack)
-                }
-            } else {
-                if let url = error.webBrowserURL {
-                    Link("Open in web browser", destination: url)
-                    Button("OK") {}
-                }
-            }
+        if let error = errorStorage.error, let url = error.webBrowserURL {
+            Link("Open in web browser", destination: url)
+            Button("OK") {}
         }
     }
     

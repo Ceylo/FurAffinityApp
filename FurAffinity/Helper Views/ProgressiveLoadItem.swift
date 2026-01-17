@@ -26,9 +26,12 @@ struct ProgressiveLoadItem<DataType: ProgressiveData>: View {
                     ProgressView()
                     Text(label)
                 }
-                .task {
+                // Not using .task() here so that the task doesn't get cancelled if the view disappears
+                .onAppear {
                     needsMoreData = true
-                    await loadMoreData(currentData)
+                    Task {
+                        await loadMoreData(currentData)
+                    }
                 }
                 .onDisappear {
                     needsMoreData = false

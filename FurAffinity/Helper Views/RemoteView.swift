@@ -55,13 +55,14 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
         case loading
         case loaded(Data)
         case updating(oldData: Data)
+        case failed
         
         var lastKnownData: Data? {
             switch self {
             case let .loaded(data),
                 let .updating(oldData: data):
                 data
-            case .notLoadingYet, .loading:
+            case .notLoadingYet, .loading, .failed:
                 nil
             }
         }
@@ -116,9 +117,17 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
                     }
                 }
                 .modifier(DelayedToggle(toggle: $showUpdateLoadingView, delay: .seconds(1)))
+            case .failed:
+                ScrollView {
+                    Text("Loading failed")
+                        .foregroundStyle(.secondary)
+                        .font(.title)
+                }
+                .defaultScrollAnchor(.center)
             }
         }
-        .task {
+        // Not using .task() here so that the task doesn't get cancelled if the view disappears
+        .onAppear {
             // Dismissed alerts cause new tasks to be scheduled.
             // We only want to trigger the code below on first appear
             guard dataState == .notLoadingYet else { return }
@@ -126,8 +135,12 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
             if let preloadedData {
                 update(with: preloadedData)
             } else {
-                await storeLocalizedError(in: errorStorage, action: "Loading", webBrowserURL: url, shouldPopNavigationStack: true) {
-                    try await update()
+                Task {
+                    await storeLocalizedError(in: errorStorage, action: "Loading", webBrowserURL: url) {
+                        try await update()
+                    } onFailure: {
+                        dataState = .failed
+                    }
                 }
             }
         }
@@ -140,21 +153,18 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
                     .updating(oldData: data)
             case .updating(let oldData):
                     .updating(oldData: oldData)
-            case .notLoadingYet, .loading:
+            case .notLoadingYet, .loading, .failed:
                     .loading
             }
             
             Task {
                 await storeLocalizedError(in: errorStorage, action: "Data Update", webBrowserURL: url) {
                     try await update()
-                    
-                    dataState = switch dataState {
-                    case .loaded(let data):
-                            .loaded(data)
-                    case .updating(let oldData):
-                            .loaded(oldData)
-                    case .notLoadingYet, .loading:
-                            .loading
+                } onFailure: {
+                    if let data = dataState.lastKnownData {
+                        dataState = .loaded(data)
+                    } else {
+                        dataState = .failed
                     }
                 }
             }

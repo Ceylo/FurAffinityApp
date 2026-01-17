@@ -51,7 +51,5 @@ func view(for target: FATarget) -> some View {
         RemoteWatchlistView(url: url)
     case let .submissionMetadata(metadata):
         SubmissionMetadataView(metadata: metadata)
-    case .popNavigationStack:
-        fatalError()
     }
 }

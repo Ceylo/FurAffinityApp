@@ -17,7 +17,6 @@ func storeLocalizedError(
     in storage: ErrorStorage,
     action: String,
     webBrowserURL: URL?,
-    shouldPopNavigationStack: Bool = false,
     closure: () async throws -> Void,
     onFailure: () -> Void = {},
     isolation: isolated (any Actor)? = #isolation,
@@ -29,7 +28,6 @@ func storeLocalizedError(
             error,
             for: action,
             webBrowserURL: webBrowserURL,
-            shouldPopNavigationStack: shouldPopNavigationStack
         )
         onFailure()
     } catch {
@@ -37,7 +35,6 @@ func storeLocalizedError(
             error,
             for: action,
             webBrowserURL: webBrowserURL,
-            shouldPopNavigationStack: shouldPopNavigationStack
         )
         onFailure()
     }

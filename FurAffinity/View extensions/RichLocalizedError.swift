@@ -9,7 +9,6 @@ import SwiftUI
 
 struct RichLocalizedError: LocalizedError, Equatable {
     var relatedAction: String?
-    var shouldPopNavigationStack = false
 
     /// A URL to be opened in a web browser for the user to attempt to continue outside of the app.
     var webBrowserURL: URL?
@@ -28,7 +27,6 @@ struct RichLocalizedError: LocalizedError, Equatable {
         helpAnchor: String? = nil
     ) {
         self.relatedAction = relatedAction
-        self.shouldPopNavigationStack = shouldPopNavigationStack
         self.webBrowserURL = webBrowserURL
         self.errorDescription = errorDescription
         self.failureReason = failureReason
@@ -40,28 +38,24 @@ struct RichLocalizedError: LocalizedError, Equatable {
         _ error: Error,
         for userAction: String? = nil,
         webBrowserURL: URL?,
-        shouldPopNavigationStack: Bool
     ) {
         if let userAction, !userAction.isEmpty {
             self.relatedAction = userAction
         }
 
-        self.shouldPopNavigationStack = shouldPopNavigationStack
         self.webBrowserURL = webBrowserURL
         self.errorDescription = error.localizedDescription
     }
 
     init(
         _ error: LocalizedError,
-        for userAction: String? = nil,
-        webBrowserURL: URL?,
-        shouldPopNavigationStack: Bool
+        for userAction: String,
+        webBrowserURL: URL?
     ) {
-        if let userAction, !userAction.isEmpty {
+        if !userAction.isEmpty {
             self.relatedAction = userAction
         }
 
-        self.shouldPopNavigationStack = shouldPopNavigationStack
         self.webBrowserURL = webBrowserURL
         self.errorDescription = error.localizedDescription
         self.failureReason = error.failureReason

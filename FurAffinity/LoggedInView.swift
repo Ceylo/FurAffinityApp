@@ -27,20 +27,15 @@ struct LoggedInView: View {
     }
     
     func handleTarget(_ target: FATarget) {
-        let updateAction = if target == .popNavigationStack {
-            { (stack: inout NavigationPath) in stack.removeLast() }
-        } else {
-            { (stack: inout NavigationPath) in stack.append(target) }
-        }
         switch selectedTab {
         case .submissions:
-            updateAction(&submissionsNavigationStack)
+            submissionsNavigationStack.append(target)
         case .notes:
-            updateAction(&notesNavigationStack)
+            notesNavigationStack.append(target)
         case .notifications:
-            updateAction(&notificationsNavigationStack)
+            notificationsNavigationStack.append(target)
         case .userpage:
-            updateAction(&userpageNavigationStack)
+            userpageNavigationStack.append(target)
         case .settings:
             fatalError("Internal inconsistency")
         }
