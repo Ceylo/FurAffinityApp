@@ -1,6 +1,6 @@
 //
-//  FANotePageTests.swift
-//  
+//  FASystemErrorPageTests.swift
+//
 //
 //  Created by Ceylo on 17/10/2021.
 //
@@ -9,7 +9,7 @@ import Testing
 @testable import FAPages
 
 struct FASystemErrorPageTests {
-    @Test func parseSystemErrorPage_providesErrorMessage() throws {
+    @Test func parseUnknownUserPage_providesMessage() throws {
         let data = testData("www.furaffinity.net:user:username-system-error.html")
         let page = try FASystemErrorPage(data: data)
         let expected = FASystemErrorPage(

@@ -17,11 +17,11 @@ public class OnlineFASession: FASession {
         case internalInconsistency
         
         /// An error with a message provided by furaffinity.net
-        case FAErrorResponse(String)
+        case FASystemErrorResponse(String)
         
         var errorDescription: String? {
             switch self {
-            case let .FAErrorResponse(message):
+            case let .FASystemErrorResponse(message):
                 return "furaffinity.net provided the following error message:\n\(message)"
             case let .parsingError(sourceUrl, underlyingError):
                 let baseDescription = "The data read from \(sourceUrl) could not be interpreted by the application."
@@ -200,12 +200,6 @@ public class OnlineFASession: FASession {
         ]
         
         let data = try await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params)
-        
-        if let errorPage = try? FASystemErrorPage(data: data) {
-            logger.error("Failed sending note: \(errorPage.message)")
-            throw Error.FAErrorResponse(errorPage.message)
-        }
-        
         _ = try await make(FANotesPage.self, with: data, url: url)
         
         logger.debug("Note successfully delivered to \(toUsername)")
@@ -352,6 +346,11 @@ fileprivate func make<Page: FAPage>(_ page: Page.Type, with data: Data, url: URL
     do {
         return try await Page(data: data, url: url)
     } catch {
+        if let messagePage = try? FASystemErrorPage(data: data) {
+            logger.error("Got FA system error: \(messagePage.message)")
+            throw OnlineFASession.Error.FASystemErrorResponse(messagePage.message)
+        }
+        
         throw OnlineFASession.Error.parsingError(sourceUrl: url, underlyingError: error)
     }
 }
