@@ -55,8 +55,23 @@ struct SubmissionControlsView: View {
     var acceptsNewReplies: Bool
     var replyAction: () -> Void
     var metadataTarget: FATarget?
+    var errorStorage: ErrorStorage
     
-    @StateObject private var saveHandler = MediaSaveHandler()
+    internal init(submissionUrl: URL, mediaFileUrl: URL? = nil, favoritesCount: Int, isFavorite: Bool, favoriteAction: @escaping () -> Void, repliesCount: Int, acceptsNewReplies: Bool, replyAction: @escaping () -> Void, metadataTarget: FATarget? = nil, errorStorage: ErrorStorage) {
+        self.submissionUrl = submissionUrl
+        self.mediaFileUrl = mediaFileUrl
+        self.favoritesCount = favoritesCount
+        self.isFavorite = isFavorite
+        self.favoriteAction = favoriteAction
+        self.repliesCount = repliesCount
+        self.acceptsNewReplies = acceptsNewReplies
+        self.replyAction = replyAction
+        self.metadataTarget = metadataTarget
+        self.errorStorage = errorStorage
+        self.saveHandler = MediaSaveHandler(errorStorage: errorStorage)
+    }
+    
+    @State private var saveHandler: MediaSaveHandler
     
     var body: some View {
         HStack {
@@ -127,6 +142,9 @@ struct SubmissionControlsView: View {
 }
 
 #Preview(traits: .sizeThatFitsLayout) {
+    @Previewable
+    @State var errorStorage = ErrorStorage()
+    
     Group {
         SubmissionControlsView(
             submissionUrl: OfflineFASession.default.submissionPreviews[0].url,
@@ -141,7 +159,8 @@ struct SubmissionControlsView: View {
             replyAction: {
                 print("Reply")
             },
-            metadataTarget: nil
+            metadataTarget: nil,
+            errorStorage: errorStorage
         )
         SubmissionControlsView(
             submissionUrl: OfflineFASession.default.submissionPreviews[0].url,
@@ -156,7 +175,8 @@ struct SubmissionControlsView: View {
             replyAction: {
                 print("Reply")
             },
-            metadataTarget: nil
+            metadataTarget: nil,
+            errorStorage: errorStorage
         )
     }
     .preferredColorScheme(.dark)

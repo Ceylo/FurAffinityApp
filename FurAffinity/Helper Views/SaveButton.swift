@@ -15,13 +15,7 @@ fileprivate extension ActionState {
             return "square.and.arrow.down"
         case .succeeded:
             return "checkmark"
-        case .failed:
-            return "exclamationmark.circle"
         }
-    }
-    
-    var saveButtonColor: Color {
-        self == .failed ? Color.red : Color.buttonTint
     }
 }
 
@@ -35,7 +29,7 @@ struct SaveButton: View {
         } label: {
             Image(systemName: state.saveButtonImageName)
                 .resizable()
-                .tint(state.saveButtonColor)
+                .tint(Color.buttonTint)
                 .aspectRatio(contentMode: .fit)
                 .padding()
                 .transition(.opacity.animation(.default))

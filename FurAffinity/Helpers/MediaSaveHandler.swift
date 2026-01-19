@@ -12,31 +12,33 @@ enum ActionState: Identifiable, CaseIterable {
     case idle
     case inProgress
     case succeeded
-    case failed
     
     var id: Self { self }
 }
 
 @MainActor
-class MediaSaveHandler: NSObject, ObservableObject {
-    @Published var state: ActionState = .idle
+@Observable
+class MediaSaveHandler {
+    var errorStorage: ErrorStorage
+    private(set) var state: ActionState = .idle
+    
+    init(errorStorage: ErrorStorage) {
+        self.errorStorage = errorStorage
+    }
     
     func saveMedia(atFileUrl url: URL) async {
         state = .inProgress
-        do {
+        await storeLocalizedError(in: errorStorage, action: "Image Save", webBrowserURL: nil) {
             try await PHPhotoLibrary.shared().performChanges { @Sendable in
                 let request = PHAssetCreationRequest.forAsset()
                 request.addResource(with: .photo, fileURL: url, options: nil)
             }
             
             state = .succeeded
-            try await Task.sleep(for: .seconds(2))
+            try? await Task.sleep(for: .seconds(2))
             if state != .inProgress {
                 state = .idle
             }
-        } catch {
-            logger.error("\(error, privacy: .public)")
-            self.state = .failed
         }
     }
 }

@@ -9,6 +9,8 @@ import SwiftUI
 import FAKit
 
 struct SubmissionView: View {
+    @Environment(ErrorStorage.self) private var errorStorage
+    
     var submission: FASubmission
     var avatarUrl: URL?
     var thumbnail: DynamicThumbnail?
@@ -53,7 +55,8 @@ struct SubmissionView: View {
             replyAction: {
                 replySession = .init(parentCid: nil, among: [])
             },
-            metadataTarget: .submissionMetadata(submission.metadata)
+            metadataTarget: .submissionMetadata(submission.metadata),
+            errorStorage: errorStorage
         )
         .padding(.horizontal, 10)
     }
@@ -119,7 +122,7 @@ struct SubmissionView: View {
                 
                 Button {
                     Task {
-                        await MediaSaveHandler().saveMedia(atFileUrl: fullResolutionMediaFileUrl!)
+                        await MediaSaveHandler(errorStorage: errorStorage).saveMedia(atFileUrl: fullResolutionMediaFileUrl!)
                     }
                 } label: {
                     Label("Save Image", systemImage: "square.and.arrow.down")
@@ -145,6 +148,9 @@ struct SubmissionView: View {
 }
 
 #Preview {
+    @Previewable
+    @State var errorStorage = ErrorStorage()
+    
     NavigationStack {
         withAsync({ await FASubmission.demo }) {
             SubmissionView(
@@ -155,4 +161,5 @@ struct SubmissionView: View {
             )
         }
     }
+    .environment(errorStorage)
 }
