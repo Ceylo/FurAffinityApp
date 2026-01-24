@@ -18,7 +18,7 @@
       "iconURL": "https://get.furaffinity.app/altstore/AppIconLG.heic",
       "tintColor": null,
       "category": "social",
-      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.15.1/FurAffinity-1.15.1-0c0d3ff.ipa",
+      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.16/FurAffinity-1.16-8f38b23.ipa",
       "screenshots": [
         {
           "height": 2532,
@@ -54,6 +54,15 @@
         "https://get.furaffinity.app/altstore/releases/1.15/screenshots/note reply.heic"
       ],
       "versions": [
+        {
+          "version": "1.16",
+          "date": "2026-01-24T23:00:00+01:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n📱 FEATURES\n- Error handling has been reworked in order to show information in case a page fails to load or an action is not performed as expected. Previously the app could silently fail on some actions.\n- Added support for displaying furaffinity.net error messages (System Error and System Message)\n\n🐞 BUGFIXES\n- Fixed a case where the app could stay on the furaffinity.net web view after logging in\n- Fixed display of journals title",
+          "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.16/FurAffinity-1.16-8f38b23.ipa",
+          "size": 20223751,
+          "sha256": "0019d11e49905c37104eb87ceb9bcfb27f4488c159297a93e89fb943f8561ad0",
+          "minOSVersion": "17.4"
+        },
         {
           "version": "1.15.1",
           "date": "2025-11-29T11:00:00+02:00",

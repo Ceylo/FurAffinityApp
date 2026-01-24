@@ -46,6 +46,15 @@
       ],
       "versions": [
         {
+          "version": "1.16",
+          "buildVersion": "1",
+          "date": "2026-01-24T23:00:00+01:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n📱 FEATURES\n- Error handling has been reworked in order to show information in case a page fails to load or an action is not performed as expected. Previously the app could silently fail on some actions.\n- Added support for displaying furaffinity.net error messages (System Error and System Message)\n\n🐞 BUGFIXES\n- Fixed a case where the app could stay on the furaffinity.net web view after logging in\n- Fixed display of journals title",
+          "downloadURL": "https://get.furaffinity.app/altstore/releases/1.16/adp/",
+          "size": 12795638,
+          "minOSVersion": "17.4"
+        },
+        {
           "version": "1.15.1",
           "buildVersion": "1",
           "date": "2025-11-29T11:00:00+02:00",
