@@ -30,9 +30,16 @@ extension FASystemMessagePage {
                 throw FAPagesError.parserFailureError()
             }
             
-            let messageNode = try sectionBodyNode.select("div.redirect-message")
+            var messageNode = try sectionBodyNode.select("div.redirect-message")
             try messageNode.select("a.button")
                 .remove()
+            if messageNode.isEmpty() {
+                messageNode = try sectionBodyNode.select("div.section-body p.link-override")
+            }
+            if messageNode.isEmpty() {
+                throw FAPagesError.parserFailureError()
+            }
+            
             self.message = try messageNode
                 .textWithNewLines()
                 .replacingOccurrences(of: "\n\n\n\n", with: "\n\n")

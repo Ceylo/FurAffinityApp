@@ -38,4 +38,13 @@ struct FASystemErrorPageTests {
         )
         #expect(page == expected)
     }
+    
+    @Test func parseUserPendingDeletionPage_providesMessage() throws {
+        let data = testData("www.furaffinity.net:user:pending-deletion-message.html")
+        let page = try FASystemMessagePage(data: data)
+        let expected = FASystemMessagePage(
+            message: "The page you are trying to reach is currently pending deletion by a request from the administration."
+        )
+        #expect(page == expected)
+    }
 }
