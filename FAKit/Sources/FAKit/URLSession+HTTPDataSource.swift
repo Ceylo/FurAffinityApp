@@ -73,7 +73,7 @@ extension URLSession: HTTPDataSource {
         )
         let (data, response) = try await self.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode)
+              (200...299).contains(httpResponse.statusCode) || (httpResponse.statusCode == 400 && !data.isEmpty)
         else {
             logger.error(
                 "\(url, privacy: .public): request failed with response \(response, privacy: .public) and received data \(String(data: data, encoding: .utf8) ?? "<non-UTF8 data>", privacy: .public)."
@@ -81,6 +81,9 @@ extension URLSession: HTTPDataSource {
             throw Error.failureStatus(description:  "\(url): request failed with response \(response)")
         }
         
+        if httpResponse.statusCode == 400 {
+            logger.warning("\(requestDesc, privacy: .public): got status code 400 but continuing since data was received")
+        }
         return data
     }
 }
