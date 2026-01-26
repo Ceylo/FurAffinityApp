@@ -28,6 +28,14 @@ public enum FAURLs {
         string: "https://www.furaffinity.net/controls/switchbox/sent/"
     )!
     
+    public static let notesArchiveUrl = URL(
+        string: "https://www.furaffinity.net/controls/switchbox/archive/"
+    )!
+    
+    public static let notesTrashUrl = URL(
+        string: "https://www.furaffinity.net/controls/switchbox/trash/"
+    )!
+    
     public static let notificationsUrl = URL(
         string: "https://www.furaffinity.net/msg/others/"
     )!

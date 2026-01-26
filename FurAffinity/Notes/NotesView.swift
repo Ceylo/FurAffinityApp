@@ -15,6 +15,10 @@ extension NotesBox {
             "Inbox"
         case .sent:
             "Sent"
+        case .archive:
+            "Archive"
+        case .trash:
+            "Trash"
         }
     }
     
@@ -24,6 +28,10 @@ extension NotesBox {
             "tray"
         case .sent:
             "paperplane"
+        case .archive:
+            "archivebox"
+        case .trash:
+            "trash"
         }
     }
 }
@@ -45,17 +53,13 @@ struct NotesView: View {
     
     var boxPicker: some View {
         Picker("Boxes", systemImage: "folder", selection: $displayedBox) {
-            Button {
-            } label: {
-                Label("Inbox", systemImage: "tray")
+            ForEach(NotesBox.allCases, id: \.self) { box in
+                Button {
+                } label: {
+                    Label(box.displayName, systemImage: box.systemImageName)
+                }
+                .tag(box)
             }
-            .tag(NotesBox.inbox)
-            
-            Button {
-            } label: {
-                Label("Sent", systemImage: "paperplane")
-            }
-            .tag(NotesBox.sent)
         }
     }
     

@@ -34,16 +34,22 @@ public struct FANotificationPreviews: Equatable, Sendable {
     }
 }
 
-public enum NotesBox {
+public enum NotesBox: CaseIterable {
     case inbox
     case sent
+    case archive
+    case trash
     
-    var url: URL {
+    public var url: URL {
         switch self {
         case .inbox:
             FAURLs.notesInboxUrl
         case .sent:
             FAURLs.notesSentUrl
+        case .archive:
+            FAURLs.notesArchiveUrl
+        case .trash:
+            FAURLs.notesTrashUrl
         }
     }
 }

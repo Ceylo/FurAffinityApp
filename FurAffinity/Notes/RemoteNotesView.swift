@@ -44,13 +44,8 @@ struct RemoteNotesView: View {
                 }
             }
         )
-        .onChange(of: displayedBox) { oldValue, newValue in
-            switch newValue {
-            case .inbox:
-                sourceUrl = FAURLs.notesInboxUrl
-            case .sent:
-                sourceUrl = FAURLs.notesSentUrl
-            }
+        .onChange(of: displayedBox) { _, newValue in
+            sourceUrl = newValue.url
         }
     }
 }
