@@ -40,6 +40,7 @@ struct NotesView: View {
     @Binding var displayedBox: NotesBox
     var notes: [FANotePreview]
     var sendNoteAction: (_ destinationUser: String, _ subject: String, _ message: String) async throws -> Void
+    var moveNotesAction: (_ notes: [FANotePreview], _ destinationBox: NotesBox) -> Void
     @State private var noteReplySession: NoteReplySession?
     @State private var showUnreadNotesOnly = false
     
@@ -111,6 +112,17 @@ struct NotesView: View {
                     NoteItemView(notePreview: preview)
                 }
             }
+            .swipeActions(edge: .trailing) {
+                ForEach([NotesBox.trash, .archive], id: \.self) { box in
+                    if displayedBox != box {
+                        Button(role: box == .trash ? .destructive : nil) {
+                            moveNotesAction([preview], box)
+                        } label: {
+                            Label(box.displayName, systemImage: box.systemImageName)
+                        }
+                    }
+                }
+            }
         }
         .listStyle(.plain)
         .navigationBarTitleDisplayMode(.inline)
@@ -143,7 +155,8 @@ struct NotesView: View {
         NotesView(
             displayedBox: .constant(NotesBox.inbox),
             notes: OfflineFASession.default.notePreviews,
-            sendNoteAction: { _, _, _ in }
+            sendNoteAction: { _, _, _ in },
+            moveNotesAction: { _, _ in }
         )
     }
 }
@@ -153,7 +166,8 @@ struct NotesView: View {
         NotesView(
             displayedBox: .constant(NotesBox.inbox),
             notes: OfflineFASession.empty.notePreviews,
-            sendNoteAction: { _, _, _ in }
+            sendNoteAction: { _, _, _ in },
+            moveNotesAction: { _, _ in }
         )
     }
 }

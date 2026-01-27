@@ -34,7 +34,7 @@ public struct FANotificationPreviews: Equatable, Sendable {
     }
 }
 
-public enum NotesBox: CaseIterable {
+public enum NotesBox: String, CaseIterable, Sendable {
     case inbox
     case sent
     case archive
@@ -83,6 +83,7 @@ public protocol FASession: AnyObject, Equatable {
     func note(for url: URL) async throws -> FANote
     func sendNote(toUsername: String, subject: String, message: String) async throws -> Void
     func sendNote(apiKey: String, toUsername: String, subject: String, message: String) async throws -> Void
+    func moveNotes(_ notes: [FANotePreview], to box: NotesBox) async throws -> [FANotePreview]
     
     // MARK: - Notifications
     func notificationPreviews() async throws -> FANotificationPreviews

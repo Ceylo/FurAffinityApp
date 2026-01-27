@@ -97,6 +97,10 @@ class OfflineFASession: FASession {
     func sendNote(apiKey: String, toUsername: String, subject: String, message: String) async throws -> Void {
     }
     
+    func moveNotes(_ notes: [FANotePreview], to box: NotesBox) async throws -> [FANotePreview] {
+        notes
+    }
+    
     func notificationPreviews() async -> FANotificationPreviews {
         notificationPreviews
     }

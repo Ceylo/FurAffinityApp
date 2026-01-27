@@ -10,6 +10,7 @@ import FAKit
 
 struct RemoteNotesView: View {
     @Environment(Model.self) private var model
+    @Environment(ErrorStorage.self) private var errorStorage
     
     @State private var sourceUrl = FAURLs.notesInboxUrl
     @State private var displayedBox: NotesBox = .inbox
@@ -36,6 +37,16 @@ struct RemoteNotesView: View {
                             subject: subject,
                             message: message
                         )
+                    }, moveNotesAction: { notes, box in
+                        Task {
+                            await storeLocalizedError(in: errorStorage, action: "Move Note to \(box.displayName)", webBrowserURL: nil) {
+                                let session = try model.session.unwrap()
+                                let updated = try await session.moveNotes(notes, to: box)
+                                withAnimation {
+                                    updateHandler.update(with: updated)
+                                }
+                            }
+                        }
                     }
                 )
                 .onChange(of: cachedInboxNotePreview) { oldValue, newValue in

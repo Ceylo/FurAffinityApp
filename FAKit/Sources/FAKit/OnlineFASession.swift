@@ -205,6 +205,22 @@ public class OnlineFASession: FASession {
         logger.debug("Note successfully delivered to \(toUsername)")
     }
     
+    public func moveNotes(_ notes: [FANotePreview], to box: NotesBox) async throws -> [FANotePreview] {
+        let url = URL(string: "https://www.furaffinity.net/msg/pms/")!
+        let params: [URLQueryItem] = [
+            URLQueryItem(name: "manage_notes", value: "1"),
+            URLQueryItem(name: "move_to", value: box.rawValue),
+        ] + notes.map {
+            URLQueryItem(name: "items[]", value: String($0.id))
+        }
+        
+        let data = try await dataSource.httpData(from: url, cookies: cookies, method: .POST, parameters: params)
+        let page = try await make(FANotesPage.self, with: data, url: url)
+        return page.noteHeaders
+            .compactMap { $0 }
+            .map { FANotePreview($0) }
+    }
+    
     // MARK: - Notifications
     public func notificationPreviews() async throws -> FANotificationPreviews {
         try await notificationPreviews(method: .GET, parameters: [])
