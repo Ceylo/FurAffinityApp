@@ -114,7 +114,7 @@ struct NotesView: View {
                 }
             }
             .swipeActions(edge: .leading) {
-                if displayedBox == .inbox {
+                if displayedBox != .sent {
                     Button {
                         markUnreadAction([preview])
                     } label: {
