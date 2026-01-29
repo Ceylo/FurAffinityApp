@@ -119,7 +119,7 @@ struct NotesView: View {
                         markUnreadAction([preview])
                     } label: {
                         Image(systemName: "message.badge.fill")
-                            .tint(.accentColor)
+                            .tint(preview.unread ? nil : .accentColor)
                     }
                 }
             }
