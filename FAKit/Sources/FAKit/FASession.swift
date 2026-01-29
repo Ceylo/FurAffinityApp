@@ -84,6 +84,7 @@ public protocol FASession: AnyObject, Equatable {
     func sendNote(toUsername: String, subject: String, message: String) async throws -> Void
     func sendNote(apiKey: String, toUsername: String, subject: String, message: String) async throws -> Void
     func moveNotes(_ notes: [FANotePreview], to box: NotesBox) async throws -> [FANotePreview]
+    func markNotesAsUnread(_ notes: [FANotePreview]) async throws -> [FANotePreview]
     
     // MARK: - Notifications
     func notificationPreviews() async throws -> FANotificationPreviews

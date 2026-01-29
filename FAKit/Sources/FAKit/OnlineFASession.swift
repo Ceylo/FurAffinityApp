@@ -206,10 +206,18 @@ public class OnlineFASession: FASession {
     }
     
     public func moveNotes(_ notes: [FANotePreview], to box: NotesBox) async throws -> [FANotePreview] {
+        try await moveNotes(notes, to: box.rawValue)
+    }
+    
+    public func markNotesAsUnread(_ notes: [FANotePreview]) async throws -> [FANotePreview] {
+        try await moveNotes(notes, to: "unread")
+    }
+    
+    private func moveNotes(_ notes: [FANotePreview], to box: String) async throws -> [FANotePreview] {
         let url = URL(string: "https://www.furaffinity.net/msg/pms/")!
         let params: [URLQueryItem] = [
             URLQueryItem(name: "manage_notes", value: "1"),
-            URLQueryItem(name: "move_to", value: box.rawValue),
+            URLQueryItem(name: "move_to", value: box),
         ] + notes.map {
             URLQueryItem(name: "items[]", value: String($0.id))
         }

@@ -41,6 +41,7 @@ struct NotesView: View {
     var notes: [FANotePreview]
     var sendNoteAction: (_ destinationUser: String, _ subject: String, _ message: String) async throws -> Void
     var moveNotesAction: (_ notes: [FANotePreview], _ destinationBox: NotesBox) -> Void
+    var markUnreadAction: (_ notes: [FANotePreview]) -> Void
     @State private var noteReplySession: NoteReplySession?
     @State private var showUnreadNotesOnly = false
     
@@ -112,13 +113,23 @@ struct NotesView: View {
                     NoteItemView(notePreview: preview)
                 }
             }
+            .swipeActions(edge: .leading) {
+                if displayedBox == .inbox {
+                    Button {
+                        markUnreadAction([preview])
+                    } label: {
+                        Image(systemName: "message.badge.fill")
+                            .tint(.accentColor)
+                    }
+                }
+            }
             .swipeActions(edge: .trailing) {
                 ForEach([NotesBox.trash, .archive], id: \.self) { box in
                     if displayedBox != box {
                         Button(role: box == .trash ? .destructive : nil) {
                             moveNotesAction([preview], box)
                         } label: {
-                            Label(box.displayName, systemImage: box.systemImageName)
+                            Image(systemName: box.systemImageName)
                         }
                     }
                 }
@@ -156,7 +167,8 @@ struct NotesView: View {
             displayedBox: .constant(NotesBox.inbox),
             notes: OfflineFASession.default.notePreviews,
             sendNoteAction: { _, _, _ in },
-            moveNotesAction: { _, _ in }
+            moveNotesAction: { _, _ in },
+            markUnreadAction: { _ in },
         )
     }
 }
@@ -167,7 +179,8 @@ struct NotesView: View {
             displayedBox: .constant(NotesBox.inbox),
             notes: OfflineFASession.empty.notePreviews,
             sendNoteAction: { _, _, _ in },
-            moveNotesAction: { _, _ in }
+            moveNotesAction: { _, _ in },
+            markUnreadAction: { _ in },
         )
     }
 }

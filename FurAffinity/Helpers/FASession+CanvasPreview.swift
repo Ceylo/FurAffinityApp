@@ -100,6 +100,9 @@ class OfflineFASession: FASession {
     func moveNotes(_ notes: [FANotePreview], to box: NotesBox) async throws -> [FANotePreview] {
         notes
     }
+    func markNotesAsUnread(_ notes: [FANotePreview]) async throws -> [FANotePreview] {
+        notes
+    }
     
     func notificationPreviews() async -> FANotificationPreviews {
         notificationPreviews

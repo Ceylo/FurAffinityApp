@@ -47,6 +47,16 @@ struct RemoteNotesView: View {
                                 }
                             }
                         }
+                    }, markUnreadAction: { notes in
+                        Task {
+                            await storeLocalizedError(in: errorStorage, action: "Mark Unread", webBrowserURL: nil) {
+                                let session = try model.session.unwrap()
+                                let updated = try await session.markNotesAsUnread(notes)
+                                withAnimation {
+                                    updateHandler.update(with: updated)
+                                }
+                            }
+                        }
                     }
                 )
                 .onChange(of: cachedInboxNotePreview) { oldValue, newValue in
