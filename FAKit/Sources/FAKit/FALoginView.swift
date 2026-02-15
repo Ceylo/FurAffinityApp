@@ -12,6 +12,7 @@ import Cache
 
 public struct FALoginView: View {
     @Binding var session: OnlineFASession?
+    var onError: (Error) -> Void
     @State private var cookies = [HTTPCookie]()
     
     static private let cookieCache: Storage<Int, [CodableHTTPCookie]> = try! Storage(
@@ -21,8 +22,9 @@ public struct FALoginView: View {
         transformer: TransformerFactory.forCodable(ofType: [CodableHTTPCookie].self)
     )
     
-    public init(session: Binding<OnlineFASession?>) {
+    public init(session: Binding<OnlineFASession?>, onError: @escaping (Error) -> Void) {
         self._session = session
+        self.onError = onError
     }
     
     public var body: some View {
@@ -32,7 +34,11 @@ public struct FALoginView: View {
             .onChange(of: cookies) { _, newCookies in
                 Task {
                     guard session == nil else { return }
-                    session = try? await Self.makeSession(cookies: newCookies)
+                    do {
+                        session = try await Self.makeSession(cookies: newCookies)
+                    } catch {
+                        onError(error)
+                    }
                 }
             }
     }
@@ -68,5 +74,5 @@ public struct FALoginView: View {
 }
 
 #Preview {
-    FALoginView(session: .constant(nil))
+    FALoginView(session: .constant(nil), onError: { _ in })
 }

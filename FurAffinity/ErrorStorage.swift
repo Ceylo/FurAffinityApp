@@ -5,7 +5,6 @@
 //  Created by Ceylo on 28/12/2025.
 //
 
-
 import SwiftUI
 
 @Observable
@@ -23,19 +22,34 @@ func storeLocalizedError(
 ) async {
     do {
         try await closure()
-    } catch let error as LocalizedError {
-        storage.error = RichLocalizedError(
-            error,
-            for: action,
-            webBrowserURL: webBrowserURL,
-        )
-        onFailure()
     } catch {
+        storeError(error, in: storage, action: action, webBrowserURL: webBrowserURL)
+        onFailure()
+    }
+}
+
+func storeError(
+    _ error: Error,
+    in storage: ErrorStorage,
+    action: String,
+    webBrowserURL: URL?,
+) {
+    guard storage.error == nil else {
+        logger.warning("Skipping storing error to not overwrite existing one. Skipped error: \(error).\nCurrent error: \(String(describing: storage.error))")
+        return
+    }
+    
+    if let error = error as? LocalizedError {
         storage.error = RichLocalizedError(
             error,
             for: action,
             webBrowserURL: webBrowserURL,
         )
-        onFailure()
+    } else {
+        storage.error = RichLocalizedError(
+            error,
+            for: action,
+            webBrowserURL: webBrowserURL,
+        )
     }
 }

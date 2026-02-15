@@ -10,6 +10,13 @@ import Foundation
 extension URLSession: HTTPDataSource {
     enum Error: LocalizedError {
         case failureStatus(description: String)
+        
+        var errorDescription: String? {
+            switch self {
+            case let .failureStatus(description):
+                description
+            }
+        }
     }
     
     private func request(
@@ -72,13 +79,21 @@ extension URLSession: HTTPDataSource {
             "\(method, privacy: .public) request on \(requestDesc, privacy: .public)"
         )
         let (data, response) = try await self.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) || (httpResponse.statusCode == 400 && !data.isEmpty)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw Error.failureStatus(description:  "\(url): request failed with non HTTP response \(response)")
+        }
+        
+        guard (200...299).contains(httpResponse.statusCode) || (httpResponse.statusCode == 400 && !data.isEmpty)
         else {
             logger.error(
                 "\(url, privacy: .public): request failed with response \(response, privacy: .public) and received data \(String(data: data, encoding: .utf8) ?? "<non-UTF8 data>", privacy: .public)."
             )
-            throw Error.failureStatus(description:  "\(url): request failed with response \(response)")
+            
+            if httpResponse.value(forHTTPHeaderField: "cf-mitigated") == "challenge" {
+                throw Error.failureStatus(description:  "\(url): request failed with status \(httpResponse.statusCode).\n\n\(url.host() ?? "(null)") is currently being protected by CloudFlare challenge and cannot be accessed by this application at the moment.")
+            }
+            
+            throw Error.failureStatus(description:  "\(url): request failed with status \(httpResponse.statusCode) and response \(httpResponse)")
         }
         
         if httpResponse.statusCode == 400 {
