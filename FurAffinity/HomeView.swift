@@ -36,6 +36,7 @@ struct HomeView: View {
     @State private var showLoginView = false
     @State private var localSession: OnlineFASession?
     @State private var didTryAutologin = false
+    @State private var loginErrorStorage = ErrorStorage()
     
     func updateSession() async throws {
         checkingConnection = true
@@ -105,18 +106,33 @@ struct HomeView: View {
                 try await updateSession()
             }
         }
-        .sheet(isPresented: $showLoginView) {
-            Task {
-                await storeLocalizedError(in: errorStorage, action: "Login", webBrowserURL: nil) {
-                    try await updateSession()
+        .sheet(
+            isPresented: $showLoginView,
+            onDismiss: {
+                if loginErrorStorage.error != nil {
+                    errorStorage.error = loginErrorStorage.error
                 }
-            }
-        } content: {
-            FALoginView(session: $localSession)
+                loginErrorStorage.error = nil
+                
+                guard errorStorage.error != nil else {
+                    return
+                }
+                
+                Task {
+                    await storeLocalizedError(in: errorStorage, action: "Login", webBrowserURL: nil) {
+                        try await updateSession()
+                    }
+                }
+            },
+            content: {
+                FALoginView(session: $localSession, onError: {
+                    storeError($0, in: loginErrorStorage, action: "Login", webBrowserURL: nil)
+                    showLoginView = false
+                })
                 .onChange(of: localSession) { _, newValue in
                     showLoginView = newValue == nil
                 }
-        }
+            })
     }
     
     var body: some View {
