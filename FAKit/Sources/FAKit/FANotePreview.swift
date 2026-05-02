@@ -10,6 +10,7 @@ import FAPages
 
 public struct FANotePreview: Hashable, Identifiable, Sendable {
     public let id: Int
+    /// ⚠️ For sent notes, this is the receiver, not the author
     public let author: String
     public let displayAuthor: String
     public let title: String

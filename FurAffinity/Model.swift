@@ -37,7 +37,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
     
     /// `nil` until a fetch actually happened.
     /// After a fetch it contains all found notes, or an empty array if none was found.
-    private(set) var inboxNotePreviews: [FANotePreview]?
+    private(set) var notePreviews: [NotesBox: [FANotePreview]] = [:]
     private(set) var unreadInboxNoteCount = 0
     private(set) var lastInboxNotePreviewsFetchDate: Date?
     
@@ -104,7 +104,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             submissionPreviews = nil
             submissionPreviewsPendingDeletion = []
             lastInboxNotePreviewsFetchDate = nil
-            inboxNotePreviews = nil
+            notePreviews = [:]
             unreadInboxNoteCount = 0
             notificationPreviews = nil
             lastNotificationPreviewsFetchDate = nil
@@ -254,22 +254,61 @@ class Model: NotificationsNuker, NotificationsDeleter {
         }
         
         let fetchedNotes = try await session.notePreviews(from: box)
-        
-        if box == .inbox {
-            inboxNotePreviews = fetchedNotes
-            unreadInboxNoteCount = fetchedNotes.filter { $0.unread }.count
-            lastInboxNotePreviewsFetchDate = Date()
-        }
+        setLocalNotePreviews(fetchedNotes, in: box)
         return fetchedNotes
     }
     
-    func markInboxNoteAsRead(_ note: FANote) {
-        let idx = inboxNotePreviews?.firstIndex { preview in
-            preview.noteUrl == note.url
+    func moveNotes(_ notes: [FANotePreview], to box: NotesBox) async throws {
+        guard let session else {
+            logger.error("Tried to move notes with no active session, skipping")
+            throw ModelError.disconnected
         }
-        if let idx, let inboxNotePreviews {
-            self.inboxNotePreviews![idx] = inboxNotePreviews[idx].asRead()
-            unreadInboxNoteCount = self.inboxNotePreviews!.filter { $0.unread }.count
+        
+        let updated = try await session.moveNotes(notes, to: box)
+        setLocalNotePreviews(updated, in: box)
+    }
+    
+    func markNotesAsUnread(_ notes: [FANotePreview], in box: NotesBox) async throws {
+        guard let session else {
+            logger.error("Tried to update notes with no active session, skipping")
+            throw ModelError.disconnected
+        }
+        
+        let updated = try await session.markNotesAsUnread(notes)
+        setLocalNotePreviews(updated, in: box)
+    }
+    
+    func markNoteAsReadLocally(_ note: FANote) {
+        var targetBox: (box: NotesBox, previews: [FANotePreview], noteIdx: Int)?
+        for (box, previews) in notePreviews {
+            if let noteIdx = previews.firstIndex(where: { $0.noteUrl == note.url }) {
+                targetBox = (box, previews, noteIdx)
+                break
+            }
+        }
+
+        // Note: none of the sent notes can be marked as read. There can also
+        // be notes in archive/trash boxes that will not be marked as read on server (the notes in these boxes sent by the current user).
+        // We're a bit optimistic here and consider that all notes can be marked
+        // as read, except for sent notes where we know that it's never possible.
+        guard let targetBox, targetBox.box != .sent else {
+            return
+        }
+        
+        var previews = targetBox.previews
+        previews[targetBox.noteIdx] = previews[targetBox.noteIdx].asRead()
+        notePreviews[targetBox.box] = previews
+        
+        if targetBox.box == .inbox {
+            unreadInboxNoteCount = previews.filter { $0.unread }.count
+        }
+    }
+    
+    private func setLocalNotePreviews(_ previews: [FANotePreview], in box: NotesBox) {
+        notePreviews[box] = previews
+        if box == .inbox {
+            unreadInboxNoteCount = previews.filter { $0.unread }.count
+            lastInboxNotePreviewsFetchDate = Date()
         }
     }
     

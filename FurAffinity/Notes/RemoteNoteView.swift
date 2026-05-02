@@ -31,7 +31,7 @@ struct RemoteNoteView: View {
                     }
                 )
                 .onAppear {
-                    model.markInboxNoteAsRead(note)
+                    model.markNoteAsReadLocally(note)
                 }
             }
         )

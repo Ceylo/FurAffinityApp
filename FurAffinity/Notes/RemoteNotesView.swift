@@ -16,7 +16,7 @@ struct RemoteNotesView: View {
     @State private var displayedBox: NotesBox = .inbox
     
     var cachedInboxNotePreview: [FANotePreview] {
-        model.inboxNotePreviews ?? []
+        model.notePreviews[displayedBox] ?? []
     }
     
     var body: some View {
@@ -29,7 +29,7 @@ struct RemoteNotesView: View {
             view: { notes, updateHandler in
                 NotesView(
                     displayedBox: $displayedBox,
-                    notes: notes,
+                    notes: cachedInboxNotePreview,
                     sendNoteAction: { destinationUser, subject, message in
                         let session = try model.session.unwrap()
                         try await session.sendNote(
@@ -40,29 +40,17 @@ struct RemoteNotesView: View {
                     }, moveNotesAction: { notes, box in
                         Task {
                             await storeLocalizedError(in: errorStorage, action: "Move Note to \(box.displayName)", webBrowserURL: nil) {
-                                let session = try model.session.unwrap()
-                                let updated = try await session.moveNotes(notes, to: box)
-                                withAnimation {
-                                    updateHandler.update(with: updated)
-                                }
+                                try await model.moveNotes(notes, to: box)
                             }
                         }
                     }, markUnreadAction: { notes in
                         Task {
                             await storeLocalizedError(in: errorStorage, action: "Mark Unread", webBrowserURL: nil) {
-                                let session = try model.session.unwrap()
-                                let updated = try await session.markNotesAsUnread(notes)
-                                withAnimation {
-                                    updateHandler.update(with: updated)
-                                }
+                                try await model.markNotesAsUnread(notes, in: displayedBox)
                             }
                         }
                     }
                 )
-                .onChange(of: cachedInboxNotePreview) { oldValue, newValue in
-                    guard displayedBox == .inbox else { return }
-                    updateHandler.update(with: newValue)
-                }
             }
         )
         .onChange(of: displayedBox) { _, newValue in

@@ -44,6 +44,7 @@ struct NoteItemView: View {
                     Text(notePreview.title)
                         .font(.headline)
                 }
+                .animation(.default, value: notePreview.unread)
                 
                 HStack {
                     UserNameView(
