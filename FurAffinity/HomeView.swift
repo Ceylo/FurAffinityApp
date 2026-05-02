@@ -114,7 +114,7 @@ struct HomeView: View {
                 }
                 loginErrorStorage.error = nil
                 
-                guard errorStorage.error != nil else {
+                guard errorStorage.error == nil else {
                     return
                 }
                 
