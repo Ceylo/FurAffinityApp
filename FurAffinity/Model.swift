@@ -89,6 +89,14 @@ class Model: NotificationsNuker, NotificationsDeleter {
         try await processNewSession()
     }
     
+    private func getSession(function: String = #function) throws -> any FASession {
+        guard let session else {
+            logger.error("Tried to get session in \(function, privacy: .public) but there is no active session, throwing")
+            throw ModelError.disconnected
+        }
+        return session
+    }
+    
     func updateAppInfo() async {
         do {
             try await appInfo.fetch()
@@ -164,10 +172,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
     
     // MARK: - Submissions feed
     func fetchSubmissionPreviews() async throws -> Int {
-        guard let session else {
-            logger.error("Tried to fetch submissions with no active session, skipping")
-            return 0
-        }
+        let session = try getSession()
         
         var firstWantedSubmissionID: Int?
         if submissionPreviews == nil {
@@ -209,8 +214,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
         
         Task {
             do {
-                let session = try session.unwrap()
-                try await session.deleteSubmissionPreviews(previews)
+                try await getSession().deleteSubmissionPreviews(previews)
             } catch {
                 logger.error("Submission previews deletion failed with error \"\(error, privacy: .public)\", rolling back")
                 let rollback = ((submissionPreviews ?? []) + previews)
@@ -222,13 +226,8 @@ class Model: NotificationsNuker, NotificationsDeleter {
     }
     
     func nukeAllSubmissions() async {
-        guard let session else {
-            logger.error("Tried to nuke submissions with no active session, skipping")
-            return
-        }
-        
         do {
-            try await session.nukeSubmissions()
+            try await getSession().nukeSubmissions()
             lastSubmissionPreviewsFetchDate = Date()
             submissionPreviews = []
         } catch {
@@ -238,43 +237,25 @@ class Model: NotificationsNuker, NotificationsDeleter {
     
     // MARK: - Commentable
     func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async throws -> C {
-        guard let session else {
-            throw ModelError.disconnected
-        }
-        
-        return try await session.postComment(on: commentable, replytoCid: replytoCid, contents: contents)
+        try await getSession()
+            .postComment(on: commentable, replytoCid: replytoCid, contents: contents)
     }
     
     // MARK: - Notes
     @discardableResult
     func fetchNotePreviews(from box: NotesBox) async throws -> [FANotePreview] {
-        guard let session else {
-            logger.error("Tried to fetch notes with no active session, skipping")
-            throw ModelError.disconnected
-        }
-        
-        let fetchedNotes = try await session.notePreviews(from: box)
+        let fetchedNotes = try await getSession().notePreviews(from: box)
         setLocalNotePreviews(fetchedNotes, in: box)
         return fetchedNotes
     }
     
     func moveNotes(_ notes: [FANotePreview], to box: NotesBox) async throws {
-        guard let session else {
-            logger.error("Tried to move notes with no active session, skipping")
-            throw ModelError.disconnected
-        }
-        
-        let updated = try await session.moveNotes(notes, to: box)
+        let updated = try await getSession().moveNotes(notes, to: box)
         setLocalNotePreviews(updated, in: box)
     }
     
     func markNotesAsUnread(_ notes: [FANotePreview], in box: NotesBox) async throws {
-        guard let session else {
-            logger.error("Tried to update notes with no active session, skipping")
-            throw ModelError.disconnected
-        }
-        
-        let updated = try await session.markNotesAsUnread(notes)
+        let updated = try await getSession().markNotesAsUnread(notes)
         setLocalNotePreviews(updated, in: box)
     }
     
@@ -436,13 +417,8 @@ class Model: NotificationsNuker, NotificationsDeleter {
     }
     
     
-    private func fetchNotificationPreviews(fetcher: (_ session: any FASession) async throws -> FANotificationPreviews) async throws {
-        guard let session else {
-            logger.error("Tried to fetch notifications with no active session, skipping")
-            return
-        }
-        
-        notificationPreviews = try await fetcher(session)
+    private func fetchNotificationPreviews(fetcher: @MainActor (_ session: any FASession) async throws -> FANotificationPreviews) async throws {
+        notificationPreviews = try await fetcher(getSession())
         lastNotificationPreviewsFetchDate = Date()
         updateSignificantNotificationCount()
     }
@@ -474,11 +450,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
     
     // MARK: - Submission
     func toggleFavorite(for submission: FASubmission) async throws -> FASubmission {
-        guard let session else {
-            throw ModelError.disconnected
-        }
-        
-        let updated = try await session.toggleFavorite(for: submission)
+        let updated = try await getSession().toggleFavorite(for: submission)
         if updated.isFavorite == submission.isFavorite {
             logger.error("\(#function, privacy: .public) did not change favorite state: \(submission.isFavorite)")
         }
