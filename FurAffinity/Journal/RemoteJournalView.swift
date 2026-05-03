@@ -13,20 +13,34 @@ struct RemoteJournalView: View {
     @Environment(Model.self) private var model
     
     var body: some View {
-        RemoteView(url: url, dataSource: { url in
-            try await model.session.unwrap().journal(for: url)
-        }) { journal, updateHandler in
-            JournalView(journal: journal,
-                        replyAction: { parentCid, reply in
-                let updatedJournal = try await model
-                    .postComment(
-                        on: journal,
-                        replytoCid: parentCid,
-                        contents: reply.commentText
-                    )
-                updateHandler.update(with: updatedJournal)
-            })
-        }
+        PreviewableRemoteView<_, _, EmptyView>(
+            url: url,
+            dataSource: { url in
+                try await model.session.unwrap().journal(for: url)
+            },
+            view: { journal, updateHandler in
+                JournalView(
+                    journal: journal,
+                    replyAction: { parentCid, reply in
+                        let updatedJournal = try await model
+                            .postComment(
+                                on: journal,
+                                replytoCid: parentCid,
+                                contents: reply.commentText
+                            )
+                        updateHandler.update(with: updatedJournal)
+                    },
+                    sendNoteAction: { destinationUser, subject, text in
+                        let session = try model.session.unwrap()
+                        try await session.sendNote(
+                            toUsername: destinationUser,
+                            subject: subject,
+                            message: text
+                        )
+                    }
+                )
+            }
+        )
     }
 }
 

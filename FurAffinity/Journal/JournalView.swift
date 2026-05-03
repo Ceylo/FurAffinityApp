@@ -12,8 +12,10 @@ import Combine
 struct JournalView: View {
     var journal: FAJournal
     var replyAction: @MainActor (_ parentCid: Int?, _ reply: CommentReply) async throws -> Void
+    var sendNoteAction: (_ destinationUser: String, _ subject: String, _ text: String) async throws -> Void
     
     @State private var replySession: CommentReplySession?
+    @State private var noteReplySession: NoteReplySession?
     
     var header: some View {
         TitleAuthorHeader(
@@ -87,6 +89,27 @@ struct JournalView: View {
             prefetchAvatars(for: journal.comments)
         }
         .scrollToItem(id: journal.targetCommentId)
+        .toolbar {
+            RemoteContentToolbarItem(url: journal.url) {
+                Button {
+                    replySession = .init(parentCid: nil, among: [])
+                } label: {
+                    Label("Comment", systemImage: "bubble")
+                }
+                .disabled(!journal.acceptsNewComments)
+                
+                Button {
+                    noteReplySession = .init(defaultContents: .init(
+                        destinationUser: journal.author
+                    ))
+                } label: {
+                    Label("Send a Note", systemImage: "message")
+                }
+            }
+        }
+        .noteReplySheet(on: $noteReplySession) { reply in
+            try await sendNoteAction(reply.destinationUser, reply.subject, reply.text)
+        }
     }
 }
 
@@ -94,7 +117,8 @@ struct JournalView: View {
     withAsync({ await FAJournal.demo }) {
         JournalView(
             journal: $0,
-            replyAction: { _, _ in }
+            replyAction: { _, _ in },
+            sendNoteAction: { _, _, _ in }
         )
     }
 }
