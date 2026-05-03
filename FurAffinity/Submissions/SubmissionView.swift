@@ -16,12 +16,14 @@ struct SubmissionView: View {
     var thumbnail: DynamicThumbnail?
     var favoriteAction: () -> Void
     var replyAction: @MainActor (_ parentCid: Int?, _ text: CommentReply) async throws -> Void
+    var sendNoteAction: (_ destinationUser: String, _ subject: String, _ text: String) async throws -> Void
     
     struct ReplySession {
         let parentCid: Int?
     }
     @State private var replySession: CommentReplySession?
     @State private var fullResolutionMediaFileUrl: URL?
+    @State private var noteReplySession: NoteReplySession?
     
     var header: some View {
         TitleAuthorHeader(
@@ -142,7 +144,18 @@ struct SubmissionView: View {
                     Label("Comment", systemImage: "bubble")
                 }
                 .disabled(!submission.acceptsNewComments)
+                
+                Button {
+                    noteReplySession = .init(defaultContents: .init(
+                        destinationUser: submission.author
+                    ))
+                } label: {
+                    Label("Send a Note", systemImage: "message")
+                }
             }
+        }
+        .noteReplySheet(on: $noteReplySession) { reply in
+            try await sendNoteAction(reply.destinationUser, reply.subject, reply.text)
         }
     }
 }
@@ -157,7 +170,8 @@ struct SubmissionView: View {
                 submission: $0,
                 avatarUrl: FAURLs.avatarUrl(for: $0.author),
                 favoriteAction: {},
-                replyAction: { _, _ in }
+                replyAction: { _, _ in },
+                sendNoteAction: { _, _, _ in }
             )
         }
     }

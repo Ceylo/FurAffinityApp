@@ -57,6 +57,14 @@ struct RemoteSubmissionView: View {
                             contents: reply.commentText
                         )
                         updateHandler.update(with: updated)
+                    },
+                    sendNoteAction: { destinationUser, subject, text in
+                        let session = try model.session.unwrap()
+                        try await session.sendNote(
+                            toUsername: destinationUser,
+                            subject: subject,
+                            message: text
+                        )
                     }
                 )
             }
