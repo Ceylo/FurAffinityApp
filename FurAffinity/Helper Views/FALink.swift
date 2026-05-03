@@ -21,7 +21,14 @@ struct FALink<ContentView: View>: View {
     var target: FATarget?
     var contentView: ContentView
     
+    private var fullWidthTapArea = false
     @Environment(\.navigationStream) private var navigationStream
+    
+    func withFullWidthTapArea() -> Self {
+        var copy = self
+        copy.fullWidthTapArea = true
+        return copy
+    }
     
     var body: some View {
         if let target {
@@ -30,8 +37,14 @@ struct FALink<ContentView: View>: View {
             } label: {
                 contentView
             }
-            // 🫠 https://forums.developer.apple.com/forums/thread/747558
-            .buttonStyle(.borderless)
+            .applying {
+                if fullWidthTapArea {
+                    $0
+                } else {
+                    // 🫠 https://forums.developer.apple.com/forums/thread/747558
+                    $0.buttonStyle(.borderless)
+                }
+            }
         } else {
             contentView
         }
@@ -54,6 +67,13 @@ struct FALink<ContentView: View>: View {
                 .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
             }
             .listStyle(.plain)
+            
+            List {
+                FALink(destination: .favorites(url: URL(string: "https://foo.com")!)) {
+                    Text("foo bar")
+                }
+                .withFullWidthTapArea()
+            }
         }
         .environment($0)
     }

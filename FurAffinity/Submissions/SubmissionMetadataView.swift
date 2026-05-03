@@ -71,6 +71,7 @@ struct SubmissionMetadataView: View {
                         FALink(destination: .gallery(url: folder.url)) {
                             Text(folder.title)
                         }
+                        .withFullWidthTapArea()
                     }
                 }
             }
