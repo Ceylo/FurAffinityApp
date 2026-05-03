@@ -249,9 +249,9 @@ class Model: NotificationsNuker, NotificationsDeleter {
         return fetchedNotes
     }
     
-    func moveNotes(_ notes: [FANotePreview], to box: NotesBox) async throws {
-        let updated = try await getSession().moveNotes(notes, to: box)
-        setLocalNotePreviews(updated, in: box)
+    func moveNotes(_ notes: [FANotePreview], from source: NotesBox, to destination: NotesBox) async throws {
+        let updated = try await getSession().moveNotes(notes, to: destination)
+        setLocalNotePreviews(updated, in: source)
     }
     
     func markNotesAsUnread(_ notes: [FANotePreview], in box: NotesBox) async throws {

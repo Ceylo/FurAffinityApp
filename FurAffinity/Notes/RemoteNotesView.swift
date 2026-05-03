@@ -37,10 +37,10 @@ struct RemoteNotesView: View {
                             subject: subject,
                             message: message
                         )
-                    }, moveNotesAction: { notes, box in
+                    }, moveNotesAction: { notes, destinationBox in
                         Task {
-                            await storeLocalizedError(in: errorStorage, action: "Move Note to \(box.displayName)", webBrowserURL: nil) {
-                                try await model.moveNotes(notes, to: box)
+                            await storeLocalizedError(in: errorStorage, action: "Move Note to \(destinationBox.displayName)", webBrowserURL: nil) {
+                                try await model.moveNotes(notes, from: displayedBox, to: destinationBox)
                             }
                         }
                     }, markUnreadAction: { notes in

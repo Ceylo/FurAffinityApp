@@ -158,6 +158,7 @@ struct NotesView: View {
         .noteReplySheet(on: $noteReplySession) { reply in
             try await sendNoteAction(reply.destinationUser, reply.subject, reply.text)
         }
+        .animation(.default, value: filteredNotes)
     }
 }
 
