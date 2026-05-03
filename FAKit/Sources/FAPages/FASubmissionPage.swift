@@ -181,7 +181,7 @@ extension FASubmissionPage {
                 }
             }
             
-            let folderNodes = try sidebarNode.select("section.folder-list-container > div > a")
+            let folderNodes = try submissionContentNode.select("section.folder-list-container > div > a")
             let folders = try folderNodes.map {
                 let href = try $0.attr("href")
                 let url = try URL(unsafeString: FAURLs.homeUrl.absoluteString + href)
