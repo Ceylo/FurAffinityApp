@@ -96,7 +96,7 @@ struct NoteEditor: View {
                     guard reply.isUsernameValid else { return }
                     avatarUrl = FAURLs.avatarUrl(for: user)
                 }
-                .onChange(of: reply.isUsernameValid) { _, newValue in
+                .onChange(of: reply.isUsernameValid, initial: true) { _, newValue in
                     isUsernameValid = newValue
                 }
         }
