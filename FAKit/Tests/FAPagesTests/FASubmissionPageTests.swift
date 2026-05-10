@@ -44,8 +44,9 @@ extension FASubmissionPage.Metadata {
             favoriteCount: favoriteCount,
             rating: rating,
             category: category,
+            subCategory: subCategory,
             species: species,
-            size: size,
+            resolution: resolution,
             fileSize: fileSize,
             keywords: keywords,
             folders: folders.ignoringUUID()
@@ -61,10 +62,10 @@ final class FASubmissionPageTests: XCTestCase {
         
         let htmlDescription = """
 YCH for 
-<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/1699843690/lil-maj.gif\" title=\"lil-maj\" alt=\"lil-maj\" />&nbsp;<span class=\"c-usernameBlockSimple username-underlined\"><span class=\"c-usernameBlockSimple__displayName\" title=\" lil-maj \">LiL-MAJ</span></span></a> 
+<a href="/user/lil-maj" class="iconusername"><img src="//a.furaffinity.net/1699843690/lil-maj.gif" title="lil-maj" alt="lil-maj" />&nbsp;<span class="c-usernameBlockSimple username-underlined"><span class="c-usernameBlockSimple__displayName" title="lil-maj">LiL-MAJ</span></span></a> 
 <br /> 
 <br /> Cody © 
-<a href=\"/user/lil-maj\" class=\"iconusername\"><img src=\"//a.furaffinity.net/1699843690/lil-maj.gif\" title=\"lil-maj\" alt=\"lil-maj\" />&nbsp;<span class=\"c-usernameBlockSimple username-underlined\"><span class=\"c-usernameBlockSimple__displayName\" title=\" lil-maj \">LiL-MAJ</span></span></a>
+<a href="/user/lil-maj" class="iconusername"><img src="//a.furaffinity.net/1699843690/lil-maj.gif" title="lil-maj" alt="lil-maj" />&nbsp;<span class="c-usernameBlockSimple username-underlined"><span class="c-usernameBlockSimple__displayName" title="lil-maj">LiL-MAJ</span></span></a>
 <br /> 
 <br /> 
 <br /> 
@@ -72,11 +73,11 @@ YCH for
 <br /> 
 <br /> *******************************
 <br /> * 
-<a class=\"auto_link external\" href=\"http://ko-fi.com/J3J16KSH\" rel=\"nofollow ugc noreferrer noopener\">Feed me with coffee?</a>
+<a class="auto_link external" href="http://ko-fi.com/J3J16KSH">Feed me with coffee?</a>
 <br /> * 
-<a class=\"auto_link \" href=\"https://www.furaffinity.net/gallery/annetpeas/\">My Gallery</a>
+<a class="auto_link" href="https://www.furaffinity.net/gallery/annetpeas/">My Gallery</a>
 <br /> * 
-<a class=\"auto_link external\" href=\"https://twitter.com/AnnetPeas_Art\" rel=\"nofollow ugc noreferrer noopener\">Twitter</a>
+<a class="auto_link external" href="https://twitter.com/AnnetPeas_Art">Twitter</a>
 """
         let expected = FASubmissionPage(
             previewImageUrl: URL(string: "https://t.furaffinity.net/49338772@600-1665402309.jpg")!,
@@ -88,13 +89,14 @@ YCH for
                 displayAuthor: "AnnetPeas",
                 datetime: "October 10, 2022 01:45:09 PM",
                 naturalDatetime: "3 years ago",
-                viewCount: 804,
+                viewCount: 808,
                 commentCount: 0,
                 favoriteCount: 65,
                 rating: .general,
-                category: "Artwork (Digital) / All",
+                category: "Artwork (Digital)",
+                subCategory: "All",
                 species: "Rabbit / Hare",
-                size: "1217 x 1280",
+                resolution: "1217 x 1280",
                 fileSize: "1.22 MB",
                 keywords: ["lil-maj", "cody", "female", "girl", "rabbit", "cute", "chibi", "annetpeas", "smoke", "smoking", "hookah", "u_annetpeas", "c_artwork_digital", "t_all", "s_rabbit_hare"],
                 folders: [.init(
@@ -105,7 +107,7 @@ YCH for
             ),
             htmlDescription: htmlDescription,
             isFavorite: false,
-            favoriteUrl: URL(string: "https://www.furaffinity.net/fav/49338772/?key=7f439f2f0929725b65ecd464a2a467a05387dce2aec267235a320850f892e3db")!,
+            favoriteUrl: URL(string: "https://www.furaffinity.net/fav/49338772/?key=65e76cc7768a5f756fcfc18918efad10406c90b44f82c0fdda034928f8408629")!,
             comments: [],
             targetCommentId: nil,
             acceptsNewComments: true
@@ -147,25 +149,25 @@ YCH for
         let page = try FASubmissionPage(data: data, url: url)
         let expected: [FAPageComment] = [
             .visible(.init(cid: 166652793, indentation: 0, author: "terriniss", displayAuthor: "Terriniss",
-                           datetime: "August 12, 2022 03:48:38 AM", naturalDatetime: "3 years ago", htmlMessage: "BID HERE \n<br /> Moon")),
+                           datetime: "August 12, 2022 02:48:38 AM", naturalDatetime: "3 years ago", htmlMessage: "BID HERE \n<br /> Moon")),
             .visible(.init(cid: 166653891, indentation: 3, author: "terriniss", displayAuthor: "Terriniss",
-                           datetime: "August 12, 2022 04:58:01 AM", naturalDatetime: "3 years ago", htmlMessage: "SakuraSlowly (DA) - SB")),
+                           datetime: "August 12, 2022 03:58:01 AM", naturalDatetime: "3 years ago", htmlMessage: "SakuraSlowly (DA) - SB")),
             .visible(.init(cid: 166658565, indentation: 6, author: "terriniss", displayAuthor: "Terriniss",
-                           datetime: "August 12, 2022 11:16:32 AM", naturalDatetime: "3 years ago", htmlMessage: "DeathPanda21 (da) - 55$")),
+                           datetime: "August 12, 2022 10:16:32 AM", naturalDatetime: "3 years ago", htmlMessage: "DeathPanda21 (da) - 55$")),
             .visible(.init(cid: 166663244, indentation: 9, author: "terriniss", displayAuthor: "Terriniss",
-                           datetime: "August 12, 2022 06:33:53 PM", naturalDatetime: "3 years ago", htmlMessage: "ionightarts (DA) - 60")),
+                           datetime: "August 12, 2022 05:33:53 PM", naturalDatetime: "3 years ago", htmlMessage: "ionightarts (DA) - 60")),
             .visible(.init(cid: 166652794, indentation: 0, author: "terriniss", displayAuthor: "Terriniss",
-                           datetime: "August 12, 2022 03:48:44 AM", naturalDatetime: "3 years ago", htmlMessage: "BID HERE \n<br /> Dawn")),
+                           datetime: "August 12, 2022 02:48:44 AM", naturalDatetime: "3 years ago", htmlMessage: "BID HERE \n<br /> Dawn")),
             .visible(.init(cid: 166656182, indentation: 3, author: "terriniss", displayAuthor: "Terriniss",
-                           datetime: "August 12, 2022 07:48:34 AM", naturalDatetime: "3 years ago", htmlMessage: "Miss-You-Love (da) - SB")),
+                           datetime: "August 12, 2022 06:48:34 AM", naturalDatetime: "3 years ago", htmlMessage: "Miss-You-Love (da) - SB")),
             .visible(.init(cid: 166658577, indentation: 6, author: "terriniss", displayAuthor: "Terriniss",
-                           datetime: "August 12, 2022 11:17:53 AM", naturalDatetime: "3 years ago", htmlMessage: "LilNikkiBun (da) - 55$")),
+                           datetime: "August 12, 2022 10:17:53 AM", naturalDatetime: "3 years ago", htmlMessage: "LilNikkiBun (da) - 55$")),
             .visible(.init(cid: 166653340, indentation: 0, author: "rurudaspippen", displayAuthor: "RuruDasPippen",
-                           datetime: "August 12, 2022 04:23:07 AM", naturalDatetime: "3 years ago", htmlMessage: "Look at the babies!")),
+                           datetime: "August 12, 2022 03:23:07 AM", naturalDatetime: "3 years ago", htmlMessage: "Look at the babies!")),
             .visible(.init(cid: 166656573, indentation: 0, author: "fallen5592", displayAuthor: "fallen5592",
-                           datetime: "August 12, 2022 08:17:46 AM", naturalDatetime: "3 years ago", htmlMessage: "ooo... more intrestin, cute lil fellas ;p")),
+                           datetime: "August 12, 2022 07:17:46 AM", naturalDatetime: "3 years ago", htmlMessage: "ooo... more intrestin, cute lil fellas ;p")),
             .visible(.init(cid: 166657876, indentation: 0, author: "alvienta", displayAuthor: "alvienta",
-                           datetime: "August 12, 2022 10:08:06 AM", naturalDatetime: "3 years ago", htmlMessage: "these are gorgeous"))
+                           datetime: "August 12, 2022 09:08:06 AM", naturalDatetime: "3 years ago", htmlMessage: "these are gorgeous"))
         ]
         
         XCTAssertEqual(expected, page.comments)

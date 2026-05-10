@@ -31,7 +31,7 @@ extension Rating {
 
 public struct FASubmissionPage: FAPage {
     public struct Metadata: Hashable, Sendable {
-        public init(title: String, author: String, displayAuthor: String, datetime: String, naturalDatetime: String, viewCount: Int, commentCount: Int, favoriteCount: Int, rating: Rating, category: String, species: String, size: String, fileSize: String, keywords: [String], folders: [FAFolder]) {
+        public init(title: String, author: String, displayAuthor: String, datetime: String, naturalDatetime: String, viewCount: Int, commentCount: Int, favoriteCount: Int, rating: Rating, category: String, subCategory: String, species: String, resolution: String, fileSize: String, keywords: [String], folders: [FAFolder]) {
             self.title = title
             self.author = author
             self.displayAuthor = displayAuthor
@@ -42,8 +42,9 @@ public struct FASubmissionPage: FAPage {
             self.favoriteCount = favoriteCount
             self.rating = rating
             self.category = category
+            self.subCategory = subCategory
             self.species = species
-            self.size = size
+            self.resolution = resolution
             self.fileSize = fileSize
             self.keywords = keywords
             self.folders = folders
@@ -61,8 +62,9 @@ public struct FASubmissionPage: FAPage {
         public let rating: Rating
         
         public let category: String
+        public let subCategory: String
         public let species: String
-        public let size: String
+        public let resolution: String
         public let fileSize: String
         public let keywords: [String]
         public let folders: [FAFolder]
@@ -87,18 +89,16 @@ extension FASubmissionPage {
             defer { signposter.endInterval("Submission Parsing", state) }
             
             let doc = try SwiftSoup.parse(String(decoding: data, as: UTF8.self))
-            let columnPageQuery = "body div#main-window div#site-content div#submission_page div#columnpage"
-            let columnPageNode = try doc.select(columnPageQuery)
-            let sidebarNode = try columnPageNode.select("div.submission-sidebar")
-            let submissionInfoNodes = try sidebarNode.select("section.info div")
-            let sizeRowNode = try submissionInfoNodes.first(where: { try $0.text().starts(with: "Size") }).unwrap()
-            let sizeText = try sizeRowNode.select("span").text()
-            let groups = try #/(\d+) x (\d+)/#.wholeMatch(in: sizeText).unwrap()
-            self.widthOnHeightRatio = try Float(groups.1).unwrap() / Float(groups.2).unwrap()
             
-            let submissionContentNode = try columnPageNode.select("div.submission-content")
+            let submissionPageContentQuery = "body#pageid-submission div#main-window div#site-content div#submission_page div div.submission-page-content"
+            let submissionPageContentNode = try doc
+                .select(submissionPageContentQuery)
+            let submissionMainContentNode = try submissionPageContentNode
+                .select("div#submission-main-content")
+            
+            let submissionContentQuery = "div div.submission-content"
+            let submissionContentNode = try submissionMainContentNode.select(submissionContentQuery)
             let submissionImgNode = try submissionContentNode.select("div.submission-area img#submissionImg")
-            
             let previewStr = try submissionImgNode.attr("data-preview-src")
             let fullViewStr = try submissionImgNode.attr("data-fullview-src")
             let previewUrl = try URL(unsafeString: "https:" + previewStr)
@@ -107,7 +107,7 @@ extension FASubmissionPage {
             self.previewImageUrl = previewUrl
             self.fullResolutionMediaUrl = fullViewUrl
             
-            let favoriteNode = try submissionContentNode.select("div.favorite-nav a.button")
+            let favoriteNode = try submissionContentNode.select("div.submission-content-inner div#submission-options a.button")
             let favoriteUrlNode = try favoriteNode
                 .first(where: { ["+Fav", "-Fav"].contains(try $0.text()) })
                 .unwrap()
@@ -116,27 +116,13 @@ extension FASubmissionPage {
             let favoriteStatusStr = try favoriteUrlNode.text()
             self.favoriteUrl = try URL(unsafeString: FAURLs.homeUrl.absoluteString + favoriteUrlStr)
             self.isFavorite = favoriteStatusStr == "-Fav"
-                        
-            let submissionContainerQuery = "section div.section-header div.submission-id-container div.submission-id-sub-container"
-            let submissionContainerNode = try submissionContentNode.select(submissionContainerQuery)
-            let titleNode = try submissionContainerNode.select("div.submission-title h2 p")
-            let title = try titleNode.text()
             
-            let dateNode = try submissionContainerNode.select("strong span.popup_date")
-            let datetime = try dateNode.attr("title")
-            let naturalDatetime = try dateNode.text()
-            
-            let authorNode = try submissionContainerNode.select("a").first().unwrap()
-            let authorUrl = try authorNode.attr("href")
-            let author = try authorUrl.substring(matching: "/user/(.+)/").unwrap()
-            let displayAuthor = try authorNode.text()
-            
-            let descriptionQuery = "section div.section-body div.submission-description"
-            let descriptionNode = try submissionContentNode.select(descriptionQuery)
+            let descriptionQuery = "div div.submission-details div section.submission-description div.section-body div.submission-description-text"
+            let descriptionNode = try submissionMainContentNode.select(descriptionQuery)
             let htmlContent = try descriptionNode.html()
             self.htmlDescription = htmlContent
             
-            let commentNodes = try submissionContentNode.select("div.comments-list div#comments-submission div.comment_container")
+            let commentNodes = try submissionPageContentNode.select("div.comments-list div#comments-submission div.comment_container")
             self.comments = try commentNodes
                 .map { try FAPageComment($0, type: .comment) }
                 .compactMap { $0 }
@@ -145,67 +131,15 @@ extension FASubmissionPage {
                 .substring(matching: #"www\.furaffinity\.net\/view\/\d+\/#cid:(\d+)$"#)
                 .flatMap { Int($0) }
             
-            let commentsDisabledNode = try columnPageNode.select("div#responsebox")
+            let commentsDisabledNode = try submissionPageContentNode
+                .select("div.comments-list div#responsebox")
             let commentsDisabled = try commentsDisabledNode.text().contains("Comment posting has been disabled")
             self.acceptsNewComments = !commentsDisabled
             
-            let statsNode = try sidebarNode.select("section.stats-container")
-            let viewCountNode = try statsNode.select("div.views > span.font-large")
-            let viewCount = try Int(viewCountNode.text()).unwrap()
-            let commentCountNode = try statsNode.select("div.comments > span.font-large")
-            let commentCount = try Int(commentCountNode.text()).unwrap()
-            let favoriteCountNode = try statsNode.select("div.favorites > span.font-large")
-            let favoriteCount = try Int(favoriteCountNode.text()).unwrap()
-            let ratingNode = try statsNode.select("div.rating > span.font-large")
-            let ratingStr = try ratingNode.text().trimmingCharacters(in: .whitespaces)
-            let rating = try Rating(ratingStr).unwrap()
+            self.metadata = try .init(root: doc)
             
-            let readRow = { (name: String, childContainer: String) in
-                let node = try submissionInfoNodes.first(where: { try $0.text().starts(with: name) }).unwrap()
-                return try node.select("div > \(childContainer)").text()
-            }
-            let category = try readRow("Category", "div")
-            let species = try readRow("Species", "span")
-            let fileSize = try readRow("File Size", "span")
-            
-            let keywordNodes = try sidebarNode.select("section.tags-row > span.tags")
-            let keywords = try keywordNodes.compactMap { node in
-                if let tag = try node.getElementsByClass("tag-block").first() {
-                    return try tag.attr("data-tag-name")
-                } else if let tag = try node.getElementsByClass("tag-invalid").first() {
-                    return try tag.text()
-                } else {
-                    let html = (try? node.html()) ?? "exception throw while retrieving html"
-                    logger.error("Failed parsing keyword. Node: \(html)")
-                    return nil
-                }
-            }
-            
-            let folderNodes = try submissionContentNode.select("section.folder-list-container > div > a")
-            let folders = try folderNodes.map {
-                let href = try $0.attr("href")
-                let url = try URL(unsafeString: FAURLs.homeUrl.absoluteString + href)
-                return try FAFolder(title: $0.text(), url: url, isActive: false)
-            }
-            
-            self.metadata = .init(
-                title: title,
-                author: author,
-                displayAuthor: displayAuthor,
-                datetime: datetime,
-                naturalDatetime: naturalDatetime,
-                viewCount: viewCount,
-                commentCount: commentCount,
-                favoriteCount: favoriteCount,
-                rating: rating,
-                category: category,
-                species: species,
-                size: sizeText,
-                fileSize: fileSize,
-                keywords: keywords,
-                folders: folders
-            )
-            
+            let groups = try #/(\d+) x (\d+)/#.wholeMatch(in: self.metadata.resolution).unwrap()
+            self.widthOnHeightRatio = try Float(groups.1).unwrap() / Float(groups.2).unwrap()
         } catch {
             logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
             throw error
@@ -214,6 +148,92 @@ extension FASubmissionPage {
 }
 
 extension FASubmissionPage.Metadata {
+    init(root: Element) throws {
+        let submissionMainContentQuery = "body#pageid-submission div#main-window div#site-content div#submission_page div div.submission-page-content div#submission-main-content"
+        let submissionMainContentNode = try root.select(submissionMainContentQuery)
+        
+        let submissionDescriptionHeaderQuery = "div div.submission-details div section.submission-description div.section-header.submission-description-header"
+        let submissionDescriptionHeaderNode = try submissionMainContentNode
+            .select(submissionDescriptionHeaderQuery)
+        let submissionDescriptionArtistNode = try submissionDescriptionHeaderNode
+            .select("div.submission-description-artist")
+        
+        let titleQuery = "div div.submission-title h2"
+        let titleNode = try submissionDescriptionArtistNode.select(titleQuery)
+        self.title = try titleNode.text()
+        
+        let authorQuery = "div div span span.c-usernameBlockSimple a"
+        let authorNode = try submissionDescriptionArtistNode
+            .select(authorQuery).first().unwrap()
+        let authorUrl = try authorNode.attr("href")
+        self.author = try authorUrl.substring(matching: "/user/(.+)/").unwrap()
+        self.displayAuthor = try authorNode.text()
+        
+        let dateNode = try submissionDescriptionHeaderNode.select("div div span.popup_date")
+        self.datetime = try dateNode.attr("title")
+        self.naturalDatetime = try dateNode.text()
+        
+        let submissionPageStatsNode = try submissionMainContentNode
+            .select("div div div.submission-page-stats")
+
+        let viewCountNode = try submissionPageStatsNode
+            .select(#"div[title="Views"] div"#).first().unwrap()
+        self.viewCount = try Int(viewCountNode.text()).unwrap()
+
+        let commentCountNode = try submissionPageStatsNode
+            .select(#"div[title="Comments"] div"#).first().unwrap()
+        self.commentCount = try Int(commentCountNode.text()).unwrap()
+
+        let favoriteCountNode = try submissionPageStatsNode
+            .select(#"div[title="Favorites"] div"#).first().unwrap()
+        self.favoriteCount = try Int(favoriteCountNode.text()).unwrap()
+        
+        let contentRatingNode = try submissionPageStatsNode
+            .select(#"div div[class*="c-contentRating"]"#)
+        self.rating = try .init(contentRatingNode.text()).unwrap()
+
+        let submissionContentStatsNode = try submissionMainContentNode
+            .select("div div.submission-content-stats")
+        let spans = try submissionContentStatsNode.select("> span")
+        guard spans.count == 2 else {
+            throw FAPagesError.parserFailureError()
+        }
+        let catories = try spans[0].select("> span").map { try $0.text() }
+        let values = try spans[1].select("> span").map { try $0.text() }
+        
+        guard !catories.isEmpty, catories.count == values.count else {
+            throw FAPagesError.parserFailureError()
+        }
+        let stats = Dictionary(uniqueKeysWithValues: zip(catories, values))
+        self.category = try stats["Category"].unwrap()
+        self.subCategory = try stats["Sub-Category"].unwrap()
+        self.species = try stats["Species"].unwrap()
+        self.resolution = try stats["Resolution"].unwrap()
+        self.fileSize = try stats["File Size"].unwrap()
+
+        let keywordNodes = try submissionMainContentNode
+            .select("div div.submission-tags div span.tags")
+        self.keywords = try keywordNodes.compactMap { node in
+            if let tag = try node.getElementsByClass("tag-block").first() {
+                return try tag.attr("data-tag-name")
+            } else if let tag = try node.getElementsByClass("tag-invalid").first() {
+                return try tag.text()
+            } else {
+                let html = (try? node.html()) ?? "exception throw while retrieving html"
+                logger.error("Failed parsing keyword. Node: \(html)")
+                return nil
+            }
+        }
+        
+        let foldersQuery = "div div#submission-sidebar-footer div.submission-controls-lower div.folder-list-container div div.submission-folder a"
+        let foldersNodes = try submissionMainContentNode.select(foldersQuery)
+        self.folders = try foldersNodes.map {
+            let href = try $0.attr("href")
+            let url = try URL(unsafeString: FAURLs.homeUrl.absoluteString + href)
+            return try FAFolder(title: $0.text(), url: url, isActive: false)
+        }
+    }
+    
     public func togglingFavorite(_ newIsFavorite: Bool) -> Self {
         Self.init(
             title: title,
@@ -226,8 +246,9 @@ extension FASubmissionPage.Metadata {
             favoriteCount: self.favoriteCount + (newIsFavorite ? -1 : 1),
             rating: rating,
             category: category,
+            subCategory: subCategory,
             species: species,
-            size: size,
+            resolution: resolution,
             fileSize: fileSize,
             keywords: keywords,
             folders: folders
