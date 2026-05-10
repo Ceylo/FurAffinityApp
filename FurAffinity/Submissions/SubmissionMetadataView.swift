@@ -37,13 +37,14 @@ struct SubmissionMetadataView: View {
                         initialDisplayedDate: .absolute
                     )
                 }
-                LabeledContent("Size", value: metadata.size)
+                LabeledContent("Resolution", value: metadata.resolution)
                 LabeledContent("File Size", value: metadata.fileSize)
             }
             
             Section("Classification") {
                 LabeledContent("Rating", value: metadata.rating.displayDescription)
                 LabeledContent("Category", value: metadata.category)
+                LabeledContent("Sub-Category", value: metadata.subCategory)
                 LabeledContent("Species", value: metadata.species)
             }
             
