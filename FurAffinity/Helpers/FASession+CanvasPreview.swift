@@ -365,7 +365,7 @@ extension FASubmission {
                     favoriteCount: 72,
                     rating: .general,
                     category: "Artwork (Digital) / All",
-                    subCategory: "All",
+                    theme: "All",
                     species: "Unspecified / Any",
                     resolution: "888 x 1280",
                     fileSize: "949.8 kB",
