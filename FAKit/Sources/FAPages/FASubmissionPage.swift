@@ -225,7 +225,7 @@ extension FASubmissionPage.Metadata {
             }
         }
         
-        let foldersQuery = "div div#submission-sidebar-footer div.submission-controls-lower div.folder-list-container div div.submission-folder a"
+        let foldersQuery = "div div#submission-sidebar-lower div.submission-controls-lower div.folder-list-container div div.submission-folder a"
         let foldersNodes = try submissionMainContentNode.select(foldersQuery)
         self.folders = try foldersNodes.map {
             let href = try $0.attr("href")
