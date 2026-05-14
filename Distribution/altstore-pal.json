@@ -46,6 +46,24 @@
       ],
       "versions": [
         {
+          "version": "1.16.3",
+          "buildVersion": "1",
+          "date": "2026-05-14T14:00:00+01:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n🐞 BUGFIXES\n- Fixed again submissions loading after 13th May's furaffinity.net website update",
+          "downloadURL": "https://get.furaffinity.app/altstore/releases/1.16.3/adp/",
+          "size": 12790952,
+          "minOSVersion": "17.4"
+        },
+        {
+          "version": "1.16.2",
+          "buildVersion": "1",
+          "date": "2026-05-10T16:00:00+01:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n🐞 BUGFIXES\n- Error handling shows a more useful message in case furaffinity.net has CloudFlare challenge currently active\n- Fixed submissions loading after early May's furaffinity.net website update",
+          "downloadURL": "https://get.furaffinity.app/altstore/releases/1.16.2/adp/",
+          "size": 12790726,
+          "minOSVersion": "17.4"
+        },
+        {
           "version": "1.16",
           "buildVersion": "1",
           "date": "2026-01-24T23:00:00+01:00",

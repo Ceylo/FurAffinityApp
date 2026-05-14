@@ -18,7 +18,7 @@
       "iconURL": "https://get.furaffinity.app/altstore/AppIconLG.heic",
       "tintColor": null,
       "category": "social",
-      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.16/FurAffinity-1.16-8f38b23.ipa",
+      "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.16.3/FurAffinity-1.16.3-516ef13.ipa",
       "screenshots": [
         {
           "height": 2532,
@@ -54,6 +54,24 @@
         "https://get.furaffinity.app/altstore/releases/1.15/screenshots/note reply.heic"
       ],
       "versions": [
+        {
+          "version": "1.16.3",
+          "date": "2026-05-14T14:00:00+01:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n🐞 BUGFIXES\n- Fixed again submissions loading after 13th May's furaffinity.net website update",
+          "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.16.3/FurAffinity-1.16.3-516ef13.ipa",
+          "size": 20217707,
+          "sha256": "2994b0f46fa5c4faedb81bb5140c47d58458e6aad7c8934ea75dae8bbbf80129",
+          "minOSVersion": "17.4"
+        },
+        {
+          "version": "1.16.2",
+          "date": "2026-05-10T16:00:00+01:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n🐞 BUGFIXES\n- Error handling shows a more useful message in case furaffinity.net has CloudFlare challenge currently active\n- Fixed submissions loading after early May's furaffinity.net website update",
+          "downloadURL": "https://github.com/Ceylo/FurAffinityApp/releases/download/1.16.2/FurAffinity-1.16.2-3a1f679.ipa",
+          "size": 20217864,
+          "sha256": "bb85eb887c224d85138aa7666610c4142b2b86eedddd540349c83bf03414e96b",
+          "minOSVersion": "17.4"
+        },
         {
           "version": "1.16",
           "date": "2026-01-24T23:00:00+01:00",
