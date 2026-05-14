@@ -31,7 +31,7 @@ extension Rating {
 
 public struct FASubmissionPage: FAPage {
     public struct Metadata: Hashable, Sendable {
-        public init(title: String, author: String, displayAuthor: String, datetime: String, naturalDatetime: String, viewCount: Int, commentCount: Int, favoriteCount: Int, rating: Rating, category: String, subCategory: String, species: String, resolution: String, fileSize: String, keywords: [String], folders: [FAFolder]) {
+        public init(title: String, author: String, displayAuthor: String, datetime: String, naturalDatetime: String, viewCount: Int, commentCount: Int, favoriteCount: Int, rating: Rating, category: String, theme: String, species: String, resolution: String, fileSize: String, keywords: [String], folders: [FAFolder]) {
             self.title = title
             self.author = author
             self.displayAuthor = displayAuthor
@@ -42,7 +42,7 @@ public struct FASubmissionPage: FAPage {
             self.favoriteCount = favoriteCount
             self.rating = rating
             self.category = category
-            self.subCategory = subCategory
+            self.theme = theme
             self.species = species
             self.resolution = resolution
             self.fileSize = fileSize
@@ -62,7 +62,7 @@ public struct FASubmissionPage: FAPage {
         public let rating: Rating
         
         public let category: String
-        public let subCategory: String
+        public let theme: String
         public let species: String
         public let resolution: String
         public let fileSize: String
@@ -206,7 +206,7 @@ extension FASubmissionPage.Metadata {
         }
         let stats = Dictionary(uniqueKeysWithValues: zip(catories, values))
         self.category = try stats["Category"].unwrap()
-        self.subCategory = try stats["Sub-Category"].unwrap()
+        self.theme = try stats["Theme"].unwrap()
         self.species = try stats["Species"].unwrap()
         self.resolution = try stats["Resolution"].unwrap()
         self.fileSize = try stats["File Size"].unwrap()
@@ -225,7 +225,7 @@ extension FASubmissionPage.Metadata {
             }
         }
         
-        let foldersQuery = "div div#submission-sidebar-footer div.submission-controls-lower div.folder-list-container div div.submission-folder a"
+        let foldersQuery = "div div#submission-sidebar-lower div.submission-controls-lower div.folder-list-container div div.submission-folder a"
         let foldersNodes = try submissionMainContentNode.select(foldersQuery)
         self.folders = try foldersNodes.map {
             let href = try $0.attr("href")
@@ -246,7 +246,7 @@ extension FASubmissionPage.Metadata {
             favoriteCount: self.favoriteCount + (newIsFavorite ? -1 : 1),
             rating: rating,
             category: category,
-            subCategory: subCategory,
+            theme: theme,
             species: species,
             resolution: resolution,
             fileSize: fileSize,
