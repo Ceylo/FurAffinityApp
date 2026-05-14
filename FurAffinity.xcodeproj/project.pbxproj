@@ -912,7 +912,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;
-				MARKETING_VERSION = 1.16.2;
+				MARKETING_VERSION = 1.16.3;
 				PRODUCT_NAME = "Fur Affinity";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -944,7 +944,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;
-				MARKETING_VERSION = 1.16.2;
+				MARKETING_VERSION = 1.16.3;
 				PRODUCT_NAME = "Fur Affinity";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
