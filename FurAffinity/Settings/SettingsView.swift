@@ -15,6 +15,8 @@ struct SettingsView: View {
     @State private var dumpingLogs = false
     
     @Default(.animateAvatars) private var animateAvatars: Bool
+    @Default(.notifySubmissions) private var notifySubmissions
+    @Default(.notifyNotes) private var notifyNotes
     @Default(.notifySubmissionComments) private var notifySubmissionComments
     @Default(.notifyJournalComments) private var notifyJournalComments
     @Default(.notifyShouts) private var notifyShouts
@@ -53,14 +55,16 @@ struct SettingsView: View {
             }
             
             Section {
+                Toggle("Submissions", isOn: $notifySubmissions)
+                Toggle("Notes", isOn: $notifyNotes)
                 Toggle("Submission comments", isOn: $notifySubmissionComments)
                 Toggle("Journal comments", isOn: $notifyJournalComments)
                 Toggle("Shouts", isOn: $notifyShouts)
                 Toggle("Journals", isOn: $notifyJournals)
             } header: {
-                Text("Notification badge")
+                Text("Notifications")
             } footer: {
-                Text("iOS notifications are not supported. These settings change the badge displayed on the Notifications tab.")
+                Text("These settings control iOS notifications and the badge displayed on the Notifications tab. iOS notifications are not triggered in real-time.")
             }
             
             Section {

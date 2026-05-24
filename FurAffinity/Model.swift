@@ -38,14 +38,17 @@ class Model: NotificationsNuker, NotificationsDeleter {
     /// `nil` until a fetch actually happened.
     /// After a fetch it contains all found notes, or an empty array if none was found.
     private(set) var notePreviews: [NotesBox: [FANotePreview]] = [:]
-    private(set) var unreadInboxNoteCount = 0
+    var unreadInboxNoteCount: Int {
+        notePreviews[.inbox]?.filter { $0.unread }.count ?? 0
+    }
+    private(set) var displayedUnreadNoteCount: Int = 0
     private(set) var lastInboxNotePreviewsFetchDate: Date?
     
     /// nil until a fetch actually happened
     /// After a fetch it contains all found notifications, or an empty array if none was found
     private(set) var notificationPreviews: FANotificationPreviews?
     private(set) var lastNotificationPreviewsFetchDate: Date?
-    private(set) var significantNotificationCount = 0
+    private(set) var displayedNotificationCount = 0
     
     private(set) var appInfo = AppInformation()
     private var lastAppInfoUpdate: Date?
@@ -74,7 +77,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
         
         Defaults.publisher(keys: Defaults.Keys.notifications)
             .sink { [unowned self] in
-                updateSignificantNotificationCount()
+                updateDisplayedNotificationCount()
             }
             .store(in: &subscriptions)
     }
@@ -113,10 +116,10 @@ class Model: NotificationsNuker, NotificationsDeleter {
             submissionPreviewsPendingDeletion = []
             lastInboxNotePreviewsFetchDate = nil
             notePreviews = [:]
-            unreadInboxNoteCount = 0
+            displayedNotificationCount = 0
             notificationPreviews = nil
             lastNotificationPreviewsFetchDate = nil
-            significantNotificationCount = 0
+            displayedNotificationCount = 0
             autorefreshSubscription = nil
             Defaults[.lastViewedSubmissionID] = nil
             return
@@ -279,16 +282,11 @@ class Model: NotificationsNuker, NotificationsDeleter {
         var previews = targetBox.previews
         previews[targetBox.noteIdx] = previews[targetBox.noteIdx].asRead()
         notePreviews[targetBox.box] = previews
-        
-        if targetBox.box == .inbox {
-            unreadInboxNoteCount = previews.filter { $0.unread }.count
-        }
     }
     
     private func setLocalNotePreviews(_ previews: [FANotePreview], in box: NotesBox) {
         notePreviews[box] = previews
         if box == .inbox {
-            unreadInboxNoteCount = previews.filter { $0.unread }.count
             lastInboxNotePreviewsFetchDate = Date()
         }
     }
@@ -420,11 +418,13 @@ class Model: NotificationsNuker, NotificationsDeleter {
     private func fetchNotificationPreviews(fetcher: @MainActor (_ session: any FASession) async throws -> FANotificationPreviews) async throws {
         notificationPreviews = try await fetcher(getSession())
         lastNotificationPreviewsFetchDate = Date()
-        updateSignificantNotificationCount()
+        updateDisplayedNotificationCount()
     }
     
-    private func updateSignificantNotificationCount() {
-        significantNotificationCount = notificationPreviews
+    private func updateDisplayedNotificationCount() {
+        displayedUnreadNoteCount = Defaults[.notifyNotes] ? unreadInboxNoteCount : 0
+        
+        displayedNotificationCount = notificationPreviews
             .flatMap { notifications in
                 var count = 0
                 

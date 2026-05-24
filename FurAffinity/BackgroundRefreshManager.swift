@@ -8,11 +8,11 @@
 import BackgroundTasks
 import Defaults
 import FAKit
-import Foundation
-import SwiftUI
 import UserNotifications
 
 private struct LatestNotificationIDs {
+    var submissionID: Int
+    var noteID: Int
     var submissionCommentID: Int
     var journalCommentID: Int
     var shoutID: Int
@@ -20,6 +20,8 @@ private struct LatestNotificationIDs {
 
     static func load() -> Self {
         Self(
+            submissionID: Defaults[.latestSubmissionNotificationID],
+            noteID: Defaults[.latestNoteNotificationID],
             submissionCommentID: Defaults[.latestSubmissionCommentNotificationID],
             journalCommentID: Defaults[.latestJournalCommentNotificationID],
             shoutID: Defaults[.latestShoutNotificationID],
@@ -27,23 +29,36 @@ private struct LatestNotificationIDs {
         )
     }
 
-    init(submissionCommentID: Int = 0, journalCommentID: Int = 0, shoutID: Int = 0, journalID: Int = 0) {
+    init(
+        submissionID: Int,
+        noteID: Int,
+        submissionCommentID: Int,
+        journalCommentID: Int,
+        shoutID: Int,
+        journalID: Int
+    ) {
+        self.submissionID = submissionID
+        self.noteID = noteID
         self.submissionCommentID = submissionCommentID
         self.journalCommentID = journalCommentID
         self.shoutID = shoutID
         self.journalID = journalID
     }
 
-    init(previews: FANotificationPreviews) {
+    init(submissions: [FASubmissionPreview], notes: [FANotePreview], previews: FANotificationPreviews?) {
         self.init(
-            submissionCommentID: previews.submissionComments.latestID,
-            journalCommentID: previews.journalComments.latestID,
-            shoutID: previews.shouts.latestID,
-            journalID: previews.journals.latestID
+            submissionID: submissions.latestID,
+            noteID: notes.latestID,
+            submissionCommentID: previews?.submissionComments.latestID ?? 0,
+            journalCommentID: previews?.journalComments.latestID ?? 0,
+            shoutID: previews?.shouts.latestID ?? 0,
+            journalID: previews?.journals.latestID ?? 0
         )
     }
 
     mutating func merge(_ other: Self) {
+        submissionID = max(submissionID, other.submissionID)
+        noteID = max(noteID, other.noteID)
         submissionCommentID = max(submissionCommentID, other.submissionCommentID)
         journalCommentID = max(journalCommentID, other.journalCommentID)
         shoutID = max(shoutID, other.shoutID)
@@ -51,6 +66,8 @@ private struct LatestNotificationIDs {
     }
 
     func save() {
+        Defaults[.latestSubmissionNotificationID] = submissionID
+        Defaults[.latestNoteNotificationID] = noteID
         Defaults[.latestSubmissionCommentNotificationID] = submissionCommentID
         Defaults[.latestJournalCommentNotificationID] = journalCommentID
         Defaults[.latestShoutNotificationID] = shoutID
@@ -58,7 +75,19 @@ private struct LatestNotificationIDs {
     }
 }
 
+extension [FANotePreview] {
+    fileprivate var latestID: Int {
+        map(\.id).max() ?? 0
+    }
+}
+
 extension [FANotificationPreview] {
+    fileprivate var latestID: Int {
+        map(\.id).max() ?? 0
+    }
+}
+
+extension [FASubmissionPreview] {
     fileprivate var latestID: Int {
         map(\.id).max() ?? 0
     }
@@ -129,13 +158,17 @@ enum BackgroundRefreshManager {
         }
     }
 
-    static func updateLatestFetchedNotificationIDs(from previews: FANotificationPreviews?) {
-        guard let previews else {
+    static func updateLatestFetchedNotificationIDs(
+        submissions: [FASubmissionPreview],
+        notes: [FANotePreview],
+        notifications: FANotificationPreviews?
+    ) {
+        guard !submissions.isEmpty || !notes.isEmpty || notifications != nil else {
             return
         }
 
         var latestNotificationIDs = LatestNotificationIDs.load()
-        latestNotificationIDs.merge(LatestNotificationIDs(previews: previews))
+        latestNotificationIDs.merge(LatestNotificationIDs(submissions: submissions, notes: notes, previews: notifications))
         latestNotificationIDs.save()
     }
 
@@ -187,10 +220,14 @@ enum BackgroundRefreshManager {
             return
         }
 
+        let submissions = try await session.submissionPreviews(from: nil)
+        let notes = try await session.notePreviews(from: .inbox)
         let previews = try await session.notificationPreviews()
 
         var latestNotificationIDs = LatestNotificationIDs.load()
 
+        let newSubmissions = submissions.filter { $0.id > latestNotificationIDs.submissionID }
+        let newNotes = notes.filter { $0.unread && $0.id > latestNotificationIDs.noteID }
         let newSubmissionComments = previews.submissionComments.filter {
             $0.id > latestNotificationIDs.submissionCommentID
         }
@@ -199,18 +236,22 @@ enum BackgroundRefreshManager {
         let newJournals = previews.journals.filter { $0.id > latestNotificationIDs.journalID }
 
         // Respect user toggles already used in Settings
+        let countSubmissions = Defaults[.notifySubmissions] ? newSubmissions.count : 0
+        let countNotes = Defaults[.notifyNotes] ? newNotes.count : 0
         let countSubmissionComments = Defaults[.notifySubmissionComments] ? newSubmissionComments.count : 0
         let countJournalComments = Defaults[.notifyJournalComments] ? newJournalComments.count : 0
         let countShouts = Defaults[.notifyShouts] ? newShouts.count : 0
         let countJournals = Defaults[.notifyJournals] ? newJournals.count : 0
 
-        let totalNew = countSubmissionComments + countJournalComments + countShouts + countJournals
+        let totalNew = countSubmissions + countNotes + countSubmissionComments + countJournalComments + countShouts + countJournals
         guard totalNew > 0 else {
             logger.info("Background refresh: no new notifiable item")
             return
         }
 
         let notificationPosted = await postLocalNotification(
+            newSubmissions: countSubmissions,
+            newNotes: countNotes,
             newSubmissionComments: countSubmissionComments,
             newJournalComments: countJournalComments,
             newShouts: countShouts,
@@ -220,11 +261,13 @@ enum BackgroundRefreshManager {
             return
         }
 
-        latestNotificationIDs.merge(LatestNotificationIDs(previews: previews))
+        latestNotificationIDs.merge(LatestNotificationIDs(submissions: submissions, notes: notes, previews: previews))
         latestNotificationIDs.save()
     }
 
     private static func postLocalNotification(
+        newSubmissions: Int,
+        newNotes: Int,
         newSubmissionComments: Int,
         newJournalComments: Int,
         newShouts: Int,
@@ -243,6 +286,12 @@ enum BackgroundRefreshManager {
         content.title = "New activity on Fur Affinity"
 
         var parts: [String] = []
+        if newSubmissions > 0 {
+            parts.append("\(newSubmissions) submission\(newSubmissions > 1 ? "s" : "")")
+        }
+        if newNotes > 0 {
+            parts.append("\(newNotes) note\(newNotes > 1 ? "s" : "")")
+        }
         if newSubmissionComments > 0 {
             parts.append("\(newSubmissionComments) submission comment\(newSubmissionComments > 1 ? "s" : "")")
         }
@@ -251,13 +300,13 @@ enum BackgroundRefreshManager {
         }
         if newShouts > 0 { parts.append("\(newShouts) shout\(newShouts > 1 ? "s" : "")") }
         if newJournals > 0 { parts.append("\(newJournals) journal\(newJournals > 1 ? "s" : "")") }
-        if parts.isEmpty { parts.append("Actually nope 🙃.") }
         content.body = parts.joined(separator: ", ")
+        
         if settings.soundSetting == .enabled {
             content.sound = .default
         }
 
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: "fa.background.refresh", content: content, trigger: trigger)
         do {
             try await center.add(request)

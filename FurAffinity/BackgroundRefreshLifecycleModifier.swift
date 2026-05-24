@@ -57,7 +57,11 @@ private struct BackgroundRefreshLifecycleModifier: ViewModifier {
     @MainActor
     private func updateLatestFetchedNotificationIDsAfterAuthorization() async {
         await requestNotificationAuthorizationIfNeeded()
-        BackgroundRefreshManager.updateLatestFetchedNotificationIDs(from: model.notificationPreviews)
+        BackgroundRefreshManager.updateLatestFetchedNotificationIDs(
+            submissions: Array(model.submissionPreviews ?? []),
+            notes: model.notePreviews[.inbox] ?? [],
+            notifications: model.notificationPreviews
+        )
     }
 }
 
