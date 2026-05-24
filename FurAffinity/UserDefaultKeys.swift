@@ -20,12 +20,22 @@ extension Defaults.Keys {
     static let notifyJournalComments = Key<Bool>("notifyJournalComments", default: true)
     static let notifyShouts = Key<Bool>("notifyShouts", default: true)
     static let notifyJournals = Key<Bool>("notifyJournals", default: false)
+    static let latestSubmissionCommentNotificationID = Key<Int>("latestSubmissionCommentNotificationID", default: 0)
+    static let latestJournalCommentNotificationID = Key<Int>("latestJournalCommentNotificationID", default: 0)
+    static let latestShoutNotificationID = Key<Int>("latestShoutNotificationID", default: 0)
+    static let latestJournalNotificationID = Key<Int>("latestJournalNotificationID", default: 0)
     
     static let notifications = [
         notifySubmissionComments,
         notifyJournalComments,
         notifyShouts,
         notifyJournals
+    ]
+    static let latestNotificationIDs = [
+        latestSubmissionCommentNotificationID,
+        latestJournalCommentNotificationID,
+        latestShoutNotificationID,
+        latestJournalNotificationID
     ]
     
     // MARK: - Sharing
@@ -35,5 +45,5 @@ extension Defaults.Keys {
     static let all = [
         lastViewedSubmissionID,
         animateAvatars
-    ] + notifications
+    ] + notifications + latestNotificationIDs
 }

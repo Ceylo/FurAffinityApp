@@ -40,7 +40,7 @@ struct LoggedInView: View {
             fatalError("Internal inconsistency")
         }
     }
-    
+
     var body: some View {
         ZStack {
             TabView(selection: $selectedTab) {
@@ -113,6 +113,7 @@ struct LoggedInView: View {
             tabBarAppearance.configureWithDefaultBackground()
             UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
         }
+        .backgroundRefreshLifecycle()
     }
 }
 

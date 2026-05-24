@@ -70,12 +70,13 @@ struct RootView: View {
 @main
 struct FurAffinityApp: App {
     @State private var model = Model()
-    
+
     init() {
         let device = UIDevice.current
         logger.info("Launched FurAffinity \(Bundle.main.version.shortDescription, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public), \(buildConfiguration, privacy: .public) build")
         _ = amplitude
         logger.info("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized", privacy: .public)")
+        BackgroundRefreshManager.register()
     }
 
     var body: some Scene {
