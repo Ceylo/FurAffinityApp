@@ -29,33 +29,6 @@ private struct LatestNotificationIDs {
         )
     }
 
-    init(
-        submissionID: Int,
-        noteID: Int,
-        submissionCommentID: Int,
-        journalCommentID: Int,
-        shoutID: Int,
-        journalID: Int
-    ) {
-        self.submissionID = submissionID
-        self.noteID = noteID
-        self.submissionCommentID = submissionCommentID
-        self.journalCommentID = journalCommentID
-        self.shoutID = shoutID
-        self.journalID = journalID
-    }
-
-    init(submissions: [FASubmissionPreview], notes: [FANotePreview], previews: FANotificationPreviews?) {
-        self.init(
-            submissionID: submissions.latestID,
-            noteID: notes.latestID,
-            submissionCommentID: previews?.submissionComments.latestID ?? 0,
-            journalCommentID: previews?.journalComments.latestID ?? 0,
-            shoutID: previews?.shouts.latestID ?? 0,
-            journalID: previews?.journals.latestID ?? 0
-        )
-    }
-
     mutating func merge(_ other: Self) {
         submissionID = max(submissionID, other.submissionID)
         noteID = max(noteID, other.noteID)
@@ -75,19 +48,20 @@ private struct LatestNotificationIDs {
     }
 }
 
-extension [FANotePreview] {
-    fileprivate var latestID: Int {
-        map(\.id).max() ?? 0
+extension LatestNotificationIDs {
+    init(submissions: [FASubmissionPreview], notes: [FANotePreview], previews: FANotificationPreviews?) {
+        self.init(
+            submissionID: submissions.latestID,
+            noteID: notes.latestID,
+            submissionCommentID: previews?.submissionComments.latestID ?? 0,
+            journalCommentID: previews?.journalComments.latestID ?? 0,
+            shoutID: previews?.shouts.latestID ?? 0,
+            journalID: previews?.journals.latestID ?? 0
+        )
     }
 }
 
-extension [FANotificationPreview] {
-    fileprivate var latestID: Int {
-        map(\.id).max() ?? 0
-    }
-}
-
-extension [FASubmissionPreview] {
+extension Collection where Element: Identifiable, Element.ID == Int {
     fileprivate var latestID: Int {
         map(\.id).max() ?? 0
     }
@@ -235,21 +209,13 @@ enum BackgroundRefreshManager {
         let newShouts = previews.shouts.filter { $0.id > latestNotificationIDs.shoutID }
         let newJournals = previews.journals.filter { $0.id > latestNotificationIDs.journalID }
 
-        // Respect user toggles already used in Settings
-        let countSubmissions = Defaults[.notifySubmissions] ? newSubmissions.count : 0
-        let countNotes = Defaults[.notifyNotes] ? newNotes.count : 0
-        let countSubmissionComments = Defaults[.notifySubmissionComments] ? newSubmissionComments.count : 0
-        let countJournalComments = Defaults[.notifyJournalComments] ? newJournalComments.count : 0
-        let countShouts = Defaults[.notifyShouts] ? newShouts.count : 0
-        let countJournals = Defaults[.notifyJournals] ? newJournals.count : 0
-
         guard await postLocalNotification(
-            newSubmissions: countSubmissions,
-            newNotes: countNotes,
-            newSubmissionComments: countSubmissionComments,
-            newJournalComments: countJournalComments,
-            newShouts: countShouts,
-            newJournals: countJournals
+            newSubmissions: newSubmissions,
+            newNotes: newNotes,
+            newSubmissionComments: newSubmissionComments,
+            newJournalComments: newJournalComments,
+            newShouts: newShouts,
+            newJournals: newJournals
         ) else {
             return
         }
@@ -258,45 +224,62 @@ enum BackgroundRefreshManager {
         latestNotificationIDs.save()
     }
 
-    static func buildNotification(
-        newSubmissions: Int,
-        newNotes: Int,
-        newSubmissionComments: Int,
-        newJournalComments: Int,
-        newShouts: Int,
-        newJournals: Int,
-    ) -> UNMutableNotificationContent? {
-        var parts: [String] = []
-        if newSubmissions > 0 {
-            parts.append("\(newSubmissions) submission\(newSubmissions > 1 ? "s" : "")")
-        }
-        if newNotes > 0 {
-            parts.append("\(newNotes) note\(newNotes > 1 ? "s" : "")")
-        }
-        if newSubmissionComments > 0 {
-            parts.append("\(newSubmissionComments) submission comment\(newSubmissionComments > 1 ? "s" : "")")
-        }
-        if newJournalComments > 0 {
-            parts.append("\(newJournalComments) journal comment\(newJournalComments > 1 ? "s" : "")")
-        }
-        if newShouts > 0 { parts.append("\(newShouts) shout\(newShouts > 1 ? "s" : "")") }
-        if newJournals > 0 { parts.append("\(newJournals) journal\(newJournals > 1 ? "s" : "")") }
+    static func applyPreferences(
+        newSubmissions: [FASubmissionPreview],
+        newNotes: [FANotePreview],
+        newSubmissionComments: [FANotificationPreview],
+        newJournalComments: [FANotificationPreview],
+        newShouts: [FANotificationPreview],
+        newJournals: [FANotificationPreview]
+    ) -> (
+        submissions: [FASubmissionPreview],
+        notes: [FANotePreview],
+        submissionComments: [FANotificationPreview],
+        journalComments: [FANotificationPreview],
+        shouts: [FANotificationPreview],
+        journals: [FANotificationPreview]
+    ) {
+        (
+            submissions: Defaults[.notifySubmissions] ? newSubmissions : [],
+            notes: Defaults[.notifyNotes] ? newNotes : [],
+            submissionComments: Defaults[.notifySubmissionComments] ? newSubmissionComments : [],
+            journalComments: Defaults[.notifyJournalComments] ? newJournalComments : [],
+            shouts: Defaults[.notifyShouts] ? newShouts : [],
+            journals: Defaults[.notifyJournals] ? newJournals : []
+        )
+    }
 
-        guard !parts.isEmpty else { return nil }
+    static func buildNotifications(
+        submissions: [FASubmissionPreview],
+        notes: [FANotePreview],
+        submissionComments: [FANotificationPreview],
+        journalComments: [FANotificationPreview],
+        shouts: [FANotificationPreview],
+        journals: [FANotificationPreview]
+    ) -> [UNMutableNotificationContent] {
+        submissions.map { notificationContent(title: "New Submission", subtitle: $0.displayAuthor, body: $0.title) }
+            + notes.map { notificationContent(title: "New Note", subtitle: $0.displayAuthor, body: $0.title) }
+            + submissionComments.map { notificationContent(title: "New Submission Comment", subtitle: $0.displayAuthor, body: $0.title) }
+            + journalComments.map { notificationContent(title: "New Journal Comment", subtitle: $0.displayAuthor, body: $0.title) }
+            + shouts.map { notificationContent(title: "New Shout", subtitle: $0.displayAuthor, body: $0.title) }
+            + journals.map { notificationContent(title: "New Journal", subtitle: $0.displayAuthor, body: $0.title) }
+    }
 
+    private static func notificationContent(title: String, subtitle: String, body: String) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
-        content.title = "New activity on Fur Affinity"
-        content.body = parts.joined(separator: ", ")
+        content.title = title
+        content.subtitle = subtitle
+        content.body = body
         return content
     }
 
     private static func postLocalNotification(
-        newSubmissions: Int,
-        newNotes: Int,
-        newSubmissionComments: Int,
-        newJournalComments: Int,
-        newShouts: Int,
-        newJournals: Int
+        newSubmissions: [FASubmissionPreview],
+        newNotes: [FANotePreview],
+        newSubmissionComments: [FANotificationPreview],
+        newJournalComments: [FANotificationPreview],
+        newShouts: [FANotificationPreview],
+        newJournals: [FANotificationPreview]
     ) async -> Bool {
         let center = UNUserNotificationCenter.current()
         let settings = await center.notificationSettings()
@@ -307,31 +290,42 @@ enum BackgroundRefreshManager {
             return false
         }
 
-        guard let content = buildNotification(
+        let filtered = applyPreferences(
             newSubmissions: newSubmissions,
             newNotes: newNotes,
             newSubmissionComments: newSubmissionComments,
             newJournalComments: newJournalComments,
             newShouts: newShouts,
             newJournals: newJournals
-        ) else {
-            return false
-        }
-        
-        if settings.soundSetting == .enabled {
-            content.sound = .default
-        }
+        )
+
+        let contents = buildNotifications(
+            submissions: filtered.submissions,
+            notes: filtered.notes,
+            submissionComments: filtered.submissionComments,
+            journalComments: filtered.journalComments,
+            shouts: filtered.shouts,
+            journals: filtered.journals
+        )
+        guard !contents.isEmpty else { return false }
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(identifier: "fa.background.refresh-\(UUID())", content: content, trigger: trigger)
-        do {
-            try await center.add(request)
-            logger.info("Scheduled local notification for background refresh")
-            return true
-        } catch {
-            logger.error("Failed to schedule local notification: \(error, privacy: .public)")
-            return false
+        var postedCount = 0
+        for content in contents {
+            if settings.soundSetting == .enabled {
+                content.sound = .default
+            }
+            let request = UNNotificationRequest(identifier: "fa.background.refresh-\(UUID())", content: content, trigger: trigger)
+            do {
+                try await center.add(request)
+                postedCount += 1
+            } catch {
+                logger.error("Failed to schedule local notification: \(error, privacy: .public)")
+            }
         }
+        guard postedCount > 0 else { return false }
+        logger.info("Scheduled \(postedCount) local notification(s) for background refresh")
+        return true
     }
 }
 
