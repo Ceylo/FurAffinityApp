@@ -172,7 +172,7 @@ enum BackgroundRefreshManager {
         latestNotificationIDs.save()
     }
 
-    static func schedule(earliestBeginAfter seconds: TimeInterval = 1 * 60) {
+    static func schedule(earliestBeginAfter seconds: TimeInterval = 30 * 60) {
         let request = BGAppRefreshTaskRequest(identifier: taskIdentifier)
         request.earliestBeginDate = Date(timeIntervalSinceNow: seconds)
         do {
@@ -282,9 +282,6 @@ enum BackgroundRefreshManager {
             return false
         }
 
-        let content = UNMutableNotificationContent()
-        content.title = "New activity on Fur Affinity"
-
         var parts: [String] = []
         if newSubmissions > 0 {
             parts.append("\(newSubmissions) submission\(newSubmissions > 1 ? "s" : "")")
@@ -300,6 +297,9 @@ enum BackgroundRefreshManager {
         }
         if newShouts > 0 { parts.append("\(newShouts) shout\(newShouts > 1 ? "s" : "")") }
         if newJournals > 0 { parts.append("\(newJournals) journal\(newJournals > 1 ? "s" : "")") }
+        
+        let content = UNMutableNotificationContent()
+        content.title = "New activity on Fur Affinity"
         content.body = parts.joined(separator: ", ")
         
         if settings.soundSetting == .enabled {
@@ -307,7 +307,7 @@ enum BackgroundRefreshManager {
         }
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(identifier: "fa.background.refresh", content: content, trigger: trigger)
+        let request = UNNotificationRequest(identifier: "fa.background.refresh-\(UUID())", content: content, trigger: trigger)
         do {
             try await center.add(request)
             logger.info("Scheduled local notification for background refresh")
