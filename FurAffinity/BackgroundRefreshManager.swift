@@ -243,12 +243,6 @@ enum BackgroundRefreshManager {
         let countShouts = Defaults[.notifyShouts] ? newShouts.count : 0
         let countJournals = Defaults[.notifyJournals] ? newJournals.count : 0
 
-        let totalNew = countSubmissions + countNotes + countSubmissionComments + countJournalComments + countShouts + countJournals
-        guard totalNew > 0 else {
-            logger.info("Background refresh: no new notifiable item")
-            return
-        }
-
         guard await postLocalNotification(
             newSubmissions: countSubmissions,
             newNotes: countNotes,
