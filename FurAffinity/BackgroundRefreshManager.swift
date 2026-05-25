@@ -249,20 +249,51 @@ enum BackgroundRefreshManager {
             return
         }
 
-        let notificationPosted = await postLocalNotification(
+        guard await postLocalNotification(
             newSubmissions: countSubmissions,
             newNotes: countNotes,
             newSubmissionComments: countSubmissionComments,
             newJournalComments: countJournalComments,
             newShouts: countShouts,
             newJournals: countJournals
-        )
-        guard notificationPosted else {
+        ) else {
             return
         }
 
         latestNotificationIDs.merge(LatestNotificationIDs(submissions: submissions, notes: notes, previews: previews))
         latestNotificationIDs.save()
+    }
+
+    static func buildNotification(
+        newSubmissions: Int,
+        newNotes: Int,
+        newSubmissionComments: Int,
+        newJournalComments: Int,
+        newShouts: Int,
+        newJournals: Int,
+    ) -> UNMutableNotificationContent? {
+        var parts: [String] = []
+        if newSubmissions > 0 {
+            parts.append("\(newSubmissions) submission\(newSubmissions > 1 ? "s" : "")")
+        }
+        if newNotes > 0 {
+            parts.append("\(newNotes) note\(newNotes > 1 ? "s" : "")")
+        }
+        if newSubmissionComments > 0 {
+            parts.append("\(newSubmissionComments) submission comment\(newSubmissionComments > 1 ? "s" : "")")
+        }
+        if newJournalComments > 0 {
+            parts.append("\(newJournalComments) journal comment\(newJournalComments > 1 ? "s" : "")")
+        }
+        if newShouts > 0 { parts.append("\(newShouts) shout\(newShouts > 1 ? "s" : "")") }
+        if newJournals > 0 { parts.append("\(newJournals) journal\(newJournals > 1 ? "s" : "")") }
+
+        guard !parts.isEmpty else { return nil }
+
+        let content = UNMutableNotificationContent()
+        content.title = "New activity on Fur Affinity"
+        content.body = parts.joined(separator: ", ")
+        return content
     }
 
     private static func postLocalNotification(
@@ -282,25 +313,16 @@ enum BackgroundRefreshManager {
             return false
         }
 
-        var parts: [String] = []
-        if newSubmissions > 0 {
-            parts.append("\(newSubmissions) submission\(newSubmissions > 1 ? "s" : "")")
+        guard let content = buildNotification(
+            newSubmissions: newSubmissions,
+            newNotes: newNotes,
+            newSubmissionComments: newSubmissionComments,
+            newJournalComments: newJournalComments,
+            newShouts: newShouts,
+            newJournals: newJournals
+        ) else {
+            return false
         }
-        if newNotes > 0 {
-            parts.append("\(newNotes) note\(newNotes > 1 ? "s" : "")")
-        }
-        if newSubmissionComments > 0 {
-            parts.append("\(newSubmissionComments) submission comment\(newSubmissionComments > 1 ? "s" : "")")
-        }
-        if newJournalComments > 0 {
-            parts.append("\(newJournalComments) journal comment\(newJournalComments > 1 ? "s" : "")")
-        }
-        if newShouts > 0 { parts.append("\(newShouts) shout\(newShouts > 1 ? "s" : "")") }
-        if newJournals > 0 { parts.append("\(newJournals) journal\(newJournals > 1 ? "s" : "")") }
-        
-        let content = UNMutableNotificationContent()
-        content.title = "New activity on Fur Affinity"
-        content.body = parts.joined(separator: ", ")
         
         if settings.soundSetting == .enabled {
             content.sound = .default
@@ -318,3 +340,4 @@ enum BackgroundRefreshManager {
         }
     }
 }
+

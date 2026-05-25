@@ -1,5 +1,5 @@
 //
-//  FurAffinityTests.swift
+//  FATargetTests.swift
 //  FurAffinityTests
 //
 //  Created by Ceylo on 17/03/2023.

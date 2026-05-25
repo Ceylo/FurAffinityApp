@@ -97,6 +97,7 @@
 		87C94A562AA897E50049CA81 /* RemoteUserGalleryLikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C94A552AA897E50049CA81 /* RemoteUserGalleryLikeView.swift */; };
 		87CCD2F22FC3441600768FDB /* BackgroundRefreshManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87CCD2F12FC3441600768FDB /* BackgroundRefreshManager.swift */; };
 		87CCD2F62FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87CCD2F52FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift */; };
+		87CCD2F92FC49A2000768FDB /* BackgroundRefreshNotificationBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87CCD2F72FC4991600768FDB /* BackgroundRefreshNotificationBuilderTests.swift */; };
 		87D252062C906AB700E07AE1 /* withAsync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D252052C906AB700E07AE1 /* withAsync.swift */; };
 		87D64FBD2C87181600AB6F44 /* WatchlistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FBC2C87181600AB6F44 /* WatchlistView.swift */; };
 		87D64FBF2C871B9300AB6F44 /* RemoteWatchlistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FBE2C871B9300AB6F44 /* RemoteWatchlistView.swift */; };
@@ -224,6 +225,7 @@
 		87C94A552AA897E50049CA81 /* RemoteUserGalleryLikeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteUserGalleryLikeView.swift; sourceTree = "<group>"; };
 		87CCD2F12FC3441600768FDB /* BackgroundRefreshManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshManager.swift; sourceTree = "<group>"; };
 		87CCD2F52FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshLifecycleModifier.swift; sourceTree = "<group>"; };
+		87CCD2F72FC4991600768FDB /* BackgroundRefreshNotificationBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshNotificationBuilderTests.swift; sourceTree = "<group>"; };
 		87D252052C906AB700E07AE1 /* withAsync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = withAsync.swift; sourceTree = "<group>"; };
 		87D64FBC2C87181600AB6F44 /* WatchlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistView.swift; sourceTree = "<group>"; };
 		87D64FBE2C871B9300AB6F44 /* RemoteWatchlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteWatchlistView.swift; sourceTree = "<group>"; };
@@ -459,6 +461,7 @@
 			isa = PBXGroup;
 			children = (
 				8791D60229C4D627003FDBBE /* FATargetTests.swift */,
+				87CCD2F72FC4991600768FDB /* BackgroundRefreshNotificationBuilderTests.swift */,
 			);
 			path = FurAffinityTests;
 			sourceTree = "<group>";
@@ -757,6 +760,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				87CCD2F92FC49A2000768FDB /* BackgroundRefreshNotificationBuilderTests.swift in Sources */,
 				8791D60329C4D627003FDBBE /* FATargetTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
