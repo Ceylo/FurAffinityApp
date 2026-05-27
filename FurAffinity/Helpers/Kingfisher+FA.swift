@@ -136,15 +136,31 @@ actor DownloadDelegate: ImageDownloaderDelegate {
         downloadStartDates[url]
     }
     
+    nonisolated private func setCloudflareCookie(for url: URL, on downloader: ImageDownloader) {
+        let cf_clearance = HTTPCookieStorage.shared
+            .cookies(for: url)?
+            .first(where: { $0.name == "cf_clearance" })
+        
+        let downloaderCookieStorage = downloader.sessionConfiguration.httpCookieStorage
+        if let cf_clearance, let downloaderCookieStorage, var cookies = downloaderCookieStorage.cookies(for: url) {
+            cookies.append(cf_clearance)
+            downloader.sessionConfiguration.httpCookieStorage!
+                .setCookies(cookies, for: url, mainDocumentURL: url)
+        }
+    }
+    
     nonisolated func imageDownloader(
         _ downloader: ImageDownloader,
         willDownloadImageForURL url: URL,
         with request: URLRequest?
     ) {
+        setCloudflareCookie(for: url, on: downloader)
+        
         let startDate = Date()
         Task {
             await setDownloadStartDate(startDate, for: url)
         }
+        
         if let request {
             let method = request.httpMethod ?? "GET"
             logger.info("[KF] \(method, privacy: .public) request on \(url, privacy: .public)")
