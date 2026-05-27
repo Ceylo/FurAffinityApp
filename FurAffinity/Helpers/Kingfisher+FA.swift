@@ -16,11 +16,22 @@ private extension KFImageProtocol {
             .backgroundDecode()
             .reducePriorityOnDisappear(true)
             .downloader(downloaderWithUserAgent)
+            .requestModifier(FAUserAgentRequestModifier())
             .diskCacheExpiration(.days((7...14).randomElement()!))
             .diskCacheAccessExtending(.none)
             .onFailure { error in
                 logger.error("\(error, privacy: .public)")
             }
+    }
+}
+
+struct FAUserAgentRequestModifier: AsyncImageDownloadRequestModifier {
+    var onDownloadTaskStarted: (@Sendable (DownloadTask?) -> Void)? { nil }
+
+    func modified(for request: URLRequest) async -> URLRequest? {
+        var modified = request
+        modified.setValue(await FAUserAgent.current(), forHTTPHeaderField: "User-Agent")
+        return modified
     }
 }
 
@@ -48,6 +59,7 @@ func prefetch(_ urls: [URL], priority: Float = URLSessionTask.lowPriority) {
         urls: urls,
         options: [
             .downloader(downloaderWithUserAgent),
+            .requestModifier(FAUserAgentRequestModifier()),
             .downloadPriority(priority)
         ]
     )
@@ -106,7 +118,6 @@ struct Prefetch: View {
 @MainActor
 private let downloaderWithUserAgent: ImageDownloader = {
     let downloader = ImageDownloader(name: "FurAffinity Downloader")
-    downloader.sessionConfiguration = downloader.sessionConfiguration.withHttpHeadersForFARequests()
     downloader.delegate = DownloadDelegate.shared
     return downloader
 }()

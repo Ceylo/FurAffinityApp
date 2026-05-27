@@ -32,7 +32,11 @@ struct WebView: UIViewRepresentable {
     }
     
     func makeUIView(context: Context) -> WKWebView {
-        let view = WKWebView()
+        let config = WKWebViewConfiguration()
+        // Must match the User-Agent used by URLSession so cf_clearance issued here
+        // remains valid for subsequent network requests.
+        config.applicationNameForUserAgent = FAUserAgent.applicationName
+        let view = WKWebView(frame: .zero, configuration: config)
         context.coordinator.request = view.load(URLRequest(url: initialUrl))
         view.navigationDelegate = context.coordinator
         context.coordinator.bind(to: view)

@@ -88,7 +88,8 @@ actor CSSInliner {
             }
             
             let url = url(for: theme)
-            let (data, response) = try await URLSession.sharedForFARequests.data(from: url)
+            let session = await URLSession.sharedForFARequests
+            let (data, response) = try await session.data(from: url)
             guard let response = response as? HTTPURLResponse,
                   (200...299).contains(response.statusCode) else {
                 logger.error("\(self.url(for: theme), privacy: .public): css download request failed with response \(response, privacy: .public) and received data \(String(data: data, encoding: .utf8) ?? "<non-UTF8 data>", privacy: .public).")
