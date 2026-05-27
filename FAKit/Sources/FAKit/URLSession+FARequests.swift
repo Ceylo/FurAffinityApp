@@ -35,6 +35,7 @@ public enum FAUserAgent {
             do {
                 let result = try await webView.evaluateJavaScript("navigator.userAgent")
                 if let ua = result as? String, !ua.isEmpty {
+                    logger.info("Resolved User-Agent: \(ua, privacy: .public)")
                     return ua
                 }
                 logger.error("FAUserAgent: navigator.userAgent returned unexpected value \(String(describing: result), privacy: .public)")
