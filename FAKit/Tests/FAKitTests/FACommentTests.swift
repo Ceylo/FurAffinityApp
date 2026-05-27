@@ -1,11 +1,11 @@
 //
 //  FACommentTests.swift
-//  
+//
 //
 //  Created by Ceylo on 01/12/2022.
 //
 
-import XCTest
+import Testing
 @testable import FAKit
 @testable import FAPages
 
@@ -18,13 +18,15 @@ extension FAPageComment {
     }
 }
 
-class FACommentTests: XCTestCase {
-    func testBuildCommentsTree_emptyListGivesEmptyTree() async throws {
+struct FACommentTests {
+    @Test
+    func buildCommentsTree_emptyListGivesEmptyTree() async throws {
         let tree = try await FAComment.buildCommentsTree([])
-        XCTAssertEqual(tree, [])
+        #expect(tree == [])
     }
-    
-    func testBuildCommentsTree_onlyRootsGivesFlatTree() async throws {
+
+    @Test
+    func buildCommentsTree_onlyRootsGivesFlatTree() async throws {
         let tree = try await FAComment.buildCommentsTree([
             .init(cid: 166652793, indentation: 0),
             .init(cid: 166653891, indentation: 0),
@@ -35,9 +37,11 @@ class FACommentTests: XCTestCase {
             FAComment(.init(cid: 166653891, indentation: 0)),
             FAComment(.init(cid: 166658565, indentation: 0)),
         ]
-        XCTAssertEqual(tree, expected)
+        #expect(tree == expected)
     }
-    func testBuildCommentsTree_simpleHierarchy() async throws {
+
+    @Test
+    func buildCommentsTree_simpleHierarchy() async throws {
         let tree = try await FAComment.buildCommentsTree([
             .init(cid: 166652793, indentation: 0),
             .init(cid: 166653891, indentation: 3),
@@ -50,10 +54,11 @@ class FACommentTests: XCTestCase {
                 ]),
             ]),
         ]
-        XCTAssertEqual(tree, expected)
+        #expect(tree == expected)
     }
-    
-    func testBuildCommentsTree_complexHierarchy() async throws {
+
+    @Test
+    func buildCommentsTree_complexHierarchy() async throws {
         let tree = try await FAComment.buildCommentsTree([
             .init(cid: 166652793, indentation: 0),
             .init(cid: 166653891, indentation: 3),
@@ -75,10 +80,11 @@ class FACommentTests: XCTestCase {
             ]),
             FAComment(.init(cid: 166656182, indentation: 0)),
         ]
-        XCTAssertEqual(tree, expected)
+        #expect(tree == expected)
     }
-    
-    func testRecursiveCommentsCount() async throws {
+
+    @Test
+    func recursiveCommentsCount() async throws {
         let tree = try await [
             FAComment(.init(cid: 166652793, indentation: 0)).withAnswers([
                 FAComment(.init(cid: 166653891, indentation: 3)).withAnswers([
@@ -91,6 +97,6 @@ class FACommentTests: XCTestCase {
             ]),
             FAComment(.init(cid: 166656182, indentation: 0)),
         ]
-        XCTAssertEqual(tree.recursiveCount, 7)
+        #expect(tree.recursiveCount == 7)
     }
 }
