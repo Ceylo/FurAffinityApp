@@ -5,11 +5,13 @@
 //  Created by Ceylo on 17/10/2021.
 //
 
-import XCTest
+import Testing
+import Foundation
 @testable import FAPages
 
-final class FAJournalPageTests: XCTestCase {
-    func testSubmissionPageWithComments_isParsed() throws {
+struct FAJournalPageTests {
+    @Test
+    func submissionPageWithComments_isParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/journal/10516170/")!
         let data = testData("www.furaffinity.net:journal:10516170-withcomments.html")
         let page = try FAJournalPage(data: data, url: url)
@@ -86,23 +88,24 @@ final class FAJournalPageTests: XCTestCase {
             acceptsNewComments: true
         )
         
-        XCTAssertEqual(expectedPage, page)
-        XCTAssertEqual(expectedPage.author, page.author)
-        XCTAssertEqual(expectedPage.displayAuthor, page.displayAuthor)
-        XCTAssertEqual(expectedPage.title, page.title)
-        XCTAssertEqual(expectedPage.datetime, page.datetime)
-        XCTAssertEqual(expectedPage.naturalDatetime, page.naturalDatetime)
-        XCTAssertEqual(expectedPage.htmlDescription, page.htmlDescription)
-        XCTAssertEqual(expectedPage.comments, page.comments)
-        XCTAssertEqual(expectedPage.targetCommentId, page.targetCommentId)
-        XCTAssertEqual(expectedPage.acceptsNewComments, page.acceptsNewComments)
+        #expect(expectedPage == page)
+        #expect(expectedPage.author == page.author)
+        #expect(expectedPage.displayAuthor == page.displayAuthor)
+        #expect(expectedPage.title == page.title)
+        #expect(expectedPage.datetime == page.datetime)
+        #expect(expectedPage.naturalDatetime == page.naturalDatetime)
+        #expect(expectedPage.htmlDescription == page.htmlDescription)
+        #expect(expectedPage.comments == page.comments)
+        #expect(expectedPage.targetCommentId == page.targetCommentId)
+        #expect(expectedPage.acceptsNewComments == page.acceptsNewComments)
     }
-    
-    func testSubmissionPageWithCommentsDisabled_isParsed() throws {
+
+    @Test
+    func submissionPageWithCommentsDisabled_isParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/journal/10882268/")!
         let data = testData("www.furaffinity.net:journal:10882268-disabled-comments.html")
         let page = try FAJournalPage(data: data, url: url)
-        
-        XCTAssertEqual(page.acceptsNewComments, false)
+
+        #expect(page.acceptsNewComments == false)
     }
 }
