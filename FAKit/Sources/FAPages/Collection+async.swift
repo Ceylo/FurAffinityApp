@@ -15,4 +15,28 @@ extension Collection where Element: Sendable {
         }
         return results
     }
+
+    // Using static method to workaround this warning:
+    // Capture of non-Sendable type 'Self.Type' in an isolated closure
+    static private func parallelMap<InputElement: Sendable, OutputElement: Sendable>(
+        of collection: some Collection<InputElement>,
+        _ transform: @Sendable @escaping (InputElement) async throws -> OutputElement
+    ) async rethrows -> [OutputElement] {
+        try await withThrowingTaskGroup(of: (Int, OutputElement).self) { group in
+            for (offset, element) in collection.enumerated() {
+                group.addTask {
+                    await (offset, try transform(element))
+                }
+            }
+
+            return try await group
+                .reduce(into: [OutputElement?](repeating: nil, count: collection.count),
+                        { $0[$1.0] = $1.1 })
+            as! [OutputElement]
+        }
+    }
+
+    public func parallelMap<T: Sendable>(_ transform: @Sendable @escaping (Element) async throws -> T) async rethrows -> [T] {
+        try await Self.parallelMap(of: self, transform)
+    }
 }

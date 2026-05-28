@@ -77,6 +77,7 @@ struct FurAffinityApp: App {
         _ = amplitude
         logger.info("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized", privacy: .public)")
         BackgroundRefreshManager.register()
+        FAImageInliner.dataProvider = kingfisherImageDataProvider
     }
 
     var body: some Scene {

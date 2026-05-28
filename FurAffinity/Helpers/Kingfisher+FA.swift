@@ -35,6 +35,35 @@ struct FAUserAgentRequestModifier: AsyncImageDownloadRequestModifier {
     }
 }
 
+/// Image-data provider used by `FAImageInliner` to fetch images for HTML inlining.
+/// Reuses Kingfisher's cache: a cache hit skips download entirely, and a cache miss
+/// downloads through `downloaderWithUserAgent` and populates the cache for later use.
+@MainActor
+let kingfisherImageDataProvider: @Sendable (URL) async -> (data: Data, mimeType: String)? = { url in
+    do {
+        _ = try await KingfisherManager.shared.retrieveImage(
+            with: url,
+            options: [
+                .downloader(downloaderWithUserAgent),
+                .requestModifier(FAUserAgentRequestModifier()),
+                .diskCacheExpiration(.days((7...14).randomElement()!)),
+                .diskCacheAccessExtendingExpiration(.none),
+                .waitForCache
+            ]
+        )
+        // Original bytes live in the disk cache; the memory cache holds the decoded image.
+        let cache = ImageCache.default
+        guard let data = try cache.diskStorage.value(forKey: url.cacheKey) else {
+            logger.error("Kingfisher data provider: image cached but disk bytes missing for \(url, privacy: .public)")
+            return nil
+        }
+        return (data, FAImageInliner.mimeType(for: url))
+    } catch {
+        logger.error("Kingfisher data provider failed for \(url, privacy: .public): \(error, privacy: .public)")
+        return nil
+    }
+}
+
 @MainActor
 func FAImage(_ url: URL?) -> KFImage {
     KFImage(url)
@@ -60,7 +89,9 @@ func prefetch(_ urls: [URL], priority: Float = URLSessionTask.lowPriority) {
         options: [
             .downloader(downloaderWithUserAgent),
             .requestModifier(FAUserAgentRequestModifier()),
-            .downloadPriority(priority)
+            .downloadPriority(priority),
+            .diskCacheExpiration(.days((7...14).randomElement()!)),
+            .diskCacheAccessExtendingExpiration(.none)
         ]
     )
     prefetcher.maxConcurrentDownloads = 100

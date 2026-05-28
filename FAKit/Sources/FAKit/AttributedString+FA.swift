@@ -18,6 +18,7 @@ extension AttributedString {
         let data = try await FAHTML
             .using(theme: theme)
             .inliningCSS()
+            .inliningImages()
             .data(using: .utf8)
             .unwrap()
         let nsattrstr = try NSAttributedString(

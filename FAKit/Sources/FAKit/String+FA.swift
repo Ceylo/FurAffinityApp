@@ -8,16 +8,21 @@
 import Foundation
 
 extension String {
-    static private let inliner = CSSInliner()
-    
+    static private let cssInliner = CSSInliner()
+    static private let imageInliner = ImageInliner()
+
     private var fixingLinks: String {
         self.replacingOccurrences(of: "href=\"/", with: "href=\"https://www.furaffinity.net/")
             .replacingOccurrences(of: "src=\"//", with: "src=\"https://")
             .replacingOccurrences(of: "src=\"/", with: "src=\"https://www.furaffinity.net/")
     }
-    
+
     public func inliningCSS() async throws -> String {
-        try await Self.inliner.inlineCSS(in: self)
+        try await Self.cssInliner.inlineCSS(in: self)
+    }
+
+    public func inliningImages() async -> String {
+        await Self.imageInliner.inlineImages(in: self)
     }
     
     public var selfContainedFAHtmlSubmission: String {
