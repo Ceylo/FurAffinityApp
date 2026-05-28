@@ -56,6 +56,8 @@ struct RootView: View {
     @Environment(Model.self) private var model
     
     var body: some View {
+        @Bindable var errorStorage = model.errorStorage
+
         ZStack {
             if model.session == nil {
                 HomeView()
@@ -64,6 +66,9 @@ struct RootView: View {
             }
         }
         .transition(.opacity.animation(.default))
+        .sheet(isPresented: $errorStorage.cloudflareChallengePending) {
+            CloudflareChallengeSheet()
+        }
     }
 }
 

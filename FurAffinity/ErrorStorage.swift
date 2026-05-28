@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import FAKit
 
 @Observable
 class ErrorStorage {
     var error: RichLocalizedError?
+    var cloudflareChallengePending = false
 }
 
 func storeLocalizedError(
@@ -34,11 +36,17 @@ func storeError(
     action: String,
     webBrowserURL: URL?,
 ) {
+    if error is CloudflareChallengeRequired {
+        logger.info("CloudFlare challenge required during \(action, privacy: .public); presenting challenge sheet")
+        storage.cloudflareChallengePending = true
+        return
+    }
+
     guard storage.error == nil else {
         logger.warning("Skipping storing error to not overwrite existing one. Skipped error: \(error).\nCurrent error: \(String(describing: storage.error))")
         return
     }
-    
+
     if let error = error as? LocalizedError {
         storage.error = RichLocalizedError(
             error,

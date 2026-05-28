@@ -56,15 +56,25 @@ struct WebView: UIViewRepresentable {
     @MainActor
     class Coordinator: NSObject, WKNavigationDelegate, WKHTTPCookieStoreObserver {
         weak var request: WKNavigation?
-        
+
         let parent: WebView
         var cookiePoller: Task<Void, Error>?
+
+        /// `false` while the initial async `clearCookies()` is still removing
+        /// cookies one by one. The cookie observer/poller suppress updates to
+        /// `parent.cookies` until this becomes `true`, so the parent never sees
+        /// the intermediate deletion events.
+        private var clearingDone: Bool
+
         init(_ webView: WebView) {
             self.parent = webView
-            
+            self.clearingDone = !webView.clearCookies
+            super.init()
+
             if webView.clearCookies {
-                Task {
+                Task { [weak self] in
                     await WebView.clearCookies()
+                    self?.clearingDone = true
                 }
             }
         }
@@ -101,14 +111,14 @@ struct WebView: UIViewRepresentable {
                 // change.
                 cookiePoller = Task { [weak self] in
                     try await Task.sleep(for: .seconds(1))
-                    
+
                     while !Task.isCancelled {
                         let cookies = await newStore.allCookies()
-                        if cookies != self?.parent.cookies {
+                        if self?.clearingDone == true, cookies != self?.parent.cookies {
                             logger.debug("Cookies updated through polling: \(cookies.map(\.name))")
                             self?.parent.cookies = cookies
                         }
-                        
+
                         try await Task.sleep(for: .seconds(1))
                     }
                 }
@@ -117,9 +127,10 @@ struct WebView: UIViewRepresentable {
         
         func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
             cookieStore.getAllCookies { [weak self] cookies in
-                if cookies != self?.parent.cookies {
+                guard let self, self.clearingDone else { return }
+                if cookies != self.parent.cookies {
                     logger.debug("Cookies updated through observer: \(cookies.map(\.name))")
-                    self?.parent.cookies = cookies
+                    self.parent.cookies = cookies
                 }
             }
         }

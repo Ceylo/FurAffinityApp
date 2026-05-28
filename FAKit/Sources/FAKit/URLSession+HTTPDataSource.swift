@@ -7,10 +7,16 @@
 
 import Foundation
 
+public struct CloudflareChallengeRequired: LocalizedError {
+    public var errorDescription: String? {
+        "furaffinity.net is requiring a CloudFlare challenge to continue browsing."
+    }
+}
+
 extension URLSession: HTTPDataSource {
     enum Error: LocalizedError {
         case failureStatus(description: String)
-        
+
         var errorDescription: String? {
             switch self {
             case let .failureStatus(description):
@@ -90,7 +96,7 @@ extension URLSession: HTTPDataSource {
             )
             
             if httpResponse.value(forHTTPHeaderField: "cf-mitigated") == "challenge" {
-                throw Error.failureStatus(description:  "\(url): request failed with status \(httpResponse.statusCode).\n\n\(url.host() ?? "(null)") is currently being protected by CloudFlare challenge and cannot be accessed by this application at the moment.")
+                throw CloudflareChallengeRequired()
             }
             
             throw Error.failureStatus(description:  "\(url): request failed with status \(httpResponse.statusCode) and response \(httpResponse)")

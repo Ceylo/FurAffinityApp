@@ -44,23 +44,32 @@ public struct FALoginView: View {
     }
     
     public static func makeSession(cookies: [HTTPCookie]? = nil) async throws -> OnlineFASession? {
-        let actualCookies: [HTTPCookie]
+        let rawCookies: [HTTPCookie]
         if let cookies {
-            actualCookies = cookies
+            rawCookies = cookies
         } else {
             if let cookies = try? cookieCache.object(forKey: 0) {
-                actualCookies = cookies
+                rawCookies = cookies
             } else {
-                actualCookies = await WebView.defaultCookies()
+                rawCookies = await WebView.defaultCookies()
             }
         }
-        
-        let session = try await OnlineFASession(cookies: actualCookies)
+
+        // CloudFlare cookies are transport-layer state: they live in
+        // HTTPCookieStorage.shared so they can be refreshed by FAChallengeView
+        // without OnlineFASession's stored auth cookies clobbering them on
+        // every request.
+        for cookie in rawCookies where cookie.name == "cf_clearance" {
+            HTTPCookieStorage.shared.setCookie(cookie)
+        }
+        let authCookies = rawCookies.filter { $0.name != "cf_clearance" }
+
+        let session = try await OnlineFASession(cookies: authCookies)
         if session != nil {
-            let codableCookies = actualCookies.map { CodableHTTPCookie($0)! }
+            let codableCookies = rawCookies.map { CodableHTTPCookie($0)! }
             try! cookieCache.setObject(codableCookies, forKey: 0)
         }
-        
+
         return session
     }
     

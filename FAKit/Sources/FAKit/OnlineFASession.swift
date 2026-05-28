@@ -40,7 +40,7 @@ public class OnlineFASession: FASession {
     public let displayUsername: String
     private let cookies: [HTTPCookie]
     private let dataSource: HTTPDataSource
-    
+
     public init(
         username: String,
         displayUsername: String,
@@ -346,8 +346,10 @@ public class OnlineFASession: FASession {
 
 extension OnlineFASession {
     /// Initialize a FASession from the given session cookies.
-    /// - Parameter cookies: The cookies for furaffinity.net after the user is logged
-    /// in through a usual web browser.
+    /// - Parameter cookies: The auth cookies for furaffinity.net after the user
+    /// is logged in. The caller is responsible for stripping any transport-layer
+    /// cookies (e.g. `cf_clearance`) and depositing them in
+    /// `HTTPCookieStorage.shared` itself.
     public convenience init?(cookies: [HTTPCookie], dataSource: HTTPDataSource? = nil) async throws {
         guard cookies.map(\.name).contains("a") else {
             return nil
