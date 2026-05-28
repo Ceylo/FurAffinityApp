@@ -5,7 +5,8 @@
 //  Created by Ceylo on 17/10/2021.
 //
 
-import XCTest
+import Testing
+import Foundation
 @testable import FAPages
 
 extension [FAFolder] {
@@ -54,8 +55,9 @@ extension FASubmissionPage.Metadata {
     }
 }
 
-final class FASubmissionPageTests: XCTestCase {
-    func testSubmissionPageWithoutComment_isParsed() throws {
+struct FASubmissionPageTests {
+    @Test
+    func submissionPageWithoutComment_isParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/view/49338772/")!
         let data = testData("www.furaffinity.net:view:49338772-nocomment.html")
         let page = try FASubmissionPage(data: data, url: url)
@@ -113,37 +115,40 @@ YCH for
             acceptsNewComments: true
         )
         
-        XCTAssertEqual(page.ignoringUUID(), expected.ignoringUUID())
+        #expect(page.ignoringUUID() == expected.ignoringUUID())
     }
-    
-    func testSubmissionPageWithCommentsDisabled_isParsed() async throws {
+
+    @Test
+    func submissionPageWithCommentsDisabled_isParsed() async throws {
         let url = URL(string: "https://www.furaffinity.net/view/52209828/")!
         let data = testData("www.furaffinity.net:view:52209828-disabled-comments.html")
         let page = try FASubmissionPage(data: data, url: url)
-        
-        XCTAssertEqual(page.acceptsNewComments, false)
+
+        #expect(page.acceptsNewComments == false)
     }
-    
-    func testSubmissionPageWithHiddenComment_isParsed() throws {
+
+    @Test
+    func submissionPageWithHiddenComment_isParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/view/49917619/")!
         let data = testData("www.furaffinity.net:view:49917619-comment-hidden.html")
         let page = try FASubmissionPage(data: data, url: url)
-        XCTAssertEqual(12, page.comments.count)
-        
+        #expect(page.comments.count == 12)
+
         for (index, comment) in page.comments.enumerated() {
             switch comment {
             case .hidden:
-                XCTAssertEqual(
-                    comment,
+                #expect(
+                    comment ==
                     .hidden(.init(cid: 168829732, indentation: 6, htmlMessage: "Comment hidden by its owner"))
                 )
             case .visible:
-                XCTAssertNotEqual(index, 6)
+                #expect(index != 6)
             }
         }
     }
-    
-    func testSubmissionPageWithComments_isParsed() throws {
+
+    @Test
+    func submissionPageWithComments_isParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/view/48519387/#cid:166652794")!
         let data = testData("www.furaffinity.net:view:48519387-comments.html")
         let page = try FASubmissionPage(data: data, url: url)
@@ -170,7 +175,7 @@ YCH for
                            datetime: "August 12, 2022 09:08:06 AM", naturalDatetime: "4 years ago", htmlMessage: "these are gorgeous"))
         ]
         
-        XCTAssertEqual(expected, page.comments)
-        XCTAssertEqual(166652794, page.targetCommentId)
+        #expect(expected == page.comments)
+        #expect(page.targetCommentId == 166652794)
     }
 }
