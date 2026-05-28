@@ -5,11 +5,13 @@
 //  Created by Ceylo on 05/12/2021.
 //
 
-import XCTest
+import Testing
+import Foundation
 @testable import FAPages
 
-class FAUserPageTests: XCTestCase {
-    func testUserPage_isParsed() throws {
+struct FAUserPageTests {
+    @Test
+    func userPage_isParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/user/terriniss")!
         let data = testData("www.furaffinity.net:user:terriniss.html")
         let page = try FAUserPage(data: data, url: url)
@@ -136,8 +138,8 @@ class FAUserPageTests: XCTestCase {
             targetShoutId: nil,
             watchData: .init(watchUrl: URL(string: "https://www.furaffinity.net/unwatch/terriniss/?key=2ad6af6e96e7d8734f5d7ca5dc60026fcebf82e4")!)
         )
-        XCTAssertEqual(page, expected)
-        
+        #expect(page == expected)
+
         let urlWithAnchor = URL(string: "https://www.furaffinity.net/user/terriniss#shout-53552229")!
         let pageWithShoutAnchor = try FAUserPage(data: data, url: urlWithAnchor)
         
@@ -150,6 +152,6 @@ class FAUserPageTests: XCTestCase {
             targetShoutId: 53552229,
             watchData: .init(watchUrl: URL(string: "https://www.furaffinity.net/unwatch/terriniss/?key=2ad6af6e96e7d8734f5d7ca5dc60026fcebf82e4")!)
         )
-        XCTAssertEqual(pageWithShoutAnchor, expectedWithShout)
+        #expect(pageWithShoutAnchor == expectedWithShout)
     }
 }
