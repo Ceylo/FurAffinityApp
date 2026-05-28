@@ -1,24 +1,27 @@
 //
 //  FASubmissionsPageTests.swift
-//  
+//
 //
 //  Created by Ceylo on 17/10/2021.
 //
 
-import XCTest
+import Testing
+import Foundation
 @testable import FAPages
 
-final class FANotesPageTests: XCTestCase {
-    func testEmptyInbox_returnsNoNote() throws {
+struct FANotesPageTests {
+    @Test
+    func emptyInbox_returnsNoNote() throws {
         let data = testData("www.furaffinity.net:msg:pms-empty.html")
         let page = try FANotesPage(data: data, url: URL(string: "https://www.furaffinity.net/msg/pms/")!)
-        XCTAssertEqual([], page.noteHeaders)
+        #expect(page.noteHeaders == [])
     }
-    
-    func testMessagesInInbox_returnsNotes() throws {
+
+    @Test
+    func messagesInInbox_returnsNotes() throws {
         let data = testData("www.furaffinity.net:msg:pms-unread.html")
         let page = try FANotesPage(data: data, url: URL(string: "https://www.furaffinity.net/msg/pms/")!)
-        
+
         let expected: [FANotesPage.NoteHeader] = [
             .init(
                 id: 141712666,
@@ -31,6 +34,6 @@ final class FANotesPageTests: XCTestCase {
                 noteUrl: URL(string: "https://www.furaffinity.net/msg/pms/1/141712666/#message")!
             )
         ]
-        XCTAssertEqual(expected, page.noteHeaders)
+        #expect(page.noteHeaders == expected)
     }
 }
