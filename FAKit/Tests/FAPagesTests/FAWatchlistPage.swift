@@ -5,11 +5,13 @@
 //  Created by Ceylo on 02/09/2024.
 //
 
-import XCTest
+import Testing
+import Foundation
 @testable import FAPages
 
-final class FAWatchlistPageTests: XCTestCase {
-    func testSinglePageWatchlist_returnsUsers() throws {
+struct FAWatchlistPageTests {
+    @Test
+    func singlePageWatchlist_returnsUsers() throws {
         let data = testData("www.furaffinity.net:watchlist:by:terriniss.html")
         let page = try FAWatchlistPage(
             data: data,
@@ -146,19 +148,19 @@ final class FAWatchlistPageTests: XCTestCase {
             nextPageUrl: nil
         )
         
-        XCTAssertEqual(page, expected)
+        #expect(page == expected)
     }
-    
-    func testMultiPageWatchlist_returnsUsersAndPage() throws {
+
+    @Test
+    func multiPageWatchlist_returnsUsersAndPage() throws {
         let data = testData("www.furaffinity.net:watchlist:to:terriniss.html")
         let page = try FAWatchlistPage(
             data: data,
             url: URL(string: "https://www.furaffinity.net/watchlist/to/terriniss/")!
         )
-        XCTAssertEqual(page.users.count, 200)
-        XCTAssertEqual(
-            page.nextPageUrl,
-            URL(string: "https://www.furaffinity.net/watchlist/to/terriniss?page=2")
+        #expect(page.users.count == 200)
+        #expect(
+            page.nextPageUrl == URL(string: "https://www.furaffinity.net/watchlist/to/terriniss?page=2")
         )
     }
 }
