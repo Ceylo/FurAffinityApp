@@ -5,14 +5,16 @@
 //  Created by Ceylo on 17/10/2021.
 //
 
-import XCTest
+import Testing
+import Foundation
 @testable import FAPages
 
-final class FANotificationsPageTests: XCTestCase {
-    func testWithAllNotifications_returnsAllNotifications() throws {
+struct FANotificationsPageTests {
+    @Test
+    func withAllNotifications_returnsAllNotifications() throws {
         let data = testData("www.furaffinity.net:msg:others-comments-journals-shout.html")
         let page = try FANotificationsPage(data: data, url: URL(string: "https://www.furaffinity.net/msg:others")!)
-        XCTAssertEqual(page.submissionCommentHeaders, [
+        #expect(page.submissionCommentHeaders == [
             .init(
                 id: 183695893,
                 author: "someuser",
@@ -23,7 +25,7 @@ final class FANotificationsPageTests: XCTestCase {
                 url: URL(string: "https://www.furaffinity.net/view/49215481/#cid:183695893")!
             )
         ])
-        XCTAssertEqual(page.journalCommentHeaders, [
+        #expect(page.journalCommentHeaders == [
             .init(
                 id: 60980385,
                 author: "someuser",
@@ -34,17 +36,17 @@ final class FANotificationsPageTests: XCTestCase {
                 url: URL(string: "https://www.furaffinity.net/journal/10528107/#cid:60980385")!
             )
         ])
-        
-        XCTAssertEqual(page.shoutHeaders, [
+
+        #expect(page.shoutHeaders == [
             .init(
                 id: 56046409, author: "someuser", displayAuthor: "SomeUser", title: "",
                 datetime: "on Dec 23, 2024 05:56 PM", naturalDatetime: "2 months ago",
                 url: URL(string: "https://www.furaffinity.net/user/furrycount#shout-56046409")!
             )
         ])
-        
-        XCTAssertEqual(page.journalHeaders.count, 21)
-        XCTAssertEqual(page.journalHeaders.prefix(3), [
+
+        #expect(page.journalHeaders.count == 21)
+        #expect(page.journalHeaders.prefix(3) == [
             .init(
                 id: 11084927,
                 author: "leilryu",
@@ -74,8 +76,9 @@ final class FANotificationsPageTests: XCTestCase {
             )
         ])
     }
-    
-    func testEmpty_returnsNoNotification() throws {
+
+    @Test
+    func empty_returnsNoNotification() throws {
         let data = testData("www.furaffinity.net:msg:others-empty.html")
         let page = try FANotificationsPage(data: data, url: URL(string: "https://www.furaffinity.net/msg/others")!)
         let expected = FANotificationsPage(
@@ -84,6 +87,6 @@ final class FANotificationsPageTests: XCTestCase {
             shoutHeaders: [],
             journalHeaders: []
         )
-        XCTAssertEqual(expected, page)
+        #expect(expected == page)
     }
 }
