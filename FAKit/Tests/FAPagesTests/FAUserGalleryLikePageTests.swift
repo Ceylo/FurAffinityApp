@@ -5,7 +5,8 @@
 //  Created by Ceylo on 31/08/2023.
 //
 
-import XCTest
+import Testing
+import Foundation
 @testable import FAPages
 
 extension [FAFolderGroup] {
@@ -27,7 +28,7 @@ extension FAFolder {
     }
 }
 
-final class FAUserGalleryLikePageTests: XCTestCase {
+struct FAUserGalleryLikePageTests {
     let tiaamaitoFolders: [FAFolderGroup] = [
         .init(title: "Gallery Folders", folders: [
             .init(title: "Main Gallery", url: URL(string: "https://www.furaffinity.net/gallery/tiaamaito/")!, isActive: true),
@@ -75,13 +76,14 @@ final class FAUserGalleryLikePageTests: XCTestCase {
         ])
     ]
     
-    func testFirstGalleryPage_72itemsParsed() throws {
+    @Test
+    func firstGalleryPage_72itemsParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/gallery/tiaamaito/")!
         let data = testData("www.furaffinity.net:gallery:tiaamaito:.html")
         let page = try FAUserGalleryLikePage(data: data, url: url)
-        XCTAssertEqual(page.previews.count, 72)
-        XCTAssertEqual(page.displayAuthor, "tiaamaito")
-        
+        #expect(page.previews.count == 72)
+        #expect(page.displayAuthor == "tiaamaito")
+
         let preview = FASubmissionsPage.Submission(
             sid: 60072465,
             url: URL(string: "https://www.furaffinity.net/view/60072465/")!,
@@ -91,22 +93,22 @@ final class FAUserGalleryLikePageTests: XCTestCase {
             author: "tiaamaito",
             displayAuthor: "tiaamaito"
         )
-        XCTAssertEqual(preview, page.previews[0])
-        XCTAssertEqual(
-            URL(string: "https://www.furaffinity.net/gallery/tiaamaito/2/")!,
-            page.nextPageUrl
+        #expect(page.previews[0] == preview)
+        #expect(
+            page.nextPageUrl == URL(string: "https://www.furaffinity.net/gallery/tiaamaito/2/")!
         )
-        XCTAssertEqual(tiaamaitoFolders.ignoringUUID(), page.folderGroups.ignoringUUID())
+        #expect(page.folderGroups.ignoringUUID() == tiaamaitoFolders.ignoringUUID())
     }
-    
-    func testEmptyGalleryPage_parsedWithNoContent() throws {
+
+    @Test
+    func emptyGalleryPage_parsedWithNoContent() throws {
         let url = URL(string: "https://www.furaffinity.net/gallery/furrycount/")!
         let data = testData("www.furaffinity.net:gallery:furrycount:.html")
         let page = try FAUserGalleryLikePage(data: data, url: url)
-        XCTAssertEqual(page.previews.count, 0)
-        XCTAssertEqual(page.displayAuthor, "Furrycount")
-        XCTAssertEqual(page.nextPageUrl, nil)
-        XCTAssertEqual(page.folderGroups.ignoringUUID(), [
+        #expect(page.previews.count == 0)
+        #expect(page.displayAuthor == "Furrycount")
+        #expect(page.nextPageUrl == nil)
+        #expect(page.folderGroups.ignoringUUID() == [
             .init(
                 title: "Gallery Folders",
                 folders: [
@@ -127,14 +129,15 @@ final class FAUserGalleryLikePageTests: XCTestCase {
             )
         ].ignoringUUID())
     }
-    
-    func testScrapsPage_72itemsParsed() throws {
+
+    @Test
+    func scrapsPage_72itemsParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/scraps/tiaamaito/")!
         let data = testData("www.furaffinity.net:scraps:tiaamaito:.html")
         let page = try FAUserGalleryLikePage(data: data, url: url)
-        XCTAssertEqual(page.previews.count, 72)
-        XCTAssertEqual(page.displayAuthor, "tiaamaito")
-        
+        #expect(page.previews.count == 72)
+        #expect(page.displayAuthor == "tiaamaito")
+
         let preview = FASubmissionsPage.Submission(
             sid: 56842400,
             url: URL(string: "https://www.furaffinity.net/view/56842400/")!,
@@ -144,21 +147,21 @@ final class FAUserGalleryLikePageTests: XCTestCase {
             author: "tiaamaito",
             displayAuthor: "tiaamaito"
         )
-        XCTAssertEqual(preview, page.previews[0])
-        XCTAssertEqual(
-            URL(string: "https://www.furaffinity.net/scraps/tiaamaito/2/")!,
-            page.nextPageUrl
+        #expect(page.previews[0] == preview)
+        #expect(
+            page.nextPageUrl == URL(string: "https://www.furaffinity.net/scraps/tiaamaito/2/")!
         )
-        XCTAssertEqual(page.folderGroups.count, 6)
+        #expect(page.folderGroups.count == 6)
     }
-    
-    func testFavoritesPage_72itemsParsed() throws {
+
+    @Test
+    func favoritesPage_72itemsParsed() throws {
         let url = URL(string: "https://www.furaffinity.net/favorites/tiaamaito/")!
         let data = testData("www.furaffinity.net:favorites:tiaamaito:.html")
         let page = try FAUserGalleryLikePage(data: data, url: url)
-        XCTAssertEqual(page.previews.count, 72)
-        XCTAssertEqual(page.displayAuthor, "tiaamaito")
-        
+        #expect(page.previews.count == 72)
+        #expect(page.displayAuthor == "tiaamaito")
+
         let preview = FASubmissionsPage.Submission(
             sid: 59999998,
             url: URL(string: "https://www.furaffinity.net/view/59999998/")!,
@@ -168,11 +171,10 @@ final class FAUserGalleryLikePageTests: XCTestCase {
             author: "astarcis",
             displayAuthor: "astarcis"
         )
-        XCTAssertEqual(preview, page.previews[0])
-        XCTAssertEqual(
-            URL(string: "https://www.furaffinity.net/favorites/tiaamaito/1614183951/next")!,
-            page.nextPageUrl
+        #expect(page.previews[0] == preview)
+        #expect(
+            page.nextPageUrl == URL(string: "https://www.furaffinity.net/favorites/tiaamaito/1614183951/next")!
         )
-        XCTAssertEqual(page.folderGroups, [])
+        #expect(page.folderGroups == [])
     }
 }
