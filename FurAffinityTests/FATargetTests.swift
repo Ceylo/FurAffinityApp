@@ -5,32 +5,38 @@
 //  Created by Ceylo on 17/03/2023.
 //
 
-import XCTest
+import Testing
+import Foundation
 @testable import Fur_Affinity
 
-final class FATargetTests: XCTestCase {
-    func testNotMatching() {
+struct FATargetTests {
+    @Test
+    func notMatching() {
         let url = URL(string: "https://www.patreon.com/")!
-        XCTAssertEqual(FATarget(with: url), nil)
+        #expect(FATarget(with: url) == nil)
     }
-    
-    func testMatchingUser() {
+
+    @Test
+    func matchingUser() {
         let userUrl = URL(string: "https://www.furaffinity.net/user/xyz")!
-        XCTAssertEqual(FATarget(with: userUrl), .user(url: userUrl, previewData: nil))
+        #expect(FATarget(with: userUrl) == .user(url: userUrl, previewData: nil))
     }
-    
-    func testMatchingSubmission() {
+
+    @Test
+    func matchingSubmission() {
         let submissionUrl = URL(string: "https://www.furaffinity.net/view/123/")!
-        XCTAssertEqual(FATarget(with: submissionUrl), .submission(url: submissionUrl, previewData: nil))
+        #expect(FATarget(with: submissionUrl) == .submission(url: submissionUrl, previewData: nil))
     }
-    
-    func testMatchingNote() {
+
+    @Test
+    func matchingNote() {
         let noteUrl = URL(string: "https://www.furaffinity.net/msg/pms/1/234/#message")!
-        XCTAssertEqual(FATarget(with: noteUrl), .note(url: noteUrl))
+        #expect(FATarget(with: noteUrl) == .note(url: noteUrl))
     }
-    
-    func testMatchingJournal() {
+
+    @Test
+    func matchingJournal() {
         let journalUrl = URL(string: "https://www.furaffinity.net/journal/10516170/")!
-        XCTAssertEqual(FATarget(with: journalUrl), .journal(url: journalUrl))
+        #expect(FATarget(with: journalUrl) == .journal(url: journalUrl))
     }
 }
