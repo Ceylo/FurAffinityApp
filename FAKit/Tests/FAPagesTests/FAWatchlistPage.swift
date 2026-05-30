@@ -152,6 +152,17 @@ struct FAWatchlistPageTests {
     }
 
     @Test
+    func emptyWatchlist_returnsNoUsers() throws {
+        let data = testData("www.furaffinity.net:watchlist:by:empty.html")
+        let page = try FAWatchlistPage(
+            data: data,
+            url: URL(string: "https://www.furaffinity.net/watchlist/by/emptyuser/")!
+        )
+        #expect(page.users.isEmpty)
+        #expect(page.nextPageUrl == nil)
+    }
+
+    @Test
     func multiPageWatchlist_returnsUsersAndPage() throws {
         let data = testData("www.furaffinity.net:watchlist:to:terriniss.html")
         let page = try FAWatchlistPage(
