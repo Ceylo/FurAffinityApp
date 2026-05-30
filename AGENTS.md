@@ -93,3 +93,5 @@ FAKit: SwiftSoup, Cache, SwiftGraph, swift-collections.
 
 Use Plan Mode (Shift+Tab) before implementing. Work incrementally with tests.
 - If using XcodeBuildMCP, use the installed XcodeBuildMCP skill before calling XcodeBuildMCP tools.
+
+@LSP_SETUP.md
