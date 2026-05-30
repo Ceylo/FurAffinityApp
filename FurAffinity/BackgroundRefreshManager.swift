@@ -258,7 +258,7 @@ enum BackgroundRefreshManager {
         journals: [FANotificationPreview]
     ) -> [UNMutableNotificationContent] {
         submissions.map { notificationContent(title: "New Submission", subtitle: $0.displayAuthor, body: $0.title) }
-            + notes.map { notificationContent(title: "New Note", subtitle: $0.displayAuthor, body: $0.title) }
+            + notes.filter(\.unread).map { notificationContent(title: "New Note", subtitle: $0.displayAuthor, body: $0.title) }
             + submissionComments.map { notificationContent(title: "New Submission Comment", subtitle: $0.displayAuthor, body: $0.title) }
             + journalComments.map { notificationContent(title: "New Journal Comment", subtitle: $0.displayAuthor, body: $0.title) }
             + shouts.map { notificationContent(title: "New Shout", subtitle: $0.displayAuthor, body: $0.title) }

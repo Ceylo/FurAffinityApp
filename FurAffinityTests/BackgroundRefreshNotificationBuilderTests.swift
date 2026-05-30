@@ -205,6 +205,44 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(contents.map(\.body) == ["J1", "J2"])
     }
 
+    @Test func mixedReadAndUnreadNotes_onlyUnreadProduceNotifications() throws {
+        let notes = [
+            makeNote(id: 1, author: "alice", title: "Unread Note", unread: true),
+            makeNote(id: 2, author: "bob", title: "Read Note", unread: false),
+            makeNote(id: 3, author: "carol", title: "Another Unread", unread: true),
+        ]
+        let contents = BackgroundRefreshManager.buildNotifications(
+            submissions: [],
+            notes: notes,
+            submissionComments: [],
+            journalComments: [],
+            shouts: [],
+            journals: []
+        )
+
+        #expect(contents.count == 2)
+        #expect(contents.allSatisfy { $0.title == "New Note" })
+        #expect(contents.map(\.subtitle) == ["Alice", "Carol"])
+        #expect(contents.map(\.body) == ["Unread Note", "Another Unread"])
+    }
+
+    @Test func allReadNotes_producesNoNotifications() throws {
+        let notes = [
+            makeNote(id: 1, author: "alice", title: "Old Note", unread: false),
+            makeNote(id: 2, author: "bob", title: "Another Old Note", unread: false),
+        ]
+        let contents = BackgroundRefreshManager.buildNotifications(
+            submissions: [],
+            notes: notes,
+            submissionComments: [],
+            journalComments: [],
+            shouts: [],
+            journals: []
+        )
+
+        #expect(contents.isEmpty)
+    }
+
     @Test func mixedActivity_producesOneNotificationPerItem() throws {
         let sub = makeSubmission(id: 1, author: "alice", title: "S1")
         let notes = [makeNote(id: 1, author: "bob", title: "N1")]
