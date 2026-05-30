@@ -10,6 +10,10 @@ import FAPages
 import SwiftGraph
 import OrderedCollections
 
+public enum FACommentError: Error, Equatable {
+    case orphanedComment(cid: Int)
+}
+
 public enum FAComment: Equatable, Sendable {
     case visible(FAVisibleComment)
     case hidden(FAHiddenComment)
@@ -169,8 +173,8 @@ extension FAComment {
             }) {
                 graph.addEdge(from: parentCid.value, to: comment.cid, directed: true)
             } else {
-                logger.error("\(String(describing: comment), privacy: .public) doesn't have any parent and is not a root, promoting to root")
-                rootCommentIDs.append(comment.cid)
+                logger.error("\(String(describing: comment), privacy: .public) doesn't have any parent and is not a root")
+                throw FACommentError.orphanedComment(cid: comment.cid)
             }
         }
         

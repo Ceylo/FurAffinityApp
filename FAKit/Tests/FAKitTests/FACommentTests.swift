@@ -84,19 +84,16 @@ struct FACommentTests {
     }
 
     @Test
-    func buildCommentsTree_orphanedParentIsPromotedToRoot() async throws {
+    func buildCommentsTree_orphanedCommentThrows() async throws {
         // Comment 166653891 has indentation 3 but appears before any root comment,
         // so there is no preceding comment with lower indentation. It is an orphan
-        // and should be promoted to root level rather than dropped or crashing.
-        let tree = try await FAComment.buildCommentsTree([
-            .init(cid: 166653891, indentation: 3),
-            .init(cid: 166652793, indentation: 0),
-        ])
-        let expected = try await [
-            FAComment(.init(cid: 166653891, indentation: 3)),
-            FAComment(.init(cid: 166652793, indentation: 0)),
-        ]
-        #expect(tree == expected)
+        // and should signal an error rather than silently promoting to root.
+        await #expect(throws: FACommentError.orphanedComment(cid: 166653891)) {
+            try await FAComment.buildCommentsTree([
+                .init(cid: 166653891, indentation: 3),
+                .init(cid: 166652793, indentation: 0),
+            ])
+        }
     }
 
     @Test
