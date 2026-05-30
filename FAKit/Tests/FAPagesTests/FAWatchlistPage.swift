@@ -153,10 +153,10 @@ struct FAWatchlistPageTests {
 
     @Test
     func emptyWatchlist_returnsNoUsers() throws {
-        let data = testData("www.furaffinity.net:watchlist:by:empty.html")
+        let data = testData("www.furaffinity.net:watchlist:to:furrycount-emptywatchlist.html")
         let page = try FAWatchlistPage(
             data: data,
-            url: URL(string: "https://www.furaffinity.net/watchlist/by/emptyuser/")!
+            url: URL(string: "https://www.furaffinity.net/watchlist/to/furrycount/")!
         )
         #expect(page.users.isEmpty)
         #expect(page.nextPageUrl == nil)
