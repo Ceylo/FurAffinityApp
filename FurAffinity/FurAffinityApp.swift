@@ -54,10 +54,9 @@ private let amplitude: Amplitude? = {
 
 struct RootView: View {
     @Environment(Model.self) private var model
-    
-    var body: some View {
-        @Bindable var errorStorage = model.errorStorage
+    @State private var challengeCoordinator = CloudflareChallengeCoordinator.shared
 
+    var body: some View {
         ZStack {
             if model.session == nil {
                 HomeView()
@@ -66,7 +65,19 @@ struct RootView: View {
             }
         }
         .transition(.opacity.animation(.default))
-        .sheet(isPresented: $errorStorage.cloudflareChallengePending) {
+        .sheet(
+            isPresented: Binding(
+                get: { challengeCoordinator.pending },
+                set: { isPresented in
+                    // markResolved() flips `pending` to false directly; the setter
+                    // only fires when SwiftUI wants to dismiss the sheet on its
+                    // own (user swipe-down). Treat that as giving up.
+                    if !isPresented && challengeCoordinator.pending {
+                        challengeCoordinator.markFailed()
+                    }
+                }
+            )
+        ) {
             CloudflareChallengeSheet()
         }
     }

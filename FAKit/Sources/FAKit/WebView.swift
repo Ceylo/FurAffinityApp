@@ -13,7 +13,14 @@ struct WebView: UIViewRepresentable {
     var initialUrl: URL
     @Binding var cookies: [HTTPCookie]
     var clearCookies: Bool
-    
+    /// Cookies to seed into `WKWebsiteDataStore.default().httpCookieStore` after
+    /// the initial clear (if any) and before `initialUrl` is loaded.
+    var seedCookies: [HTTPCookie] = []
+    /// Called on the main actor whenever a top-frame navigation finishes loading,
+    /// with the resulting URL and the underlying `WKWebView` (so callers can
+    /// `evaluateJavaScript` to inspect page content).
+    var onPageLoaded: (@MainActor (URL?, WKWebView) async -> Void)? = nil
+
     static func defaultCookies() async -> [HTTPCookie] {
         let task = Task { @MainActor in
             await WKWebsiteDataStore.default().httpCookieStore.allCookies()
@@ -37,9 +44,9 @@ struct WebView: UIViewRepresentable {
         // remains valid for subsequent network requests.
         config.applicationNameForUserAgent = FAUserAgent.applicationName
         let view = WKWebView(frame: .zero, configuration: config)
-        context.coordinator.request = view.load(URLRequest(url: initialUrl))
         view.navigationDelegate = context.coordinator
         context.coordinator.bind(to: view)
+        context.coordinator.startInitialLoad(in: view, url: initialUrl)
         return view
     }
     
@@ -64,18 +71,40 @@ struct WebView: UIViewRepresentable {
         /// cookies one by one. The cookie observer/poller suppress updates to
         /// `parent.cookies` until this becomes `true`, so the parent never sees
         /// the intermediate deletion events.
-        private var clearingDone: Bool
+        private var monitorCookies: Bool
 
         init(_ webView: WebView) {
             self.parent = webView
-            self.clearingDone = !webView.clearCookies
+            // Setup is now driven by `startInitialLoad` so it can sequence
+            // clear → seed → load. Until that completes, suppress cookie
+            // observer updates the same way the previous implementation did.
+            self.monitorCookies = !webView.clearCookies && webView.seedCookies.isEmpty
             super.init()
+        }
 
-            if webView.clearCookies {
-                Task { [weak self] in
+        func startInitialLoad(in view: WKWebView, url: URL) {
+            Task { [weak self] in
+                guard let self else { return }
+                if parent.clearCookies {
                     await WebView.clearCookies()
-                    self?.clearingDone = true
                 }
+                if !parent.seedCookies.isEmpty {
+                    let store = WKWebsiteDataStore.default().httpCookieStore
+                    for cookie in parent.seedCookies {
+                        await store.setCookie(cookie)
+                    }
+                }
+                monitorCookies = true
+                request = view.load(URLRequest(url: url))
+            }
+        }
+
+        nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            
+            let url = MainActor.assumeIsolated { webView.url }
+            Task { @MainActor [weak self] in
+                guard let self, let onPageLoaded = parent.onPageLoaded else { return }
+                await onPageLoaded(url, webView)
             }
         }
         
@@ -114,7 +143,7 @@ struct WebView: UIViewRepresentable {
 
                     while !Task.isCancelled {
                         let cookies = await newStore.allCookies()
-                        if self?.clearingDone == true, cookies != self?.parent.cookies {
+                        if self?.monitorCookies == true, cookies != self?.parent.cookies {
                             logger.debug("Cookies updated through polling: \(cookies.map(\.name))")
                             self?.parent.cookies = cookies
                         }
@@ -127,7 +156,7 @@ struct WebView: UIViewRepresentable {
         
         func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
             cookieStore.getAllCookies { [weak self] cookies in
-                guard let self, self.clearingDone else { return }
+                guard let self, self.monitorCookies else { return }
                 if cookies != self.parent.cookies {
                     logger.debug("Cookies updated through observer: \(cookies.map(\.name))")
                     self.parent.cookies = cookies

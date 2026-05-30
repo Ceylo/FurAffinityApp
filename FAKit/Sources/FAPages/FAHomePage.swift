@@ -14,13 +14,12 @@ public struct FAHomePage: FAPage {
 }
 
 extension FAHomePage {
-    public init(data: Data, url: URL) throws {
+    public init(html: String, url: URL) throws {
         let state = signposter.beginInterval("Home Parsing")
         defer { signposter.endInterval("Home Parsing", state) }
         
         do {
-            let string = String(decoding: data, as: UTF8.self)
-            let doc = try SwiftSoup.parse(string, url.absoluteString)
+            let doc = try SwiftSoup.parse(html, url.absoluteString)
             
             let usernameQuery = "body div.mobile-navigation div.nav-ac-container article.nav-ac-content div.mobile-nav-content-container div.aligncenter h2 a"
             let element = try doc.select(usernameQuery)
@@ -37,5 +36,10 @@ extension FAHomePage {
             logger.error("\(#file, privacy: .public) - failed decoding or parsing: \(error, privacy: .public)")
             throw error
         }
+    }
+    
+    public init(data: Data, url: URL) throws {
+        let html = String(decoding: data, as: UTF8.self)
+        try self.init(html: html, url: url)
     }
 }

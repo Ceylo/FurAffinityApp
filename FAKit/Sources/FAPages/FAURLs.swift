@@ -8,6 +8,7 @@
 import Foundation
 
 public enum FAURLs {
+    public static let domain = "furaffinity.net"
     public static let homeUrl = URL(string: "https://www.furaffinity.net")!
     public static let signupUrl = URL(string: "https://www.furaffinity.net/register")!
     

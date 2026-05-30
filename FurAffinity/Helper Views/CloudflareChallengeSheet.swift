@@ -11,8 +11,6 @@ import FAKit
 import AmplitudeSwift
 
 struct CloudflareChallengeSheet: View {
-    @Environment(ErrorStorage.self) private var errorStorage
-
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 8) {
@@ -25,15 +23,12 @@ struct CloudflareChallengeSheet: View {
             .padding()
 
             FAChallengeView(onResolved: {
-                errorStorage.cloudflareChallengePending = false
+                CloudflareChallengeCoordinator.shared.markResolved()
             })
         }
     }
 }
 
 #Preview {
-    @Previewable @State var errorStorage = ErrorStorage()
-    
     CloudflareChallengeSheet()
-        .environment(errorStorage)
 }
