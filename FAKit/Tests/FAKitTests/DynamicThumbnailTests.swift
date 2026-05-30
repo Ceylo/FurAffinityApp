@@ -43,4 +43,22 @@ struct DynamicThumbnailTests {
         let size = CGSize(width: size.0, height: size.1)
         #expect(thumbnail.bestThumbnailUrl(for: size) == expected)
     }
+
+    /// Viewport smaller than all available thumbnail sizes — expects the smallest thumbnail (200).
+    @Test("bestThumbnailUrl - viewport smaller than all thumbnails")
+    func bestThumbnailUrl_smallerThanAllThumbnails() async throws {
+        let url = try URL(string: Self.baseUrl).unwrap()
+        let expected = try URL(string: "https://t.fa/123@200-123.jpg").unwrap()
+        let thumbnail = DynamicThumbnail(thumbnailUrl: url)
+        #expect(thumbnail.bestThumbnailUrl(for: CGSize(width: 1, height: 1)) == expected)
+    }
+
+    /// Viewport exactly matching a thumbnail size — expects that exact thumbnail (320).
+    @Test("bestThumbnailUrl - viewport exactly matches a thumbnail size")
+    func bestThumbnailUrl_exactMatchThumbnailSize() async throws {
+        let url = try URL(string: Self.baseUrl).unwrap()
+        let expected = try URL(string: "https://t.fa/123@320-123.jpg").unwrap()
+        let thumbnail = DynamicThumbnail(thumbnailUrl: url)
+        #expect(thumbnail.bestThumbnailUrl(for: CGSize(width: 320, height: 320)) == expected)
+    }
 }
