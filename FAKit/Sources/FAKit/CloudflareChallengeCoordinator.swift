@@ -19,8 +19,8 @@ import FAPages
 ///      off-screen `FAChallengeView` (1×1, transparent). Cloudflare frequently
 ///      resolves a *managed* challenge passively for an authenticated session
 ///      with no user interaction, so this clears the challenge with no visible
-///      sheet. If it doesn't resolve within `backgroundResolutionTimeout`, we
-///      escalate to stage 2.
+///      sheet. Escalates to stage 2 when DOM inspection detects an interactive
+///      checkbox, or when `backgroundResolutionSafetyTimeout` expires.
 ///   2. **Interactive** (`pending == true`): the UI presents `FAChallengeView`
 ///      in a visible sheet so the user can complete the check.
 /// - Either stage calls `markResolved()` once a fresh `cf_clearance` has landed
@@ -40,9 +40,9 @@ public final class CloudflareChallengeCoordinator {
     /// attempt a passive (no-UI) resolution before falling back to the sheet.
     public private(set) var backgroundResolutionPending: Bool = false
 
-    /// How long the hidden background WebView gets to passively resolve the
-    /// challenge before we fall back to the visible interactive sheet.
-    private let backgroundResolutionTimeout: Duration = .seconds(12)
+    /// Safety-net backstop: if neither passive resolution nor checkbox detection
+    /// fires within this window, we still escalate to the visible sheet.
+    private let backgroundResolutionSafetyTimeout: Duration = .seconds(8)
     private var backgroundTimeoutTask: Task<Void, Never>?
 
     private enum Outcome { case resolved, failed, cancelled }
@@ -93,26 +93,42 @@ public final class CloudflareChallengeCoordinator {
         guard !pending && !backgroundResolutionPending else { return }
 
         guard isLoggedIn else {
-            // No FA auth cookies → passive resolution won't happen; don't waste
-            // the timeout window staring at nothing, present the sheet directly.
-            logger.info("CloudFlare challenge: not logged in, presenting interactive sheet directly")
-            pending = true
+            // No FA auth cookies → the CF challenge resolves naturally inside
+            // FALoginView's own WebView when the user logs in. Fail fast so
+            // callers throw CloudflareChallengeRequired immediately.
+            logger.info("CloudFlare challenge: not logged in, failing fast")
+            let toResume = waiters
+            waiters.removeAll()
+            for waiter in toResume {
+                waiter.continuation.resume(returning: .failed)
+            }
             return
         }
 
-        logger.info("CloudFlare challenge: attempting background resolution (timeout \(self.backgroundResolutionTimeout, privacy: .public))")
+        logger.info("CloudFlare challenge: starting background resolution (safety timeout \(self.backgroundResolutionSafetyTimeout, privacy: .public))")
         backgroundResolutionPending = true
-        let timeout = backgroundResolutionTimeout
+        let timeout = backgroundResolutionSafetyTimeout
         backgroundTimeoutTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: timeout)
             guard !Task.isCancelled else { return }
+            logger.info("CloudFlare background resolution safety-net timeout; escalating to interactive sheet")
             self?.escalateToInteractive()
         }
     }
 
+    /// Called when DOM inspection detects an interactive Turnstile checkbox,
+    /// meaning passive resolution won't happen. Escalates from the hidden
+    /// background WebView to the visible interactive sheet immediately.
+    public func markInteractionRequired() {
+        guard backgroundResolutionPending else { return }
+        logger.info("CloudFlare: interaction required detected; escalating to interactive sheet")
+        escalateToInteractive()
+    }
+
     private func escalateToInteractive() {
         guard backgroundResolutionPending else { return }
-        logger.info("CloudFlare background resolution timed out; presenting interactive sheet")
+        backgroundTimeoutTask?.cancel()
+        backgroundTimeoutTask = nil
         backgroundResolutionPending = false
         pending = true
     }
