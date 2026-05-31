@@ -25,6 +25,7 @@
 		87253C292DBD373D002BD806 /* UserHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87253C282DBD366D002BD806 /* UserHeader.swift */; };
 		872EF3C42CCFDAEA00251EB5 /* View+pullableScreenCover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 872EF3C32CCFDAEA00251EB5 /* View+pullableScreenCover.swift */; };
 		87307E1F2FC78CF10069E7F2 /* CloudflareChallengeSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87307E1E2FC78C790069E7F2 /* CloudflareChallengeSheet.swift */; };
+		76DD1A515EB54A13BA763698 /* CloudflareResolutionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */; };
 		8733DDFB28F75B1A00CD8BCF /* Logs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8733DDFA28F75B1A00CD8BCF /* Logs.swift */; };
 		8733DDFD28F75C1200CD8BCF /* Sharing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8733DDFC28F75C1200CD8BCF /* Sharing.swift */; };
 		8733DDFF28FAD58D00CD8BCF /* SwapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8733DDFE28FAD58D00CD8BCF /* SwapView.swift */; };
@@ -156,6 +157,7 @@
 		87253C282DBD366D002BD806 /* UserHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserHeader.swift; sourceTree = "<group>"; };
 		872EF3C32CCFDAEA00251EB5 /* View+pullableScreenCover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+pullableScreenCover.swift"; sourceTree = "<group>"; };
 		87307E1E2FC78C790069E7F2 /* CloudflareChallengeSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudflareChallengeSheet.swift; sourceTree = "<group>"; };
+		FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudflareResolutionOverlay.swift; sourceTree = "<group>"; };
 		8733DDFA28F75B1A00CD8BCF /* Logs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logs.swift; sourceTree = "<group>"; };
 		8733DDFC28F75C1200CD8BCF /* Sharing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sharing.swift; sourceTree = "<group>"; };
 		8733DDFE28FAD58D00CD8BCF /* SwapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwapView.swift; sourceTree = "<group>"; };
@@ -485,6 +487,7 @@
 			isa = PBXGroup;
 			children = (
 				87307E1E2FC78C790069E7F2 /* CloudflareChallengeSheet.swift */,
+				FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */,
 				871B05EE2C84BAD400302500 /* AppIcon.swift */,
 				87A185A12745A8A100B10D2A /* CenteredView.swift */,
 				875EF2E52C1E1705000D4BFB /* LinearProgress.swift */,
@@ -699,6 +702,7 @@
 				87F5EE8F29C5D9DD00649C5B /* DateTimeButton.swift in Sources */,
 				879C89FC2E2AFA8400F59A74 /* View+applying.swift in Sources */,
 				87307E1F2FC78CF10069E7F2 /* CloudflareChallengeSheet.swift in Sources */,
+				76DD1A515EB54A13BA763698 /* CloudflareResolutionOverlay.swift in Sources */,
 				87D64FC92C887DE200AB6F44 /* UserProfileControl.swift in Sources */,
 				87EAA2DB29EB4F1800677446 /* RemoteNotificationsView.swift in Sources */,
 				87D64FC52C886F0200AB6F44 /* ProgressiveLoadItem.swift in Sources */,

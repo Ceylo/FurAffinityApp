@@ -67,17 +67,27 @@ struct RootView: View {
             // Hidden background WebView: attempts to resolve a CloudFlare
             // challenge passively (no visible sheet). Kept 1×1 and transparent
             // but in the hierarchy so WebKit renders it and runs the challenge
-            // JS. Falls back to the sheet below if it can't resolve in time.
+            // JS. Escalates to the sheet if checkbox detection fires or the
+            // safety-net timeout expires.
             if challengeCoordinator.backgroundResolutionPending {
-                FAChallengeView(onResolved: {
-                    CloudflareChallengeCoordinator.shared.markResolved()
-                })
+                FAChallengeView(
+                    onResolved: { CloudflareChallengeCoordinator.shared.markResolved() },
+                    onInteractionRequired: { CloudflareChallengeCoordinator.shared.markInteractionRequired() }
+                )
                 .frame(width: 1, height: 1)
                 .opacity(0.001)
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
             }
         }
+        .overlay(alignment: .top) {
+            if challengeCoordinator.backgroundResolutionPending {
+                CloudflareResolutionOverlay()
+                    .padding(.top, 8)
+                    .transition(.fallAndFade)
+            }
+        }
+        .animation(.default, value: challengeCoordinator.backgroundResolutionPending)
         .transition(.opacity.animation(.default))
         .sheet(
             isPresented: Binding(
