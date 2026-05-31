@@ -20,6 +20,9 @@ struct WebView: UIViewRepresentable {
     /// with the resulting URL and the underlying `WKWebView` (so callers can
     /// `evaluateJavaScript` to inspect page content).
     var onPageLoaded: (@MainActor (URL?, WKWebView) async -> Void)? = nil
+    /// Called on the main actor roughly every 0.5 s while the WebView is alive,
+    /// with the underlying `WKWebView`. Callers can use this for DOM polling.
+    var onPeriodicCheck: (@MainActor (WKWebView) async -> Void)? = nil
 
     static func defaultCookies() async -> [HTTPCookie] {
         let task = Task { @MainActor in
@@ -66,6 +69,7 @@ struct WebView: UIViewRepresentable {
 
         let parent: WebView
         var cookiePoller: Task<Void, Error>?
+        var periodicCheckPoller: Task<Void, Error>?
 
         /// `false` while the initial async `clearCookies()` is still removing
         /// cookies one by one. The cookie observer/poller suppress updates to
@@ -121,6 +125,8 @@ struct WebView: UIViewRepresentable {
                 observedCookieStore = nil
                 cookiePoller?.cancel()
                 cookiePoller = nil
+                periodicCheckPoller?.cancel()
+                periodicCheckPoller = nil
             }
         }
         
@@ -149,6 +155,18 @@ struct WebView: UIViewRepresentable {
                         }
 
                         try await Task.sleep(for: .seconds(1))
+                    }
+                }
+
+                if parent.onPeriodicCheck != nil {
+                    periodicCheckPoller = Task { [weak self, weak view] in
+                        while !Task.isCancelled {
+                            try await Task.sleep(for: .milliseconds(500))
+                            guard let self, let view else { break }
+                            if let check = self.parent.onPeriodicCheck {
+                                await check(view)
+                            }
+                        }
                     }
                 }
             }
