@@ -8,6 +8,7 @@
 import FAKit
 import Foundation
 import Testing
+import UserNotifications
 
 @testable import Fur_Affinity
 
@@ -270,5 +271,17 @@ struct BackgroundRefreshNotificationBuilderTests {
         ])
         #expect(contents.map(\.subtitle) == ["Alice", "Bob", "Carol", "Dave", "Eve", "Alice"])
         #expect(contents.map(\.body) == ["S1", "N1", "SC1", "JC1", "Sh1", "AJ1"])
+    }
+
+    // MARK: - CloudFlare challenge failure notification
+
+    @Test func challengeFailureNotificationContent() {
+        let content = BackgroundRefreshManager.buildChallengeFailureNotification()
+        #expect(content.title == "CloudFlare check required")
+        #expect(content.body == "FurAffinity needs human verification. Open the app to resume notifications.")
+    }
+
+    @Test func challengeFailureNotificationIdentifierIsStable() {
+        #expect(BackgroundRefreshManager.challengeFailureNotificationIdentifier == "fa.background.cf-challenge")
     }
 }

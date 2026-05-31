@@ -282,6 +282,19 @@ enum BackgroundRefreshManager {
         return content
     }
 
+    /// Identifier for the CloudFlare-challenge failure local notification.
+    static let challengeFailureNotificationIdentifier = "fa.background.cf-challenge"
+
+    /// Builds the content for the CloudFlare-challenge failure notification.
+    /// Pure (no `UNUserNotificationCenter`), mirroring `buildNotifications`; sound
+    /// is applied at post time in `postChallengeFailureNotification`.
+    static func buildChallengeFailureNotification() -> UNMutableNotificationContent {
+        let content = UNMutableNotificationContent()
+        content.title = "CloudFlare check required"
+        content.body = "FurAffinity needs human verification. Open the app to resume notifications."
+        return content
+    }
+
     private static func postChallengeFailureNotification() async {
         let center = UNUserNotificationCenter.current()
         let settings = await center.notificationSettings()
@@ -289,15 +302,17 @@ enum BackgroundRefreshManager {
             return
         }
 
-        let content = UNMutableNotificationContent()
-        content.title = "CloudFlare check required"
-        content.body = "FurAffinity needs human verification. Open the app to resume notifications."
+        let content = buildChallengeFailureNotification()
         if settings.soundSetting == .enabled {
             content.sound = .default
         }
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(identifier: "fa.background.cf-challenge", content: content, trigger: trigger)
+        let request = UNNotificationRequest(
+            identifier: challengeFailureNotificationIdentifier,
+            content: content,
+            trigger: trigger
+        )
         do {
             try await center.add(request)
             logger.info("Posted CF challenge notification")

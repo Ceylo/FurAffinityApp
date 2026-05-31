@@ -40,10 +40,7 @@ final class BackgroundCFChallengeResolver: NSObject, WKNavigationDelegate {
             wv.navigationDelegate = self
             self.webView = wv
 
-            let authCookies = (HTTPCookieStorage.shared.cookies ?? []).filter { cookie in
-                guard cookie.name != "cf_clearance" else { return false }
-                return cookie.domain.contains(FAURLs.domain)
-            }
+            let authCookies = (HTTPCookieStorage.shared.cookies ?? []).faAuthCookies
 
             Task {
                 for cookie in authCookies {

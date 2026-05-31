@@ -48,7 +48,7 @@ public struct FAChallengeView: View {
             })
     }
 
-    private struct CFDOMSnapshot: Decodable {
+    struct CFDOMSnapshot: Decodable {
         var onChallenge: Bool
         var tsW: Int
         var tsH: Int
@@ -56,6 +56,15 @@ public struct FAChallengeView: View {
         var success: String
         var title: String
         var href: String
+    }
+
+    /// Whether the background WebView shows an interactive Turnstile checkbox that
+    /// won't clear passively, so the flow should escalate to the visible sheet.
+    /// A rendered checkbox is a sized challenges.cloudflare.com iframe still on the
+    /// challenge page; the elapsed gate avoids escalating during the brief window
+    /// before a managed challenge resolves itself.
+    static func interactionRequired(snapshot: CFDOMSnapshot, elapsed: TimeInterval) -> Bool {
+        snapshot.onChallenge && snapshot.tsW >= 50 && snapshot.tsH >= 30 && elapsed >= 2.0
     }
 
     private func periodicDOMCheck(in webView: WKWebView) async {
@@ -86,7 +95,7 @@ public struct FAChallengeView: View {
         else { return }
 
         let elapsed = pageLoadedAt.map { Date().timeIntervalSince($0) } ?? 0
-        let interactionRequired = snap.onChallenge && snap.tsW >= 50 && snap.tsH >= 30 && elapsed >= 2.0
+        let interactionRequired = Self.interactionRequired(snapshot: snap, elapsed: elapsed)
         let msg = String(format:
             "CF bg t=%.1fs title='%@' onChallenge=%@ ts=%dx%d spinner=%@ success=%@%@",
             elapsed, snap.title,
@@ -108,10 +117,7 @@ public struct FAChallengeView: View {
     /// store before navigation lets the FA homepage render as logged-in, which is
     /// the state our `FAHomePage` parser expects.
     private static func faAuthCookiesFromSharedStorage() -> [HTTPCookie] {
-        (HTTPCookieStorage.shared.cookies ?? []).filter { cookie in
-            guard cookie.name != "cf_clearance" else { return false }
-            return cookie.domain.contains(FAURLs.domain)
-        }
+        (HTTPCookieStorage.shared.cookies ?? []).faAuthCookies
     }
 
     private func pageDidLoad(url: URL, in webView: WKWebView) async {

@@ -42,8 +42,13 @@ public final class CloudflareChallengeCoordinator {
 
     /// Safety-net backstop: if neither passive resolution nor checkbox detection
     /// fires within this window, we still escalate to the visible sheet.
-    private let backgroundResolutionSafetyTimeout: Duration = .seconds(8)
+    private let backgroundResolutionSafetyTimeout: Duration
     private var backgroundTimeoutTask: Task<Void, Never>?
+
+    // Injected dependencies (defaulted to production behavior on `shared`).
+    private let isInBackground: @Sendable @MainActor () -> Bool
+    private let backgroundResolve: @Sendable @MainActor () async -> Bool
+    private let cookieProvider: @Sendable @MainActor () -> [HTTPCookie]
 
     private enum Outcome { case resolved, failed, cancelled }
     private struct Waiter {
@@ -52,17 +57,34 @@ public final class CloudflareChallengeCoordinator {
     }
     private var waiters: [Waiter] = []
 
-    private init() {}
+    /// Internal initializer with injectable dependencies. The class stays `public`
+    /// but the init is internal, so external modules still only reach it via
+    /// `.shared` (which uses the production defaults below). Tests construct
+    /// instances with overridden closures and a short timeout, never touching
+    /// `UIApplication` or `HTTPCookieStorage`.
+    init(
+        isInBackground: @escaping @Sendable @MainActor () -> Bool =
+            { UIApplication.shared.applicationState == .background },
+        backgroundResolve: @escaping @Sendable @MainActor () async -> Bool =
+            { await BackgroundCFChallengeResolver().resolve() },
+        cookieProvider: @escaping @Sendable @MainActor () -> [HTTPCookie] =
+            { HTTPCookieStorage.shared.cookies ?? [] },
+        safetyTimeout: Duration = .seconds(8)
+    ) {
+        self.isInBackground = isInBackground
+        self.backgroundResolve = backgroundResolve
+        self.cookieProvider = cookieProvider
+        self.backgroundResolutionSafetyTimeout = safetyTimeout
+    }
 
     /// Suspend the caller until the UI signals resolution.
     /// - Throws `CloudflareChallengeRequired` if the challenge can't be presented
     ///   (background) or the user dismisses the sheet without solving it.
     /// - Throws `CancellationError` if the calling task is cancelled while parked.
     public func awaitResolution() async throws {
-        guard UIApplication.shared.applicationState != .background else {
+        guard !isInBackground() else {
             logger.info("CF challenge in background; attempting headless resolution")
-            let resolver = BackgroundCFChallengeResolver()
-            if await resolver.resolve() {
+            if await backgroundResolve() {
                 logger.info("CF background-task resolution succeeded")
                 return
             }
@@ -142,9 +164,7 @@ public final class CloudflareChallengeCoordinator {
     /// Whether `HTTPCookieStorage.shared` holds FA auth cookies (anything for the
     /// FA domain other than `cf_clearance`) — i.e. there is a logged-in session.
     private var isLoggedIn: Bool {
-        (HTTPCookieStorage.shared.cookies ?? []).contains { cookie in
-            cookie.name != "cf_clearance" && cookie.domain.contains(FAURLs.domain)
-        }
+        !cookieProvider().faAuthCookies.isEmpty
     }
 
     /// Called by the UI (either stage) once a fresh `cf_clearance` has been
