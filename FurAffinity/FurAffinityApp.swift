@@ -63,6 +63,20 @@ struct RootView: View {
             } else {
                 LoggedInView()
             }
+
+            // Hidden background WebView: attempts to resolve a CloudFlare
+            // challenge passively (no visible sheet). Kept 1×1 and transparent
+            // but in the hierarchy so WebKit renders it and runs the challenge
+            // JS. Falls back to the sheet below if it can't resolve in time.
+            if challengeCoordinator.backgroundResolutionPending {
+                FAChallengeView(onResolved: {
+                    CloudflareChallengeCoordinator.shared.markResolved()
+                })
+                .frame(width: 1, height: 1)
+                .opacity(0.001)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+            }
         }
         .transition(.opacity.animation(.default))
         .sheet(
