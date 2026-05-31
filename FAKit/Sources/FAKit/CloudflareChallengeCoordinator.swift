@@ -60,7 +60,13 @@ public final class CloudflareChallengeCoordinator {
     /// - Throws `CancellationError` if the calling task is cancelled while parked.
     public func awaitResolution() async throws {
         guard UIApplication.shared.applicationState != .background else {
-            logger.info("CloudFlare challenge required but app is in background; failing fast")
+            logger.info("CF challenge in background; attempting headless resolution")
+            let resolver = BackgroundCFChallengeResolver()
+            if await resolver.resolve() {
+                logger.info("CF background-task resolution succeeded")
+                return
+            }
+            logger.info("CF background-task resolution failed; throwing")
             throw CloudflareChallengeRequired()
         }
 
