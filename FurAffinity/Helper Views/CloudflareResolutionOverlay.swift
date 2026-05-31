@@ -48,7 +48,7 @@ struct CloudflareResolutionOverlay: View {
     private var pillContent: some View {
         HStack(spacing: 8) {
             ProgressView()
-            Text("Checking with CloudFlare… Tap to verify manually")
+            Text("Handling CloudFlare challenge… Tap to verify manually")
                 .font(.callout)
         }
         .foregroundStyle(.primary)
