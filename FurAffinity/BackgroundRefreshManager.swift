@@ -194,9 +194,18 @@ enum BackgroundRefreshManager {
             return
         }
 
-        let submissions = try await session.submissionPreviews(from: nil)
-        let notes = try await session.notePreviews(from: .inbox)
-        let previews = try await session.notificationPreviews()
+        let submissions: [FASubmissionPreview]
+        let notes: [FANotePreview]
+        let previews: FANotificationPreviews
+        do {
+            submissions = try await session.submissionPreviews(from: nil)
+            notes = try await session.notePreviews(from: .inbox)
+            previews = try await session.notificationPreviews()
+        } catch is CloudflareChallengeRequired {
+            logger.warning("CF challenge not resolved in background; posting notification")
+            await postChallengeFailureNotification()
+            return
+        }
 
         var latestNotificationIDs = LatestNotificationIDs.load()
 
@@ -271,6 +280,30 @@ enum BackgroundRefreshManager {
         content.subtitle = subtitle
         content.body = body
         return content
+    }
+
+    private static func postChallengeFailureNotification() async {
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
+            return
+        }
+
+        let content = UNMutableNotificationContent()
+        content.title = "CloudFlare check required"
+        content.body = "FurAffinity needs human verification. Open the app to resume notifications."
+        if settings.soundSetting == .enabled {
+            content.sound = .default
+        }
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(identifier: "fa.background.cf-challenge", content: content, trigger: trigger)
+        do {
+            try await center.add(request)
+            logger.info("Posted CF challenge notification")
+        } catch {
+            logger.error("Failed to post CF challenge notification: \(error, privacy: .public)")
+        }
     }
 
     private static func postLocalNotification(
