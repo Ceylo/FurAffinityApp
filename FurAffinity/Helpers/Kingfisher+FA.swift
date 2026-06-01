@@ -9,6 +9,7 @@ import Foundation
 import Kingfisher
 import SwiftUI
 import FAKit
+import os
 
 private extension KFImageProtocol {
     func defaultConfiguration() -> Self {
@@ -157,7 +158,13 @@ actor DownloadDelegate: ImageDownloaderDelegate {
     @MainActor static let shared = DownloadDelegate()
     
     private init() {}
-    
+
+    // Serializes the read-of-shared-storage + write-to-downloader-storage in
+    // setCloudflareCookie. That method is nonisolated and Kingfisher invokes it
+    // concurrently (one Task per download, no lock) right before resuming the
+    // request, so without this guard concurrent loads corrupt the cookie array.
+    nonisolated private let cookieLock = OSAllocatedUnfairLock()
+
     private var downloadStartDates = [URL: Date]()
     // Get/set boilerplate needed for actor isolation
     private func setDownloadStartDate(_ date: Date?, for url: URL) {
@@ -168,15 +175,24 @@ actor DownloadDelegate: ImageDownloaderDelegate {
     }
     
     nonisolated private func setCloudflareCookie(for url: URL, on downloader: ImageDownloader) {
-        let cf_clearance = HTTPCookieStorage.shared
-            .cookies(for: url)?
-            .first(where: { $0.name == "cf_clearance" })
-        
-        let downloaderCookieStorage = downloader.sessionConfiguration.httpCookieStorage
-        if let cf_clearance, let downloaderCookieStorage, var cookies = downloaderCookieStorage.cookies(for: url) {
-            cookies.append(cf_clearance)
-            downloader.sessionConfiguration.httpCookieStorage!
-                .setCookies(cookies, for: url, mainDocumentURL: url)
+        guard let downloaderCookieStorage = downloader.sessionConfiguration.httpCookieStorage
+        else { return }
+
+        cookieLock.withLock {
+            guard let cf_clearance = HTTPCookieStorage.shared
+                .cookies(for: url)?
+                .first(where: { $0.name == "cf_clearance" })
+            else { return }
+
+            // Already seeded with the same value: nothing to do, keep the lock window empty.
+            let existing = downloaderCookieStorage.cookies(for: url)?
+                .first(where: { $0.name == "cf_clearance" })
+            guard existing?.value != cf_clearance.value else { return }
+
+            // setCookie inserts-or-replaces by name+domain+path, so it stays idempotent
+            // and avoids the crashing setCookies(_:for:mainDocumentURL:) mass-array munge.
+            // cf_clearance came from cookies(for: url), so its domain/path already match url.
+            downloaderCookieStorage.setCookie(cf_clearance)
         }
     }
     
