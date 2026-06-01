@@ -61,6 +61,11 @@ class Model: NotificationsNuker, NotificationsDeleter {
     private var autorefreshSubscription: AnyCancellable?
     init() {
         Defaults.publisher(keys: Defaults.Keys.all, options: [])
+            // Defaults delivers KVO synchronously on whichever thread mutates a key
+            // (e.g. background refresh writing latestNotificationIDs off the main actor).
+            // These sinks are @MainActor-isolated, so hop to main before entering them to
+            // avoid an executor-isolation crash. See defaultsWriteFromBackground… test.
+            .receive(on: DispatchQueue.main)
             .sink {
                 let userDefaults = UserDefaults.standard
                 let preferences = Defaults.Keys.all
@@ -76,6 +81,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             .store(in: &subscriptions)
         
         Defaults.publisher(keys: Defaults.Keys.notifications)
+            .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
                 updateDisplayedNotificationCount()
             }
