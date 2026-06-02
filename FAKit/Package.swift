@@ -10,6 +10,9 @@ let package = Package(
         .library(
             name: "FAKit",
             targets: ["FAKit"]),
+        .library(
+            name: "FALogging",
+            targets: ["FALogging"]),
     ],
     dependencies: [
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.5"),
@@ -27,7 +30,7 @@ let package = Package(
         ),
         .target(
             name: "FAPages",
-            dependencies: ["SwiftSoup"]
+            dependencies: ["SwiftSoup", "FALogging"]
         ),
         .testTarget(
             name: "FAPagesTests",
@@ -38,7 +41,7 @@ let package = Package(
         ),
         .target(
             name: "FAKit",
-            dependencies: ["FAPages", "Cache", "SwiftGraph", .product(name: "OrderedCollections", package: "swift-collections")],
+            dependencies: ["FAPages", "FALogging", "Cache", "SwiftGraph", .product(name: "OrderedCollections", package: "swift-collections")],
             resources: [.process("Resources")]
         ),
         .testTarget(
