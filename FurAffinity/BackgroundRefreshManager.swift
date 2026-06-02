@@ -266,19 +266,21 @@ enum BackgroundRefreshManager {
         shouts: [FANotificationPreview],
         journals: [FANotificationPreview]
     ) -> [UNMutableNotificationContent] {
-        submissions.map { notificationContent(title: "New Submission", subtitle: $0.displayAuthor, body: $0.title) }
-            + notes.filter(\.unread).map { notificationContent(title: "New Note", subtitle: $0.displayAuthor, body: $0.title) }
-            + submissionComments.map { notificationContent(title: "New Submission Comment", subtitle: $0.displayAuthor, body: $0.title) }
-            + journalComments.map { notificationContent(title: "New Journal Comment", subtitle: $0.displayAuthor, body: $0.title) }
-            + shouts.map { notificationContent(title: "New Shout", subtitle: $0.displayAuthor, body: $0.title) }
-            + journals.map { notificationContent(title: "New Journal", subtitle: $0.displayAuthor, body: $0.title) }
+        submissions.map { notificationContent(title: "New Submission", subtitle: $0.displayAuthor, body: $0.title, url: $0.url) }
+            + notes.filter(\.unread).map { notificationContent(title: "New Note", subtitle: $0.displayAuthor, body: $0.title, url: $0.noteUrl) }
+            + submissionComments.map { notificationContent(title: "New Submission Comment", subtitle: $0.displayAuthor, body: $0.title, url: $0.url) }
+            + journalComments.map { notificationContent(title: "New Journal Comment", subtitle: $0.displayAuthor, body: $0.title, url: $0.url) }
+            + shouts.map { notificationContent(title: "New Shout", subtitle: $0.displayAuthor, body: $0.title, url: $0.url) }
+            + journals.map { notificationContent(title: "New Journal", subtitle: $0.displayAuthor, body: $0.title, url: $0.url) }
     }
 
-    private static func notificationContent(title: String, subtitle: String, body: String) -> UNMutableNotificationContent {
+    private static func notificationContent(title: String, subtitle: String, body: String, url: URL) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
         content.title = title
         content.subtitle = subtitle
         content.body = body
+        // Carry the FA URL so a tap can deep-link to the related content.
+        content.userInfo = [NotificationDeepLink.urlKey: url.absoluteString]
         return content
     }
 
