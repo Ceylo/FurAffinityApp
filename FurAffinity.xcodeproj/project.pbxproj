@@ -101,6 +101,7 @@
 		87CCD2F22FC3441600768FDB /* BackgroundRefreshManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87CCD2F12FC3441600768FDB /* BackgroundRefreshManager.swift */; };
 		87CCD2F62FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87CCD2F52FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift */; };
 		87CCD2F92FC49A2000768FDB /* BackgroundRefreshNotificationBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87CCD2F72FC4991600768FDB /* BackgroundRefreshNotificationBuilderTests.swift */; };
+		87FACE0400000000000DEECF /* NotificationCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FACE0300000000000DEECF /* NotificationCoordinatorTests.swift */; };
 		87AA2222AABB222200222222 /* MockFASession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87AA1111AABB111100111111 /* MockFASession.swift */; };
 		87AA4444AABB444400444444 /* ModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87AA3333AABB333300333333 /* ModelTests.swift */; };
 		87D252062C906AB700E07AE1 /* withAsync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D252052C906AB700E07AE1 /* withAsync.swift */; };
@@ -234,6 +235,7 @@
 		87CCD2F12FC3441600768FDB /* BackgroundRefreshManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshManager.swift; sourceTree = "<group>"; };
 		87CCD2F52FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshLifecycleModifier.swift; sourceTree = "<group>"; };
 		87CCD2F72FC4991600768FDB /* BackgroundRefreshNotificationBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshNotificationBuilderTests.swift; sourceTree = "<group>"; };
+		87FACE0300000000000DEECF /* NotificationCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCoordinatorTests.swift; sourceTree = "<group>"; };
 		87AA1111AABB111100111111 /* MockFASession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockFASession.swift; sourceTree = "<group>"; };
 		87AA3333AABB333300333333 /* ModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelTests.swift; sourceTree = "<group>"; };
 		87D252052C906AB700E07AE1 /* withAsync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = withAsync.swift; sourceTree = "<group>"; };
@@ -473,6 +475,7 @@
 			children = (
 				8791D60229C4D627003FDBBE /* FATargetTests.swift */,
 				87CCD2F72FC4991600768FDB /* BackgroundRefreshNotificationBuilderTests.swift */,
+				87FACE0300000000000DEECF /* NotificationCoordinatorTests.swift */,
 				87AA1111AABB111100111111 /* MockFASession.swift */,
 				87AA3333AABB333300333333 /* ModelTests.swift */,
 			);
@@ -779,6 +782,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				87CCD2F92FC49A2000768FDB /* BackgroundRefreshNotificationBuilderTests.swift in Sources */,
+				87FACE0400000000000DEECF /* NotificationCoordinatorTests.swift in Sources */,
 				8791D60329C4D627003FDBBE /* FATargetTests.swift in Sources */,
 				87AA2222AABB222200222222 /* MockFASession.swift in Sources */,
 				87AA4444AABB444400444444 /* ModelTests.swift in Sources */,
