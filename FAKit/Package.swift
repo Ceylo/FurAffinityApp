@@ -19,6 +19,13 @@ let package = Package(
     ],
     targets: [
         .target(
+            name: "FALogging"
+        ),
+        .testTarget(
+            name: "FALoggingTests",
+            dependencies: ["FALogging"]
+        ),
+        .target(
             name: "FAPages",
             dependencies: ["SwiftSoup"]
         ),
