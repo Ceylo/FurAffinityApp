@@ -124,11 +124,7 @@ struct FurAffinityApp: App {
         logger.info("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized", privacy: .public)")
         BackgroundRefreshManager.register()
         FAImageInliner.dataProvider = kingfisherImageDataProvider
-        // Must be set before launch finishes so a tap that cold-launches the
-        // app is delivered to our coordinator.
-        MainActor.assumeIsolated {
-            UNUserNotificationCenter.current().delegate = NotificationCoordinator.shared
-        }
+        UNUserNotificationCenter.current().delegate = NotificationCoordinator.shared
     }
 
     var body: some Scene {
