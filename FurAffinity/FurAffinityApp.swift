@@ -55,6 +55,7 @@ private let amplitude: Amplitude? = {
 
 struct RootView: View {
     @Environment(Model.self) private var model
+    @Environment(\.scenePhase) private var scenePhase
     @State private var challengeCoordinator = CloudflareChallengeCoordinator.shared
 
     var body: some View {
@@ -105,6 +106,9 @@ struct RootView: View {
         ) {
             CloudflareChallengeSheet()
         }
+        .onChange(of: scenePhase, initial: true) { oldPhase, newPhase in
+            logger.info("[CFDIAG] scenePhase \(String(describing: oldPhase), privacy: .public) -> \(String(describing: newPhase), privacy: .public), applicationState=\(UIApplication.shared.applicationState.rawValue, privacy: .public)")
+        }
     }
 }
 
@@ -114,7 +118,8 @@ struct FurAffinityApp: App {
 
     init() {
         let device = UIDevice.current
-        logger.info("Launched FurAffinity \(Bundle.main.version.shortDescription, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public), \(buildConfiguration, privacy: .public) build")
+        let appState = UIApplication.shared.applicationState
+        logger.info("Launched FurAffinity \(Bundle.main.version.shortDescription, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public), \(buildConfiguration, privacy: .public) build [CFDIAG] applicationState=\(appState.rawValue, privacy: .public)")
         _ = amplitude
         logger.info("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized", privacy: .public)")
         BackgroundRefreshManager.register()
