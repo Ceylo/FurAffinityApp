@@ -103,4 +103,32 @@ struct ModelTests {
         try await Task.sleep(nanoseconds: 100_000_000)
         #expect(model.submissionPreviews?.count == 2)
     }
+
+    @Test func defaultsWriteFromBackgroundDoesNotCrashModelObservers() async {
+        // Model.init registers two @MainActor Defaults.publisher sinks (the Defaults
+        // library observes the standard suite via KVO). Writing an observed key off the
+        // main actor synchronously flushes CFPrefs KVO on that thread; before the fix
+        // this entered the main-actor sink off-main and aborted the process via the
+        // executor-isolation assertion.
+        //
+        // The key is written through raw UserDefaults (rather than the Defaults API) so
+        // the test target doesn't need to link the Defaults package — Defaults observes
+        // the same KVO either way. Name must match
+        // Defaults.Keys.latestSubmissionNotificationID in UserDefaultKeys.swift.
+        let keyName = "latestSubmissionNotificationID"
+        let defaults = UserDefaults.standard
+        let model = Model()
+        let original = defaults.object(forKey: keyName)
+        defer { defaults.set(original, forKey: keyName) }
+
+        // Off-main write with a guaranteed-changed value so KVO actually fires.
+        let newValue = (original as? Int ?? 0) &+ 1
+        await Task.detached {
+            UserDefaults.standard.set(newValue, forKey: keyName)
+        }.value
+
+        // Keep observers alive across the write. Reaching here without aborting
+        // means the sink was delivered safely on the main actor.
+        withExtendedLifetime(model) {}
+    }
 }
