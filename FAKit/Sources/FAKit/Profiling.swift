@@ -7,6 +7,8 @@
 
 import Foundation
 import os
+import FALogging
 
-let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FAKit")
-let signposter = OSSignposter(logger: logger)
+let logger = PersistentLogger(subsystem: Bundle.main.bundleIdentifier!, category: "FAKit")
+private let signpostLog = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FAKit")
+let signposter = OSSignposter(logger: signpostLog)

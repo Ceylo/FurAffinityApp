@@ -7,9 +7,11 @@
 
 import Foundation
 import OSLog
+import FALogging
 
-let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FA")
-let signposter = OSSignposter(logger: logger)
+let logger = PersistentLogger(subsystem: Bundle.main.bundleIdentifier!, category: "FA")
+private let signpostLog = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FA")
+let signposter = OSSignposter(logger: signpostLog)
 
 extension OSLogEntryLog.Level {
     fileprivate var description: String {
