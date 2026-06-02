@@ -32,6 +32,7 @@ private struct HomeViewButtonContents: View {
 struct HomeView: View {
     @State private var checkingConnection = true
     @Environment(Model.self) private var model
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(ErrorStorage.self) private var errorStorage
     @State private var showLoginView = false
     @State private var localSession: OnlineFASession?
@@ -100,10 +101,21 @@ struct HomeView: View {
             ErrorDisplay()
         }
         .task {
-            guard !didTryAutologin else { return }
+            logger.info("[CFDIAG] HomeView autologin .task fired; scenePhase=\(String(describing: scenePhase), privacy: .public), applicationState=\(UIApplication.shared.applicationState.rawValue, privacy: .public), didTryAutologin=\(didTryAutologin, privacy: .public)")
+            guard !didTryAutologin else {
+                logger.info("[CFDIAG] HomeView autologin SKIPPED by didTryAutologin guard (leftover state, no fresh attempt)")
+                return
+            }
             didTryAutologin = true
+            logger.info("[CFDIAG] HomeView autologin PROCEEDING; updateSession() start")
             await storeLocalizedError(in: errorStorage, action: "Auto-login", webBrowserURL: nil) {
-                try await updateSession()
+                do {
+                    try await updateSession()
+                    logger.info("[CFDIAG] HomeView autologin updateSession() succeeded")
+                } catch {
+                    logger.error("[CFDIAG] HomeView autologin updateSession() failed: \(type(of: error), privacy: .public) — \(String(describing: error), privacy: .public)")
+                    throw error
+                }
             }
         }
         .sheet(
