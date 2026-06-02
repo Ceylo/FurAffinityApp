@@ -41,6 +41,7 @@ final class BackgroundCFChallengeResolver: NSObject, WKNavigationDelegate {
             self.webView = wv
 
             let authCookies = (HTTPCookieStorage.shared.cookies ?? []).faAuthCookies
+            logger.info("[CFDIAG] CF background resolver: starting headless resolution with \(authCookies.count, privacy: .public) auth cookie(s), timeout \(timeout, privacy: .public)")
 
             Task {
                 for cookie in authCookies {
@@ -52,7 +53,7 @@ final class BackgroundCFChallengeResolver: NSObject, WKNavigationDelegate {
             timeoutTask = Task { [weak self] in
                 try? await Task.sleep(for: timeout)
                 guard !Task.isCancelled else { return }
-                logger.info("CF background resolver: timeout after \(timeout, privacy: .public)")
+                logger.info("[CFDIAG] CF background resolver: timeout after \(timeout, privacy: .public)")
                 self?.finish(success: false)
             }
         }
@@ -85,7 +86,7 @@ final class BackgroundCFChallengeResolver: NSObject, WKNavigationDelegate {
 
         let allCookies = await webView.configuration.websiteDataStore.httpCookieStore.allCookies()
         guard let clearance = allCookies.first(where: { $0.name == "cf_clearance" }) else {
-            logger.warning("BackgroundCFChallengeResolver: FAHomePage parsed but no cf_clearance in WebView cookie store")
+            logger.warning("[CFDIAG] BackgroundCFChallengeResolver: FAHomePage parsed but no cf_clearance in WebView cookie store")
             return
         }
 
@@ -94,7 +95,7 @@ final class BackgroundCFChallengeResolver: NSObject, WKNavigationDelegate {
             HTTPCookieStorage.shared.deleteCookie(stale)
         }
         HTTPCookieStorage.shared.setCookie(clearance)
-        logger.info("CF background resolver: new clearance \(clearance.loggingDescription, privacy: .public)")
+        logger.info("[CFDIAG] CF background resolver: success — new clearance \(clearance.loggingDescription, privacy: .public)")
 
         finish(success: true)
     }
