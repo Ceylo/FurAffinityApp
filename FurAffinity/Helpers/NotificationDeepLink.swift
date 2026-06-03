@@ -34,15 +34,35 @@ final class NotificationCoordinator: NSObject, UNUserNotificationCenterDelegate 
     /// honored once `LoggedInView` mounts.
     var pendingDeepLink: FATarget?
 
-    // Async delegate variant (iOS 15+); avoids completion handlers.
+    // Completion-handler delegate variant. We call `completionHandler()`
+    // synchronously and immediately, and never touch `@MainActor` state inline:
+    // the system finishes handling the response (and the foreground transition
+    // on a tap) only once this method returns. The async variant returned only
+    // after an `await` hop onto the (possibly busy) main actor, which delayed
+    // the implicit completion and could keep the app from foregrounding. Here
+    // the main-actor work is handed off to a detached `Task` instead.
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        didReceive response: UNNotificationResponse
-    ) async {
-        // Extract the Sendable String off-actor, then hop to the main actor.
-        let urlString = response.notification.request.content
-            .userInfo[NotificationDeepLink.urlKey] as? String
-        await setPendingDeepLink(fromURLString: urlString)
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping @Sendable () -> Void
+    ) {
+        // Extract the Sendable String off-actor; do NOT block on a main-actor hop here.
+        let urlString = Self.deepLinkURLString(fromUserInfo: response.notification.request.content.userInfo)
+        if let urlString {
+            Task { @MainActor in
+                NotificationCoordinator.shared.setPendingDeepLink(fromURLString: urlString)
+            }
+        }
+        // Signal completion right away so the system finishes foregrounding the app.
+        completionHandler()
+    }
+
+    /// Pulls the deep-link URL string out of a notification's `userInfo`.
+    /// Returns nil when the key is absent or not a string. Factored out so the
+    /// extraction seam is unit-testable without constructing a
+    /// `UNNotificationResponse`.
+    nonisolated static func deepLinkURLString(fromUserInfo userInfo: [AnyHashable: Any]) -> String? {
+        userInfo[NotificationDeepLink.urlKey] as? String
     }
 
     /// Parses an FA URL string into a navigable target. No-op (leaves

@@ -94,4 +94,22 @@ struct NotificationCoordinatorTests {
     @Test func wellFormedButUnmappableFAURL_leavesNil() {
         #expect(target(forURLString: "https://www.furaffinity.net/unknownpath/42/") == nil)
     }
+
+    // MARK: - userInfo extraction seam (driven by the delegate method)
+
+    @Test func deepLinkURLString_presentKey_returnsString() {
+        let urlString = "https://www.furaffinity.net/view/1234/"
+        let userInfo: [AnyHashable: Any] = [NotificationDeepLink.urlKey: urlString]
+        #expect(NotificationCoordinator.deepLinkURLString(fromUserInfo: userInfo) == urlString)
+    }
+
+    @Test func deepLinkURLString_missingKey_returnsNil() {
+        let userInfo: [AnyHashable: Any] = ["other.key": "value"]
+        #expect(NotificationCoordinator.deepLinkURLString(fromUserInfo: userInfo) == nil)
+    }
+
+    @Test func deepLinkURLString_nonStringValue_returnsNil() {
+        let userInfo: [AnyHashable: Any] = [NotificationDeepLink.urlKey: 42]
+        #expect(NotificationCoordinator.deepLinkURLString(fromUserInfo: userInfo) == nil)
+    }
 }
