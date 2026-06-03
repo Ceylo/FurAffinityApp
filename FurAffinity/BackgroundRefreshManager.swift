@@ -365,7 +365,7 @@ enum BackgroundRefreshManager {
         let sender = INPerson(
             personHandle: INPersonHandle(value: pending.author, type: .unknown),
             nameComponents: nil,
-            displayName: pending.content.subtitle,
+            displayName: pending.content.title,
             image: avatar,
             contactIdentifier: nil,
             customIdentifier: pending.author,
