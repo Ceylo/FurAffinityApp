@@ -27,8 +27,8 @@ struct LoggedInView: View {
         case settings
     }
     
-    func handleTarget(_ target: FATarget) {
-        switch selectedTab {
+    private func append(_ target: FATarget, to tab: Tab) {
+        switch tab {
         case .submissions:
             submissionsNavigationStack.append(target)
         case .notes:
@@ -42,26 +42,18 @@ struct LoggedInView: View {
         }
     }
 
-    /// Navigates to a target coming from a notification tap, selecting the
-    /// tab inferred from the target. Unlike `handleTarget`, this works from any
-    /// tab (including Settings) because the destination tab is always a content
-    /// tab.
+    func handleTarget(_ target: FATarget) {
+        append(target, to: selectedTab)
+    }
+
+    /// Navigates to a target coming from a notification tap, selecting the tab
+    /// inferred from the target. Unlike `handleTarget`, this works from any tab
+    /// (including Settings) because `Tab(deepLinkTarget:current:)` never yields
+    /// `.settings`.
     private func navigate(to target: FATarget) {
-        let tab = Tab(deepLinkTarget: target)
+        let tab = Tab(deepLinkTarget: target, current: selectedTab)
         selectedTab = tab
-        switch tab {
-        case .submissions:
-            submissionsNavigationStack.append(target)
-        case .notes:
-            notesNavigationStack.append(target)
-        case .notifications:
-            notificationsNavigationStack.append(target)
-        case .userpage:
-            userpageNavigationStack.append(target)
-        case .settings:
-            // Unreachable: Tab(deepLinkTarget:) never yields .settings.
-            break
-        }
+        append(target, to: tab)
     }
 
     private func drainPendingDeepLink() {
@@ -139,13 +131,10 @@ struct LoggedInView: View {
         .onReceive(navigationStream) { target in
             handleTarget(target)
         }
-        // Drain a notification deep link: `.task` covers a tap that
-        // cold-launched the app (value set before this view mounted), while
-        // `.onChange` covers taps while the app is already running.
-        .task {
-            drainPendingDeepLink()
-        }
-        .onChange(of: notificationCoordinator.pendingDeepLink) { _, _ in
+        // Drain a notification deep link. `initial: true` covers a tap that
+        // cold-launched the app (value already set when this view mounts); the
+        // change handler covers taps while the app is already running.
+        .onChange(of: notificationCoordinator.pendingDeepLink, initial: true) { _, _ in
             drainPendingDeepLink()
         }
         .onAppear {
@@ -158,17 +147,27 @@ struct LoggedInView: View {
 }
 
 extension LoggedInView.Tab {
-    /// The content tab a notification deep link should open in, inferred purely
-    /// from the target (so notifications from older app versions still route).
+    /// The content tab a notification deep link should open in, inferred from
+    /// the target (so notifications from older app versions still route).
     /// Never returns `.settings`.
-    init(deepLinkTarget target: FATarget) {
+    ///
+    /// - Parameter current: the currently selected tab, used for targets that
+    ///   aren't tied to a specific tab.
+    init(deepLinkTarget target: FATarget, current: LoggedInView.Tab) {
         switch target {
-        case .submission:
+        case .submission, .gallery, .favorites:
             self = .submissions
         case .note:
             self = .notes
-        case .journal, .user, .gallery, .favorites, .journals, .watchlist, .submissionMetadata:
+        case .journal, .journals:
             self = .notifications
+        case .user, .watchlist:
+            // Not tied to a specific tab — stay on the current tab, unless it's
+            // Settings (which has no navigation stack).
+            self = current == .settings ? .notifications : current
+        case .submissionMetadata:
+            // Has no URL, so it can never originate from a notification tap.
+            preconditionFailure("submissionMetadata cannot originate from a notification deep link")
         }
     }
 }

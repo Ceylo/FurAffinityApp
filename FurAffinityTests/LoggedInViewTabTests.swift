@@ -14,50 +14,48 @@ import Testing
 struct LoggedInViewTabTests {
     private let url = URL(string: "https://www.furaffinity.net/")!
 
-    private func metadata() -> FASubmission.Metadata {
-        .init(
-            title: "", author: "", displayAuthor: "", datetime: "", naturalDatetime: "",
-            viewCount: 0, commentCount: 0, favoriteCount: 0, rating: .general,
-            category: "", theme: "", species: "", resolution: "", fileSize: "",
-            keywords: [], folders: []
-        )
-    }
-
-    // Exhaustive over every FATarget case.
+    // Tab the target opens in is independent of `current` for these cases.
 
     @Test func submission_opensInSubmissions() {
-        #expect(LoggedInView.Tab(deepLinkTarget: .submission(url: url, previewData: nil)) == .submissions)
+        #expect(LoggedInView.Tab(deepLinkTarget: .submission(url: url, previewData: nil), current: .notes) == .submissions)
+    }
+
+    @Test func gallery_opensInSubmissions() {
+        #expect(LoggedInView.Tab(deepLinkTarget: .gallery(url: url), current: .notes) == .submissions)
+    }
+
+    @Test func favorites_opensInSubmissions() {
+        #expect(LoggedInView.Tab(deepLinkTarget: .favorites(url: url), current: .notes) == .submissions)
     }
 
     @Test func note_opensInNotes() {
-        #expect(LoggedInView.Tab(deepLinkTarget: .note(url: url)) == .notes)
+        #expect(LoggedInView.Tab(deepLinkTarget: .note(url: url), current: .submissions) == .notes)
     }
 
     @Test func journal_opensInNotifications() {
-        #expect(LoggedInView.Tab(deepLinkTarget: .journal(url: url)) == .notifications)
-    }
-
-    @Test func user_opensInNotifications() {
-        #expect(LoggedInView.Tab(deepLinkTarget: .user(url: url, previewData: nil)) == .notifications)
-    }
-
-    @Test func gallery_opensInNotifications() {
-        #expect(LoggedInView.Tab(deepLinkTarget: .gallery(url: url)) == .notifications)
-    }
-
-    @Test func favorites_opensInNotifications() {
-        #expect(LoggedInView.Tab(deepLinkTarget: .favorites(url: url)) == .notifications)
+        #expect(LoggedInView.Tab(deepLinkTarget: .journal(url: url), current: .submissions) == .notifications)
     }
 
     @Test func journals_opensInNotifications() {
-        #expect(LoggedInView.Tab(deepLinkTarget: .journals(url: url)) == .notifications)
+        #expect(LoggedInView.Tab(deepLinkTarget: .journals(url: url), current: .submissions) == .notifications)
     }
 
-    @Test func watchlist_opensInNotifications() {
-        #expect(LoggedInView.Tab(deepLinkTarget: .watchlist(url: url)) == .notifications)
+    // user/watchlist aren't tied to a tab: they preserve `current`, unless
+    // it's Settings (then they fall back to Notifications).
+
+    @Test func user_preservesCurrentTab() {
+        #expect(LoggedInView.Tab(deepLinkTarget: .user(url: url, previewData: nil), current: .notes) == .notes)
     }
 
-    @Test func submissionMetadata_opensInNotifications() {
-        #expect(LoggedInView.Tab(deepLinkTarget: .submissionMetadata(metadata())) == .notifications)
+    @Test func user_fromSettings_opensInNotifications() {
+        #expect(LoggedInView.Tab(deepLinkTarget: .user(url: url, previewData: nil), current: .settings) == .notifications)
+    }
+
+    @Test func watchlist_preservesCurrentTab() {
+        #expect(LoggedInView.Tab(deepLinkTarget: .watchlist(url: url), current: .userpage) == .userpage)
+    }
+
+    @Test func watchlist_fromSettings_opensInNotifications() {
+        #expect(LoggedInView.Tab(deepLinkTarget: .watchlist(url: url), current: .settings) == .notifications)
     }
 }
