@@ -5,3 +5,7 @@
 xcuserdata/
 DerivedData/
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+
+# SwiftPM resolves this for standalone package builds; the app workspace
+# Package.resolved is the source of truth.
+/Package.resolved
