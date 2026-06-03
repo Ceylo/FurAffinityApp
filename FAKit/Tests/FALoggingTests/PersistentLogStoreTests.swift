@@ -40,18 +40,19 @@ final class PersistentLogStoreTests: XCTestCase {
         // Small cap so rotation triggers quickly: 8 KB total -> 4 KB per file.
         let cap = 8 * 1024
         let store = PersistentLogStore(directory: tempDir, maxTotalBytes: cap)
+        // A fast burst coalesces into large batches, so this also exercises the
+        // chunked write path that keeps each file under the cap mid-batch.
         let payload = String(repeating: "x", count: 120)
         for i in 0..<2_000 {
             store.append(category: "FA", level: "info", message: "\(i) \(payload)")
         }
-        store.flush() // writes are async; ensure they land before inspecting disk
+        // Writes are async; readAllForExport drains buffered entries to disk.
+        _ = store.readAllForExport()
 
-        // At most active + one rotated file, each capped near maxFileBytes.
+        // At most active + one rotated file, each capped at maxFileBytes.
         let files = try FileManager.default.contentsOfDirectory(atPath: tempDir.path)
         XCTAssertLessThanOrEqual(files.count, 2, "expected at most 2 rotation files, got \(files)")
-        // Allow one over-cap line per file beyond the byte budget.
-        let oneLineSlack = 256
-        XCTAssertLessThanOrEqual(try diskUsage(tempDir), cap + oneLineSlack)
+        XCTAssertLessThanOrEqual(try diskUsage(tempDir), cap)
     }
 
     func testRotationPreservesMostRecentEntries() {
@@ -69,7 +70,7 @@ final class PersistentLogStoreTests: XCTestCase {
     func testNewInstanceAppendsToExistingFiles() {
         let first = PersistentLogStore(directory: tempDir, maxTotalBytes: 10 * 1024 * 1024)
         first.append(category: "FA", level: "info", message: "before relaunch")
-        first.flush() // ensure it reaches disk before the "new process" reads
+        _ = first.readAllForExport() // drain to disk before the "new process" reads
 
         // Simulate a fresh process pointing at the same directory.
         let second = PersistentLogStore(directory: tempDir, maxTotalBytes: 10 * 1024 * 1024)
@@ -101,7 +102,7 @@ final class PersistentLogStoreTests: XCTestCase {
             store.append(category: "FAKit", level: "info", message: "\(i) \(message)")
             nanos[i] = Double((clock.now - start).components.attoseconds) / 1_000_000_000.0
         }
-        store.flush()
+        _ = store.readAllForExport()
 
         printLatencyStats("async append - caller cost (no rotation)", nanos)
         XCTAssertLessThan(percentile(nanos, 0.99), 5_000_000, "p99 caller latency unexpectedly high")
@@ -121,7 +122,7 @@ final class PersistentLogStoreTests: XCTestCase {
             store.append(category: "FAKit", level: "info", message: "\(i) \(payload)")
             nanos[i] = Double((clock.now - start).components.attoseconds) / 1_000_000_000.0
         }
-        store.flush()
+        _ = store.readAllForExport()
         printLatencyStats("async append - caller cost (frequent rotation)", nanos)
     }
 

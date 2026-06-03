@@ -6,12 +6,13 @@
 //  OSLogStore (which on iOS can only read the current process), this survives
 //  process kills so log history is retained across launches.
 //
-//  Writes go through a private serial DispatchQueue: append() captures the
-//  timestamp/message and dispatches the file I/O, so the caller (often the main
-//  actor) never blocks. This was chosen over synchronous writes after measuring
-//  the sync path on the simulator — typical cost was ~9 µs but tail latency
-//  reached 4.3 ms (no rotation) and 31.8 ms (rotation), which would hitch
-//  main-thread frames. Durability at termination is provided by flush().
+//  Writes are asynchronous and batched. append() never touches the file: it
+//  buffers the entry and, if no write is already pending, schedules one on a
+//  serial queue. Entries that arrive while a write is in flight are coalesced
+//  into the next batch, and a fresh write is scheduled the moment the previous
+//  one finishes. This keeps the caller (often the main actor) off the file I/O
+//  path — measured caller cost is single-digit microseconds — while writing
+//  promptly without any explicit flush/lifecycle wiring.
 //
 
 import Foundation
@@ -20,8 +21,8 @@ public final class PersistentLogStore: @unchecked Sendable {
     /// Process-wide store writing to Application Support/Logs.
     public static let shared = PersistentLogStore()
 
-    /// Owns all file I/O and the mutable state below; it is the single access
-    /// point, so no additional lock is needed.
+    /// Owns all file I/O and `handle`/`currentSize`; it is their single access
+    /// point, so they need no extra lock.
     private let queue = DispatchQueue(label: "net.furaffinity.persistentlog", qos: .utility)
     private let directory: URL
     /// Per-file byte cap. Total on-disk budget is roughly `2 * maxFileBytes`
@@ -30,6 +31,18 @@ public final class PersistentLogStore: @unchecked Sendable {
     private let activeURL: URL
     private let previousURL: URL
     private let formatter: ISO8601DateFormatter
+
+    private struct Entry {
+        let date: Date
+        let category: String
+        let level: String
+        let message: String
+    }
+
+    /// Producer/consumer buffer for not-yet-written entries. Guarded by `bufferLock`.
+    private let bufferLock = NSLock()
+    private var pending: [Entry] = []
+    private var drainScheduled = false
 
     // Touched only on `queue`.
     private var handle: FileHandle?
@@ -48,7 +61,7 @@ public final class PersistentLogStore: @unchecked Sendable {
         let fmt = ISO8601DateFormatter()
         fmt.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         self.formatter = fmt
-        // Enqueued first, so it runs before any append on the serial queue.
+        // Enqueued first, so it runs before any drain on the serial queue.
         queue.async { [self] in openActive() }
     }
 
@@ -64,30 +77,30 @@ public final class PersistentLogStore: @unchecked Sendable {
 
     // MARK: - Public API
 
-    /// Append one log entry. Returns immediately; the file write happens on the
-    /// serial queue. Never throws and never crashes: on any I/O failure the
-    /// entry is silently dropped from the file (the os.Logger mirror still
-    /// receives it).
+    /// Buffer one log entry for asynchronous writing. Returns immediately; the
+    /// file write happens on the serial queue, batched with any other entries
+    /// that arrive before it runs. Never throws and never crashes: on any I/O
+    /// failure the batch is silently dropped from the file (the os.Logger mirror
+    /// still receives it).
     public func append(category: String, level: String, message: String) {
-        let date = Date()
-        queue.async { [self] in
-            let line = "\(formatter.string(from: date)) [\(category)] [\(level)] \(message)\n"
-            guard let data = line.data(using: .utf8) else { return }
-            write(data)
+        let entry = Entry(date: Date(), category: category, level: level, message: message)
+        bufferLock.lock()
+        pending.append(entry)
+        let needsSchedule = !drainScheduled
+        if needsSchedule { drainScheduled = true }
+        bufferLock.unlock()
+
+        if needsSchedule {
+            queue.async { [self] in writePendingBatch() }
         }
     }
 
-    /// Block until all writes enqueued so far have reached the page cache. Call
-    /// at lifecycle checkpoints (scene background, end of background refresh) to
-    /// bound log loss on abrupt termination.
-    public func flush() {
-        queue.sync {}
-    }
-
-    /// Concatenated log contents, oldest (rotated) file first, for export.
-    /// Runs on the queue, so all previously enqueued writes are included.
+    /// Concatenated log contents, oldest (rotated) file first, for export. Runs
+    /// on the queue and writes any buffered entries first, so the export
+    /// includes everything appended so far.
     public func readAllForExport() -> Data {
         queue.sync {
+            writePendingBatch()
             var data = Data()
             if let previous = try? Data(contentsOf: previousURL) {
                 data.append(previous)
@@ -99,9 +112,14 @@ public final class PersistentLogStore: @unchecked Sendable {
         }
     }
 
-    /// Delete all persisted logs and start fresh.
+    /// Delete all persisted logs (and any buffered entries) and start fresh.
     public func clear() {
         queue.sync {
+            bufferLock.lock()
+            pending.removeAll()
+            drainScheduled = false
+            bufferLock.unlock()
+
             try? handle?.close()
             handle = nil
             try? FileManager.default.removeItem(at: activeURL)
@@ -111,6 +129,28 @@ public final class PersistentLogStore: @unchecked Sendable {
     }
 
     // MARK: - Internals (all run on `queue`)
+
+    /// Drain the buffer and write it to disk as a single batch. Clearing
+    /// `drainScheduled` under the buffer lock guarantees that any entry appended
+    /// after this point schedules a fresh write, so nothing is lost.
+    private func writePendingBatch() {
+        bufferLock.lock()
+        let batch = pending
+        pending.removeAll(keepingCapacity: true)
+        drainScheduled = false
+        bufferLock.unlock()
+
+        guard !batch.isEmpty else { return }
+
+        var data = Data()
+        for entry in batch {
+            let line = "\(formatter.string(from: entry.date)) [\(entry.category)] [\(entry.level)] \(entry.message)\n"
+            if let bytes = line.data(using: .utf8) {
+                data.append(bytes)
+            }
+        }
+        write(data)
+    }
 
     private func openActive() {
         do {
@@ -128,16 +168,30 @@ public final class PersistentLogStore: @unchecked Sendable {
         }
     }
 
+    /// Write a (possibly large, batched) blob, rotating whenever the active file
+    /// reaches the per-file cap. Chunking mid-blob keeps each file strictly under
+    /// `maxFileBytes` even for bursts larger than the cap; a log line split across
+    /// the boundary is reassembled by `readAllForExport`, which concatenates the
+    /// files in order.
     private func write(_ data: Data) {
-        guard let handle else { return }
-        do {
-            try handle.write(contentsOf: data)
-            currentSize += data.count
+        let total = data.count
+        var offset = 0
+        while offset < total {
             if currentSize >= maxFileBytes {
                 rotate()
             }
-        } catch {
-            // Drop the entry rather than ever crashing the caller.
+            guard let handle else { return }
+            let room = max(1, maxFileBytes - currentSize)
+            let chunkLength = min(room, total - offset)
+            let chunk = data.subdata(in: offset..<(offset + chunkLength))
+            do {
+                try handle.write(contentsOf: chunk)
+                currentSize += chunkLength
+            } catch {
+                // Drop the rest of the batch rather than ever crashing the caller.
+                return
+            }
+            offset += chunkLength
         }
     }
 

@@ -27,8 +27,6 @@ final class PersistentLoggerTests: XCTestCase {
         logger.info("got \(3) items")
         logger.warning("a warning")
         logger.error("failed: \("boom", privacy: .public)")
-        store.flush()
-
         let text = String(data: store.readAllForExport(), encoding: .utf8) ?? ""
         XCTAssertTrue(text.contains("[FAKit] [debug] a debug line"), text)
         XCTAssertTrue(text.contains("[FAKit] [info] got 3 items"), text)
@@ -39,8 +37,6 @@ final class PersistentLoggerTests: XCTestCase {
     func testCategoryIsRecorded() {
         let other = PersistentLogger(subsystem: "net.test", category: "FAPages", store: store)
         other.info("parsed page")
-        store.flush()
-
         let text = String(data: store.readAllForExport(), encoding: .utf8) ?? ""
         XCTAssertTrue(text.contains("[FAPages] [info] parsed page"), text)
     }
