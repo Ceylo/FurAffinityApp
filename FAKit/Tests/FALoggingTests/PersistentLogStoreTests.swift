@@ -87,14 +87,15 @@ final class PersistentLogStoreTests {
     }
 
     @Test
-    func privateValuesAreRedactedOnDisk() {
+    func privateValuesAreVisibleInSelfReadExport() {
+        // The export is a same-process read, like OSLogStore(.currentProcessIdentifier):
+        // os.Logger shows .private values in full there, and so must we.
         let store = PersistentLogStore(directory: tempDir, maxTotalBytes: 10 * 1024 * 1024)
         let logger = PersistentLogger(subsystem: "net.test", category: "FA", store: store)
         logger.info("auth token=\("secret-xyz", privacy: .private) for \("alice", privacy: .public)")
 
         let text = String(data: store.readAllForExport(), encoding: .utf8) ?? ""
-        #expect(text.contains("token=<private> for alice"), "\(text)")
-        #expect(!text.contains("secret-xyz"), "private value leaked to disk: \(text)")
+        #expect(text.contains("token=secret-xyz for alice"), "\(text)")
     }
 
     // MARK: - Caller latency benchmark

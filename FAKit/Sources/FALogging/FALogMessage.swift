@@ -10,26 +10,22 @@
 
 import Foundation
 
-/// Privacy qualifier for interpolated values, mirroring `os.Logger`'s.
+/// Privacy qualifier accepted at call sites for syntax compatibility with
+/// `os.Logger`.
 ///
-/// `.public` and `.auto` render the value; `.private` and `.sensitive` redact it
-/// to `<private>`. The default is `.public` so that unannotated interpolations
-/// (and the codebase's existing `privacy: .public` ones) keep producing full
-/// values in the diagnostic log — matching the old `OSLogStore` export, which
-/// could read this process's own private values. Mark genuinely sensitive
-/// values `.private`/`.sensitive` to keep them out of the exported file.
+/// It intentionally does **not** redact the persisted value. In `os.Logger`,
+/// `.private`/`.sensitive` data is still written to the log store in full and is
+/// only masked as `<private>` for *unprivileged* readers (Console.app on a user
+/// device, sysdiagnose). The same process reading its own logs via
+/// `OSLogStore(scope: .currentProcessIdentifier)` — which is exactly what the
+/// old log export did — and any debugger-attached session see the real values.
+/// This persistent file is that same self-read/privileged context, so to match
+/// `os.Logger` we render every value in full regardless of privacy.
 public enum FALogPrivacy: Sendable {
     case `public`
     case `private`
     case sensitive
     case auto
-
-    var redacts: Bool {
-        switch self {
-        case .public, .auto: return false
-        case .private, .sensitive: return true
-        }
-    }
 }
 
 /// A log message built from a string literal or interpolation. The interpolated
@@ -60,14 +56,14 @@ public struct FALogMessage: ExpressibleByStringLiteral, ExpressibleByStringInter
 
         /// A single unconstrained generic overload covers every interpolation
         /// form used in the codebase (`\(x)` and `\(x, privacy: .public)`) for
-        /// any value type, with no overload ambiguity. Redacting values is done
-        /// here (not at render time) so the value closure isn't even evaluated
-        /// when redacted.
+        /// any value type, with no overload ambiguity. `privacy` is accepted for
+        /// `os.Logger` syntax compatibility; see `FALogPrivacy` for why it does
+        /// not redact in this self-read context.
         public mutating func appendInterpolation<T>(
             _ value: @autoclosure () -> T,
             privacy: FALogPrivacy = .public
         ) {
-            text.append(privacy.redacts ? "<private>" : String(describing: value()))
+            text.append(String(describing: value()))
         }
     }
 }

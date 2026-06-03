@@ -8,6 +8,11 @@
 //  level metadata. Call sites use the same `logger.info("... \(x, privacy:
 //  .public) ...")` syntax as before (see FALogMessage).
 //
+//  Note: Console's "source" attribution points at this file rather than the
+//  call site, because os.Logger derives it from the os_log call address and
+//  there is no API to forward the caller's #file/#line. That is an inherent
+//  cost of wrapping os.Logger; the message text is left untouched.
+//
 
 import Foundation
 import os

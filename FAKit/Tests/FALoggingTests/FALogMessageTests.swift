@@ -35,18 +35,21 @@ struct FALogMessageTests {
         #expect(message.rendered == "n=7")
     }
 
+    // Privacy must NOT redact here: this matches os.Logger read from the same
+    // process (OSLogStore .currentProcessIdentifier) / with a debugger attached,
+    // where .private and .sensitive values appear in full.
     @Test
-    func privatePrivacyRedactsValue() {
+    func privatePrivacyStillShowsValue() {
         let token = "secret-abc"
         let message: FALogMessage = "token=\(token, privacy: .private)"
-        #expect(message.rendered == "token=<private>")
+        #expect(message.rendered == "token=secret-abc")
     }
 
     @Test
-    func sensitivePrivacyRedactsValue() {
+    func sensitivePrivacyStillShowsValue() {
         let password = "hunter2"
         let message: FALogMessage = "pwd=\(password, privacy: .sensitive)"
-        #expect(message.rendered == "pwd=<private>")
+        #expect(message.rendered == "pwd=hunter2")
     }
 
     @Test
