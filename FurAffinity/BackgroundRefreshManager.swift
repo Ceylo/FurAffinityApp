@@ -275,20 +275,21 @@ enum BackgroundRefreshManager {
         shouts: [FANotificationPreview],
         journals: [FANotificationPreview]
     ) -> [PendingNotification] {
-        submissions.map { notificationContent(emoji: "🖼️", title: "New Submission", subtitle: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
-            + notes.filter(\.unread).map { notificationContent(emoji: "✉️", title: "New Note", subtitle: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.noteUrl) }
-            + submissionComments.map { notificationContent(emoji: "💬", title: "New Submission Comment", subtitle: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
-            + journalComments.map { notificationContent(emoji: "💬", title: "New Journal Comment", subtitle: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
-            + shouts.map { notificationContent(emoji: "📣", title: "New Shout", subtitle: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
-            + journals.map { notificationContent(emoji: "📝", title: "New Journal", subtitle: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+        submissions.map { notificationContent(emoji: "🖼️", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+            + notes.filter(\.unread).map { notificationContent(emoji: "✉️", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.noteUrl) }
+            + submissionComments.map { notificationContent(emoji: "💬", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+            + journalComments.map { notificationContent(emoji: "💬", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+            + shouts.map { notificationContent(emoji: "📣", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+            + journals.map { notificationContent(emoji: "📝", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
     }
 
-    private static func notificationContent(emoji: String, title: String, subtitle: String, body: String, author: String, url: URL) -> PendingNotification {
+    private static func notificationContent(emoji: String, displayAuthor: String, body: String, author: String, url: URL) -> PendingNotification {
         let content = UNMutableNotificationContent()
-        content.title = title
-        content.subtitle = subtitle
-        // Prepend a type emoji: communication-notification enrichment replaces the
-        // header with the author name and drops `title`, so the emoji is what conveys
+        // Communication-notification enrichment replaces the header with the author
+        // name; we set the same title so the text-only fallback (no avatar / missing
+        // entitlement) renders the same layout. The type is conveyed by the emoji.
+        content.title = displayAuthor
+        // Prepend a type emoji: enrichment drops `title`, so the emoji is what conveys
         // the notification type (submission/note/journal/…) in the message line.
         content.body = "\(emoji) \(body)"
         // Carry the FA URL so a tap can deep-link to the related content.
