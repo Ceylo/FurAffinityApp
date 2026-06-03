@@ -20,6 +20,7 @@ struct SubmissionsFeedView: View {
     @State private var targetScrollItem: FASubmissionPreview?
     @State private var currentViewIsDisplayed = false
     @State private var refreshTask: Task<Void, Never>?
+    @State private var pendingAutorefresh = false
     
     var noPreview: some View {
         ScrollView {
@@ -199,9 +200,30 @@ struct SubmissionsFeedView: View {
         // which calls these modifiers as expected!
         .onAppear {
             currentViewIsDisplayed = true
+
+            // Resume an autorefresh that was deferred or aborted while the feed
+            // was covered (e.g. by a notification deep link push). Now that it's
+            // on-screen and stable, the scroll choreography runs correctly.
+            // Ordinary tab switches never set this flag, so this does not refresh
+            // on every return.
+            if pendingAutorefresh {
+                pendingAutorefresh = false
+                autorefreshIfNeeded()
+            }
         }
         .onDisappear {
             currentViewIsDisplayed = false
+
+            // The feed just got covered by a navigation push. If a scroll-managed
+            // refresh is in flight, abort it cleanly so no new items are inserted
+            // while off-screen (which would lose the restored scroll position),
+            // and mark it to re-run once the feed is front-most again.
+            if targetScrollItem != nil {
+                refreshTask?.cancel()
+                refreshTask = nil
+                targetScrollItem = nil
+                pendingAutorefresh = true
+            }
         }
     }
 }
@@ -238,8 +260,16 @@ extension SubmissionsFeedView {
     
     func autorefreshIfNeeded() {
         guard scrollView?.reachedTop ?? true else { return }
-        guard currentViewIsDisplayed else { return }
-        
+
+        // If the feed is currently covered (e.g. a notification deep link pushed
+        // content over it), don't run the scroll-managed refresh now — it needs
+        // the feed on-screen and stable for the full fetch. Defer it and let
+        // onAppear resume it once the feed is front-most again.
+        guard currentViewIsDisplayed else {
+            pendingAutorefresh = Model.shouldAutoRefresh(with: model.lastSubmissionPreviewsFetchDate)
+            return
+        }
+
         if Model.shouldAutoRefresh(with: model.lastSubmissionPreviewsFetchDate) {
             refresh(pulled: false)
         }
