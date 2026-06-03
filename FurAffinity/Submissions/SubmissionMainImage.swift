@@ -115,7 +115,7 @@ struct SubmissionMainImage: View {
             fullResolutionMediaFileUrl = pathWithExtension
             fullResolutionImage = loadedImage
         } catch {
-            logger.error("\(error, privacy: .public)")
+            logger.error("\(error)")
         }
     }
 }

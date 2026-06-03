@@ -83,7 +83,7 @@ public final class CloudflareChallengeCoordinator {
     /// - Throws `CancellationError` if the calling task is cancelled while parked.
     public func awaitResolution() async throws {
         let inBackground = isInBackground()
-        logger.info("[CFDIAG] awaitResolution decision: isInBackground=\(inBackground, privacy: .public), branch=\(inBackground ? "headless" : "foreground two-stage", privacy: .public)")
+        logger.info("[CFDIAG] awaitResolution decision: isInBackground=\(inBackground), branch=\(inBackground ? "headless" : "foreground two-stage")")
         guard !inBackground else {
             logger.info("[CFDIAG] CF challenge in background; attempting headless resolution")
             if await backgroundResolve() {
@@ -135,7 +135,7 @@ public final class CloudflareChallengeCoordinator {
             return
         }
 
-        logger.info("CloudFlare challenge: starting background resolution (safety timeout \(self.backgroundResolutionSafetyTimeout, privacy: .public))")
+        logger.info("CloudFlare challenge: starting background resolution (safety timeout \(self.backgroundResolutionSafetyTimeout))")
         backgroundResolutionPending = true
         let timeout = backgroundResolutionSafetyTimeout
         backgroundTimeoutTask = Task { @MainActor [weak self] in

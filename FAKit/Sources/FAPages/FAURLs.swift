@@ -140,13 +140,13 @@ public enum FAURLs {
             case "by":
                 watchDirection = .watching
             default:
-                logger.error("\(#file, privacy: .public) - invalid direction in url: \(direction, privacy: .public)")
+                logger.error("\(#file) - invalid direction in url: \(direction)")
                 return nil
             }
             
             return (username, pageNumber, watchDirection)
         } catch {
-            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
+            logger.error("\(#file) - \(error)")
             return nil
         }
     }

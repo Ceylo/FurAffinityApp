@@ -86,7 +86,7 @@ private final class BackgroundRefreshTaskRunner: @unchecked Sendable {
             } catch is CancellationError {
                 success = false
             } catch {
-                logger.error("Background refresh failed: \(error, privacy: .public)")
+                logger.error("Background refresh failed: \(error)")
                 success = false
             }
             complete(success: success)
@@ -126,9 +126,9 @@ enum BackgroundRefreshManager {
             handle(appRefreshTask)
         }
         if registered {
-            logger.info("Registered background task: \(self.taskIdentifier, privacy: .public)")
+            logger.info("Registered background task: \(self.taskIdentifier)")
         } else {
-            logger.error("Failed to register background task: \(self.taskIdentifier, privacy: .public)")
+            logger.error("Failed to register background task: \(self.taskIdentifier)")
         }
     }
 
@@ -153,7 +153,7 @@ enum BackgroundRefreshManager {
             try BGTaskScheduler.shared.submit(request)
             logger.info("Scheduled background refresh (earliest in \(Int(seconds))s)")
         } catch {
-            logger.error("Failed scheduling background refresh: \(error, privacy: .public)")
+            logger.error("Failed scheduling background refresh: \(error)")
         }
     }
 
@@ -181,9 +181,9 @@ enum BackgroundRefreshManager {
 
         do {
             let granted = try await center.requestAuthorization(options: [.alert, .badge, .sound])
-            logger.info("Notification authorization granted? \(granted, privacy: .public)")
+            logger.info("Notification authorization granted? \(granted)")
         } catch {
-            logger.error("Notification auth error: \(error, privacy: .public)")
+            logger.error("Notification auth error: \(error)")
         }
     }
 
@@ -317,7 +317,7 @@ enum BackgroundRefreshManager {
             try await center.add(request)
             logger.info("Posted CF challenge notification")
         } catch {
-            logger.error("Failed to post CF challenge notification: \(error, privacy: .public)")
+            logger.error("Failed to post CF challenge notification: \(error)")
         }
     }
 
@@ -368,7 +368,7 @@ enum BackgroundRefreshManager {
                 try await center.add(request)
                 postedCount += 1
             } catch {
-                logger.error("Failed to schedule local notification: \(error, privacy: .public)")
+                logger.error("Failed to schedule local notification: \(error)")
             }
         }
         guard postedCount > 0 else { return false }

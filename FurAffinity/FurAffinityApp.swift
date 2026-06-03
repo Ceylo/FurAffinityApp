@@ -106,7 +106,7 @@ struct RootView: View {
             CloudflareChallengeSheet()
         }
         .onChange(of: scenePhase, initial: true) { oldPhase, newPhase in
-            logger.info("[CFDIAG] scenePhase \(String(describing: oldPhase), privacy: .public) -> \(String(describing: newPhase), privacy: .public), applicationState=\(UIApplication.shared.applicationState.rawValue, privacy: .public)")
+            logger.info("[CFDIAG] scenePhase \(String(describing: oldPhase)) -> \(String(describing: newPhase)), applicationState=\(UIApplication.shared.applicationState.rawValue)")
         }
     }
 }
@@ -118,9 +118,9 @@ struct FurAffinityApp: App {
     init() {
         let device = UIDevice.current
         let appState = UIApplication.shared.applicationState
-        logger.info("Launched FurAffinity \(Bundle.main.version.shortDescription, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public), \(buildConfiguration, privacy: .public) build [CFDIAG] applicationState=\(appState.rawValue, privacy: .public)")
+        logger.info("Launched FurAffinity \(Bundle.main.version.shortDescription) on \(device.systemName) \(device.systemVersion), \(buildConfiguration) build [CFDIAG] applicationState=\(appState.rawValue)")
         _ = amplitude
-        logger.info("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized", privacy: .public)")
+        logger.info("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized")")
         BackgroundRefreshManager.register()
         FAImageInliner.dataProvider = kingfisherImageDataProvider
     }

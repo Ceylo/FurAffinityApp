@@ -41,7 +41,7 @@ final class BackgroundCFChallengeResolver: NSObject, WKNavigationDelegate {
             self.webView = wv
 
             let authCookies = (HTTPCookieStorage.shared.cookies ?? []).faAuthCookies
-            logger.info("[CFDIAG] CF background resolver: starting headless resolution with \(authCookies.count, privacy: .public) auth cookie(s), timeout \(timeout, privacy: .public)")
+            logger.info("[CFDIAG] CF background resolver: starting headless resolution with \(authCookies.count) auth cookie(s), timeout \(timeout)")
 
             Task {
                 for cookie in authCookies {
@@ -53,7 +53,7 @@ final class BackgroundCFChallengeResolver: NSObject, WKNavigationDelegate {
             timeoutTask = Task { [weak self] in
                 try? await Task.sleep(for: timeout)
                 guard !Task.isCancelled else { return }
-                logger.info("[CFDIAG] CF background resolver: timeout after \(timeout, privacy: .public)")
+                logger.info("[CFDIAG] CF background resolver: timeout after \(timeout)")
                 self?.finish(success: false)
             }
         }
@@ -95,7 +95,7 @@ final class BackgroundCFChallengeResolver: NSObject, WKNavigationDelegate {
             HTTPCookieStorage.shared.deleteCookie(stale)
         }
         HTTPCookieStorage.shared.setCookie(clearance)
-        logger.info("[CFDIAG] CF background resolver: success — new clearance \(clearance.loggingDescription, privacy: .public)")
+        logger.info("[CFDIAG] CF background resolver: success — new clearance \(clearance.loggingDescription)")
 
         finish(success: true)
     }

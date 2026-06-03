@@ -46,7 +46,7 @@ extension FASystemMessagePage {
                 .replacingOccurrences(of: "\n\n\n", with: "\n\n")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
         } catch {
-            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
+            logger.error("\(#file) - \(error)")
             throw error
         }
     }

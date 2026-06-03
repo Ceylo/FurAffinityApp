@@ -87,7 +87,7 @@ extension FAWatchlistPage {
                 nextPageUrl: nextPageUrl
             )
         } catch {
-            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
+            logger.error("\(#file) - \(error)")
             throw error
         }
     }
@@ -108,7 +108,7 @@ extension FAWatchlistPage.User {
             
             self.init(name: name, displayName: displayName)
         } catch {
-            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
+            logger.error("\(#file) - \(error)")
             throw error
         }
     }

@@ -85,7 +85,7 @@ extension FAUserPage {
                 self.watchData = nil
             }
         } catch {
-            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
+            logger.error("\(#file) - \(error)")
             throw error
         }
     }

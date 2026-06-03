@@ -86,7 +86,7 @@ extension URLSession: HTTPDataSource {
             let sentCFClearance = (self.configuration.httpCookieStorage?.cookies(for: url) ?? [])
                 .first(where: { $0.name == "cf_clearance" })
             logger.info(
-                "\(method, privacy: .public) request on \(requestDesc, privacy: .public)\(hasAwaitedChallenge ? " (retry post-challenge)" : "", privacy: .public)\(sentCFClearance.map { " with \($0.loggingDescription)" } ?? "", privacy: .public)"
+                "\(method) request on \(requestDesc)\(hasAwaitedChallenge ? " (retry post-challenge)" : "")\(sentCFClearance.map { " with \($0.loggingDescription)" } ?? "")"
             )
             let (data, response) = try await self.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse else {
@@ -96,7 +96,7 @@ extension URLSession: HTTPDataSource {
             let isCloudflareChallenge = httpResponse.value(forHTTPHeaderField: "cf-mitigated") == "challenge"
             if isCloudflareChallenge && !hasAwaitedChallenge {
                 hasAwaitedChallenge = true
-                logger.info("CloudFlare challenge encountered for \(url, privacy: .public); awaiting user resolution")
+                logger.info("CloudFlare challenge encountered for \(url); awaiting user resolution")
                 try await CloudflareChallengeCoordinator.shared.awaitResolution()
                 continue
             }
@@ -104,7 +104,7 @@ extension URLSession: HTTPDataSource {
             guard (200...299).contains(httpResponse.statusCode) || (httpResponse.statusCode == 400 && !data.isEmpty)
             else {
                 logger.error(
-                    "\(url, privacy: .public): request failed with response \(response, privacy: .public) and received data \(String(data: data, encoding: .utf8) ?? "<non-UTF8 data>", privacy: .public)."
+                    "\(url): request failed with response \(response) and received data \(String(data: data, encoding: .utf8) ?? "<non-UTF8 data>")."
                 )
 
                 if isCloudflareChallenge {
@@ -115,7 +115,7 @@ extension URLSession: HTTPDataSource {
             }
 
             if httpResponse.statusCode == 400 {
-                logger.warning("\(requestDesc, privacy: .public): got status code 400 but continuing since data was received")
+                logger.warning("\(requestDesc): got status code 400 but continuing since data was received")
             }
             return data
         }

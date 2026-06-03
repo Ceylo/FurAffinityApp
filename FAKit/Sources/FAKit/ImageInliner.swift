@@ -32,13 +32,13 @@ public enum FAImageInliner {
                 let httpResponse = response as? HTTPURLResponse,
                 (200...299).contains(httpResponse.statusCode)
             else {
-                logger.error("FAImageInliner default provider: bad response for \(url, privacy: .public): \(response, privacy: .public)")
+                logger.error("FAImageInliner default provider: bad response for \(url): \(response)")
                 return nil
             }
             let mime = httpResponse.value(forHTTPHeaderField: "Content-Type") ?? Self.mimeType(for: url)
             return (data, mime)
         } catch {
-            logger.error("FAImageInliner default provider: failed to download \(url, privacy: .public): \(error, privacy: .public)")
+            logger.error("FAImageInliner default provider: failed to download \(url): \(error)")
             return nil
         }
     }

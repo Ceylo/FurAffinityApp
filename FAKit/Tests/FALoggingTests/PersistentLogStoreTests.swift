@@ -86,18 +86,6 @@ final class PersistentLogStoreTests {
         #expect(text.contains("after relaunch"), "\(text)")
     }
 
-    @Test
-    func privateValuesAreVisibleInSelfReadExport() {
-        // The export is a same-process read, like OSLogStore(.currentProcessIdentifier):
-        // os.Logger shows .private values in full there, and so must we.
-        let store = PersistentLogStore(directory: tempDir, maxTotalBytes: 10 * 1024 * 1024)
-        let logger = PersistentLogger(subsystem: "net.test", category: "FA", store: store)
-        logger.info("auth token=\("secret-xyz", privacy: .private) for \("alice", privacy: .public)")
-
-        let text = String(data: store.readAllForExport(), encoding: .utf8) ?? ""
-        #expect(text.contains("token=secret-xyz for alice"), "\(text)")
-    }
-
     // MARK: - Caller latency benchmark
     //
     // The write path is async (decided from a sync-path benchmark: sync tail

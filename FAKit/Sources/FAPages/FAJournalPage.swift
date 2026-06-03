@@ -69,7 +69,7 @@ extension FAJournalPage {
             let commentsDisabled = try commentsDisabledNode.text().contains("Comment posting has been disabled")
             self.acceptsNewComments = !commentsDisabled
         } catch {
-            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
+            logger.error("\(#file) - \(error)")
             throw error
         }
     }

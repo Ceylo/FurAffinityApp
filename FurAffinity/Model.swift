@@ -76,7 +76,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
                     }
                     .sorted(by: { $0.0 < $1.0 })
                 
-                logger.info("UserDefaults state update: \(preferences, privacy: .public)")
+                logger.info("UserDefaults state update: \(preferences)")
             }
             .store(in: &subscriptions)
         
@@ -100,7 +100,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
     
     private func getSession(function: String = #function) throws -> any FASession {
         guard let session else {
-            logger.error("Tried to get session in \(function, privacy: .public) but there is no active session, throwing")
+            logger.error("Tried to get session in \(function) but there is no active session, throwing")
             throw ModelError.disconnected
         }
         return session
@@ -225,7 +225,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             do {
                 try await getSession().deleteSubmissionPreviews(previews)
             } catch {
-                logger.error("Submission previews deletion failed with error \"\(error, privacy: .public)\", rolling back")
+                logger.error("Submission previews deletion failed with error \"\(error)\", rolling back")
                 let rollback = ((submissionPreviews ?? []) + previews)
                     .sorted()
                     .reversed()
@@ -240,7 +240,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             lastSubmissionPreviewsFetchDate = Date()
             submissionPreviews = []
         } catch {
-            logger.error("Failed nuking submissions: \(error, privacy: .public)")
+            logger.error("Failed nuking submissions: \(error)")
         }
     }
     
@@ -458,7 +458,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
     func toggleFavorite(for submission: FASubmission) async throws -> FASubmission {
         let updated = try await getSession().toggleFavorite(for: submission)
         if updated.isFavorite == submission.isFavorite {
-            logger.error("\(#function, privacy: .public) did not change favorite state: \(submission.isFavorite)")
+            logger.error("\(#function) did not change favorite state: \(submission.isFavorite)")
         }
         return updated
     }

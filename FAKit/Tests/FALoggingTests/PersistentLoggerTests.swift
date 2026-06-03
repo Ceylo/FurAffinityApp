@@ -28,7 +28,7 @@ final class PersistentLoggerTests {
         logger.debug("a debug line")
         logger.info("got \(3) items")
         logger.warning("a warning")
-        logger.error("failed: \("boom", privacy: .public)")
+        logger.error("failed: \("boom")")
 
         let text = String(data: store.readAllForExport(), encoding: .utf8) ?? ""
         #expect(text.contains("[FAKit] [debug] a debug line"), "\(text)")

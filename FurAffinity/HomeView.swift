@@ -101,7 +101,7 @@ struct HomeView: View {
             ErrorDisplay()
         }
         .task {
-            logger.info("[CFDIAG] HomeView autologin .task fired; scenePhase=\(String(describing: scenePhase), privacy: .public), applicationState=\(UIApplication.shared.applicationState.rawValue, privacy: .public), didTryAutologin=\(didTryAutologin, privacy: .public)")
+            logger.info("[CFDIAG] HomeView autologin .task fired; scenePhase=\(String(describing: scenePhase)), applicationState=\(UIApplication.shared.applicationState.rawValue), didTryAutologin=\(didTryAutologin)")
             guard !didTryAutologin else {
                 logger.info("[CFDIAG] HomeView autologin SKIPPED by didTryAutologin guard (leftover state, no fresh attempt)")
                 return
@@ -113,7 +113,7 @@ struct HomeView: View {
                     try await updateSession()
                     logger.info("[CFDIAG] HomeView autologin updateSession() succeeded")
                 } catch {
-                    logger.error("[CFDIAG] HomeView autologin updateSession() failed: \(type(of: error), privacy: .public) — \(String(describing: error), privacy: .public)")
+                    logger.error("[CFDIAG] HomeView autologin updateSession() failed: \(type(of: error)) — \(String(describing: error))")
                     throw error
                 }
             }

@@ -141,7 +141,7 @@ extension FASubmissionPage {
             let groups = try #/(\d+) x (\d+)/#.wholeMatch(in: self.metadata.resolution).unwrap()
             self.widthOnHeightRatio = try Float(groups.1).unwrap() / Float(groups.2).unwrap()
         } catch {
-            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
+            logger.error("\(#file) - \(error)")
             throw error
         }
     }

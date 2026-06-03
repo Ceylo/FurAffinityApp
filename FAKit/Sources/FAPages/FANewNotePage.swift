@@ -24,7 +24,7 @@ extension FANewNotePage {
             let apiKeyNode = try doc.select(apiKeyQuery)
             self.apiKey = try apiKeyNode.attr("value")
         } catch {
-            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
+            logger.error("\(#file) - \(error)")
             throw error
         }
     }

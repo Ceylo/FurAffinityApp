@@ -5,8 +5,7 @@
 //  Drop-in replacement for `os.Logger` that dual-writes: each entry is appended
 //  to the persistent rotating file (PersistentLogStore) AND forwarded to the
 //  matching os.Logger method so the Xcode Console keeps its native category and
-//  level metadata. Call sites use the same `logger.info("... \(x, privacy:
-//  .public) ...")` syntax as before (see FALogMessage).
+//  level metadata.
 //
 //  Note: Console's "source" attribution points at this file rather than the
 //  call site, because os.Logger derives it from the os_log call address and
@@ -30,46 +29,46 @@ public struct PersistentLogger: Sendable {
 
     public func trace(_ message: FALogMessage) {
         store.append(category: category, level: "trace", message: message.rendered)
-        osLogger.trace("\(message.rendered, privacy: .public)")
+        osLogger.trace("\(message.rendered)")
     }
 
     public func debug(_ message: FALogMessage) {
         store.append(category: category, level: "debug", message: message.rendered)
-        osLogger.debug("\(message.rendered, privacy: .public)")
+        osLogger.debug("\(message.rendered)")
     }
 
     public func info(_ message: FALogMessage) {
         store.append(category: category, level: "info", message: message.rendered)
-        osLogger.info("\(message.rendered, privacy: .public)")
+        osLogger.info("\(message.rendered)")
     }
 
     public func notice(_ message: FALogMessage) {
         store.append(category: category, level: "notice", message: message.rendered)
-        osLogger.notice("\(message.rendered, privacy: .public)")
+        osLogger.notice("\(message.rendered)")
     }
 
     public func warning(_ message: FALogMessage) {
         store.append(category: category, level: "warning", message: message.rendered)
-        osLogger.warning("\(message.rendered, privacy: .public)")
+        osLogger.warning("\(message.rendered)")
     }
 
     public func error(_ message: FALogMessage) {
         store.append(category: category, level: "error", message: message.rendered)
-        osLogger.error("\(message.rendered, privacy: .public)")
+        osLogger.error("\(message.rendered)")
     }
 
     public func critical(_ message: FALogMessage) {
         store.append(category: category, level: "critical", message: message.rendered)
-        osLogger.critical("\(message.rendered, privacy: .public)")
+        osLogger.critical("\(message.rendered)")
     }
 
     public func fault(_ message: FALogMessage) {
         store.append(category: category, level: "fault", message: message.rendered)
-        osLogger.fault("\(message.rendered, privacy: .public)")
+        osLogger.fault("\(message.rendered)")
     }
 
     public func log(_ message: FALogMessage) {
         store.append(category: category, level: "default", message: message.rendered)
-        osLogger.log("\(message.rendered, privacy: .public)")
+        osLogger.log("\(message.rendered)")
     }
 }
