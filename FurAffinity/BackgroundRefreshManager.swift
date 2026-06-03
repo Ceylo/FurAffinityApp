@@ -8,6 +8,7 @@
 import BackgroundTasks
 import Defaults
 import FAKit
+import Intents
 import UserNotifications
 
 private struct LatestNotificationIDs {
@@ -329,6 +330,80 @@ enum BackgroundRefreshManager {
         }
     }
 
+    /// Fetches the author's avatar (ensuring it is cached via Kingfisher) and wraps
+    /// it as an `INImage` for use as a communication-notification sender image.
+    /// Returns `nil` when the author has no avatar URL or the download/cache fails.
+    private static func avatarImage(for author: String) async -> INImage? {
+        guard let url = FAURLs.avatarUrl(for: author) else {
+            return nil
+        }
+        guard await kingfisherImageDataProvider(url) != nil else {
+            return nil
+        }
+        guard let file = cachedImageFileURL(for: url) else {
+            return nil
+        }
+        return INImage(url: file)
+    }
+
+    /// Enriches a pending notification into a Communication Notification whose leading
+    /// icon is the author's avatar, by donating an `INSendMessageIntent` and applying
+    /// it to the content. Falls back to the original text-only content when the avatar
+    /// can't be fetched or the enrichment fails (e.g. the Communication Notifications
+    /// entitlement is missing, which makes `updating(from:)` throw).
+    private static func communicationContent(for pending: PendingNotification) async -> UNNotificationContent {
+        guard let avatar = await avatarImage(for: pending.author) else {
+            return pending.content
+        }
+
+        let sender = INPerson(
+            personHandle: INPersonHandle(value: pending.author, type: .unknown),
+            nameComponents: nil,
+            displayName: pending.content.subtitle,
+            image: avatar,
+            contactIdentifier: nil,
+            customIdentifier: pending.author,
+            isMe: false,
+            suggestionType: .none
+        )
+        let me = INPerson(
+            personHandle: INPersonHandle(value: "me", type: .unknown),
+            nameComponents: nil,
+            displayName: nil,
+            image: nil,
+            contactIdentifier: nil,
+            customIdentifier: nil,
+            isMe: true,
+            suggestionType: .none
+        )
+        let intent = INSendMessageIntent(
+            recipients: [me],
+            outgoingMessageType: .outgoingMessageText,
+            content: pending.content.body,
+            speakableGroupName: nil,
+            conversationIdentifier: nil,
+            serviceName: nil,
+            sender: sender,
+            attachments: nil
+        )
+        intent.setImage(avatar, forParameterNamed: \INSendMessageIntent.sender)
+
+        let interaction = INInteraction(intent: intent, response: nil)
+        interaction.direction = .incoming
+        do {
+            try await interaction.donate()
+        } catch {
+            logger.error("Failed to donate message intent: \(error, privacy: .public)")
+        }
+
+        do {
+            return try pending.content.updating(from: intent)
+        } catch {
+            logger.error("Failed to enrich notification with avatar intent: \(error, privacy: .public)")
+            return pending.content
+        }
+    }
+
     private static func postLocalNotification(
         newSubmissions: [FASubmissionPreview],
         newNotes: [FANotePreview],
@@ -368,10 +443,12 @@ enum BackgroundRefreshManager {
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         var postedCount = 0
         for pending in pendings {
-            let content = pending.content
+            // Set sound on the mutable content before enrichment so it carries into
+            // the immutable content returned by updating(from:).
             if settings.soundSetting == .enabled {
-                content.sound = .default
+                pending.content.sound = .default
             }
+            let content = await communicationContent(for: pending)
             let request = UNNotificationRequest(identifier: "fa.background.refresh-\(UUID())", content: content, trigger: trigger)
             do {
                 try await center.add(request)
