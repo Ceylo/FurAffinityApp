@@ -199,6 +199,7 @@
 		877FD54C29EC939E00230996 /* JournalControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalControlsView.swift; sourceTree = "<group>"; };
 		878401442CB9747D0099CAC8 /* UserJournalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserJournalsView.swift; sourceTree = "<group>"; };
 		878401462CB994330099CAC8 /* RemoteUserJournalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteUserJournalsView.swift; sourceTree = "<group>"; };
+		87874B802FD0A3E90027CE46 /* FurAffinity.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FurAffinity.entitlements; sourceTree = "<group>"; };
 		878892DA2B8B905A00F332EE /* Text+Markdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Text+Markdown.swift"; sourceTree = "<group>"; };
 		87891FF929F5A09700606F12 /* CommentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentView.swift; sourceTree = "<group>"; };
 		878B0B8A296CA5B200A08685 /* Privacy Policy.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Privacy Policy.md"; sourceTree = "<group>"; };
@@ -319,6 +320,7 @@
 		8716E7EA271C659C00C0BC4A /* FurAffinity */ = {
 			isa = PBXGroup;
 			children = (
+				87874B802FD0A3E90027CE46 /* FurAffinity.entitlements */,
 				871C66DE29B8C36700A2B2C2 /* Info.plist */,
 				8725335E274A70BB007FEF3B /* Model.swift */,
 				87C2ADEB2F017D230061F837 /* ErrorStorage.swift */,
@@ -939,6 +941,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIconLG-debug";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = FurAffinity/FurAffinity.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"FurAffinity/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
@@ -973,6 +976,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconLG;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = FurAffinity/FurAffinity.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"FurAffinity/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
