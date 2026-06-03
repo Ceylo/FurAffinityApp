@@ -263,10 +263,11 @@ extension SubmissionsFeedView {
 
         // If the feed is currently covered (e.g. a notification deep link pushed
         // content over it), don't run the scroll-managed refresh now — it needs
-        // the feed on-screen and stable for the full fetch. Defer it and let
-        // onAppear resume it once the feed is front-most again.
+        // the feed on-screen and stable for the full fetch. Defer it; onAppear
+        // re-runs this method once the feed is front-most again, where the
+        // shouldAutoRefresh check below is re-evaluated.
         guard currentViewIsDisplayed else {
-            pendingAutorefresh = Model.shouldAutoRefresh(with: model.lastSubmissionPreviewsFetchDate)
+            pendingAutorefresh = true
             return
         }
 
