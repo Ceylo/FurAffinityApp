@@ -3,18 +3,19 @@
 //  FALoggingTests
 //
 
-import XCTest
+import Testing
+import Foundation
 @testable import FALogging
 
-final class PersistentLogStoreTests: XCTestCase {
-    private var tempDir: URL!
+final class PersistentLogStoreTests {
+    private let tempDir: URL
 
-    override func setUpWithError() throws {
+    init() {
         tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("FALoggingTests-\(UUID().uuidString)", isDirectory: true)
     }
 
-    override func tearDownWithError() throws {
+    deinit {
         try? FileManager.default.removeItem(at: tempDir)
     }
 
@@ -26,17 +27,19 @@ final class PersistentLogStoreTests: XCTestCase {
         }
     }
 
-    func testAppendThenExportRoundTrips() {
+    @Test
+    func appendThenExportRoundTrips() {
         let store = PersistentLogStore(directory: tempDir, maxTotalBytes: 10 * 1024 * 1024)
         store.append(category: "FA", level: "info", message: "hello world")
         store.append(category: "FAKit", level: "error", message: "boom")
 
         let text = String(data: store.readAllForExport(), encoding: .utf8) ?? ""
-        XCTAssertTrue(text.contains("[FA] [info] hello world"), text)
-        XCTAssertTrue(text.contains("[FAKit] [error] boom"), text)
+        #expect(text.contains("[FA] [info] hello world"), "\(text)")
+        #expect(text.contains("[FAKit] [error] boom"), "\(text)")
     }
 
-    func testRotationKeepsTotalUnderCap() throws {
+    @Test
+    func rotationKeepsTotalUnderCap() throws {
         // Small cap so rotation triggers quickly: 8 KB total -> 4 KB per file.
         let cap = 8 * 1024
         let store = PersistentLogStore(directory: tempDir, maxTotalBytes: cap)
@@ -51,11 +54,12 @@ final class PersistentLogStoreTests: XCTestCase {
 
         // At most active + one rotated file, each capped at maxFileBytes.
         let files = try FileManager.default.contentsOfDirectory(atPath: tempDir.path)
-        XCTAssertLessThanOrEqual(files.count, 2, "expected at most 2 rotation files, got \(files)")
-        XCTAssertLessThanOrEqual(try diskUsage(tempDir), cap)
+        #expect(files.count <= 2, "expected at most 2 rotation files, got \(files)")
+        #expect(try diskUsage(tempDir) <= cap)
     }
 
-    func testRotationPreservesMostRecentEntries() {
+    @Test
+    func rotationPreservesMostRecentEntries() {
         let store = PersistentLogStore(directory: tempDir, maxTotalBytes: 8 * 1024)
         let payload = String(repeating: "y", count: 120)
         for i in 0..<2_000 {
@@ -63,11 +67,12 @@ final class PersistentLogStoreTests: XCTestCase {
         }
         let text = String(data: store.readAllForExport(), encoding: .utf8) ?? ""
         // The newest line must survive; the oldest must have been dropped.
-        XCTAssertTrue(text.contains("line-1999"), "most recent entry missing")
-        XCTAssertFalse(text.contains("line-0 "), "oldest entry should have rotated out")
+        #expect(text.contains("line-1999"), "most recent entry missing")
+        #expect(!text.contains("line-0 "), "oldest entry should have rotated out")
     }
 
-    func testNewInstanceAppendsToExistingFiles() {
+    @Test
+    func newInstanceAppendsToExistingFiles() {
         let first = PersistentLogStore(directory: tempDir, maxTotalBytes: 10 * 1024 * 1024)
         first.append(category: "FA", level: "info", message: "before relaunch")
         _ = first.readAllForExport() // drain to disk before the "new process" reads
@@ -77,19 +82,30 @@ final class PersistentLogStoreTests: XCTestCase {
         second.append(category: "FA", level: "info", message: "after relaunch")
 
         let text = String(data: second.readAllForExport(), encoding: .utf8) ?? ""
-        XCTAssertTrue(text.contains("before relaunch"), text)
-        XCTAssertTrue(text.contains("after relaunch"), text)
+        #expect(text.contains("before relaunch"), "\(text)")
+        #expect(text.contains("after relaunch"), "\(text)")
+    }
+
+    @Test
+    func privateValuesAreRedactedOnDisk() {
+        let store = PersistentLogStore(directory: tempDir, maxTotalBytes: 10 * 1024 * 1024)
+        let logger = PersistentLogger(subsystem: "net.test", category: "FA", store: store)
+        logger.info("auth token=\("secret-xyz", privacy: .private) for \("alice", privacy: .public)")
+
+        let text = String(data: store.readAllForExport(), encoding: .utf8) ?? ""
+        #expect(text.contains("token=<private> for alice"), "\(text)")
+        #expect(!text.contains("secret-xyz"), "private value leaked to disk: \(text)")
     }
 
     // MARK: - Caller latency benchmark
     //
-    // The write path is async (decided from the sync-path benchmark: sync tail
-    // latency reached 4.3 ms with no rotation and 31.8 ms on rotation, which
-    // would hitch main-thread frames). These tests confirm the *caller*-observed
-    // cost of append() is now negligible because file I/O happens off-thread.
+    // The write path is async (decided from a sync-path benchmark: sync tail
+    // latency reached 4.3 ms / 31.8 ms, which would hitch main-thread frames).
+    // These confirm the *caller*-observed cost of append() is negligible because
+    // file I/O happens off-thread.
 
-    /// Times the caller-observed cost of append() and prints mean/p50/p99/max.
-    func testAppendCallerLatency() {
+    @Test
+    func appendCallerLatency() {
         let store = PersistentLogStore(directory: tempDir, maxTotalBytes: 10 * 1024 * 1024)
         let message = "[CFDIAG] CloudFlare background resolution attempt for "
             + "https://www.furaffinity.net/msg/submissions/ state=active retry=2"
@@ -105,12 +121,11 @@ final class PersistentLogStoreTests: XCTestCase {
         _ = store.readAllForExport()
 
         printLatencyStats("async append - caller cost (no rotation)", nanos)
-        XCTAssertLessThan(percentile(nanos, 0.99), 5_000_000, "p99 caller latency unexpectedly high")
+        #expect(percentile(nanos, 0.99) < 5_000_000, "p99 caller latency unexpectedly high")
     }
 
-    /// Same, but with frequent rotation: caller cost should stay low because
-    /// rotation runs on the serial queue, not the caller's thread.
-    func testAppendCallerLatencyWithRotation() {
+    @Test
+    func appendCallerLatencyWithRotation() {
         let store = PersistentLogStore(directory: tempDir, maxTotalBytes: 64 * 1024)
         let payload = String(repeating: "z", count: 120)
 
