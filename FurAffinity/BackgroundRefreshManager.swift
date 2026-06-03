@@ -219,7 +219,7 @@ enum BackgroundRefreshManager {
         var latestNotificationIDs = LatestNotificationIDs.load()
 
         let newSubmissions = submissions.filter { $0.id > latestNotificationIDs.submissionID }
-        let newNotes = notes.filter { $0.unread && $0.id > latestNotificationIDs.noteID }
+        let newNotes = notes.filter { $0.id > latestNotificationIDs.noteID }
         let newSubmissionComments = previews.submissionComments.filter {
             $0.id > latestNotificationIDs.submissionCommentID
         }

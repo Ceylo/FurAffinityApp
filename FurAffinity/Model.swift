@@ -122,7 +122,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             submissionPreviewsPendingDeletion = []
             lastInboxNotePreviewsFetchDate = nil
             notePreviews = [:]
-            displayedNotificationCount = 0
+            displayedUnreadNoteCount = 0
             notificationPreviews = nil
             lastNotificationPreviewsFetchDate = nil
             displayedNotificationCount = 0
@@ -288,13 +288,15 @@ class Model: NotificationsNuker, NotificationsDeleter {
         var previews = targetBox.previews
         previews[targetBox.noteIdx] = previews[targetBox.noteIdx].asRead()
         notePreviews[targetBox.box] = previews
+        updateDisplayedNotificationCount()
     }
-    
+
     private func setLocalNotePreviews(_ previews: [FANotePreview], in box: NotesBox) {
         notePreviews[box] = previews
         if box == .inbox {
             lastInboxNotePreviewsFetchDate = Date()
         }
+        updateDisplayedNotificationCount()
     }
     
     // MARK: - Notifications feed
