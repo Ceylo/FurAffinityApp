@@ -10,15 +10,26 @@
 
 import Foundation
 
-/// Privacy qualifier accepted at call sites for syntax compatibility with
-/// `os.Logger`. It does not redact persisted output: the persistent log is a
-/// developer diagnostics artifact and every value is rendered in full (matching
-/// what the previous `OSLogStore` export already produced for this process).
+/// Privacy qualifier for interpolated values, mirroring `os.Logger`'s.
+///
+/// `.public` and `.auto` render the value; `.private` and `.sensitive` redact it
+/// to `<private>`. The default is `.public` so that unannotated interpolations
+/// (and the codebase's existing `privacy: .public` ones) keep producing full
+/// values in the diagnostic log — matching the old `OSLogStore` export, which
+/// could read this process's own private values. Mark genuinely sensitive
+/// values `.private`/`.sensitive` to keep them out of the exported file.
 public enum FALogPrivacy: Sendable {
     case `public`
     case `private`
     case sensitive
     case auto
+
+    var redacts: Bool {
+        switch self {
+        case .public, .auto: return false
+        case .private, .sensitive: return true
+        }
+    }
 }
 
 /// A log message built from a string literal or interpolation. The interpolated
@@ -49,12 +60,14 @@ public struct FALogMessage: ExpressibleByStringLiteral, ExpressibleByStringInter
 
         /// A single unconstrained generic overload covers every interpolation
         /// form used in the codebase (`\(x)` and `\(x, privacy: .public)`) for
-        /// any value type, with no overload ambiguity.
+        /// any value type, with no overload ambiguity. Redacting values is done
+        /// here (not at render time) so the value closure isn't even evaluated
+        /// when redacted.
         public mutating func appendInterpolation<T>(
             _ value: @autoclosure () -> T,
             privacy: FALogPrivacy = .public
         ) {
-            text.append(String(describing: value()))
+            text.append(privacy.redacts ? "<private>" : String(describing: value()))
         }
     }
 }

@@ -14,6 +14,24 @@
 //  path — measured caller cost is single-digit microseconds — while writing
 //  promptly without any explicit flush/lifecycle wiring.
 //
+//  Why GCD and not an actor / Swift Concurrency:
+//  - append() must be a *synchronous*, fire-and-forget call usable from any
+//    context (sync code, the main actor, deinit, the ~150 existing
+//    `logger.info(...)` call sites). An actor's methods are async, so the store
+//    would force `await logger.info(...)` everywhere, or per-call `Task { ... }`
+//    wrappers — and Tasks have no FIFO guarantee, which would reorder log lines.
+//  - A serial DispatchQueue gives exactly what a log sink needs: synchronous
+//    ordered enqueue, cheap batching, and a `queue.sync` barrier for the
+//    consistent reads in readAllForExport()/clear().
+//
+//  Why `@unchecked Sendable`: the instance is a process-wide singleton captured
+//  by the Sendable `PersistentLogger` and inside @Sendable queue closures, so it
+//  must be Sendable. It also holds mutable state (`handle`, `currentSize`,
+//  `pending`) that the compiler can't prove safe, so Sendable can't be synthesized
+//  — we assert it and uphold it manually: file state is confined to `queue`, and
+//  the buffer is guarded by `bufferLock`. (An actor could be plain `Sendable`,
+//  but only by making the API async, per above.)
+//
 
 import Foundation
 
