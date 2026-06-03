@@ -68,6 +68,10 @@ struct BackgroundRefreshNotificationBuilderTests {
         )
     }
 
+    func deepLinkURL(_ content: UNMutableNotificationContent) -> String? {
+        content.userInfo[NotificationDeepLink.urlKey] as? String
+    }
+
     // MARK: - Tests
 
     @Test func noInputs_returnsEmpty() {
@@ -103,6 +107,10 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(contents[1].title == "New Note")
         #expect(contents[1].subtitle == "Alice")
         #expect(contents[1].body == "World")
+        #expect(contents.map(deepLinkURL) == [
+            "https://www.furaffinity.net/msg/pms/1/1/#message",
+            "https://www.furaffinity.net/msg/pms/1/2/#message",
+        ])
     }
 
     @Test func eachSubmissionCommentGetsItsOwnNotification() throws {
@@ -123,6 +131,10 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(contents.allSatisfy { $0.title == "New Submission Comment" })
         #expect(contents.map(\.subtitle) == ["Alice", "Alice"])
         #expect(contents.map(\.body) == ["Nice!", "Cool"])
+        #expect(contents.map(deepLinkURL) == [
+            "https://www.furaffinity.net/view/1001/",
+            "https://www.furaffinity.net/view/1002/",
+        ])
     }
 
     @Test func eachJournalCommentGetsItsOwnNotification() throws {
@@ -143,6 +155,10 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(contents.allSatisfy { $0.title == "New Journal Comment" })
         #expect(contents.map(\.subtitle) == ["Alice", "Alice"])
         #expect(contents.map(\.body) == ["C1", "C2"])
+        #expect(contents.map(deepLinkURL) == [
+            "https://www.furaffinity.net/journal/1001/",
+            "https://www.furaffinity.net/journal/1002/",
+        ])
     }
 
     @Test func eachShoutGetsItsOwnNotification() throws {
@@ -163,6 +179,10 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(contents.allSatisfy { $0.title == "New Shout" })
         #expect(contents.map(\.subtitle) == ["Alice", "Alice"])
         #expect(contents.map(\.body) == ["Hey!", "Yo"])
+        #expect(contents.map(deepLinkURL) == [
+            "https://www.furaffinity.net/user/1001/",
+            "https://www.furaffinity.net/user/1002/",
+        ])
     }
 
     @Test func eachSubmissionGetsItsOwnNotification() throws {
@@ -184,6 +204,11 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(contents.allSatisfy { $0.title == "New Submission" })
         #expect(contents.map(\.subtitle) == ["Alice", "Alice", "Bob"])
         #expect(contents.map(\.body) == ["S1", "S2", "S3"])
+        #expect(contents.map(deepLinkURL) == [
+            "https://www.furaffinity.net/view/1001/",
+            "https://www.furaffinity.net/view/1002/",
+            "https://www.furaffinity.net/view/1003/",
+        ])
     }
 
     @Test func eachJournalGetsItsOwnNotification() throws {
@@ -204,6 +229,10 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(contents.allSatisfy { $0.title == "New Journal" })
         #expect(contents.map(\.subtitle) == ["Alice", "Bob"])
         #expect(contents.map(\.body) == ["J1", "J2"])
+        #expect(contents.map(deepLinkURL) == [
+            "https://www.furaffinity.net/journal/1001/",
+            "https://www.furaffinity.net/journal/1002/",
+        ])
     }
 
     @Test func mixedReadAndUnreadNotes_onlyUnreadProduceNotifications() throws {
@@ -271,6 +300,14 @@ struct BackgroundRefreshNotificationBuilderTests {
         ])
         #expect(contents.map(\.subtitle) == ["Alice", "Bob", "Carol", "Dave", "Eve", "Alice"])
         #expect(contents.map(\.body) == ["S1", "N1", "SC1", "JC1", "Sh1", "AJ1"])
+        #expect(contents.map(deepLinkURL) == [
+            "https://www.furaffinity.net/view/1001/",            // submission, id 1
+            "https://www.furaffinity.net/msg/pms/1/1/#message",  // note, id 1
+            "https://www.furaffinity.net/view/1001/",            // submission comment, id 1
+            "https://www.furaffinity.net/journal/1002/",         // journal comment, id 2
+            "https://www.furaffinity.net/user/1003/",            // shout, id 3
+            "https://www.furaffinity.net/journal/1004/",         // journal, id 4
+        ])
     }
 
     // MARK: - CloudFlare challenge failure notification

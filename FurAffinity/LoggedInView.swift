@@ -11,6 +11,7 @@ import Combine
 
 struct LoggedInView: View {
     @Environment(Model.self) private var model
+    @Environment(NotificationCoordinator.self) private var notificationCoordinator
     @State private var selectedTab: Tab = .submissions
     @State private var navigationStream = PassthroughSubject<FATarget, Never>()
     @State private var submissionsNavigationStack = NavigationPath()
@@ -26,8 +27,8 @@ struct LoggedInView: View {
         case settings
     }
     
-    func handleTarget(_ target: FATarget) {
-        switch selectedTab {
+    private func append(_ target: FATarget, to tab: Tab) {
+        switch tab {
         case .submissions:
             submissionsNavigationStack.append(target)
         case .notes:
@@ -39,6 +40,27 @@ struct LoggedInView: View {
         case .settings:
             fatalError("Internal inconsistency")
         }
+    }
+
+    func handleTarget(_ target: FATarget) {
+        append(target, to: selectedTab)
+    }
+
+    /// Navigates to a target coming from a notification tap. Unlike
+    /// `handleTarget`, this works from any tab (including Settings) because
+    /// `Tab.forDeepLink(current:)` never yields `.settings`.
+    private func navigate(to target: FATarget) {
+        let tab = Tab.forDeepLink(current: selectedTab)
+        selectedTab = tab
+        append(target, to: tab)
+    }
+
+    private func drainPendingDeepLink() {
+        guard let target = notificationCoordinator.pendingDeepLink else {
+            return
+        }
+        notificationCoordinator.pendingDeepLink = nil
+        navigate(to: target)
     }
 
     var body: some View {
@@ -108,6 +130,12 @@ struct LoggedInView: View {
         .onReceive(navigationStream) { target in
             handleTarget(target)
         }
+        // Drain a notification deep link. `initial: true` covers a tap that
+        // cold-launched the app (value already set when this view mounts); the
+        // change handler covers taps while the app is already running.
+        .onChange(of: notificationCoordinator.pendingDeepLink, initial: true) { _, _ in
+            drainPendingDeepLink()
+        }
         .onAppear {
             let tabBarAppearance = UITabBarAppearance()
             tabBarAppearance.configureWithDefaultBackground()
@@ -117,10 +145,20 @@ struct LoggedInView: View {
     }
 }
 
+extension LoggedInView.Tab {
+    /// The tab a notification deep link should open in: the currently selected
+    /// tab is kept, unless it's `.settings` (which has no navigation stack), in
+    /// which case the link opens in `.notifications`. Never returns `.settings`.
+    static func forDeepLink(current: LoggedInView.Tab) -> LoggedInView.Tab {
+        current == .settings ? .notifications : current
+    }
+}
+
 #Preview {
     withAsync({ try await Model.demo }) {
         LoggedInView()
             .environment($0)
             .environment($0.errorStorage)
+            .environment(NotificationCoordinator.shared)
     }
 }

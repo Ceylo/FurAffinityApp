@@ -118,6 +118,15 @@ struct HomeView: View {
                 }
             }
         }
+        // Deterministic logged-out behavior: once autologin has concluded
+        // without a session, discard any deep link from a notification tap so
+        // it can't replay after a later manual login. Gating on
+        // !checkingConnection avoids racing the cold-launch autologin window.
+        .onChange(of: checkingConnection) { _, checking in
+            if !checking && model.session == nil {
+                NotificationCoordinator.shared.pendingDeepLink = nil
+            }
+        }
         .sheet(
             isPresented: $showLoginView,
             onDismiss: {
