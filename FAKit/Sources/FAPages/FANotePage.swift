@@ -82,7 +82,7 @@ extension FANotePage {
             self.answerPlaceholderMessage = try "\n\n" + placeholderMessageNode.text()
                 .replacingOccurrences(of: "\r\n", with: "\n")
         } catch {
-            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
+            logger.error("\(#file) - \(error)")
             throw error
         }
     }

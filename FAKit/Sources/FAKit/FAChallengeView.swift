@@ -104,7 +104,7 @@ public struct FAChallengeView: View {
             snap.spinner, snap.success,
             interactionRequired ? " -> interaction required" : ""
         )
-        logger.info("\(msg, privacy: .public)")
+        logger.info("\(msg)")
 
         if interactionRequired {
             hasEscalated = true
@@ -155,7 +155,7 @@ public struct FAChallengeView: View {
             HTTPCookieStorage.shared.deleteCookie(stale)
         }
         HTTPCookieStorage.shared.setCookie(clearance)
-        logger.info("CloudFlare challenge resolved; new clearance: \(clearance.loggingDescription, privacy: .public)")
+        logger.info("CloudFlare challenge resolved; new clearance: \(clearance.loggingDescription)")
 
         hasResolved = true
         onResolved()

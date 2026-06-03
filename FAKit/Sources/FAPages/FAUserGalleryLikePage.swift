@@ -79,7 +79,7 @@ extension FAUserGalleryLikePage {
             let userItems = try siteContentNode.select(folderItemsQuery)
             self.folderGroups = try Self.parseFolderGroups(from: userItems, currentUrl: url)
         } catch {
-            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
+            logger.error("\(#file) - \(error)")
             throw error
         }
     }
@@ -127,7 +127,7 @@ extension FAUserGalleryLikePage {
                 ))
             } else {
                 let html = (try? child.html()) ?? ""
-                logger.error("Unhandled tag \(child.tagName(), privacy: .public) in \(html, privacy: .public)")
+                logger.error("Unhandled tag \(child.tagName()) in \(html)")
                 throw FAPagesError.unexpectedStructure
             }
         }

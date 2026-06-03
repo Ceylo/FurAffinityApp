@@ -95,7 +95,7 @@ private final class BackgroundRefreshTaskRunner: @unchecked Sendable {
             } catch is CancellationError {
                 success = false
             } catch {
-                logger.error("Background refresh failed: \(error, privacy: .public)")
+                logger.error("Background refresh failed: \(error)")
                 success = false
             }
             complete(success: success)
@@ -135,9 +135,9 @@ enum BackgroundRefreshManager {
             handle(appRefreshTask)
         }
         if registered {
-            logger.info("Registered background task: \(self.taskIdentifier, privacy: .public)")
+            logger.info("Registered background task: \(self.taskIdentifier)")
         } else {
-            logger.error("Failed to register background task: \(self.taskIdentifier, privacy: .public)")
+            logger.error("Failed to register background task: \(self.taskIdentifier)")
         }
     }
 
@@ -162,7 +162,7 @@ enum BackgroundRefreshManager {
             try BGTaskScheduler.shared.submit(request)
             logger.info("Scheduled background refresh (earliest in \(Int(seconds))s)")
         } catch {
-            logger.error("Failed scheduling background refresh: \(error, privacy: .public)")
+            logger.error("Failed scheduling background refresh: \(error)")
         }
     }
 
@@ -190,9 +190,9 @@ enum BackgroundRefreshManager {
 
         do {
             let granted = try await center.requestAuthorization(options: [.alert, .badge, .sound])
-            logger.info("Notification authorization granted? \(granted, privacy: .public)")
+            logger.info("Notification authorization granted? \(granted)")
         } catch {
-            logger.error("Notification auth error: \(error, privacy: .public)")
+            logger.error("Notification auth error: \(error)")
         }
     }
 
@@ -275,19 +275,21 @@ enum BackgroundRefreshManager {
         shouts: [FANotificationPreview],
         journals: [FANotificationPreview]
     ) -> [PendingNotification] {
-        submissions.map { notificationContent(title: "New Submission", subtitle: $0.displayAuthor, body: $0.title, author: $0.author) }
-            + notes.filter(\.unread).map { notificationContent(title: "New Note", subtitle: $0.displayAuthor, body: $0.title, author: $0.author) }
-            + submissionComments.map { notificationContent(title: "New Submission Comment", subtitle: $0.displayAuthor, body: $0.title, author: $0.author) }
-            + journalComments.map { notificationContent(title: "New Journal Comment", subtitle: $0.displayAuthor, body: $0.title, author: $0.author) }
-            + shouts.map { notificationContent(title: "New Shout", subtitle: $0.displayAuthor, body: $0.title, author: $0.author) }
-            + journals.map { notificationContent(title: "New Journal", subtitle: $0.displayAuthor, body: $0.title, author: $0.author) }
+        submissions.map { notificationContent(title: "New Submission", subtitle: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+            + notes.filter(\.unread).map { notificationContent(title: "New Note", subtitle: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.noteUrl) }
+            + submissionComments.map { notificationContent(title: "New Submission Comment", subtitle: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+            + journalComments.map { notificationContent(title: "New Journal Comment", subtitle: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+            + shouts.map { notificationContent(title: "New Shout", subtitle: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+            + journals.map { notificationContent(title: "New Journal", subtitle: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
     }
 
-    private static func notificationContent(title: String, subtitle: String, body: String, author: String) -> PendingNotification {
+    private static func notificationContent(title: String, subtitle: String, body: String, author: String, url: URL) -> PendingNotification {
         let content = UNMutableNotificationContent()
         content.title = title
         content.subtitle = subtitle
         content.body = body
+        // Carry the FA URL so a tap can deep-link to the related content.
+        content.userInfo = [NotificationDeepLink.urlKey: url.absoluteString]
         return PendingNotification(content: content, author: author)
     }
 
@@ -326,7 +328,7 @@ enum BackgroundRefreshManager {
             try await center.add(request)
             logger.info("Posted CF challenge notification")
         } catch {
-            logger.error("Failed to post CF challenge notification: \(error, privacy: .public)")
+            logger.error("Failed to post CF challenge notification: \(error)")
         }
     }
 
@@ -393,13 +395,13 @@ enum BackgroundRefreshManager {
         do {
             try await interaction.donate()
         } catch {
-            logger.error("Failed to donate message intent: \(error, privacy: .public)")
+            logger.error("Failed to donate message intent: \(error)")
         }
 
         do {
             return try pending.content.updating(from: intent)
         } catch {
-            logger.error("Failed to enrich notification with avatar intent: \(error, privacy: .public)")
+            logger.error("Failed to enrich notification with avatar intent: \(error)")
             return pending.content
         }
     }
@@ -454,7 +456,7 @@ enum BackgroundRefreshManager {
                 try await center.add(request)
                 postedCount += 1
             } catch {
-                logger.error("Failed to schedule local notification: \(error, privacy: .public)")
+                logger.error("Failed to schedule local notification: \(error)")
             }
         }
         guard postedCount > 0 else { return false }

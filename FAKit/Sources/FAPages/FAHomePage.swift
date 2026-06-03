@@ -33,7 +33,7 @@ extension FAHomePage {
                 displayUsername: displayUsername
             )
         } catch {
-            logger.error("\(#file, privacy: .public) - failed decoding or parsing: \(error, privacy: .public)")
+            logger.error("\(#file) - failed decoding or parsing: \(error)")
             throw error
         }
     }

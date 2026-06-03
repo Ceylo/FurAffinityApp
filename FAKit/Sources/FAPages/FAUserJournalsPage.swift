@@ -45,7 +45,7 @@ extension FAUserJournalsPage {
             
             self.init(displayAuthor: displayAuthor, journals: journals)
         } catch {
-            logger.error("Decoding failure in \(#file, privacy: .public): \(error, privacy: .public)")
+            logger.error("Decoding failure in \(#file): \(error)")
             throw error
         }
     }

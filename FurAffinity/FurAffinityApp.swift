@@ -8,6 +8,7 @@
 import SwiftUI
 import FAKit
 import AmplitudeSwift
+import UserNotifications
 
 enum BuildConfiguration: CustomStringConvertible {
     case debug
@@ -54,6 +55,7 @@ private let amplitude: Amplitude? = {
 
 struct RootView: View {
     @Environment(Model.self) private var model
+    @Environment(\.scenePhase) private var scenePhase
     @State private var challengeCoordinator = CloudflareChallengeCoordinator.shared
 
     var body: some View {
@@ -104,6 +106,9 @@ struct RootView: View {
         ) {
             CloudflareChallengeSheet()
         }
+        .onChange(of: scenePhase, initial: true) { oldPhase, newPhase in
+            logger.info("[CFDIAG] scenePhase \(String(describing: oldPhase)) -> \(String(describing: newPhase)), applicationState=\(UIApplication.shared.applicationState.rawValue)")
+        }
     }
 }
 
@@ -113,11 +118,13 @@ struct FurAffinityApp: App {
 
     init() {
         let device = UIDevice.current
-        logger.info("Launched FurAffinity \(Bundle.main.version.shortDescription, privacy: .public) on \(device.systemName, privacy: .public) \(device.systemVersion, privacy: .public), \(buildConfiguration, privacy: .public) build")
+        let appState = UIApplication.shared.applicationState
+        logger.info("Launched FurAffinity \(Bundle.main.version.shortDescription) on \(device.systemName) \(device.systemVersion), \(buildConfiguration) build [CFDIAG] applicationState=\(appState.rawValue)")
         _ = amplitude
-        logger.info("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized", privacy: .public)")
+        logger.info("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized")")
         BackgroundRefreshManager.register()
         FAImageInliner.dataProvider = kingfisherImageDataProvider
+        UNUserNotificationCenter.current().delegate = NotificationCoordinator.shared
     }
 
     var body: some Scene {
@@ -125,6 +132,7 @@ struct FurAffinityApp: App {
             RootView()
                 .environment(model)
                 .environment(model.errorStorage)
+                .environment(NotificationCoordinator.shared)
         }
     }
 }

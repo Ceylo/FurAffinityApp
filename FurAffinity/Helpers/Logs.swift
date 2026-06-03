@@ -7,35 +7,19 @@
 
 import Foundation
 import OSLog
+import FALogging
 
-let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FA")
-let signposter = OSSignposter(logger: logger)
+let logger = PersistentLogger(subsystem: Bundle.main.bundleIdentifier!, category: "FA")
+private let signpostLog = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FA")
+let signposter = OSSignposter(logger: signpostLog)
 
-extension OSLogEntryLog.Level {
-    fileprivate var description: String {
-        switch self {
-        case .undefined: return "undefined"
-        case .debug: return "debug"
-        case .info: return "info"
-        case .notice: return "notice"
-        case .error: return "error"
-        case .fault: return "fault"
-        @unknown default: return "unknown"
-        }
-    }
-}
-
+/// Export the persistent application logs to a temporary file for sharing.
+///
+/// Reads the rotating on-disk log written by `PersistentLogStore`, which spans
+/// previous app sessions too — unlike the old `OSLogStore(.currentProcessIdentifier)`
+/// approach, which only ever saw the current process and lost history on kill.
 func generateLogFile() throws -> URL {
-    let logStore = try OSLogStore(scope: .currentProcessIdentifier)
-    let position = logStore.position(date: Date().addingTimeInterval(-900))
-    let allEntries = try logStore.getEntries(at: position)
-    let subsystem = Bundle.main.bundleIdentifier!
-    let logs = allEntries
-        .compactMap { $0 as? OSLogEntryLog }
-        .filter { $0.subsystem == subsystem }
-        .map { "\($0.date) [\($0.category)] [\($0.level.description)] \($0.composedMessage)" }
-        .joined(separator: "\n")
-    let data = logs.data(using: .utf8)!
+    let data = PersistentLogStore.shared.readAllForExport()
     let url = FileManager.default.temporaryDirectory
         .appendingPathComponent("FurAffinity App Logs.txt")
     try data.write(to: url)

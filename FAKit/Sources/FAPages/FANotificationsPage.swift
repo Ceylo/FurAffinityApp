@@ -45,7 +45,7 @@ extension FANotificationsPage {
             self.shoutHeaders = Self.decodeNodes(shoutNodes, { try Header.shout($0, page: doc) })
             self.journalHeaders = Self.decodeNodes(journalNodes, Header.journal)
         } catch {
-            logger.error("Decoding failure in \(#file, privacy: .public): \(error, privacy: .public)")
+            logger.error("Decoding failure in \(#file): \(error)")
             throw error
         }
     }
@@ -56,7 +56,7 @@ extension FANotificationsPage {
                 return try headerDecoder(node)
             } catch {
                 let html = (try? node.html()) ?? ""
-                logger.error("Failed decoding header for \(T.self, privacy: .public). Error: \(error, privacy: .public). Generated while parsing: \(html, privacy: .public)")
+                logger.error("Failed decoding header for \(T.self). Error: \(error). Generated while parsing: \(html)")
                 return nil
             }
         }

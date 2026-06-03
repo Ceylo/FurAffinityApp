@@ -36,7 +36,7 @@ extension FASystemErrorPage {
                 .textWithNewLines()
                 .trimmingCharacters(in: .whitespacesAndNewlines)
         } catch {
-            logger.error("\(#file, privacy: .public) - \(error, privacy: .public)")
+            logger.error("\(#file) - \(error)")
             throw error
         }
     }

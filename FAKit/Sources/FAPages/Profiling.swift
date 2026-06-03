@@ -7,6 +7,8 @@
 
 import os
 import Foundation
+import FALogging
 
-let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FAPages")
-let signposter = OSSignposter(logger: logger)
+let logger = PersistentLogger(subsystem: Bundle.main.bundleIdentifier!, category: "FAPages")
+private let signpostLog = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FAPages")
+let signposter = OSSignposter(logger: signpostLog)

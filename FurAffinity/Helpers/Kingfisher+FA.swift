@@ -21,7 +21,7 @@ private extension KFImageProtocol {
             .diskCacheExpiration(.days((7...14).randomElement()!))
             .diskCacheAccessExtending(.none)
             .onFailure { error in
-                logger.error("\(error, privacy: .public)")
+                logger.error("\(error)")
             }
     }
 }
@@ -55,12 +55,12 @@ let kingfisherImageDataProvider: @Sendable (URL) async -> (data: Data, mimeType:
         // Original bytes live in the disk cache; the memory cache holds the decoded image.
         let cache = ImageCache.default
         guard let data = try cache.diskStorage.value(forKey: url.cacheKey) else {
-            logger.error("Kingfisher data provider: image cached but disk bytes missing for \(url, privacy: .public)")
+            logger.error("Kingfisher data provider: image cached but disk bytes missing for \(url)")
             return nil
         }
         return (data, FAImageInliner.mimeType(for: url))
     } catch {
-        logger.error("Kingfisher data provider failed for \(url, privacy: .public): \(error, privacy: .public)")
+        logger.error("Kingfisher data provider failed for \(url): \(error)")
         return nil
     }
 }
@@ -87,7 +87,7 @@ func cachedImageFileURL(for url: URL) -> URL? {
         try fileManager.copyItem(atPath: path, toPath: pathWithExtension.path(percentEncoded: false))
         return pathWithExtension
     } catch {
-        logger.error("\(error, privacy: .public)")
+        logger.error("\(error)")
         return nil
     }
 }
@@ -237,9 +237,9 @@ actor DownloadDelegate: ImageDownloaderDelegate {
         
         if let request {
             let method = request.httpMethod ?? "GET"
-            logger.info("[KF] \(method, privacy: .public) request on \(url, privacy: .public)")
+            logger.info("[KF] \(method) request on \(url)")
         } else {
-            logger.info("[KF] Request on \(url, privacy: .public)")
+            logger.info("[KF] Request on \(url)")
         }
     }
     
