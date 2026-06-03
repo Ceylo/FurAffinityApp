@@ -65,6 +65,33 @@ let kingfisherImageDataProvider: @Sendable (URL) async -> (data: Data, mimeType:
     }
 }
 
+/// Copies the Kingfisher disk-cache file for `url` to a temp file named after the
+/// URL's last path component, returning the temp file URL. Returns `nil` when the
+/// image is not cached on disk, or `nil` (logging) when the copy fails. The image
+/// must already be present in Kingfisher's disk cache (e.g. via `waitForCache` or
+/// `kingfisherImageDataProvider`).
+func cachedImageFileURL(for url: URL) -> URL? {
+    let cacheKey = url.cacheKey
+    let cache = ImageCache.default
+    guard cache.diskStorage.isCached(forKey: cacheKey) else {
+        return nil
+    }
+
+    let path = cache.cachePath(forKey: cacheKey)
+    let fileManager = FileManager.default
+    let pathWithExtension = URL.temporaryDirectory.appending(component: url.lastPathComponent)
+    do {
+        if fileManager.fileExists(atPath: pathWithExtension.path(percentEncoded: false)) {
+            try fileManager.removeItem(at: pathWithExtension)
+        }
+        try fileManager.copyItem(atPath: path, toPath: pathWithExtension.path(percentEncoded: false))
+        return pathWithExtension
+    } catch {
+        logger.error("\(error, privacy: .public)")
+        return nil
+    }
+}
+
 @MainActor
 func FAImage(_ url: URL?) -> KFImage {
     KFImage(url)

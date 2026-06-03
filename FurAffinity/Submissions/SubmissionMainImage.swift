@@ -99,24 +99,11 @@ struct SubmissionMainImage: View {
     }
     
     func prepareFullResolutionMedia(sourceUrl: URL, loadedImage: UIImage) {
-        let cacheKey = sourceUrl.cacheKey
-        let path = ImageCache.default.cachePath(forKey: cacheKey)
-        let fileManager = FileManager.default
-        precondition(ImageCache.default.diskStorage.isCached(forKey: cacheKey))
-        precondition(fileManager.fileExists(atPath: path))
-        
-        let filename = sourceUrl.lastPathComponent
-        let pathWithExtension = URL.temporaryDirectory.appending(component: filename)
-        do {
-            if fileManager.fileExists(atPath: pathWithExtension.path(percentEncoded: false)) {
-                try fileManager.removeItem(at: pathWithExtension)
-            }
-            try fileManager.copyItem(atPath: path, toPath: pathWithExtension.path(percentEncoded: false))
-            fullResolutionMediaFileUrl = pathWithExtension
-            fullResolutionImage = loadedImage
-        } catch {
-            logger.error("\(error, privacy: .public)")
+        guard let fileUrl = cachedImageFileURL(for: sourceUrl) else {
+            return
         }
+        fullResolutionMediaFileUrl = fileUrl
+        fullResolutionImage = loadedImage
     }
 }
 
