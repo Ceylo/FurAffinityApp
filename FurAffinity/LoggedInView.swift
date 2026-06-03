@@ -46,12 +46,11 @@ struct LoggedInView: View {
         append(target, to: selectedTab)
     }
 
-    /// Navigates to a target coming from a notification tap, selecting the tab
-    /// inferred from the target. Unlike `handleTarget`, this works from any tab
-    /// (including Settings) because `Tab(deepLinkTarget:current:)` never yields
-    /// `.settings`.
+    /// Navigates to a target coming from a notification tap. Unlike
+    /// `handleTarget`, this works from any tab (including Settings) because
+    /// `Tab.forDeepLink(current:)` never yields `.settings`.
     private func navigate(to target: FATarget) {
-        let tab = Tab(deepLinkTarget: target, current: selectedTab)
+        let tab = Tab.forDeepLink(current: selectedTab)
         selectedTab = tab
         append(target, to: tab)
     }
@@ -147,28 +146,11 @@ struct LoggedInView: View {
 }
 
 extension LoggedInView.Tab {
-    /// The content tab a notification deep link should open in, inferred from
-    /// the target (so notifications from older app versions still route).
-    /// Never returns `.settings`.
-    ///
-    /// - Parameter current: the currently selected tab, used for targets that
-    ///   aren't tied to a specific tab.
-    init(deepLinkTarget target: FATarget, current: LoggedInView.Tab) {
-        switch target {
-        case .submission, .gallery, .favorites:
-            self = .submissions
-        case .note:
-            self = .notes
-        case .journal, .journals:
-            self = .notifications
-        case .user, .watchlist:
-            // Not tied to a specific tab — stay on the current tab, unless it's
-            // Settings (which has no navigation stack).
-            self = current == .settings ? .notifications : current
-        case .submissionMetadata:
-            // Has no URL, so it can never originate from a notification tap.
-            preconditionFailure("submissionMetadata cannot originate from a notification deep link")
-        }
+    /// The tab a notification deep link should open in: the currently selected
+    /// tab is kept, unless it's `.settings` (which has no navigation stack), in
+    /// which case the link opens in `.notifications`. Never returns `.settings`.
+    static func forDeepLink(current: LoggedInView.Tab) -> LoggedInView.Tab {
+        current == .settings ? .notifications : current
     }
 }
 
