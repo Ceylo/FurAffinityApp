@@ -19,6 +19,7 @@ struct SubmissionsFeedView: View {
     @Weak private var scrollView: UIScrollView?
     @State private var targetScrollItem: FASubmissionPreview?
     @State private var currentViewIsDisplayed = false
+    @State private var refreshTask: Task<Void, Never>?
     
     var noPreview: some View {
         ScrollView {
@@ -73,12 +74,20 @@ struct SubmissionsFeedView: View {
             .frame(height: 1)
             .onAppear {
                 scrollProxy.scrollTo(Item.submissionPreview(targetPreview), anchor: .top)
-                
-                Task {
-                    await storeLocalizedError(in: errorStorage, action: "Submissions Refresh", webBrowserURL: FAURLs.submissionsUrl) {
+
+                refreshTask = Task {
+                    do {
                         try await fetchSubmissionPreviews()
+                        self.targetScrollItem = nil
+                    } catch {
+                        // A fetch cancelled because the feed got covered by a
+                        // navigation push must abort silently: don't surface an
+                        // error and don't commit the refresh (leave the scroll
+                        // choreography untouched so it can re-run on return).
+                        if Self.isCancellation(error) { return }
+                        storeError(error, in: errorStorage, action: "Submissions Refresh", webBrowserURL: FAURLs.submissionsUrl)
+                        self.targetScrollItem = nil
                     }
-                    self.targetScrollItem = nil
                 }
             }
             .onDisappear {
@@ -236,6 +245,16 @@ extension SubmissionsFeedView {
         }
     }
     
+    /// Whether `error` represents the in-flight refresh being cancelled by
+    /// navigation rather than a genuine failure. The underlying URLSession call
+    /// surfaces cancellation as `URLError(.cancelled)`, so check that too.
+    static func isCancellation(_ error: Error) -> Bool {
+        if Task.isCancelled { return true }
+        if error is CancellationError { return true }
+        if let urlError = error as? URLError, urlError.code == .cancelled { return true }
+        return false
+    }
+
     func fetchSubmissionPreviews() async throws {
         let newSubmissionCount = try await model
             .fetchSubmissionPreviews()
