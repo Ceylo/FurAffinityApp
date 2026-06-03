@@ -67,6 +67,14 @@ extension Collection where Element: Identifiable, Element.ID == Int {
     }
 }
 
+/// A built notification content plus the author whose avatar should become the
+/// notification's leading icon at post time. Keeps `buildNotifications` pure (the
+/// async avatar download + intent donation happen later in `postLocalNotification`).
+struct PendingNotification {
+    let content: UNMutableNotificationContent
+    let author: String
+}
+
 private final class BackgroundRefreshTaskRunner: @unchecked Sendable {
     private let task: BGAppRefreshTask
     private let lock = NSLock()
@@ -265,21 +273,21 @@ enum BackgroundRefreshManager {
         journalComments: [FANotificationPreview],
         shouts: [FANotificationPreview],
         journals: [FANotificationPreview]
-    ) -> [UNMutableNotificationContent] {
-        submissions.map { notificationContent(title: "New Submission", subtitle: $0.displayAuthor, body: $0.title) }
-            + notes.filter(\.unread).map { notificationContent(title: "New Note", subtitle: $0.displayAuthor, body: $0.title) }
-            + submissionComments.map { notificationContent(title: "New Submission Comment", subtitle: $0.displayAuthor, body: $0.title) }
-            + journalComments.map { notificationContent(title: "New Journal Comment", subtitle: $0.displayAuthor, body: $0.title) }
-            + shouts.map { notificationContent(title: "New Shout", subtitle: $0.displayAuthor, body: $0.title) }
-            + journals.map { notificationContent(title: "New Journal", subtitle: $0.displayAuthor, body: $0.title) }
+    ) -> [PendingNotification] {
+        submissions.map { notificationContent(title: "New Submission", subtitle: $0.displayAuthor, body: $0.title, author: $0.author) }
+            + notes.filter(\.unread).map { notificationContent(title: "New Note", subtitle: $0.displayAuthor, body: $0.title, author: $0.author) }
+            + submissionComments.map { notificationContent(title: "New Submission Comment", subtitle: $0.displayAuthor, body: $0.title, author: $0.author) }
+            + journalComments.map { notificationContent(title: "New Journal Comment", subtitle: $0.displayAuthor, body: $0.title, author: $0.author) }
+            + shouts.map { notificationContent(title: "New Shout", subtitle: $0.displayAuthor, body: $0.title, author: $0.author) }
+            + journals.map { notificationContent(title: "New Journal", subtitle: $0.displayAuthor, body: $0.title, author: $0.author) }
     }
 
-    private static func notificationContent(title: String, subtitle: String, body: String) -> UNMutableNotificationContent {
+    private static func notificationContent(title: String, subtitle: String, body: String, author: String) -> PendingNotification {
         let content = UNMutableNotificationContent()
         content.title = title
         content.subtitle = subtitle
         content.body = body
-        return content
+        return PendingNotification(content: content, author: author)
     }
 
     /// Identifier for the CloudFlare-challenge failure local notification.
@@ -347,7 +355,7 @@ enum BackgroundRefreshManager {
             newJournals: newJournals
         )
 
-        let contents = buildNotifications(
+        let pendings = buildNotifications(
             submissions: filtered.submissions,
             notes: filtered.notes,
             submissionComments: filtered.submissionComments,
@@ -355,11 +363,12 @@ enum BackgroundRefreshManager {
             shouts: filtered.shouts,
             journals: filtered.journals
         )
-        guard !contents.isEmpty else { return false }
+        guard !pendings.isEmpty else { return false }
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         var postedCount = 0
-        for content in contents {
+        for pending in pendings {
+            let content = pending.content
             if settings.soundSetting == .enabled {
                 content.sound = .default
             }
