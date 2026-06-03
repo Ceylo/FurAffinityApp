@@ -103,11 +103,11 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(contents.count == 2)
         #expect(contents[0].content.title == "New Note")
         #expect(contents[0].content.subtitle == "Alice")
-        #expect(contents[0].content.body == "Hello")
+        #expect(contents[0].content.body == "✉️ Hello")
         #expect(contents[0].author == "alice")
         #expect(contents[1].content.title == "New Note")
         #expect(contents[1].content.subtitle == "Alice")
-        #expect(contents[1].content.body == "World")
+        #expect(contents[1].content.body == "✉️ World")
         #expect(contents[1].author == "alice")
         #expect(contents.map(deepLinkURL) == [
             "https://www.furaffinity.net/msg/pms/1/1/#message",
@@ -132,7 +132,7 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(contents.count == 2)
         #expect(contents.allSatisfy { $0.content.title == "New Submission Comment" })
         #expect(contents.map(\.content.subtitle) == ["Alice", "Alice"])
-        #expect(contents.map(\.content.body) == ["Nice!", "Cool"])
+        #expect(contents.map(\.content.body) == ["💬 Nice!", "💬 Cool"])
         #expect(contents.map(\.author) == ["alice", "alice"])
         #expect(contents.map(deepLinkURL) == [
             "https://www.furaffinity.net/view/1001/",
@@ -157,7 +157,7 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(contents.count == 2)
         #expect(contents.allSatisfy { $0.content.title == "New Journal Comment" })
         #expect(contents.map(\.content.subtitle) == ["Alice", "Alice"])
-        #expect(contents.map(\.content.body) == ["C1", "C2"])
+        #expect(contents.map(\.content.body) == ["💬 C1", "💬 C2"])
         #expect(contents.map(\.author) == ["alice", "alice"])
         #expect(contents.map(deepLinkURL) == [
             "https://www.furaffinity.net/journal/1001/",
@@ -182,7 +182,7 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(contents.count == 2)
         #expect(contents.allSatisfy { $0.content.title == "New Shout" })
         #expect(contents.map(\.content.subtitle) == ["Alice", "Alice"])
-        #expect(contents.map(\.content.body) == ["Hey!", "Yo"])
+        #expect(contents.map(\.content.body) == ["📣 Hey!", "📣 Yo"])
         #expect(contents.map(\.author) == ["alice", "alice"])
         #expect(contents.map(deepLinkURL) == [
             "https://www.furaffinity.net/user/1001/",
@@ -208,7 +208,7 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(contents.count == 3)
         #expect(contents.allSatisfy { $0.content.title == "New Submission" })
         #expect(contents.map(\.content.subtitle) == ["Alice", "Alice", "Bob"])
-        #expect(contents.map(\.content.body) == ["S1", "S2", "S3"])
+        #expect(contents.map(\.content.body) == ["🖼️ S1", "🖼️ S2", "🖼️ S3"])
         #expect(contents.map(\.author) == ["alice", "alice", "bob"])
         #expect(contents.map(deepLinkURL) == [
             "https://www.furaffinity.net/view/1001/",
@@ -234,7 +234,7 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(contents.count == 2)
         #expect(contents.allSatisfy { $0.content.title == "New Journal" })
         #expect(contents.map(\.content.subtitle) == ["Alice", "Bob"])
-        #expect(contents.map(\.content.body) == ["J1", "J2"])
+        #expect(contents.map(\.content.body) == ["📝 J1", "📝 J2"])
         #expect(contents.map(\.author) == ["alice", "bob"])
         #expect(contents.map(deepLinkURL) == [
             "https://www.furaffinity.net/journal/1001/",
@@ -260,7 +260,7 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(contents.count == 2)
         #expect(contents.allSatisfy { $0.content.title == "New Note" })
         #expect(contents.map(\.content.subtitle) == ["Alice", "Carol"])
-        #expect(contents.map(\.content.body) == ["Unread Note", "Another Unread"])
+        #expect(contents.map(\.content.body) == ["✉️ Unread Note", "✉️ Another Unread"])
         #expect(contents.map(\.author) == ["alice", "carol"])
     }
 
@@ -307,7 +307,7 @@ struct BackgroundRefreshNotificationBuilderTests {
             "New Journal",
         ])
         #expect(contents.map(\.content.subtitle) == ["Alice", "Bob", "Carol", "Dave", "Eve", "Alice"])
-        #expect(contents.map(\.content.body) == ["S1", "N1", "SC1", "JC1", "Sh1", "AJ1"])
+        #expect(contents.map(\.content.body) == ["🖼️ S1", "✉️ N1", "💬 SC1", "💬 JC1", "📣 Sh1", "📝 AJ1"])
         #expect(contents.map(\.author) == ["alice", "bob", "carol", "dave", "eve", "alice"])
         #expect(contents.map(deepLinkURL) == [
             "https://www.furaffinity.net/view/1001/",            // submission, id 1
