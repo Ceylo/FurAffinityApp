@@ -27,6 +27,18 @@ extension Rating {
             return nil
         }
     }
+
+    /// Maps a submission `<figure>` CSS class list to a rating.
+    /// e.g. "r-general t-image" → .general
+    init?(submissionFigureClass classAttribute: String) {
+        let token = classAttribute.split(separator: " ").first { $0.hasPrefix("r-") }
+        switch token {
+        case "r-general": self = .general
+        case "r-mature":  self = .mature
+        case "r-adult":   self = .adult
+        default:          return nil
+        }
+    }
 }
 
 public struct FASubmissionPage: FAPage {

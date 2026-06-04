@@ -18,7 +18,8 @@ struct BackgroundRefreshNotificationBuilderTests {
         id: Int = 1,
         author: String = "author",
         display: String? = nil,
-        title: String = "Submission Title"
+        title: String = "Submission Title",
+        rating: Rating = .general
     ) -> FASubmissionPreview {
         .init(
             sid: id,
@@ -27,7 +28,8 @@ struct BackgroundRefreshNotificationBuilderTests {
             thumbnailWidthOnHeightRatio: 1.0,
             title: title,
             author: author,
-            displayAuthor: display ?? author.capitalized
+            displayAuthor: display ?? author.capitalized,
+            rating: rating
         )
     }
 

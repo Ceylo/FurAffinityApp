@@ -26,7 +26,8 @@ struct ModelTests {
             thumbnailWidthOnHeightRatio: 1.0,
             title: title,
             author: author,
-            displayAuthor: display ?? author.capitalized
+            displayAuthor: display ?? author.capitalized,
+            rating: .general
         )
     }
 

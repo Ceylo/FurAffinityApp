@@ -23,7 +23,8 @@ struct FASubmissionsPageTests {
             thumbnailWidthOnHeightRatio: 1.94175,
             title: "On The Wings of Light",
             author: "leilryu",
-            displayAuthor: "leilryu"
+            displayAuthor: "leilryu",
+            rating: .general
         )
         #expect(page.submissions[0] == submission)
     }
@@ -50,5 +51,14 @@ struct FASubmissionsPageTests {
         let page = try FASubmissionsPage(data: data, url: FAURLs.submissionsUrl)
         #expect(page.nextPageUrl?.absoluteString == "https://www.furaffinity.net/msg/submissions/new~57208617@72/")
         #expect(page.previousPageUrl?.absoluteString == "https://www.furaffinity.net/msg/submissions/new~60097041@72/")
+    }
+
+    @Test
+    func ratingFromSubmissionFigureClass() {
+        #expect(Rating(submissionFigureClass: "r-general t-image") == .general)
+        #expect(Rating(submissionFigureClass: "r-mature t-image") == .mature)
+        #expect(Rating(submissionFigureClass: "r-adult t-image") == .adult)
+        #expect(Rating(submissionFigureClass: "t-image") == nil)
+        #expect(Rating(submissionFigureClass: "") == nil)
     }
 }
