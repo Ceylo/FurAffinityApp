@@ -15,12 +15,6 @@ struct SettingsView: View {
     @State private var dumpingLogs = false
     
     @Default(.animateAvatars) private var animateAvatars: Bool
-    @Default(.notifySubmissions) private var notifySubmissions
-    @Default(.notifyNotes) private var notifyNotes
-    @Default(.notifySubmissionComments) private var notifySubmissionComments
-    @Default(.notifyJournalComments) private var notifyJournalComments
-    @Default(.notifyShouts) private var notifyShouts
-    @Default(.notifyJournals) private var notifyJournals
     @Default(.addMessageToSharedItems) private var addMessageToSharedItems
     
     @State private var cachedFileSize = "unknown"
@@ -28,6 +22,13 @@ struct SettingsView: View {
     @State private var cleaningCache = false
     
     var body: some View {
+        NavigationStack {
+            content
+                .navigationTitle("Settings")
+        }
+    }
+
+    private var content: some View {
         Form {
             Section("App information") {
                 Link("Website", destination: URL(string: "https://furaffinity.app")!)
@@ -51,20 +52,10 @@ struct SettingsView: View {
             }
             
             Section("Display") {
+                NavigationLink("Notifications & Badges") {
+                    NotificationSettingsView()
+                }
                 Toggle("Animate avatars", isOn: $animateAvatars)
-            }
-            
-            Section {
-                Toggle("Submissions", isOn: $notifySubmissions)
-                Toggle("Notes", isOn: $notifyNotes)
-                Toggle("Submission comments", isOn: $notifySubmissionComments)
-                Toggle("Journal comments", isOn: $notifyJournalComments)
-                Toggle("Shouts", isOn: $notifyShouts)
-                Toggle("Journals", isOn: $notifyJournals)
-            } header: {
-                Text("Notifications")
-            } footer: {
-                Text("These settings control iOS notifications and the badge displayed on the Notifications tab. iOS notifications are not triggered in real-time.")
             }
             
             Section {
@@ -73,6 +64,14 @@ struct SettingsView: View {
                 Text("Sharing")
             } footer: {
                 Text("When enabled, sharing a link adds a message in order to let the recipient know about this app.")
+            }
+            
+            if let session = model.session {
+                Section("Account") {
+                    Button("Disconnect from \(session.displayUsername)", role: .destructive) {
+                        logout()
+                    }
+                }
             }
             
             Section {
@@ -113,15 +112,6 @@ struct SettingsView: View {
                 Text("Advanced")
             } footer: {
                 Text("This cache allows faster contents display. Clearing it will cause images to be downloaded again from furaffinity.net when needed.")
-            }
-
-            
-            if let session = model.session {
-                Section("Account") {
-                    Button("Disconnect from \(session.displayUsername)", role: .destructive) {
-                        logout()
-                    }
-                }
             }
         }
         .onAppear {

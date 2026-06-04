@@ -80,7 +80,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             }
             .store(in: &subscriptions)
         
-        Defaults.publisher(keys: Defaults.Keys.notifications)
+        Defaults.publisher(keys: Defaults.Keys.badges)
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
                 updateDisplayedNotificationCount()
@@ -122,7 +122,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             submissionPreviewsPendingDeletion = []
             lastInboxNotePreviewsFetchDate = nil
             notePreviews = [:]
-            displayedNotificationCount = 0
+            displayedUnreadNoteCount = 0
             notificationPreviews = nil
             lastNotificationPreviewsFetchDate = nil
             displayedNotificationCount = 0
@@ -288,13 +288,15 @@ class Model: NotificationsNuker, NotificationsDeleter {
         var previews = targetBox.previews
         previews[targetBox.noteIdx] = previews[targetBox.noteIdx].asRead()
         notePreviews[targetBox.box] = previews
+        updateDisplayedNotificationCount()
     }
-    
+
     private func setLocalNotePreviews(_ previews: [FANotePreview], in box: NotesBox) {
         notePreviews[box] = previews
         if box == .inbox {
             lastInboxNotePreviewsFetchDate = Date()
         }
+        updateDisplayedNotificationCount()
     }
     
     // MARK: - Notifications feed
@@ -428,28 +430,28 @@ class Model: NotificationsNuker, NotificationsDeleter {
     }
     
     private func updateDisplayedNotificationCount() {
-        displayedUnreadNoteCount = Defaults[.notifyNotes] ? unreadInboxNoteCount : 0
-        
+        displayedUnreadNoteCount = Defaults[.badgeNotes] ? unreadInboxNoteCount : 0
+
         displayedNotificationCount = notificationPreviews
             .flatMap { notifications in
                 var count = 0
-                
-                if Defaults[.notifySubmissionComments] {
+
+                if Defaults[.badgeSubmissionComments] {
                     count += notifications.submissionComments.count
                 }
-                
-                if Defaults[.notifyJournalComments] {
+
+                if Defaults[.badgeJournalComments] {
                     count += notifications.journalComments.count
                 }
-                
-                if Defaults[.notifyShouts] {
+
+                if Defaults[.badgeShouts] {
                     count += notifications.shouts.count
                 }
-                
-                if Defaults[.notifyJournals] {
+
+                if Defaults[.badgeJournals] {
                     count += notifications.journals.count
                 }
-                
+
                 return count
             } ?? 0
     }

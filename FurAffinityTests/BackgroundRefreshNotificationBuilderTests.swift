@@ -18,7 +18,8 @@ struct BackgroundRefreshNotificationBuilderTests {
         id: Int = 1,
         author: String = "author",
         display: String? = nil,
-        title: String = "Submission Title"
+        title: String = "Submission Title",
+        rating: Rating = .general
     ) -> FASubmissionPreview {
         .init(
             sid: id,
@@ -27,7 +28,8 @@ struct BackgroundRefreshNotificationBuilderTests {
             thumbnailWidthOnHeightRatio: 1.0,
             title: title,
             author: author,
-            displayAuthor: display ?? author.capitalized
+            displayAuthor: display ?? author.capitalized,
+            rating: rating
         )
     }
 
@@ -202,13 +204,36 @@ struct BackgroundRefreshNotificationBuilderTests {
 
         #expect(contents.count == 3)
         #expect(contents.map(\.content.title) == ["Alice", "Alice", "Bob"])
-        #expect(contents.map(\.content.body) == ["🖼️ S1", "🖼️ S2", "🖼️ S3"])
+        // Submissions drop the emoji prefix now that they carry a thumbnail attachment.
+        #expect(contents.map(\.content.body) == ["S1", "S2", "S3"])
         #expect(contents.map(\.author) == ["alice", "alice", "bob"])
         #expect(contents.map(deepLinkURL) == [
             "https://www.furaffinity.net/view/1001/",
             "https://www.furaffinity.net/view/1002/",
             "https://www.furaffinity.net/view/1003/",
         ])
+        // Submissions carry their thumbnail + rating for attachment building.
+        #expect(contents.allSatisfy { $0.thumbnail != nil })
+        #expect(contents.map(\.rating) == [.general, .general, .general])
+    }
+
+    @Test func nonGeneralSubmissionCarriesItsRating() throws {
+        let submissions = [
+            makeSubmission(id: 1, author: "alice", title: "S1", rating: .general),
+            makeSubmission(id: 2, author: "bob", title: "S2", rating: .mature),
+            makeSubmission(id: 3, author: "carol", title: "S3", rating: .adult),
+        ]
+        let contents = BackgroundRefreshManager.buildNotifications(
+            submissions: submissions,
+            notes: [],
+            submissionComments: [],
+            journalComments: [],
+            shouts: [],
+            journals: []
+        )
+
+        #expect(contents.map(\.rating) == [.general, .mature, .adult])
+        #expect(contents.allSatisfy { $0.thumbnail != nil })
     }
 
     @Test func eachJournalGetsItsOwnNotification() throws {
@@ -291,8 +316,11 @@ struct BackgroundRefreshNotificationBuilderTests {
         )
 
         #expect(contents.map(\.content.title) == ["Alice", "Bob", "Carol", "Dave", "Eve", "Alice"])
-        #expect(contents.map(\.content.body) == ["🖼️ S1", "✉️ N1", "💬 SC1", "💬 JC1", "📣 Sh1", "📝 AJ1"])
+        #expect(contents.map(\.content.body) == ["S1", "✉️ N1", "💬 SC1", "💬 JC1", "📣 Sh1", "📝 AJ1"])
         #expect(contents.map(\.author) == ["alice", "bob", "carol", "dave", "eve", "alice"])
+        // Only the submission carries a thumbnail/rating; the rest are nil.
+        #expect(contents.map { $0.thumbnail != nil } == [true, false, false, false, false, false])
+        #expect(contents.map(\.rating) == [.general, nil, nil, nil, nil, nil])
         #expect(contents.map(deepLinkURL) == [
             "https://www.furaffinity.net/view/1001/",            // submission, id 1
             "https://www.furaffinity.net/msg/pms/1/1/#message",  // note, id 1

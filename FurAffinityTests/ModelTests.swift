@@ -26,7 +26,8 @@ struct ModelTests {
             thumbnailWidthOnHeightRatio: 1.0,
             title: title,
             author: author,
-            displayAuthor: display ?? author.capitalized
+            displayAuthor: display ?? author.capitalized,
+            rating: .general
         )
     }
 
@@ -75,6 +76,44 @@ struct ModelTests {
         try await model.setSession(mock)
         // processNewSession() already called fetchNotePreviews(from: .inbox)
         #expect(model.unreadInboxNoteCount == 2)
+    }
+
+    @Test func processNewSession_clearsNoteBadgeOnLogout() async throws {
+        let mock = MockFASession(
+            mockNotePreviews: [makeNote(id: 1, unread: true), makeNote(id: 2, unread: true)]
+        )
+        let model = Model()
+        try await model.setSession(mock)
+        #expect(model.displayedUnreadNoteCount == 2)
+
+        // Logout resets the Notes badge to 0 (item 1 regression guard).
+        try await model.setSession(nil)
+        #expect(model.displayedUnreadNoteCount == 0)
+    }
+
+    @Test func markNoteAsReadLocally_updatesNoteBadge() async throws {
+        let mock = MockFASession(
+            mockNotePreviews: [makeNote(id: 1, unread: true), makeNote(id: 2, unread: true)]
+        )
+        let model = Model()
+        try await model.setSession(mock)
+        #expect(model.displayedUnreadNoteCount == 2)
+
+        // Reading a note must refresh the badge immediately (item 2 regression guard).
+        let read = FANote(
+            url: URL(string: "https://www.furaffinity.net/msg/pms/1/1/#message")!,
+            author: "author",
+            displayAuthor: "Author",
+            title: "Note Title",
+            datetime: "now",
+            naturalDatetime: "now",
+            message: AttributedString(),
+            messageWithoutWarning: AttributedString(),
+            answerKey: "",
+            answerPlaceholderMessage: ""
+        )
+        model.markNoteAsReadLocally(read)
+        #expect(model.displayedUnreadNoteCount == 1)
     }
 
     @Test func shouldAutoRefresh_returnsFalseWhenRecentlyRefreshed() {
