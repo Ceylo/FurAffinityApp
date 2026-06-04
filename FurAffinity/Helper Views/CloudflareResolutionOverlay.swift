@@ -46,10 +46,16 @@ struct CloudflareResolutionOverlay: View {
     }
 
     private var pillContent: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 12) {
             ProgressView()
-            Text("Handling CloudFlare challenge… Tap to verify manually")
-                .font(.callout)
+            VStack(spacing: 2) {
+                Text("Handling CloudFlare challenge…")
+                    .font(.callout)
+                Text("Tap to verify manually")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .multilineTextAlignment(.center)
         }
         .foregroundStyle(.primary)
         .padding(.horizontal, 16)
