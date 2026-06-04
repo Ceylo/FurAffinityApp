@@ -34,7 +34,7 @@ struct NotificationSettingsView: View {
             } header: {
                 Text("iOS Notifications")
             } footer: {
-                Text("These settings control which iOS notifications you receive. iOS notifications are not triggered in real-time.")
+                Text("These notifications are not delivered in real-time and may be unavailable on CloudFlare challenge failure.")
             }
 
             Section {
