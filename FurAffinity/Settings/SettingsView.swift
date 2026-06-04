@@ -66,6 +66,14 @@ struct SettingsView: View {
                 Text("When enabled, sharing a link adds a message in order to let the recipient know about this app.")
             }
             
+            if let session = model.session {
+                Section("Account") {
+                    Button("Disconnect from \(session.displayUsername)", role: .destructive) {
+                        logout()
+                    }
+                }
+            }
+            
             Section {
                 Button {
                     dumpingLogs = true
@@ -104,15 +112,6 @@ struct SettingsView: View {
                 Text("Advanced")
             } footer: {
                 Text("This cache allows faster contents display. Clearing it will cause images to be downloaded again from furaffinity.net when needed.")
-            }
-
-            
-            if let session = model.session {
-                Section("Account") {
-                    Button("Disconnect from \(session.displayUsername)", role: .destructive) {
-                        logout()
-                    }
-                }
             }
         }
         .onAppear {
