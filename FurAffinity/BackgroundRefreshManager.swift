@@ -74,6 +74,11 @@ extension Collection where Element: Identifiable, Element.ID == Int {
 struct PendingNotification {
     let content: UNMutableNotificationContent
     let author: String
+    /// Submission thumbnail to attach to the notification (nil for non-submissions).
+    let thumbnail: DynamicThumbnail?
+    /// Submission rating, used to decide whether the attachment must be blurred
+    /// (nil for non-submissions).
+    let rating: Rating?
 }
 
 private final class BackgroundRefreshTaskRunner: @unchecked Sendable {
@@ -275,7 +280,8 @@ enum BackgroundRefreshManager {
         shouts: [FANotificationPreview],
         journals: [FANotificationPreview]
     ) -> [PendingNotification] {
-        submissions.map { notificationContent(emoji: "🖼️", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+        // Submissions carry a thumbnail attachment instead of an emoji prefix.
+        submissions.map { notificationContent(emoji: nil, displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url, thumbnail: $0.dynamicThumbnail, rating: $0.rating) }
             + notes.filter(\.unread).map { notificationContent(emoji: "✉️", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.noteUrl) }
             + submissionComments.map { notificationContent(emoji: "💬", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
             + journalComments.map { notificationContent(emoji: "💬", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
@@ -283,18 +289,23 @@ enum BackgroundRefreshManager {
             + journals.map { notificationContent(emoji: "📝", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
     }
 
-    private static func notificationContent(emoji: String, displayAuthor: String, body: String, author: String, url: URL) -> PendingNotification {
+    private static func notificationContent(emoji: String?, displayAuthor: String, body: String, author: String, url: URL, thumbnail: DynamicThumbnail? = nil, rating: Rating? = nil) -> PendingNotification {
         let content = UNMutableNotificationContent()
         // Communication-notification enrichment replaces the header with the author
         // name; we set the same title so the text-only fallback (no avatar / missing
-        // entitlement) renders the same layout. The type is conveyed by the emoji.
+        // entitlement) renders the same layout.
         content.title = displayAuthor
-        // Prepend a type emoji: enrichment drops `title`, so the emoji is what conveys
-        // the notification type (submission/note/journal/…) in the message line.
-        content.body = "\(emoji) \(body)"
+        // Prepend a type emoji when present: enrichment drops `title`, so the emoji is
+        // what conveys the notification type (note/journal/…) in the message line.
+        // Submissions pass `nil` since their thumbnail attachment carries that meaning.
+        if let emoji {
+            content.body = "\(emoji) \(body)"
+        } else {
+            content.body = body
+        }
         // Carry the FA URL so a tap can deep-link to the related content.
         content.userInfo = [NotificationDeepLink.urlKey: url.absoluteString]
-        return PendingNotification(content: content, author: author)
+        return PendingNotification(content: content, author: author, thumbnail: thumbnail, rating: rating)
     }
 
     /// Identifier for the CloudFlare-challenge failure local notification.
@@ -410,6 +421,37 @@ enum BackgroundRefreshManager {
         }
     }
 
+    /// Builds the notification attachment(s) for a submission thumbnail. Ensures the
+    /// 400px thumbnail is cached, then returns a single attachment: the clear image for
+    /// general-rated submissions, or a blurred copy for mature/adult. Returns `nil` if
+    /// the thumbnail can't be fetched, or if blurring fails (so the unblurred NSFW image
+    /// is never attached by accident).
+    private static func submissionAttachment(thumbnail: DynamicThumbnail, rating: Rating) async -> [UNNotificationAttachment]? {
+        let url = thumbnail.bestThumbnailUrl(for: CGSize(width: 400, height: 400))
+        guard await kingfisherImageDataProvider(url) != nil else {
+            return nil
+        }
+        guard let file = cachedImageFileURL(for: url) else {
+            return nil
+        }
+
+        do {
+            if rating == .general {
+                let clear = try UNNotificationAttachment(identifier: "clear", url: file, options: nil)
+                return [clear]
+            } else {
+                guard let blurredFile = ImageBlur.blurredImageFile(from: file) else {
+                    return nil
+                }
+                let blurred = try UNNotificationAttachment(identifier: "blurred", url: blurredFile, options: nil)
+                return [blurred]
+            }
+        } catch {
+            logger.error("Failed to build submission attachment: \(error)")
+            return nil
+        }
+    }
+
     private static func postLocalNotification(
         newSubmissions: [FASubmissionPreview],
         newNotes: [FANotePreview],
@@ -454,7 +496,16 @@ enum BackgroundRefreshManager {
             if settings.soundSetting == .enabled {
                 pending.content.sound = .default
             }
-            let content = await communicationContent(for: pending)
+            var content = await communicationContent(for: pending)
+            // Attach the submission thumbnail (blurred for non-general). Set it on a
+            // mutable copy of the enriched content: updating(from:) returns immutable
+            // content and may drop attachments, so this is the robust path.
+            if let thumbnail = pending.thumbnail, let rating = pending.rating,
+               let attachments = await submissionAttachment(thumbnail: thumbnail, rating: rating),
+               let mutable = content.mutableCopy() as? UNMutableNotificationContent {
+                mutable.attachments = attachments
+                content = mutable
+            }
             let request = UNNotificationRequest(identifier: "fa.background.refresh-\(UUID())", content: content, trigger: trigger)
             do {
                 try await center.add(request)
