@@ -130,8 +130,27 @@ enum BackgroundRefreshManager {
     // Identifier must be added to Info.plist (BGTaskSchedulerPermittedIdentifiers)
     static var taskIdentifier: String { (Bundle.main.bundleIdentifier ?? "app") + ".background-refresh" }
 
+    /// Notification category for submission notifications. Matched by the
+    /// NotificationContent app extension (`UNNotificationExtensionCategory`) so a
+    /// long-press / expand reveals the clear thumbnail.
+    static let submissionCategoryIdentifier = "fa.submission"
+
+    /// Registers the notification categories handled by the app's content extension.
+    /// Called at startup so the extension is wired up before any notification posts.
+    static func registerNotificationCategories() {
+        let submission = UNNotificationCategory(
+            identifier: submissionCategoryIdentifier,
+            actions: [],
+            intentIdentifiers: [],
+            options: []
+        )
+        UNUserNotificationCenter.current().setNotificationCategories([submission])
+    }
+
     // MARK: Registration & Scheduling
     static func register() {
+        registerNotificationCategories()
+
         let registered = BGTaskScheduler.shared.register(forTaskWithIdentifier: taskIdentifier, using: nil) { task in
             guard let appRefreshTask = task as? BGAppRefreshTask else {
                 task.setTaskCompleted(success: false)
@@ -422,10 +441,13 @@ enum BackgroundRefreshManager {
     }
 
     /// Builds the notification attachment(s) for a submission thumbnail. Ensures the
-    /// 400px thumbnail is cached, then returns a single attachment: the clear image for
-    /// general-rated submissions, or a blurred copy for mature/adult. Returns `nil` if
-    /// the thumbnail can't be fetched, or if blurring fails (so the unblurred NSFW image
-    /// is never attached by accident).
+    /// 400px thumbnail is cached, then returns:
+    /// - general: a single clear attachment (identifier `"clear"`), shown everywhere.
+    /// - mature/adult: a blurred primary attachment (identifier `"blurred"`, shown on
+    ///   the banner / lock screen) plus a hidden clear attachment (identifier `"clear"`,
+    ///   `thumbnailHidden`) that the content extension reveals on long-press / expand.
+    /// Returns `nil` if the thumbnail can't be fetched, or if blurring fails (so the
+    /// unblurred NSFW image is never attached by accident).
     private static func submissionAttachment(thumbnail: DynamicThumbnail, rating: Rating) async -> [UNNotificationAttachment]? {
         let url = thumbnail.bestThumbnailUrl(for: CGSize(width: 400, height: 400))
         guard await kingfisherImageDataProvider(url) != nil else {
@@ -443,8 +465,16 @@ enum BackgroundRefreshManager {
                 guard let blurredFile = ImageBlur.blurredImageFile(from: file) else {
                     return nil
                 }
+                // The blurred attachment is first, so it's the primary image on the
+                // banner / lock screen. The clear attachment is hidden from the banner
+                // thumbnail but bundled so the content extension can reveal it on expand.
                 let blurred = try UNNotificationAttachment(identifier: "blurred", url: blurredFile, options: nil)
-                return [blurred]
+                let clear = try UNNotificationAttachment(
+                    identifier: "clear",
+                    url: file,
+                    options: [UNNotificationAttachmentOptionsThumbnailHiddenKey: true]
+                )
+                return [blurred, clear]
             }
         } catch {
             logger.error("Failed to build submission attachment: \(error)")
@@ -504,6 +534,10 @@ enum BackgroundRefreshManager {
                let attachments = await submissionAttachment(thumbnail: thumbnail, rating: rating),
                let mutable = content.mutableCopy() as? UNMutableNotificationContent {
                 mutable.attachments = attachments
+                // The category routes the notification to the content extension that
+                // reveals the clear image on expand. Set here (post-enrichment) since
+                // updating(from:) can reset it.
+                mutable.categoryIdentifier = submissionCategoryIdentifier
                 content = mutable
             }
             let request = UNNotificationRequest(identifier: "fa.background.refresh-\(UUID())", content: content, trigger: trigger)
