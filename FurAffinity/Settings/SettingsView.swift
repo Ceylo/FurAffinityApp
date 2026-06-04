@@ -7,6 +7,7 @@
 
 import SwiftUI
 import FAKit
+import FALogging
 import Kingfisher
 import Defaults
 
@@ -97,7 +98,11 @@ struct SettingsView: View {
                     }
                 }
                 .disabled(dumpingLogs)
-                
+
+                Button("Clear Application Logs", role: .destructive) {
+                    PersistentLogStore.shared.clear()
+                }
+
                 Button("Delete cached files (\(cachedFileSize))") {
                     cleaningCache = true
                     
