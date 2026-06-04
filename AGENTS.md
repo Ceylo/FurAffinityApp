@@ -92,6 +92,7 @@ FAKit: SwiftSoup, Cache, SwiftGraph, swift-collections.
 ## Planning Workflow
 
 Use Plan Mode (Shift+Tab) before implementing. Work incrementally with tests.
+- Apply changes in steps. Each step must be complete, tested, and committed before starting the next.
 - If using XcodeBuildMCP, use the installed XcodeBuildMCP skill before calling XcodeBuildMCP tools.
 
 @LSP_SETUP.md
