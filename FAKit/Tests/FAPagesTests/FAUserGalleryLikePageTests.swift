@@ -91,7 +91,8 @@ struct FAUserGalleryLikePageTests {
             thumbnailWidthOnHeightRatio: 1.47754,
             title: "CM - Beach time with the Dragon Girls",
             author: "tiaamaito",
-            displayAuthor: "tiaamaito"
+            displayAuthor: "tiaamaito",
+            rating: .general
         )
         #expect(page.previews[0] == preview)
         #expect(
@@ -145,7 +146,8 @@ struct FAUserGalleryLikePageTests {
             thumbnailWidthOnHeightRatio: 1.4988,
             title: "🏳️‍🌈 Pride YCH 🏳️‍⚧️ Auction CLOSED",
             author: "tiaamaito",
-            displayAuthor: "tiaamaito"
+            displayAuthor: "tiaamaito",
+            rating: .general
         )
         #expect(page.previews[0] == preview)
         #expect(
@@ -169,7 +171,8 @@ struct FAUserGalleryLikePageTests {
             thumbnailWidthOnHeightRatio: 1.516685,
             title: "CM | Moss",
             author: "astarcis",
-            displayAuthor: "astarcis"
+            displayAuthor: "astarcis",
+            rating: .general
         )
         #expect(page.previews[0] == preview)
         #expect(

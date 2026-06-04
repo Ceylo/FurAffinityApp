@@ -10,7 +10,7 @@ import SwiftSoup
 
 public struct FASubmissionsPage: FAPage {
     public struct Submission: Equatable, Sendable {
-        public init(sid: Int, url: URL, thumbnailUrl: URL, thumbnailWidthOnHeightRatio: Float, title: String, author: String, displayAuthor: String) {
+        public init(sid: Int, url: URL, thumbnailUrl: URL, thumbnailWidthOnHeightRatio: Float, title: String, author: String, displayAuthor: String, rating: Rating) {
             self.sid = sid
             self.url = url
             self.thumbnailUrl = thumbnailUrl
@@ -18,8 +18,9 @@ public struct FASubmissionsPage: FAPage {
             self.title = title
             self.author = author
             self.displayAuthor = displayAuthor
+            self.rating = rating
         }
-        
+
         public let sid: Int
         public let url: URL
         public let thumbnailUrl: URL
@@ -27,6 +28,7 @@ public struct FASubmissionsPage: FAPage {
         public let title: String
         public let author: String
         public let displayAuthor: String
+        public let rating: Rating
     }
     
     public let submissions: [Submission?]
@@ -102,5 +104,7 @@ extension FASubmissionsPage.Submission {
         self.author = try captionNodes[1].attr("href")
             .substring(matching: "/user/(.+)/")!
         self.displayAuthor = try captionNodes[1].text()
+
+        self.rating = try Rating(submissionFigureClass: node.attr("class")).unwrap()
     }
 }

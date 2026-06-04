@@ -18,8 +18,9 @@ public struct FASubmissionPreview: Hashable, Identifiable, Sendable {
     public let displayAuthor: String
     public var id: Int { sid }
     public let dynamicThumbnail: DynamicThumbnail
-    
-    public init(sid: Int, url: URL, thumbnailUrl: URL, thumbnailWidthOnHeightRatio: Float, title: String, author: String, displayAuthor: String) {
+    public let rating: Rating
+
+    public init(sid: Int, url: URL, thumbnailUrl: URL, thumbnailWidthOnHeightRatio: Float, title: String, author: String, displayAuthor: String, rating: Rating) {
         self.sid = sid
         self.url = url
         self.thumbnailUrl = thumbnailUrl
@@ -28,6 +29,7 @@ public struct FASubmissionPreview: Hashable, Identifiable, Sendable {
         self.author = author
         self.displayAuthor = displayAuthor
         self.dynamicThumbnail = .init(thumbnailUrl: thumbnailUrl)
+        self.rating = rating
     }
 }
 
@@ -39,7 +41,8 @@ public extension FASubmissionPreview {
                   thumbnailWidthOnHeightRatio: submission.thumbnailWidthOnHeightRatio,
                   title: submission.title,
                   author: submission.author,
-                  displayAuthor: submission.displayAuthor)
+                  displayAuthor: submission.displayAuthor,
+                  rating: submission.rating)
     }
 }
 
