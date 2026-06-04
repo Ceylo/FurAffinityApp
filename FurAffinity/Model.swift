@@ -80,7 +80,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             }
             .store(in: &subscriptions)
         
-        Defaults.publisher(keys: Defaults.Keys.notifications)
+        Defaults.publisher(keys: Defaults.Keys.badges)
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
                 updateDisplayedNotificationCount()
@@ -430,28 +430,28 @@ class Model: NotificationsNuker, NotificationsDeleter {
     }
     
     private func updateDisplayedNotificationCount() {
-        displayedUnreadNoteCount = Defaults[.notifyNotes] ? unreadInboxNoteCount : 0
-        
+        displayedUnreadNoteCount = Defaults[.badgeNotes] ? unreadInboxNoteCount : 0
+
         displayedNotificationCount = notificationPreviews
             .flatMap { notifications in
                 var count = 0
-                
-                if Defaults[.notifySubmissionComments] {
+
+                if Defaults[.badgeSubmissionComments] {
                     count += notifications.submissionComments.count
                 }
-                
-                if Defaults[.notifyJournalComments] {
+
+                if Defaults[.badgeJournalComments] {
                     count += notifications.journalComments.count
                 }
-                
-                if Defaults[.notifyShouts] {
+
+                if Defaults[.badgeShouts] {
                     count += notifications.shouts.count
                 }
-                
-                if Defaults[.notifyJournals] {
+
+                if Defaults[.badgeJournals] {
                     count += notifications.journals.count
                 }
-                
+
                 return count
             } ?? 0
     }

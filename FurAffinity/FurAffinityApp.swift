@@ -9,6 +9,7 @@ import SwiftUI
 import FAKit
 import AmplitudeSwift
 import UserNotifications
+import Defaults
 
 enum BuildConfiguration: CustomStringConvertible {
     case debug
@@ -122,6 +123,8 @@ struct FurAffinityApp: App {
         logger.info("Launched FurAffinity \(Bundle.main.version.shortDescription) on \(device.systemName) \(device.systemVersion), \(buildConfiguration) build [CFDIAG] applicationState=\(appState.rawValue)")
         _ = amplitude
         logger.info("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized")")
+        
+        Defaults.migrateBadgeSettingsIfNeeded()
         BackgroundRefreshManager.register()
         FAImageInliner.dataProvider = kingfisherImageDataProvider
         UNUserNotificationCenter.current().delegate = NotificationCoordinator.shared
