@@ -51,7 +51,7 @@ struct HomeView: View {
         } else {
             session = try await FALoginView.makeSession()
         }
-        
+
         let task = Task.detached(name: "Session init") {
             try await model.setSession(session)
         }
@@ -101,22 +101,10 @@ struct HomeView: View {
             ErrorDisplay()
         }
         .task {
-            logger.info("[CFDIAG] HomeView autologin .task fired; scenePhase=\(String(describing: scenePhase)), applicationState=\(UIApplication.shared.applicationState.rawValue), didTryAutologin=\(didTryAutologin)")
-            guard !didTryAutologin else {
-                logger.info("[CFDIAG] HomeView autologin SKIPPED by didTryAutologin guard (leftover state, no fresh attempt)")
-                return
-            }
-            didTryAutologin = true
-            logger.info("[CFDIAG] HomeView autologin PROCEEDING; updateSession() start")
-            await storeLocalizedError(in: errorStorage, action: "Auto-login", webBrowserURL: nil) {
-                do {
-                    try await updateSession()
-                    logger.info("[CFDIAG] HomeView autologin updateSession() succeeded")
-                } catch {
-                    logger.error("[CFDIAG] HomeView autologin updateSession() failed: \(type(of: error)) — \(String(describing: error))")
-                    throw error
-                }
-            }
+            await autologinIfActive()
+        }
+        .onChange(of: scenePhase) {
+            Task { await autologinIfActive() }
         }
         // Deterministic logged-out behavior: once autologin has concluded
         // without a session, discard any deep link from a notification tap so
@@ -170,6 +158,36 @@ struct HomeView: View {
             }
         }
         .padding()
+    }
+    
+    /// Runs autologin once, but only while the app is foregrounded.
+    ///
+    /// On a `BGAppRefreshTask` launch SwiftUI builds the scene and fires `.task`
+    /// with `scenePhase == .background`; logging in there would push failures
+    /// (e.g. an unsolvable Cloudflare challenge) into `ErrorStorage` and surface a
+    /// stale "Auto-login failed" alert at the next foreground. The
+    /// `.onChange(of: scenePhase)` trigger resumes the deferred attempt.
+    func autologinIfActive() async {
+        logger.info("[CFDIAG] HomeView autologin trigger; scenePhase=\(String(describing: scenePhase)), applicationState=\(UIApplication.shared.applicationState.rawValue), didTryAutologin=\(didTryAutologin)")
+        guard scenePhase == .active else {
+            logger.info("[CFDIAG] HomeView autologin DEFERRED; app not active (scenePhase=\(String(describing: scenePhase)))")
+            return
+        }
+        guard !didTryAutologin else {
+            logger.info("[CFDIAG] HomeView autologin SKIPPED by didTryAutologin guard (leftover state, no fresh attempt)")
+            return
+        }
+        didTryAutologin = true
+        logger.info("[CFDIAG] HomeView autologin PROCEEDING; updateSession() start")
+        await storeLocalizedError(in: errorStorage, action: "Auto-login", webBrowserURL: nil) {
+            do {
+                try await updateSession()
+                logger.info("[CFDIAG] HomeView autologin updateSession() succeeded")
+            } catch {
+                logger.error("[CFDIAG] HomeView autologin updateSession() failed: \(type(of: error)) — \(String(describing: error))")
+                throw error
+            }
+        }
     }
 }
 
