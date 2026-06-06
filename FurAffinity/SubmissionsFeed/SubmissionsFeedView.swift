@@ -201,14 +201,14 @@ struct SubmissionsFeedView: View {
         .onAppear {
             currentViewIsDisplayed = true
 
-            // Resume an autorefresh that was deferred or aborted while the feed
-            // was covered (e.g. by a notification deep link push). Now that it's
-            // on-screen and stable, the scroll choreography runs correctly.
-            // Ordinary tab switches never set this flag, so this does not refresh
-            // on every return.
+            // Resume an autorefresh deferred/aborted while the feed was covered
+            // (e.g. a notification deep link push). Only set on those paths, so
+            // ordinary tab switches don't refresh. Bypass the reachedTop guard:
+            // the abort's scrollTo left reachedTop == false, but the resumed
+            // scrollTo(.top) re-pins it. See autorefreshIfNeeded's invariant.
             if pendingAutorefresh {
                 pendingAutorefresh = false
-                autorefreshIfNeeded()
+                autorefreshIfNeeded(ignoreScrollPosition: true)
             }
         }
         .onDisappear {
@@ -258,8 +258,14 @@ extension SubmissionsFeedView {
         }
     }
     
-    func autorefreshIfNeeded() {
-        guard scrollView?.reachedTop ?? true else { return }
+    /// - Parameter ignoreScrollPosition: When `true`, skip the `reachedTop`
+    ///   guard (resume path only). Safe because `pendingAutorefresh` is only set
+    ///   from a refresh already in flight, which only starts from the top — so
+    ///   this can never yank a scrolled-down user.
+    func autorefreshIfNeeded(ignoreScrollPosition: Bool = false) {
+        guard ignoreScrollPosition || scrollView?.reachedTop ?? true else {
+            return
+        }
 
         // If the feed is currently covered (e.g. a notification deep link pushed
         // content over it), don't run the scroll-managed refresh now — it needs
