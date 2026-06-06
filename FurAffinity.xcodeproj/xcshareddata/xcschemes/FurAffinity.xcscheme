@@ -35,6 +35,18 @@
             testExecutionOrdering = "random">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "FALoggingTests"
+               BuildableName = "FALoggingTests"
+               BlueprintName = "FALoggingTests"
+               ReferencedContainer = "container:FAKit">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES"
+            testExecutionOrdering = "random">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "FAKitTests"
                BuildableName = "FAKitTests"
                BlueprintName = "FAKitTests"

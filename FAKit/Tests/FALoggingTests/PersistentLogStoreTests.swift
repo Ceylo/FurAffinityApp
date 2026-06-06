@@ -72,6 +72,53 @@ final class PersistentLogStoreTests {
     }
 
     @Test
+    func readForExportNilReturnsEverything() {
+        let store = PersistentLogStore(directory: tempDir, maxTotalBytes: 10 * 1024 * 1024)
+        store.append(category: "FA", level: "info", message: "hello world")
+        store.append(category: "FAKit", level: "error", message: "boom")
+
+        #expect(store.readForExport(since: nil) == store.readAllForExport())
+    }
+
+    @Test
+    func readForExportFiltersByCutoff() {
+        let store = PersistentLogStore(directory: tempDir, maxTotalBytes: 10 * 1024 * 1024)
+        // append() stamps Date() internally, so drive the cutoff relative to now.
+        let now = Date()
+        store.append(category: "FA", level: "info", message: "alpha")
+        store.append(category: "FAKit", level: "error", message: "beta")
+
+        // A cutoff slightly in the past keeps every just-appended entry.
+        let kept = String(data: store.readForExport(since: now.addingTimeInterval(-60)), encoding: .utf8) ?? ""
+        #expect(kept.contains("alpha"), "\(kept)")
+        #expect(kept.contains("beta"), "\(kept)")
+
+        // A cutoff in the future drops them all.
+        let dropped = String(data: store.readForExport(since: now.addingTimeInterval(60)), encoding: .utf8) ?? ""
+        #expect(!dropped.contains("alpha"), "\(dropped)")
+        #expect(!dropped.contains("beta"), "\(dropped)")
+    }
+
+    @Test
+    func readForExportKeepsMultiLineMessageWhole() {
+        let store = PersistentLogStore(directory: tempDir, maxTotalBytes: 10 * 1024 * 1024)
+        let now = Date()
+        store.append(category: "FA", level: "info", message: "line one\nline two\nline three")
+
+        // The whole multi-line message survives a past cutoff...
+        let kept = String(data: store.readForExport(since: now.addingTimeInterval(-60)), encoding: .utf8) ?? ""
+        #expect(kept.contains("line one"), "\(kept)")
+        #expect(kept.contains("line two"), "\(kept)")
+        #expect(kept.contains("line three"), "\(kept)")
+
+        // ...and is dropped as a whole for a future cutoff (continuation lines
+        // inherit the leading line's decision).
+        let dropped = String(data: store.readForExport(since: now.addingTimeInterval(60)), encoding: .utf8) ?? ""
+        #expect(!dropped.contains("line two"), "\(dropped)")
+        #expect(!dropped.contains("line three"), "\(dropped)")
+    }
+
+    @Test
     func newInstanceAppendsToExistingFiles() {
         let first = PersistentLogStore(directory: tempDir, maxTotalBytes: 10 * 1024 * 1024)
         first.append(category: "FA", level: "info", message: "before relaunch")

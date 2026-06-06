@@ -76,18 +76,10 @@ struct SettingsView: View {
             }
             
             Section {
-                Button {
-                    dumpingLogs = true
-                    Task.detached {
-                        defer {
-                            Task { @MainActor in
-                                dumpingLogs = false
-                            }
-                        }
-                        if let fileUrl = try? generateLogFile() {
-                            await share([fileUrl])
-                        }
-                    }
+                Menu {
+                    Button("Last hour") { exportLogs(range: .lastHour) }
+                    Button("Last 24 hours") { exportLogs(range: .last24Hours) }
+                    Button("All") { exportLogs(range: .all) }
                 } label: {
                     HStack {
                         Text("Export Application Logs")
@@ -124,6 +116,20 @@ struct SettingsView: View {
         }
     }
     
+    private func exportLogs(range: LogExportRange) {
+        dumpingLogs = true
+        Task.detached {
+            defer {
+                Task { @MainActor in
+                    dumpingLogs = false
+                }
+            }
+            if let fileUrl = try? generateLogFile(range: range) {
+                await share([fileUrl])
+            }
+        }
+    }
+
     func updateCachedFileSize() {
         if let size = try? ImageCache.default.diskStorage.totalSize() {
             cachedFileSize = ByteCountFormatter.string(

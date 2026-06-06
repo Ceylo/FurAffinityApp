@@ -117,6 +117,16 @@ public final class PersistentLogStore: @unchecked Sendable {
     /// on the queue and writes any buffered entries first, so the export
     /// includes everything appended so far.
     public func readAllForExport() -> Data {
+        readForExport(since: nil)
+    }
+
+    /// Concatenated log contents limited to entries whose timestamp is >= `since`.
+    /// Passing `nil` returns everything (same as `readAllForExport`). Lines without
+    /// a parseable leading timestamp (continuation lines of multi-line messages)
+    /// inherit the keep/drop decision of the entry they belong to. Runs on the
+    /// queue and writes any buffered entries first, so the export includes
+    /// everything appended so far.
+    public func readForExport(since: Date?) -> Data {
         queue.sync {
             writePendingBatch()
             var data = Data()
@@ -126,8 +136,37 @@ public final class PersistentLogStore: @unchecked Sendable {
             if let active = try? Data(contentsOf: activeURL) {
                 data.append(active)
             }
-            return data
+            guard let since else { return data }
+            return filter(data, since: since)
         }
+    }
+
+    /// Keep only lines whose leading ISO8601 timestamp is >= `since`. A line with
+    /// no parseable leading timestamp (a continuation line of a multi-line
+    /// message) inherits the previous line's keep/drop decision.
+    private func filter(_ data: Data, since: Date) -> Data {
+        guard let text = String(data: data, encoding: .utf8) else { return data }
+        var result = ""
+        var keep = false
+        // `omittingEmptySubsequences: false` preserves blank lines and the exact
+        // newline structure when reassembling.
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
+        for (index, line) in lines.enumerated() {
+            // The final element after a trailing "\n" is an empty trailing piece;
+            // don't emit a spurious extra newline for it.
+            let isTrailingEmpty = index == lines.count - 1 && line.isEmpty
+            if isTrailingEmpty { continue }
+
+            if let spaceIndex = line.firstIndex(of: " "),
+               let date = formatter.date(from: String(line[line.startIndex..<spaceIndex])) {
+                keep = date >= since
+            }
+            if keep {
+                result += line
+                result += "\n"
+            }
+        }
+        return Data(result.utf8)
     }
 
     /// Delete all persisted logs (and any buffered entries) and start fresh.
