@@ -48,18 +48,30 @@ struct CloudflareResolutionOverlay: View {
     private var pillContent: some View {
         HStack(spacing: 12) {
             ProgressView()
-            VStack(spacing: 2) {
-                Text("Handling CloudFlare challenge…")
-                    .font(.callout)
-                Text("Tap to verify manually")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            // Prefer the full wording; fall back to a shorter variant when it
+            // would otherwise overflow one line (e.g. larger Dynamic Type on a
+            // narrow screen). The last variant scales/truncates as a final guard.
+            ViewThatFits(in: .horizontal) {
+                labels("Handling CloudFlare challenge…", "Tap to verify manually")
+                labels("CloudFlare challenge…", "Tap to see")
+                    .minimumScaleFactor(0.7)
             }
-            .multilineTextAlignment(.center)
         }
         .foregroundStyle(.primary)
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
+    }
+
+    private func labels(_ title: String, _ subtitle: String) -> some View {
+        VStack(spacing: 2) {
+            Text(title)
+                .font(.callout)
+            Text(subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .multilineTextAlignment(.center)
+        .lineLimit(1)
     }
 }
 
