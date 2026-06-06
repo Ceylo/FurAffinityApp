@@ -108,7 +108,7 @@ struct RootView: View {
             CloudflareChallengeSheet()
         }
         .onChange(of: scenePhase, initial: true) { oldPhase, newPhase in
-            logger.info("[CFDIAG] scenePhase \(String(describing: oldPhase)) -> \(String(describing: newPhase)), applicationState=\(UIApplication.shared.applicationState.rawValue)")
+            logger.info("App scenePhase: \(oldPhase) -> \(newPhase)")
         }
     }
 }

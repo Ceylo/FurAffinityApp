@@ -104,7 +104,7 @@ public struct FAChallengeView: View {
             snap.spinner, snap.success,
             interactionRequired ? " -> interaction required" : ""
         )
-        logger.info("\(msg)")
+        logger.debug("\(msg)")
 
         if interactionRequired {
             hasEscalated = true

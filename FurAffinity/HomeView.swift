@@ -168,21 +168,21 @@ struct HomeView: View {
     /// stale "Auto-login failed" alert at the next foreground. The
     /// `.onChange(of: scenePhase)` trigger resumes the deferred attempt.
     func autologinIfActive() async {
-        logger.info("[CFDIAG] HomeView autologin trigger; scenePhase=\(String(describing: scenePhase)), applicationState=\(UIApplication.shared.applicationState.rawValue), didTryAutologin=\(didTryAutologin)")
+        logger.debug("[CFDIAG] HomeView autologin trigger; scenePhase=\(String(describing: scenePhase)), applicationState=\(UIApplication.shared.applicationState.rawValue), didTryAutologin=\(didTryAutologin)")
         guard scenePhase == .active else {
-            logger.info("[CFDIAG] HomeView autologin DEFERRED; app not active (scenePhase=\(String(describing: scenePhase)))")
+            logger.debug("[CFDIAG] HomeView autologin DEFERRED; app not active (scenePhase=\(String(describing: scenePhase)))")
             return
         }
         guard !didTryAutologin else {
-            logger.info("[CFDIAG] HomeView autologin SKIPPED by didTryAutologin guard (leftover state, no fresh attempt)")
+            logger.debug("[CFDIAG] HomeView autologin SKIPPED by didTryAutologin guard (leftover state, no fresh attempt)")
             return
         }
         didTryAutologin = true
-        logger.info("[CFDIAG] HomeView autologin PROCEEDING; updateSession() start")
+        logger.debug("[CFDIAG] HomeView autologin PROCEEDING; updateSession() start")
         await storeLocalizedError(in: errorStorage, action: "Auto-login", webBrowserURL: nil) {
             do {
                 try await updateSession()
-                logger.info("[CFDIAG] HomeView autologin updateSession() succeeded")
+                logger.debug("[CFDIAG] HomeView autologin updateSession() succeeded")
             } catch {
                 logger.error("[CFDIAG] HomeView autologin updateSession() failed: \(type(of: error)) — \(String(describing: error))")
                 throw error

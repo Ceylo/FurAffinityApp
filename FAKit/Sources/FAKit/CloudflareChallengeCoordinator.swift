@@ -83,14 +83,14 @@ public final class CloudflareChallengeCoordinator {
     /// - Throws `CancellationError` if the calling task is cancelled while parked.
     public func awaitResolution() async throws {
         let inBackground = isInBackground()
-        logger.info("[CFDIAG] awaitResolution decision: isInBackground=\(inBackground), branch=\(inBackground ? "headless" : "foreground two-stage")")
+        logger.debug("[CFDIAG] awaitResolution decision: isInBackground=\(inBackground), branch=\(inBackground ? "headless" : "foreground two-stage")")
         guard !inBackground else {
-            logger.info("[CFDIAG] CF challenge in background; attempting headless resolution")
+            logger.debug("[CFDIAG] CF challenge in background; attempting headless resolution")
             if await backgroundResolve() {
-                logger.info("[CFDIAG] CF background-task resolution succeeded")
+                logger.debug("[CFDIAG] CF background-task resolution succeeded")
                 return
             }
-            logger.info("[CFDIAG] CF background-task resolution failed; throwing")
+            logger.debug("[CFDIAG] CF background-task resolution failed; throwing")
             throw CloudflareChallengeRequired()
         }
 
