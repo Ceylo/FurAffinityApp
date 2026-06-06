@@ -26,6 +26,11 @@ jobs:
           echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
           echo -n "$APP_PP_BASE64" | base64 --decode -o "${PROVISIONINGPROFILE_STORAGE_PATH}/app.mobileprovision"
           echo -n "$NOTIFICATION_CONTENT_EXT_PP_BASE64" | base64 --decode -o "${PROVISIONINGPROFILE_STORAGE_PATH}/notification-content-ext.mobileprovision"
+          sha256 "${PROVISIONINGPROFILE_STORAGE_PATH}/*.mobileprovision" "${CERTIFICATE_PATH}"
+          KEYCHAIN_PASSWORD_HASH=$(echo -n "${KEYCHAIN_PASSWORD}" | sha256)
+          P12_PASSWORD_HASH=$(echo -n "${P12_PASSWORD}" | sha256)
+          echo "SHA256 (KEYCHAIN_PASSWORD) = ${KEYCHAIN_PASSWORD_HASH}"
+          echo "SHA256 (P12_PASSWORD) = ${P12_PASSWORD_HASH}"
 
           # create temporary keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
@@ -43,6 +48,10 @@ jobs:
         run: |
           sed -i "" "s/amplitudeApiKey = \"Your App Secret\"/amplitudeApiKey = \"${AMPLITUDE_API_KEY}\"/" "FurAffinity/Secrets.swift"
           sed -i "" "s/PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234;/PRODUCT_BUNDLE_IDENTIFIER = ${BUNDLE_ID};/" "FurAffinity.xcodeproj/project.pbxproj"
+          AMPLITUDE_API_KEY_HASH=$(echo -n "${AMPLITUDE_API_KEY}" | sha256)
+          BUNDLE_ID_HASH=$(echo -n "${BUNDLE_ID}" | sha256)
+          echo "SHA256 (BUNDLE_ID) = ${BUNDLE_ID_HASH}"
+          echo "SHA256 (AMPLITUDE_API_KEY) = ${AMPLITUDE_API_KEY_HASH}"
       - uses: mxcl/xcodebuild@v3
         with:
           action: none
