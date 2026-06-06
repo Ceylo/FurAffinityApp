@@ -10,17 +10,22 @@ jobs:
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
-          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+          APP_PP_BASE64: ${{ secrets.APP_PP_BASE64 }}
+          NOTIFICATION_CONTENT_EXT_PP_BASE64: ${{ secrets.NOTIFICATION_CONTENT_EXT_PP_BASE64 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
+          PROVISIONINGPROFILE_STORAGE_PATH="~/Library/Developer/Xcode/UserData/Provisioning Profiles"
+          mkdir -p "${PROVISIONINGPROFILE_STORAGE_PATH}"
+
           # create variables
           CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          APP_PROVISIONINGPROFILE_PATH=$RUNNER_TEMP/build_pp.mobileprovision
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
 
           # import certificate and provisioning profile from secrets
           echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
-          echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
+          echo -n "$APP_PP_BASE64" | base64 --decode -o "${PROVISIONINGPROFILE_STORAGE_PATH}/app.mobileprovision"
+          echo -n "$NOTIFICATION_CONTENT_EXT_PP_BASE64" | base64 --decode -o "${PROVISIONINGPROFILE_STORAGE_PATH}/notification-content-ext.mobileprovision"
 
           # create temporary keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
@@ -31,10 +36,6 @@ jobs:
           security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
-
-          # apply provisioning profile
-          mkdir -p ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
-          cp $PP_PATH ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
       - name: Update Secrets
         env:
           AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
