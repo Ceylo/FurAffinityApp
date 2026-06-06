@@ -26,7 +26,7 @@ jobs:
           echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
           echo -n "$APP_PP_BASE64" | base64 --decode -o "${PROVISIONINGPROFILE_STORAGE_PATH}/app.mobileprovision"
           echo -n "$NOTIFICATION_CONTENT_EXT_PP_BASE64" | base64 --decode -o "${PROVISIONINGPROFILE_STORAGE_PATH}/notification-content-ext.mobileprovision"
-          sha256 "${PROVISIONINGPROFILE_STORAGE_PATH}/*.mobileprovision" "${CERTIFICATE_PATH}"
+          sha256 "${PROVISIONINGPROFILE_STORAGE_PATH}"/*.mobileprovision "${CERTIFICATE_PATH}"
           KEYCHAIN_PASSWORD_HASH=$(echo -n "${KEYCHAIN_PASSWORD}" | sha256)
           P12_PASSWORD_HASH=$(echo -n "${P12_PASSWORD}" | sha256)
           echo "SHA256 (KEYCHAIN_PASSWORD) = ${KEYCHAIN_PASSWORD_HASH}"
