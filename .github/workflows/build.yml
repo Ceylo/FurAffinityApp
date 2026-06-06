@@ -14,7 +14,7 @@ jobs:
           NOTIFICATION_CONTENT_EXT_PP_BASE64: ${{ secrets.NOTIFICATION_CONTENT_EXT_PP_BASE64 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          PROVISIONINGPROFILE_STORAGE_PATH="~/Library/Developer/Xcode/UserData/Provisioning Profiles"
+          PROVISIONINGPROFILE_STORAGE_PATH="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
           mkdir -p "${PROVISIONINGPROFILE_STORAGE_PATH}"
 
           # create variables
