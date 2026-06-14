@@ -221,6 +221,26 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(records.map(\.needsBlur) == [false, false, false])
     }
 
+    @Test func recordsAreOrderedOldestToNewestWithinEachCategory() throws {
+        // Feed order is newest-first; buildRecords must sort each category ascending by
+        // id so the queue is delivered oldest → newest (newest ends up on top).
+        let submissions = [makeSubmission(id: 3), makeSubmission(id: 1), makeSubmission(id: 2)]
+        let notes = [makeNote(id: 30), makeNote(id: 10), makeNote(id: 20)]
+        let records = BackgroundRefreshManager.buildRecords(
+            submissions: submissions,
+            notes: notes,
+            submissionComments: [],
+            journalComments: [],
+            shouts: [],
+            journals: []
+        )
+
+        #expect(records.map(\.dedupKey) == [
+            "submission-1", "submission-2", "submission-3",
+            "note-10", "note-20", "note-30",
+        ])
+    }
+
     @Test func nonGeneralSubmissionNeedsBlur() throws {
         let submissions = [
             makeSubmission(id: 1, author: "alice", title: "S1", rating: .general),
@@ -375,7 +395,7 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(result.map(\.dedupKey) == ["note-1", "shout-3", "note-2", "journal-5"])
     }
 
-    // MARK: - Concurrent flush: resume / cancellation integrity
+    // MARK: - In-order flush: ordering / resume / cancellation integrity
 
     private func queue(_ count: Int) -> [PendingNotificationRecord] {
         (1...count).map { record("note-\($0)") }
@@ -389,12 +409,19 @@ struct BackgroundRefreshNotificationBuilderTests {
         func leave() { current -= 1 }
     }
 
+    /// Records the order in which deliveries happen, to verify queue order is preserved.
+    private actor DeliveryRecorder {
+        private(set) var order = [String]()
+        func record(_ key: String) { order.append(key) }
+    }
+
     @Test func flush_uncancelledRun_postsAllAndEmptiesQueue() async {
         var persisted = queue(3)
-        let outcome = await BackgroundRefreshManager.flushConcurrently(
+        let outcome = await BackgroundRefreshManager.flushInOrder(
             persisted,
             maxConcurrent: 6,
-            post: { _ in .posted },
+            prepare: { $0 },
+            deliver: { _ in true },
             persist: { persisted = $0 }
         )
 
@@ -402,13 +429,38 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(persisted.isEmpty)
     }
 
+    @Test func flush_deliversInQueueOrder_evenWhenPreparationFinishesOutOfOrder() async {
+        let recorder = DeliveryRecorder()
+        // Make earlier records prepare slower than later ones, so preparations finish in
+        // reverse order; delivery must still follow queue order.
+        let outcome = await BackgroundRefreshManager.flushInOrder(
+            queue(5),
+            maxConcurrent: 6,
+            prepare: { rec -> PendingNotificationRecord? in
+                let index = Int(rec.dedupKey.dropFirst("note-".count)) ?? 0
+                try? await Task.sleep(nanoseconds: UInt64((6 - index) * 2_000_000))
+                return rec
+            },
+            deliver: { rec in
+                await recorder.record(rec.dedupKey)
+                return true
+            },
+            persist: { _ in }
+        )
+
+        #expect(outcome == .init(postedCount: 5, cancelled: false))
+        let order = await recorder.order
+        #expect(order == ["note-1", "note-2", "note-3", "note-4", "note-5"])
+    }
+
     @Test func flush_allCancelled_postsNothingAndLeavesQueueIntact() async {
         let initial = queue(3)
         var persisted = initial
-        let outcome = await BackgroundRefreshManager.flushConcurrently(
+        let outcome = await BackgroundRefreshManager.flushInOrder(
             initial,
             maxConcurrent: 6,
-            post: { _ in .cancelled },
+            prepare: { _ -> PendingNotificationRecord? in nil },
+            deliver: { _ in true },
             persist: { persisted = $0 }
         )
 
@@ -419,17 +471,15 @@ struct BackgroundRefreshNotificationBuilderTests {
     @Test func flush_cancelledItemsStayQueued_postedAndSkippedRemoved() async {
         let initial = queue(5)
         var persisted = initial
-        // note-2 cancelled mid-prep, note-4 a genuine post failure; the rest post.
-        let outcome = await BackgroundRefreshManager.flushConcurrently(
+        // note-2 cancelled mid-prep (prepare returns nil), note-4 a genuine post failure
+        // (deliver returns false); the rest post.
+        let outcome = await BackgroundRefreshManager.flushInOrder(
             initial,
             maxConcurrent: 6,
-            post: { rec in
-                switch rec.dedupKey {
-                case "note-2": return .cancelled
-                case "note-4": return .skipped
-                default: return .posted
-                }
+            prepare: { rec -> PendingNotificationRecord? in
+                rec.dedupKey == "note-2" ? nil : rec
             },
+            deliver: { rec in rec.dedupKey != "note-4" },
             persist: { persisted = $0 }
         )
 
@@ -440,10 +490,11 @@ struct BackgroundRefreshNotificationBuilderTests {
 
     @Test func flush_emptyQueueDoesNothing() async {
         var persistCalls = 0
-        let outcome = await BackgroundRefreshManager.flushConcurrently(
+        let outcome = await BackgroundRefreshManager.flushInOrder(
             [],
             maxConcurrent: 6,
-            post: { _ in .posted },
+            prepare: { $0 },
+            deliver: { _ in true },
             persist: { _ in persistCalls += 1 }
         )
 
@@ -453,16 +504,17 @@ struct BackgroundRefreshNotificationBuilderTests {
 
     @Test func flush_respectsConcurrencyBound() async {
         let tracker = ConcurrencyTracker()
-        let outcome = await BackgroundRefreshManager.flushConcurrently(
+        let outcome = await BackgroundRefreshManager.flushInOrder(
             queue(20),
             maxConcurrent: 4,
-            post: { _ in
+            prepare: { rec -> PendingNotificationRecord? in
                 await tracker.enter()
                 // Yield so overlapping preparations actually coexist.
                 try? await Task.sleep(nanoseconds: 1_000_000)
                 await tracker.leave()
-                return .posted
+                return rec
             },
+            deliver: { _ in true },
             persist: { _ in }
         )
 

@@ -331,13 +331,16 @@ enum BackgroundRefreshManager {
         shouts: [FANotificationPreview],
         journals: [FANotificationPreview]
     ) -> [PendingNotificationRecord] {
+        // Sort each category oldest → newest (ascending id): the queue is flushed in
+        // order, so the newest item posts last and lands on top of Notification Center,
+        // matching the feed. Incoming arrays are newest-first, hence the sort.
         // Submissions carry a thumbnail attachment instead of an emoji prefix.
-        submissions.map { submissionRecord($0) }
-            + notes.filter(\.unread).map { record(emoji: "✉️", dedupKey: "note-\($0.id)", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.noteUrl) }
-            + submissionComments.map { record(emoji: "💬", dedupKey: "submission-comment-\($0.id)", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
-            + journalComments.map { record(emoji: "💬", dedupKey: "journal-comment-\($0.id)", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
-            + shouts.map { record(emoji: "📣", dedupKey: "shout-\($0.id)", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
-            + journals.map { record(emoji: "📝", dedupKey: "journal-\($0.id)", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+        submissions.sorted { $0.id < $1.id }.map { submissionRecord($0) }
+            + notes.filter(\.unread).sorted { $0.id < $1.id }.map { record(emoji: "✉️", dedupKey: "note-\($0.id)", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.noteUrl) }
+            + submissionComments.sorted { $0.id < $1.id }.map { record(emoji: "💬", dedupKey: "submission-comment-\($0.id)", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+            + journalComments.sorted { $0.id < $1.id }.map { record(emoji: "💬", dedupKey: "journal-comment-\($0.id)", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+            + shouts.sorted { $0.id < $1.id }.map { record(emoji: "📣", dedupKey: "shout-\($0.id)", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+            + journals.sorted { $0.id < $1.id }.map { record(emoji: "📝", dedupKey: "journal-\($0.id)", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
     }
 
     private static func submissionRecord(_ submission: FASubmissionPreview) -> PendingNotificationRecord {
@@ -545,66 +548,76 @@ enum BackgroundRefreshManager {
         var cancelled: Bool
     }
 
-    /// Result of attempting to post a single notification.
-    /// - `posted`: `center.add` succeeded.
-    /// - `skipped`: a genuine failure (e.g. `center.add` threw) — does not defer the run.
-    /// - `cancelled`: the task was cancelled mid-preparation, so the content would be
-    ///   media-less; the item is left unposted and the run is treated as cancelled.
-    enum PostResult {
-        case posted
-        case skipped
-        case cancelled
-    }
-
-    /// Flushes the pending queue, preparing each record's media (avatar + thumbnail
-    /// downloads) and posting it concurrently, bounded to `maxConcurrent` in-flight so
-    /// the scarce post-CF budget delivers media for as many items as possible rather
-    /// than one or two. The shrinking remainder is persisted (via `persist`) as each
-    /// item is delivered/skipped, so a run interrupted mid-flush resumes from what's
-    /// left; an item whose preparation was cancelled is kept queued (`PostResult` is
-    /// `.cancelled`) and marks the run cancelled. Pure with respect to its injected
-    /// closures, so the concurrency / resume / cancellation bookkeeping can be
-    /// unit-tested without a live `UNUserNotificationCenter` or network.
+    /// Prepares each record's media (avatar + thumbnail downloads) concurrently, bounded
+    /// to `maxConcurrent`, but delivers strictly in queue order so concurrency can't
+    /// reshuffle the result — the newest item (last in the oldest→newest queue) posts
+    /// last and lands on top of Notification Center, matching the feed. Preparations run
+    /// ahead; a finished one waits until every earlier record has been delivered.
     ///
-    /// `post` runs in a child task, so it must be `@Sendable`; `persist` is invoked only
-    /// from the consuming parent task (serially), so it needn't be.
-    static func flushConcurrently(
+    /// The remainder is persisted (via `persist`) as each item is delivered/skipped, so
+    /// an interrupted run resumes from what's left; a record whose preparation returned
+    /// `nil` (cancelled mid-flight) is kept queued and marks the run cancelled. Pure w.r.t.
+    /// its closures, so the bookkeeping is unit-testable without `UNUserNotificationCenter`.
+    ///
+    /// `prepare` runs in a child task, so it (and `Prepared`) must be `Sendable`; `deliver`
+    /// and `persist` run on the parent serially, so they needn't be.
+    ///
+    /// - Parameters:
+    ///   - prepare: Builds a deliverable payload, or `nil` if cancelled mid-preparation.
+    ///   - deliver: Posts a payload; `true` if posted, `false` on failure (dropped).
+    static func flushInOrder<Prepared: Sendable>(
         _ queue: [PendingNotificationRecord],
         maxConcurrent: Int,
-        post: @escaping @Sendable (PendingNotificationRecord) async -> PostResult,
+        prepare: @escaping @Sendable (PendingNotificationRecord) async -> Prepared?,
+        deliver: (Prepared) async -> Bool,
         persist: ([PendingNotificationRecord]) -> Void
     ) async -> FlushOutcome {
+        guard !queue.isEmpty else {
+            return FlushOutcome(postedCount: 0, cancelled: false)
+        }
+
         var remaining = queue
         var postedCount = 0
         var cancelled = false
-        var iterator = queue.makeIterator()
+        // Index of the next record to deliver; delivery follows queue order even though
+        // preparations finish out of order.
+        var nextDeliver = 0
+        // Prepared payloads (or `nil` = cancelled) that finished ahead of their turn.
+        var ready = [Int: Prepared?]()
 
-        await withTaskGroup(of: (String, PostResult).self) { group in
+        await withTaskGroup(of: (Int, Prepared?).self) { group in
+            var nextPrepare = 0
             func addNext() {
-                guard let record = iterator.next() else { return }
-                group.addTask { (record.dedupKey, await post(record)) }
+                guard nextPrepare < queue.count else { return }
+                let index = nextPrepare
+                nextPrepare += 1
+                group.addTask { (index, await prepare(queue[index])) }
             }
             // Prime up to `maxConcurrent` preparations; each completion feeds the next.
-            for _ in 0 ..< max(1, min(maxConcurrent, queue.count)) {
+            for _ in 0 ..< min(maxConcurrent, queue.count) {
                 addNext()
             }
-            while let (dedupKey, result) = await group.next() {
-                switch result {
-                case .posted:
-                    postedCount += 1
-                    remaining.removeAll { $0.dedupKey == dedupKey }
-                    persist(remaining)
-                case .skipped:
-                    // A genuine post failure isn't retried — drop it so it can't clog
-                    // the queue.
-                    remaining.removeAll { $0.dedupKey == dedupKey }
-                    persist(remaining)
-                case .cancelled:
-                    // Keep it queued for the next run and mark the run cancelled so the
-                    // caller doesn't treat a partial flush as complete.
-                    cancelled = true
-                }
+
+            while let (index, payload) = await group.next() {
+                ready[index] = payload
                 addNext()
+
+                // Deliver the now-contiguous prefix in queue order.
+                while let payload = ready[nextDeliver] {
+                    ready.removeValue(forKey: nextDeliver)
+                    if let prepared = payload {
+                        if await deliver(prepared) {
+                            postedCount += 1
+                        }
+                        // Posted or failed: drop it either way so it can't clog the queue.
+                        remaining.removeAll { $0.dedupKey == queue[nextDeliver].dedupKey }
+                        persist(remaining)
+                    } else {
+                        // Cancelled mid-preparation: keep queued, mark the run cancelled.
+                        cancelled = true
+                    }
+                    nextDeliver += 1
+                }
             }
         }
         return FlushOutcome(postedCount: postedCount, cancelled: cancelled)
@@ -637,13 +650,18 @@ enum BackgroundRefreshManager {
     /// network / image cache while still overlapping the per-item downloads.
     private static let maxConcurrentPreparations = 6
 
-    /// Prepares a record's final notification content (avatar enrichment + thumbnail
-    /// attachment) and posts it, returning whether it posted, was skipped, or was
-    /// cancelled mid-preparation. Runs in a child task during a concurrent flush, so it
-    /// creates the notification center / trigger itself rather than capturing them
-    /// (neither is `Sendable`).
-    private static func post(_ record: PendingNotificationRecord, soundEnabled: Bool) async -> PostResult {
-        var content = await communicationContent(baseContent(for: record, soundEnabled: soundEnabled), author: record.author)
+    /// Built, immutable notification content. Boxed so it can cross the `flushInOrder`
+    /// task-group boundary: `UNNotificationContent` isn't `Sendable`, but it's immutable
+    /// once built, so passing it across is safe.
+    private struct PreparedNotification: @unchecked Sendable {
+        let content: UNNotificationContent
+    }
+
+    /// Builds a record's final content (avatar enrichment + thumbnail attachment), or
+    /// `nil` if cancelled mid-preparation (downloads return cancelled, so the content
+    /// would be media-less — defer it). Runs in a child task, hence self-contained.
+    private static func prepareNotification(_ record: PendingNotificationRecord, soundEnabled: Bool) async -> PreparedNotification? {
+        var content: UNNotificationContent = await communicationContent(baseContent(for: record, soundEnabled: soundEnabled), author: record.author)
         // Attach the submission thumbnail (blurred when needed). Set it on a mutable
         // copy of the enriched content: updating(from:) returns immutable content and
         // may drop attachments, so this is the robust path.
@@ -657,28 +675,32 @@ enum BackgroundRefreshManager {
             mutable.categoryIdentifier = submissionCategoryIdentifier
             content = mutable
         }
-        // Cancellation can land mid-preparation: the avatar/thumbnail downloads above
-        // return cancelled, so posting now would deliver a media-less notification.
-        // Defer instead of posting an incomplete one.
         if Task.isCancelled {
-            return .cancelled
+            return nil
         }
+        return PreparedNotification(content: content)
+    }
+
+    /// Posts a prepared notification; `true` if scheduled, `false` on failure. Each post
+    /// stamps a fresh fire date, so serial in-order delivery keeps the list ordered.
+    private static func deliver(_ prepared: PreparedNotification) async -> Bool {
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(identifier: "fa.background.refresh-\(UUID())", content: content, trigger: trigger)
+        let request = UNNotificationRequest(identifier: "fa.background.refresh-\(UUID())", content: prepared.content, trigger: trigger)
         do {
             try await UNUserNotificationCenter.current().add(request)
-            return .posted
+            return true
         } catch {
             logger.error("Failed to schedule local notification: \(error)")
-            return .skipped
+            return false
         }
     }
 
     private static func flushQueue(soundEnabled: Bool) async {
-        let outcome = await flushConcurrently(
+        let outcome = await flushInOrder(
             Defaults[.pendingNotificationQueue],
             maxConcurrent: maxConcurrentPreparations,
-            post: { await post($0, soundEnabled: soundEnabled) },
+            prepare: { await prepareNotification($0, soundEnabled: soundEnabled) },
+            deliver: { await deliver($0) },
             persist: { Defaults[.pendingNotificationQueue] = $0 }
         )
         if outcome.postedCount > 0 {
