@@ -68,17 +68,26 @@ extension Collection where Element: Identifiable, Element.ID == Int {
     }
 }
 
-/// A built notification content plus the author whose avatar should become the
-/// notification's leading icon at post time. Keeps `buildNotifications` pure (the
-/// async avatar download + intent donation happen later in `postLocalNotification`).
-struct PendingNotification {
-    let content: UNMutableNotificationContent
+/// Everything needed to rebuild and post one notification without re-parsing FA
+/// pages. Persisted (via `Defaults[.pendingNotificationQueue]`) at a checkpoint
+/// before the slow media+post phase, so a background run expired mid-flight resumes
+/// the remainder next time instead of redoing or losing it.
+struct PendingNotificationRecord: Codable, Defaults.Serializable, Equatable {
+    /// Stable per-item key (e.g. `"submission-123"`, `"shout-456"`) — prevents the
+    /// same item being enqueued twice across discovery passes.
+    let dedupKey: String
+    /// Notification header (the author's display name).
+    let title: String
+    /// Final message body, with any type emoji prefix already applied.
+    let body: String
+    /// Author handle, used to download the avatar at post time.
     let author: String
-    /// Submission thumbnail to attach to the notification (nil for non-submissions).
-    let thumbnail: DynamicThumbnail?
-    /// Submission rating, used to decide whether the attachment must be blurred
-    /// (nil for non-submissions).
-    let rating: Rating?
+    /// Deep-link URL string carried in `userInfo`.
+    let url: String
+    /// Resolved best 400px thumbnail URL (submissions only; nil otherwise).
+    let thumbnailURLString: String?
+    /// Whether the thumbnail attachment must be blurred (rating != .general).
+    let needsBlur: Bool
 }
 
 private final class BackgroundRefreshTaskRunner: @unchecked Sendable {
@@ -227,6 +236,16 @@ enum BackgroundRefreshManager {
             return
         }
 
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
+            logger.info(
+                "Skipping background refresh because authorization status is \(settings.authorizationStatus.rawValue)"
+            )
+            return
+        }
+        let soundEnabled = settings.soundSetting == .enabled
+
         let submissions: [FASubmissionPreview]
         let notes: [FANotePreview]
         let previews: FANotificationPreviews
@@ -236,6 +255,7 @@ enum BackgroundRefreshManager {
             previews = try await session.notificationPreviews()
         } catch is CloudflareChallengeRequired {
             logger.warning("CF challenge not resolved in background; posting notification")
+            // Leave the pending queue intact so a previously-stranded remainder isn't lost.
             await postChallengeFailureNotification()
             return
         }
@@ -251,19 +271,32 @@ enum BackgroundRefreshManager {
         let newShouts = previews.shouts.filter { $0.id > latestNotificationIDs.shoutID }
         let newJournals = previews.journals.filter { $0.id > latestNotificationIDs.journalID }
 
-        guard await postLocalNotification(
+        let filtered = applyPreferences(
             newSubmissions: newSubmissions,
             newNotes: newNotes,
             newSubmissionComments: newSubmissionComments,
             newJournalComments: newJournalComments,
             newShouts: newShouts,
             newJournals: newJournals
-        ) else {
-            return
-        }
+        )
+        let records = buildRecords(
+            submissions: filtered.submissions,
+            notes: filtered.notes,
+            submissionComments: filtered.submissionComments,
+            journalComments: filtered.journalComments,
+            shouts: filtered.shouts,
+            journals: filtered.journals
+        )
 
+        // Checkpoint that survives expiration: advance the watermark to everything
+        // fetched and persist the (deduped) queue *before* the slow media+post phase.
+        // The queue is now the source of truth for what still needs posting, so a run
+        // expired mid-flush resumes the remainder instead of redoing or losing it.
+        Defaults[.pendingNotificationQueue] = enqueue(records, into: Defaults[.pendingNotificationQueue])
         latestNotificationIDs.merge(LatestNotificationIDs(submissions: submissions, notes: notes, previews: previews))
         latestNotificationIDs.save()
+
+        await flushQueue(center: center, soundEnabled: soundEnabled)
     }
 
     static func applyPreferences(
@@ -291,40 +324,64 @@ enum BackgroundRefreshManager {
         )
     }
 
-    static func buildNotifications(
+    static func buildRecords(
         submissions: [FASubmissionPreview],
         notes: [FANotePreview],
         submissionComments: [FANotificationPreview],
         journalComments: [FANotificationPreview],
         shouts: [FANotificationPreview],
         journals: [FANotificationPreview]
-    ) -> [PendingNotification] {
+    ) -> [PendingNotificationRecord] {
         // Submissions carry a thumbnail attachment instead of an emoji prefix.
-        submissions.map { notificationContent(emoji: nil, displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url, thumbnail: $0.dynamicThumbnail, rating: $0.rating) }
-            + notes.filter(\.unread).map { notificationContent(emoji: "✉️", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.noteUrl) }
-            + submissionComments.map { notificationContent(emoji: "💬", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
-            + journalComments.map { notificationContent(emoji: "💬", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
-            + shouts.map { notificationContent(emoji: "📣", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
-            + journals.map { notificationContent(emoji: "📝", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+        submissions.map { submissionRecord($0) }
+            + notes.filter(\.unread).map { record(emoji: "✉️", dedupKey: "note-\($0.id)", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.noteUrl) }
+            + submissionComments.map { record(emoji: "💬", dedupKey: "submission-comment-\($0.id)", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+            + journalComments.map { record(emoji: "💬", dedupKey: "journal-comment-\($0.id)", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+            + shouts.map { record(emoji: "📣", dedupKey: "shout-\($0.id)", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
+            + journals.map { record(emoji: "📝", dedupKey: "journal-\($0.id)", displayAuthor: $0.displayAuthor, body: $0.title, author: $0.author, url: $0.url) }
     }
 
-    private static func notificationContent(emoji: String?, displayAuthor: String, body: String, author: String, url: URL, thumbnail: DynamicThumbnail? = nil, rating: Rating? = nil) -> PendingNotification {
-        let content = UNMutableNotificationContent()
-        // Communication-notification enrichment replaces the header with the author
-        // name; we set the same title so the text-only fallback (no avatar / missing
-        // entitlement) renders the same layout.
-        content.title = displayAuthor
-        // Prepend a type emoji when present: enrichment drops `title`, so the emoji is
-        // what conveys the notification type (note/journal/…) in the message line.
-        // Submissions pass `nil` since their thumbnail attachment carries that meaning.
-        if let emoji {
-            content.body = "\(emoji) \(body)"
-        } else {
-            content.body = body
-        }
-        // Carry the FA URL so a tap can deep-link to the related content.
-        content.userInfo = [NotificationDeepLink.urlKey: url.absoluteString]
-        return PendingNotification(content: content, author: author, thumbnail: thumbnail, rating: rating)
+    private static func submissionRecord(_ submission: FASubmissionPreview) -> PendingNotificationRecord {
+        // Resolve the same 400px thumbnail the attachment builder consumes, now so it
+        // can be persisted and downloaded later without the FAKit type.
+        let thumbnailURL = submission.dynamicThumbnail.bestThumbnailUrl(for: CGSize(width: 400, height: 400))
+        return record(
+            emoji: nil,
+            dedupKey: "submission-\(submission.id)",
+            displayAuthor: submission.displayAuthor,
+            body: submission.title,
+            author: submission.author,
+            url: submission.url,
+            thumbnailURLString: thumbnailURL.absoluteString,
+            needsBlur: submission.rating != .general
+        )
+    }
+
+    private static func record(emoji: String?, dedupKey: String, displayAuthor: String, body: String, author: String, url: URL, thumbnailURLString: String? = nil, needsBlur: Bool = false) -> PendingNotificationRecord {
+        // Prepend a type emoji when present: communication enrichment drops `title`, so
+        // the emoji is what conveys the notification type (note/journal/…) in the
+        // message line. Submissions pass `nil` since their thumbnail carries that meaning.
+        let finalBody = emoji.map { "\($0) \(body)" } ?? body
+        return PendingNotificationRecord(
+            dedupKey: dedupKey,
+            // Communication enrichment replaces the header with the author name; we set
+            // the same title so the text-only fallback renders the same layout.
+            title: displayAuthor,
+            body: finalBody,
+            author: author,
+            url: url.absoluteString,
+            thumbnailURLString: thumbnailURLString,
+            needsBlur: needsBlur
+        )
+    }
+
+    /// Appends `records` to `queue`, skipping any whose `dedupKey` is already present.
+    static func enqueue(
+        _ records: [PendingNotificationRecord],
+        into queue: [PendingNotificationRecord]
+    ) -> [PendingNotificationRecord] {
+        let existingKeys = Set(queue.map(\.dedupKey))
+        return queue + records.filter { !existingKeys.contains($0.dedupKey) }
     }
 
     /// Identifier for the CloudFlare-challenge failure local notification.
@@ -387,18 +444,18 @@ enum BackgroundRefreshManager {
     /// it to the content. Falls back to the original text-only content when the avatar
     /// can't be fetched or the enrichment fails (e.g. the Communication Notifications
     /// entitlement is missing, which makes `updating(from:)` throw).
-    private static func communicationContent(for pending: PendingNotification) async -> UNNotificationContent {
-        guard let avatar = await avatarImage(for: pending.author) else {
-            return pending.content
+    private static func communicationContent(_ content: UNMutableNotificationContent, author: String) async -> UNNotificationContent {
+        guard let avatar = await avatarImage(for: author) else {
+            return content
         }
 
         let sender = INPerson(
-            personHandle: INPersonHandle(value: pending.author, type: .unknown),
+            personHandle: INPersonHandle(value: author, type: .unknown),
             nameComponents: nil,
-            displayName: pending.content.title,
+            displayName: content.title,
             image: avatar,
             contactIdentifier: nil,
-            customIdentifier: pending.author,
+            customIdentifier: author,
             isMe: false,
             suggestionType: .none
         )
@@ -415,7 +472,7 @@ enum BackgroundRefreshManager {
         let intent = INSendMessageIntent(
             recipients: [me],
             outgoingMessageType: .outgoingMessageText,
-            content: pending.content.body,
+            content: content.body,
             speakableGroupName: nil,
             conversationIdentifier: nil,
             serviceName: nil,
@@ -433,10 +490,10 @@ enum BackgroundRefreshManager {
         }
 
         do {
-            return try pending.content.updating(from: intent)
+            return try content.updating(from: intent)
         } catch {
             logger.error("Failed to enrich notification with avatar intent: \(error)")
-            return pending.content
+            return content
         }
     }
 
@@ -448,8 +505,7 @@ enum BackgroundRefreshManager {
     ///   `thumbnailHidden`) that the content extension reveals on long-press / expand.
     /// Returns `nil` if the thumbnail can't be fetched, or if blurring fails (so the
     /// unblurred NSFW image is never attached by accident).
-    private static func submissionAttachment(thumbnail: DynamicThumbnail, rating: Rating) async -> [UNNotificationAttachment]? {
-        let url = thumbnail.bestThumbnailUrl(for: CGSize(width: 400, height: 400))
+    private static func submissionAttachment(thumbnailURL url: URL, needsBlur: Bool) async -> [UNNotificationAttachment]? {
         guard await kingfisherImageDataProvider(url) != nil else {
             return nil
         }
@@ -458,7 +514,7 @@ enum BackgroundRefreshManager {
         }
 
         do {
-            if rating == .general {
+            if !needsBlur {
                 let clear = try UNNotificationAttachment(identifier: "clear", url: file, options: nil)
                 return [clear]
             } else {
@@ -501,26 +557,35 @@ enum BackgroundRefreshManager {
         case cancelled
     }
 
-    /// Posts each pending notification in order, bailing before the next item once
-    /// `isCancelled` returns `true` (so the scarce post-CF budget isn't spent preparing
-    /// media that won't be delivered). Pure with respect to its injected closures, so
-    /// the cancellation/watermark semantics can be unit-tested without a live
-    /// `UNUserNotificationCenter` or network.
+    /// Flushes the pending queue in order, posting each record and persisting the
+    /// shrinking remainder (via `persist`) after every delivered/skipped item, so a run
+    /// interrupted mid-flush resumes cleanly from what's left. Bails before the next
+    /// item once `isCancelled` returns `true` (so the scarce post-CF budget isn't spent
+    /// preparing media that won't be delivered), leaving the remainder persisted. Pure
+    /// with respect to its injected closures, so the resume/cancellation semantics can
+    /// be unit-tested without a live `UNUserNotificationCenter` or network.
     static func flush(
-        _ pendings: [PendingNotification],
+        _ queue: [PendingNotificationRecord],
         isCancelled: () -> Bool,
-        post: (PendingNotification) async -> PostResult
+        post: (PendingNotificationRecord) async -> PostResult,
+        persist: ([PendingNotificationRecord]) -> Void
     ) async -> FlushOutcome {
+        var remaining = queue
         var postedCount = 0
-        for pending in pendings {
+        while let record = remaining.first {
             if isCancelled() {
                 return FlushOutcome(postedCount: postedCount, cancelled: true)
             }
-            switch await post(pending) {
+            switch await post(record) {
             case .posted:
                 postedCount += 1
+                remaining.removeFirst()
+                persist(remaining)
             case .skipped:
-                continue
+                // A genuine post failure isn't retried — drop it so it can't clog the
+                // queue, and keep going with the rest.
+                remaining.removeFirst()
+                persist(remaining)
             case .cancelled:
                 return FlushOutcome(postedCount: postedCount, cancelled: true)
             }
@@ -528,85 +593,79 @@ enum BackgroundRefreshManager {
         return FlushOutcome(postedCount: postedCount, cancelled: false)
     }
 
-    private static func postLocalNotification(
-        newSubmissions: [FASubmissionPreview],
-        newNotes: [FANotePreview],
-        newSubmissionComments: [FANotificationPreview],
-        newJournalComments: [FANotificationPreview],
-        newShouts: [FANotificationPreview],
-        newJournals: [FANotificationPreview]
-    ) async -> Bool {
-        let center = UNUserNotificationCenter.current()
-        let settings = await center.notificationSettings()
-        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
-            logger.info(
-                "Skipping local notification because authorization status is \(settings.authorizationStatus.rawValue)"
-            )
-            return false
+    /// Clears the persisted pending-notification queue. Called on app use: the user has
+    /// now seen the content in-app, and the watermark is advanced to the in-app state at
+    /// the same time, so discarded items won't be rediscovered.
+    static func discardPendingNotificationQueue() {
+        Defaults[.pendingNotificationQueue] = []
+    }
+
+    /// Builds the base mutable content for a record (title / emoji-prefixed body /
+    /// deep-link / sound) before communication enrichment and attachment.
+    private static func baseContent(for record: PendingNotificationRecord, soundEnabled: Bool) -> UNMutableNotificationContent {
+        let content = UNMutableNotificationContent()
+        content.title = record.title
+        content.body = record.body
+        // Carry the FA URL so a tap can deep-link to the related content.
+        content.userInfo = [NotificationDeepLink.urlKey: record.url]
+        // Set sound on the mutable content before enrichment so it carries into the
+        // immutable content returned by updating(from:).
+        if soundEnabled {
+            content.sound = .default
         }
+        return content
+    }
 
-        let filtered = applyPreferences(
-            newSubmissions: newSubmissions,
-            newNotes: newNotes,
-            newSubmissionComments: newSubmissionComments,
-            newJournalComments: newJournalComments,
-            newShouts: newShouts,
-            newJournals: newJournals
-        )
+    /// Prepares a record's final notification content (avatar enrichment + thumbnail
+    /// attachment) and posts it, returning whether it posted, was skipped, or was
+    /// cancelled mid-preparation.
+    private static func post(
+        _ record: PendingNotificationRecord,
+        center: UNUserNotificationCenter,
+        soundEnabled: Bool,
+        trigger: UNNotificationTrigger
+    ) async -> PostResult {
+        var content = await communicationContent(baseContent(for: record, soundEnabled: soundEnabled), author: record.author)
+        // Attach the submission thumbnail (blurred when needed). Set it on a mutable
+        // copy of the enriched content: updating(from:) returns immutable content and
+        // may drop attachments, so this is the robust path.
+        if let urlString = record.thumbnailURLString, let url = URL(string: urlString),
+           let attachments = await submissionAttachment(thumbnailURL: url, needsBlur: record.needsBlur),
+           let mutable = content.mutableCopy() as? UNMutableNotificationContent {
+            mutable.attachments = attachments
+            // The category routes the notification to the content extension that
+            // reveals the clear image on expand. Set here (post-enrichment) since
+            // updating(from:) can reset it.
+            mutable.categoryIdentifier = submissionCategoryIdentifier
+            content = mutable
+        }
+        // Cancellation can land mid-preparation: the avatar/thumbnail downloads above
+        // return cancelled, so posting now would deliver a media-less notification.
+        // Defer instead of posting an incomplete one.
+        if Task.isCancelled {
+            return .cancelled
+        }
+        let request = UNNotificationRequest(identifier: "fa.background.refresh-\(UUID())", content: content, trigger: trigger)
+        do {
+            try await center.add(request)
+            return .posted
+        } catch {
+            logger.error("Failed to schedule local notification: \(error)")
+            return .skipped
+        }
+    }
 
-        let pendings = buildNotifications(
-            submissions: filtered.submissions,
-            notes: filtered.notes,
-            submissionComments: filtered.submissionComments,
-            journalComments: filtered.journalComments,
-            shouts: filtered.shouts,
-            journals: filtered.journals
-        )
-        guard !pendings.isEmpty else { return false }
-
+    private static func flushQueue(center: UNUserNotificationCenter, soundEnabled: Bool) async {
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let outcome = await flush(pendings, isCancelled: { Task.isCancelled }) { pending in
-            // Set sound on the mutable content before enrichment so it carries into
-            // the immutable content returned by updating(from:).
-            if settings.soundSetting == .enabled {
-                pending.content.sound = .default
-            }
-            var content = await communicationContent(for: pending)
-            // Attach the submission thumbnail (blurred for non-general). Set it on a
-            // mutable copy of the enriched content: updating(from:) returns immutable
-            // content and may drop attachments, so this is the robust path.
-            if let thumbnail = pending.thumbnail, let rating = pending.rating,
-               let attachments = await submissionAttachment(thumbnail: thumbnail, rating: rating),
-               let mutable = content.mutableCopy() as? UNMutableNotificationContent {
-                mutable.attachments = attachments
-                // The category routes the notification to the content extension that
-                // reveals the clear image on expand. Set here (post-enrichment) since
-                // updating(from:) can reset it.
-                mutable.categoryIdentifier = submissionCategoryIdentifier
-                content = mutable
-            }
-            // Cancellation can land mid-preparation: the avatar/thumbnail downloads
-            // above return cancelled, so posting now would deliver a media-less
-            // notification. Defer instead of posting an incomplete one.
-            if Task.isCancelled {
-                return .cancelled
-            }
-            let request = UNNotificationRequest(identifier: "fa.background.refresh-\(UUID())", content: content, trigger: trigger)
-            do {
-                try await center.add(request)
-                return .posted
-            } catch {
-                logger.error("Failed to schedule local notification: \(error)")
-                return .skipped
-            }
-        }
+        let outcome = await flush(
+            Defaults[.pendingNotificationQueue],
+            isCancelled: { Task.isCancelled },
+            post: { await post($0, center: center, soundEnabled: soundEnabled, trigger: trigger) },
+            persist: { Defaults[.pendingNotificationQueue] = $0 }
+        )
         if outcome.postedCount > 0 {
             logger.info("Scheduled \(outcome.postedCount) local notification(s) for background refresh")
         }
-        // Advance the watermark only for a run that completed without cancellation and
-        // actually delivered something. A cancelled run leaves the watermark untouched
-        // so its unposted items are rediscovered (and re-posted) on the next run.
-        return !outcome.cancelled && outcome.postedCount > 0
     }
 }
 

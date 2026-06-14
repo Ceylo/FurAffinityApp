@@ -28,6 +28,9 @@ extension Defaults.Keys {
     static let latestJournalCommentNotificationID = Key<Int>("latestJournalCommentNotificationID", default: 0)
     static let latestShoutNotificationID = Key<Int>("latestShoutNotificationID", default: 0)
     static let latestJournalNotificationID = Key<Int>("latestJournalNotificationID", default: 0)
+    /// Notifications discovered by a background refresh but not yet posted. Persisted
+    /// before the slow media+post phase so an expired run resumes the remainder.
+    static let pendingNotificationQueue = Key<[PendingNotificationRecord]>("pendingNotificationQueue", default: [])
     
     static let notifications = [
         notifySubmissions,

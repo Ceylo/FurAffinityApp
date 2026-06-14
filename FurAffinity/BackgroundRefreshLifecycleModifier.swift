@@ -62,6 +62,10 @@ private struct BackgroundRefreshLifecycleModifier: ViewModifier {
             notes: model.notePreviews[.inbox] ?? [],
             notifications: model.notificationPreviews
         )
+        // The user is now in the app and has seen this content; drop any background
+        // notifications still queued for posting. The watermark was just advanced to
+        // the in-app state, so discarded items won't be rediscovered.
+        BackgroundRefreshManager.discardPendingNotificationQueue()
     }
 }
 

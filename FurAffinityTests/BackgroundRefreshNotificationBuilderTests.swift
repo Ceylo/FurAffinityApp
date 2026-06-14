@@ -5,6 +5,7 @@
 //  Created by Ceylo on 17/03/2023.
 //
 
+import Defaults
 import FAKit
 import Foundation
 import Testing
@@ -70,14 +71,10 @@ struct BackgroundRefreshNotificationBuilderTests {
         )
     }
 
-    func deepLinkURL(_ pending: PendingNotification) -> String? {
-        pending.content.userInfo[NotificationDeepLink.urlKey] as? String
-    }
-
-    // MARK: - Tests
+    // MARK: - Record building
 
     @Test func noInputs_returnsEmpty() {
-        let contents = BackgroundRefreshManager.buildNotifications(
+        let records = BackgroundRefreshManager.buildRecords(
             submissions: [],
             notes: [],
             submissionComments: [],
@@ -85,7 +82,7 @@ struct BackgroundRefreshNotificationBuilderTests {
             shouts: [],
             journals: []
         )
-        #expect(contents.isEmpty)
+        #expect(records.isEmpty)
     }
 
     @Test func eachNoteGetsItsOwnNotification() throws {
@@ -93,7 +90,7 @@ struct BackgroundRefreshNotificationBuilderTests {
             makeNote(id: 1, author: "alice", title: "Hello"),
             makeNote(id: 2, author: "alice", title: "World"),
         ]
-        let contents = BackgroundRefreshManager.buildNotifications(
+        let records = BackgroundRefreshManager.buildRecords(
             submissions: [],
             notes: notes,
             submissionComments: [],
@@ -102,14 +99,13 @@ struct BackgroundRefreshNotificationBuilderTests {
             journals: []
         )
 
-        #expect(contents.count == 2)
-        #expect(contents[0].content.title == "Alice")
-        #expect(contents[0].content.body == "✉️ Hello")
-        #expect(contents[0].author == "alice")
-        #expect(contents[1].content.title == "Alice")
-        #expect(contents[1].content.body == "✉️ World")
-        #expect(contents[1].author == "alice")
-        #expect(contents.map(deepLinkURL) == [
+        #expect(records.count == 2)
+        #expect(records.map(\.title) == ["Alice", "Alice"])
+        #expect(records.map(\.body) == ["✉️ Hello", "✉️ World"])
+        #expect(records.map(\.author) == ["alice", "alice"])
+        #expect(records.map(\.dedupKey) == ["note-1", "note-2"])
+        #expect(records.allSatisfy { $0.thumbnailURLString == nil })
+        #expect(records.map(\.url) == [
             "https://www.furaffinity.net/msg/pms/1/1/#message",
             "https://www.furaffinity.net/msg/pms/1/2/#message",
         ])
@@ -120,7 +116,7 @@ struct BackgroundRefreshNotificationBuilderTests {
             makeNotification(id: 1, author: "alice", title: "Nice!", path: "/view/"),
             makeNotification(id: 2, author: "alice", title: "Cool", path: "/view/"),
         ]
-        let contents = BackgroundRefreshManager.buildNotifications(
+        let records = BackgroundRefreshManager.buildRecords(
             submissions: [],
             notes: [],
             submissionComments: comments,
@@ -129,11 +125,12 @@ struct BackgroundRefreshNotificationBuilderTests {
             journals: []
         )
 
-        #expect(contents.count == 2)
-        #expect(contents.map(\.content.title) == ["Alice", "Alice"])
-        #expect(contents.map(\.content.body) == ["💬 Nice!", "💬 Cool"])
-        #expect(contents.map(\.author) == ["alice", "alice"])
-        #expect(contents.map(deepLinkURL) == [
+        #expect(records.count == 2)
+        #expect(records.map(\.title) == ["Alice", "Alice"])
+        #expect(records.map(\.body) == ["💬 Nice!", "💬 Cool"])
+        #expect(records.map(\.author) == ["alice", "alice"])
+        #expect(records.map(\.dedupKey) == ["submission-comment-1", "submission-comment-2"])
+        #expect(records.map(\.url) == [
             "https://www.furaffinity.net/view/1001/",
             "https://www.furaffinity.net/view/1002/",
         ])
@@ -144,7 +141,7 @@ struct BackgroundRefreshNotificationBuilderTests {
             makeNotification(id: 1, author: "alice", title: "C1", path: "/journal/"),
             makeNotification(id: 2, author: "alice", title: "C2", path: "/journal/"),
         ]
-        let contents = BackgroundRefreshManager.buildNotifications(
+        let records = BackgroundRefreshManager.buildRecords(
             submissions: [],
             notes: [],
             submissionComments: [],
@@ -153,11 +150,12 @@ struct BackgroundRefreshNotificationBuilderTests {
             journals: []
         )
 
-        #expect(contents.count == 2)
-        #expect(contents.map(\.content.title) == ["Alice", "Alice"])
-        #expect(contents.map(\.content.body) == ["💬 C1", "💬 C2"])
-        #expect(contents.map(\.author) == ["alice", "alice"])
-        #expect(contents.map(deepLinkURL) == [
+        #expect(records.count == 2)
+        #expect(records.map(\.title) == ["Alice", "Alice"])
+        #expect(records.map(\.body) == ["💬 C1", "💬 C2"])
+        #expect(records.map(\.author) == ["alice", "alice"])
+        #expect(records.map(\.dedupKey) == ["journal-comment-1", "journal-comment-2"])
+        #expect(records.map(\.url) == [
             "https://www.furaffinity.net/journal/1001/",
             "https://www.furaffinity.net/journal/1002/",
         ])
@@ -168,7 +166,7 @@ struct BackgroundRefreshNotificationBuilderTests {
             makeNotification(id: 1, author: "alice", title: "Hey!", path: "/user/"),
             makeNotification(id: 2, author: "alice", title: "Yo", path: "/user/"),
         ]
-        let contents = BackgroundRefreshManager.buildNotifications(
+        let records = BackgroundRefreshManager.buildRecords(
             submissions: [],
             notes: [],
             submissionComments: [],
@@ -177,11 +175,12 @@ struct BackgroundRefreshNotificationBuilderTests {
             journals: []
         )
 
-        #expect(contents.count == 2)
-        #expect(contents.map(\.content.title) == ["Alice", "Alice"])
-        #expect(contents.map(\.content.body) == ["📣 Hey!", "📣 Yo"])
-        #expect(contents.map(\.author) == ["alice", "alice"])
-        #expect(contents.map(deepLinkURL) == [
+        #expect(records.count == 2)
+        #expect(records.map(\.title) == ["Alice", "Alice"])
+        #expect(records.map(\.body) == ["📣 Hey!", "📣 Yo"])
+        #expect(records.map(\.author) == ["alice", "alice"])
+        #expect(records.map(\.dedupKey) == ["shout-1", "shout-2"])
+        #expect(records.map(\.url) == [
             "https://www.furaffinity.net/user/1001/",
             "https://www.furaffinity.net/user/1002/",
         ])
@@ -193,7 +192,7 @@ struct BackgroundRefreshNotificationBuilderTests {
             makeSubmission(id: 2, author: "alice", title: "S2"),
             makeSubmission(id: 3, author: "bob", title: "S3"),
         ]
-        let contents = BackgroundRefreshManager.buildNotifications(
+        let records = BackgroundRefreshManager.buildRecords(
             submissions: submissions,
             notes: [],
             submissionComments: [],
@@ -202,28 +201,33 @@ struct BackgroundRefreshNotificationBuilderTests {
             journals: []
         )
 
-        #expect(contents.count == 3)
-        #expect(contents.map(\.content.title) == ["Alice", "Alice", "Bob"])
+        #expect(records.count == 3)
+        #expect(records.map(\.title) == ["Alice", "Alice", "Bob"])
         // Submissions drop the emoji prefix now that they carry a thumbnail attachment.
-        #expect(contents.map(\.content.body) == ["S1", "S2", "S3"])
-        #expect(contents.map(\.author) == ["alice", "alice", "bob"])
-        #expect(contents.map(deepLinkURL) == [
+        #expect(records.map(\.body) == ["S1", "S2", "S3"])
+        #expect(records.map(\.author) == ["alice", "alice", "bob"])
+        #expect(records.map(\.dedupKey) == ["submission-1", "submission-2", "submission-3"])
+        #expect(records.map(\.url) == [
             "https://www.furaffinity.net/view/1001/",
             "https://www.furaffinity.net/view/1002/",
             "https://www.furaffinity.net/view/1003/",
         ])
-        // Submissions carry their thumbnail + rating for attachment building.
-        #expect(contents.allSatisfy { $0.thumbnail != nil })
-        #expect(contents.map(\.rating) == [.general, .general, .general])
+        // Submissions carry their resolved 400px thumbnail URL; general rating => no blur.
+        #expect(records.map(\.thumbnailURLString) == [
+            "https://t.furaffinity.net/1001@400-1637084699.jpg",
+            "https://t.furaffinity.net/1002@400-1637084699.jpg",
+            "https://t.furaffinity.net/1003@400-1637084699.jpg",
+        ])
+        #expect(records.map(\.needsBlur) == [false, false, false])
     }
 
-    @Test func nonGeneralSubmissionCarriesItsRating() throws {
+    @Test func nonGeneralSubmissionNeedsBlur() throws {
         let submissions = [
             makeSubmission(id: 1, author: "alice", title: "S1", rating: .general),
             makeSubmission(id: 2, author: "bob", title: "S2", rating: .mature),
             makeSubmission(id: 3, author: "carol", title: "S3", rating: .adult),
         ]
-        let contents = BackgroundRefreshManager.buildNotifications(
+        let records = BackgroundRefreshManager.buildRecords(
             submissions: submissions,
             notes: [],
             submissionComments: [],
@@ -232,8 +236,8 @@ struct BackgroundRefreshNotificationBuilderTests {
             journals: []
         )
 
-        #expect(contents.map(\.rating) == [.general, .mature, .adult])
-        #expect(contents.allSatisfy { $0.thumbnail != nil })
+        #expect(records.map(\.needsBlur) == [false, true, true])
+        #expect(records.allSatisfy { $0.thumbnailURLString != nil })
     }
 
     @Test func eachJournalGetsItsOwnNotification() throws {
@@ -241,7 +245,7 @@ struct BackgroundRefreshNotificationBuilderTests {
             makeNotification(id: 1, author: "alice", title: "J1", path: "/journal/"),
             makeNotification(id: 2, author: "bob", title: "J2", path: "/journal/"),
         ]
-        let contents = BackgroundRefreshManager.buildNotifications(
+        let records = BackgroundRefreshManager.buildRecords(
             submissions: [],
             notes: [],
             submissionComments: [],
@@ -250,11 +254,12 @@ struct BackgroundRefreshNotificationBuilderTests {
             journals: journals
         )
 
-        #expect(contents.count == 2)
-        #expect(contents.map(\.content.title) == ["Alice", "Bob"])
-        #expect(contents.map(\.content.body) == ["📝 J1", "📝 J2"])
-        #expect(contents.map(\.author) == ["alice", "bob"])
-        #expect(contents.map(deepLinkURL) == [
+        #expect(records.count == 2)
+        #expect(records.map(\.title) == ["Alice", "Bob"])
+        #expect(records.map(\.body) == ["📝 J1", "📝 J2"])
+        #expect(records.map(\.author) == ["alice", "bob"])
+        #expect(records.map(\.dedupKey) == ["journal-1", "journal-2"])
+        #expect(records.map(\.url) == [
             "https://www.furaffinity.net/journal/1001/",
             "https://www.furaffinity.net/journal/1002/",
         ])
@@ -266,7 +271,7 @@ struct BackgroundRefreshNotificationBuilderTests {
             makeNote(id: 2, author: "bob", title: "Read Note", unread: false),
             makeNote(id: 3, author: "carol", title: "Another Unread", unread: true),
         ]
-        let contents = BackgroundRefreshManager.buildNotifications(
+        let records = BackgroundRefreshManager.buildRecords(
             submissions: [],
             notes: notes,
             submissionComments: [],
@@ -275,10 +280,10 @@ struct BackgroundRefreshNotificationBuilderTests {
             journals: []
         )
 
-        #expect(contents.count == 2)
-        #expect(contents.map(\.content.title) == ["Alice", "Carol"])
-        #expect(contents.map(\.content.body) == ["✉️ Unread Note", "✉️ Another Unread"])
-        #expect(contents.map(\.author) == ["alice", "carol"])
+        #expect(records.count == 2)
+        #expect(records.map(\.title) == ["Alice", "Carol"])
+        #expect(records.map(\.body) == ["✉️ Unread Note", "✉️ Another Unread"])
+        #expect(records.map(\.author) == ["alice", "carol"])
     }
 
     @Test func allReadNotes_producesNoNotifications() throws {
@@ -286,7 +291,7 @@ struct BackgroundRefreshNotificationBuilderTests {
             makeNote(id: 1, author: "alice", title: "Old Note", unread: false),
             makeNote(id: 2, author: "bob", title: "Another Old Note", unread: false),
         ]
-        let contents = BackgroundRefreshManager.buildNotifications(
+        let records = BackgroundRefreshManager.buildRecords(
             submissions: [],
             notes: notes,
             submissionComments: [],
@@ -295,7 +300,7 @@ struct BackgroundRefreshNotificationBuilderTests {
             journals: []
         )
 
-        #expect(contents.isEmpty)
+        #expect(records.isEmpty)
     }
 
     @Test func mixedActivity_producesOneNotificationPerItem() throws {
@@ -306,7 +311,7 @@ struct BackgroundRefreshNotificationBuilderTests {
         let shout = makeNotification(id: 3, author: "eve", title: "Sh1", path: "/user/")
         let journal = makeNotification(id: 4, author: "alice", title: "AJ1", path: "/journal/")
 
-        let contents = BackgroundRefreshManager.buildNotifications(
+        let records = BackgroundRefreshManager.buildRecords(
             submissions: [sub],
             notes: notes,
             submissionComments: [subComment],
@@ -315,13 +320,20 @@ struct BackgroundRefreshNotificationBuilderTests {
             journals: [journal]
         )
 
-        #expect(contents.map(\.content.title) == ["Alice", "Bob", "Carol", "Dave", "Eve", "Alice"])
-        #expect(contents.map(\.content.body) == ["S1", "✉️ N1", "💬 SC1", "💬 JC1", "📣 Sh1", "📝 AJ1"])
-        #expect(contents.map(\.author) == ["alice", "bob", "carol", "dave", "eve", "alice"])
-        // Only the submission carries a thumbnail/rating; the rest are nil.
-        #expect(contents.map { $0.thumbnail != nil } == [true, false, false, false, false, false])
-        #expect(contents.map(\.rating) == [.general, nil, nil, nil, nil, nil])
-        #expect(contents.map(deepLinkURL) == [
+        #expect(records.map(\.title) == ["Alice", "Bob", "Carol", "Dave", "Eve", "Alice"])
+        #expect(records.map(\.body) == ["S1", "✉️ N1", "💬 SC1", "💬 JC1", "📣 Sh1", "📝 AJ1"])
+        #expect(records.map(\.author) == ["alice", "bob", "carol", "dave", "eve", "alice"])
+        // Only the submission carries a thumbnail; the rest are nil.
+        #expect(records.map { $0.thumbnailURLString != nil } == [true, false, false, false, false, false])
+        #expect(records.map(\.dedupKey) == [
+            "submission-1",
+            "note-1",
+            "submission-comment-1",
+            "journal-comment-2",
+            "shout-3",
+            "journal-4",
+        ])
+        #expect(records.map(\.url) == [
             "https://www.furaffinity.net/view/1001/",            // submission, id 1
             "https://www.furaffinity.net/msg/pms/1/1/#message",  // note, id 1
             "https://www.furaffinity.net/view/1001/",            // submission comment, id 1
@@ -329,6 +341,166 @@ struct BackgroundRefreshNotificationBuilderTests {
             "https://www.furaffinity.net/user/1003/",            // shout, id 3
             "https://www.furaffinity.net/journal/1004/",         // journal, id 4
         ])
+    }
+
+    // MARK: - Enqueue dedup
+
+    private func record(_ dedupKey: String, body: String = "b") -> PendingNotificationRecord {
+        PendingNotificationRecord(
+            dedupKey: dedupKey,
+            title: "T",
+            body: body,
+            author: "a",
+            url: "https://www.furaffinity.net/",
+            thumbnailURLString: nil,
+            needsBlur: false
+        )
+    }
+
+    @Test func enqueue_appendsToEmptyQueue() {
+        let result = BackgroundRefreshManager.enqueue(
+            [record("note-1"), record("note-2")],
+            into: []
+        )
+        #expect(result.map(\.dedupKey) == ["note-1", "note-2"])
+    }
+
+    @Test func enqueue_skipsKeysAlreadyQueued() {
+        let existing = [record("note-1"), record("shout-3")]
+        let result = BackgroundRefreshManager.enqueue(
+            [record("note-1"), record("note-2"), record("shout-3"), record("journal-5")],
+            into: existing
+        )
+        // note-1 and shout-3 are already present; only the genuinely new ones append.
+        #expect(result.map(\.dedupKey) == ["note-1", "shout-3", "note-2", "journal-5"])
+    }
+
+    // MARK: - Flush resume / cancellation integrity
+
+    private func queue(_ count: Int) -> [PendingNotificationRecord] {
+        (1...count).map { record("note-\($0)") }
+    }
+
+    @Test func flush_uncancelledRun_postsAllAndEmptiesQueue() async {
+        var persisted = queue(3)
+        var posted = [String]()
+        let outcome = await BackgroundRefreshManager.flush(
+            persisted,
+            isCancelled: { false },
+            post: { rec in
+                posted.append(rec.dedupKey)
+                return .posted
+            },
+            persist: { persisted = $0 }
+        )
+
+        #expect(outcome == .init(postedCount: 3, cancelled: false))
+        #expect(posted == ["note-1", "note-2", "note-3"])
+        #expect(persisted.isEmpty)
+    }
+
+    @Test func flush_cancelledBeforeAnyPost_postsNothingAndLeavesQueueIntact() async {
+        let initial = queue(3)
+        var persisted = initial
+        var postCalls = 0
+        let outcome = await BackgroundRefreshManager.flush(
+            initial,
+            isCancelled: { true },
+            post: { _ in
+                postCalls += 1
+                return .posted
+            },
+            persist: { persisted = $0 }
+        )
+
+        #expect(outcome == .init(postedCount: 0, cancelled: true))
+        #expect(postCalls == 0)
+        #expect(persisted == initial)
+    }
+
+    @Test func flush_cancelledMidRun_persistsOnlyTheRemainder() async {
+        let initial = queue(5)
+        var persisted = initial
+        var seen = 0
+        // Top-of-loop guard cancels once the first item has been posted.
+        let outcome = await BackgroundRefreshManager.flush(
+            initial,
+            isCancelled: { seen >= 1 },
+            post: { _ in
+                seen += 1
+                return .posted
+            },
+            persist: { persisted = $0 }
+        )
+
+        #expect(outcome == .init(postedCount: 1, cancelled: true))
+        #expect(persisted.map(\.dedupKey) == ["note-2", "note-3", "note-4", "note-5"])
+    }
+
+    @Test func flush_postReturnsCancelled_leavesUnpostedRemainderQueued() async {
+        let initial = queue(5)
+        var persisted = initial
+        var calls = 0
+        // Cancellation lands mid-preparation of the second item: only the first is removed.
+        let outcome = await BackgroundRefreshManager.flush(
+            initial,
+            isCancelled: { false },
+            post: { _ in
+                calls += 1
+                return calls == 2 ? .cancelled : .posted
+            },
+            persist: { persisted = $0 }
+        )
+
+        #expect(outcome == .init(postedCount: 1, cancelled: true))
+        #expect(persisted.map(\.dedupKey) == ["note-2", "note-3", "note-4", "note-5"])
+    }
+
+    @Test func flush_skippedPostsAreDroppedWithoutCancelling() async {
+        let initial = queue(3)
+        var persisted = initial
+        var calls = 0
+        // A genuine post failure (e.g. center.add threw) drops the item but keeps going.
+        let outcome = await BackgroundRefreshManager.flush(
+            initial,
+            isCancelled: { false },
+            post: { _ in
+                calls += 1
+                return calls == 2 ? .skipped : .posted
+            },
+            persist: { persisted = $0 }
+        )
+
+        #expect(outcome == .init(postedCount: 2, cancelled: false))
+        #expect(calls == 3)
+        #expect(persisted.isEmpty)
+    }
+
+    @Test func flush_reflushOfDrainedQueueDoesNothing() async {
+        var posted = 0
+        let outcome = await BackgroundRefreshManager.flush(
+            [],
+            isCancelled: { false },
+            post: { _ in
+                posted += 1
+                return .posted
+            },
+            persist: { _ in }
+        )
+
+        #expect(outcome == .init(postedCount: 0, cancelled: false))
+        #expect(posted == 0)
+    }
+
+    // MARK: - Discard on app use
+
+    @Test func discardPendingNotificationQueue_clearsTheQueue() {
+        let saved = Defaults[.pendingNotificationQueue]
+        defer { Defaults[.pendingNotificationQueue] = saved }
+
+        Defaults[.pendingNotificationQueue] = queue(3)
+        BackgroundRefreshManager.discardPendingNotificationQueue()
+        #expect(Defaults[.pendingNotificationQueue].isEmpty)
     }
 
     // MARK: - CloudFlare challenge failure notification
@@ -341,95 +513,5 @@ struct BackgroundRefreshNotificationBuilderTests {
 
     @Test func challengeFailureNotificationIdentifierIsStable() {
         #expect(BackgroundRefreshManager.challengeFailureNotificationIdentifier == "fa.background.cf-challenge")
-    }
-
-    // MARK: - Flush cancellation integrity
-
-    private func pendings(_ count: Int) -> [PendingNotification] {
-        BackgroundRefreshManager.buildNotifications(
-            submissions: [],
-            notes: (1...count).map { makeNote(id: $0, title: "N\($0)") },
-            submissionComments: [],
-            journalComments: [],
-            shouts: [],
-            journals: []
-        )
-    }
-
-    @Test func flush_uncancelledRun_postsAllAndCompletes() async {
-        var posted = [String]()
-        let outcome = await BackgroundRefreshManager.flush(
-            pendings(3),
-            isCancelled: { false },
-            post: { pending in
-                posted.append(pending.content.body)
-                return .posted
-            }
-        )
-
-        #expect(outcome == .init(postedCount: 3, cancelled: false))
-        #expect(posted == ["✉️ N1", "✉️ N2", "✉️ N3"])
-    }
-
-    @Test func flush_cancelledBeforeAnyPost_postsNothingAndReportsCancelled() async {
-        var postCalls = 0
-        let outcome = await BackgroundRefreshManager.flush(
-            pendings(3),
-            isCancelled: { true },
-            post: { _ in
-                postCalls += 1
-                return .posted
-            }
-        )
-
-        #expect(outcome == .init(postedCount: 0, cancelled: true))
-        #expect(postCalls == 0)
-    }
-
-    @Test func flush_cancelledMidRun_stopsAndReportsCancelled() async {
-        var seen = 0
-        // Top-of-loop guard cancels once the first item has been posted.
-        let outcome = await BackgroundRefreshManager.flush(
-            pendings(5),
-            isCancelled: { seen >= 1 },
-            post: { _ in
-                seen += 1
-                return .posted
-            }
-        )
-
-        #expect(outcome == .init(postedCount: 1, cancelled: true))
-    }
-
-    @Test func flush_postReturnsCancelled_stopsAndReportsCancelled() async {
-        var calls = 0
-        // Cancellation lands mid-preparation of the second item.
-        let outcome = await BackgroundRefreshManager.flush(
-            pendings(5),
-            isCancelled: { false },
-            post: { _ in
-                calls += 1
-                return calls == 2 ? .cancelled : .posted
-            }
-        )
-
-        #expect(outcome == .init(postedCount: 1, cancelled: true))
-        #expect(calls == 2)
-    }
-
-    @Test func flush_skippedPostsDoNotCancelTheRun() async {
-        var calls = 0
-        // A genuine post failure (e.g. center.add threw) skips the item but keeps going.
-        let outcome = await BackgroundRefreshManager.flush(
-            pendings(3),
-            isCancelled: { false },
-            post: { _ in
-                calls += 1
-                return calls == 2 ? .skipped : .posted
-            }
-        )
-
-        #expect(outcome == .init(postedCount: 2, cancelled: false))
-        #expect(calls == 3)
     }
 }
