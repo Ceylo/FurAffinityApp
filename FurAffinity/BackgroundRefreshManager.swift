@@ -482,6 +482,52 @@ enum BackgroundRefreshManager {
         }
     }
 
+    /// Outcome of flushing the pending notifications. `cancelled` is `true` when the
+    /// run was interrupted before posting every item — callers must NOT advance the
+    /// notification watermark in that case, or unposted items would be lost forever.
+    struct FlushOutcome: Equatable {
+        var postedCount: Int
+        var cancelled: Bool
+    }
+
+    /// Result of attempting to post a single notification.
+    /// - `posted`: `center.add` succeeded.
+    /// - `skipped`: a genuine failure (e.g. `center.add` threw) — does not defer the run.
+    /// - `cancelled`: the task was cancelled mid-preparation, so the content would be
+    ///   media-less; the item is left unposted and the run is treated as cancelled.
+    enum PostResult {
+        case posted
+        case skipped
+        case cancelled
+    }
+
+    /// Posts each pending notification in order, bailing before the next item once
+    /// `isCancelled` returns `true` (so the scarce post-CF budget isn't spent preparing
+    /// media that won't be delivered). Pure with respect to its injected closures, so
+    /// the cancellation/watermark semantics can be unit-tested without a live
+    /// `UNUserNotificationCenter` or network.
+    static func flush(
+        _ pendings: [PendingNotification],
+        isCancelled: () -> Bool,
+        post: (PendingNotification) async -> PostResult
+    ) async -> FlushOutcome {
+        var postedCount = 0
+        for pending in pendings {
+            if isCancelled() {
+                return FlushOutcome(postedCount: postedCount, cancelled: true)
+            }
+            switch await post(pending) {
+            case .posted:
+                postedCount += 1
+            case .skipped:
+                continue
+            case .cancelled:
+                return FlushOutcome(postedCount: postedCount, cancelled: true)
+            }
+        }
+        return FlushOutcome(postedCount: postedCount, cancelled: false)
+    }
+
     private static func postLocalNotification(
         newSubmissions: [FASubmissionPreview],
         newNotes: [FANotePreview],
@@ -519,8 +565,7 @@ enum BackgroundRefreshManager {
         guard !pendings.isEmpty else { return false }
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        var postedCount = 0
-        for pending in pendings {
+        let outcome = await flush(pendings, isCancelled: { Task.isCancelled }) { pending in
             // Set sound on the mutable content before enrichment so it carries into
             // the immutable content returned by updating(from:).
             if settings.soundSetting == .enabled {
@@ -540,17 +585,28 @@ enum BackgroundRefreshManager {
                 mutable.categoryIdentifier = submissionCategoryIdentifier
                 content = mutable
             }
+            // Cancellation can land mid-preparation: the avatar/thumbnail downloads
+            // above return cancelled, so posting now would deliver a media-less
+            // notification. Defer instead of posting an incomplete one.
+            if Task.isCancelled {
+                return .cancelled
+            }
             let request = UNNotificationRequest(identifier: "fa.background.refresh-\(UUID())", content: content, trigger: trigger)
             do {
                 try await center.add(request)
-                postedCount += 1
+                return .posted
             } catch {
                 logger.error("Failed to schedule local notification: \(error)")
+                return .skipped
             }
         }
-        guard postedCount > 0 else { return false }
-        logger.info("Scheduled \(postedCount) local notification(s) for background refresh")
-        return true
+        if outcome.postedCount > 0 {
+            logger.info("Scheduled \(outcome.postedCount) local notification(s) for background refresh")
+        }
+        // Advance the watermark only for a run that completed without cancellation and
+        // actually delivered something. A cancelled run leaves the watermark untouched
+        // so its unposted items are rediscovered (and re-posted) on the next run.
+        return !outcome.cancelled && outcome.postedCount > 0
     }
 }
 

@@ -342,4 +342,94 @@ struct BackgroundRefreshNotificationBuilderTests {
     @Test func challengeFailureNotificationIdentifierIsStable() {
         #expect(BackgroundRefreshManager.challengeFailureNotificationIdentifier == "fa.background.cf-challenge")
     }
+
+    // MARK: - Flush cancellation integrity
+
+    private func pendings(_ count: Int) -> [PendingNotification] {
+        BackgroundRefreshManager.buildNotifications(
+            submissions: [],
+            notes: (1...count).map { makeNote(id: $0, title: "N\($0)") },
+            submissionComments: [],
+            journalComments: [],
+            shouts: [],
+            journals: []
+        )
+    }
+
+    @Test func flush_uncancelledRun_postsAllAndCompletes() async {
+        var posted = [String]()
+        let outcome = await BackgroundRefreshManager.flush(
+            pendings(3),
+            isCancelled: { false },
+            post: { pending in
+                posted.append(pending.content.body)
+                return .posted
+            }
+        )
+
+        #expect(outcome == .init(postedCount: 3, cancelled: false))
+        #expect(posted == ["✉️ N1", "✉️ N2", "✉️ N3"])
+    }
+
+    @Test func flush_cancelledBeforeAnyPost_postsNothingAndReportsCancelled() async {
+        var postCalls = 0
+        let outcome = await BackgroundRefreshManager.flush(
+            pendings(3),
+            isCancelled: { true },
+            post: { _ in
+                postCalls += 1
+                return .posted
+            }
+        )
+
+        #expect(outcome == .init(postedCount: 0, cancelled: true))
+        #expect(postCalls == 0)
+    }
+
+    @Test func flush_cancelledMidRun_stopsAndReportsCancelled() async {
+        var seen = 0
+        // Top-of-loop guard cancels once the first item has been posted.
+        let outcome = await BackgroundRefreshManager.flush(
+            pendings(5),
+            isCancelled: { seen >= 1 },
+            post: { _ in
+                seen += 1
+                return .posted
+            }
+        )
+
+        #expect(outcome == .init(postedCount: 1, cancelled: true))
+    }
+
+    @Test func flush_postReturnsCancelled_stopsAndReportsCancelled() async {
+        var calls = 0
+        // Cancellation lands mid-preparation of the second item.
+        let outcome = await BackgroundRefreshManager.flush(
+            pendings(5),
+            isCancelled: { false },
+            post: { _ in
+                calls += 1
+                return calls == 2 ? .cancelled : .posted
+            }
+        )
+
+        #expect(outcome == .init(postedCount: 1, cancelled: true))
+        #expect(calls == 2)
+    }
+
+    @Test func flush_skippedPostsDoNotCancelTheRun() async {
+        var calls = 0
+        // A genuine post failure (e.g. center.add threw) skips the item but keeps going.
+        let outcome = await BackgroundRefreshManager.flush(
+            pendings(3),
+            isCancelled: { false },
+            post: { _ in
+                calls += 1
+                return calls == 2 ? .skipped : .posted
+            }
+        )
+
+        #expect(outcome == .init(postedCount: 2, cancelled: false))
+        #expect(calls == 3)
+    }
 }
