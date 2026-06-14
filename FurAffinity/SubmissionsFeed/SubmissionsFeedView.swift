@@ -195,6 +195,14 @@ struct SubmissionsFeedView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             autorefreshIfNeeded()
         }
+        // One-shot newer-submissions check after a cold-launch restore, reusing the
+        // foreground autorefresh's scroll-preserving choreography. `initial: true`
+        // catches the flag whether it's set before or after this view appears.
+        .onChange(of: model.shouldCheckForNewerSubmissionsAfterRestore, initial: true) { _, needsCheck in
+            guard needsCheck else { return }
+            model.shouldCheckForNewerSubmissionsAfterRestore = false
+            refresh(pulled: false)
+        }
         // Relying on this to know if the view is displayed doesn't always work
         // in the general case, hopefully this view is used in a TabView
         // which calls these modifiers as expected!
