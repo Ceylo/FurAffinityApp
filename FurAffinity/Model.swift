@@ -34,6 +34,9 @@ class Model: NotificationsNuker, NotificationsDeleter {
     private(set) var submissionPreviews: OrderedSet<FASubmissionPreview>?
     private var submissionPreviewsPendingDeletion = Set<FASubmissionPreview>()
     private(set) var lastSubmissionPreviewsFetchDate: Date?
+    /// Set once after a cold-launch restore from a persisted scroll position, to
+    /// ask SubmissionsFeedView to run a scroll-preserving newer-submissions check.
+    var shouldCheckForNewerSubmissionsAfterRestore = false
     
     /// `nil` until a fetch actually happened.
     /// After a fetch it contains all found notes, or an empty array if none was found.
@@ -127,6 +130,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             lastNotificationPreviewsFetchDate = nil
             displayedNotificationCount = 0
             autorefreshSubscription = nil
+            shouldCheckForNewerSubmissionsAfterRestore = false
             Defaults[.lastViewedSubmissionID] = nil
             return
         }
@@ -194,6 +198,10 @@ class Model: NotificationsNuker, NotificationsDeleter {
             // Happens if submissions have been nuked
             logger.info("Fetching submissions from \(firstWantedSubmissionID) and older gave no result. Falling back to latest submissions.")
             latestSubmissions = try await session.submissionPreviews(from: nil)
+        } else if submissionPreviews == nil, firstWantedSubmissionID != nil {
+            // Cold-launch restore from a persisted position succeeded: flag a
+            // follow-up check for submissions newer than the restored top.
+            shouldCheckForNewerSubmissionsAfterRestore = true
         }
         lastSubmissionPreviewsFetchDate = Date()
         let lastKnownSid = submissionPreviews?.first?.sid ?? 0
