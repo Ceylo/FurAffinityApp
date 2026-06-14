@@ -236,8 +236,7 @@ enum BackgroundRefreshManager {
             return
         }
 
-        let center = UNUserNotificationCenter.current()
-        let settings = await center.notificationSettings()
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
         guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
             logger.info(
                 "Skipping background refresh because authorization status is \(settings.authorizationStatus.rawValue)"
@@ -296,7 +295,7 @@ enum BackgroundRefreshManager {
         latestNotificationIDs.merge(LatestNotificationIDs(submissions: submissions, notes: notes, previews: previews))
         latestNotificationIDs.save()
 
-        await flushQueue(center: center, soundEnabled: soundEnabled)
+        await flushQueue(soundEnabled: soundEnabled)
     }
 
     static func applyPreferences(
@@ -557,40 +556,58 @@ enum BackgroundRefreshManager {
         case cancelled
     }
 
-    /// Flushes the pending queue in order, posting each record and persisting the
-    /// shrinking remainder (via `persist`) after every delivered/skipped item, so a run
-    /// interrupted mid-flush resumes cleanly from what's left. Bails before the next
-    /// item once `isCancelled` returns `true` (so the scarce post-CF budget isn't spent
-    /// preparing media that won't be delivered), leaving the remainder persisted. Pure
-    /// with respect to its injected closures, so the resume/cancellation semantics can
-    /// be unit-tested without a live `UNUserNotificationCenter` or network.
-    static func flush(
+    /// Flushes the pending queue, preparing each record's media (avatar + thumbnail
+    /// downloads) and posting it concurrently, bounded to `maxConcurrent` in-flight so
+    /// the scarce post-CF budget delivers media for as many items as possible rather
+    /// than one or two. The shrinking remainder is persisted (via `persist`) as each
+    /// item is delivered/skipped, so a run interrupted mid-flush resumes from what's
+    /// left; an item whose preparation was cancelled is kept queued (`PostResult` is
+    /// `.cancelled`) and marks the run cancelled. Pure with respect to its injected
+    /// closures, so the concurrency / resume / cancellation bookkeeping can be
+    /// unit-tested without a live `UNUserNotificationCenter` or network.
+    ///
+    /// `post` runs in a child task, so it must be `@Sendable`; `persist` is invoked only
+    /// from the consuming parent task (serially), so it needn't be.
+    static func flushConcurrently(
         _ queue: [PendingNotificationRecord],
-        isCancelled: () -> Bool,
-        post: (PendingNotificationRecord) async -> PostResult,
+        maxConcurrent: Int,
+        post: @escaping @Sendable (PendingNotificationRecord) async -> PostResult,
         persist: ([PendingNotificationRecord]) -> Void
     ) async -> FlushOutcome {
         var remaining = queue
         var postedCount = 0
-        while let record = remaining.first {
-            if isCancelled() {
-                return FlushOutcome(postedCount: postedCount, cancelled: true)
+        var cancelled = false
+        var iterator = queue.makeIterator()
+
+        await withTaskGroup(of: (String, PostResult).self) { group in
+            func addNext() {
+                guard let record = iterator.next() else { return }
+                group.addTask { (record.dedupKey, await post(record)) }
             }
-            switch await post(record) {
-            case .posted:
-                postedCount += 1
-                remaining.removeFirst()
-                persist(remaining)
-            case .skipped:
-                // A genuine post failure isn't retried — drop it so it can't clog the
-                // queue, and keep going with the rest.
-                remaining.removeFirst()
-                persist(remaining)
-            case .cancelled:
-                return FlushOutcome(postedCount: postedCount, cancelled: true)
+            // Prime up to `maxConcurrent` preparations; each completion feeds the next.
+            for _ in 0 ..< max(1, min(maxConcurrent, queue.count)) {
+                addNext()
+            }
+            while let (dedupKey, result) = await group.next() {
+                switch result {
+                case .posted:
+                    postedCount += 1
+                    remaining.removeAll { $0.dedupKey == dedupKey }
+                    persist(remaining)
+                case .skipped:
+                    // A genuine post failure isn't retried — drop it so it can't clog
+                    // the queue.
+                    remaining.removeAll { $0.dedupKey == dedupKey }
+                    persist(remaining)
+                case .cancelled:
+                    // Keep it queued for the next run and mark the run cancelled so the
+                    // caller doesn't treat a partial flush as complete.
+                    cancelled = true
+                }
+                addNext()
             }
         }
-        return FlushOutcome(postedCount: postedCount, cancelled: false)
+        return FlushOutcome(postedCount: postedCount, cancelled: cancelled)
     }
 
     /// Clears the persisted pending-notification queue. Called on app use: the user has
@@ -616,15 +633,16 @@ enum BackgroundRefreshManager {
         return content
     }
 
+    /// Maximum simultaneous media preparations during a flush. Bounds load on the
+    /// network / image cache while still overlapping the per-item downloads.
+    private static let maxConcurrentPreparations = 6
+
     /// Prepares a record's final notification content (avatar enrichment + thumbnail
     /// attachment) and posts it, returning whether it posted, was skipped, or was
-    /// cancelled mid-preparation.
-    private static func post(
-        _ record: PendingNotificationRecord,
-        center: UNUserNotificationCenter,
-        soundEnabled: Bool,
-        trigger: UNNotificationTrigger
-    ) async -> PostResult {
+    /// cancelled mid-preparation. Runs in a child task during a concurrent flush, so it
+    /// creates the notification center / trigger itself rather than capturing them
+    /// (neither is `Sendable`).
+    private static func post(_ record: PendingNotificationRecord, soundEnabled: Bool) async -> PostResult {
         var content = await communicationContent(baseContent(for: record, soundEnabled: soundEnabled), author: record.author)
         // Attach the submission thumbnail (blurred when needed). Set it on a mutable
         // copy of the enriched content: updating(from:) returns immutable content and
@@ -645,9 +663,10 @@ enum BackgroundRefreshManager {
         if Task.isCancelled {
             return .cancelled
         }
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: "fa.background.refresh-\(UUID())", content: content, trigger: trigger)
         do {
-            try await center.add(request)
+            try await UNUserNotificationCenter.current().add(request)
             return .posted
         } catch {
             logger.error("Failed to schedule local notification: \(error)")
@@ -655,12 +674,11 @@ enum BackgroundRefreshManager {
         }
     }
 
-    private static func flushQueue(center: UNUserNotificationCenter, soundEnabled: Bool) async {
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let outcome = await flush(
+    private static func flushQueue(soundEnabled: Bool) async {
+        let outcome = await flushConcurrently(
             Defaults[.pendingNotificationQueue],
-            isCancelled: { Task.isCancelled },
-            post: { await post($0, center: center, soundEnabled: soundEnabled, trigger: trigger) },
+            maxConcurrent: maxConcurrentPreparations,
+            post: { await post($0, soundEnabled: soundEnabled) },
             persist: { Defaults[.pendingNotificationQueue] = $0 }
         )
         if outcome.postedCount > 0 {

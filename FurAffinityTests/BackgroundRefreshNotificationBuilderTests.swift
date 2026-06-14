@@ -375,121 +375,101 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(result.map(\.dedupKey) == ["note-1", "shout-3", "note-2", "journal-5"])
     }
 
-    // MARK: - Flush resume / cancellation integrity
+    // MARK: - Concurrent flush: resume / cancellation integrity
 
     private func queue(_ count: Int) -> [PendingNotificationRecord] {
         (1...count).map { record("note-\($0)") }
     }
 
+    /// Tracks peak simultaneous executions to verify the concurrency bound.
+    private actor ConcurrencyTracker {
+        private var current = 0
+        private(set) var peak = 0
+        func enter() { current += 1; peak = max(peak, current) }
+        func leave() { current -= 1 }
+    }
+
     @Test func flush_uncancelledRun_postsAllAndEmptiesQueue() async {
         var persisted = queue(3)
-        var posted = [String]()
-        let outcome = await BackgroundRefreshManager.flush(
+        let outcome = await BackgroundRefreshManager.flushConcurrently(
             persisted,
-            isCancelled: { false },
-            post: { rec in
-                posted.append(rec.dedupKey)
-                return .posted
-            },
+            maxConcurrent: 6,
+            post: { _ in .posted },
             persist: { persisted = $0 }
         )
 
         #expect(outcome == .init(postedCount: 3, cancelled: false))
-        #expect(posted == ["note-1", "note-2", "note-3"])
         #expect(persisted.isEmpty)
     }
 
-    @Test func flush_cancelledBeforeAnyPost_postsNothingAndLeavesQueueIntact() async {
+    @Test func flush_allCancelled_postsNothingAndLeavesQueueIntact() async {
         let initial = queue(3)
         var persisted = initial
-        var postCalls = 0
-        let outcome = await BackgroundRefreshManager.flush(
+        let outcome = await BackgroundRefreshManager.flushConcurrently(
             initial,
-            isCancelled: { true },
-            post: { _ in
-                postCalls += 1
-                return .posted
-            },
+            maxConcurrent: 6,
+            post: { _ in .cancelled },
             persist: { persisted = $0 }
         )
 
         #expect(outcome == .init(postedCount: 0, cancelled: true))
-        #expect(postCalls == 0)
         #expect(persisted == initial)
     }
 
-    @Test func flush_cancelledMidRun_persistsOnlyTheRemainder() async {
+    @Test func flush_cancelledItemsStayQueued_postedAndSkippedRemoved() async {
         let initial = queue(5)
         var persisted = initial
-        var seen = 0
-        // Top-of-loop guard cancels once the first item has been posted.
-        let outcome = await BackgroundRefreshManager.flush(
+        // note-2 cancelled mid-prep, note-4 a genuine post failure; the rest post.
+        let outcome = await BackgroundRefreshManager.flushConcurrently(
             initial,
-            isCancelled: { seen >= 1 },
-            post: { _ in
-                seen += 1
-                return .posted
+            maxConcurrent: 6,
+            post: { rec in
+                switch rec.dedupKey {
+                case "note-2": return .cancelled
+                case "note-4": return .skipped
+                default: return .posted
+                }
             },
             persist: { persisted = $0 }
         )
 
-        #expect(outcome == .init(postedCount: 1, cancelled: true))
-        #expect(persisted.map(\.dedupKey) == ["note-2", "note-3", "note-4", "note-5"])
+        #expect(outcome == .init(postedCount: 3, cancelled: true))
+        // Only the cancelled item is stranded for the next run; posted + skipped are gone.
+        #expect(persisted.map(\.dedupKey) == ["note-2"])
     }
 
-    @Test func flush_postReturnsCancelled_leavesUnpostedRemainderQueued() async {
-        let initial = queue(5)
-        var persisted = initial
-        var calls = 0
-        // Cancellation lands mid-preparation of the second item: only the first is removed.
-        let outcome = await BackgroundRefreshManager.flush(
-            initial,
-            isCancelled: { false },
-            post: { _ in
-                calls += 1
-                return calls == 2 ? .cancelled : .posted
-            },
-            persist: { persisted = $0 }
-        )
-
-        #expect(outcome == .init(postedCount: 1, cancelled: true))
-        #expect(persisted.map(\.dedupKey) == ["note-2", "note-3", "note-4", "note-5"])
-    }
-
-    @Test func flush_skippedPostsAreDroppedWithoutCancelling() async {
-        let initial = queue(3)
-        var persisted = initial
-        var calls = 0
-        // A genuine post failure (e.g. center.add threw) drops the item but keeps going.
-        let outcome = await BackgroundRefreshManager.flush(
-            initial,
-            isCancelled: { false },
-            post: { _ in
-                calls += 1
-                return calls == 2 ? .skipped : .posted
-            },
-            persist: { persisted = $0 }
-        )
-
-        #expect(outcome == .init(postedCount: 2, cancelled: false))
-        #expect(calls == 3)
-        #expect(persisted.isEmpty)
-    }
-
-    @Test func flush_reflushOfDrainedQueueDoesNothing() async {
-        var posted = 0
-        let outcome = await BackgroundRefreshManager.flush(
+    @Test func flush_emptyQueueDoesNothing() async {
+        var persistCalls = 0
+        let outcome = await BackgroundRefreshManager.flushConcurrently(
             [],
-            isCancelled: { false },
+            maxConcurrent: 6,
+            post: { _ in .posted },
+            persist: { _ in persistCalls += 1 }
+        )
+
+        #expect(outcome == .init(postedCount: 0, cancelled: false))
+        #expect(persistCalls == 0)
+    }
+
+    @Test func flush_respectsConcurrencyBound() async {
+        let tracker = ConcurrencyTracker()
+        let outcome = await BackgroundRefreshManager.flushConcurrently(
+            queue(20),
+            maxConcurrent: 4,
             post: { _ in
-                posted += 1
+                await tracker.enter()
+                // Yield so overlapping preparations actually coexist.
+                try? await Task.sleep(nanoseconds: 1_000_000)
+                await tracker.leave()
                 return .posted
             },
             persist: { _ in }
         )
 
-        #expect(outcome == .init(postedCount: 0, cancelled: false))
-        #expect(posted == 0)
+        #expect(outcome == .init(postedCount: 20, cancelled: false))
+        let peak = await tracker.peak
+        #expect(peak <= 4)
+        #expect(peak >= 1)
     }
 
     // MARK: - Discard on app use
