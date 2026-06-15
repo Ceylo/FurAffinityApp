@@ -11,8 +11,10 @@ import FAKit
 struct CommentView: View {
     var comment: FAComment
     var highlight: Bool
+    var thread: CommentThreadInfo = .root
     @Environment(\.colorScheme) var colorScheme
     private let avatarSize = 42.0
+    private let contentVerticalPadding = 5.0
     @State private var rowBackgroundAnimated = false
     
     var overlayStyle: some ShapeStyle {
@@ -97,6 +99,17 @@ struct CommentView: View {
                 )
         }
     }
+
+    var threadColor: Color {
+        switch colorScheme {
+        case .light:
+                .secondary.opacity(0.5)
+        case .dark:
+                .secondary.opacity(0.75)
+        @unknown default:
+            fatalError()
+        }
+    }
     
     var body: some View {
         Group {
@@ -106,6 +119,20 @@ struct CommentView: View {
             case let .hidden(comment):
                 commentView(comment)
             }
+        }
+        .padding(.leading, CGFloat(thread.depth) * CommentsView.indentationStep)
+        .padding(.vertical, contentVerticalPadding)
+        // Connector is a full-row overlay drawn in the foreground, so it slides with the
+        // message under `.swipeActions` (keeping the curve attached to the avatar) and is
+        // never clipped — even at depth 0 where the indentation gutter has zero width.
+        .overlay(alignment: .topLeading) {
+            CommentThreadConnector(
+                info: thread,
+                step: CommentsView.indentationStep,
+                avatarCenterY: contentVerticalPadding + avatarSize / 2,
+                avatarRadius: avatarSize / 2
+            )
+            .stroke(threadColor, lineWidth: 1.5)
         }
         .listRowBackground(rowBackground)
         .onAppear {
