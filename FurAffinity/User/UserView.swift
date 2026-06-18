@@ -96,12 +96,6 @@ struct UserView: View {
             .listRowSeparator(.hidden)
             .listRowInsets(.init())
         }
-        .commentThreadFocusDestination(
-            in: user.shouts,
-            acceptsNewReplies: false,
-            highlightedCommentId: user.targetShoutId,
-            replyAction: nil
-        )
         .navigationTitle(user.displayName)
         .listStyle(.plain)
         .onAppear {

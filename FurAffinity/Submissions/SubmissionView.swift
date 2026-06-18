@@ -105,14 +105,6 @@ struct SubmissionView: View {
             .listRowSeparator(.hidden)
             .listRowInsets(.init(top: 5, leading: 0, bottom: 5, trailing: 0))
         }
-        .commentThreadFocusDestination(
-            in: submission.comments,
-            acceptsNewReplies: submission.acceptsNewComments,
-            highlightedCommentId: submission.targetCommentId,
-            replyAction: { cid in
-                replySession = .init(parentCid: cid, among: submission.comments)
-            }
-        )
         .commentSheet(on: $replySession, replyAction)
         .navigationTitle(submission.title)
         .listStyle(.plain)

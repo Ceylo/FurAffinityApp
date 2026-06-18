@@ -82,14 +82,6 @@ struct JournalView: View {
             .listRowInsets(.init())
             .padding(.horizontal, 10)
         }
-        .commentThreadFocusDestination(
-            in: journal.comments,
-            acceptsNewReplies: journal.acceptsNewComments,
-            highlightedCommentId: journal.targetCommentId,
-            replyAction: { cid in
-                replySession = .init(parentCid: cid, among: journal.comments)
-            }
-        )
         .commentSheet(on: $replySession, replyAction)
         .navigationTitle(journal.title)
         .listStyle(.plain)

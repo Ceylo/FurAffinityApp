@@ -25,6 +25,9 @@ struct CommentsView: View {
     var highlightedCommentId: Int?
     var acceptsNewReplies: Bool = false
     var replyAction: ((_ cid: Int) -> Void)?
+    /// Original top-level root to persist across focused screens. nil in host mode (the
+    /// top-level comment is its own root); set when re-basing a focused sub-thread.
+    var threadRoot: FAComment? = nil
 
     /// Avatar + spacing + a readable minimum bubble; scales with Dynamic Type so the cutoff
     /// falls shallower as the font grows.
@@ -82,16 +85,32 @@ struct CommentsView: View {
         .padding(.horizontal, 10)
     }
 
-    func visitContinueThread(rootCid: Int, hiddenCount: Int, thread: CommentThreadInfo) -> some View {
-        ContinueThreadRow(rootCid: rootCid, hiddenCount: hiddenCount, thread: thread)
-            .listRowSeparator(.hidden)
-            .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
-            .padding(.horizontal, 10)
+    // An inline link (no shared navigationDestination registration) so each host's live
+    // comments resolve against the right tree and reply updates propagate by re-rendering.
+    func visitContinueThread(comment: FAComment, root: FAComment, thread: CommentThreadInfo) -> some View {
+        NavigationLink {
+            FocusedCommentsView(
+                threadRoot: root,
+                focusedCid: comment.cid,
+                acceptsNewReplies: acceptsNewReplies,
+                highlightedCommentId: highlightedCommentId,
+                replyAction: replyAction
+            )
+        } label: {
+            ContinueThreadRow(hiddenCount: comment.answers.recursiveCount, thread: thread)
+        }
+        .listRowSeparator(.hidden)
+        .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
+        .padding(.horizontal, 10)
     }
 
-    func visitComments(_ comments: [FAComment], depth: Int, ancestorsContinue: [Bool]) -> some View {
+    func visitComments(_ comments: [FAComment], depth: Int, ancestorsContinue: [Bool],
+                       root: FAComment? = nil) -> some View {
         ForEach(Array(comments.enumerated()), id: \.element.id) { index, comment in
             let hasFollowingSibling = index < comments.count - 1
+            // The original top-level ancestor carried down so a continue row at any depth
+            // can focus while keeping the real root (host mode) or persisted root (focused).
+            let currentRoot = depth == 0 ? (threadRoot ?? comment) : (root ?? comment)
             visitComment(comment, thread: CommentThreadInfo(
                 depth: depth,
                 ancestorsContinue: ancestorsContinue,
@@ -109,11 +128,11 @@ struct CommentsView: View {
                 } ?? false
                 if childDepth <= maxInlineDepth || containsHighlight {
                     AnyView(visitComments(comment.answers, depth: childDepth,
-                                          ancestorsContinue: childAncestors))
+                                          ancestorsContinue: childAncestors, root: currentRoot))
                 } else {
                     AnyView(visitContinueThread(
-                        rootCid: comment.cid,
-                        hiddenCount: comment.answers.recursiveCount,
+                        comment: comment,
+                        root: currentRoot,
                         thread: CommentThreadInfo(
                             depth: childDepth, ancestorsContinue: childAncestors,
                             hasFollowingSibling: false, hasChildren: false
