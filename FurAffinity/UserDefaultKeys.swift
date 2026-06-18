@@ -57,6 +57,9 @@ extension Defaults.Keys {
     ]
 
     // MARK: - Migration
+    /// Current settings schema version. Bump when adding a migration below.
+    static let settingsSchemaVersion = Key<Int>("settingsSchemaVersion", default: 0)
+    /// Legacy flag from the first (pre-versioning) migration. Read-only signal now.
     static let didMigrateBadgeSettings = Key<Bool>("didMigrateBadgeSettings", default: false)
 
     static let latestNotificationIDs = [
@@ -75,16 +78,61 @@ extension Defaults.Keys {
     static let all = [
         lastViewedSubmissionID,
         animateAvatars,
+        settingsSchemaVersion,
         didMigrateBadgeSettings
     ] + notifications + badges + latestNotificationIDs
 }
 
 extension Defaults {
-    /// Seeds the per-content badge toggles from the existing notification toggles so that
-    /// users upgrading from a build where a single set of toggles drove both iOS notifications
-    /// and tab badges keep their current badge behavior. Runs once.
-    static func migrateBadgeSettingsIfNeeded() {
-        guard !Defaults[.didMigrateBadgeSettings] else { return }
+    static let currentSettingsSchemaVersion = 1
+
+    /// Runs each pending settings migration in order, stamping the schema version as it
+    /// goes. A no-op once the version is at the current one.
+    static func runSettingsMigrations() {
+        var version = startingSchemaVersion()
+        while version < currentSettingsSchemaVersion {
+            version += 1
+            runMigration(to: version)
+            Defaults[.settingsSchemaVersion] = version
+        }
+        Defaults[.settingsSchemaVersion] = max(version, currentSettingsSchemaVersion)
+    }
+
+    /// Dispatches a single migration step. Add a case for each new schema version.
+    private static func runMigration(to version: Int) {
+        switch version {
+        case 1: migrateBadgeSettings()
+        default: break
+        }
+    }
+
+    /// Determines where to begin migrating. Once `settingsSchemaVersion` is persisted this
+    /// returns it; otherwise it infers the version for the transition release: fresh
+    /// installs skip all migrations, legacy users resume from their last state.
+    ///
+    /// Detection uses the persistent domain (values actually written by the app) rather
+    /// than `object(forKey:)`, because `Defaults` registers every key's default into the
+    /// registration domain — so `object(forKey:)` is never `nil` and cannot tell a fresh
+    /// install from a real one.
+    private static func startingSchemaVersion() -> Int {
+        guard let bundleID = Bundle.main.bundleIdentifier,
+              let persisted = UserDefaults.standard.persistentDomain(forName: bundleID)
+        else { return currentSettingsSchemaVersion }
+
+        if let version = persisted[Keys.settingsSchemaVersion.name] as? Int {
+            return version
+        }
+        let ownKeyNames = Set(Keys.all.map(\.name))
+        guard persisted.keys.contains(where: ownKeyNames.contains) else {
+            return currentSettingsSchemaVersion   // fresh install
+        }
+        return persisted[Keys.didMigrateBadgeSettings.name] as? Bool == true ? 1 : 0
+    }
+
+    /// v1: seed the per-content badge toggles from the legacy notification toggles so that
+    /// users upgrading from a build where a single set of toggles drove both iOS
+    /// notifications and tab badges keep their current badge behavior.
+    private static func migrateBadgeSettings() {
         Defaults[.badgeNotes] = Defaults[.notifyNotes]
         Defaults[.badgeSubmissionComments] = Defaults[.notifySubmissionComments]
         Defaults[.badgeJournalComments] = Defaults[.notifyJournalComments]

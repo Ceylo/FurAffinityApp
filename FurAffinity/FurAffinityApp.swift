@@ -124,7 +124,7 @@ struct FurAffinityApp: App {
         _ = amplitude
         logger.info("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized")")
         
-        Defaults.migrateBadgeSettingsIfNeeded()
+        Defaults.runSettingsMigrations()
         BackgroundRefreshManager.register()
         FAImageInliner.dataProvider = kingfisherImageDataProvider
         UNUserNotificationCenter.current().delegate = NotificationCoordinator.shared
