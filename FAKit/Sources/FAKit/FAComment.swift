@@ -213,4 +213,14 @@ extension Collection<FAComment> {
         }
         return count
     }
+
+    /// Path from a top-level comment down to and including the comment with `cid`
+    /// (first element = top-level ancestor); nil if absent.
+    public func recursivePath(toCid cid: Int) -> [FAComment]? {
+        for comment in self {
+            if comment.cid == cid { return [comment] }
+            if let tail = comment.answers.recursivePath(toCid: cid) { return [comment] + tail }
+        }
+        return nil
+    }
 }

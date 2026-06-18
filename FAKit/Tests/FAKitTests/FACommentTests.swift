@@ -112,4 +112,31 @@ struct FACommentTests {
         ]
         #expect(tree.recursiveCount == 7)
     }
+
+    @Test
+    func recursivePath() async throws {
+        let tree = try await [
+            FAComment(.init(cid: 166652793, indentation: 0)).withAnswers([
+                FAComment(.init(cid: 166653891, indentation: 3)).withAnswers([
+                    FAComment(.init(cid: 166658565, indentation: 6))
+                ]),
+                FAComment(.init(cid: 166663244, indentation: 3)),
+                FAComment(.init(cid: 166652794, indentation: 3)).withAnswers([
+                    FAComment(.init(cid: 166658865, indentation: 6))
+                ]),
+            ]),
+            FAComment(.init(cid: 166656182, indentation: 0)),
+        ]
+
+        // Leaf: full chain from its top-level ancestor.
+        #expect(tree.recursivePath(toCid: 166658565)?.map(\.cid)
+                == [166652793, 166653891, 166658565])
+        // Mid-level node.
+        #expect(tree.recursivePath(toCid: 166652794)?.map(\.cid)
+                == [166652793, 166652794])
+        // Top-level root: just itself.
+        #expect(tree.recursivePath(toCid: 166656182)?.map(\.cid) == [166656182])
+        // Missing cid.
+        #expect(tree.recursivePath(toCid: 999) == nil)
+    }
 }
