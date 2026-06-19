@@ -69,6 +69,7 @@ struct FocusedCommentsView: View {
             .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
         }
         .listStyle(.plain)
+        .measuringCommentsAvailableWidth()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .scrollToItem(id: highlightedCommentId)

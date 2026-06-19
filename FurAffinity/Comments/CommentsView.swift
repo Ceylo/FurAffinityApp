@@ -8,12 +8,46 @@
 import SwiftUI
 import FAKit
 
-/// Width of a comment row (excluding host padding), reported up so the inline cutoff can
-/// adapt to the screen and Dynamic Type.
-private struct RowWidthKey: PreferenceKey {
+/// Width of the comments container, measured once from a stable (non-scrolling) anchor.
+private struct CommentsWidthKey: PreferenceKey {
     static let defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = max(value, nextValue())
+    }
+}
+
+private struct CommentsAvailableWidthKey: EnvironmentKey {
+    static let defaultValue: CGFloat = 0
+}
+
+extension EnvironmentValues {
+    /// Container width published by `measuringCommentsAvailableWidth()`, read by
+    /// `CommentsView` to size its inline-collapse cutoff.
+    var commentsAvailableWidth: CGFloat {
+        get { self[CommentsAvailableWidthKey.self] }
+        set { self[CommentsAvailableWidthKey.self] = newValue }
+    }
+}
+
+private struct CommentsWidthMeasuringModifier: ViewModifier {
+    @State private var width: CGFloat = 0
+    func body(content: Content) -> some View {
+        content
+            // The container background never scrolls, so the measured width is stable and the
+            // cutoff is fixed up front instead of shifting as rows recycle during scrolling.
+            .background(GeometryReader {
+                Color.clear.preference(key: CommentsWidthKey.self, value: $0.size.width)
+            })
+            .onPreferenceChange(CommentsWidthKey.self) { width = $0 }
+            .environment(\.commentsAvailableWidth, width)
+    }
+}
+
+extension View {
+    /// Publishes the comments container width to descendant `CommentsView`s. Apply to the
+    /// `List` that hosts comments so the collapse cutoff is decided from a stable width.
+    func measuringCommentsAvailableWidth() -> some View {
+        modifier(CommentsWidthMeasuringModifier())
     }
 }
 
@@ -32,17 +66,19 @@ struct CommentsView: View {
     /// Avatar + spacing + a readable minimum bubble; scales with Dynamic Type so the cutoff
     /// falls shallower as the font grows.
     @ScaledMetric private var minContentWidth: CGFloat = 220
-    @State private var availableWidth: CGFloat = 0
+    /// Stable container width from the host `List` (see `measuringCommentsAvailableWidth()`).
+    @Environment(\.commentsAvailableWidth) private var availableWidth
 
     /// Deepest reply depth rendered inline. Past it, a comment's replies collapse into a
     /// tappable "Continue thread" row that pushes a focused screen re-based to depth 0.
-    /// Driven by the measured row width: the last depth that still leaves a readable bubble.
-    /// 5 is the pre-measurement fallback; the ≥1 floor guarantees a top-level comment's
-    /// direct replies always render inline.
+    /// Computed up front from the stable container width — the last depth that still leaves a
+    /// readable bubble — so it never shifts while scrolling. 5 is the pre-measurement
+    /// fallback; the ≥1 floor guarantees a top-level comment's direct replies render inline.
     var maxInlineDepth: Int {
-        availableWidth <= 0
-            ? 5
-            : max(1, Int((availableWidth - minContentWidth) / Self.indentationStep))
+        guard availableWidth > 0 else { return 5 }
+        // Rows reserve 10pt on each side inside the container (see visitComment).
+        let contentWidth = availableWidth - 20
+        return max(1, Int((contentWidth - minContentWidth) / Self.indentationStep))
     }
 
     func visitComment(_ comment: FAComment, thread: CommentThreadInfo) -> some View {
@@ -78,10 +114,6 @@ struct CommentsView: View {
         // Indentation and inter-row spacing are handled inside CommentView (gutter + content
         // padding) so the connector can span the full row height and connect across rows.
         .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
-        // Measured inside the host padding, so it already excludes it; feeds maxInlineDepth.
-        .background(GeometryReader {
-            Color.clear.preference(key: RowWidthKey.self, value: $0.size.width)
-        })
         .padding(.horizontal, 10)
     }
 
@@ -145,7 +177,6 @@ struct CommentsView: View {
 
     var body: some View {
         visitComments(comments, depth: 0, ancestorsContinue: [])
-            .onPreferenceChange(RowWidthKey.self) { availableWidth = $0 }
     }
 }
 

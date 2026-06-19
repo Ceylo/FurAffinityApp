@@ -98,6 +98,7 @@ struct UserView: View {
         }
         .navigationTitle(user.displayName)
         .listStyle(.plain)
+        .measuringCommentsAvailableWidth()
         .onAppear {
             prefetchAvatars(for: user.shouts)
         }

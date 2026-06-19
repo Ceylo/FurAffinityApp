@@ -108,6 +108,7 @@ struct SubmissionView: View {
         .commentSheet(on: $replySession, replyAction)
         .navigationTitle(submission.title)
         .listStyle(.plain)
+        .measuringCommentsAvailableWidth()
         .onAppear {
             prefetchAvatars(for: submission.comments)
         }

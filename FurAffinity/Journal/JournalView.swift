@@ -85,6 +85,7 @@ struct JournalView: View {
         .commentSheet(on: $replySession, replyAction)
         .navigationTitle(journal.title)
         .listStyle(.plain)
+        .measuringCommentsAvailableWidth()
         .onAppear {
             prefetchAvatars(for: journal.comments)
         }
