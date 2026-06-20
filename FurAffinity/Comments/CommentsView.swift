@@ -32,10 +32,7 @@ struct CommentsView: View {
     /// readable bubble — so it never shifts while scrolling. 5 is the pre-measurement
     /// fallback; the ≥1 floor guarantees a top-level comment's direct replies render inline.
     var maxInlineDepth: Int {
-        guard availableWidth > 0 else { return 5 }
-        // Rows reserve 10pt on each side inside the container (see visitComment).
-        let contentWidth = availableWidth - 20
-        return max(1, Int((contentWidth - minContentWidth) / Self.indentationStep))
+        commentInlineCutoff(availableWidth: availableWidth, minContentWidth: minContentWidth)
     }
 
     func visitComment(_ comment: FAComment, thread: CommentThreadInfo) -> some View {
@@ -110,12 +107,9 @@ struct CommentsView: View {
             // A top-level comment has no trunk, so it contributes no ancestor column.
             let childAncestors = depth == 0 ? [] : ancestorsContinue + [hasFollowingSibling]
             if !comment.answers.isEmpty {
-                // Keep a deep-linked target reachable by expanding only the branch that
-                // contains it; sibling branches still collapse at the cutoff.
-                let containsHighlight = highlightedCommentId.map { hcid in
-                    comment.answers.recursiveFirst(where: { $0.cid == hcid }) != nil
-                } ?? false
-                if childDepth <= maxInlineDepth || containsHighlight {
+                // Every branch collapses once it passes the cutoff; a deep-linked target past
+                // it is reached by the host auto-pushing a focused screen.
+                if childDepth <= maxInlineDepth {
                     AnyView(visitComments(comment.answers, depth: childDepth,
                                           ancestorsContinue: childAncestors, root: currentRoot))
                 } else {

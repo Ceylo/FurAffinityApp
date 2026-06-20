@@ -8,6 +8,29 @@
 import SwiftUI
 import FAKit
 
+/// A deep-linked target, past the collapse cutoff, that the host should auto-focus.
+/// Identity is the focused cid (FAComment isn't Hashable, and the cid uniquely keys the push).
+struct CommentFocusTarget: Identifiable, Hashable {
+    let threadRoot: FAComment      // top-level ancestor, for context
+    let focusedCid: Int            // the target's PARENT, so the target re-bases to depth 1
+    var id: Int { focusedCid }
+
+    static func == (lhs: CommentFocusTarget, rhs: CommentFocusTarget) -> Bool {
+        lhs.focusedCid == rhs.focusedCid
+    }
+    func hash(into hasher: inout Hasher) { hasher.combine(focusedCid) }
+}
+
+/// Resolves a deep-linked target to a focus the host should auto-push, or nil when the target
+/// is within the cutoff (renders inline) or absent from the tree. Focusing on the target's
+/// parent re-bases the target to depth 1, so it is always readable in a single push.
+func deepHighlightFocus(in comments: [FAComment], targetCid: Int?, cutoff: Int) -> CommentFocusTarget? {
+    guard let targetCid, let path = comments.recursivePath(toCid: targetCid),
+          path.count - 1 > cutoff           // target depth (0-based) exceeds cutoff
+    else { return nil }
+    return CommentFocusTarget(threadRoot: path[0], focusedCid: path[path.count - 2].cid)
+}
+
 /// Focused view of a collapsed sub-thread that keeps the original top-level root in view.
 ///
 /// Shows the top-level `threadRoot` for context, a non-interactive "N parent comments
