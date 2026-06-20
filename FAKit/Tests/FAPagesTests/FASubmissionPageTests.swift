@@ -19,8 +19,7 @@ extension FASubmissionPage {
     func ignoringUUID() -> Self {
         .init(
             previewImageUrl: previewImageUrl,
-            fullResolutionMediaUrl: fullResolutionMediaUrl,
-            widthOnHeightRatio: widthOnHeightRatio,
+            content: content,
             metadata: metadata.ignoringUUID(),
             htmlDescription: htmlDescription,
             isFavorite: isFavorite,
@@ -47,7 +46,6 @@ extension FASubmissionPage.Metadata {
             category: category,
             theme: theme,
             species: species,
-            resolution: resolution,
             fileSize: fileSize,
             keywords: keywords,
             folders: folders.ignoringUUID()
@@ -83,8 +81,11 @@ YCH for
 """
         let expected = FASubmissionPage(
             previewImageUrl: URL(string: "https://t.furaffinity.net/49338772@600-1665402309.jpg")!,
-            fullResolutionMediaUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1665402309/1665402309.annetpeas_the_hookah_fa.png")!,
-            widthOnHeightRatio: 1217 / 1280,
+            content: .image(.init(
+                mediaUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1665402309/1665402309.annetpeas_the_hookah_fa.png")!,
+                widthOnHeightRatio: 1217 / 1280,
+                resolution: "1217 x 1280"
+            )),
             metadata: .init(
                 title: "The hookah",
                 author: "annetpeas",
@@ -98,7 +99,6 @@ YCH for
                 category: "Artwork (Digital)",
                 theme: "All",
                 species: "Rabbit / Hare",
-                resolution: "1217 x 1280",
                 fileSize: "1.22 MB",
                 keywords: ["lil-maj", "cody", "female", "girl", "rabbit", "cute", "chibi", "annetpeas", "smoke", "smoking", "hookah", "u_annetpeas", "c_artwork_digital", "t_all", "s_rabbit_hare"],
                 folders: [.init(
@@ -116,6 +116,32 @@ YCH for
         )
         
         #expect(page.ignoringUUID() == expected.ignoringUUID())
+    }
+
+    @Test
+    func storyTextSubmission_isParsed() throws {
+        let url = URL(string: "https://www.furaffinity.net/view/65390484/")!
+        let data = testData("www.furaffinity.net:view:65390484:story-text.html")
+        let page = try FASubmissionPage(data: data, url: url)
+
+        #expect(page.previewImageUrl == URL(string: "https://t.furaffinity.net/65390484@600-1781809267.jpg")!)
+        #expect(page.content == .text(.init(
+            documentUrl: URL(string: "https://d.furaffinity.net/download/art/botsu1x/stories/1781809267/1781809267.botsu1x_prepared_with_the_fall_out___1_.docx")!,
+            renderedPreviewUrl: URL(string: "https://d.furaffinity.net/art/botsu1x/stories/1781809267/1781809267.thumbnail.botsu1x_prepared_with_the_fall_out___1_.docx.jpg")!
+        )))
+        #expect(page.metadata.category == "Story")
+    }
+
+    @Test
+    func storyPdfSubmission_isParsed() throws {
+        let url = URL(string: "https://www.furaffinity.net/view/65394772/")!
+        let data = testData("www.furaffinity.net:view:65394772:story-pdf.html")
+        let page = try FASubmissionPage(data: data, url: url)
+
+        #expect(page.content == .text(.init(
+            documentUrl: URL(string: "https://d.furaffinity.net/download/art/vixyyfox/stories/1781832277/1781832277.vixyyfox_3000_-redfurythings.pdf")!,
+            renderedPreviewUrl: URL(string: "https://d.furaffinity.net/art/vixyyfox/stories/1781832277/1781832277.thumbnail.vixyyfox_3000_-redfurythings.pdf.jpg")!
+        )))
     }
 
     @Test
