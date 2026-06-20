@@ -76,6 +76,10 @@ class OfflineFASession: FASession {
         print(#function)
         return submission
     }
+
+    func file(at url: URL) async throws -> Data {
+        Data()
+    }
     
     func journals(for url: URL) async throws -> FAUserJournals {
         .init(displayAuthor: displayUsername, journals: [])
@@ -365,8 +369,11 @@ extension FASubmission {
             return await FASubmission(
                 url: URL(string: "https://www.furaffinity.net/view/44188741/")!,
                 previewImageUrl: URL(string: "https://t.furaffinity.net/44188741@400-1634411740.jpg")!,
-                fullResolutionMediaUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1634411740/1634411740.annetpeas_witch2021__2_fa.png")!,
-                widthOnHeightRatio: 416 / 600,
+                content: .image(.init(
+                    mediaUrl: URL(string: "https://d.furaffinity.net/art/annetpeas/1634411740/1634411740.annetpeas_witch2021__2_fa.png")!,
+                    widthOnHeightRatio: 416 / 600,
+                    resolution: "888 x 1280"
+                )),
                 metadata: FASubmission.Metadata(
                     title: "Spells and magic",
                     author: "annetpeas",
@@ -380,7 +387,6 @@ extension FASubmission {
                     category: "Artwork (Digital) / All",
                     theme: "All",
                     species: "Unspecified / Any",
-                    resolution: "888 x 1280",
                     fileSize: "949.8 kB",
                     keywords: ["mikazukihellfire", "medea", "female", "cute", "chibi", "annetpeas", "halloween", "witch", "grimoire", "magic", "books"],
                     folders: [
@@ -400,6 +406,44 @@ extension FASubmission {
                 isFavorite: false,
                 favoriteUrl: URL(string: "https://www.furaffinity.net/fav/44188741/?key=00f2f5f4c1c7fbfac02147b73d670cac6423ab85")!,
                 comments: FAComment.demo,
+                targetCommentId: nil,
+                acceptsNewComments: true
+            )
+        }
+    }
+
+    static var demoText: FASubmission {
+        get async {
+            let htmlDescription = "A short story, presented as a downloadable document."
+
+            return await FASubmission(
+                url: URL(string: "https://www.furaffinity.net/view/65390484/")!,
+                previewImageUrl: URL(string: "https://t.furaffinity.net/65390484@600-1781809267.jpg")!,
+                content: .text(.init(
+                    documentUrl: URL(string: "https://d.furaffinity.net/download/art/botsu1x/stories/1781809267/1781809267.botsu1x_prepared_with_the_fall_out___1_.docx")!,
+                    renderedPreviewUrl: URL(string: "https://d.furaffinity.net/art/botsu1x/stories/1781809267/1781809267.thumbnail.botsu1x_prepared_with_the_fall_out___1_.docx.jpg")!
+                )),
+                metadata: FASubmission.Metadata(
+                    title: "Prepared for the Fallout",
+                    author: "botsu1x",
+                    displayAuthor: "botsu1x",
+                    datetime: "Jun 18, 2026 04:15 PM",
+                    naturalDatetime: "3 days ago",
+                    viewCount: 42,
+                    commentCount: 0,
+                    favoriteCount: 7,
+                    rating: .general,
+                    category: "Story",
+                    theme: "All",
+                    species: "Unspecified / Any",
+                    fileSize: "15.1 kB",
+                    keywords: ["fallout", "family", "adventure"],
+                    folders: []
+                ),
+                description: try! AttributedString(FAHTML: htmlDescription.selfContainedFAHtmlSubmission),
+                isFavorite: false,
+                favoriteUrl: URL(string: "https://www.furaffinity.net/fav/65390484/?key=c1965239f78b5e5589024ff12924bac8c0d31f324c0d4124b33dacae79e7bbd9")!,
+                comments: [],
                 targetCommentId: nil,
                 acceptsNewComments: true
             )

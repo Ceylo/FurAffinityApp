@@ -12,11 +12,13 @@ public typealias Rating = FAPages.Rating
 
 public struct FASubmission: Equatable, Sendable {
     public typealias Metadata = FASubmissionPage.Metadata
-    
+    public typealias Content = FASubmissionPage.Content
+    public typealias ImageContent = FASubmissionPage.ImageContent
+    public typealias TextContent = FASubmissionPage.TextContent
+
     public let url: URL
     public let previewImageUrl: URL
-    public let fullResolutionMediaUrl: URL
-    public let widthOnHeightRatio: Float
+    public let content: Content
     public let metadata: Metadata
     public var author: String { metadata.author }
     public var displayAuthor: String { metadata.displayAuthor }
@@ -33,8 +35,7 @@ public struct FASubmission: Equatable, Sendable {
     
     public init(
         url: URL, previewImageUrl: URL,
-        fullResolutionMediaUrl: URL,
-        widthOnHeightRatio: Float,
+        content: Content,
         metadata: Metadata,
         description: AttributedString,
         isFavorite: Bool,
@@ -45,8 +46,7 @@ public struct FASubmission: Equatable, Sendable {
     ) {
         self.url = url
         self.previewImageUrl = previewImageUrl
-        self.fullResolutionMediaUrl = fullResolutionMediaUrl
-        self.widthOnHeightRatio = widthOnHeightRatio
+        self.content = content
         self.metadata = metadata
         self.description = description
         self.isFavorite = isFavorite
@@ -60,8 +60,7 @@ public struct FASubmission: Equatable, Sendable {
         .init(
             url: url,
             previewImageUrl: previewImageUrl,
-            fullResolutionMediaUrl: fullResolutionMediaUrl,
-            widthOnHeightRatio: widthOnHeightRatio,
+            content: content,
             metadata: metadata.togglingFavorite(isFavorite),
             description: description,
             isFavorite: !isFavorite,
@@ -79,8 +78,7 @@ extension FASubmission {
         try self.init(
             url: url,
             previewImageUrl: page.previewImageUrl,
-            fullResolutionMediaUrl: page.fullResolutionMediaUrl,
-            widthOnHeightRatio: page.widthOnHeightRatio,
+            content: page.content,
             metadata: page.metadata,
             description: await AttributedString(FAHTML: page.htmlDescription.selfContainedFAHtmlSubmission),
             isFavorite: page.isFavorite,

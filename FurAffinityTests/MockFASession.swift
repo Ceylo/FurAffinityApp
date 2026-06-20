@@ -61,6 +61,10 @@ final class MockFASession: FASession {
         throw ModelError.disconnected
     }
 
+    func file(at url: URL) async throws -> Data {
+        throw ModelError.disconnected
+    }
+
     func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async throws -> C {
         throw ModelError.disconnected
     }
