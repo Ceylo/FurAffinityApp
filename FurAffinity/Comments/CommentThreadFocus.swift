@@ -31,6 +31,57 @@ func deepHighlightFocus(in comments: [FAComment], targetCid: Int?, cutoff: Int) 
     return CommentFocusTarget(threadRoot: path[0], focusedCid: path[path.count - 2].cid)
 }
 
+private struct DeepHighlightAutoFocusModifier: ViewModifier {
+    let comments: [FAComment]
+    let targetCid: Int?
+    let acceptsNewReplies: Bool
+    let replyAction: ((_ cid: Int) -> Void)?
+
+    @State private var commentsWidth: CGFloat = 0
+    @State private var autoFocus: CommentFocusTarget?
+    @State private var didAutoFocus = false
+    @ScaledMetric private var minContentWidth: CGFloat = 220
+
+    func body(content: Content) -> some View {
+        content
+            .measuringCommentsAvailableWidth($commentsWidth)
+            .onChange(of: commentsWidth) { _, w in
+                guard !didAutoFocus, w > 0 else { return }
+                let cutoff = commentInlineCutoff(availableWidth: w, minContentWidth: minContentWidth)
+                if let focus = deepHighlightFocus(in: comments, targetCid: targetCid, cutoff: cutoff) {
+                    didAutoFocus = true
+                    autoFocus = focus
+                }
+            }
+            .navigationDestination(item: $autoFocus) { focus in
+                FocusedCommentsView(
+                    threadRoot: focus.threadRoot,
+                    focusedCid: focus.focusedCid,
+                    acceptsNewReplies: acceptsNewReplies,
+                    highlightedCommentId: targetCid,
+                    replyAction: replyAction
+                )
+            }
+    }
+}
+
+extension View {
+    /// Measures the comments container width and, once known, auto-pushes a focused screen for
+    /// a deep-linked target past the collapse cutoff (see `deepHighlightFocus`). Apply to the
+    /// comment-hosting `List` in place of a bare `measuringCommentsAvailableWidth()`.
+    func autoFocusingDeepHighlight(
+        in comments: [FAComment],
+        targetCid: Int?,
+        acceptsNewReplies: Bool,
+        replyAction: ((_ cid: Int) -> Void)?
+    ) -> some View {
+        modifier(DeepHighlightAutoFocusModifier(
+            comments: comments, targetCid: targetCid,
+            acceptsNewReplies: acceptsNewReplies, replyAction: replyAction
+        ))
+    }
+}
+
 /// Focused view of a collapsed sub-thread that keeps the original top-level root in view.
 ///
 /// Shows the top-level `threadRoot` for context, a non-interactive "N parent comments

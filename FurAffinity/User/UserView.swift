@@ -17,10 +17,6 @@ struct UserView: View {
     
     private let bannerHeight = 100.0
     @State private var noteReplySession: NoteReplySession?
-    @State private var commentsWidth: CGFloat = 0
-    @State private var autoFocus: CommentFocusTarget?
-    @State private var didAutoFocus = false
-    @ScaledMetric private var minContentWidth: CGFloat = 220
     
     var banner: some View {
         GeometryReader { geometry in
@@ -102,25 +98,12 @@ struct UserView: View {
         }
         .navigationTitle(user.displayName)
         .listStyle(.plain)
-        .measuringCommentsAvailableWidth($commentsWidth)
-        .onChange(of: commentsWidth) { _, w in
-            guard !didAutoFocus, w > 0 else { return }
-            let cutoff = commentInlineCutoff(availableWidth: w, minContentWidth: minContentWidth)
-            if let focus = deepHighlightFocus(in: user.shouts,
-                                              targetCid: user.targetShoutId, cutoff: cutoff) {
-                didAutoFocus = true
-                autoFocus = focus
-            }
-        }
-        .navigationDestination(item: $autoFocus) { focus in
-            FocusedCommentsView(
-                threadRoot: focus.threadRoot,
-                focusedCid: focus.focusedCid,
-                acceptsNewReplies: false,
-                highlightedCommentId: user.targetShoutId,
-                replyAction: nil
-            )
-        }
+        .autoFocusingDeepHighlight(
+            in: user.shouts,
+            targetCid: user.targetShoutId,
+            acceptsNewReplies: false,
+            replyAction: nil
+        )
         .onAppear {
             prefetchAvatars(for: user.shouts)
         }

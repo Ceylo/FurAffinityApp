@@ -24,10 +24,6 @@ struct SubmissionView: View {
     @State private var replySession: CommentReplySession?
     @State private var fullResolutionMediaFileUrl: URL?
     @State private var noteReplySession: NoteReplySession?
-    @State private var commentsWidth: CGFloat = 0
-    @State private var autoFocus: CommentFocusTarget?
-    @State private var didAutoFocus = false
-    @ScaledMetric private var minContentWidth: CGFloat = 220
     
     var header: some View {
         TitleAuthorHeader(
@@ -112,27 +108,14 @@ struct SubmissionView: View {
         .commentSheet(on: $replySession, replyAction)
         .navigationTitle(submission.title)
         .listStyle(.plain)
-        .measuringCommentsAvailableWidth($commentsWidth)
-        .onChange(of: commentsWidth) { _, w in
-            guard !didAutoFocus, w > 0 else { return }
-            let cutoff = commentInlineCutoff(availableWidth: w, minContentWidth: minContentWidth)
-            if let focus = deepHighlightFocus(in: submission.comments,
-                                              targetCid: submission.targetCommentId, cutoff: cutoff) {
-                didAutoFocus = true
-                autoFocus = focus
+        .autoFocusingDeepHighlight(
+            in: submission.comments,
+            targetCid: submission.targetCommentId,
+            acceptsNewReplies: submission.acceptsNewComments,
+            replyAction: { cid in
+                replySession = .init(parentCid: cid, among: submission.comments)
             }
-        }
-        .navigationDestination(item: $autoFocus) { focus in
-            FocusedCommentsView(
-                threadRoot: focus.threadRoot,
-                focusedCid: focus.focusedCid,
-                acceptsNewReplies: submission.acceptsNewComments,
-                highlightedCommentId: submission.targetCommentId,
-                replyAction: { cid in
-                    replySession = .init(parentCid: cid, among: submission.comments)
-                }
-            )
-        }
+        )
         .onAppear {
             prefetchAvatars(for: submission.comments)
         }
