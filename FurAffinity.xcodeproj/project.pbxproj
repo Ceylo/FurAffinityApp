@@ -69,6 +69,7 @@
 		87891FFA29F5A09700606F12 /* CommentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87891FF929F5A09700606F12 /* CommentView.swift */; };
 		CEA17A1100000000000000FA /* CommentThreadConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA17A1100000000000000F9 /* CommentThreadConnector.swift */; };
 		CEA17A1100000000000000FC /* ContinueThreadRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA17A1100000000000000FB /* ContinueThreadRow.swift */; };
+		CEA17A110000000000000202 /* CommentsWidthMeasuring.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA17A110000000000000201 /* CommentsWidthMeasuring.swift */; };
 		CEA17A1100000000000000FE /* CommentThreadFocus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA17A1100000000000000FD /* CommentThreadFocus.swift */; };
 		878B0B912970B18C00A08685 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878B0B902970B18C00A08685 /* Secrets.swift */; };
 		878EBC992EDB8CFE006A68D3 /* ErrorDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878EBC982EDB8CF6006A68D3 /* ErrorDisplay.swift */; };
@@ -238,6 +239,7 @@
 		87891FF929F5A09700606F12 /* CommentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentView.swift; sourceTree = "<group>"; };
 		CEA17A1100000000000000F9 /* CommentThreadConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentThreadConnector.swift; sourceTree = "<group>"; };
 		CEA17A1100000000000000FB /* ContinueThreadRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContinueThreadRow.swift; sourceTree = "<group>"; };
+		CEA17A110000000000000201 /* CommentsWidthMeasuring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsWidthMeasuring.swift; sourceTree = "<group>"; };
 		CEA17A1100000000000000FD /* CommentThreadFocus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentThreadFocus.swift; sourceTree = "<group>"; };
 		878B0B8A296CA5B200A08685 /* Privacy Policy.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Privacy Policy.md"; sourceTree = "<group>"; };
 		878B0B902970B18C00A08685 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
@@ -524,6 +526,7 @@
 				87891FF929F5A09700606F12 /* CommentView.swift */,
 				CEA17A1100000000000000F9 /* CommentThreadConnector.swift */,
 				CEA17A1100000000000000FB /* ContinueThreadRow.swift */,
+				CEA17A110000000000000201 /* CommentsWidthMeasuring.swift */,
 				CEA17A1100000000000000FD /* CommentThreadFocus.swift */,
 				87919B2229F1CED6006FC2D6 /* Commenting.swift */,
 			);
@@ -840,6 +843,7 @@
 				87891FFA29F5A09700606F12 /* CommentView.swift in Sources */,
 				CEA17A1100000000000000FA /* CommentThreadConnector.swift in Sources */,
 				CEA17A1100000000000000FC /* ContinueThreadRow.swift in Sources */,
+				CEA17A110000000000000202 /* CommentsWidthMeasuring.swift in Sources */,
 				CEA17A1100000000000000FE /* CommentThreadFocus.swift in Sources */,
 				878B0B912970B18C00A08685 /* Secrets.swift in Sources */,
 				8758895C2DCD150F00CB7793 /* WatchingPill.swift in Sources */,
