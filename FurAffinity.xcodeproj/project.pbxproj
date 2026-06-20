@@ -11,6 +11,8 @@
 		50599C71B1FD0BDBC8E34245 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7311AE39DCFA90D16A020EBA /* Foundation.framework */; };
 		76DD1A515EB54A13BA763698 /* CloudflareResolutionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */; };
 		8708DA262D74CF19000B419C /* SubmissionMetadataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8708DA252D74CF19000B419C /* SubmissionMetadataView.swift */; };
+		FA0000000000000000000002 /* QuickLookPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000001 /* QuickLookPreview.swift */; };
+		FA0000000000000000000004 /* SubmissionTextContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000003 /* SubmissionTextContent.swift */; };
 		8708DA292D74D4D4000B419C /* WrappingHStack in Frameworks */ = {isa = PBXBuildFile; productRef = 8708DA282D74D4D4000B419C /* WrappingHStack */; };
 		87098D362CB14F1000E7BD94 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 87098D352CB14F1000E7BD94 /* Kingfisher */; };
 		87098D382CB19E4D00E7BD94 /* Kingfisher+FA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */; };
@@ -183,6 +185,8 @@
 		702AF02EF9EF07FD91BDCD6C /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7311AE39DCFA90D16A020EBA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS14.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		8708DA252D74CF19000B419C /* SubmissionMetadataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionMetadataView.swift; sourceTree = "<group>"; };
+		FA0000000000000000000001 /* QuickLookPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookPreview.swift; sourceTree = "<group>"; };
+		FA0000000000000000000003 /* SubmissionTextContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionTextContent.swift; sourceTree = "<group>"; };
 		87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Kingfisher+FA.swift"; sourceTree = "<group>"; };
 		87098D392CB2BEF000E7BD94 /* UserDefaultKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultKeys.swift; sourceTree = "<group>"; };
 		870B2AA02DFDD29500B48AC3 /* NoteReplying.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteReplying.swift; sourceTree = "<group>"; };
@@ -459,6 +463,8 @@
 				87566B83297DD02300FD3199 /* SubmissionMainImage.swift */,
 				873E65EF27528FC6009C8767 /* SubmissionControlsView.swift */,
 				8708DA252D74CF19000B419C /* SubmissionMetadataView.swift */,
+				FA0000000000000000000001 /* QuickLookPreview.swift */,
+				FA0000000000000000000003 /* SubmissionTextContent.swift */,
 			);
 			path = Submissions;
 			sourceTree = "<group>";
@@ -859,6 +865,8 @@
 				87B0933C2AED6D53008DFDE7 /* DatetimePair.swift in Sources */,
 				87F074A82C91AF0C00218D0E /* RemoteSubmissionView.swift in Sources */,
 				8708DA262D74CF19000B419C /* SubmissionMetadataView.swift in Sources */,
+				FA0000000000000000000002 /* QuickLookPreview.swift in Sources */,
+				FA0000000000000000000004 /* SubmissionTextContent.swift in Sources */,
 				875EF2E82C1E1FF7000D4BFB /* Comparable.swift in Sources */,
 				87919B2329F1CED6006FC2D6 /* Commenting.swift in Sources */,
 				873E66112752AAB2009C8767 /* MediaSaveHandler.swift in Sources */,

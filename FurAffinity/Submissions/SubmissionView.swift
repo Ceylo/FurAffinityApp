@@ -23,8 +23,24 @@ struct SubmissionView: View {
     }
     @State private var replySession: CommentReplySession?
     @State private var fullResolutionMediaFileUrl: URL?
+    @State private var documentFileUrl: URL?
     @State private var noteReplySession: NoteReplySession?
-    
+
+    private var isText: Bool {
+        if case .text = submission.content { return true }
+        return false
+    }
+
+    /// The downloaded file backing Save/Share, whichever content kind applies.
+    private var savableFileUrl: URL? {
+        isText ? documentFileUrl : fullResolutionMediaFileUrl
+    }
+
+    private var imageResolution: String? {
+        if case let .image(image) = submission.content { return image.resolution }
+        return nil
+    }
+
     var header: some View {
         TitleAuthorHeader(
             username: submission.author,
@@ -36,19 +52,31 @@ struct SubmissionView: View {
         .padding(.horizontal, 10)
     }
     
-    var mainImage: some View {
-        SubmissionMainImage(
-            widthOnHeightRatio: submission.widthOnHeightRatio,
-            thumbnailImage: thumbnail,
-            fullResolutionMediaUrl: submission.fullResolutionMediaUrl,
-            fullResolutionMediaFileUrl: $fullResolutionMediaFileUrl
-        )
+    @ViewBuilder
+    var mainContent: some View {
+        switch submission.content {
+        case let .image(image):
+            SubmissionMainImage(
+                widthOnHeightRatio: image.widthOnHeightRatio,
+                thumbnailImage: thumbnail,
+                fullResolutionMediaUrl: image.mediaUrl,
+                fullResolutionMediaFileUrl: $fullResolutionMediaFileUrl
+            )
+        case let .text(text):
+            SubmissionTextContent(
+                textContent: text,
+                thumbnail: thumbnail,
+                previewImageUrl: submission.previewImageUrl,
+                documentFileUrl: $documentFileUrl
+            )
+        }
     }
-    
+
     var submissionControls: some View {
         SubmissionControlsView(
             submissionUrl: submission.url,
-            mediaFileUrl: fullResolutionMediaFileUrl,
+            mediaFileUrl: savableFileUrl,
+            isText: isText,
             favoritesCount: submission.favoriteCount,
             isFavorite: submission.isFavorite,
             favoriteAction: favoriteAction,
@@ -57,7 +85,7 @@ struct SubmissionView: View {
             replyAction: {
                 replySession = .init(parentCid: nil, among: [])
             },
-            metadataTarget: .submissionMetadata(submission.metadata),
+            metadataTarget: .submissionMetadata(submission.metadata, resolution: imageResolution),
             errorStorage: errorStorage
         )
         .padding(.horizontal, 10)
@@ -92,7 +120,7 @@ struct SubmissionView: View {
         List {
             Group {
                 header
-                mainImage
+                mainContent
                 submissionControls
                 // When glass effect is used in a list with light mode, shadow gets clipped.
                 // This padding is a workaround to prevent clipping.
@@ -131,20 +159,24 @@ struct SubmissionView: View {
                 }
                 
                 Button {
-                    Task {
-                        await MediaSaveHandler(errorStorage: errorStorage).saveMedia(atFileUrl: fullResolutionMediaFileUrl!)
+                    if isText {
+                        exportToFiles([savableFileUrl!])
+                    } else {
+                        Task {
+                            await MediaSaveHandler(errorStorage: errorStorage).saveMedia(atFileUrl: savableFileUrl!)
+                        }
                     }
                 } label: {
-                    Label("Save Image", systemImage: "square.and.arrow.down")
+                    Label(isText ? "Save to Files" : "Save Image", systemImage: "square.and.arrow.down")
                 }
-                .disabled(fullResolutionMediaFileUrl == nil)
-                
+                .disabled(savableFileUrl == nil)
+
                 Button {
-                    share([fullResolutionMediaFileUrl!])
+                    share([savableFileUrl!])
                 } label: {
-                    Label("Share Image", systemImage: "square.and.arrow.up")
+                    Label(isText ? "Share" : "Share Image", systemImage: "square.and.arrow.up")
                 }
-                .disabled(fullResolutionMediaFileUrl == nil)
+                .disabled(savableFileUrl == nil)
                 
                 Button {
                     replySession = .init(parentCid: nil, among: [])
