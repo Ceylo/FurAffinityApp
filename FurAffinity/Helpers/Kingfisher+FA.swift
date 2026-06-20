@@ -65,11 +65,11 @@ let kingfisherImageDataProvider: @Sendable (URL) async -> (data: Data, mimeType:
     }
 }
 
-/// Copies the Kingfisher disk-cache file for `url` to a temp file named after the
-/// URL's last path component, returning the temp file URL. Returns `nil` when the
-/// image is not cached on disk, or `nil` (logging) when the copy fails. The image
-/// must already be present in Kingfisher's disk cache (e.g. via `waitForCache` or
-/// `kingfisherImageDataProvider`).
+/// Copies the (already disk-cached) image for `url` to a fresh temp file and returns
+/// it; `nil` when not cached or the copy fails. The destination is UUID-prefixed so
+/// concurrent calls — or distinct URLs sharing a filename, e.g. each author's
+/// `<username>.gif` avatar — can't collide on one path and race their copies. The
+/// extension is preserved since iOS infers the image type from it.
 func cachedImageFileURL(for url: URL) -> URL? {
     let cacheKey = url.cacheKey
     let cache = ImageCache.default
@@ -79,11 +79,9 @@ func cachedImageFileURL(for url: URL) -> URL? {
 
     let path = cache.cachePath(forKey: cacheKey)
     let fileManager = FileManager.default
-    let pathWithExtension = URL.temporaryDirectory.appending(component: url.lastPathComponent)
+    let pathWithExtension = URL.temporaryDirectory
+        .appending(component: "\(UUID().uuidString)-\(url.lastPathComponent)")
     do {
-        if fileManager.fileExists(atPath: pathWithExtension.path(percentEncoded: false)) {
-            try fileManager.removeItem(at: pathWithExtension)
-        }
         try fileManager.copyItem(atPath: path, toPath: pathWithExtension.path(percentEncoded: false))
         return pathWithExtension
     } catch {
@@ -91,6 +89,14 @@ func cachedImageFileURL(for url: URL) -> URL? {
         return nil
     }
 }
+
+#if DEBUG
+/// Test seam: seeds the disk cache so `cachedImageFileURL` can be tested without a
+/// fetch. Here (not in the test) so the test target needn't link Kingfisher.
+func seedDiskCacheForTesting(_ data: Data, for url: URL) throws {
+    try ImageCache.default.diskStorage.store(value: data, forKey: url.cacheKey)
+}
+#endif
 
 @MainActor
 func FAImage(_ url: URL?) -> KFImage {
