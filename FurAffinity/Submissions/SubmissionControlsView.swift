@@ -48,6 +48,8 @@ struct ReplyButton: View {
 struct SubmissionControlsView: View {
     var submissionUrl: URL
     var mediaFileUrl: URL?
+    /// When true the file is a document: Save exports to Files instead of Photos.
+    var isText: Bool
     var favoritesCount: Int
     var isFavorite: Bool
     var favoriteAction: () -> Void
@@ -56,10 +58,11 @@ struct SubmissionControlsView: View {
     var replyAction: () -> Void
     var metadataTarget: FATarget?
     var errorStorage: ErrorStorage
-    
-    internal init(submissionUrl: URL, mediaFileUrl: URL? = nil, favoritesCount: Int, isFavorite: Bool, favoriteAction: @escaping () -> Void, repliesCount: Int, acceptsNewReplies: Bool, replyAction: @escaping () -> Void, metadataTarget: FATarget? = nil, errorStorage: ErrorStorage) {
+
+    internal init(submissionUrl: URL, mediaFileUrl: URL? = nil, isText: Bool = false, favoritesCount: Int, isFavorite: Bool, favoriteAction: @escaping () -> Void, repliesCount: Int, acceptsNewReplies: Bool, replyAction: @escaping () -> Void, metadataTarget: FATarget? = nil, errorStorage: ErrorStorage) {
         self.submissionUrl = submissionUrl
         self.mediaFileUrl = mediaFileUrl
+        self.isText = isText
         self.favoritesCount = favoritesCount
         self.isFavorite = isFavorite
         self.favoriteAction = favoriteAction
@@ -70,7 +73,7 @@ struct SubmissionControlsView: View {
         self.errorStorage = errorStorage
         self.saveHandler = MediaSaveHandler(errorStorage: errorStorage)
     }
-    
+
     @State private var saveHandler: MediaSaveHandler
     
     var body: some View {
@@ -92,9 +95,13 @@ struct SubmissionControlsView: View {
                     $1 == true
                 })
                 
-                SaveButton(state: saveHandler.state) {
-                    Task {
-                        await saveHandler.saveMedia(atFileUrl: mediaFileUrl!)
+                SaveButton(state: isText ? .idle : saveHandler.state) {
+                    if isText {
+                        exportToFiles([mediaFileUrl!])
+                    } else {
+                        Task {
+                            await saveHandler.saveMedia(atFileUrl: mediaFileUrl!)
+                        }
                     }
                 }
                 .frame(height: buttonsSize)
