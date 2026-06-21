@@ -65,6 +65,9 @@ struct RemoteSubmissionView: View {
                             subject: subject,
                             message: text
                         )
+                    },
+                    downloadDocument: { url in
+                        try await model.session.unwrap().file(at: url)
                     }
                 )
             }

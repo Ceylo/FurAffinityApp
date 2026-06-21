@@ -17,6 +17,7 @@ struct SubmissionView: View {
     var favoriteAction: () -> Void
     var replyAction: @MainActor (_ parentCid: Int?, _ text: CommentReply) async throws -> Void
     var sendNoteAction: (_ destinationUser: String, _ subject: String, _ text: String) async throws -> Void
+    var downloadDocument: (_ url: URL) async throws -> Data
     
     struct ReplySession {
         let parentCid: Int?
@@ -68,7 +69,8 @@ struct SubmissionView: View {
                 textContent: text,
                 thumbnail: thumbnail,
                 previewImageUrl: submission.previewImageUrl,
-                documentFileUrl: $documentFileUrl
+                documentFileUrl: $documentFileUrl,
+                downloadDocument: downloadDocument
             )
         }
     }
@@ -201,18 +203,38 @@ struct SubmissionView: View {
     }
 }
 
-#Preview {
+#Preview("Image submission") {
     @Previewable
     @State var errorStorage = ErrorStorage()
     
     NavigationStack {
-        withAsync({ await FASubmission.demo }) {
+        withAsync({ await FASubmission.demoImage }) {
             SubmissionView(
                 submission: $0,
                 avatarUrl: FAURLs.avatarUrl(for: $0.author),
                 favoriteAction: {},
                 replyAction: { _, _ in },
-                sendNoteAction: { _, _, _ in }
+                sendNoteAction: { _, _, _ in },
+                downloadDocument: { try await OfflineFASession.default.file(at: $0) }
+            )
+        }
+    }
+    .environment(errorStorage)
+}
+
+#Preview("Text submission") {
+    @Previewable
+    @State var errorStorage = ErrorStorage()
+    
+    NavigationStack {
+        withAsync({ await FASubmission.demoText }) {
+            SubmissionView(
+                submission: $0,
+                avatarUrl: FAURLs.avatarUrl(for: $0.author),
+                favoriteAction: {},
+                replyAction: { _, _ in },
+                sendNoteAction: { _, _, _ in },
+                downloadDocument: { try await OfflineFASession.default.file(at: $0) }
             )
         }
     }

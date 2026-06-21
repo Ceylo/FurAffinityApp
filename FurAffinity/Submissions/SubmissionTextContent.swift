@@ -12,7 +12,6 @@ import FAKit
 /// downloads the document and opens it in a native reading view. The downloaded
 /// file URL is exposed to the parent (for Save/Share) via `documentFileUrl`.
 struct SubmissionTextContent: View {
-    @Environment(Model.self) private var model
     @Environment(ErrorStorage.self) private var errorStorage
 
     var title: String
@@ -20,6 +19,7 @@ struct SubmissionTextContent: View {
     var thumbnail: DynamicThumbnail?
     var previewImageUrl: URL
     @Binding var documentFileUrl: URL?
+    var downloadDocument: (_ url: URL) async throws -> Data
 
     @State private var isDownloading = false
     @State private var readerContent: StoryReaderView.Content?
@@ -91,7 +91,6 @@ struct SubmissionTextContent: View {
             return
         }
 
-        guard let session = model.session else { return }
         isDownloading = true
         Task {
             await storeLocalizedError(
@@ -99,7 +98,7 @@ struct SubmissionTextContent: View {
                 action: "Story Download",
                 webBrowserURL: textContent.documentUrl
             ) {
-                let data = try await session.file(at: textContent.documentUrl)
+                let data = try await downloadDocument(textContent.documentUrl)
                 let fileUrl = FileManager.default.temporaryDirectory
                     .appendingPathComponent(textContent.documentUrl.lastPathComponent)
                 try data.write(to: fileUrl, options: .atomic)
@@ -119,22 +118,24 @@ struct SubmissionTextContent: View {
 }
 
 #Preview {
-    withAsync({ () -> (Model, FASubmission.TextContent, URL) in
-        let model = try await Model.demo
+    @Previewable
+    @State var errorStorage = ErrorStorage()
+
+    withAsync({ () -> (FASubmission.TextContent, URL) in
         let submission = await FASubmission.demoText
         guard case let .text(text) = submission.content else {
             fatalError("demoText must be a text submission")
         }
-        return (model, text, submission.previewImageUrl)
+        return (text, submission.previewImageUrl)
     }) { data in
         SubmissionTextContent(
             title: "Prepared for the Fallout",
-            textContent: data.1,
+            textContent: data.0,
             thumbnail: nil,
-            previewImageUrl: data.2,
-            documentFileUrl: .constant(nil)
+            previewImageUrl: data.1,
+            documentFileUrl: .constant(nil),
+            downloadDocument: { try await OfflineFASession.default.file(at: $0) }
         )
-        .environment(data.0)
-        .environment(data.0.errorStorage)
+        .environment(errorStorage)
     }
 }
