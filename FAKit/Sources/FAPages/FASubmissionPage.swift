@@ -46,7 +46,7 @@ public struct FASubmissionPage: FAPage {
     public enum Content: Hashable, Sendable {
         case image(ImageContent)
         case text(TextContent)
-        // later: case audio(AudioContent)
+        case audio(AudioContent)
     }
 
     public struct ImageContent: Hashable, Sendable {
@@ -71,6 +71,21 @@ public struct FASubmissionPage: FAPage {
         public init(documentUrl: URL, renderedPreviewUrl: URL) {
             self.documentUrl = documentUrl
             self.renderedPreviewUrl = renderedPreviewUrl
+        }
+    }
+
+    public struct AudioContent: Hashable, Sendable {
+        /// `<audio>` src; the streamable media (progressive playback).
+        public let streamUrl: URL
+        /// The Download button href; the savable/shareable file.
+        public let downloadUrl: URL
+        /// `data-fullview-src`; the rendered cover thumbnail (`.mp3.jpg`).
+        public let coverImageUrl: URL
+
+        public init(streamUrl: URL, downloadUrl: URL, coverImageUrl: URL) {
+            self.streamUrl = streamUrl
+            self.downloadUrl = downloadUrl
+            self.coverImageUrl = coverImageUrl
         }
     }
 
@@ -141,6 +156,15 @@ func submissionContentStats(in submissionMainContentNode: Elements) throws -> [S
     return Dictionary(uniqueKeysWithValues: zip(categories, values))
 }
 
+/// Extracts the `Download` option button href as an absolute URL.
+/// Shared by text and audio submissions.
+func downloadButtonUrl(in optionButtons: Elements) throws -> URL {
+    let downloadNode = try optionButtons
+        .first(where: { try $0.text() == "Download" })
+        .unwrap()
+    return try URL(unsafeString: "https:" + downloadNode.attr("href"))
+}
+
 extension FASubmissionPage {
     public init(data: Data, url: URL) throws {
         do {
@@ -178,12 +202,20 @@ extension FASubmissionPage {
 
             let isTextSubmission = try !submissionContentNode
                 .select("div.submission-area.submission-writing").isEmpty()
+            let isAudioSubmission = try !submissionContentNode
+                .select("div.submission-area.submission-music").isEmpty()
             if isTextSubmission {
-                let downloadNode = try optionButtons
-                    .first(where: { try $0.text() == "Download" })
-                    .unwrap()
-                let downloadUrl = try URL(unsafeString: "https:" + downloadNode.attr("href"))
+                let downloadUrl = try downloadButtonUrl(in: optionButtons)
                 self.content = .text(.init(documentUrl: downloadUrl, renderedPreviewUrl: fullViewUrl))
+            } else if isAudioSubmission {
+                let streamUrl = try URL(unsafeString: "https:" + submissionContentNode
+                    .select("div.submission-area audio#c-musicPlayer_inner").attr("src"))
+                let downloadUrl = try downloadButtonUrl(in: optionButtons)
+                self.content = .audio(.init(
+                    streamUrl: streamUrl,
+                    downloadUrl: downloadUrl,
+                    coverImageUrl: fullViewUrl
+                ))
             } else {
                 let stats = try submissionContentStats(in: submissionMainContentNode)
                 let resolution = try stats["Resolution"].unwrap()

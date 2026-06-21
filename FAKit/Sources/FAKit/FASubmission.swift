@@ -15,6 +15,7 @@ public struct FASubmission: Equatable, Sendable {
     public typealias Content = FASubmissionPage.Content
     public typealias ImageContent = FASubmissionPage.ImageContent
     public typealias TextContent = FASubmissionPage.TextContent
+    public typealias AudioContent = FASubmissionPage.AudioContent
 
     public let url: URL
     public let previewImageUrl: URL
