@@ -68,7 +68,7 @@ struct LoggedInView: View {
             TabView(selection: $selectedTab) {
                 if model.session != nil {
                     NavigationStack(path: $submissionsNavigationStack) {
-                        SubmissionsFeedView()
+                        SubmissionsTabView()
                             .navigationDestination(for: FATarget.self) { nav in
                                 view(for: nav)
                             }

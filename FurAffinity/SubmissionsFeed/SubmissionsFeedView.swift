@@ -157,16 +157,11 @@ struct SubmissionsFeedView: View {
                 }
                 .trackListFrame()
                 .listStyle(.plain)
-                .overlay(alignment: .topTrailing) {
-                    SubmissionsFeedActionView()
-                        .padding(.trailing, 20)
-                        .padding(.top, 6)
-                }
-                // Toolbar needs to be setup before refresh control…
+                // The nav bar chrome (inline title, mode menu, trailing action)
+                // is owned by the enclosing SubmissionsTabView so both feed modes
+                // can share it. Keeping the title/toolbar above the refresh
+                // control there preserves the "toolbar before refresh" ordering.
                 // https://stackoverflow.com/a/64700545/869385
-                .navigationTitle("Submissions")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar(.hidden, for: .navigationBar)
                 .refreshable {
                     refresh(pulled: true)
                 }
