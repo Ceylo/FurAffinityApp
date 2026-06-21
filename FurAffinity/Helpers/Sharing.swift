@@ -27,7 +27,7 @@ func share(_ items: [Any]) {
 /// Presents the system "Save to Files" exporter for the given local file URLs.
 @MainActor
 func exportToFiles(_ urls: [URL]) {
-    let picker = UIDocumentPickerViewController(forExporting: urls)
+    let picker = UIDocumentPickerViewController(forExporting: urls, asCopy: true)
     foregroundWindow?.rootViewController?
         .present(picker, animated: true)
 }
