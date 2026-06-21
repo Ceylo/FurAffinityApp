@@ -19,6 +19,7 @@ let package = Package(
         .package(url: "https://github.com/hyperoslo/Cache.git", from: "7.4.0"),
         .package(url: "https://github.com/davecom/SwiftGraph.git", from: "3.1.0"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.3"),
+        .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19"),
     ],
     targets: [
         .target(
@@ -41,7 +42,7 @@ let package = Package(
         ),
         .target(
             name: "FAKit",
-            dependencies: ["FAPages", "FALogging", "Cache", "SwiftGraph", .product(name: "OrderedCollections", package: "swift-collections")],
+            dependencies: ["FAPages", "FALogging", "Cache", "SwiftGraph", .product(name: "OrderedCollections", package: "swift-collections"), "ZIPFoundation"],
             resources: [.process("Resources")]
         ),
         .testTarget(
