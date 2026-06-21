@@ -43,13 +43,26 @@ struct StoryDocumentTests {
         let attributed = try #require(StoryDocument.richText(from: testData("1781832277.vixyyfox_3000_-redfurythings.pdf"), filename: "story.pdf"))
         let text = String(attributed.characters)
 
-        // Short title lines stay on their own lines instead of running together.
-        #expect(text.contains("(30)\nRedfurythings"), "title block not split: \(text.prefix(120))")
+        // Title lines stack tightly within one paragraph (line separator, not `\n`).
+        #expect(text.contains("(30)\u{2028}Redfurythings"), "title block not split: \(text.prefix(120))")
+        // The title block ends and the body starts a new paragraph.
         #expect(text.contains("(#Twelve Manny)\nI prefer"), "title/body not split: \(text.prefix(200))")
         // A real paragraph break inside the body is preserved.
         #expect(text.contains("in human form.\nThis morning"), "paragraph break missing")
         // The run-on bug (joining the break with a space) must not recur.
         #expect(!text.contains("human form. This morning"), "paragraphs ran on")
+    }
+
+    @Test
+    func pdfStory_doesNotBreakIndentedSoftWraps() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1781832277.vixyyfox_3000_-redfurythings.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // Short tail lines that drift right (justified text) used to be mistaken for
+        // paragraph starts; they must stay joined to the line they continue.
+        #expect(text.contains("but there wasn’t any answer"), "indented soft wrap broke the sentence")
+        #expect(!text.contains("but there\nwasn’t"))
+        #expect(!text.contains("but there\u{2028}wasn’t"))
     }
 
     @Test

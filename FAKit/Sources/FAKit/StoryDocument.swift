@@ -102,14 +102,26 @@ public enum StoryDocument {
         var firstWordWidth: CGFloat { firstWordMaxX - firstWordMinX }
     }
 
+    /// How two consecutive visual lines are joined when reflowing a PDF page.
+    private enum LineJoin {
+        /// Same paragraph, wrapped by width — join with a space (de-hyphenating).
+        case softWrap
+        /// A break inside a stacked block (e.g. the title lines) — a line break that
+        /// stays in the same paragraph, so it gets no paragraph spacing.
+        case lineBreak
+        /// A new paragraph — gets the reader's paragraph spacing.
+        case paragraph
+    }
+
     /// Reconstructs paragraphs from a PDF page: PDFKit already breaks the text into
     /// visual lines (a `\n` per line, which is what shows orphaned words on screen).
-    /// We keep a hard break only where the line ended early — if the next line's
-    /// leading word would still have fit on the current line (line-fill test), or the
-    /// next line is indented, the author broke it on purpose; otherwise it's a soft
-    /// wrap we rejoin with a space. This separates short title lines and detects
-    /// paragraph ends regardless of vertical spacing. Original per-character fonts
-    /// (size + traits) are preserved so headings/emphasis survive.
+    /// A break is a *soft wrap* (rejoined with a space) when the previous line was
+    /// full — the next line's leading word wouldn't have fit (line-fill test);
+    /// otherwise the line ended early on purpose and we keep the break. The leading
+    /// short lines of the page (the title block) are kept as tight *line breaks*
+    /// within one paragraph; every other kept break starts a new *paragraph*. This
+    /// separates the title from the body and detects paragraph ends regardless of
+    /// vertical spacing. Original per-character fonts (size + traits) are preserved.
     private static func appendReflowed(page: PDFPage, to result: NSMutableAttributedString) {
         let attributed = page.attributedString ?? NSAttributedString()
         let string = attributed.string as NSString
@@ -166,39 +178,58 @@ public enum StoryDocument {
         let bodyLeft = lines.map(\.minX).min() ?? 0
         let bodyRight = lines.map(\.maxX).max() ?? 0
         let spaceWidth = medianHeight * 0.25
-        let indentTolerance = medianHeight * 0.5
+
+        // The title block: the leading run of short lines that don't reach the body's
+        // right margin. Breaks inside it stay tight; the break into the body and all
+        // body breaks become paragraphs.
+        let titleMaxX = bodyLeft + (bodyRight - bodyLeft) * 0.6
+        var titleEnd = 0
+        while titleEnd < lines.count, lines[titleEnd].maxX < titleMaxX { titleEnd += 1 }
 
         for (index, line) in lines.enumerated() {
             let substring = attributed.attributedSubstring(from: line.range)
 
             if index == 0 {
                 // First line of a later page continues as a new paragraph.
-                appendSeparated(substring, to: result, paragraphBreak: result.length > 0)
+                appendSeparated(substring, to: result, join: result.length > 0 ? .paragraph : .softWrap)
+                continue
+            }
+
+            // Within the title block, keep tight line breaks.
+            if index < titleEnd {
+                appendSeparated(substring, to: result, join: .lineBreak)
                 continue
             }
 
             // Line-fill test: if the previous line had room for this line's first
-            // word (plus a space), it ended early on purpose → hard break.
+            // word (plus a space), it ended early on purpose → new paragraph;
+            // otherwise it was full → soft wrap we rejoin.
             let previous = lines[index - 1]
             let available = bodyRight - previous.maxX
             let nextWordWouldFit = available >= spaceWidth + line.firstWordWidth
-            let indented = line.minX > bodyLeft + indentTolerance
-            let paragraphBreak = nextWordWouldFit || indented
-            appendSeparated(substring, to: result, paragraphBreak: paragraphBreak)
+            appendSeparated(substring, to: result, join: nextWordWouldFit ? .paragraph : .softWrap)
         }
     }
 
-    /// Appends `substring` to `result`, inserting either a paragraph break (`\n`)
-    /// or, for a soft wrap, a space — joining hyphenated words without the hyphen.
-    private static func appendSeparated(_ substring: NSAttributedString, to result: NSMutableAttributedString, paragraphBreak: Bool) {
+    /// Appends `substring` to `result`, separating it from the existing text per
+    /// `join`: a paragraph break (`\n`), a tight line break (`\u{2028}`, same
+    /// paragraph), or a soft-wrap space — joining hyphenated words without the hyphen.
+    private static func appendSeparated(_ substring: NSAttributedString, to result: NSMutableAttributedString, join: LineJoin) {
         if result.length == 0 {
             result.append(substring)
             return
         }
-        if paragraphBreak {
+        switch join {
+        case .paragraph:
             result.append(NSAttributedString(string: "\n"))
             result.append(substring)
             return
+        case .lineBreak:
+            result.append(NSAttributedString(string: "\u{2028}"))
+            result.append(substring)
+            return
+        case .softWrap:
+            break
         }
         let existing = result.string as NSString
         let lastChar = existing.character(at: existing.length - 1)
