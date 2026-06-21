@@ -8,7 +8,7 @@
 import Foundation
 import SwiftSoup
 
-public enum Rating: Sendable {
+public enum Rating: Sendable, Codable, CaseIterable {
     case general
     case mature
     case adult

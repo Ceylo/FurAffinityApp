@@ -55,4 +55,35 @@ struct FAURLsTests {
         #expect(parsed.page == expectedPage)
         #expect(parsed.watchDirection == expectedWatchDirection)
     }
+
+    @Test
+    func searchUrl_defaultQuery() throws {
+        let url = FAURLs.searchUrl(for: .default)
+        #expect(url.absoluteString == "https://www.furaffinity.net/search/?"
+            + "q=&order-by=relevancy&order-direction=desc&range=5years"
+            + "&rating-general=1&rating-mature=1&rating-adult=1"
+            + "&type-art=1&type-music=1&type-flash=1&type-story=1&type-photo=1&type-poetry=1"
+            + "&mode=extended&page=1&perpage=72")
+    }
+
+    @Test
+    func searchUrl_populatedQuery() throws {
+        let query = FASearchQuery(
+            text: "wolf",
+            sortOrder: .date,
+            sortDirection: .ascending,
+            dateRange: .thirtyDays,
+            ratings: [.general],
+            contentTypes: [.art, .music],
+            genders: [.male],
+            matchMode: .any,
+            page: 3
+        )
+        let url = FAURLs.searchUrl(for: query)
+        // Gender is intentionally not emitted yet (param encoding unverified).
+        #expect(url.absoluteString == "https://www.furaffinity.net/search/?"
+            + "q=wolf&order-by=date&order-direction=asc&range=30days"
+            + "&rating-general=1&type-art=1&type-music=1"
+            + "&mode=any&page=3&perpage=72")
+    }
 }

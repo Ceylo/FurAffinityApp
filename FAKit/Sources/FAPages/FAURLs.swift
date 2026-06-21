@@ -151,6 +151,39 @@ public enum FAURLs {
         }
     }
     
+    public static let searchUrl = URL(string: "https://www.furaffinity.net/search/")!
+
+    /// Builds the `GET /search/` URL for `query`. Checked checkboxes are emitted
+    /// as `rating-general=1`, `type-art=1`, …; radios/selects as `range=…`,
+    /// `order-by=…`, etc. Enums are iterated in `CaseIterable` order so the
+    /// produced query string is deterministic (and testable).
+    ///
+    /// Gender is intentionally **not** emitted yet: the gender checkboxes carry no
+    /// `name` in the page markup (the site JS builds the param), so the exact
+    /// encoding must be verified against a real logged-in search first.
+    public static func searchUrl(for query: FASearchQuery) -> URL {
+        var items: [URLQueryItem] = [
+            .init(name: "q", value: query.text),
+            .init(name: "order-by", value: query.sortOrder.rawValue),
+            .init(name: "order-direction", value: query.sortDirection.rawValue),
+            .init(name: "range", value: query.dateRange.rawValue),
+        ]
+
+        for rating in Rating.allCases where query.ratings.contains(rating) {
+            items.append(.init(name: "rating-\(rating.searchParamSuffix)", value: "1"))
+        }
+
+        for type in FASearchQuery.ContentType.allCases where query.contentTypes.contains(type) {
+            items.append(.init(name: "type-\(type.rawValue)", value: "1"))
+        }
+
+        items.append(.init(name: "mode", value: query.matchMode.rawValue))
+        items.append(.init(name: "page", value: "\(query.page)"))
+        items.append(.init(name: "perpage", value: "72"))
+
+        return searchUrl.appending(queryItems: items)
+    }
+
     public static func submissionUrl(sid: Int) -> URL {
         URL(string: "https://www.furaffinity.net/view/\(sid)/")!
     }
