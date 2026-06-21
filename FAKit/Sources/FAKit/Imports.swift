@@ -8,3 +8,4 @@
 import FAPages
 
 public typealias FAURLs = FAPages.FAURLs
+public typealias FASearchQuery = FAPages.FASearchQuery

@@ -1,0 +1,2753 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" />
+
+    <title>Search -- Fur Affinity [dot] net</title>
+
+    <meta name="viewport"           content="width=device-width, initial-scale=1.0" />
+    <meta name="description"        content="Fur Affinity | For all things fluff, scaled, and feathered!" />
+    <meta name="keywords"           content="fur furry furries fursuit fursuits cosplay brony bronies zootopia scalies kemono anthro anthropormophic art online gallery portfolio" />
+    <meta name="distribution"       content="global" />
+    <meta name="copyright"          content="Frost Dragon Art LLC" />
+    <meta name="robots"             content="noai, noimageai" />
+
+    <link rel="icon" href="/themes/beta/img/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="/themes/beta/img/favicon.ico" type="image/x-icon" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+    <link href="//d.furaffinity.net/media/static/img/icons/bootstrap/bootstrap-icons.min.css" rel="stylesheet">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=9; IE=EDGE" />
+
+    <!-- og -->
+        <meta property="og:image" content="https://www.furaffinity.net/themes/beta/img/banners/fa_logo.png?v2" />
+        <!-- twitter -->
+        <meta name="twitter:image" content="https://www.furaffinity.net/themes/beta/img/banners/fa_logo.png?v2" />
+    
+    <script type="text/javascript">
+        var _faurl = {
+            d: '//d.furaffinity.net',
+            s: '//d.furaffinity.net/media/static',
+            a: '//a.furaffinity.net',
+            r: '//rv.furaffinity.net',
+            t: '//t.furaffinity.net',
+        };
+    </script>
+    <script type="text/javascript" src="/themes/beta/js/common.js?u=2026060613"></script>
+    <link type="text/css" rel="stylesheet" href="/themes/beta/css/ui_theme_dark.css?u=2026060613" id="css-theme" />
+
+    <!-- browser hints -->
+    <link rel="preconnect" href="//t.furaffinity.net" />
+    <link rel="preconnect" href="//a.furaffinity.net" />
+    <link rel="preconnect" href="//rv.furaffinity.net" />
+    <link rel="preconnect" href="https://www15.smartadserver.com" />
+
+    <link rel="preload" href="/themes/beta/js/censor.js?u=2026060613" as="script" />
+    <link rel="preload" href="/themes/beta/js/prototype.1.7.3.min.js" as="script" />
+    <link rel="preload" href="/themes/beta/js/script.js?u=2026060613" as="script" />
+
+    <link rel="preload" href="/themes/beta/js/color_helper.js?u=2026060613" as="script" />
+    <link rel="preload" href="/themes/beta/js/bbcode_color_adjuster.js?u=2026060613" as="script" />
+    <link rel="preload" href="/themes/beta/js/widgets/fuzzy-date-switcher.js?u=2026060613" as="script" />
+
+    <link rel="preload" href="/themes/beta/js/prebid10.26.0.js" as="script" />
+
+    <!-- Playwire Pre-connect <head> links -->
+    <link rel="preconnect" href="https://cdn.intergient.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.intergi.com" crossorigin />
+    <link rel="preconnect" href="https://config.playwire.com" crossorigin />
+    <link rel="preconnect" href="https://securepubads.g.doubleclick.net" crossorigin />
+    <link rel="preconnect" href="https://z.moatads.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.playwire.com" crossorigin />
+
+
+
+</head>
+
+<!-- EU request: yes -->
+<body class="c-bodyColor"
+    id="pageid-search"    data-static-path="/themes/beta"
+            data-user-blocklist=""
+        data-user-logged-in="1"
+        data-tag-blocklist=""
+        data-tag-blocklist-hide-tagless="0"
+        data-tag-blocklist-nonce="333d3cb311ed02780220a6c9a393f60fd99bd134b30e8b8a91f8c74d6fc10c7f"
+        >
+
+    <script type="text/javascript">
+        0; // attempted fix for fouc in ff
+    </script>
+
+    
+    <!-- sidebar -->
+    <div class="mobile-navigation">
+
+    <div class="mobile-nav-container">
+
+        <div class="mobile-nav-container-item left">
+            <label for="mobile-menu-nav" class="css-menu-toggle only-one"><img class="burger-menu" src="/themes/beta/img/fa-burger-menu-icon.png"></label>
+        </div>
+
+        <div class="mobile-nav-container-item center">
+            <a class="mobile-nav-logo" href="/">
+                <picture>
+    <source srcset="/themes/beta/img/banners/fa_logo.webp?v2" type="image/webp">
+    <img class="site-logo" src="/themes/beta/img/banners/fa_logo.png?v2">
+</picture>            </a>
+        </div>
+
+        <div class="mobile-nav-container-item right">
+
+        </div>
+    </div>
+
+    <div class="nav-ac-container">
+        <input id="mobile-menu-nav" name="accordion-1" type="checkbox" />
+        <article class="nav-ac-content mobile-menu">
+
+        <div class="mobile-nav-content-container">
+
+            <div class="aligncenter">
+                                    <a href="/user/furrycount/"><img class="loggedin_user_avatar avatar" alt="Furrycount" src="//a.furaffinity.net/20260620/furrycount.gif"/></a>
+                    <h2 style="margin-bottom:0"><a href="/user/furrycount/">Furrycount</a></h2>
+                    <a href="/user/furrycount/">Userpage</a> |
+                    <a href="/msg/pms/">Notes</a> |
+                    <a href="/controls/journal/">Journals</a> |
+                                <a href="/plus/"><img class="menu-mini-icon" src="/themes/beta/img/the-golden-pawb.png"> FA+</a> |
+                <a href="https://shop.furaffinity.net" target="_blank"><img class="menu-mini-icon" src="/themes/beta/img/icons/merch_store_icon.png"> Shop</a>
+                <br />
+            </div>
+            <hr>
+            <h2><a href="/browse/">Browse</a></h2>
+            <h2><a href="/search/">Search</a></h2>
+                            <h2><a href="/submit/">Upload</a></h2>
+            
+            <div class="nav-ac-container">
+                <label for="mobile-menu-submenu-0"><h2 style="margin-top:0;padding-top:0">Support &#x25BC;</h2></label>
+                <input id="mobile-menu-submenu-0" name="accordion-1" type="checkbox" />
+                <article class="nav-ac-content nav-ac-content-dropdown">
+                    <a href="/announcements">Site Announcements</a><br>
+                    <a href="/help/">Help & Support</a><br>
+                    <a href="/advertising.html">Advertising</a><br>
+                    <a href="/blm">Black Lives Matter</a><br />
+                    <a href="/changelog">Changelog</a><br />
+                    <a href="/fight_spam">Internet Safety</a><br />
+
+                    <h3>Community Walls</h3>
+                    <a href="/route/i_was_here">I Was Here</a><br />
+                    <a href="/route/banner_museum">Banner Museum</a><br />
+                    <a href="/route/wall_of_awesome">Wall-o-Awesome</a>
+
+                    <h3>SUPPORT FA</h3>
+                    <a href="/plus/">Subscribe to FA+ </a><br>
+                    <a href="https://shop.furaffinity.net/" target="_blank">FA Merch Store</a>
+
+
+                    <h3>RULES & POLICIES</h3>
+                    <a href="/tos">Terms of Service</a><br>
+                    <a href="/privacy">Privacy</a><br>
+                    <a href="/coc">Code of Conduct</a><br>
+                    <a href="/aup">Upload Policy</a>
+
+                    <h3>SUPPORT</h3>
+                    <a href="/help/#contact">Contact Us</a><br />
+                                            <a href="/controls/troubletickets/">REPORT A PROBLEM</a><br />
+                                        <a href="https://status.furaffinity.net/">Site Status</a>
+                </article>
+            </div>
+                                        <div class="nav-ac-container">
+                    <label for="mobile-menu-submenu-1"><h2 style="margin-top:0;padding-top:0">Settings &#x25BC;</h2></label>
+                    <input id="mobile-menu-submenu-1" name="accordion-1" type="checkbox" />
+                    <article class="nav-ac-content nav-ac-content-dropdown">
+                        <h3>ACCOUNT INFORMATION</h3>
+                        <a href="/controls/settings/">Account Settings</a><br>
+                        <a href="/controls/site-settings/">Global Site Settings</a><br>
+                        <a href="/controls/user-settings/">User Settings</a>
+
+                        <h3>CUSTOMIZE USER PROFILE</h3>
+                        <a href="/controls/profile/">Profile Info</a><br>
+                        <a href="/controls/profilebanner/">Profile Banner</a><br>
+                        <a href="/controls/contacts/">Contacts and Social Media</a><br>
+                        <a href="/controls/avatar/">Avatar Management</a>
+
+                        <h3>MANAGE MY CONTENT</h3>
+                        <a href="/controls/submissions/">Submissions</a><br>
+                                                <a href="/controls/folders/submissions/">Folders</a><br>
+                        <a href="/controls/journal/">Journals</a><br>
+                        <a href="/controls/favorites/">Favorites</a><br>
+                        <a href="/controls/buddylist/">Watches</a><br>
+                        <a href="/controls/shouts/">Shouts</a><br>
+                        <a href="/controls/badges/">Badges</a><br>
+                        <a href="/controls/user-icons/">User Icons</a>
+
+                        <h3>SECURITY</h3>
+                        <a href="/controls/sessions/logins/">Active Sessions</a><br>
+                        <a href="/controls/sessions/logs/">Activity Log</a><br>
+                        <a href="/controls/sessions/labels/">Browser Labels</a>
+                    </article>
+                </div>
+                <hr>
+            
+
+            
+            
+            <hr>
+
+            <h2><form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="68aecec341cc7c10469002eb2dbf748a8b787b21bee36db9fd98e6b5851961e1"/></form>
+<script type="text/javascript">
+    _fajs.push(['init_logout_button', '.logout-link button']);
+</script>
+</h2>
+
+
+            <h2></h2>
+         </div>
+         </article>
+    </div>
+
+</div>
+
+    
+    <div class="mobile-notification-bar">
+        <a class="notification-container inline" href="/announcements/" title="3 Unread Announcements">3A</a>
+<a class="notification-container inline" href="/msg/submissions/" title="120 Submission Notifications">120S</a>
+<a class="notification-container inline" href="/msg/others/#journals" title="14 Journal Notifications">14J</a>
+<a class="notification-container inline" href="/msg/pms/" title="2 Unread Notes">2N</a>
+    </div>
+
+<nav id="ddmenu">
+    <div class="mobile-nav navhideondesktop hideonmobile hideontablet">
+        <div class="mobile-nav-logo">
+            <a class="mobile-nav-logo" href="/">
+                <picture>
+    <source srcset="/themes/beta/img/banners/fa_logo.webp?v2" type="image/webp">
+    <img class="site-logo" src="/themes/beta/img/banners/fa_logo.png?v2">
+</picture>            </a>
+        </div>
+        <div class="mobile-nav-header-item"><a href="/browse/">Browse</a></div>
+        <div class="mobile-nav-header-item"><a href="/search/">Search</a></div>
+    </div>
+
+    <div class="menu-icon"></div>
+
+    <ul class="navhideonmobile">
+        <li class="lileft">
+            <div class="lileft hideonmobile" style="vertical-align:middle;line-height:0 !important" >
+                <a class="top-heading" href="/">
+                    <picture>
+    <source srcset="/themes/beta/img/banners/fa_logo.webp?v2" type="image/webp">
+    <img class="site-logo" src="/themes/beta/img/banners/fa_logo.png?v2">
+</picture>                </a>
+            </div>
+        </li>
+        <li class="lileft">
+            <a class="top-heading" href="#"><div class="sprite-news menu-space-saver hideonmobile"></div>Support</a>
+            <i class="caret"></i>
+            <div class="dropdown dropdown-left ">
+                <div class="dd-inner">
+                    <div class="column">
+                        <h3>Community</h3>
+                        <a href="/announcements">Site Announcements</a>
+                        <a href="/help/">Help & Support</a>
+                        <a href="/advertising.html">Advertising</a>
+                        <a href="/blm/">Black Lives Matter</a>
+                        <a href="/changelog">Changelog</a>
+                        <a href="/fight_spam">Internet Safety</a>
+
+                        <h3>Community Walls</h3>
+                        <a href="/route/i_was_here">I Was Here</a>
+                        <a href="/route/banner_museum">Banner Museum</a>
+                        <a href="/route/wall_of_awesome">Wall-o-Awesome</a>
+
+                        <h3>Rules & Policies</h3>
+                        <a href="/tos">Terms of Service</a>
+                        <a href="/privacy">Privacy</a>
+                        <a href="/coc">Code of Conduct</a>
+                        <a href="/aup">Upload Policy</a>
+
+                        <h3>Support</h3>
+                        <a href="/help/#contact">Contact Us</a>
+                                                    <a href="/controls/troubletickets/">Report a Problem</a>
+                                                <a href="https://status.furaffinity.net/">Site Status</a>
+                    </div>
+                </div>
+            </div>
+        </li>
+        <li class="lileft"><a class="top-heading" href="/browse/"><div class="sprite-paw menu-space-saver hideonmobile"></div>Browse</a></li>
+        <li class="lileft"><a class="top-heading hideondesktop" href="/search/">Search</a></li>
+        <li class="lileft"><a class="top-heading" href="/submit/"><div class="sprite-upload menu-space-saver hideonmobile"></div> Upload</a></li>
+
+
+        <li class="lileft"><a class="top-heading" href="/plus/" title="FA+"><img  class="menu-mini-icon" src="/themes/beta/img/the-golden-pawb.png"><span class="hidebrowselowres"> FA+</span></a></li>
+        <li class="lileft"><a class="top-heading" href="https://shop.furaffinity.net" title="Shop" target="_blank"><img  class="menu-mini-icon" src="/themes/beta/img/icons/merch_store_icon.png"><span class="hidebrowselowres"> Shop</span></a></li>
+
+        <div class="lileft hideonmobile">
+            <form id="searchbox" method="get" action="/search/">
+                <input type="search" name="q" placeholder="SEARCH">
+                <a href="/search">&nbsp;</a>
+            </form>
+        </div>
+
+
+
+
+
+
+                    <li class="message-bar-desktop">
+                <a class="notification-container inline" href="/announcements/" title="3 Unread Announcements">3A</a>
+<a class="notification-container inline" href="/msg/submissions/" title="120 Submission Notifications">120S</a>
+<a class="notification-container inline" href="/msg/others/#journals" title="14 Journal Notifications">14J</a>
+<a class="notification-container inline" href="/msg/pms/" title="2 Unread Notes">2N</a>
+            </li>
+
+            <li>
+                <div class="floatleft hideonmobile">
+                    <a href="/user/furrycount"><img class="loggedin_user_avatar menubar-icon-resize avatar" style="cursor:pointer" alt="Furrycount" src="//a.furaffinity.net/20260620/furrycount.gif"/></a>
+                </div>
+            </li>
+
+            <li class="submenu-trigger">
+                <div class="floatleft hideonmobile">
+                    <svg class="avatar-submenu-trigger banner-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"></path></svg>
+                </div>
+                <a id="my-username" class="top-heading hideondesktop" href="#"><span class="hideondesktop">My FA ( </span>Furrycount<span class="hideondesktop"> )</span></a>
+
+                <div class="dropdown dropdown-right">
+                    <div class="dd-inner">
+                        <div class="column">
+                            <h3>Account</h3>
+                            <a href="/user/furrycount/">My Userpage</a>
+                            <a href="/msg/pms/">Check My Notes</a>
+                            <a href="/controls/journal/">Create a Journal</a>
+                            <a href="/commissions/furrycount/">My Commission Info</a>
+
+                            <h3>Support Fur Affinity</h3>
+                            <a href="/plus/">Subscribe to FA+ </a>
+                            <a href="https://shop.furaffinity.net/" target="_blank">Merch Store</a>
+
+                            <h3>Trouble Tickets</h3>
+                            <a href="/controls/troubletickets/">Report a Problem</a>
+
+                                                                                                                <hr>
+                            <form class="post-btn logout-link" method="post" action="/logout/"><button type="submit">Log Out</button><input type="hidden" name="key" value="68aecec341cc7c10469002eb2dbf748a8b787b21bee36db9fd98e6b5851961e1"/></form>
+<script type="text/javascript">
+    _fajs.push(['init_logout_button', '.logout-link button']);
+</script>
+                        </div>
+                    </div>
+                </div>
+            </li>
+
+            <li class="submenu-trigger">
+                <a class="top-heading" href="#"><svg class="banner-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" style="transform: ;msFilter:;"><path d="M12 16c2.206 0 4-1.794 4-4s-1.794-4-4-4-4 1.794-4 4 1.794 4 4 4zm0-6c1.084 0 2 .916 2 2s-.916 2-2 2-2-.916-2-2 .916-2 2-2z"></path><path d="m2.845 16.136 1 1.73c.531.917 1.809 1.261 2.73.73l.529-.306A8.1 8.1 0 0 0 9 19.402V20c0 1.103.897 2 2 2h2c1.103 0 2-.897 2-2v-.598a8.132 8.132 0 0 0 1.896-1.111l.529.306c.923.53 2.198.188 2.731-.731l.999-1.729a2.001 2.001 0 0 0-.731-2.732l-.505-.292a7.718 7.718 0 0 0 0-2.224l.505-.292a2.002 2.002 0 0 0 .731-2.732l-.999-1.729c-.531-.92-1.808-1.265-2.731-.732l-.529.306A8.1 8.1 0 0 0 15 4.598V4c0-1.103-.897-2-2-2h-2c-1.103 0-2 .897-2 2v.598a8.132 8.132 0 0 0-1.896 1.111l-.529-.306c-.924-.531-2.2-.187-2.731.732l-.999 1.729a2.001 2.001 0 0 0 .731 2.732l.505.292a7.683 7.683 0 0 0 0 2.223l-.505.292a2.003 2.003 0 0 0-.731 2.733zm3.326-2.758A5.703 5.703 0 0 1 6 12c0-.462.058-.926.17-1.378a.999.999 0 0 0-.47-1.108l-1.123-.65.998-1.729 1.145.662a.997.997 0 0 0 1.188-.142 6.071 6.071 0 0 1 2.384-1.399A1 1 0 0 0 11 5.3V4h2v1.3a1 1 0 0 0 .708.956 6.083 6.083 0 0 1 2.384 1.399.999.999 0 0 0 1.188.142l1.144-.661 1 1.729-1.124.649a1 1 0 0 0-.47 1.108c.112.452.17.916.17 1.378 0 .461-.058.925-.171 1.378a1 1 0 0 0 .471 1.108l1.123.649-.998 1.729-1.145-.661a.996.996 0 0 0-1.188.142 6.071 6.071 0 0 1-2.384 1.399A1 1 0 0 0 13 18.7l.002 1.3H11v-1.3a1 1 0 0 0-.708-.956 6.083 6.083 0 0 1-2.384-1.399.992.992 0 0 0-1.188-.141l-1.144.662-1-1.729 1.124-.651a1 1 0 0 0 .471-1.108z"></path></svg></a>
+                <div class="dropdown dropdown-right">
+                    <div class="dd-inner">
+                        <div class="column">
+                            <h3>Account Information</h3>
+                            <a href="/controls/settings/">Account Settings</a>
+                            <a href="/controls/site-settings/">Global Site Settings</a>
+                            <a href="/controls/user-settings/">User Settings</a>
+
+                            <h3>Customize User Profile</h3>
+                            <a href="/controls/profile/">Profile Info</a>
+                            <a href="/controls/profilebanner/">Profile Banner</a>
+                            <a href="/controls/contacts/">Contacts & Social Media</a>
+                            <a href="/controls/avatar/">Avatar Management</a>
+
+                            <h3>Manage My Content</h3>
+                            <a href="/controls/submissions/">Submissions</a>
+                                                        <a href="/controls/folders/submissions/">Folders</a>
+                            <a href="/controls/journal/">Journals</a>
+                            <a href="/controls/favorites/">Favorites</a>
+                            <a href="/controls/buddylist/">Watches</a>
+                            <a href="/controls/shouts/">Shouts</a>
+                            <a href="/controls/badges/">Badges</a>
+                            <a href="/controls/user-icons/">User Icons</a>
+
+                            <h3>Security</h3>
+                            <a href="/controls/sessions/logins/">Active Sessions</a>
+                            <a href="/controls/sessions/logs/">Activity Log</a>
+                            <a href="/controls/sessions/labels/">Browser Labels</a>
+                        </div>
+                    </div>
+                </div>
+            </li>
+                    </ul>
+    <script type="text/javascript">
+        _fajs.push(['init_sfw_button', '.sfw-toggle']);
+    </script>
+</nav>
+
+<script type="text/javascript">
+    _fajs.push(function(){
+        // all menus that should be opened only one at a time
+        $$('.css-menu-toggle.only-one').invoke('observe', 'click', function(evt) {
+           var curr_input = $(evt.findElement('label').getAttribute('for'));
+            curr_input.next('.nav-ac-content').removeClassName('no-transition');
+            if(curr_input.checked === false) {
+                $$('.css-menu-toggle.only-one').each(function(elm){
+                    var elm_input = $(elm.getAttribute('for'));
+                    if(elm_input.checked === true) {
+                        elm_input.next('.nav-ac-content').addClassName('no-transition');
+                        elm_input.checked = false;
+                    }
+                });
+            }
+        });
+    });
+</script>
+
+    <div class="news-block">
+                                    </div>
+
+    <div id="main-window" class="footer-mobile-tweak g-wrapper">
+        
+        <div id="header">
+                                                <!-- site banner -->
+                    <site-banner >
+                                                <a href="/">
+                            <picture>
+                                <source srcset="//d.furaffinity.net/media/banners/modern/fa-banner-spring-fapride-20260508.webp" type="image/webp">
+                                <img usemap="#banner-map" src="//d.furaffinity.net/media/banners/modern/fa-banner-spring-fapride-20260508.jpg">
+                            </picture>
+                        </a>
+                    </site-banner>
+                            
+            <a name="top"></a>
+        </div>
+
+        <div id="site-content">
+            <!-- /header -->
+
+
+<div id="browse-search">
+
+    <div class="browse-content">
+
+        
+<div class="leaderboardAd">
+    <ins data-id="header_middle" class="leaderboardAd__slot format--leaderboard jsAdSlot hidden"></ins>
+</div>
+
+        <section class="gallery-section">
+
+                                    
+                <div class="section-header">
+                    <h2 class="floatleft">Search</h2>
+                    <div class="floatright"><button type="button" class="button standard toggle_titles">Disable Titles</button></div>
+                </div>
+
+                <div class="section-body aligncenter" style="padding-bottom:0">
+                    <div class="alignleft">
+
+                        
+                                                    <div class="search-results-box">
+                                
+<br class="clear" />
+
+<div id="search-results" class="query-not-provided">
+    <div id="warning">
+        <h4>Search query not provided. Displaying recent uploads.</h4>
+    </div>
+
+    <section id="gallery-search-results" class="gallery no-padding s-200 ">
+        <figure id="sid-65413735" class="r-general t-image u-razor-z">
+    <b>
+        <u>
+            <a href="/view/65413735/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_razor-z c_artwork_digital t_fantasy s_dragon_other dragon commission drawing" alt="" src="//t.furaffinity.net/65413735@400-1781992882.jpg"  data-width="328" data-height="200" style="width:328px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413735/" title="CM: Escaping">CM: Escaping</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/razor-z/" title="Razzyk">Razzyk</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413734" class="r-general t-image u-tenebrislunam">
+    <b>
+        <u>
+            <a href="/view/65413734/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_tenebrislunam c_adoptables t_pokemon s_pokemon pokefusion pokemonadopt adopt adoptable pokemon pokemonhybrid pokemonfusion adoptopen hybridadopt" alt="" src="//t.furaffinity.net/65413734@400-1781992882.jpg"  data-width="360" data-height="200" style="width:360px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413734/" title="Pokefusion adopt collab EliLunam #18 2026">Pokefusion adopt collab EliLunam #18 2026</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/tenebrislunam/" title="TenebrisLunam">TenebrisLunam</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413732" class="r-general t-image u-amaralemur">
+    <b>
+        <u>
+            <a href="/view/65413732/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_amaralemur c_all t_all s_unspecified_any amara_lemur comic pokemon milf reshiram size_difference smaller_male larger_female ghost possession mind_control big_breasts wide_hips slice_of_life eeveelution umbreon flareon eevee male female grope" alt="" src="//t.furaffinity.net/65413732@200-1781992870.jpg"  data-width="151" data-height="200" style="width:151px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413732/" title="M.P.G Hotel Heatup page 3">M.P.G Hotel Heatup page 3</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/amaralemur/" title="Amara_Lemur">Amara_Lemur</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413725" class="r-general t-image u-toynako">
+    <b>
+        <u>
+            <a href="/view/65413725/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_toynako c_adoptables t_all s_unspecified_any monstergirl adopt adoptable adoptables openadopts openadoptable adopts futa open pokemon lucario" alt="" src="//t.furaffinity.net/65413725@300-1781992829.jpg"  data-width="266" data-height="200" style="width:266px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413725/" title="Adoptable 25$ (OPEN)">Adoptable 25$ (OPEN)</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/toynako/" title="Toynako">Toynako</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413723" class="r-general t-image u-caecusgirl">
+    <b>
+        <u>
+            <a href="/view/65413723/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_caecusgirl c_all t_all s_unspecified_any feline lion lionking nuka thelionking tlk tlk_style male" alt="" src="//t.furaffinity.net/65413723@200-1781992824.jpg"  data-width="187" data-height="200" style="width:187px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413723/" title="Nuka">Nuka</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/caecusgirl/" title="Caecusgirl">Caecusgirl</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413710" class="r-general t-image u-naonightfury">
+    <b>
+        <u>
+            <a href="/view/65413710/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_naonightfury c_all t_all s_unspecified_any trans_male male intersex female trans_female non_binary fox wolf stream twitch picarto sfw nsfw" alt="" src="//t.furaffinity.net/65413710@400-1781992747.jpg"  data-width="400" data-height="196" style="width:400px; height:196px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413710/" title="Live comms! [Reminder]">Live comms! [Reminder]</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/naonightfury/" title="Naoto Universe">Naoto Universe</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413706" class="r-general t-image u-bloofoo">
+    <b>
+        <u>
+            <a href="/view/65413706/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_bloofoo c_artwork_digital t_all s_lion male lion koa" alt="" src="//t.furaffinity.net/65413706@200-1781992742.jpg"  data-width="142" data-height="200" style="width:142px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413706/" title="Get lion’d idiot">Get lion’d idiot</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/bloofoo/" title="bloofoo">bloofoo</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413705" class="r-general t-image u-marquessink">
+    <b>
+        <u>
+            <a href="/view/65413705/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_marquessink c_artwork_digital t_fanart s_lion marquessink digitalart game_of_thrones martell lion lioness got fanart" alt="" src="//t.furaffinity.net/65413705@200-1781992738.jpg"  data-width="190" data-height="200" style="width:190px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413705/" title="[2019] Scarelette of House Martell">[2019] Scarelette of House Martell</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/marquessink/" title="marquessink">marquessink</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413697" class="r-general t-image u-chibichu~">
+    <b>
+        <u>
+            <a href="/view/65413697/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_chibichu_ c_artwork_digital t_all s_unspecified_any fluffy furry female" alt="" src="//t.furaffinity.net/65413697@200-1781992825.jpg"  data-width="157" data-height="200" style="width:157px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413697/" title="A gift for a wonderful white doggy 🌟">A gift for a wonderful white doggy 🌟</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/chibichu~/" title="Chibichu~">Chibichu~</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413693" class="r-general t-image u-starburntgreenhouse">
+    <b>
+        <u>
+            <a href="/view/65413693/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_starburntgreenhouse c_artwork_digital t_fat_furs s_pokemon male pokemon feraligatr mightyena fat obese weightgain" alt="" src="//t.furaffinity.net/65413693@300-1781992675.jpg"  data-width="240" data-height="200" style="width:240px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413693/" title="On Summer&#039;s Day">On Summer&#039;s Day</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/starburntgreenhouse/" title="starburntgreenhouse">starburntgreenhouse</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413692" class="r-general t-image u-peptohlr">
+    <b>
+        <u>
+            <a href="/view/65413692/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_peptohlr c_artwork_digital t_general_furry_art s_dog_other male reference pink fur big tail fem cute gay mlm cuddly paws beans short hypnosis pepto heeler" alt="" src="//t.furaffinity.net/65413692@300-1781992664.jpg"  data-width="258" data-height="200" style="width:258px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413692/" title="Pepto Heeler Reference sheet [Second part in the desc]">Pepto Heeler Reference sheet [Second part in the desc]</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/peptohlr/" title="PeptoHLR">PeptoHLR</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413688" class="r-general t-image u-labacterina">
+    <b>
+        <u>
+            <a href="/view/65413688/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_labacterina c_ych_sale t_general_furry_art s_unspecified_any ych yourcharacterhere your_character_here cheap sale cheap_sale furry model girl couple both love lovely hug hugs enjoy happiness warm summer beach ocean sea sand june" alt="" src="//t.furaffinity.net/65413688@200-1781992651.jpg"  data-width="155" data-height="200" style="width:155px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413688/" title="FINAL HOUR!! SUPER CHEAP YCH SALE!!">FINAL HOUR!! SUPER CHEAP YCH SALE!!</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/labacterina/" title="la_bacterina">la_bacterina</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413687" class="r-general t-image u-cougarleon">
+    <b>
+        <u>
+            <a href="/view/65413687/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_cougarleon c_artwork_traditional t_general_furry_art s_mammal_other_predator male female non_binary hyena werehyena owl burrowing_owl hare rabbit alien symbiote klyntar nude naked featureless_breasts featureless_chest august_williams hypochondria_klyntar bean ruin_klyntar marvel_comics" alt="" src="//t.furaffinity.net/65413687@200-1781992650.jpg"  data-width="166" data-height="200" style="width:166px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413687/" title="Commission Art - Hypochrondia &amp; Ruin Swap (Colours)">Commission Art - Hypochrondia &amp; Ruin Swap (Colours)</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/cougarleon/" title="CL_Proper">CL_Proper</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413686" class="r-general t-image u-acrosanti">
+    <b>
+        <u>
+            <a href="/view/65413686/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_acrosanti c_artwork_digital t_fanart s_unspecified_any theamazingdigitalcircus the_amazing_digital_circus tadc tadc_oc theamazingdigitalcircus_oc lamphead objecthead object_head lamp female" alt="" src="//t.furaffinity.net/65413686@400-1781992646.jpg"  data-width="326" data-height="200" style="width:326px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413686/" title="TADC - Lampik 3.0">TADC - Lampik 3.0</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/acrosanti/" title="acrosanti">acrosanti</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413685" class="r-general t-text u-niankofatcat">
+    <b>
+        <u>
+            <a href="/view/65413685/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_niankofatcat c_story t_all s_unspecified_any female trans_female trans nianko axolocat cat feline girl fat fatty chubby galene tsareena mud black forest autumm sakura birch sewers creature" alt="" src="//t.furaffinity.net/65413685@200-1781992635.jpg"  data-width="120" data-height="82" style="width:120px; height:82px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413685/" title="Ch1:W1-3">Ch1:W1-3</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/niankofatcat/" title="Nianko">Nianko</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413676" class="r-general t-image u-wezaraje">
+    <b>
+        <u>
+            <a href="/view/65413676/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_wezaraje c_ych_sale t_all s_unspecified_any animation ych canine boxer" alt="" src="//t.furaffinity.net/65413676@300-1781992584.jpg"  data-width="221" data-height="200" style="width:221px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413676/" title="A tough win # ANIMATED YCH">A tough win # ANIMATED YCH</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/wezaraje/" title="Wezaraje">Wezaraje</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413673" class="r-general t-image u-samic5s">
+    <b>
+        <u>
+            <a href="/view/65413673/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_samic5s c_3d_models t_fanart s_wolf tadc render furry wolf 3d male" alt="" src="//t.furaffinity.net/65413673@400-1781992572.jpg"  data-width="355" data-height="200" style="width:355px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413673/" title="~theirs no coming back from this~I don’t want to go~">~theirs no coming back from this~I don’t want to go~</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/samic5s/" title="Samic5s">Samic5s</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413672" class="r-general t-image u-boulderexe">
+    <b>
+        <u>
+            <a href="/view/65413672/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_boulderexe c_artwork_digital t_macro_micro s_unspecified_any pead oddish loom big pokemon forest cutie macro micro" alt="" src="//t.furaffinity.net/65413672@200-1781992571.jpg"  data-width="149" data-height="200" style="width:149px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413672/" title="Big pead the oddish">Big pead the oddish</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/boulderexe/" title="Boulderexe">Boulderexe</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413671" class="r-general t-image u-liquid">
+    <b>
+        <u>
+            <a href="/view/65413671/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_liquid c_photography t_animal_related_non_anthro s_leopard female amur_leopard paws eyes" alt="" src="//t.furaffinity.net/65413671@300-1781992564.jpg"  data-width="300" data-height="200" style="width:300px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413671/" title="Still Dreaming">Still Dreaming</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/liquid/" title="Jasiri">Jasiri</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413667" class="r-general t-image u-ghilleattano">
+    <b>
+        <u>
+            <a href="/view/65413667/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_ghilleattano c_artwork_digital t_pokemon s_pokemon female pokemon pocket_monsters nintendo fanart digital_art portrait sneasel sneasel_pokemon sneasel_female" alt="" src="//t.furaffinity.net/65413667@200-1781992561.jpg"  data-width="178" data-height="200" style="width:178px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413667/" title="Sneasel the Wild Weasel">Sneasel the Wild Weasel</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/ghilleattano/" title="Ghille Attano">Ghille Attano</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413664" class="r-general t-image u-mdwines">
+    <b>
+        <u>
+            <a href="/view/65413664/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_mdwines c_ych_sale t_all s_unspecified_any underwater adventure ych open nswf ver swim swimsuit bikini ocean sea water fish creatures dive dynamic pose bubbles blue recreation vacation resort corals plant plants background wallpaper animated animation girl female woman romantic fantasy cute sexy hot adorable naked nudity bra top breasts cleavage butt furry anthro smile wonder delight month full body touch adventurer shell pendant explore explorer hands trans_female non_binary intersex trans_male male" alt="" src="//t.furaffinity.net/65413664@300-1781992549.jpg"  data-width="249" data-height="200" style="width:249px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413664/" title="Underwater adventure {YCH Open} + nswf ver">Underwater adventure {YCH Open} + nswf ver</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/mdwines/" title="Reddo__MDWines">Reddo__MDWines</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413663" class="r-general t-image u-ochreacer">
+    <b>
+        <u>
+            <a href="/view/65413663/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_ochreacer c_all t_all s_fox_other minecraft fox female antlers" alt="" src="//t.furaffinity.net/65413663@400-1781992549.jpg"  data-width="355" data-height="200" style="width:355px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413663/" title="the craft&#039;">the craft&#039;</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/ochreacer/" title="Ochrecer">Ochrecer</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413662" class="r-general t-image u-pyroassassin">
+    <b>
+        <u>
+            <a href="/view/65413662/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_pyroassassin c_all t_all s_tiger male vasili tiger headshot icon eyepatch suit tie bartender bodyguard grin fangs pyroassassin pac tacorat" alt="" src="//t.furaffinity.net/65413662@200-1781992548.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413662/" title="Dapper Tiger">Dapper Tiger</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/pyroassassin/" title="Xepher Sicarius">Xepher Sicarius</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413657" class="r-general t-image u-handsandtoes">
+    <b>
+        <u>
+            <a href="/view/65413657/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_handsandtoes c_all t_all s_unspecified_any furry furryart adopt adoptable adoptauction characterdesign oc deer stag cervine anthro hooves painterly oilpainting atmospheric fantasy mystic nature spirit ancientspirit keeper guardian white pink magenta autumn fall forest woods" alt="" src="//t.furaffinity.net/65413657@200-1781992525.jpg"  data-width="143" data-height="200" style="width:143px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413657/" title="☀️🌾✨🌻ADOPT REMINDER 🌻✨🌾☀️">☀️🌾✨🌻ADOPT REMINDER 🌻✨🌾☀️</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/handsandtoes/" title="handsandtoes">handsandtoes</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413653" class="r-general t-image u-alixey">
+    <b>
+        <u>
+            <a href="/view/65413653/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_alixey c_artwork_digital t_general_furry_art s_fox_other female art furry furryart illustration oc stainedglass foxgirl" alt="" src="//t.furaffinity.net/65413653@200-1781992516.jpg"  data-width="149" data-height="200" style="width:149px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413653/" title="Requies Sine Fine">Requies Sine Fine</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/alixey/" title="Alixey">Alixey</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413651" class="r-general t-image u-fmirsokp">
+    <b>
+        <u>
+            <a href="/view/65413651/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_fmirsokp c_all t_all s_dragon_other female dragon lizard green scaly scalie fingerlessgloves pinkhair pink hair orange floating rocks mendacity pantesless trouserless superfluous belt" alt="" src="//t.furaffinity.net/65413651@200-1781992515.jpg"  data-width="187" data-height="200" style="width:187px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413651/" title="Being Bored is NOT an Excuse for Bad Behavior">Being Bored is NOT an Excuse for Bad Behavior</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/fmirsokp/" title="fmirsokp">fmirsokp</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413649" class="r-general t-image u-acrosanti">
+    <b>
+        <u>
+            <a href="/view/65413649/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_acrosanti c_artwork_digital t_all s_unspecified_any artfight art_fight artfight2026 art_fight_2026 teammystery team_mystery" alt="" src="//t.furaffinity.net/65413649@300-1781992503.jpg"  data-width="263" data-height="200" style="width:263px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413649/" title="art fight 2026 profile">art fight 2026 profile</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/acrosanti/" title="acrosanti">acrosanti</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413645" class="r-general t-image u-drgravitas">
+    <b>
+        <u>
+            <a href="/view/65413645/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_drgravitas c_artwork_digital t_general_furry_art s_vulpine_other recel commission comm dr_gravitas gravitas drgravitas psuedolapsa lapsa_like big fluffy werefox pointy_boi snoot needle_nose male" alt="" src="//t.furaffinity.net/65413645@300-1781992484.jpg"  data-width="281" data-height="200" style="width:281px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413645/" title="WereGrav II By Recel">WereGrav II By Recel</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/drgravitas/" title="DrGravitas">DrGravitas</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413643" class="r-general t-image u-bonegrindr">
+    <b>
+        <u>
+            <a href="/view/65413643/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_bonegrindr c_all t_all s_unspecified_any female nessie cryptid bonegrindr" alt="" src="//t.furaffinity.net/65413643@300-1781992481.jpg"  data-width="235" data-height="200" style="width:235px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413643/" title="nessie OTA">nessie OTA</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/bonegrindr/" title="bonegrindr">bonegrindr</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413639" class="r-general t-image u-kindar">
+    <b>
+        <u>
+            <a href="/view/65413639/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_kindar c_all t_all s_unspecified_any advert series adventure action writing streaming tristan" alt="" src="//t.furaffinity.net/65413639@200-1781992472.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413639/" title="It&#039;s the Saturday Social! Come Hang out">It&#039;s the Saturday Social! Come Hang out</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/kindar/" title="Kindar">Kindar</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413638" class="r-general t-image u-ochreacer">
+    <b>
+        <u>
+            <a href="/view/65413638/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_ochreacer c_all t_all s_dragon_other female dragon reference" alt="" src="//t.furaffinity.net/65413638@400-1781992470.jpg"  data-width="366" data-height="200" style="width:366px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413638/" title="vic reference">vic reference</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/ochreacer/" title="Ochrecer">Ochrecer</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413633" class="r-general t-image u-mintyambitions">
+    <b>
+        <u>
+            <a href="/view/65413633/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_mintyambitions c_all t_all s_unspecified_any fursuit fox design marble adopt adoption adoptable canine vulpine" alt="" src="//t.furaffinity.net/65413633@300-1781992453.jpg"  data-width="236" data-height="200" style="width:236px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413633/" title="Marble Fox Adopt">Marble Fox Adopt</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/mintyambitions/" title="MintyAmbitions">MintyAmbitions</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413632" class="r-general t-image u-spg">
+    <b>
+        <u>
+            <a href="/view/65413632/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_spg c_artwork_digital t_general_furry_art s_fox_other fox_humanoid fox open_mouth radio yelling helmet armor red_hair teeth blue_eyes arma fingerless_gloves armored_vest halo_ series tongue claws radiopack" alt="" src="//t.furaffinity.net/65413632@200-1781992419.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413632/" title="JTAC Juliet (Ivy Darling)">JTAC Juliet (Ivy Darling)</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/spg/" title="impishHyena">impishHyena</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413631" class="r-general t-image u-rikakitty">
+    <b>
+        <u>
+            <a href="/view/65413631/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_rikakitty c_artwork_digital t_animal_related_non_anthro s_husky husky plush dog stuffed_animal 3d_model" alt="" src="//t.furaffinity.net/65413631@300-1781992413.jpg"  data-width="222" data-height="200" style="width:222px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413631/" title="Husky Plush">Husky Plush</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/rikakitty/" title="RikaCreature">RikaCreature</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413630" class="r-general t-text u-thundermental">
+    <b>
+        <u>
+            <a href="/view/65413630/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_thundermental c_story t_tf_tg s_human male female fate ftm_tf ftm_transformation character_transformation character_tf anime_transformation" alt="" src="//t.furaffinity.net/65413630@200-1781992413.jpg"  data-width="105" data-height="120" style="width:105px; height:120px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413630/" title="Regis Reditus - Fate&#039;s Charlemagne (FTM)">Regis Reditus - Fate&#039;s Charlemagne (FTM)</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/thundermental/" title="Thundermental">Thundermental</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413629" class="r-general t-image u-m4n">
+    <b>
+        <u>
+            <a href="/view/65413629/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_m4n c_artwork_digital t_fanart s_deer female male kris dess dess_holiday december_holiday kris_dreemur cigarette art trauma horror friend friend_deltarune deltarune undertale" alt="" src="//t.furaffinity.net/65413629@300-1781992431.jpg"  data-width="253" data-height="200" style="width:253px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413629/" title="Deltarune! Just in a week!">Deltarune! Just in a week!</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/m4n/" title="M4N">M4N</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413627" class="r-general t-image u-justalti">
+    <b>
+        <u>
+            <a href="/view/65413627/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_justalti c_all t_all s_unspecified_any male female trans_male trans_female intersex non_binary" alt="" src="//t.furaffinity.net/65413627@200-1781992402.jpg"  data-width="173" data-height="200" style="width:173px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413627/" title="!!REMINDER!! 🌈 &quot;PRIDE FLAGS&quot; YCH 🌈 !!REMINDER!!">!!REMINDER!! 🌈 &quot;PRIDE FLAGS&quot; YCH 🌈 !!REMINDER!!</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/justalti/" title="JustAlti">JustAlti</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413625" class="r-general t-image u-undertaker666dead">
+    <b>
+        <u>
+            <a href="/view/65413625/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_undertaker666dead c_fursuiting t_fursuit s_fox_other male beer hat lcbo" alt="" src="//t.furaffinity.net/65413625@300-1781992396.jpg"  data-width="300" data-height="200" style="width:300px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413625/" title="Free Coors Hat">Free Coors Hat</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/undertaker666dead/" title="undertaker666dead">undertaker666dead</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413624" class="r-general t-image u-acrosanti">
+    <b>
+        <u>
+            <a href="/view/65413624/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_acrosanti c_artwork_digital t_fantasy s_exotic_other artfight art_fight artfight2026 art_fight_2026 teammystery team_mystery lamphead objecthead object_head" alt="" src="//t.furaffinity.net/65413624@200-1781992384.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413624/" title="art fight 2026 - icon">art fight 2026 - icon</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/acrosanti/" title="acrosanti">acrosanti</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413623" class="r-general t-image u-flookiebrutze">
+    <b>
+        <u>
+            <a href="/view/65413623/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_flookiebrutze c_artwork_digital t_general_furry_art s_deer female deer oc" alt="" src="//t.furaffinity.net/65413623@200-1781992374.jpg"  data-width="195" data-height="200" style="width:195px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413623/" title="Lizzy Headshot">Lizzy Headshot</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/flookiebrutze/" title="Flookie">Flookie</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413621" class="r-general t-image u-caecusgirl">
+    <b>
+        <u>
+            <a href="/view/65413621/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_caecusgirl c_all t_all s_unspecified_any female lion lionking thelionking tlk_style tama lioness feline feral" alt="" src="//t.furaffinity.net/65413621@200-1781992349.jpg"  data-width="192" data-height="200" style="width:192px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413621/" title="Tama">Tama</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/caecusgirl/" title="Caecusgirl">Caecusgirl</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413617" class="r-general t-image u-ryuuie">
+    <b>
+        <u>
+            <a href="/view/65413617/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_ryuuie c_artwork_digital t_all s_bear_other male bear black underwear" alt="" src="//t.furaffinity.net/65413617@300-1781992334.jpg"  data-width="239" data-height="200" style="width:239px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413617/" title="Burr #3">Burr #3</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/ryuuie/" title="Ryuuie">Ryuuie</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413613" class="r-general t-image u-marz74">
+    <b>
+        <u>
+            <a href="/view/65413613/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_marz74 c_artwork_digital t_human s_unspecified_any male chainsaw lab chemical lab_coat human scientist" alt="" src="//t.furaffinity.net/65413613@200-1781992698.jpg"  data-width="141" data-height="200" style="width:141px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413613/" title="Edwin and his Chainsaw">Edwin and his Chainsaw</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/marz74/" title="Marz74">Marz74</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413612" class="r-general t-image u-jackin123">
+    <b>
+        <u>
+            <a href="/view/65413612/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_jackin123 c_all t_all s_unspecified_any may character poll vore deer" alt="" src="//t.furaffinity.net/65413612@400-1781992311.jpg"  data-width="333" data-height="200" style="width:333px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413612/" title="June Character Poll">June Character Poll</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/jackin123/" title="Elias">Elias</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413610" class="r-general t-image u-spaceg3n">
+    <b>
+        <u>
+            <a href="/view/65413610/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_spaceg3n c_all t_all s_unspecified_any kit bodega gameoverse anthro cat feline cowboy hat outfit desert cactus gun" alt="" src="//t.furaffinity.net/65413610@200-1781992308.jpg"  data-width="173" data-height="200" style="width:173px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413610/" title="Cowgirl Kit Bodega">Cowgirl Kit Bodega</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/spaceg3n/" title="SpaceG3n">SpaceG3n</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413605" class="r-general t-image u-nathanieldrake">
+    <b>
+        <u>
+            <a href="/view/65413605/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_nathanieldrake c_artwork_digital t_fantasy s_western_dragon male addranor linupus nathaniel drake natha nath solstice symphony anthrotales aurora borealis armor elementalist dragon wolf grey blue clothes mountain stars sky night music violin ingeneer piano" alt="" src="//t.furaffinity.net/65413605@200-1781992267.jpg"  data-width="141" data-height="200" style="width:141px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413605/" title="Antrotale - Solstice Symphony">Antrotale - Solstice Symphony</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/nathanieldrake/" title="NathanielDrake">NathanielDrake</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413603" class="r-general t-image u-aneddhead28">
+    <b>
+        <u>
+            <a href="/view/65413603/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_aneddhead28 c_artwork_digital t_inflation s_avian_other poppyplaytime nightmarecritters poe cartoon raven bird avian male balloon airinflation bodyinflation talons" alt="" src="//t.furaffinity.net/65413603@300-1781992263.jpg"  data-width="293" data-height="200" style="width:293px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413603/" title="Poe’s Holiday">Poe’s Holiday</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/aneddhead28/" title="AnEddHead28">AnEddHead28</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413602" class="r-general t-image u-ogcoon">
+    <b>
+        <u>
+            <a href="/view/65413602/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_ogcoon c_artwork_digital t_animal_related_non_anthro s_feline_other art digital fight artfight prep furry fur feral quad cat feline house housecat domestic eevee kinda cotton candy cottoncandy" alt="" src="//t.furaffinity.net/65413602@300-1781992261.jpg"  data-width="228" data-height="200" style="width:228px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413602/" title="Cotton Candy Reference Sheet">Cotton Candy Reference Sheet</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/ogcoon/" title="OZGfur">OZGfur</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413600" class="r-general t-image u-stortishorties">
+    <b>
+        <u>
+            <a href="/view/65413600/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_stortishorties c_all t_all s_unspecified_any mole domesticabuse domesticviolence male" alt="" src="//t.furaffinity.net/65413600@400-1781992259.jpg"  data-width="355" data-height="200" style="width:355px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413600/" title="Keith Moleson ( Owens Father)">Keith Moleson ( Owens Father)</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/stortishorties/" title="StortiShorties">StortiShorties</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413599" class="r-general t-image u-lapisgamerfoxviewingartsonly">
+    <b>
+        <u>
+            <a href="/view/65413599/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_lapisgamerfoxviewingartsonly c_artwork_digital t_transformation s_pokemon tf transformation sylvally pokemon paw paws beans recurrent male" alt="" src="//t.furaffinity.net/65413599@300-1781992245.jpg"  data-width="232" data-height="200" style="width:232px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413599/" title="Like My New Paw?">Like My New Paw?</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/lapisgamerfoxviewingartsonly/" title="LapisFoxy">LapisFoxy</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413594" class="r-general t-image u-gigglestheclown">
+    <b>
+        <u>
+            <a href="/view/65413594/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_gigglestheclown c_photography t_all s_unspecified_any fidgets autism toys" alt="" src="//t.furaffinity.net/65413594@400-1781992200.jpg"  data-width="400" data-height="184" style="width:400px; height:184px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413594/" title="my little goodies">my little goodies</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/gigglestheclown/" title="clown around and find out">clown around and find out</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413593" class="r-general t-image u-angryhamster00">
+    <b>
+        <u>
+            <a href="/view/65413593/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_angryhamster00 c_ych_sale t_all s_unspecified_any general sfw sale ych your character here animal digital feral canine dog fox wolf ychauction auction dragon wings" alt="" src="//t.furaffinity.net/65413593@200-1781992187.jpg"  data-width="162" data-height="200" style="width:162px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413593/" title="YCH Auction (OPEN) - Amethyst">YCH Auction (OPEN) - Amethyst</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/angryhamster00/" title="AngryHamster00">AngryHamster00</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413591" class="r-general t-image u-peptohlr">
+    <b>
+        <u>
+            <a href="/view/65413591/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_peptohlr c_artwork_digital t_general_furry_art s_dog_other male hugs comfort blush affection cuddly" alt="" src="//t.furaffinity.net/65413591@200-1781992182.jpg"  data-width="154" data-height="200" style="width:154px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413591/" title="Beeeg hug!">Beeeg hug!</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/peptohlr/" title="PeptoHLR">PeptoHLR</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413589" class="r-general t-image u-brewster">
+    <b>
+        <u>
+            <a href="/view/65413589/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_brewster c_all t_fantasy s_rabbit_hare male rabbit harengone bard warlock dnd wip" alt="" src="//t.furaffinity.net/65413589@200-1781992178.jpg"  data-width="150" data-height="200" style="width:150px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413589/" title="Brewster!  D&amp;D Bard Extrodinaire!  WIP">Brewster!  D&amp;D Bard Extrodinaire!  WIP</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/brewster/" title="Brewster">Brewster</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413587" class="r-general t-image u-mutagenicmaidens">
+    <b>
+        <u>
+            <a href="/view/65413587/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_mutagenicmaidens c_artwork_digital t_human s_human female conjoinment conjoined kids" alt="" src="//t.furaffinity.net/65413587@300-1781992170.jpg"  data-width="244" data-height="200" style="width:244px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413587/" title="Delilah&#039;s Daycare - wholesome worldbuildin&#039;">Delilah&#039;s Daycare - wholesome worldbuildin&#039;</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/mutagenicmaidens/" title="MutagenicMatrons">MutagenicMatrons</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413583" class="r-general t-image u-slayslash">
+    <b>
+        <u>
+            <a href="/view/65413583/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_slayslash c_artwork_digital t_all s_rabbit_hare male femboy rabbit bunny tattoo" alt="" src="//t.furaffinity.net/65413583@400-1781992137.jpg"  data-width="316" data-height="200" style="width:316px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413583/" title="Mata Ref">Mata Ref</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/slayslash/" title="Slayslash">Slayslash</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413579" class="r-general t-image u-stickiest">
+    <b>
+        <u>
+            <a href="/view/65413579/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_stickiest c_artwork_digital t_all s_unspecified_any female dragon bat hybrid fursona digital art anthro portrait spooky blue grey black white crystal edgy goth alt commission" alt="" src="//t.furaffinity.net/65413579@200-1781992122.jpg"  data-width="124" data-height="200" style="width:124px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413579/" title="All things spooky">All things spooky</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/stickiest/" title="stickiest">stickiest</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413578" class="r-general t-image u-bla-bla-saur">
+    <b>
+        <u>
+            <a href="/view/65413578/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_bla-bla-saur c_ych_sale t_vore s_unspecified_any vore predator mouth maw big belly big_belly saliva drool tongue" alt="" src="//t.furaffinity.net/65413578@200-1781992108.jpg"  data-width="150" data-height="200" style="width:150px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413578/" title="ych reminder">ych reminder</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/bla-bla-saur/" title="Bla-bla-saur">Bla-bla-saur</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413576" class="r-general t-image u-angryhamster00">
+    <b>
+        <u>
+            <a href="/view/65413576/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_angryhamster00 c_ych_sale t_all s_unspecified_any general sfw feral sale ych your character here ychfix fixprice animal digital canine dog fox wolf cat feline wildcat box setprice dragon equine horse pegasus unicorn feralych ychferal felineych furry open wings winged any_species multislot clouds scene anthro species solo art lynx commission commissions anyspecies" alt="" src="//t.furaffinity.net/65413576@400-1781992097.jpg"  data-width="373" data-height="200" style="width:373px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413576/" title="Adopt and YCH Reminder">Adopt and YCH Reminder</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/angryhamster00/" title="AngryHamster00">AngryHamster00</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413569" class="r-general t-image u-colinkiller10">
+    <b>
+        <u>
+            <a href="/view/65413569/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_colinkiller10 c_all t_all s_unspecified_any male gummigoo the amazing digital circus theamazingdigitalcircus tadc bara scalie alligator crocodile muscle daddy" alt="" src="//t.furaffinity.net/65413569@200-1781992055.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413569/" title="Gummigoo">Gummigoo</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/colinkiller10/" title="ColinKILLER10">ColinKILLER10</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413567" class="r-general t-image u-inot">
+    <b>
+        <u>
+            <a href="/view/65413567/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_inot c_artwork_digital t_miscellaneous s_unspecified_any red fire horse carousel" alt="" src="//t.furaffinity.net/65413567@200-1781992052.jpg"  data-width="154" data-height="200" style="width:154px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413567/" title="Carousels - Cover">Carousels - Cover</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/inot/" title="Inot">Inot</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413565" class="r-general t-image u-quiteunusual">
+    <b>
+        <u>
+            <a href="/view/65413565/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_quiteunusual c_artwork_digital t_transformation s_unspecified_any commission info transformation" alt="" src="//t.furaffinity.net/65413565@300-1781992300.jpg"  data-width="225" data-height="200" style="width:225px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413565/" title="[OPEN] QuiteUnusual&#039;s Commission Sheet">[OPEN] QuiteUnusual&#039;s Commission Sheet</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/quiteunusual/" title="QuiteUnusual">QuiteUnusual</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413564" class="r-general t-image u-flookiebrutze">
+    <b>
+        <u>
+            <a href="/view/65413564/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_flookiebrutze c_artwork_digital t_general_furry_art s_deer female deer fursona" alt="" src="//t.furaffinity.net/65413564@400-1781992035.jpg"  data-width="339" data-height="200" style="width:339px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413564/" title="Lizzy Refsheet">Lizzy Refsheet</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/flookiebrutze/" title="Flookie">Flookie</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413563" class="r-general t-image u-werewolfovna">
+    <b>
+        <u>
+            <a href="/view/65413563/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_werewolfovna c_fursuiting t_all s_unspecified_any fursuit fursuiter furry fursuitmaker furryfandom wolffactory" alt="" src="//t.furaffinity.net/65413563@400-1781992031.jpg"  data-width="400" data-height="175" style="width:400px; height:175px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413563/" title="Fursuit comission OPEN!">Fursuit comission OPEN!</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/werewolfovna/" title="Wolf_Factory">Wolf_Factory</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413559" class="r-general t-image u-wolfisteelpaw">
+    <b>
+        <u>
+            <a href="/view/65413559/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_wolfisteelpaw c_all t_all s_hybrid_species male skolf wolf skunk" alt="" src="//t.furaffinity.net/65413559@400-1781992007.jpg"  data-width="400" data-height="197" style="width:400px; height:197px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413559/" title="it´s me Carbite">it´s me Carbite</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/wolfisteelpaw/" title="Carbite Steelpaw">Carbite Steelpaw</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413554" class="r-general t-image u-p-aei">
+    <b>
+        <u>
+            <a href="/view/65413554/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_p-aei c_all t_all s_unspecified_any male commission screen shot anime" alt="" src="//t.furaffinity.net/65413554@300-1781992566.jpg"  data-width="283" data-height="200" style="width:283px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413554/" title="Anime Screen Shot Commissions">Anime Screen Shot Commissions</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/p-aei/" title="P-Aei">P-Aei</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413553" class="r-general t-image u-nidomiko">
+    <b>
+        <u>
+            <a href="/view/65413553/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_nidomiko c_artwork_digital t_general_furry_art s_dog_other original character oc refsheet reference sheet ref dog anthro furry nonbinary lgbtqia mudi canine special agent" alt="" src="//t.furaffinity.net/65413553@400-1781991968.jpg"  data-width="375" data-height="200" style="width:375px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413553/" title="Char. Sheet: Desi">Char. Sheet: Desi</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/nidomiko/" title="Nidomiko">Nidomiko</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413549" class="r-general t-image u-littledreamycat">
+    <b>
+        <u>
+            <a href="/view/65413549/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_littledreamycat c_artwork_digital t_my_little_pony_brony s_equine_other female mlp pony earthypony applejack aj redesign cowboyhat shawl lesbian braid au" alt="" src="//t.furaffinity.net/65413549@300-1781991952.jpg"  data-width="250" data-height="200" style="width:250px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413549/" title="Apple Jack">Apple Jack</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/littledreamycat/" title="Lionbun">Lionbun</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413548" class="r-general t-image u-asthmatic">
+    <b>
+        <u>
+            <a href="/view/65413548/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_asthmatic c_adoptables t_all s_unspecified_any adopt adopts adoption lot feral anthro fix price furry adoptable fantasy medieval refsheet reference seahorse mermaid merman merfolk" alt="" src="//t.furaffinity.net/65413548@200-1781991947.jpg"  data-width="128" data-height="200" style="width:128px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413548/" title="ADOPT">ADOPT</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/asthmatic/" title="Asthmatic">Asthmatic</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413546" class="r-general t-image u-k.m.a.">
+    <b>
+        <u>
+            <a href="/view/65413546/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_k_m_a_ c_artwork_digital t_paw s_unspecified_any female pool_toy ych inflatable anthro shiny_inflatable pooltoy inflation toy transformation rubber_toy beach_toy summer_toy anthro_toy ych_inflatable ych_pooltoy full_render shiny latex rubber glossy inflatable_toy pooltoy_anthro furry_ych inflation_ych toy_transformation object_tf pride pride_month lgbtq flag genders pride_ych pride_art love furry paws june pride_june lesbian lion manticore headshot head icon avatar" alt="" src="//t.furaffinity.net/65413546@200-1781991929.jpg"  data-width="200" data-height="200" style="width:200px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413546/" title="YCH DONE ☣ Inflatable pride month">YCH DONE ☣ Inflatable pride month</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/k.m.a./" title="k.m.a.">k.m.a.</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413545" class="r-general t-image u-peptohlr">
+    <b>
+        <u>
+            <a href="/view/65413545/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_peptohlr c_artwork_digital t_general_furry_art s_dog_other male pride month bisexual mlm gay cute couple femboy" alt="" src="//t.furaffinity.net/65413545@300-1781991927.jpg"  data-width="258" data-height="200" style="width:258px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413545/" title="Pride Month :3">Pride Month :3</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/peptohlr/" title="PeptoHLR">PeptoHLR</a>
+        </p>
+    </figcaption>
+</figure>
+<figure id="sid-65413542" class="r-general t-image u-dixandra">
+    <b>
+        <u>
+            <a href="/view/65413542/">
+                <noscript><span class="is-noScriptEnabled"></span></noscript>
+
+                <img class="blocked-content" data-tags="u_dixandra c_all t_all s_unspecified_any valentine romantic love couple candles ych commission bedroom underwear champagne roses female male trans_female non_binary intersex trans_male c_ych_sale" alt="" src="//t.furaffinity.net/65413542@400-1781991924.jpg"  data-width="398" data-height="200" style="width:398px; height:200px" loading="lazy" decoding="async" />
+                <i class="hideonmobile hideontablet" title="Click for description"></i>
+            </a>
+        </u>
+    </b>
+    <figcaption>
+        <p>
+            <a href="/view/65413542/" title="Romantic YCH">Romantic YCH</a>
+        </p>
+        <p>
+            <i>by</i> <a href="/user/dixandra/" title="DiXandra">DiXandra</a>
+        </p>
+    </figcaption>
+</figure>
+    </section>
+
+    <script type="text/javascript">
+        _fajs.push(['init_gallery', 'gallery-search-results']);
+    </script>
+</div>
+
+
+<script id="js-submissionData" type="application/json">{"65413735":{"title":"CM: Escaping","description":"Another old commission for Cy\r\n\r\nThis and all my other works, are published on Patreon long before they make it here, so take a look for full resolution pics, raffles, for as low as 3 USD\/month.\r\n\r\nDrawing by :iconrazor-z: 2025:\r\n\r\n[center]----Commissions are always open, send me a note if interested----[\/center]\r\n\r\n[center]:icontelegram: [url=https:\/\/t.me\/+WzjIKR5HldNiODEx] Feel free to join my c .......","username":"Razzyk","lower":"razor-z","avatar_mtime":"1574904346"},"65413734":{"title":"Pokefusion adopt collab EliLunam #18 2026","description":"Hiii everyone~ New babies available! Collab between EliBat and Tenebris Lunam~\r\n\r\nMake sure you read the rules and specifications on prices!~\r\n\r\n\r\n\r\nRemember to join my discord server to be tagged when I upload more beans, as well as exclusive auctions! discord.gg\/Xy6X9QUPwU\r\nAnd by being a Ko-fi support (of any level) you get the chance of pre-claim for a little less! \r\n*Shiny is included with th .......","username":"TenebrisLunam","lower":"tenebrislunam","avatar_mtime":"1717385059"},"65413732":{"title":"M.P.G Hotel Heatup page 3","description":"Gezz Ligh, have her say her retirement account number out loud too while you\u0026#039;re at it. XP\n\nThree college guys alone with one sexy dragon cougar under their control? This can only go well.\n\n-----------------------------------------------\nThe good stuff comes next ;3\n\nMy supporters are enjoying Page Four on [url=https:\/\/subscribestar.adult\/amara_lemur][color=Darkturquoise]Subscribe[\/color][color=Hot .......","username":"Amara_Lemur","lower":"amaralemur","avatar_mtime":"1773251813"},"65413725":{"title":"Adoptable 25$ (OPEN)","description":"[h1]\u2606 PRICE: 25 dollars[\/h1]\r\n\u2022 Payment on Paypal only (USD, No refunds)\r\n\r\n\u2606 ADD-ONS FOR EXTRA:\r\n\u2022 Genitals on the body: +5$ USD\r\n\u2022 Female chest on the body: +5$ USD\r\n\u2022 Nipples on the body: +5$ USD\r\n\u2022 Anal close-up: +5$ USD\r\n\u2022 Butt close-up: +5$ USD\r\n\u2022 Genital close-up: +5$ USD\r\n\u2022 Paw close-up: +5$ USD\r\n\u2022 Eyes close-up: +5$ USD\r\n\r\n\u2606 EXTRA INFORMATION:\r\n\u2022 I can write your .......","username":"Toynako","lower":"toynako","avatar_mtime":"1779482326"},"65413723":{"title":"Nuka","description":".","username":"Caecusgirl","lower":"caecusgirl","avatar_mtime":"1750932755"},"65413710":{"title":"Live comms! [Reminder]","description":"https:\/\/www.furaffinity.net\/view\/65401854\/\r\nhttps:\/\/www.furaffinity.net\/view\/65401854\/\r\nhttps:\/\/www.furaffinity.net\/view\/65401854\/","username":"Naoto Universe","lower":"naonightfury","avatar_mtime":"1774048727"},"65413706":{"title":"Get lion\u2019d idiot","description":"Once at a wedding, a guest said my husband looked like \u201chuman Scar\u201d and that compliment always stuck in our head.\r\nSo here\u2019s a lion doodle of Koa~\r\nI\u2019m partial to the design bc it finally lets me properly show off my hubbys gorgeous hair and grays \ud83e\udd70\ud83e\udd70\ud83e\udd70","username":"bloofoo","lower":"bloofoo","avatar_mtime":"1767313810"},"65413705":{"title":"[2019] Scarelette of House Martell","description":"I do not have Scarelette\u0026#039;s tag, if anyone knows her, please do send me her tags so I can properly credit her for the design.\n\nShe told me what was the vibe of her character, with the poisons and all, and I told her that sounds a lot like a Martell, and she picked the flag based on what I said, so I do thank her for the trust on picking her flag for the commission. But she was very specific about w .......","username":"marquessink","lower":"marquessink","avatar_mtime":"1748811184"},"65413697":{"title":"A gift for a wonderful white doggy \ud83c\udf1f","description":"[center] For :Nellorainicon: [\/center]\r\n[b][center][color=#3E435C]_[\/color][color=#424862]_[\/color][color=#464E69]_[\/color][color=#4A5470]_[\/color][color=#4F5A77]_[\/color][color=#53607D]_[\/color][color=#576684]_[\/color][color=#5C6C8B]_[\/color][color=#607292]_[\/color][color=#647899]_[\/color][color=#697E9F]_[\/color][color=#6D84A6]_[\/color][color=#718AAD]_[\/color][color=#7690B4]_[\/color][color=#7A96B .......","username":"Chibichu~","lower":"chibichu~","avatar_mtime":"1765146497"},"65413693":{"title":"On Summer\u0026#039;s Day","description":"Happy Birthday, :iconHolodrom:\r\nTaro and Milkbone chilling after work","username":"starburntgreenhouse","lower":"starburntgreenhouse","avatar_mtime":"1767831371"},"65413692":{"title":"Pepto Heeler Reference sheet [Second part in the desc]","description":"This should be useful for anyone who would like draw the big tailed canine :3\r\n\r\nSecond part here:","username":"PeptoHLR","lower":"peptohlr","avatar_mtime":"1741103387"},"65413688":{"title":"FINAL HOUR!! SUPER CHEAP YCH SALE!!","description":"[b]BIDS IN THE ORIGINAL PLEASE!! THANK YOU!! \r\n\r\nDON\u0026#039;T FAVORITE THIS ONE, PLEASE!! =)[\/b]\r\n\r\nhttps:\/\/www.furaffinity.net\/view\/65389471\/\r\nhttps:\/\/www.furaffinity.net\/view\/65389471\/\r\nhttps:\/\/www.furaffinity.net\/view\/65389471\/\r\nhttps:\/\/www.furaffinity.net\/view\/65389471\/\r\nhttps:\/\/www.furaffinity.net\/view\/65389471\/","username":"la_bacterina","lower":"labacterina","avatar_mtime":"1467234068"},"65413687":{"title":"Commission Art - Hypochrondia \u0026amp; Ruin Swap (Colours)","description":"Now the actual commission piece created for BeanTheWaif. Here we have Hypochondria and Ruin swapping hosts temporarily in order to get a feel for each-other. Nothing weird or kinky here!\r\n\r\nArt and characters (August \u0026amp; Hypochondria) are (C) to myself\r\nCharacters (Bean and Ruin) are (C) to their respective owners\r\nKlyntar Species is \u00a9 to Marvel Comics\r\n\r\n[i]:ko-fiicon: If you like my artwork and w .......","username":"CL_Proper","lower":"cougarleon","avatar_mtime":"1635699594"},"65413686":{"title":"TADC - Lampik 3.0","description":"I know, updating Lampik again mere months after the last update is pretty fast. I didn\u0026#039;t inherently dislike the other one but it felt... idk, like it was missing something? This time around the body is inspired partly by Moroccan lamps. Sort of.","username":"acrosanti","lower":"acrosanti","avatar_mtime":"1642896496"},"65413685":{"title":"Ch1:W1-3","description":"Dark abomination","username":"Nianko","lower":"niankofatcat","avatar_mtime":"1776975151"},"65413676":{"title":"A tough win # ANIMATED YCH","description":"Auction: SB: $35, AB: 50, paypal - 1 slot only  (The auction ends 24 hours after the last bid)\r\n\r\nI will redraw the base model to you character. He (or she) can be of any species or gender. \r\nIf you want to make a character more muscular or fat, write to me in a PM. I can also change the clothing or its color according to your wishes.","username":"Wezaraje","lower":"wezaraje","avatar_mtime":"1703967273"},"65413673":{"title":"~theirs no coming back from this~I don\u2019t want to go~","description":"Literally the finale made me cry to many times!!!\r\nI had to recreate atleast one scene","username":"Samic5s","lower":"samic5s","avatar_mtime":"1683105429"},"65413672":{"title":"Big pead the oddish","description":"Pead the oddish looming over various tiny that seem to have disturbed his forest!\n\nBig and loomy :3\n\nDone by [url=https:\/\/twitter.com\/kamu_kurosiro]kamu_kurosiro[\/url] again!! Link to his submission here: [url=https:\/\/x.com\/kamu_kurosiro\/status\/2063244521438335012]https:\/\/x.com\/kamu_kurosiro\/status\/2063244521438335012[\/url]\n\n[url=http:\/\/www.postybirb.com]Posted using PostyBirb[\/url]","username":"Boulderexe","lower":"boulderexe","avatar_mtime":"1665614134"},"65413671":{"title":"Still Dreaming","description":"It\u0026#039;s been five years since I got my latest camera, but this lovely lass has been a favourite of mine since I started my photography journey in earnest. The title\u0026#039;s sort of looping back to \u0026quot;[url=https:\/\/www.furaffinity.net\/view\/28772221\/]She\u0026#039;s A Dreamer[\/url]\u0026quot; from 2018. She\u0026#039;s in the same spot, actually, just now upgraded with a more cosy spot for the leopards to chill on. Photography equipment\u0026#039;s a .......","username":"Jasiri","lower":"liquid","avatar_mtime":"1719861228"},"65413667":{"title":"Sneasel the Wild Weasel","description":"Sneasel was in a strange place balance-wise before the physical-special split of Gen 4 with two specially aligned types and 35 special attack. Leagues better now though with access to many great physical options, including effective STAB.\r\n\r\n\r\nI need more practice with background trees methinks.","username":"Ghille Attano","lower":"ghilleattano","avatar_mtime":"1758323105"},"65413664":{"title":"Underwater adventure {YCH Open} + nswf ver","description":"https:\/\/www.furaffinity.net\/view\/65289395\/\r\nhttps:\/\/www.furaffinity.net\/view\/65289395\/\r\nhttps:\/\/www.furaffinity.net\/view\/65289395\/","username":"Reddo__MDWines","lower":"mdwines","avatar_mtime":"1703447663"},"65413663":{"title":"the craft\u0026#039;","description":"forgot why i did this\nyeah","username":"Ochrecer","lower":"ochreacer","avatar_mtime":"1779749055"},"65413662":{"title":"Dapper Tiger","description":"When not tending at the bar, Vasili tends to look his best outside of his work area~\r\n\r\nArt by :iconpac:","username":"Xepher Sicarius","lower":"pyroassassin","avatar_mtime":"1722992958"},"65413657":{"title":"\u2600\ufe0f\ud83c\udf3e\u2728\ud83c\udf3bADOPT REMINDER \ud83c\udf3b\u2728\ud83c\udf3e\u2600\ufe0f","description":"https:\/\/www.furaffinity.net\/view\/65299354\/\r\n\r\nhttps:\/\/www.furaffinity.net\/view\/65299354\/\r\n\r\nhttps:\/\/www.furaffinity.net\/view\/65299354\/","username":"handsandtoes","lower":"handsandtoes","avatar_mtime":"1687730150"},"65413653":{"title":"Requies Sine Fine","description":"ALT TEXT: A stained glass style illustration of a bare-backed anthropomorphic fox character with long green hair, looking over one shoulder against a dark green circular backdrop.","username":"Alixey","lower":"alixey","avatar_mtime":"1761939498"},"65413651":{"title":"Being Bored is NOT an Excuse for Bad Behavior","description":"a lizardy creature seems rather unimpressed or disappointed about something\r\n\r\n\\ \\ \\ \\ \\ \\ \\ \\ \\ \\|||||||||||||\/ \/ \/ \/ \/ \/ \/ \/ \/ \/\r\n[u][url=http:\/\/eh.bimshwel.com]commission form that may be unimpressive and or disappointing[\/url][\/u]\r\n\/ \/ \/ \/ \/ \/ \/ \/ \/ \/|||||||||||||\\ \\ \\ \\ \\ \\ \\ \\ \\ \\\r\n[u]\r\n[b][url=https:\/\/bimshwel.com\/ope\/wud\/]comic strip[\/url] \u00b7 [url=https:\/\/mastodon.art\/@bimshwel]mastodork[\/ .......","username":"fmirsokp","lower":"fmirsokp","avatar_mtime":"1519927885"},"65413649":{"title":"art fight 2026 profile","description":"https:\/\/artfight.net\/~acrosanti\r\n\r\nLike every year before, things will be very dependent on what kind of time I can put into dedicated pieces - which means probably only a handful. But I will try!","username":"acrosanti","lower":"acrosanti","avatar_mtime":"1642896496"},"65413645":{"title":"WereGrav II By Recel","description":"Art By: :iconrecel:\r\nCharacters By: :iconDrGravitas:\r\n\r\n[url=https:\/\/www.furaffinity.net\/view\/58707224\/]Fave the Original here![\/url]\r\n\r\n[url=https:\/\/www.furaffinity.net\/view\/65393941\/]Check out Recel\u0026#039;s original Doodle which inspired the comm![\/url]\r\n\r\nLove that needle nose pointy boi\u0026lt;3","username":"DrGravitas","lower":"drgravitas","avatar_mtime":"1424255659"},"65413643":{"title":"nessie OTA","description":"little nessie design that im not clicking with how i wanted\r\n\r\nsb is $30\r\n\r\nab is $80\r\n\r\npayment via paypal due within 24hr of close\r\n\r\n!!! THE LINES WILL LIKELY BE REUSED","username":"bonegrindr","lower":"bonegrindr","avatar_mtime":"1691047036"},"65413639":{"title":"It\u0026#039;s the Saturday Social! Come Hang out","description":"It\u0026#039;s a couple of hours of the Tiger being social, answering questions, chatting, and if things get quiet, writing.\n\u00a0\nDrop by and say Hi!\n\u00a0\nhttps:\/\/www.twitch.tv\/thetigerwrites\n\n[url=https:\/\/postybirb.com]Posted using PostyBirb[\/url]","username":"Kindar","lower":"kindar","avatar_mtime":"1424255659"},"65413638":{"title":"vic reference","description":"thats right she has a reference\nand a name but shes had that before being drawn\nanyway yes","username":"Ochrecer","lower":"ochreacer","avatar_mtime":"1779749055"},"65413633":{"title":"Marble Fox Adopt","description":"Snowy marble fox \u2665\r\n--\r\nbg \u0026gt; https:\/\/www.furaffinity.net\/view\/49752931\/ base \u0026gt; covepalms\r\n--\r\n\r\ntake this cutie for 10 usd","username":"MintyAmbitions","lower":"mintyambitions","avatar_mtime":"1563295575"},"65413632":{"title":"JTAC Juliet (Ivy Darling)","description":"Little icon piece for one of my partners, Ivy, of herself geared up in armor, radio pack, etc, shouting at her squad through the radio.  It\u0026#039;s inspired by this really neat Halo-verse Arma group she\u0026#039;s a part of, 22nd RDF \u0026quot;Warhound\u0026quot;, they seem like a really fun group of folks~","username":"impishHyena","lower":"spg","avatar_mtime":"1705295930"},"65413631":{"title":"Husky Plush","description":"Husky plush!! uses the same model as the wolf lol, took waaay longer to finish than it should\u0026#039;ve because i got sick with some nasty virus.\r\n\r\n\r\nget em on second life here-\r\nhttps:\/\/marketplace.secondlife.com\/p\/Liminality-Husky-Pup-Plushes\/28382724\r\n\r\n\r\nor get the whole model pack, plus the wolves, here- \r\nhttps:\/\/rikacreature.itch.io\/husky-and-wolf","username":"RikaCreature","lower":"rikakitty","avatar_mtime":"1556325999"},"65413630":{"title":"Regis Reditus - Fate\u0026#039;s Charlemagne (FTM)","description":"First time posting a story here. Hope you enjoy it! :3","username":"Thundermental","lower":"thundermental","avatar_mtime":"1746815096"},"65413629":{"title":"Deltarune! Just in a week!","description":"Dess and Kris art\r\nhttps:\/\/x.com\/i\/status\/2068449948002095594","username":"M4N","lower":"m4n","avatar_mtime":"1660317767"},"65413627":{"title":"!!REMINDER!! \ud83c\udf08 \u0026quot;PRIDE FLAGS\u0026quot; YCH \ud83c\udf08 !!REMINDER!!","description":"[center]\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u2022 \ud83d\udc9c \u2022 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\r\n\r\n[b]\ud83c\udf08 !!REMINDER!! \ud83c\udf08[\/b]\r\n==================================================\r\nhttps:\/\/www.furaffinity.net\/view\/65274864\/\r\nhttps:\/\/www.furaffinity.net\/view\/65274864\/\r\nhttps:\/\/www.furaffinity.net\/view\/65274864\/\r\n==================================================\r\n\r\n\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 .......","username":"JustAlti","lower":"justalti","avatar_mtime":"1759706259"},"65413625":{"title":"Free Coors Hat","description":"I stopped by the LCBO (The Liquor Control Board of Ontario ) to get more beer when I saw this deal  if you buy a 6 pack of Coors beer you get a free hat and I am not one to pass up a free hat.","username":"undertaker666dead","lower":"undertaker666dead","avatar_mtime":"1461183075"},"65413624":{"title":"art fight 2026 - icon","description":"It\u0026#039;s almost Art Fight time... here\u0026#039;s my icon I threw together for the theme. Spooky mysterious lamp in a mask oooo","username":"acrosanti","lower":"acrosanti","avatar_mtime":"1642896496"},"65413623":{"title":"Lizzy Headshot","description":"Ehhhhhh, I dunno if I like this piece.. whatever","username":"Flookie","lower":"flookiebrutze","avatar_mtime":"1781808315"},"65413621":{"title":"Tama","description":".","username":"Caecusgirl","lower":"caecusgirl","avatar_mtime":"1750932755"},"65413617":{"title":"Burr #3","description":"Burr 3","username":"Ryuuie","lower":"ryuuie","avatar_mtime":"1758689830"},"65413613":{"title":"Edwin and his Chainsaw","description":"Preparing for the artfight! Team Mystery!\r\nhttps:\/\/artfight.net\/~Marz74\r\n\r\nAlso, my commissions are open! Note me!","username":"Marz74","lower":"marz74","avatar_mtime":"1777641003"},"65413612":{"title":"June Character Poll","description":"\ud83c\udf69May Character Poll (#vore) \ud83c\udf69\r\n\r\nTheme: Deer-ish\r\n\r\nHappening for free on my Telegram Channel: https:\/\/t.me\/elias_lynxie","username":"Elias","lower":"jackin123","avatar_mtime":"1769126107"},"65413610":{"title":"Cowgirl Kit Bodega","description":"More Kit Bodega from Gameoverse.\n\nThis was one of her outfit that I actually liked.\n\n[url=http:\/\/www.postybirb.com]Posted using PostyBirb[\/url]","username":"SpaceG3n","lower":"spaceg3n","avatar_mtime":"1679219362"},"65413605":{"title":"Antrotale - Solstice Symphony","description":"Hear the sound of our magic, companion lost in the mist of the coldest mountains, and find your war to the Archivist lair. \r\n\r\nOur Doorsign with @Greenword :Greenwordicon: for a belgian furry convention : Anthrotale (first edition : the Solstice Symphony).\r\n\r\nArt by Ekkocatalist on Bluesky.","username":"NathanielDrake","lower":"nathanieldrake","avatar_mtime":"1688497075"},"65413603":{"title":"Poe\u2019s Holiday","description":"Scene taken from https:\/\/youtu.be\/zkwUT3aW3qA?is=ebF2kuiVPhD0Zhvk","username":"AnEddHead28","lower":"aneddhead28","avatar_mtime":"1764188438"},"65413602":{"title":"Cotton Candy Reference Sheet","description":"Back to refs! This was going to be the last of art fight prep, but I got a new character today that I just have to add. Idk how much I\u2019ll use them outside of art fight, but we\u2019ll see. \r\n\r\n(The character is a cat based on Sans to get around the whole \u201cno canon characters\u201d on art fight rule and maybe get a little ship art this year.)","username":"OZGfur","lower":"ogcoon","avatar_mtime":"1780343430"},"65413600":{"title":"Keith Moleson ( Owens Father)","description":"Keith Moleson was the father of Owen Owen does not know his father because he was drinking excessively he was violent, paranoid and had a horrible temper. Right before Owen was born Judith escaped from Indiana to Northridge California. Soon Keith was extremely drunk, in a fit of rage, he murdered another woman, and then later was arrested.  4 months later Owen was born in 1999 with his mom in Nort .......","username":"StortiShorties","lower":"stortishorties","avatar_mtime":"0"},"65413599":{"title":"Like My New Paw?","description":"You like what you see? Im becoming a sylvally. Cool right? But the best part... these paws. Wanna see?\r\n\r\nArt by @@recurrent","username":"LapisFoxy","lower":"lapisgamerfoxviewingartsonly","avatar_mtime":"1778693314"},"65413594":{"title":"my little goodies","description":"went to a autism event and they gave away some free fidgets and got some cool ones it was very fun","username":"clown around and find out","lower":"gigglestheclown","avatar_mtime":"1776281063"},"65413593":{"title":"YCH Auction (OPEN) - Amethyst","description":"[center]Payment via PayPal or Bankcard\r\n\r\nSB: $40 (USD)\r\nMB: -\r\nAB: $90 (USD)\r\n\r\nExample:\r\nhttps:\/\/www.furaffinity.net\/view\/64465352\/\r\nhttps:\/\/www.furaffinity.net\/view\/64745224\/\r\n\r\nI change everything for the character. Any species^^\r\nThe auction will be closed in 48 hours after the last bid.\r\n\r\nIf you do not reply to me within 3 days, I will restart the auction^^\r\n\r\nThe art will be rendered withi .......","username":"AngryHamster00","lower":"angryhamster00","avatar_mtime":"1693523725"},"65413591":{"title":"Beeeg hug!","description":"You needed this hug, hope your doing okay \u0026lt;3","username":"PeptoHLR","lower":"peptohlr","avatar_mtime":"1741103387"},"65413589":{"title":"Brewster!  D\u0026amp;D Bard Extrodinaire!  WIP","description":"Bit more of Brewster in one of his entertaining uniforms for the D\u0026amp;D campaign (that thankfully ended)  I drew inspiration from 1940s Zoot suits and the cascading cravat from one of Prince\u0026#039;s outfits.  I may finish this one as I rather like it.","username":"Brewster","lower":"brewster","avatar_mtime":"1781992378"},"65413587":{"title":"Delilah\u0026#039;s Daycare - wholesome worldbuildin\u0026#039;","description":"part of my **wholesome** series, just stuff thats cute n makes me less depresso. i will remove comments which try to be weird.\r\n\r\nconjoined people exist in real life, n kids are cute n based so i try to consider them in world-building. While \u0026quot;Twinhearts\u0026quot; are people who are born singlets then magically join to their biggest love, I like the idea that their kids tend to just be normal conjoined ppl. .......","username":"MutagenicMatrons","lower":"mutagenicmaidens","avatar_mtime":"1780525315"},"65413583":{"title":"Mata Ref","description":"Smol bun, big ears, much cute~\r\n\r\nDone by :iconbeheleaf:","username":"Slayslash","lower":"slayslash","avatar_mtime":"1599251403"},"65413579":{"title":"All things spooky","description":"[center][i]Portrait com from x!! \u0026lt;3[\/i]\r\n-----\r\n[color=#FFBEE3]\ud83d\udfc6[\/color]\r\n\r\n[color=#000000]\u256d\u2e3b\u2e3b\u2e3b\u2e3b\u263e :doofcatICON: \u263d\u2e3b\u2e3b\u2e3b\u2e3b\u256e[\/color]\r\n\r\n[url=https:\/\/stickiest.carrd.co\/][b][i][color=#FFBEE3]\u1d04\u029f\u026a\u1d04\u1d0b \u029c\u1d07\u0280\u1d07 \ua730\u1d0f\u0280 \u1d00\u029f\u029f \u1d04\u1d0f\u1d0d\u1d0d \u0280\u1d07\u029f\u1d00\u1d1b\u1d07\u1d05 \u029f\u026a\u0274\u1d0b\ua731[\/b][\/i][\/color][\/url]\r\n\r\n[sub][color=#adadad]Wondering where else to find me\u200b?[\/color]\r\n[url=https: .......","username":"stickiest","lower":"stickiest","avatar_mtime":"1758608592"},"65413578":{"title":"ych reminder","description":"https:\/\/www.furaffinity.net\/view\/65346187\/\r\nhttps:\/\/www.furaffinity.net\/view\/65346187\/\r\nhttps:\/\/www.furaffinity.net\/view\/65346187\/","username":"Bla-bla-saur","lower":"bla-bla-saur","avatar_mtime":"1764860399"},"65413576":{"title":"Adopt and YCH Reminder","description":"[center]Please! Don\u0026#039;t fav reminder, it will be deleted in 24 hours^^\r\n\r\n[url=https:\/\/www.furaffinity.net\/gallery\/angryhamster00\/folder\/1064292\/YCH-OPEN][color=#87CEFA]Open YCHs[\/color][\/url]\r\n\u2728\r\n[url=https:\/\/www.furaffinity.net\/gallery\/angryhamster00\/folder\/1064294\/ADOPT-OPEN][color=#87CEFA]Open Adopts[\/color][\/url]\r\n\u2728\r\n[url=https:\/\/www.furaffinity.net\/user\/badbadhamster][color=#87CEFA]NSFW[\/c .......","username":"AngryHamster00","lower":"angryhamster00","avatar_mtime":"1693523725"},"65413569":{"title":"Gummigoo","description":"Wanted to draw him :3","username":"ColinKILLER10","lower":"colinkiller10","avatar_mtime":"1749934155"},"65413567":{"title":"Carousels - Cover","description":"It took me way longer this time around, but I\u0026#039;m finally done with this project!\r\nWill be uploading a bunch of OC\u0026#039;s on them carousels in the coming days","username":"Inot","lower":"inot","avatar_mtime":"1755981331"},"65413565":{"title":"[OPEN] QuiteUnusual\u0026#039;s Commission Sheet","description":"Slots:\r\n-Taken-\r\n-Open-\r\n-Open-\r\n-Open-\r\n-Open-\r\n-Open-\r\n\r\nPrices:\r\n\r\n[b]Sketch[\/b]: 35$-55$ (Depending on Complexity)\r\n\r\n[b]Lineart[\/b] + 15$ for extra Character\/Panel*\r\nHeadshot: 40$\r\nWaist Up: 55$\r\nFull Body: 65$\r\n\r\n[b]Flat Color[\/b] + 25$ for extra Character\/Panel*\r\nHeadshot: 50$\r\nWaist Up: 60$\r\nFull Body: 75$\r\n\r\n[b]Shaded[\/b] + 30$ for extra Character\/Panel*\r\nHeadshot: 65$\r\nWaist Up: 85$\r\nFul .......","username":"QuiteUnusual","lower":"quiteunusual","avatar_mtime":"1653699643"},"65413564":{"title":"Lizzy Refsheet","description":"A lil refsheet I made for my fursona!\r\nWell, nothing special","username":"Flookie","lower":"flookiebrutze","avatar_mtime":"1781808315"},"65413563":{"title":"Fursuit comission OPEN!","description":"Write all questions in messages,\r\nor send your questionnaire on the website\r\n\r\n\r\nhttps:\/\/wolffactory-fur.com\/order-form\/","username":"Wolf_Factory","lower":"werewolfovna","avatar_mtime":"1755495377"},"65413559":{"title":"it\u00b4s me Carbite","description":"Wenn ich vorstellen darf Carbite Steelpaw Wolf\/Skunk Hybrid  M 32 Jahre alt  .\r\n\r\nRefsheet von meiner Sona gezeichnet von TheSatonic    https:\/\/www.furaffinity.net\/user\/thesatonic\/ \r\nnochmal Danke f\u00fcr die tolle Zusammenarbeit und das genial gewordene Ref.","username":"Carbite Steelpaw","lower":"wolfisteelpaw","avatar_mtime":"1781980859"},"65413554":{"title":"Anime Screen Shot Commissions","description":"I like drawing fake TV shows. :)","username":"P-Aei","lower":"p-aei","avatar_mtime":"1704442917"},"65413553":{"title":"Char. Sheet: Desi","description":"Warning! This character\u0026#039;s info may contain sensitive material like weapons, warfare, torture etc.\r\n---\r\n\r\nAnother agent doggo of mine \u0026lt;3\r\n\r\n--\r\n\r\n[b]Name:[\/b] Desi\r\n[b]Age:[\/b] Adult\r\n[b]Gender:[\/b] Nonbinary, they\/them\r\n[b]Build:[\/b] Average \/ 165cm\r\n[b]Species:[\/b] Dog, Mudi\r\n\r\nPart of agent organization that takes care of things that aren\u0026#039;t wanted for big public knowledge, like zombie outbreaks .......","username":"Nidomiko","lower":"nidomiko","avatar_mtime":"1780427082"},"65413549":{"title":"Apple Jack","description":"My AJ redesign!","username":"Lionbun","lower":"littledreamycat","avatar_mtime":"1721286451"},"65413548":{"title":"ADOPT","description":"-----\r\n\r\n[center] Price - $14\r\n\r\nIn the comments, indicate the number of the desired character. \r\nIf you want with an additional service, you can also indicate \r\n--------\r\n\r\n-----\r\n [u] Base - @lucasestellar [\/u]  [\/center]\r\n-----","username":"Asthmatic","lower":"asthmatic","avatar_mtime":"1679608719"},"65413546":{"title":"YCH DONE \u2623 Inflatable pride month","description":"[url=https:\/\/www.furaffinity.net\/view\/65281303\/]YCH[\/url] for :goodmorningdeericon:\r\n\r\nSo cute character, thank you!\r\n\r\n[color=#7cfc00] Like what you see? Want me to experiment with [b]your[\/b] character? [\/color]\r\n\r\n[color=#d77aff] [url=https:\/\/www.furaffinity.net\/gallery\/k.m.a.\/folder\/1641366\/OPEN]Take a look here[\/url] or [url=https:\/\/www.furaffinity.net\/view\/64353727\/]here.[\/url] [\/color]","username":"k.m.a.","lower":"k.m.a.","avatar_mtime":"1772888151"},"65413545":{"title":"Pride Month :3","description":"Something a lil cute for me and my boyfriend hehe","username":"PeptoHLR","lower":"peptohlr","avatar_mtime":"1741103387"},"65413542":{"title":"Romantic YCH","description":"https:\/\/www.furaffinity.net\/view\/59738571\r\nhttps:\/\/www.furaffinity.net\/view\/59738571\r\nhttps:\/\/www.furaffinity.net\/view\/59738571\r\nhttps:\/\/www.furaffinity.net\/view\/59738571\r\nhttps:\/\/www.furaffinity.net\/view\/59738571","username":"DiXandra","lower":"dixandra","avatar_mtime":"1779223460"}}</script>
+<script type="text/javascript">
+    var descriptions = JSON.parse(document.getElementById('js-submissionData').textContent);
+</script>
+                            </div>
+                                            </div>
+                </div>
+
+                                </section>
+    </div>
+
+
+
+
+
+                    <div class="browse-sidebar-container">
+            <div class="browse-sidebar-content">
+                <div id="sidebar-options">
+                    <form id="search-form" method="get" action="/search/">
+
+                    <input type="checkbox" id="menu-toggle2" class="toggle_input" style="display:none"/>
+                    <label for="menu-toggle2" class="toggle_label hideonfull" style="display:none"><div>Advanced Options</div></label>
+
+                    <div class="sidebar-options-content">
+
+                        <input type="checkbox" id="menu-toggle3" class="toggle_input" style="display:none"/>
+                        <label for="menu-toggle2" class="toggle_label2 hideonfull"><div style="cursor:pointer;margin-top:1px">X</div></label>
+
+
+                                                <div class="l-sidebar sidebar-browse-container">
+
+                                                        <div class="hidebrowselowres">
+                                
+<div class="sidebarAds">
+    <ins data-id="sidebar_top"    class="sidebarAds__slot format--faSmallRectangle jsAdSlot hidden"></ins>
+    <ins data-id="sidebar_bottom" class="sidebarAds__slot format--faSmallRectangle jsAdSlot hidden"></ins>
+</div>
+                            </div>
+
+                                                        <div class="l-sidebar__searchBox">
+                                <h4>
+                                    <a class="l-sidebar__helpLink" href="/help/#search" target="_blank">[Help]</a>
+                                    Search
+                                </h4>
+
+                                <div class="c-searchQueryInput">
+                                    <textarea autoresize class="c-searchQueryInput__textarea search_string_input search-query" name="q" id="q" rows="1" placeholder="Type here to search!" required></textarea>
+                                    <button type="submit" class="c-searchQueryInput__button button standard" value="Search">&nbsp;</button>
+                                </div>
+                            </div>
+
+
+                                                        <div id="search-flex-container" class="flex-container">
+                                <div id="search-advanced">
+                                    <div class="l-sidebar__pageSettings sidebar-section flex-container">
+                                        <div class="search-flex-item-section">
+                                            Page #<input type="text" class="l-sidebar__pageInput textbox js-pageNumInput" name="page" id="page" value="1" data-orig-value="1" size="3" /> ,
+                                            <select name="perpage" class="listbox">
+<option value="24">24</option>
+<option value="48">48</option>
+<option value="72" selected="selected">72</option>
+</select> results per page
+                                        </div>
+                                    </div>
+
+                                    <div class="l-sidebar__sortCriteria sidebar-section flex-container">
+                                        <h4 class="search-flex-item-title">Sort Criteria</h4>
+                                        <div class="search-flex-item-section">
+                                            <select name="order-by" class="listbox">
+                                                <option value="relevancy" selected="selected">relevancy</option>
+<option value="date">date</option>
+<option value="popularity">popularity</option>                                            </select>
+                                            ordered
+                                            <select name="order-direction" class="listbox">
+                                                <option value="asc">ascending</option>
+<option value="desc" selected="selected">descending</option>                                            </select>
+                                        </div>
+                                    </div>
+
+
+                                    <div class="sidebar-section flex-container">
+                                        <h4 class="search-flex-item-title">Upload Type Filter</h4>
+                                        <div class="search-flex-item-section side-by-side">
+                                            <strong>Category:</strong>
+                                            <select class="listbox" name="category">
+    <optgroup label="Visual Art">
+        <option value="1" selected="selected">All</option>
+        <option value="34">3D Models</option>
+        <option value="2">Artwork (Digital)</option>
+        <option value="3">Artwork (Traditional)</option>
+        <option value="4">Cel Shading</option>
+        <option value="5">Crafting</option>
+        <option value="6">Designs</option>
+        <option value="32">Food / Recipes</option>
+        <option value="8">Fursuiting</option>
+        <option value="9">Icons</option>
+        <option value="10">Mosaics</option>
+        <option value="11">Photography</option>
+        <option value="36">Pixel Art</option>
+        <option value="12">Sculpting</option>
+        <option value="35">Virtual Photography</option>
+    </optgroup>
+    <optgroup label="Animation &amp; Media">
+        <option value="37">2D Animation</option>
+        <option value="38">3D Animation</option>
+        <option value="39">Pixel Animation</option>
+        <option value="7">Flash</option>
+        <option value="40">Interactive Media</option>
+    </optgroup>
+    <optgroup label="Readable Art">
+        <option value="13">Story</option>
+        <option value="14">Poetry</option>
+        <option value="15">Prose</option>
+    </optgroup>
+    <optgroup label="Audio Art">
+        <option value="16">Music</option>
+        <option value="17">Podcasts</option>
+    </optgroup>
+    <optgroup label="Downloadable">
+        <option value="18">Skins</option>
+        <option value="19">Handhelds</option>
+        <option value="20">Resources</option>
+    </optgroup>
+    <optgroup label="Other Stuff">
+        <option value="21">Adoptables</option>
+        <option value="22">Auctions</option>
+        <option value="23">Contests</option>
+        <option value="24">Current Events</option>
+        <option value="25">Desktops</option>
+        <option value="26">Stockart</option>
+        <option value="27">Screenshots</option>
+        <option value="28">Scraps</option>
+        <option value="29">Wallpaper</option>
+        <option value="30">YCH / Sale</option>
+        <option value="31">Other</option>
+    </optgroup>
+</select>                                        </div>
+                                        <div class="search-flex-item-section side-by-side">
+                                            <strong>Type:</strong>
+                                            <select class="listbox" name="arttype">
+    <optgroup label="General Things">
+        <option value="1" selected="selected">All</option>
+        <option value="2">Abstract</option>
+        <option value="3">Animal related (non-anthro)</option>
+        <option value="4">Anime</option>
+        <option value="5">Comics</option>
+        <option value="6">Doodle</option>
+        <option value="7">Fanart</option>
+        <option value="8">Fantasy</option>
+        <option value="9">Human</option>
+        <option value="10">Portraits</option>
+        <option value="11">Scenery</option>
+        <option value="12">Still Life</option>
+        <option value="13">Tutorials</option>
+        <option value="14">Miscellaneous</option>
+    </optgroup>
+    <optgroup label="Specialty">
+        <option value="100">General Furry Art</option>
+        <option value="122">ABDL</option>
+        <option value="101">Baby fur</option>
+        <option value="102">Bondage</option>
+        <option value="103">Digimon</option>
+        <option value="104">Fat Furs</option>
+        <option value="105">Fetish Other</option>
+        <option value="106">Fursuit</option>
+        <option value="119">Gore / Macabre Art</option>
+        <option value="107">Hyper</option>
+        <option value="121">Hypnosis</option>
+        <option value="108">Inflation</option>
+        <option value="109">Macro / Micro</option>
+        <option value="110">Muscle</option>
+        <option value="111">My Little Pony / Brony</option>
+        <option value="112">Paw</option>
+        <option value="113">Pokemon</option>
+        <option value="114">Pregnancy</option>
+        <option value="115">Sonic</option>
+        <option value="116">Transformation</option>
+        <option value="120">TF / TG</option>
+        <option value="117">Vore</option>
+        <option value="118">Water Sports</option>
+    </optgroup>
+    <optgroup label="Music">
+        <option value="201">Techno</option>
+        <option value="202">Trance</option>
+        <option value="203">House</option>
+        <option value="204">90s</option>
+        <option value="205">80s</option>
+        <option value="206">70s</option>
+        <option value="207">60s</option>
+        <option value="208">Pre-60s</option>
+        <option value="209">Classical</option>
+        <option value="210">Game Music</option>
+        <option value="211">Rock</option>
+        <option value="212">Pop</option>
+        <option value="213">Rap</option>
+        <option value="214">Industrial</option>
+        <option value="200">Other Music</option>
+    </optgroup>
+</select>                                        </div>
+                                        <div class="search-flex-item-section side-by-side">
+                                            <strong>Species:</strong>
+                                            <select class="listbox" name="species">
+    <option value="1" selected="selected">Unspecified / Any</option>
+    <optgroup label="General">
+        <option value="10001">Airborne Vehicle</option>
+        <option value="5001">Alien (Other)</option>
+        <option value="1000">Amphibian (Other)</option>
+        <option value="2000">Aquatic (Other)</option>
+        <option value="3000">Avian (Other)</option>
+        <option value="6002">Bear (Other)</option>
+        <option value="6007">Bovine (Other)</option>
+        <option value="6017">Canine (Other)</option>
+        <option value="6018">Cervine (Other)</option>
+        <option value="6010">Dog (Other)</option>
+        <option value="4000">Dragon (Other)</option>
+        <option value="10009">Equine (Other)</option>
+        <option value="5000">Exotic (Other)</option>
+        <option value="6030">Feline (Other)</option>
+        <option value="6075">Fox (Other)</option>
+        <option value="10007">Goo / Slime</option>
+        <option value="10002">Hybrid Species</option>
+        <option value="10006">Inanimate</option>
+        <option value="8003">Insect (Other)</option>
+        <option value="10003">Land Vehicle</option>
+        <option value="6000">Mammal (Other)</option>
+        <option value="6042">Marsupial (Other)</option>
+        <option value="6051">Mustelid (Other)</option>
+        <option value="10008">Plant / Fungus</option>
+        <option value="6058">Primate (Other)</option>
+        <option value="7000">Reptilian (Other)</option>
+        <option value="10004">Robot / Android / Cyborg</option>
+        <option value="6067">Rodent (Other)</option>
+        <option value="10005">Sea Vehicle</option>
+        <option value="5025">Taur (Other)</option>
+        <option value="6015">Vulpine (Other)</option>
+    </optgroup>
+    <optgroup label="Fandom Creations">
+        <option value="11014">Original Species</option>
+        <option value="11015">Fan Species / Character</option>
+        <option value="11001">Aeromorph</option>
+        <option value="11002">Angel Dragon</option>
+        <option value="11012">Avali</option>
+        <option value="5003">Chakat</option>
+        <option value="5005">Citra</option>
+        <option value="5006">Crux</option>
+        <option value="5009">Dracat</option>
+        <option value="11003">Dutch Angel Dragon</option>
+        <option value="11011">Felkin</option>
+        <option value="11004">Ferrin</option>
+        <option value="11005">Jogauni</option>
+        <option value="5014">Langurhali</option>
+        <option value="11006">Nevrean</option>
+        <option value="11007">Protogen</option>
+        <option value="11016">Rexouium</option>
+        <option value="5021">Sergal</option>
+        <option value="11010">Synx</option>
+        <option value="11013">Wickerbeast</option>
+        <option value="11009">Yinglet</option>
+        <option value="11008">Zorgoia</option>
+    </optgroup>
+    <optgroup label="Mythological / Fantasy">
+        <option value="12001">Angel</option>
+        <option value="12002">Centaur</option>
+        <option value="12003">Cerberus</option>
+        <option value="12038">Changeling / Shape Shifter</option>
+        <option value="12004">Chimera</option>
+        <option value="12005">Chupacabra</option>
+        <option value="12006">Cockatrice</option>
+        <option value="5007">Daemon</option>
+        <option value="12007">Demon</option>
+        <option value="12008">Displacer Beast</option>
+        <option value="12009">Dragonborn</option>
+        <option value="12010">Drow</option>
+        <option value="12011">Dwarf</option>
+        <option value="4001">Eastern Dragon</option>
+        <option value="5011">Elf</option>
+        <option value="5012">Gargoyle</option>
+        <option value="12012">Goblin</option>
+        <option value="12013">Golem</option>
+        <option value="3007">Gryphon</option>
+        <option value="12014">Harpy</option>
+        <option value="12015">Hellhound</option>
+        <option value="12016">Hippogriff</option>
+        <option value="12017">Hobbit</option>
+        <option value="4002">Hydra</option>
+        <option value="12018">Imp</option>
+        <option value="12019">Incubus</option>
+        <option value="12020">Jackalope</option>
+        <option value="12021">Kirin</option>
+        <option value="12022">Kitsune</option>
+        <option value="12023">Kobold</option>
+        <option value="12024">Lamia</option>
+        <option value="12025">Manticore</option>
+        <option value="12026">Minotaur</option>
+        <option value="5016">Naga</option>
+        <option value="12027">Nephilim</option>
+        <option value="5018">Orc</option>
+        <option value="12028">Pegasus</option>
+        <option value="12029">Peryton</option>
+        <option value="3010">Phoenix</option>
+        <option value="12030">Sasquatch</option>
+        <option value="5020">Satyr</option>
+        <option value="12031">Sphinx</option>
+        <option value="12032">Succubus</option>
+        <option value="12033">Tiefling</option>
+        <option value="12034">Troll</option>
+        <option value="5023">Unicorn</option>
+        <option value="12035">Water Dragon</option>
+        <option value="12036">Werewolf / Lycanthrope</option>
+        <option value="4004">Western Dragon</option>
+        <option value="4005">Wyvern</option>
+        <option value="12037">Yokai</option>
+    </optgroup>
+    <optgroup label="Games / Media">
+        <option value="13001">Alicorn (MLP)</option>
+        <option value="5002">Argonian</option>
+        <option value="13002">Asari</option>
+        <option value="13003">Bangaa</option>
+        <option value="13004">Bubble Dragon</option>
+        <option value="13005">Burmecian</option>
+        <option value="13006">Charr</option>
+        <option value="13007">Chiss</option>
+        <option value="5004">Chocobo</option>
+        <option value="13008">Deathclaw</option>
+        <option value="5008">Digimon</option>
+        <option value="5010">Draenei</option>
+        <option value="13009">Drell</option>
+        <option value="13010">Elcor</option>
+        <option value="13011">Ewok</option>
+        <option value="13012">Hanar</option>
+        <option value="13013">Hrothgar</option>
+        <option value="5013">Iksar</option>
+        <option value="5015">Kaiju / Giant Monster</option>
+        <option value="13041">Kelpie</option>
+        <option value="13014">Kemonomimi</option>
+        <option value="13015">Khajiit</option>
+        <option value="13016">Koopa</option>
+        <option value="13017">Krogan</option>
+        <option value="13018">Lombax</option>
+        <option value="13019">Mimiga</option>
+        <option value="13020">Mobian</option>
+        <option value="5017">Moogle</option>
+        <option value="13021">Neopet</option>
+        <option value="13022">Nu Mou</option>
+        <option value="5019">Pokemon</option>
+        <option value="13023">Pony (MLP)</option>
+        <option value="13024">Protoss</option>
+        <option value="13025">Quarian</option>
+        <option value="13026">Ronso</option>
+        <option value="13027">Salarian</option>
+        <option value="13028">Sangheili / Elites</option>
+        <option value="13029">Tauntaun</option>
+        <option value="13030">Tauren</option>
+        <option value="13031">Trandoshan</option>
+        <option value="13032">Transformer</option>
+        <option value="13033">Turian</option>
+        <option value="13034">Twi'lek</option>
+        <option value="13035">Viera</option>
+        <option value="13036">Wookiee</option>
+        <option value="5024">Xenomorph</option>
+        <option value="13037">Yautja / Predator</option>
+        <option value="13038">Yordle</option>
+        <option value="13039">Yoshi</option>
+        <option value="13040">Zerg</option>
+    </optgroup>
+    <optgroup label="Animal Kingdom">
+        <option value="14001">Aardvark</option>
+        <option value="14002">Aardwolf</option>
+        <option value="14003">African Wild Dog</option>
+        <option value="14004">Akita</option>
+        <option value="14005">Albatross</option>
+        <option value="7001">Alligator / Crocodile</option>
+        <option value="14006">Alpaca</option>
+        <option value="14007">Anaconda</option>
+        <option value="14008">Anteater</option>
+        <option value="6004">Antelope</option>
+        <option value="8000">Arachnid</option>
+        <option value="14009">Arctic Fox</option>
+        <option value="14010">Armadillo</option>
+        <option value="14011">Axolotl</option>
+        <option value="14012">Baboon</option>
+        <option value="6045">Badger</option>
+        <option value="6001">Bat</option>
+        <option value="6064">Beaver</option>
+        <option value="14013">Bee</option>
+        <option value="14014">Binturong</option>
+        <option value="14015">Bison</option>
+        <option value="14016">Blue Jay</option>
+        <option value="14017">Border Collie</option>
+        <option value="14018">Brown Bear</option>
+        <option value="14019">Buffalo</option>
+        <option value="14020">Buffalo / Bison</option>
+        <option value="14021">Bull Terrier</option>
+        <option value="14022">Butterfly</option>
+        <option value="14023">Caiman</option>
+        <option value="6074">Camel</option>
+        <option value="14024">Capybara</option>
+        <option value="14025">Caribou</option>
+        <option value="14026">Caterpillar</option>
+        <option value="2001">Cephalopod</option>
+        <option value="14027">Chameleon</option>
+        <option value="6021">Cheetah</option>
+        <option value="14028">Chicken</option>
+        <option value="14029">Chimpanzee</option>
+        <option value="14030">Chinchilla</option>
+        <option value="14031">Chipmunk</option>
+        <option value="14032">Civet</option>
+        <option value="14033">Clouded Leopard</option>
+        <option value="14034">Coatimundi</option>
+        <option value="14035">Cockatiel</option>
+        <option value="14036">Corgi</option>
+        <option value="3001">Corvid</option>
+        <option value="6022">Cougar / Puma</option>
+        <option value="6003">Cow</option>
+        <option value="6008">Coyote</option>
+        <option value="14037">Crab</option>
+        <option value="14038">Crane</option>
+        <option value="14039">Crayfish</option>
+        <option value="3002">Crow</option>
+        <option value="14040">Crustacean</option>
+        <option value="14041">Dalmatian</option>
+        <option value="14042">Deer</option>
+        <option value="14043">Dhole</option>
+        <option value="6011">Dingo</option>
+        <option value="8001">Dinosaur</option>
+        <option value="6009">Doberman</option>
+        <option value="2002">Dolphin</option>
+        <option value="6019">Donkey / Mule</option>
+        <option value="3003">Duck</option>
+        <option value="3004">Eagle</option>
+        <option value="14044">Eel</option>
+        <option value="14045">Elephant</option>
+        <option value="3005">Falcon</option>
+        <option value="6072">Fennec</option>
+        <option value="6046">Ferret</option>
+        <option value="14046">Finch</option>
+        <option value="2005">Fish</option>
+        <option value="14047">Flamingo</option>
+        <option value="14048">Fossa</option>
+        <option value="1001">Frog</option>
+        <option value="6005">Gazelle</option>
+        <option value="7003">Gecko</option>
+        <option value="14049">Genet</option>
+        <option value="6012">German Shepherd</option>
+        <option value="14050">Gibbon</option>
+        <option value="6031">Giraffe</option>
+        <option value="6006">Goat</option>
+        <option value="3006">Goose</option>
+        <option value="6054">Gorilla</option>
+        <option value="14051">Gray Fox</option>
+        <option value="14052">Great Dane</option>
+        <option value="14053">Grizzly Bear</option>
+        <option value="14054">Guinea Pig</option>
+        <option value="14055">Hamster</option>
+        <option value="3008">Hawk</option>
+        <option value="6032">Hedgehog</option>
+        <option value="14056">Heron</option>
+        <option value="6033">Hippopotamus</option>
+        <option value="14057">Honeybee / Bumblebee</option>
+        <option value="6034">Horse</option>
+        <option value="6020">Housecat</option>
+        <option value="6055">Human</option>
+        <option value="14058">Humanoid</option>
+        <option value="14059">Hummingbird</option>
+        <option value="6014">Husky</option>
+        <option value="6035">Hyena</option>
+        <option value="7004">Iguana</option>
+        <option value="14060">Impala</option>
+        <option value="6013">Jackal</option>
+        <option value="6023">Jaguar</option>
+        <option value="6038">Kangaroo</option>
+        <option value="14061">Kangaroo Mouse</option>
+        <option value="14062">Kangaroo Rat</option>
+        <option value="14063">Kinkajou</option>
+        <option value="14064">Kit Fox</option>
+        <option value="6039">Koala</option>
+        <option value="14065">Kodiak Bear</option>
+        <option value="14066">Komodo Dragon</option>
+        <option value="14067">Labrador</option>
+        <option value="6056">Lemur</option>
+        <option value="6024">Leopard</option>
+        <option value="14068">Liger</option>
+        <option value="14069">Linsang</option>
+        <option value="6025">Lion</option>
+        <option value="7005">Lizard</option>
+        <option value="6036">Llama</option>
+        <option value="14070">Lobster</option>
+        <option value="14071">Longhair Cat</option>
+        <option value="6026">Lynx</option>
+        <option value="14072">Magpie</option>
+        <option value="14073">Maine Coon</option>
+        <option value="14074">Malamute</option>
+        <option value="14075">Mammal - Feline</option>
+        <option value="14076">Mammal - Herd</option>
+        <option value="14077">Mammal - Marsupial</option>
+        <option value="14078">Mammal - Mustelid</option>
+        <option value="14079">Mammal - Other Predator</option>
+        <option value="14080">Mammal - Prey</option>
+        <option value="14081">Mammal - Primate</option>
+        <option value="14082">Mammal - Rodent</option>
+        <option value="14083">Manatee</option>
+        <option value="14084">Mandrill</option>
+        <option value="14085">Maned Wolf</option>
+        <option value="8004">Mantid</option>
+        <option value="14086">Marmoset</option>
+        <option value="14087">Marten</option>
+        <option value="6043">Meerkat</option>
+        <option value="6048">Mink</option>
+        <option value="14088">Mole</option>
+        <option value="6044">Mongoose</option>
+        <option value="14089">Monitor Lizard</option>
+        <option value="6057">Monkey</option>
+        <option value="14090">Moose</option>
+        <option value="14091">Moth</option>
+        <option value="6065">Mouse</option>
+        <option value="14092">Musk Deer</option>
+        <option value="14093">Musk Ox</option>
+        <option value="1002">Newt</option>
+        <option value="6027">Ocelot</option>
+        <option value="14094">Octopus</option>
+        <option value="14095">Okapi</option>
+        <option value="14096">Olingo</option>
+        <option value="6037">Opossum</option>
+        <option value="14097">Orangutan</option>
+        <option value="14098">Orca</option>
+        <option value="14099">Oryx</option>
+        <option value="14100">Ostrich</option>
+        <option value="6047">Otter</option>
+        <option value="3009">Owl</option>
+        <option value="6052">Panda</option>
+        <option value="14101">Pangolin</option>
+        <option value="6028">Panther</option>
+        <option value="14102">Parakeet</option>
+        <option value="14103">Parrot / Macaw</option>
+        <option value="14104">Peacock</option>
+        <option value="14105">Penguin</option>
+        <option value="14106">Persian Cat</option>
+        <option value="6053">Pig / Swine</option>
+        <option value="14107">Pigeon</option>
+        <option value="14108">Pika</option>
+        <option value="14109">Pine Marten</option>
+        <option value="14110">Platypus</option>
+        <option value="14111">Polar Bear</option>
+        <option value="6073">Pony</option>
+        <option value="14112">Poodle</option>
+        <option value="14113">Porcupine</option>
+        <option value="2004">Porpoise</option>
+        <option value="14114">Procyonid</option>
+        <option value="14115">Puffin</option>
+        <option value="6040">Quoll</option>
+        <option value="6059">Rabbit / Hare</option>
+        <option value="6060">Raccoon</option>
+        <option value="6061">Rat</option>
+        <option value="14116">Ray</option>
+        <option value="14117">Red Fox</option>
+        <option value="6062">Red Panda</option>
+        <option value="14118">Reindeer</option>
+        <option value="14119">Reptillian</option>
+        <option value="6063">Rhinoceros</option>
+        <option value="14120">Robin</option>
+        <option value="14121">Rottweiler</option>
+        <option value="14122">Sabercats</option>
+        <option value="14123">Sabertooth</option>
+        <option value="1003">Salamander</option>
+        <option value="8005">Scorpion</option>
+        <option value="14124">Seagull</option>
+        <option value="14125">Seahorse</option>
+        <option value="6068">Seal</option>
+        <option value="14126">Secretary Bird</option>
+        <option value="4003">Serpent Dragon</option>
+        <option value="14127">Serval</option>
+        <option value="2006">Shark</option>
+        <option value="14128">Sheep</option>
+        <option value="14129">Shiba Inu</option>
+        <option value="14130">Shorthair Cat</option>
+        <option value="14131">Shrew</option>
+        <option value="14132">Siamese</option>
+        <option value="14133">Sifaka</option>
+        <option value="14134">Silver Fox</option>
+        <option value="6069">Skunk</option>
+        <option value="14135">Sloth</option>
+        <option value="14136">Snail</option>
+        <option value="7006">Snake / Serpent</option>
+        <option value="14137">Snow Leopard</option>
+        <option value="14138">Sparrow</option>
+        <option value="14139">Squid</option>
+        <option value="6070">Squirrel</option>
+        <option value="14140">Stoat</option>
+        <option value="14141">Stork</option>
+        <option value="14142">Sugar Glider</option>
+        <option value="14143">Sun Bear</option>
+        <option value="3011">Swan</option>
+        <option value="14144">Swift Fox</option>
+        <option value="5022">Tanuki</option>
+        <option value="14145">Tapir</option>
+        <option value="14146">Tasmanian Devil</option>
+        <option value="14147">Thylacine</option>
+        <option value="6029">Tiger</option>
+        <option value="14148">Toucan</option>
+        <option value="7007">Turtle / Tortoise</option>
+        <option value="14149">Vulture</option>
+        <option value="6041">Wallaby</option>
+        <option value="14150">Walrus</option>
+        <option value="14151">Wasp</option>
+        <option value="6049">Weasel</option>
+        <option value="2003">Whale</option>
+        <option value="6016">Wolf</option>
+        <option value="6050">Wolverine</option>
+        <option value="6071">Zebra</option>
+    </optgroup>
+</select>                                        </div>
+                                    </div>
+
+                                    <div class="sidebar-section jsDateRangeInputs">
+                                        <h4 class="search-flex-item-title">Date Filter</h4>
+                                        <div class="gridContainer gridContainer--columns3">
+    <div class="gridContainer__item"><label><input type="radio" name="range" value="1day">1 Day</label></div>
+    <div class="gridContainer__item"><label><input type="radio" name="range" value="3days">3 Days</label></div>
+    <div class="gridContainer__item"><label><input type="radio" name="range" value="7days">7 Days</label></div>
+    <div class="gridContainer__item"><label><input type="radio" name="range" value="30days">30 Days</label></div>
+    <div class="gridContainer__item"><label><input type="radio" name="range" value="90days">90 Days</label></div>
+    <div class="gridContainer__item"><label><input type="radio" name="range" value="1year">1 Year</label></div>
+    <div class="gridContainer__item"><label><input type="radio" name="range" value="3years">3 Years</label></div>
+    <div class="gridContainer__item"><label><input type="radio" name="range" value="5years" checked="checked">5 Years</label></div>
+    <div class="gridContainer__item"><label><input type="radio" name="range" value="all">All Time</label></div>
+    <div class="gridContainer__item"><label><input type="radio" name="range" value="manual">Manual</label></div>
+</div>
+                                        <div class="jsManualRangeContainer hidden">
+                                            <div class="jsManualRangeContainer__item"><input class="textbox" type="date" name="range_from" value="" placeholder="mm / dd / yyyy" min="2005-12-04" max="2026-06-20" step="1" /><span>From:</span></div>
+                                            <div class="jsManualRangeContainer__item"><input class="textbox" type="date" name="range_to"   value=""   placeholder="mm / dd / yyyy" min="2005-12-04" max="2026-06-20" step="1" /><span>To:</span></div>
+                                        </div>
+                                    </div>
+
+
+                                    <div class="sidebar-section">
+                                        <h4 class="search-flex-item-title">Gender Filter</h4>
+                                        <div class="gridContainer gridContainer--columns2 js-filterSection__gender">
+    <div class="gridContainer__item"><label><input type="checkbox" value="male">Male</label></div>
+    <div class="gridContainer__item"><label><input type="checkbox" value="female">Female</label></div>
+    <div class="gridContainer__item"><label><input type="checkbox" value="trans_male">Trans_Male</label></div>
+    <div class="gridContainer__item"><label><input type="checkbox" value="trans_female">Trans_Female</label></div>
+    <div class="gridContainer__item"><label><input type="checkbox" value="intersex">Intersex</label></div>
+    <div class="gridContainer__item"><label><input type="checkbox" value="non_binary">Non_Binary</label></div>
+</div>                                    </div>
+
+                                    <div class="sidebar-section">
+                                        <h4 class="search-flex-item-title">Rating Filter</h4>
+                                        <div class="gridContainer gridContainer--columns3">
+    <div class="gridContainer__item"><label><input type="checkbox" value="1" name="rating-general" checked="checked">General</label></div>
+    <div class="gridContainer__item"><label><input type="checkbox" value="1" name="rating-mature" disabled="disabled">Mature</label></div>
+    <div class="gridContainer__item"><label><input type="checkbox" value="1" name="rating-adult" disabled="disabled">Adult</label></div>
+</div>                                    </div>
+
+                                    <div class="sidebar-section">
+                                        <h4 class="search-flex-item-title">Type Filter</h4>
+                                        <div class="gridContainer gridContainer--columns3">
+    <div class="gridContainer__item"><label><input type="checkbox" value="1" name="type-art" checked="checked">Art</label></div>
+    <div class="gridContainer__item"><label><input type="checkbox" value="1" name="type-music" checked="checked">Music</label></div>
+    <div class="gridContainer__item"><label><input type="checkbox" value="1" name="type-flash" checked="checked">Flash</label></div>
+    <div class="gridContainer__item"><label><input type="checkbox" value="1" name="type-story" checked="checked">Story</label></div>
+    <div class="gridContainer__item"><label><input type="checkbox" value="1" name="type-photo" checked="checked">Photos</label></div>
+    <div class="gridContainer__item"><label><input type="checkbox" value="1" name="type-poetry" checked="checked">Poetry</label></div>
+</div>                                    </div>
+
+                                    <div class="sidebar-section">
+                                        <h4 class="search-flex-item-title">Match Criteria</h4>
+                                        <div class="gridContainer gridContainer--columns2 filterSection__mode">
+    <div class="gridContainer__item"><label><input type="radio" name="mode" value="all">All of the  words</label></div>
+    <div class="gridContainer__item"><label><input type="radio" name="mode" value="any">Any of the words</label></div>
+    <div class="gridContainer__item"><label><input type="radio" name="mode" value="extended" checked="checked">Extended (see &quot;Help&quot; section below)</label></div>
+</div>                                    </div>
+                                </div>
+
+                                <div class="extra-search-btn-container">
+                                    <button type="submit" class="button standard" value="Search">Search</button>
+                                </div>
+                                </form>
+
+
+                                                                <div class="l-sidebar__advancedSearchHelp search-flex-item-title hiddensearch">
+                                    <div class="search-flex-item-holder user-submitted-links">
+                                        <div class="c-divToggle">
+                                            <input type="checkbox" id="div-search-help2">
+                                            <label for="div-search-help2"><h4>Extended Search Help</h4></label>
+
+                                            <div class="hide">
+                                                More information can be found on the <a href="/help/#search" target="_blank">Help Page</a>. Short summary below.
+                                                <br />
+                                                <br />
+                                                <h4>Basic boolean operators:</h4>
+                                                <ul>
+                                                    <li><u>AND</u>: fender & rednef <u>-or-</u> fender rednef</li>
+                                                    <li><u>OR&nbsp;</u>: fender | rednef</li>
+                                                    <li><u>NOT</u>: rednef -fender <u>-or-</u> rednef !fender</li>
+                                                    <li><u>Grouping</u>: fox & (box | socks)</li>
+                                                </ul>
+
+                                                <h4>Capabilities</h4>
+                                                    <ul>
+                                                    <li><u>Field searching</u>: @title fender @message rednef</li>
+                                                    <li><u>Phrase searching</u>: "quick brown fox"</li>
+                                                    <li><u>Word proximity searching</u>: "quick brown fox"~3</li>
+                                                    <li><u>Quorum matching</u>: "red_fox gray_fox arctic_fox fennec swift_fox kit_fox"/2</li>
+                                                </ul>
+
+                                                <h4>Available Fields</h4>
+                                                <ul>
+                                                    <li>@title</li>
+                                                    <li>@message</li>
+                                                    <li>@lower (artist name as it appears in their userpage URL)</li>
+                                                    <li>@keywords</li>
+                                                </ul>
+                                                <u>Example</u>:<br />
+                                                    (fender | rednef) -truck @keywords plushie
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                                                    
+<div class="rectangleAd">
+    <ins data-id="sidebar" class="rectangleAd__slot format--mediumRectangle jsAdSlot"></ins>
+</div>
+                                                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<script type="text/javascript" src="/themes/beta/js/pages/pageid-search.js?u=2026060613"></script>
+<script type="text/javascript" src="/themes/beta/js/widgets/gender_checkboxes_search.js?u=2026060613"></script>
+
+
+    </div>
+    <!-- /<div id="site-content"> -->
+
+    <div id="footer">
+        <div class="auto_link footer-links">
+            <a href="/advertising">Advertise</a> |
+            <a href="/plus"><img style="position:relative;top:4px" src="/themes/beta/img/the-golden-pawb.png"> Get FA+</a> |
+            <a href="https://status.furaffinity.net/">Site Status</a> |
+            <a href="https://shop.furaffinity.net/"><img style="position:relative;top:4px" src="/themes/beta/img/icons/merch_store_icon.png"> Merch Store</a> |
+            <a href="/route/i_was_here">Memorial</a> |
+            <a href="/tos">Terms of Service</a> |
+            <a href="/privacy">Privacy</a> |
+            <a href="/coc">Code of Conduct</a> |
+            <a href="/aup">Upload Policy</a>
+        </div>
+
+        
+<div class="footerAds">
+    <div class="footerAds__column">
+        <ins class="footerAds__slot format--faMediumRectangle jsAdSlot hidden" data-id="footer_left"></ins>    </div>
+
+    <div class="footerAds__column">
+        <div class="footerAds__slot footerAds__slot--faLogo">
+            <img src="/themes/beta/img/banners/fa_logo.png?v2">
+        </div>
+    </div>
+
+    <div class="footerAds__column">
+            <ins class="footerAds__slot format--faMediumRectangle jsAdSlot hidden" data-id="footer_right"></ins>
+    </div>
+</div>
+
+                    <div class="online-stats">
+                88959                <strong><span title="Measured in the last 900 seconds">Users online</span></strong> &mdash;
+                2354 <strong>guests</strong>,
+                                    14002 <strong>registered</strong>
+                    and 72603 <strong>other</strong>
+                                <!-- Online Counter Last Update: Sat, 20 Jun 2026 15:02:38 -0700 -->
+          </div>
+          <small>Limit bot activity to periods with less than 15k registered users online.</small>
+        
+        <br><br>
+        <strong>&copy; 2005-2026 Frost Dragon Art LLC</strong>
+
+        <div class="footnote">
+            Server Time: Jun 20, 2026 03:02 PM<br />
+            Page generated in 0.036 seconds<br />[ 21.9% PHP, 78.1% SQL ] (19 queries)<br />
+                    </div>
+    </div>
+</div>
+
+
+
+    <script type="text/javascript">
+        _fajs.push(function() {
+            var exists = getCookie('sz');
+            var saved = save_viewport_size();
+            if((!exists && saved) || (exists && saved && exists != saved)) {
+                //window.location.reload();
+            }
+        });
+    </script>
+
+    <script type="text/javascript" src="/themes/beta/js/prebid10.26.0.js"></script>
+    <script type="text/javascript" src="/themes/beta/js/censor.js?u=2026060613"></script>
+
+    <script type="text/javascript" src="/themes/beta/js/prototype.1.7.3.min.js?u=2026060613"></script>
+    <script type="text/javascript" src="/themes/beta/js/script.js?u=2026060613"></script>
+
+    <script type="text/javascript" src="/themes/beta/js/color_helper.js?u=2026060613"></script>
+    <script type="text/javascript" src="/themes/beta/js/bbcode_color_adjuster.js?u=2026060613"></script>
+    <script type="text/javascript" src="/themes/beta/js/widgets/fuzzy-date-switcher.js?u=2026060613"></script>
+
+    
+            <script src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js" crossorigin="anonymous"></script>
+    
+    <script type="text/javascript">
+        var server_timestamp = 1781992959;
+        var client_timestamp = Date.now() / 1000;
+        var server_timestamp_delta  = server_timestamp - client_timestamp;
+        var sfw_cookie_name = 'sfw';
+
+                    //
+            document.addEventListener("DOMContentLoaded", (event) => {
+                //
+                const ad_manager = new adManager({"sizeConfig":[{"labels":["desktopWide"],"mediaQuery":"(min-width: 1090px)","sizesSupported":[[728,90],[300,250],[300,168],[300,600],[160,600]]},{"labels":["desktopNarrow"],"mediaQuery":"(min-width: 740px) and (max-width: 1089px)","sizesSupported":[[728,90],[300,250],[300,168]]},{"labels":["mobile"],"mediaQuery":"(min-width: 0px) and (max-width: 739px)","sizesSupported":[[320,50],[300,50],[320,100]]}],"slotConfig":{"header_middle":{"containerSize":{"desktopWide":[728,90],"desktopNarrow":[728,90],"mobile":[320,50]},"providerPriority":["inhouse"]},"above_content":{"containerSize":{"desktopWide":[728,90],"desktopNarrow":[728,90],"mobile":[320,50]},"providerPriority":["inhouse"]},"sidebar":{"containerSize":{"desktopWide":[300,250]},"providerPriority":["inhouse"]},"sidebar_tall":{"containerSize":{"desktopWide":[300,600],"desktopNarrow":[300,600],"mobile":[300,250]},"providerPriority":["inhouse"]},"footer_left":{"containerSize":{"desktopWide":[300,250],"desktopNarrow":[300,250],"mobile":[300,250]},"providerPriority":["inhouse"]},"footer_right":{"containerSize":{"desktopWide":[300,250],"desktopNarrow":[300,250],"mobile":[300,250]},"providerPriority":["inhouse"]},"footer_right_top":{"containerSize":{"desktopWide":[320,50],"desktopNarrow":[320,50],"mobile":[320,50]},"providerPriority":["inhouse"]},"footer_right_bottom":{"containerSize":{"desktopWide":[320,50],"desktopNarrow":[320,50],"mobile":[320,50]},"providerPriority":["inhouse"]},"header_right_left":{"containerSize":{"desktopWide":[320,50]},"providerPriority":["inhouse"]},"header_right_right":{"containerSize":{"desktopWide":[320,50]},"providerPriority":["inhouse"]},"sidebar_top":{"containerSize":{"desktopWide":[320,50]},"providerPriority":["inhouse"]},"sidebar_bottom":{"containerSize":{"desktopWide":[320,50]},"providerPriority":["inhouse"]},"front_page":{"containerSize":{"desktopWide":[728,90],"desktopNarrow":[728,90],"mobile":[320,50]},"providerPriority":["inhouse"]},"c-videoAd":{"containerSize":{"desktopWide":[300,250]},"providerPriority":["inhouse"]}},"providerConfig":{"inhouse":{"domain":"https:\/\/rv.furaffinity.net","dataPath":"\/live\/www\/delivery\/spc.php","dataVariableName":"OA_output"}},"adConfig":{"inhouse":{"header_middle":{"default":{"tagId":40,"tagSize":[728,90]},"sizeOverride":{"mobile":{"tagId":56,"tagSize":[320,50]}}},"above_content":{"default":{"tagId":25,"tagSize":[728,90]},"sizeOverride":{"mobile":{"tagId":53,"tagSize":[320,50]}}},"sidebar":{"default":{"tagId":49,"tagSize":[300,250]}},"sidebar_tall":{"default":{"tagId":49,"tagSize":[300,250]}},"footer_left":{"default":{"tagId":28,"tagSize":[300,250]}},"footer_right":{"default":{"tagId":74,"tagSize":[300,250]}},"footer_right_top":{"default":{"tagId":62,"tagSize":[320,50]}},"footer_right_bottom":{"default":{"tagId":59,"tagSize":[320,50]}},"header_right_left":{"default":{"tagId":65,"tagSize":[320,50]}},"header_right_right":{"default":{"tagId":68,"tagSize":[320,50]}},"sidebar_top":{"default":{"tagId":65,"tagSize":[320,50]}},"sidebar_bottom":{"default":{"tagId":68,"tagSize":[320,50]}},"front_page":{"default":{"tagId":77,"tagSize":[728,90]},"sizeOverride":{"mobile":{"tagId":78,"tagSize":[320,50]}}},"c-videoAd":{"default":{"tagId":71,"tagSize":[320,50]}}}},"extraMetadata":{"adsenseClient":"ca-pub-3495616356562362","forceLoadConfigs":["c-videoAd"]}}, true);
+
+                            });
+            </script>
+
+    <script type="text/javascript">
+        _fajs.push(function() {
+            var ddmenuOptions = {
+                menuId: "ddmenu",
+                linkIdToMenuHtml: null,
+                open: "onmouseover", // or "onclick"
+                delay: 1,
+                speed: 1,
+                keysNav: true,
+                license: "2c1f72"
+            };
+            var ddmenu = new Ddmenu(ddmenuOptions);
+        });
+    </script>
+</body>
+
+<!---
+  |\ /|
+ /_^ ^_\
+   \v/
+
+The fox goes "moo!"
+--->
+
+</html>

@@ -65,6 +65,9 @@ public protocol FASession: AnyObject, Equatable {
     /// If `nil`, the latest submission previews are provided.
     func submissionPreviews(from sid: Int?) async throws -> [FASubmissionPreview]
     func nukeSubmissions() async throws
+
+    // MARK: - Search
+    func searchSubmissionPreviews(_ query: FASearchQuery) async throws -> [FASubmissionPreview]
     
     // MARK: - User gallery
     func galleryLike(for url: URL) async throws -> FAUserGalleryLike

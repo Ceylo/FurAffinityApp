@@ -34,6 +34,17 @@ struct OnlineFASessionTests {
     }
 
     @Test
+    func searchSubmissionPreviews_returnsResults() async throws {
+        let searchUrl = FAURLs.searchUrl(for: .default)
+        let session = try await makeLoggedInSession(extraData: [
+            searchUrl: testData("www.furaffinity.net:search:")
+        ])
+        let previews = try await session.searchSubmissionPreviews(.default)
+        #expect(previews.count == 72)
+        #expect(previews.first?.sid == 65413735)
+    }
+
+    @Test
     func notePreviews_returnsPreviewsFromInbox() async throws {
         let session = try await makeLoggedInSession(extraData: [
             FAURLs.notesInboxUrl: testData("www.furaffinity.net:msg:pms-unread.html")

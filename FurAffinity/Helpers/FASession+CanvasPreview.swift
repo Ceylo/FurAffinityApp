@@ -39,7 +39,11 @@ class OfflineFASession: FASession {
     }
     
     func submissionPreviews(from sid: Int?) async -> [FASubmissionPreview] { submissionPreviews }
-    
+
+    func searchSubmissionPreviews(_ query: FASearchQuery) async throws -> [FASubmissionPreview] {
+        submissionPreviews
+    }
+
     func deleteSubmissionPreviews(_ previews: [FASubmissionPreview]) async throws {
         print(#function)
     }

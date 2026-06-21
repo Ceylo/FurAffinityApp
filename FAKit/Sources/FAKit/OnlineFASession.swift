@@ -99,6 +99,19 @@ public class OnlineFASession: FASession {
         _ = try await make(FASubmissionsPage.self, with: data, url: url)
     }
     
+    // MARK: - Search
+    public func searchSubmissionPreviews(_ query: FASearchQuery) async throws -> [FASubmissionPreview] {
+        let url = FAURLs.searchUrl(for: query)
+        let data = try await dataSource.httpData(from: url, cookies: cookies)
+        let page = try await make(FASearchPage.self, with: data, url: url)
+
+        let previews = page.submissions
+            .compactMap { $0 }
+            .map { FASubmissionPreview($0) }
+        logger.info("Got \(page.submissions.count) search results (\(previews.count) after filter)")
+        return previews
+    }
+
     // MARK: - User gallery
     public func galleryLike(for url: URL) async throws -> FAUserGalleryLike {
         let data = try await dataSource.httpData(from: url, cookies: cookies)

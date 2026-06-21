@@ -45,6 +45,10 @@ final class MockFASession: FASession {
 
     func nukeSubmissions() async throws {}
 
+    func searchSubmissionPreviews(_ query: FASearchQuery) async throws -> [FASubmissionPreview] {
+        mockSubmissionPreviews
+    }
+
     // MARK: - User gallery
 
     func galleryLike(for url: URL) async throws -> FAUserGalleryLike {
