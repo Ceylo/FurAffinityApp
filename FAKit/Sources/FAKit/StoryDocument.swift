@@ -74,8 +74,121 @@ public enum StoryDocument {
     }
 
     private static func pdfText(from data: Data) -> NSAttributedString? {
-        guard let text = PDFDocument(data: data)?.string, !text.isEmpty else { return nil }
-        return plainAttributed(text)
+        guard let document = PDFDocument(data: data) else { return nil }
+
+        let result = NSMutableAttributedString()
+        for index in 0..<document.pageCount {
+            guard let page = document.page(at: index) else { continue }
+            appendReflowed(page: page, to: result)
+        }
+
+        result.removeAttribute(.foregroundColor, range: NSRange(location: 0, length: result.length))
+        let trimmedResult = trimmed(result)
+        return trimmedResult.length > 0 ? trimmedResult : nil
+    }
+
+    /// A visual line of a PDF page: a contiguous run of characters sharing a row,
+    /// with its on-page geometry (PDF space, origin bottom-left, y up).
+    private struct PDFLine {
+        var range: NSRange
+        var minX: CGFloat
+        var maxX: CGFloat
+        var minY: CGFloat
+        var maxY: CGFloat
+        var height: CGFloat { maxY - minY }
+    }
+
+    /// Reconstructs paragraphs from a PDF page: PDFKit already breaks the text into
+    /// visual lines (a `\n` per line, which is what orphaned words on screen);
+    /// we rejoin soft-wrapped lines into spaces and only keep breaks where page
+    /// geometry shows a paragraph gap or indentation. Original per-character fonts
+    /// (size + traits) are preserved so headings/emphasis survive.
+    private static func appendReflowed(page: PDFPage, to result: NSMutableAttributedString) {
+        let attributed = page.attributedString ?? NSAttributedString()
+        let string = attributed.string as NSString
+        let count = min(string.length, page.numberOfCharacters)
+        guard count > 0 else { return }
+
+        // Split into visual lines on newlines; gather per-line geometry.
+        var lines: [PDFLine] = []
+        var lineStart = 0
+        func flushLine(end: Int) {
+            let length = end - lineStart
+            if length > 0 {
+                var minX = CGFloat.greatestFiniteMagnitude, maxX = -CGFloat.greatestFiniteMagnitude
+                var minY = CGFloat.greatestFiniteMagnitude, maxY = -CGFloat.greatestFiniteMagnitude
+                var hasBounds = false
+                for i in lineStart..<end {
+                    let bounds = page.characterBounds(at: i)
+                    guard bounds.width > 0, bounds.height > 0 else { continue }
+                    hasBounds = true
+                    minX = min(minX, bounds.minX); maxX = max(maxX, bounds.maxX)
+                    minY = min(minY, bounds.minY); maxY = max(maxY, bounds.maxY)
+                }
+                if hasBounds {
+                    lines.append(PDFLine(range: NSRange(location: lineStart, length: length),
+                                         minX: minX, maxX: maxX, minY: minY, maxY: maxY))
+                }
+            }
+            lineStart = end + 1
+        }
+        for i in 0..<count where Unicode.Scalar(string.character(at: i)) == "\n" {
+            flushLine(end: i)
+        }
+        flushLine(end: count)
+        guard !lines.isEmpty else { return }
+
+        let medianHeight = median(lines.map(\.height)) ?? bodyPointSize
+        let bodyLeft = lines.map(\.minX).min() ?? 0
+        let indentTolerance = medianHeight * 0.5
+        let gapThreshold = medianHeight * 0.7
+
+        for (index, line) in lines.enumerated() {
+            let substring = attributed.attributedSubstring(from: line.range)
+
+            if index == 0 {
+                // First line of a later page continues as a new paragraph.
+                appendSeparated(substring, to: result, paragraphBreak: result.length > 0)
+                continue
+            }
+
+            let previous = lines[index - 1]
+            let gap = previous.minY - line.maxY
+            let indented = line.minX > bodyLeft + indentTolerance
+            let paragraphBreak = gap > gapThreshold || indented
+            appendSeparated(substring, to: result, paragraphBreak: paragraphBreak)
+        }
+    }
+
+    /// Appends `substring` to `result`, inserting either a paragraph break (`\n`)
+    /// or, for a soft wrap, a space — joining hyphenated words without the hyphen.
+    private static func appendSeparated(_ substring: NSAttributedString, to result: NSMutableAttributedString, paragraphBreak: Bool) {
+        if result.length == 0 {
+            result.append(substring)
+            return
+        }
+        if paragraphBreak {
+            result.append(NSAttributedString(string: "\n"))
+            result.append(substring)
+            return
+        }
+        let existing = result.string as NSString
+        let lastChar = existing.character(at: existing.length - 1)
+        if Unicode.Scalar(lastChar) == "-", existing.length >= 2,
+           CharacterSet.letters.contains(Unicode.Scalar(existing.character(at: existing.length - 2))!) {
+            result.deleteCharacters(in: NSRange(location: existing.length - 1, length: 1))
+            result.append(substring)
+        } else {
+            result.append(NSAttributedString(string: " ", attributes: [.font: font(size: bodyPointSize, bold: false, italic: false)]))
+            result.append(substring)
+        }
+    }
+
+    private static func median(_ values: [CGFloat]) -> CGFloat? {
+        guard !values.isEmpty else { return nil }
+        let sorted = values.sorted()
+        let mid = sorted.count / 2
+        return sorted.count.isMultiple(of: 2) ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
     }
 
     private static func docxText(from data: Data) -> NSAttributedString? {

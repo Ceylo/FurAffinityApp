@@ -39,6 +39,36 @@ struct StoryDocumentTests {
     }
 
     @Test
+    func pdfStory_reflowsSoftWrappedLines() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1781832277.vixyyfox_3000_-redfurythings.pdf"), filename: "story.pdf"))
+        let lines = String(attributed.characters).split(separator: "\n", omittingEmptySubsequences: false)
+
+        // Before reflow every physical PDF line was its own line (~40 chars);
+        // after reflow a paragraph collapses into one long line.
+        let longest = lines.map(\.count).max() ?? 0
+        #expect(longest > 200, "expected a reflowed paragraph, longest line was \(longest) chars")
+    }
+
+    @Test
+    func pdfStory_preservesHeadingAndEmphasis() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1781832277.vixyyfox_3000_-redfurythings.pdf"), filename: "story.pdf"))
+        let ns = NSAttributedString(attributed)
+
+        var distinctSizes = Set<CGFloat>()
+        var emphasised = false
+        ns.enumerateAttribute(.font, in: NSRange(location: 0, length: ns.length)) { value, _, _ in
+            guard let font = value as? UIFont else { return }
+            distinctSizes.insert(font.pointSize)
+            if !font.fontDescriptor.symbolicTraits.isDisjoint(with: [.traitBold, .traitItalic]) {
+                emphasised = true
+            }
+        }
+        // Heading vs body sizes survive, and at least one run is bold/italic.
+        #expect(distinctSizes.count > 1, "expected varying font sizes, got \(distinctSizes.sorted())")
+        #expect(emphasised)
+    }
+
+    @Test
     func plainTextFile_isReturnedAsIs() throws {
         let attributed = try #require(StoryDocument.richText(from: Data("Hello world".utf8), filename: "story.txt"))
         #expect(String(attributed.characters) == "Hello world")
