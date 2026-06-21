@@ -95,13 +95,20 @@ public enum StoryDocument {
         var maxX: CGFloat
         var minY: CGFloat
         var maxY: CGFloat
+        /// Horizontal extent of the line's leading word, used by the line-fill test.
+        var firstWordMinX: CGFloat
+        var firstWordMaxX: CGFloat
         var height: CGFloat { maxY - minY }
+        var firstWordWidth: CGFloat { firstWordMaxX - firstWordMinX }
     }
 
     /// Reconstructs paragraphs from a PDF page: PDFKit already breaks the text into
-    /// visual lines (a `\n` per line, which is what orphaned words on screen);
-    /// we rejoin soft-wrapped lines into spaces and only keep breaks where page
-    /// geometry shows a paragraph gap or indentation. Original per-character fonts
+    /// visual lines (a `\n` per line, which is what shows orphaned words on screen).
+    /// We keep a hard break only where the line ended early — if the next line's
+    /// leading word would still have fit on the current line (line-fill test), or the
+    /// next line is indented, the author broke it on purpose; otherwise it's a soft
+    /// wrap we rejoin with a space. This separates short title lines and detects
+    /// paragraph ends regardless of vertical spacing. Original per-character fonts
     /// (size + traits) are preserved so headings/emphasis survive.
     private static func appendReflowed(page: PDFPage, to result: NSMutableAttributedString) {
         let attributed = page.attributedString ?? NSAttributedString()
@@ -117,17 +124,34 @@ public enum StoryDocument {
             if length > 0 {
                 var minX = CGFloat.greatestFiniteMagnitude, maxX = -CGFloat.greatestFiniteMagnitude
                 var minY = CGFloat.greatestFiniteMagnitude, maxY = -CGFloat.greatestFiniteMagnitude
+                var firstWordMinX = CGFloat.greatestFiniteMagnitude, firstWordMaxX = -CGFloat.greatestFiniteMagnitude
+                var firstWordStarted = false, firstWordEnded = false
                 var hasBounds = false
                 for i in lineStart..<end {
+                    let isSpace = Unicode.Scalar(string.character(at: i))
+                        .map { CharacterSet.whitespacesAndNewlines.contains($0) } ?? false
                     let bounds = page.characterBounds(at: i)
-                    guard bounds.width > 0, bounds.height > 0 else { continue }
-                    hasBounds = true
-                    minX = min(minX, bounds.minX); maxX = max(maxX, bounds.maxX)
-                    minY = min(minY, bounds.minY); maxY = max(maxY, bounds.maxY)
+                    let valid = bounds.width > 0 && bounds.height > 0
+                    if valid {
+                        hasBounds = true
+                        minX = min(minX, bounds.minX); maxX = max(maxX, bounds.maxX)
+                        minY = min(minY, bounds.minY); maxY = max(maxY, bounds.maxY)
+                    }
+                    if !firstWordEnded {
+                        if isSpace {
+                            if firstWordStarted { firstWordEnded = true }
+                        } else if valid {
+                            firstWordStarted = true
+                            firstWordMinX = min(firstWordMinX, bounds.minX)
+                            firstWordMaxX = max(firstWordMaxX, bounds.maxX)
+                        }
+                    }
                 }
                 if hasBounds {
+                    if !firstWordStarted { firstWordMinX = minX; firstWordMaxX = maxX }
                     lines.append(PDFLine(range: NSRange(location: lineStart, length: length),
-                                         minX: minX, maxX: maxX, minY: minY, maxY: maxY))
+                                         minX: minX, maxX: maxX, minY: minY, maxY: maxY,
+                                         firstWordMinX: firstWordMinX, firstWordMaxX: firstWordMaxX))
                 }
             }
             lineStart = end + 1
@@ -140,8 +164,9 @@ public enum StoryDocument {
 
         let medianHeight = median(lines.map(\.height)) ?? bodyPointSize
         let bodyLeft = lines.map(\.minX).min() ?? 0
+        let bodyRight = lines.map(\.maxX).max() ?? 0
+        let spaceWidth = medianHeight * 0.25
         let indentTolerance = medianHeight * 0.5
-        let gapThreshold = medianHeight * 0.7
 
         for (index, line) in lines.enumerated() {
             let substring = attributed.attributedSubstring(from: line.range)
@@ -152,10 +177,13 @@ public enum StoryDocument {
                 continue
             }
 
+            // Line-fill test: if the previous line had room for this line's first
+            // word (plus a space), it ended early on purpose → hard break.
             let previous = lines[index - 1]
-            let gap = previous.minY - line.maxY
+            let available = bodyRight - previous.maxX
+            let nextWordWouldFit = available >= spaceWidth + line.firstWordWidth
             let indented = line.minX > bodyLeft + indentTolerance
-            let paragraphBreak = gap > gapThreshold || indented
+            let paragraphBreak = nextWordWouldFit || indented
             appendSeparated(substring, to: result, paragraphBreak: paragraphBreak)
         }
     }

@@ -98,6 +98,11 @@ private struct StoryTextView: UIViewRepresentable {
         paragraph.lineBreakMode = .byWordWrapping
         result.addAttribute(.paragraphStyle, value: paragraph, range: full)
 
+        // `attributedText` ignores `view.textColor`, so set a dynamic color the text
+        // view re-resolves at draw time — keeping the reader readable in dark mode,
+        // both at launch and on live appearance changes.
+        result.addAttribute(.foregroundColor, value: UIColor.label, range: full)
+
         return result
     }
 

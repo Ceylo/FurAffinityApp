@@ -39,6 +39,20 @@ struct StoryDocumentTests {
     }
 
     @Test
+    func pdfStory_separatesTitleBlockAndParagraphs() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1781832277.vixyyfox_3000_-redfurythings.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // Short title lines stay on their own lines instead of running together.
+        #expect(text.contains("(30)\nRedfurythings"), "title block not split: \(text.prefix(120))")
+        #expect(text.contains("(#Twelve Manny)\nI prefer"), "title/body not split: \(text.prefix(200))")
+        // A real paragraph break inside the body is preserved.
+        #expect(text.contains("in human form.\nThis morning"), "paragraph break missing")
+        // The run-on bug (joining the break with a space) must not recur.
+        #expect(!text.contains("human form. This morning"), "paragraphs ran on")
+    }
+
+    @Test
     func pdfStory_reflowsSoftWrappedLines() throws {
         let attributed = try #require(StoryDocument.richText(from: testData("1781832277.vixyyfox_3000_-redfurythings.pdf"), filename: "story.pdf"))
         let lines = String(attributed.characters).split(separator: "\n", omittingEmptySubsequences: false)
