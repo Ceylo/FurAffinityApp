@@ -93,10 +93,11 @@ private struct StoryTextView: UIViewRepresentable {
             result.addAttribute(.font, value: metrics.scaledFont(for: base), range: range)
         }
 
-        // Paragraphs (separated by `\n`) get a clear gap; tight line breaks within a
-        // paragraph (`\u{2028}`, e.g. the title block) stay close.
+        // Every line (wrapped body lines and the title block's `\u{2028}` breaks) gets
+        // a modest gap; paragraphs (`\n`) add more on top so they clearly stand out.
         let paragraph = NSMutableParagraphStyle()
-        paragraph.paragraphSpacing = metrics.scaledValue(for: referenceBodySize)
+        paragraph.lineSpacing = metrics.scaledValue(for: referenceBodySize * 0.35)
+        paragraph.paragraphSpacing = metrics.scaledValue(for: referenceBodySize * 0.7)
         paragraph.lineBreakMode = .byWordWrapping
         result.addAttribute(.paragraphStyle, value: paragraph, range: full)
 

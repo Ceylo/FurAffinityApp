@@ -219,13 +219,16 @@ public enum StoryDocument {
             result.append(substring)
             return
         }
+        // Separators inherit the preceding run's font so they don't inflate the line
+        // height (an oversized join space would make that display line taller).
+        let separatorAttributes = result.attributes(at: result.length - 1, effectiveRange: nil)
         switch join {
         case .paragraph:
-            result.append(NSAttributedString(string: "\n"))
+            result.append(NSAttributedString(string: "\n", attributes: separatorAttributes))
             result.append(substring)
             return
         case .lineBreak:
-            result.append(NSAttributedString(string: "\u{2028}"))
+            result.append(NSAttributedString(string: "\u{2028}", attributes: separatorAttributes))
             result.append(substring)
             return
         case .softWrap:
@@ -238,7 +241,7 @@ public enum StoryDocument {
             result.deleteCharacters(in: NSRange(location: existing.length - 1, length: 1))
             result.append(substring)
         } else {
-            result.append(NSAttributedString(string: " ", attributes: [.font: font(size: bodyPointSize, bold: false, italic: false)]))
+            result.append(NSAttributedString(string: " ", attributes: separatorAttributes))
             result.append(substring)
         }
     }
