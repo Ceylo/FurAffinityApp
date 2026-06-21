@@ -98,6 +98,9 @@ public enum StoryDocument {
         /// Horizontal extent of the line's leading word, used by the line-fill test.
         var firstWordMinX: CGFloat
         var firstWordMaxX: CGFloat
+        /// False when no character reported usable geometry; the text is still kept
+        /// but the line can't take part in the line-fill test.
+        var hasBounds: Bool
         var height: CGFloat { maxY - minY }
         var firstWordWidth: CGFloat { firstWordMaxX - firstWordMinX }
     }
@@ -106,9 +109,6 @@ public enum StoryDocument {
     private enum LineJoin {
         /// Same paragraph, wrapped by width — join with a space (de-hyphenating).
         case softWrap
-        /// A break inside a stacked block (e.g. the title lines) — a line break that
-        /// stays in the same paragraph, so it gets no paragraph spacing.
-        case lineBreak
         /// A new paragraph — gets the reader's paragraph spacing.
         case paragraph
     }
@@ -117,11 +117,11 @@ public enum StoryDocument {
     /// visual lines (a `\n` per line, which is what shows orphaned words on screen).
     /// A break is a *soft wrap* (rejoined with a space) when the previous line was
     /// full — the next line's leading word wouldn't have fit (line-fill test);
-    /// otherwise the line ended early on purpose and we keep the break. The leading
-    /// short lines of the page (the title block) are kept as tight *line breaks*
-    /// within one paragraph; every other kept break starts a new *paragraph*. This
-    /// separates the title from the body and detects paragraph ends regardless of
-    /// vertical spacing. Original per-character fonts (size + traits) are preserved.
+    /// otherwise the line ended early on purpose and starts a new *paragraph*. This
+    /// keeps short title lines on their own and detects paragraph ends regardless of
+    /// vertical spacing. Lines whose glyphs report no geometry still have their text
+    /// emitted (joined as a soft wrap) so no words are lost. Original per-character
+    /// fonts (size + traits) are preserved.
     private static func appendReflowed(page: PDFPage, to result: NSMutableAttributedString) {
         let attributed = page.attributedString ?? NSAttributedString()
         let string = attributed.string as NSString
@@ -159,12 +159,12 @@ public enum StoryDocument {
                         }
                     }
                 }
-                if hasBounds {
-                    if !firstWordStarted { firstWordMinX = minX; firstWordMaxX = maxX }
-                    lines.append(PDFLine(range: NSRange(location: lineStart, length: length),
-                                         minX: minX, maxX: maxX, minY: minY, maxY: maxY,
-                                         firstWordMinX: firstWordMinX, firstWordMaxX: firstWordMaxX))
-                }
+                if !hasBounds { minX = 0; maxX = 0; minY = 0; maxY = 0 }
+                if !firstWordStarted { firstWordMinX = minX; firstWordMaxX = maxX }
+                lines.append(PDFLine(range: NSRange(location: lineStart, length: length),
+                                     minX: minX, maxX: maxX, minY: minY, maxY: maxY,
+                                     firstWordMinX: firstWordMinX, firstWordMaxX: firstWordMaxX,
+                                     hasBounds: hasBounds))
             }
             lineStart = end + 1
         }
@@ -174,17 +174,10 @@ public enum StoryDocument {
         flushLine(end: count)
         guard !lines.isEmpty else { return }
 
-        let medianHeight = median(lines.map(\.height)) ?? bodyPointSize
-        let bodyLeft = lines.map(\.minX).min() ?? 0
-        let bodyRight = lines.map(\.maxX).max() ?? 0
+        let bounded = lines.filter(\.hasBounds)
+        let medianHeight = median(bounded.map(\.height)) ?? bodyPointSize
+        let bodyRight = bounded.map(\.maxX).max() ?? 0
         let spaceWidth = medianHeight * 0.25
-
-        // The title block: the leading run of short lines that don't reach the body's
-        // right margin. Breaks inside it stay tight; the break into the body and all
-        // body breaks become paragraphs.
-        let titleMaxX = bodyLeft + (bodyRight - bodyLeft) * 0.6
-        var titleEnd = 0
-        while titleEnd < lines.count, lines[titleEnd].maxX < titleMaxX { titleEnd += 1 }
 
         for (index, line) in lines.enumerated() {
             let substring = attributed.attributedSubstring(from: line.range)
@@ -195,25 +188,26 @@ public enum StoryDocument {
                 continue
             }
 
-            // Within the title block, keep tight line breaks.
-            if index < titleEnd {
-                appendSeparated(substring, to: result, join: .lineBreak)
-                continue
-            }
-
             // Line-fill test: if the previous line had room for this line's first
             // word (plus a space), it ended early on purpose → new paragraph;
-            // otherwise it was full → soft wrap we rejoin.
+            // otherwise it was full → soft wrap we rejoin. Without geometry on either
+            // line we can't tell, so default to a soft wrap (avoids spurious breaks).
             let previous = lines[index - 1]
-            let available = bodyRight - previous.maxX
-            let nextWordWouldFit = available >= spaceWidth + line.firstWordWidth
-            appendSeparated(substring, to: result, join: nextWordWouldFit ? .paragraph : .softWrap)
+            let join: LineJoin
+            if !line.hasBounds || !previous.hasBounds {
+                join = .softWrap
+            } else {
+                let available = bodyRight - previous.maxX
+                let nextWordWouldFit = available >= spaceWidth + line.firstWordWidth
+                join = nextWordWouldFit ? .paragraph : .softWrap
+            }
+            appendSeparated(substring, to: result, join: join)
         }
     }
 
     /// Appends `substring` to `result`, separating it from the existing text per
-    /// `join`: a paragraph break (`\n`), a tight line break (`\u{2028}`, same
-    /// paragraph), or a soft-wrap space — joining hyphenated words without the hyphen.
+    /// `join`: a paragraph break (`\n`) or a soft-wrap space — joining hyphenated
+    /// words without the hyphen.
     private static func appendSeparated(_ substring: NSAttributedString, to result: NSMutableAttributedString, join: LineJoin) {
         if result.length == 0 {
             result.append(substring)
@@ -225,10 +219,6 @@ public enum StoryDocument {
         switch join {
         case .paragraph:
             result.append(NSAttributedString(string: "\n", attributes: separatorAttributes))
-            result.append(substring)
-            return
-        case .lineBreak:
-            result.append(NSAttributedString(string: "\u{2028}", attributes: separatorAttributes))
             result.append(substring)
             return
         case .softWrap:

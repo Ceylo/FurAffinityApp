@@ -8,6 +8,7 @@
 import Testing
 import Foundation
 import UIKit
+import PDFKit
 @testable import FAKit
 
 struct StoryDocumentTests {
@@ -43,14 +44,38 @@ struct StoryDocumentTests {
         let attributed = try #require(StoryDocument.richText(from: testData("1781832277.vixyyfox_3000_-redfurythings.pdf"), filename: "story.pdf"))
         let text = String(attributed.characters)
 
-        // Title lines stack tightly within one paragraph (line separator, not `\n`).
-        #expect(text.contains("(30)\u{2028}Redfurythings"), "title block not split: \(text.prefix(120))")
+        // Title lines each stay on their own line.
+        #expect(text.contains("(30)\nRedfurythings"), "title block not split: \(text.prefix(120))")
         // The title block ends and the body starts a new paragraph.
         #expect(text.contains("(#Twelve Manny)\nI prefer"), "title/body not split: \(text.prefix(200))")
         // A real paragraph break inside the body is preserved.
         #expect(text.contains("in human form.\nThis morning"), "paragraph break missing")
         // The run-on bug (joining the break with a space) must not recur.
         #expect(!text.contains("human form. This morning"), "paragraphs ran on")
+    }
+
+    @Test
+    func pdfStory_keepsEveryWord() throws {
+        let data = testData("1781832277.vixyyfox_3000_-redfurythings.pdf")
+        let attributed = try #require(StoryDocument.richText(from: data, filename: "story.pdf"))
+
+        // Source words: everything PDFKit reports across the pages.
+        let document = try #require(PDFDocument(data: data))
+        var source = ""
+        for index in 0..<document.pageCount {
+            source += (document.page(at: index)?.attributedString?.string ?? "") + "\n"
+        }
+
+        // The reflow joins lines and de-hyphenates, but it must never drop a word.
+        var remaining: [String: Int] = [:]
+        for word in words(in: String(attributed.characters)) { remaining[word, default: 0] += 1 }
+
+        var missing: [String] = []
+        for word in words(in: source) {
+            if let count = remaining[word], count > 0 { remaining[word] = count - 1 }
+            else { missing.append(word) }
+        }
+        #expect(missing.isEmpty, "words dropped during reflow: \(missing)")
     }
 
     @Test
@@ -104,6 +129,13 @@ struct StoryDocumentTests {
     @Test
     func unsupportedFormat_returnsNil() {
         #expect(StoryDocument.richText(from: Data("anything".utf8), filename: "story.bin") == nil)
+    }
+
+    /// Splits text into words, trimming surrounding punctuation and dropping empties.
+    private func words(in text: String) -> [String] {
+        text.components(separatedBy: .whitespacesAndNewlines)
+            .map { $0.trimmingCharacters(in: .punctuationCharacters) }
+            .filter { !$0.isEmpty }
     }
 
     /// True if any run carries the given symbolic trait.

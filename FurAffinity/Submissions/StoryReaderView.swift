@@ -93,8 +93,8 @@ private struct StoryTextView: UIViewRepresentable {
             result.addAttribute(.font, value: metrics.scaledFont(for: base), range: range)
         }
 
-        // Every line (wrapped body lines and the title block's `\u{2028}` breaks) gets
-        // a modest gap; paragraphs (`\n`) add more on top so they clearly stand out.
+        // Wrapped lines within a paragraph get a modest gap; paragraph breaks (`\n`,
+        // which includes the stacked title lines) add more on top so they stand out.
         let paragraph = NSMutableParagraphStyle()
         paragraph.lineSpacing = metrics.scaledValue(for: referenceBodySize * 0.35)
         paragraph.paragraphSpacing = metrics.scaledValue(for: referenceBodySize * 0.7)
