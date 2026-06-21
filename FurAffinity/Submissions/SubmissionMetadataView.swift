@@ -87,7 +87,7 @@ struct SubmissionMetadataView: View {
 
 #Preview {
     NavigationStack {
-        withAsync({ await FASubmission.demo.metadata }) { metadata in
+        withAsync({ await FASubmission.demoImage.metadata }) { metadata in
             SubmissionMetadataView(
                 metadata: metadata
             )
