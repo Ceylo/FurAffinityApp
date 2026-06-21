@@ -49,7 +49,7 @@ struct SubmissionControlsView: View {
     var submissionUrl: URL
     var mediaFileUrl: URL?
     /// When true the file is a document: Save exports to Files instead of Photos.
-    var isText: Bool
+    var savesToFiles: Bool
     var favoritesCount: Int
     var isFavorite: Bool
     var favoriteAction: () -> Void
@@ -59,10 +59,10 @@ struct SubmissionControlsView: View {
     var metadataTarget: FATarget?
     var errorStorage: ErrorStorage
 
-    internal init(submissionUrl: URL, mediaFileUrl: URL? = nil, isText: Bool = false, favoritesCount: Int, isFavorite: Bool, favoriteAction: @escaping () -> Void, repliesCount: Int, acceptsNewReplies: Bool, replyAction: @escaping () -> Void, metadataTarget: FATarget? = nil, errorStorage: ErrorStorage) {
+    internal init(submissionUrl: URL, mediaFileUrl: URL? = nil, savesToFiles: Bool = false, favoritesCount: Int, isFavorite: Bool, favoriteAction: @escaping () -> Void, repliesCount: Int, acceptsNewReplies: Bool, replyAction: @escaping () -> Void, metadataTarget: FATarget? = nil, errorStorage: ErrorStorage) {
         self.submissionUrl = submissionUrl
         self.mediaFileUrl = mediaFileUrl
-        self.isText = isText
+        self.savesToFiles = savesToFiles
         self.favoritesCount = favoritesCount
         self.isFavorite = isFavorite
         self.favoriteAction = favoriteAction
@@ -95,8 +95,8 @@ struct SubmissionControlsView: View {
                     $1 == true
                 })
                 
-                SaveButton(state: isText ? .idle : saveHandler.state) {
-                    if isText {
+                SaveButton(state: savesToFiles ? .idle : saveHandler.state) {
+                    if savesToFiles {
                         exportToFiles([mediaFileUrl!])
                     } else {
                         Task {

@@ -27,14 +27,18 @@ struct SubmissionView: View {
     @State private var documentFileUrl: URL?
     @State private var noteReplySession: NoteReplySession?
 
-    private var isText: Bool {
-        if case .text = submission.content { return true }
-        return false
+    /// True for content kinds saved as a document (to Files) rather than an
+    /// image (to Photos): text and audio.
+    private var savesToFiles: Bool {
+        switch submission.content {
+        case .text, .audio: return true
+        case .image: return false
+        }
     }
 
     /// The downloaded file backing Save/Share, whichever content kind applies.
     private var savableFileUrl: URL? {
-        isText ? documentFileUrl : fullResolutionMediaFileUrl
+        savesToFiles ? documentFileUrl : fullResolutionMediaFileUrl
     }
 
     private var imageResolution: String? {
@@ -72,6 +76,13 @@ struct SubmissionView: View {
                 documentFileUrl: $documentFileUrl,
                 downloadDocument: downloadDocument
             )
+        case let .audio(audio):
+            SubmissionAudioContent(
+                audioContent: audio,
+                thumbnail: thumbnail,
+                documentFileUrl: $documentFileUrl,
+                downloadDocument: downloadDocument
+            )
         }
     }
 
@@ -79,7 +90,7 @@ struct SubmissionView: View {
         SubmissionControlsView(
             submissionUrl: submission.url,
             mediaFileUrl: savableFileUrl,
-            isText: isText,
+            savesToFiles: savesToFiles,
             favoritesCount: submission.favoriteCount,
             isFavorite: submission.isFavorite,
             favoriteAction: favoriteAction,
@@ -162,7 +173,7 @@ struct SubmissionView: View {
                 }
                 
                 Button {
-                    if isText {
+                    if savesToFiles {
                         exportToFiles([savableFileUrl!])
                     } else {
                         Task {
@@ -170,14 +181,14 @@ struct SubmissionView: View {
                         }
                     }
                 } label: {
-                    Label(isText ? "Save to Files" : "Save Image", systemImage: "square.and.arrow.down")
+                    Label(savesToFiles ? "Save to Files" : "Save Image", systemImage: "square.and.arrow.down")
                 }
                 .disabled(savableFileUrl == nil)
 
                 Button {
                     share([savableFileUrl!])
                 } label: {
-                    Label(isText ? "Share" : "Share Image", systemImage: "square.and.arrow.up")
+                    Label(savesToFiles ? "Share" : "Share Image", systemImage: "square.and.arrow.up")
                 }
                 .disabled(savableFileUrl == nil)
                 
