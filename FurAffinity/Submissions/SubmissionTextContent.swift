@@ -100,7 +100,7 @@ struct SubmissionTextContent: View {
 
                 let filename = textContent.documentUrl.lastPathComponent
                 let text = await Task.detached {
-                    StoryDocument.plainText(from: data, filename: filename)
+                    StoryDocument.richText(from: data, filename: filename)
                 }.value
                 let content: StoryReaderView.Content = text.map { .text($0) } ?? .document(fileUrl)
                 loadedContent = content

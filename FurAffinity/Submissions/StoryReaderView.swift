@@ -12,7 +12,7 @@ import SwiftUI
 /// back to a QuickLook document preview. Presented in a sheet with a Done button.
 struct StoryReaderView: View {
     enum Content: Identifiable {
-        case text(String)
+        case text(AttributedString)
         case document(URL)
 
         var id: String {
@@ -32,7 +32,7 @@ struct StoryReaderView: View {
             Group {
                 switch content {
                 case .text(let text):
-                    StoryTextView(text: text)
+                    StoryTextView(attributedText: text)
                         .ignoresSafeArea(edges: .bottom)
                 case .document(let url):
                     QuickLookPreview(fileUrl: url)
@@ -50,11 +50,16 @@ struct StoryReaderView: View {
     }
 }
 
-/// A scrollable, read-only `UITextView` matching the submission description's look:
-/// dynamic `.body` font and `.label` color, so it adapts to light/dark and
-/// Dynamic Type. Mirrors `HTMLView`'s UITextView but scrolls instead of self-sizing.
+/// A scrollable, read-only `UITextView` rendering the extracted rich text.
+/// Run fonts are normalized so the document's dominant size maps to the user's
+/// Dynamic Type body size (other sizes scale proportionally), foreground color is
+/// forced to `.label` for light/dark, and paragraphs gain spacing for readability.
 private struct StoryTextView: UIViewRepresentable {
-    var text: String
+    var attributedText: AttributedString
+
+    /// Default `.body` point size at the standard content-size category; the
+    /// document's dominant run size is mapped to this, then scaled by Dynamic Type.
+    private let referenceBodySize: CGFloat = 17
 
     func makeUIView(context: Context) -> UITextView {
         let view = UITextView(usingTextLayoutManager: true)
@@ -62,7 +67,6 @@ private struct StoryTextView: UIViewRepresentable {
         view.isScrollEnabled = true
         view.backgroundColor = nil
         view.textColor = .label
-        view.font = .preferredFont(forTextStyle: .body)
         view.adjustsFontForContentSizeCategory = true
         view.dataDetectorTypes = [.link]
         view.textContainerInset = .init(top: 12, left: 12, bottom: 12, right: 12)
@@ -70,7 +74,41 @@ private struct StoryTextView: UIViewRepresentable {
     }
 
     func updateUIView(_ view: UITextView, context: Context) {
-        view.text = text
+        view.attributedText = normalized(NSAttributedString(attributedText))
+    }
+
+    /// Rescales run fonts relative to the dominant body size and applies paragraph
+    /// spacing, wrapping fonts in `UIFontMetrics` so they track Dynamic Type.
+    private func normalized(_ source: NSAttributedString) -> NSAttributedString {
+        let result = NSMutableAttributedString(attributedString: source)
+        let full = NSRange(location: 0, length: result.length)
+
+        let bodySize = dominantFontSize(in: result) ?? referenceBodySize
+        let metrics = UIFontMetrics(forTextStyle: .body)
+
+        result.enumerateAttribute(.font, in: full) { value, range, _ in
+            let font = value as? UIFont ?? .systemFont(ofSize: bodySize)
+            let scaled = font.fontDescriptor.withSize(font.pointSize / bodySize * referenceBodySize)
+            let base = UIFont(descriptor: scaled, size: scaled.pointSize)
+            result.addAttribute(.font, value: metrics.scaledFont(for: base), range: range)
+        }
+
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.paragraphSpacing = metrics.scaledValue(for: referenceBodySize * 0.6)
+        paragraph.lineBreakMode = .byWordWrapping
+        result.addAttribute(.paragraphStyle, value: paragraph, range: full)
+
+        return result
+    }
+
+    /// The run size covering the most characters — treated as the body size.
+    private func dominantFontSize(in text: NSAttributedString) -> CGFloat? {
+        var lengthBySize: [CGFloat: Int] = [:]
+        text.enumerateAttribute(.font, in: NSRange(location: 0, length: text.length)) { value, range, _ in
+            guard let font = value as? UIFont else { return }
+            lengthBySize[font.pointSize, default: 0] += range.length
+        }
+        return lengthBySize.max { $0.value < $1.value }?.key
     }
 }
 
@@ -85,6 +123,6 @@ private struct StoryTextView: UIViewRepresentable {
 
     Color.clear
         .sheet(isPresented: .constant(true)) {
-            StoryReaderView(title: "Prepared for the Fallout", content: .text(sample))
+            StoryReaderView(title: "Prepared for the Fallout", content: .text(AttributedString(sample)))
         }
 }
