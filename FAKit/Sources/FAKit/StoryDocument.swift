@@ -111,6 +111,9 @@ public enum StoryDocument {
         case softWrap
         /// A new paragraph — gets the reader's paragraph spacing.
         case paragraph
+        /// Not a real break: PDFKit split one logical word/row in two (typically at a
+        /// curly apostrophe) — join the fragments with nothing between them.
+        case noSeparator
     }
 
     /// Reconstructs paragraphs from a PDF page: PDFKit already breaks the text into
@@ -188,13 +191,18 @@ public enum StoryDocument {
                 continue
             }
 
-            // Line-fill test: if the previous line had room for this line's first
-            // word (plus a space), it ended early on purpose → new paragraph;
-            // otherwise it was full → soft wrap we rejoin. Without geometry on either
-            // line we can't tell, so default to a soft wrap (avoids spurious breaks).
             let previous = lines[index - 1]
             let join: LineJoin
-            if !line.hasBounds || !previous.hasBounds {
+            if isSpuriousSplit(previous: previous, line: line, next: substring,
+                               result: result, spaceWidth: spaceWidth) {
+                // PDFKit broke one logical row/word in two (e.g. at a curly apostrophe);
+                // rejoin without a separator so contractions stay whole.
+                join = .noSeparator
+            } else if !line.hasBounds || !previous.hasBounds {
+                // Line-fill test: if the previous line had room for this line's first
+                // word (plus a space), it ended early on purpose → new paragraph;
+                // otherwise it was full → soft wrap we rejoin. Without geometry on either
+                // line we can't tell, so default to a soft wrap (avoids spurious breaks).
                 join = .softWrap
             } else {
                 let available = bodyRight - previous.maxX
@@ -203,6 +211,47 @@ public enum StoryDocument {
             }
             appendSeparated(substring, to: result, join: join)
         }
+    }
+
+    /// True when two consecutive PDFKit "lines" are really one logical row or word that
+    /// PDFKit split — it inserts a newline at curly-quote/apostrophe font runs. Two
+    /// independent signals: the fragment continues rightward on the *same row*
+    /// (geometry), or it completes a *contraction* across the break (an apostrophe with a
+    /// lowercase tail). The lowercase tail keeps real dialogue lines — which open with a
+    /// capital or an opening quote `“`/`‘` — from being merged.
+    private static func isSpuriousSplit(previous: PDFLine, line: PDFLine,
+                                        next substring: NSAttributedString,
+                                        result: NSMutableAttributedString,
+                                        spaceWidth: CGFloat) -> Bool {
+        // Same row, continuing to the right of where the previous fragment ended.
+        if line.hasBounds, previous.hasBounds,
+           line.minX >= previous.maxX - spaceWidth,
+           line.minY < previous.maxY, previous.minY < line.maxY {
+            return true
+        }
+
+        // Contraction split at an apostrophe: "It’" + "s …", or "don" + "’t …".
+        guard result.length > 0 else { return false }
+        let prevString = result.string as NSString
+        let prevChar = Unicode.Scalar(prevString.character(at: prevString.length - 1))
+        let nextString = substring.string as NSString
+        guard nextString.length > 0 else { return false }
+        let nextChar = Unicode.Scalar(nextString.character(at: 0))
+
+        func isApostrophe(_ scalar: Unicode.Scalar?) -> Bool { scalar == "\u{2019}" || scalar == "'" }
+        func isLowercaseLetter(_ scalar: Unicode.Scalar?) -> Bool {
+            guard let scalar else { return false }
+            return CharacterSet.lowercaseLetters.contains(scalar)
+        }
+
+        // prev ends with an apostrophe, next starts lowercase: "It’" + "s".
+        if isApostrophe(prevChar), isLowercaseLetter(nextChar) { return true }
+        // prev ends with a letter, next is apostrophe + lowercase: "don" + "’t".
+        if let prevChar, CharacterSet.letters.contains(prevChar), isApostrophe(nextChar),
+           nextString.length >= 2, isLowercaseLetter(Unicode.Scalar(nextString.character(at: 1))) {
+            return true
+        }
+        return false
     }
 
     /// Appends `substring` to `result`, separating it from the existing text per
@@ -219,6 +268,9 @@ public enum StoryDocument {
         switch join {
         case .paragraph:
             result.append(NSAttributedString(string: "\n", attributes: separatorAttributes))
+            result.append(substring)
+            return
+        case .noSeparator:
             result.append(substring)
             return
         case .softWrap:

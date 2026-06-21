@@ -121,6 +121,23 @@ struct StoryDocumentTests {
     }
 
     @Test
+    func pdfStory_doesNotSplitContractionsAtCurlyQuotes() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // PDFKit splits these at the curly apostrophe (a separate font run); the reflow
+        // must rejoin the fragments so contractions stay whole.
+        #expect(text.contains("it’s scrutinous"), "contraction split: \(text.prefix(500))")
+        #expect(text.contains("I don’t entirely find"))
+        #expect(text.contains("There’s a light coming"))
+        #expect(text.contains("It’s cold in this room"))
+        // The broken forms must not survive.
+        #expect(!text.contains("it’\ns"))
+        #expect(!text.contains("There’\ns"))
+        #expect(!text.contains("don\n’t"))
+    }
+
+    @Test
     func plainTextFile_isReturnedAsIs() throws {
         let attributed = try #require(StoryDocument.richText(from: Data("Hello world".utf8), filename: "story.txt"))
         #expect(String(attributed.characters) == "Hello world")
