@@ -176,6 +176,18 @@ struct StoryDocumentTests {
     }
 
     @Test
+    func pdfStory_preservesEmbeddedImages() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let ns = NSAttributedString(attributed)
+
+        var images = 0
+        ns.enumerateAttribute(.attachment, in: NSRange(location: 0, length: ns.length)) { value, _, _ in
+            if let attachment = value as? NSTextAttachment, attachment.image != nil { images += 1 }
+        }
+        #expect(images >= 1, "expected inline images, found \(images)")
+    }
+
+    @Test
     func plainTextFile_isReturnedAsIs() throws {
         let attributed = try #require(StoryDocument.richText(from: Data("Hello world".utf8), filename: "story.txt"))
         #expect(String(attributed.characters) == "Hello world")

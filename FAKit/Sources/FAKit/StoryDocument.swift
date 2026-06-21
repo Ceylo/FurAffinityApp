@@ -234,7 +234,18 @@ public enum StoryDocument {
     /// each paragraph, restore that indent as a leading tab.
     private static func appendReflowed(page: PDFPage, to result: NSMutableAttributedString, indentParagraphs: Bool) {
         let (attributed, lines) = visualLines(of: page)
-        guard !lines.isEmpty else { return }
+
+        // Embedded illustrations, kept in reading order by their top edge (PDF y-up).
+        let images = embeddedImages(on: page).sorted { $0.top > $1.top }
+        var nextImage = 0
+        func emitImages(above top: CGFloat) {
+            while nextImage < images.count, images[nextImage].top >= top {
+                appendImage(images[nextImage].image, to: result)
+                nextImage += 1
+            }
+        }
+
+        guard !lines.isEmpty || !images.isEmpty else { return }
 
         let m = metrics(for: lines, page: page)
         let bodyRight = m.bodyRight
@@ -243,6 +254,7 @@ public enum StoryDocument {
         let pageMidX = m.pageMidX
 
         for (index, line) in lines.enumerated() {
+            emitImages(above: line.maxY)
             let substring = attributed.attributedSubstring(from: line.range)
 
             let join: LineJoin
@@ -294,6 +306,120 @@ public enum StoryDocument {
                 result.addAttribute(.paragraphStyle, value: style, range: range)
             }
         }
+
+        // Any images sitting below the last line of text (or all images on an
+        // illustration-only page).
+        emitImages(above: -.greatestFiniteMagnitude)
+    }
+
+    /// Appends `image` as its own centered paragraph via a text attachment. The reader
+    /// sizes the attachment to the text width; here we only carry the image.
+    private static func appendImage(_ image: UIImage, to result: NSMutableAttributedString) {
+        if result.length > 0 {
+            result.append(NSAttributedString(string: "\n"))
+        }
+        let attachment = NSTextAttachment()
+        attachment.image = image
+        let start = result.length
+        result.append(NSAttributedString(attachment: attachment))
+        let style = NSMutableParagraphStyle()
+        style.alignment = .center
+        result.addAttribute(.paragraphStyle, value: style, range: NSRange(location: start, length: result.length - start))
+        result.append(NSAttributedString(string: "\n"))
+    }
+
+    /// Extracts each embedded raster image on the page as a rendered `UIImage` paired
+    /// with the top edge of its on-page rectangle (PDF y-up), for interleaving with text.
+    private static func embeddedImages(on page: PDFPage) -> [(top: CGFloat, image: UIImage)] {
+        imagePlacements(on: page).compactMap { rect in
+            renderImage(from: page, rect: rect).map { (rect.maxY, $0) }
+        }
+    }
+
+    /// The on-page rectangles (PDF coordinates) where image XObjects are drawn, found by
+    /// scanning the page content stream (`cm` updates the CTM, `Do` draws a unit square
+    /// transformed by it). Returns an empty list when the page draws no images.
+    private static func imagePlacements(on page: PDFPage) -> [CGRect] {
+        guard let cgPage = page.pageRef else { return [] }
+        let imageNames = imageXObjectNames(of: cgPage)
+        guard !imageNames.isEmpty else { return [] }
+
+        let scanner = PDFImageScanner(imageNames: imageNames)
+        guard let table = CGPDFOperatorTableCreate() else { return [] }
+        defer { CGPDFOperatorTableRelease(table) }
+
+        CGPDFOperatorTableSetCallback(table, "q") { _, info in
+            let s = Unmanaged<PDFImageScanner>.fromOpaque(info!).takeUnretainedValue()
+            s.stack.append(s.ctm)
+        }
+        CGPDFOperatorTableSetCallback(table, "Q") { _, info in
+            let s = Unmanaged<PDFImageScanner>.fromOpaque(info!).takeUnretainedValue()
+            if let last = s.stack.popLast() { s.ctm = last }
+        }
+        CGPDFOperatorTableSetCallback(table, "cm") { scanner, info in
+            let s = Unmanaged<PDFImageScanner>.fromOpaque(info!).takeUnretainedValue()
+            var values = [CGFloat](repeating: 0, count: 6)
+            for i in (0..<6).reversed() {
+                var number: CGPDFReal = 0
+                guard CGPDFScannerPopNumber(scanner, &number) else { return }
+                values[i] = CGFloat(number)
+            }
+            let matrix = CGAffineTransform(a: values[0], b: values[1], c: values[2],
+                                           d: values[3], tx: values[4], ty: values[5])
+            s.ctm = matrix.concatenating(s.ctm)
+        }
+        CGPDFOperatorTableSetCallback(table, "Do") { scanner, info in
+            let s = Unmanaged<PDFImageScanner>.fromOpaque(info!).takeUnretainedValue()
+            var name: UnsafePointer<Int8>?
+            guard CGPDFScannerPopName(scanner, &name), let name,
+                  s.imageNames.contains(String(cString: name)) else { return }
+            s.placements.append(CGRect(x: 0, y: 0, width: 1, height: 1).applying(s.ctm))
+        }
+
+        let stream = CGPDFContentStreamCreateWithPage(cgPage)
+        let cgScanner = CGPDFScannerCreate(stream, table, Unmanaged.passUnretained(scanner).toOpaque())
+        CGPDFScannerScan(cgScanner)
+        CGPDFScannerRelease(cgScanner)
+        CGPDFContentStreamRelease(stream)
+        return scanner.placements
+    }
+
+    /// Names of the page's XObjects whose subtype is `Image`.
+    private static func imageXObjectNames(of page: CGPDFPage) -> Set<String> {
+        guard let dictionary = page.dictionary else { return [] }
+        var resources: CGPDFDictionaryRef?
+        guard CGPDFDictionaryGetDictionary(dictionary, "Resources", &resources), let resources else { return [] }
+        var xobjects: CGPDFDictionaryRef?
+        guard CGPDFDictionaryGetDictionary(resources, "XObject", &xobjects), let xobjects else { return [] }
+
+        final class Collector { var names = Set<String>() }
+        let collector = Collector()
+        CGPDFDictionaryApplyFunction(xobjects, { key, value, info in
+            let collector = Unmanaged<Collector>.fromOpaque(info!).takeUnretainedValue()
+            var stream: CGPDFStreamRef?
+            guard CGPDFObjectGetValue(value, .stream, &stream), let stream,
+                  let streamDict = CGPDFStreamGetDictionary(stream) else { return }
+            var subtype: UnsafePointer<Int8>?
+            if CGPDFDictionaryGetName(streamDict, "Subtype", &subtype), let subtype,
+               String(cString: subtype) == "Image" {
+                collector.names.insert(String(cString: key))
+            }
+        }, Unmanaged.passUnretained(collector).toOpaque())
+        return collector.names
+    }
+
+    /// Renders the given page rectangle (PDF coordinates) to a `UIImage` at `scale`× — a
+    /// robust way to capture an embedded image regardless of its encoding or masks.
+    private static func renderImage(from page: PDFPage, rect: CGRect, scale: CGFloat = 2) -> UIImage? {
+        let width = Int((rect.width * scale).rounded()), height = Int((rect.height * scale).rounded())
+        guard width > 0, height > 0,
+              let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8,
+                                      bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        context.scaleBy(x: scale, y: scale)
+        context.translateBy(x: -rect.minX, y: -rect.minY)
+        page.draw(with: .mediaBox, to: context)
+        return context.makeImage().map { UIImage(cgImage: $0) }
     }
 
     /// The first non-whitespace Unicode scalar of an attributed string, if any.
@@ -456,6 +582,17 @@ public enum StoryDocument {
         }
         return attributed.attributedSubstring(from: NSRange(location: start, length: end - start))
     }
+}
+
+/// Mutable state threaded through the content-stream scan that locates image draws:
+/// the current transform, the graphics-state stack, and the collected image rectangles.
+private final class PDFImageScanner {
+    let imageNames: Set<String>
+    var ctm = CGAffineTransform.identity
+    var stack: [CGAffineTransform] = []
+    var placements: [CGRect] = []
+
+    init(imageNames: Set<String>) { self.imageNames = imageNames }
 }
 
 /// Builds an attributed string from a Word `document.xml`: text inside `<w:t>`,
