@@ -64,6 +64,7 @@ struct SubmissionView: View {
             )
         case let .text(text):
             SubmissionTextContent(
+                title: submission.title,
                 textContent: text,
                 thumbnail: thumbnail,
                 previewImageUrl: submission.previewImageUrl,

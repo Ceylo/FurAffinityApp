@@ -9,19 +9,22 @@ import SwiftUI
 import FAKit
 
 /// Renders a text/story submission: a rendered cover page plus a button that
-/// downloads the document and opens it in QuickLook. The downloaded file URL is
-/// exposed to the parent (for Save/Share) via `documentFileUrl`.
+/// downloads the document and opens it in a native reading view. The downloaded
+/// file URL is exposed to the parent (for Save/Share) via `documentFileUrl`.
 struct SubmissionTextContent: View {
     @Environment(Model.self) private var model
     @Environment(ErrorStorage.self) private var errorStorage
 
+    var title: String
     var textContent: FASubmission.TextContent
     var thumbnail: DynamicThumbnail?
     var previewImageUrl: URL
     @Binding var documentFileUrl: URL?
 
     @State private var isDownloading = false
-    @State private var showPreview = false
+    @State private var readerContent: StoryReaderView.Content?
+    /// Extracted once, reused so re-opening doesn't re-download or re-parse.
+    @State private var loadedContent: StoryReaderView.Content?
 
     private var coverUrl: URL {
         textContent.renderedPreviewUrl
@@ -56,17 +59,14 @@ struct SubmissionTextContent: View {
             .disabled(isDownloading)
         }
         .padding(.horizontal, 10)
-        .sheet(isPresented: $showPreview) {
-            if let documentFileUrl {
-                QuickLookPreview(fileUrl: documentFileUrl)
-                    .ignoresSafeArea()
-            }
+        .sheet(item: $readerContent) { content in
+            StoryReaderView(title: title, content: content)
         }
     }
 
     private func readStory() {
-        if documentFileUrl != nil {
-            showPreview = true
+        if let loadedContent {
+            readerContent = loadedContent
             return
         }
 
@@ -83,7 +83,14 @@ struct SubmissionTextContent: View {
                     .appendingPathComponent(textContent.documentUrl.lastPathComponent)
                 try data.write(to: fileUrl, options: .atomic)
                 documentFileUrl = fileUrl
-                showPreview = true
+
+                let filename = textContent.documentUrl.lastPathComponent
+                let text = await Task.detached {
+                    StoryDocument.plainText(from: data, filename: filename)
+                }.value
+                let content: StoryReaderView.Content = text.map { .text($0) } ?? .document(fileUrl)
+                loadedContent = content
+                readerContent = content
             }
             isDownloading = false
         }
@@ -100,6 +107,7 @@ struct SubmissionTextContent: View {
         return (model, text, submission.previewImageUrl)
     }) { data in
         SubmissionTextContent(
+            title: "Prepared for the Fallout",
             textContent: data.1,
             thumbnail: nil,
             previewImageUrl: data.2,
