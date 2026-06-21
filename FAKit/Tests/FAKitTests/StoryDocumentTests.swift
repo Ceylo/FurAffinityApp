@@ -162,6 +162,20 @@ struct StoryDocumentTests {
     }
 
     @Test
+    func pdfStory_respectsCenteredTitleAlignment() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let ns = NSAttributedString(attributed)
+        let titleRange = (ns.string as NSString).range(of: "LIMA NOX - BOXES")
+        try #require(titleRange.location != NSNotFound)
+
+        var centered = false
+        ns.enumerateAttribute(.paragraphStyle, in: titleRange) { value, _, _ in
+            if let style = value as? NSParagraphStyle, style.alignment == .center { centered = true }
+        }
+        #expect(centered, "centered title lost its alignment")
+    }
+
+    @Test
     func plainTextFile_isReturnedAsIs() throws {
         let attributed = try #require(StoryDocument.richText(from: Data("Hello world".utf8), filename: "story.txt"))
         #expect(String(attributed.characters) == "Hello world")

@@ -95,11 +95,17 @@ private struct StoryTextView: UIViewRepresentable {
 
         // Wrapped lines within a paragraph get a modest gap; paragraph breaks (`\n`,
         // which includes the stacked title lines) add more on top so they stand out.
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.lineSpacing = metrics.scaledValue(for: referenceBodySize * 0.35)
-        paragraph.paragraphSpacing = metrics.scaledValue(for: referenceBodySize * 0.7)
-        paragraph.lineBreakMode = .byWordWrapping
-        result.addAttribute(.paragraphStyle, value: paragraph, range: full)
+        // Any alignment the extractor set (e.g. centered titles) is preserved.
+        let lineSpacing = metrics.scaledValue(for: referenceBodySize * 0.35)
+        let paragraphSpacing = metrics.scaledValue(for: referenceBodySize * 0.7)
+        result.enumerateAttribute(.paragraphStyle, in: full) { value, range, _ in
+            let paragraph = NSMutableParagraphStyle()
+            if let existing = value as? NSParagraphStyle { paragraph.setParagraphStyle(existing) }
+            paragraph.lineSpacing = lineSpacing
+            paragraph.paragraphSpacing = paragraphSpacing
+            paragraph.lineBreakMode = .byWordWrapping
+            result.addAttribute(.paragraphStyle, value: paragraph, range: range)
+        }
 
         // `attributedText` ignores `view.textColor`, so set a dynamic color the text
         // view re-resolves at draw time — keeping the reader readable in dark mode,

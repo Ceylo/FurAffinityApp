@@ -277,12 +277,22 @@ public enum StoryDocument {
             // In a document that indents the first line of each paragraph, restore that
             // indent as a leading tab — matching the DOCX `<w:tab>` path. Centered lines
             // get alignment instead, never a tab.
+            let centered = line.hasBounds && isCentered(line, pageMidX: pageMidX, leftMargin: leftMargin)
             let isParagraphStart = join == .paragraph || (index == 0 && result.length == 0)
-            let indented = indentParagraphs && isParagraphStart
-                && !isCentered(line, pageMidX: pageMidX, leftMargin: leftMargin)
+            let indented = indentParagraphs && isParagraphStart && !centered
 
-            appendSeparated(indented ? prependingTab(to: substring) : substring,
-                            to: result, join: join)
+            let emitted = indented ? prependingTab(to: substring) : substring
+            appendSeparated(emitted, to: result, join: join)
+
+            // A line centered on the page keeps centered alignment (e.g. a title); the
+            // reader preserves it. Apply it to the emitted content only, not the leading
+            // separator, which belongs to the previous paragraph.
+            if centered, emitted.length > 0 {
+                let range = NSRange(location: result.length - emitted.length, length: emitted.length)
+                let style = NSMutableParagraphStyle()
+                style.alignment = .center
+                result.addAttribute(.paragraphStyle, value: style, range: range)
+            }
         }
     }
 
