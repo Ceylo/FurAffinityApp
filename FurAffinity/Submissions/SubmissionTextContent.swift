@@ -31,7 +31,7 @@ struct SubmissionTextContent: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             FAImage(coverUrl)
                 .aspectRatio(contentMode: .fit)
                 .frame(maxWidth: .infinity)
@@ -40,6 +40,22 @@ struct SubmissionTextContent: View {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(Color.secondary.opacity(0.3))
                 }
+                .overlay {
+                    if isDownloading {
+                        ZStack {
+                            Color.black.opacity(0.25)
+                            ProgressView()
+                                .controlSize(.large)
+                                .tint(.white)
+                        }
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    readStory()
+                }
+                .disabled(isDownloading)
 
             Button {
                 readStory()
@@ -52,10 +68,8 @@ struct SubmissionTextContent: View {
                     }
                     Text(isDownloading ? "Downloading…" : "Read story")
                 }
-                .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .controlSize(.large)
             .disabled(isDownloading)
         }
         .padding(.horizontal, 10)
