@@ -69,7 +69,14 @@ struct SubmissionTextContent: View {
                     Text(isDownloading ? "Downloading…" : "Read story")
                 }
             }
-            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .applying {
+                if #available(iOS 26, *) {
+                    $0.buttonStyle(.glassProminent)
+                } else {
+                    $0.buttonStyle(.borderedProminent)
+                }
+            }
             .disabled(isDownloading)
         }
         .padding(.horizontal, 10)
