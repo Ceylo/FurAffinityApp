@@ -7,10 +7,16 @@
 
 import SwiftUI
 import Defaults
+import FAKit
+
+// Persist the whole search query (Codable) so Explore filters are remembered.
+extension FASearchQuery: Defaults.Serializable {}
 
 extension Defaults.Keys {
     // MARK: - Persistence
     static let lastViewedSubmissionID = Key<Int?>("lastViewedSubmissionID")
+    /// Last Explore search criteria, seeded into the next session.
+    static let lastSearchQuery = Key<FASearchQuery>("lastSearchQuery", default: .default)
     
     // MARK: - Display
     static let animateAvatars = Key<Bool>("animateAvatars", default: true)

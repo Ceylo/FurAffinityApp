@@ -37,6 +37,18 @@ class Model: NotificationsNuker, NotificationsDeleter {
     /// Set once after a cold-launch restore from a persisted scroll position, to
     /// ask SubmissionsFeedView to run a scroll-preserving newer-submissions check.
     var shouldCheckForNewerSubmissionsAfterRestore = false
+
+    // MARK: - Exploration (search)
+    /// `nil` until a search actually happened. Kept apart from the watched-feed
+    /// state so the two Submissions-tab modes never interfere.
+    private(set) var explorationResults: OrderedSet<FASubmissionPreview>?
+    /// Current search criteria, seeded from the persisted value on launch and
+    /// written back when the user runs a new search (filters are remembered).
+    private(set) var explorationQuery: FASearchQuery = Defaults[.lastSearchQuery]
+    /// `true` while the last fetched page came back full, so more may exist.
+    private(set) var explorationCanLoadMore = false
+    /// `true` while a search/page fetch is in flight.
+    private(set) var isLoadingExploration = false
     
     /// `nil` until a fetch actually happened.
     /// After a fetch it contains all found notes, or an empty array if none was found.
@@ -131,6 +143,9 @@ class Model: NotificationsNuker, NotificationsDeleter {
             displayedNotificationCount = 0
             autorefreshSubscription = nil
             shouldCheckForNewerSubmissionsAfterRestore = false
+            explorationResults = nil
+            explorationCanLoadMore = false
+            isLoadingExploration = false
             Defaults[.lastViewedSubmissionID] = nil
             return
         }
@@ -249,6 +264,45 @@ class Model: NotificationsNuker, NotificationsDeleter {
             submissionPreviews = []
         } catch {
             logger.error("Failed nuking submissions: \(error)")
+        }
+    }
+
+    // MARK: - Exploration (search)
+    private static let searchPageSize = 72
+
+    /// Runs a fresh search (page 1), replacing any previous results, and persists
+    /// the criteria so they are remembered next launch.
+    func searchSubmissions(_ query: FASearchQuery) async {
+        var query = query
+        query.page = 1
+        explorationQuery = query
+        Defaults[.lastSearchQuery] = query
+        explorationResults = nil
+        explorationCanLoadMore = false
+        await fetchExplorationResults(replacing: true)
+    }
+
+    /// Fetches the next page and appends it. No-op when there's nothing more or a
+    /// fetch is already running.
+    func loadMoreExploration() async {
+        guard explorationCanLoadMore, !isLoadingExploration else { return }
+        explorationQuery.page += 1
+        await fetchExplorationResults(replacing: false)
+    }
+
+    private func fetchExplorationResults(replacing: Bool) async {
+        isLoadingExploration = true
+        defer { isLoadingExploration = false }
+
+        await storeLocalizedError(in: errorStorage, action: "Search", webBrowserURL: FAURLs.searchUrl(for: explorationQuery)) {
+            let results = try await getSession().searchSubmissionPreviews(explorationQuery)
+            // A full page means more may exist; a short page means we've reached the end.
+            explorationCanLoadMore = results.count >= Self.searchPageSize
+            if replacing {
+                explorationResults = OrderedSet(results)
+            } else {
+                explorationResults = (explorationResults ?? []).appending(contentsOf: results)
+            }
         }
     }
     
