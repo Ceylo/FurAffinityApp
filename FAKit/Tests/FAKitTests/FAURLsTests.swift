@@ -79,11 +79,34 @@ struct FAURLsTests {
             matchMode: .any,
             page: 3
         )
-        let url = FAURLs.searchUrl(for: query)
-        // Gender is intentionally not emitted yet (param encoding unverified).
-        #expect(url.absoluteString == "https://www.furaffinity.net/search/?"
-            + "q=wolf&order-by=date&order-direction=asc&range=30days"
-            + "&rating-general=1&type-art=1&type-music=1"
-            + "&mode=any&page=3&perpage=72")
+        let items = try queryItems(of: FAURLs.searchUrl(for: query))
+        // A selected gender folds into q as an @keywords operator.
+        #expect(items["q"] == "wolf @keywords male")
+        #expect(items["order-by"] == "date")
+        #expect(items["order-direction"] == "asc")
+        #expect(items["range"] == "30days")
+        #expect(items["rating-general"] == "1")
+        #expect(items["type-art"] == "1")
+        #expect(items["type-music"] == "1")
+        #expect(items["mode"] == "any")
+        #expect(items["page"] == "3")
+        #expect(items["perpage"] == "72")
+    }
+
+    @Test
+    func searchUrl_allGendersAppendKeywords() throws {
+        var query = FASearchQuery.default
+        query.genders = Set(FASearchQuery.Gender.allCases)
+        let items = try queryItems(of: FAURLs.searchUrl(for: query))
+        // Matches the q produced by the site when every gender box is checked.
+        #expect(items["q"] == "@keywords male female trans_male trans_female intersex non_binary")
+    }
+
+    private func queryItems(of url: URL) throws -> [String: String] {
+        let components = try URLComponents(url: url, resolvingAgainstBaseURL: false).unwrap()
+        return Dictionary(
+            (components.queryItems ?? []).map { ($0.name, $0.value ?? "") },
+            uniquingKeysWith: { first, _ in first }
+        )
     }
 }

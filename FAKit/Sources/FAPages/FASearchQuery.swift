@@ -46,8 +46,8 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
     }
 
     /// The gender checkboxes have no `name` in the page markup — the site JS
-    /// builds the param. The exact param encoding still needs verifying against a
-    /// real logged-in search before it can be emitted (see `FAURLs.searchUrl`).
+    /// instead appends the selected values to the `q` text as an
+    /// `@keywords <values…>` operator (see `FAURLs.searchUrl`).
     public enum Gender: String, Codable, Sendable, CaseIterable {
         case male
         case female

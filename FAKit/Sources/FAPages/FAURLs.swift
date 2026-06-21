@@ -158,12 +158,11 @@ public enum FAURLs {
     /// `order-by=…`, etc. Enums are iterated in `CaseIterable` order so the
     /// produced query string is deterministic (and testable).
     ///
-    /// Gender is intentionally **not** emitted yet: the gender checkboxes carry no
-    /// `name` in the page markup (the site JS builds the param), so the exact
-    /// encoding must be verified against a real logged-in search first.
+    /// Gender has no form param: the site appends the selected values to the `q`
+    /// text as an `@keywords male female …` operator, so we do the same.
     public static func searchUrl(for query: FASearchQuery) -> URL {
         var items: [URLQueryItem] = [
-            .init(name: "q", value: query.text),
+            .init(name: "q", value: searchQueryText(for: query)),
             .init(name: "order-by", value: query.sortOrder.rawValue),
             .init(name: "order-direction", value: query.sortDirection.rawValue),
             .init(name: "range", value: query.dateRange.rawValue),
@@ -182,6 +181,19 @@ public enum FAURLs {
         items.append(.init(name: "perpage", value: "72"))
 
         return searchUrl.appending(queryItems: items)
+    }
+
+    /// The `q` value: the user's text, with any selected genders folded in as an
+    /// `@keywords male female …` operator (matching what the site's JS produces).
+    private static func searchQueryText(for query: FASearchQuery) -> String {
+        guard !query.genders.isEmpty else { return query.text }
+
+        let genderTokens = FASearchQuery.Gender.allCases
+            .filter { query.genders.contains($0) }
+            .map(\.rawValue)
+            .joined(separator: " ")
+        let keywords = "@keywords \(genderTokens)"
+        return query.text.isEmpty ? keywords : "\(query.text) \(keywords)"
     }
 
     public static func submissionUrl(sid: Int) -> URL {

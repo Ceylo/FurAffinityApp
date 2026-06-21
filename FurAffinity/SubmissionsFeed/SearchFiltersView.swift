@@ -34,6 +34,13 @@ struct SearchFiltersView: View {
         )
     }
 
+    private func genderBinding(_ gender: FASearchQuery.Gender) -> Binding<Bool> {
+        Binding(
+            get: { query.genders.contains(gender) },
+            set: { query.genders.formSymmetricToggle(gender, on: $0) }
+        )
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -86,6 +93,16 @@ struct SearchFiltersView: View {
                 }
 
                 Section {
+                    ForEach(FASearchQuery.Gender.allCases, id: \.self) { gender in
+                        Toggle(gender.displayName, isOn: genderBinding(gender))
+                    }
+                } header: {
+                    Text("Gender")
+                } footer: {
+                    Text("Filters by gender keywords tagged on submissions.")
+                }
+
+                Section {
                     Button("Reset to defaults") {
                         query = .default
                     }
@@ -112,6 +129,19 @@ private extension Set {
     /// Inserts or removes `element` to match `on`.
     mutating func formSymmetricToggle(_ element: Element, on: Bool) {
         if on { insert(element) } else { remove(element) }
+    }
+}
+
+extension FASearchQuery.Gender {
+    var displayName: String {
+        switch self {
+        case .male: "Male"
+        case .female: "Female"
+        case .transMale: "Trans (male)"
+        case .transFemale: "Trans (female)"
+        case .intersex: "Intersex"
+        case .nonBinary: "Non-binary"
+        }
     }
 }
 
