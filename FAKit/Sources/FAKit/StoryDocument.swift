@@ -76,10 +76,12 @@ public enum StoryDocument {
     private static func pdfText(from data: Data) -> NSAttributedString? {
         guard let document = PDFDocument(data: data) else { return nil }
 
+        let indentParagraphs = documentUsesFirstLineIndent(document)
+
         let result = NSMutableAttributedString()
         for index in 0..<document.pageCount {
             guard let page = document.page(at: index) else { continue }
-            appendReflowed(page: page, to: result)
+            appendReflowed(page: page, to: result, indentParagraphs: indentParagraphs)
         }
 
         result.removeAttribute(.foregroundColor, range: NSRange(location: 0, length: result.length))
@@ -116,23 +118,25 @@ public enum StoryDocument {
         case noSeparator
     }
 
-    /// Reconstructs paragraphs from a PDF page: PDFKit already breaks the text into
-    /// visual lines (a `\n` per line, which is what shows orphaned words on screen).
-    /// A break is a *soft wrap* (rejoined with a space) when the previous line was
-    /// full — the next line's leading word wouldn't have fit (line-fill test);
-    /// otherwise the line ended early on purpose and starts a new *paragraph*. This
-    /// keeps short title lines on their own and detects paragraph ends regardless of
-    /// vertical spacing. Lines whose glyphs report no geometry still have their text
-    /// emitted (joined as a soft wrap) so no words are lost. Original per-character
-    /// fonts (size + traits) are preserved.
-    private static func appendReflowed(page: PDFPage, to result: NSMutableAttributedString) {
+    /// Per-page horizontal/vertical reference values derived from the bounded lines.
+    private struct PageMetrics {
+        var medianHeight: CGFloat
+        var bodyRight: CGFloat
+        var leftMargin: CGFloat
+        var spaceWidth: CGFloat
+        var indentThreshold: CGFloat
+        var pageMidX: CGFloat
+    }
+
+    /// PDFKit's per-character text for a page, split into visual lines (it emits a `\n`
+    /// per line) with each line's on-page geometry.
+    private static func visualLines(of page: PDFPage) -> (attributed: NSAttributedString, lines: [PDFLine]) {
         let attributed = page.attributedString ?? NSAttributedString()
         let string = attributed.string as NSString
         let count = min(string.length, page.numberOfCharacters)
-        guard count > 0 else { return }
-
-        // Split into visual lines on newlines; gather per-line geometry.
         var lines: [PDFLine] = []
+        guard count > 0 else { return (attributed, lines) }
+
         var lineStart = 0
         func flushLine(end: Int) {
             let length = end - lineStart
@@ -175,42 +179,148 @@ public enum StoryDocument {
             flushLine(end: i)
         }
         flushLine(end: count)
-        guard !lines.isEmpty else { return }
+        return (attributed, lines)
+    }
 
+    private static func metrics(for lines: [PDFLine], page: PDFPage) -> PageMetrics {
         let bounded = lines.filter(\.hasBounds)
         let medianHeight = median(bounded.map(\.height)) ?? bodyPointSize
-        let bodyRight = bounded.map(\.maxX).max() ?? 0
-        let spaceWidth = medianHeight * 0.25
+        return PageMetrics(
+            medianHeight: medianHeight,
+            bodyRight: bounded.map(\.maxX).max() ?? 0,
+            leftMargin: bounded.map(\.minX).min() ?? 0,
+            spaceWidth: medianHeight * 0.25,
+            indentThreshold: max(medianHeight, 12),
+            pageMidX: page.bounds(for: .mediaBox).midX)
+    }
+
+    /// Decides whether the document indents the first line of each paragraph (restore a
+    /// tab) versus separating paragraphs by spacing only. Per-character geometry is noisy,
+    /// so we vote: a likely paragraph-start line counts as indented when its left edge
+    /// sits a clear step right of the body's left margin. Block-style documents reliably
+    /// score zero indented starts; indent-style documents score enough to win.
+    private static func documentUsesFirstLineIndent(_ document: PDFDocument) -> Bool {
+        var indented = 0, total = 0
+        for index in 0..<document.pageCount {
+            guard let page = document.page(at: index) else { continue }
+            let (attributed, lines) = visualLines(of: page)
+            guard lines.count > 1 else { continue }
+            let m = metrics(for: lines, page: page)
+            for i in 1..<lines.count {
+                let line = lines[i], previous = lines[i - 1]
+                guard line.hasBounds, previous.hasBounds else { continue }
+                let substring = attributed.attributedSubstring(from: line.range)
+                // Geometry-only paragraph-start guess: the previous line ended early and
+                // this one opens like a paragraph (not a wrapped continuation, not centered).
+                let endedEarly = m.bodyRight - previous.maxX >= m.spaceWidth + line.firstWordWidth
+                guard endedEarly, !beginsLikeContinuation(substring),
+                      !isCentered(line, pageMidX: m.pageMidX, leftMargin: m.leftMargin) else { continue }
+                total += 1
+                if line.minX - m.leftMargin >= m.indentThreshold { indented += 1 }
+            }
+        }
+        return indented >= 2 && indented * 3 >= total
+    }
+
+    /// Reconstructs paragraphs from a PDF page: PDFKit already breaks the text into
+    /// visual lines (a `\n` per line, which is what shows orphaned words on screen).
+    /// A break is a *soft wrap* (rejoined with a space) when the previous line was
+    /// full — the next line's leading word wouldn't have fit (line-fill test);
+    /// otherwise the line ended early on purpose and starts a new *paragraph*. This
+    /// keeps short title lines on their own and detects paragraph ends regardless of
+    /// vertical spacing. Lines whose glyphs report no geometry still have their text
+    /// emitted (joined as a soft wrap) so no words are lost. Original per-character
+    /// fonts (size + traits) are preserved. When the document indents the first line of
+    /// each paragraph, restore that indent as a leading tab.
+    private static func appendReflowed(page: PDFPage, to result: NSMutableAttributedString, indentParagraphs: Bool) {
+        let (attributed, lines) = visualLines(of: page)
+        guard !lines.isEmpty else { return }
+
+        let m = metrics(for: lines, page: page)
+        let bodyRight = m.bodyRight
+        let leftMargin = m.leftMargin
+        let spaceWidth = m.spaceWidth
+        let pageMidX = m.pageMidX
 
         for (index, line) in lines.enumerated() {
             let substring = attributed.attributedSubstring(from: line.range)
 
+            let join: LineJoin
             if index == 0 {
                 // First line of a later page continues as a new paragraph.
-                appendSeparated(substring, to: result, join: result.length > 0 ? .paragraph : .softWrap)
-                continue
+                join = result.length > 0 ? .paragraph : .softWrap
+            } else {
+                let previous = lines[index - 1]
+                if isSpuriousSplit(previous: previous, line: line, next: substring,
+                                   result: result, spaceWidth: spaceWidth) {
+                    // PDFKit broke one logical row/word in two (e.g. at a curly apostrophe);
+                    // rejoin without a separator so contractions stay whole.
+                    join = .noSeparator
+                } else if !line.hasBounds || !previous.hasBounds {
+                    // Line-fill test: if the previous line had room for this line's first
+                    // word (plus a space), it ended early on purpose → new paragraph;
+                    // otherwise it was full → soft wrap we rejoin. Without geometry on
+                    // either line we can't tell, so default to a soft wrap.
+                    join = .softWrap
+                } else {
+                    // A new paragraph needs both room on the previous line *and* a line
+                    // that reads like a paragraph opening — one starting with a lowercase
+                    // letter is a soft-wrapped continuation, not a new paragraph (these
+                    // PDFs' noisy geometry otherwise mistakes short wrapped lines for
+                    // paragraph starts).
+                    let available = bodyRight - previous.maxX
+                    let nextWordWouldFit = available >= spaceWidth + line.firstWordWidth
+                    join = nextWordWouldFit && !beginsLikeContinuation(substring) ? .paragraph : .softWrap
+                }
             }
 
-            let previous = lines[index - 1]
-            let join: LineJoin
-            if isSpuriousSplit(previous: previous, line: line, next: substring,
-                               result: result, spaceWidth: spaceWidth) {
-                // PDFKit broke one logical row/word in two (e.g. at a curly apostrophe);
-                // rejoin without a separator so contractions stay whole.
-                join = .noSeparator
-            } else if !line.hasBounds || !previous.hasBounds {
-                // Line-fill test: if the previous line had room for this line's first
-                // word (plus a space), it ended early on purpose → new paragraph;
-                // otherwise it was full → soft wrap we rejoin. Without geometry on either
-                // line we can't tell, so default to a soft wrap (avoids spurious breaks).
-                join = .softWrap
-            } else {
-                let available = bodyRight - previous.maxX
-                let nextWordWouldFit = available >= spaceWidth + line.firstWordWidth
-                join = nextWordWouldFit ? .paragraph : .softWrap
-            }
-            appendSeparated(substring, to: result, join: join)
+            // In a document that indents the first line of each paragraph, restore that
+            // indent as a leading tab — matching the DOCX `<w:tab>` path. Centered lines
+            // get alignment instead, never a tab.
+            let isParagraphStart = join == .paragraph || (index == 0 && result.length == 0)
+            let indented = indentParagraphs && isParagraphStart
+                && !isCentered(line, pageMidX: pageMidX, leftMargin: leftMargin)
+
+            appendSeparated(indented ? prependingTab(to: substring) : substring,
+                            to: result, join: join)
         }
+    }
+
+    /// The first non-whitespace Unicode scalar of an attributed string, if any.
+    private static func firstNonSpaceScalar(in substring: NSAttributedString) -> Unicode.Scalar? {
+        let string = substring.string as NSString
+        var index = 0
+        while index < string.length {
+            guard let scalar = Unicode.Scalar(string.character(at: index)) else { return nil }
+            if !CharacterSet.whitespaces.contains(scalar) { return scalar }
+            index += 1
+        }
+        return nil
+    }
+
+    /// True when a line reads like the continuation of a wrapped sentence rather than a
+    /// new paragraph — i.e. it starts with a lowercase letter. Paragraphs open with a
+    /// capital, an opening quote, or a digit/symbol.
+    private static func beginsLikeContinuation(_ substring: NSAttributedString) -> Bool {
+        guard let scalar = firstNonSpaceScalar(in: substring) else { return false }
+        return CharacterSet.lowercaseLetters.contains(scalar)
+    }
+
+    /// True when a line is centered on the page (its midpoint sits at the page center and
+    /// it does not start at the body's left margin) — e.g. a centered title.
+    private static func isCentered(_ line: PDFLine, pageMidX: CGFloat, leftMargin: CGFloat) -> Bool {
+        guard line.hasBounds else { return false }
+        let mid = (line.minX + line.maxX) / 2
+        return abs(mid - pageMidX) <= 12 && line.minX > leftMargin + 12
+    }
+
+    /// Prepends a tab carrying `substring`'s leading run attributes, so a first-line
+    /// indent renders without inflating the line height.
+    private static func prependingTab(to substring: NSAttributedString) -> NSAttributedString {
+        guard substring.length > 0 else { return substring }
+        let result = NSMutableAttributedString(string: "\t", attributes: substring.attributes(at: 0, effectiveRange: nil))
+        result.append(substring)
+        return result
     }
 
     /// True when two consecutive PDFKit "lines" are really one logical row or word that
@@ -227,6 +337,13 @@ public enum StoryDocument {
         if line.hasBounds, previous.hasBounds,
            line.minX >= previous.maxX - spaceWidth,
            line.minY < previous.maxY, previous.minY < line.maxY {
+            return true
+        }
+
+        // A fragment that begins with clause punctuation can't start a real line —
+        // PDFKit split a clause at an adjacent quote (e.g. `…"normal"` + `, but …`,
+        // `…"experiments"` + `. And …`). Attach it with no separator.
+        if let head = firstNonSpaceScalar(in: substring), ",.;:".unicodeScalars.contains(head) {
             return true
         }
 

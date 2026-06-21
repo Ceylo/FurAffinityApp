@@ -138,6 +138,30 @@ struct StoryDocumentTests {
     }
 
     @Test
+    func pdfStory_restoresFirstLineIndentTabs() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1642368831.typhin_princess_tells_her_story.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // This PDF indents the first line of each paragraph (positionally, not as a tab
+        // character); restore it as a leading tab so paragraphs read as in the source.
+        #expect(text.contains("\n\tThe wizard Elimaio"), "missing paragraph indent: \(String(text.prefix(400)))")
+        #expect(text.contains("\n\tOnce we were alone"))
+        // The justified body's noisy geometry must not produce spurious breaks: clauses
+        // split at curly quotes stay joined, as do plain soft wraps.
+        #expect(text.contains("my new “normal”, but I was wrong."))
+        #expect(text.contains("the “experiments”. And yes,"))
+        #expect(text.contains("as they disappeared once the door"))
+    }
+
+    @Test
+    func pdfStory_blockStyleDocumentGetsNoIndentTabs() throws {
+        // A document that separates paragraphs by spacing (not first-line indents) must
+        // not gain spurious tabs from the noisy per-character geometry.
+        let attributed = try #require(StoryDocument.richText(from: testData("1781832277.vixyyfox_3000_-redfurythings.pdf"), filename: "story.pdf"))
+        #expect(!String(attributed.characters).contains("\t"))
+    }
+
+    @Test
     func plainTextFile_isReturnedAsIs() throws {
         let attributed = try #require(StoryDocument.richText(from: Data("Hello world".utf8), filename: "story.txt"))
         #expect(String(attributed.characters) == "Hello world")
