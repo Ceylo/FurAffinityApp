@@ -79,6 +79,8 @@ struct SubmissionView: View {
         case let .audio(audio):
             SubmissionAudioContent(
                 audioContent: audio,
+                title: submission.title,
+                author: submission.author,
                 thumbnail: thumbnail,
                 documentFileUrl: $documentFileUrl,
                 downloadDocument: downloadDocument
