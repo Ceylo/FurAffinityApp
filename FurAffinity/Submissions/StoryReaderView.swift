@@ -74,27 +74,15 @@ private struct StoryTextView: UIViewRepresentable {
     }
 
     func updateUIView(_ view: UITextView, context: Context) {
-        let inset = view.textContainerInset
-        let lineFragmentPadding = view.textContainer.lineFragmentPadding
-        let available = view.bounds.width - inset.left - inset.right - 2 * lineFragmentPadding
-        view.attributedText = normalized(NSAttributedString(attributedText), availableWidth: available)
+        view.attributedText = normalized(NSAttributedString(attributedText))
     }
 
     /// Rescales run fonts relative to the dominant body size and applies paragraph
-    /// spacing, wrapping fonts in `UIFontMetrics` so they track Dynamic Type, and sizes
-    /// image attachments to the available text width.
-    private func normalized(_ source: NSAttributedString, availableWidth: CGFloat) -> NSAttributedString {
+    /// spacing, wrapping fonts in `UIFontMetrics` so they track Dynamic Type. Embedded
+    /// images size themselves to the line width via `FittingImageTextAttachment`.
+    private func normalized(_ source: NSAttributedString) -> NSAttributedString {
         let result = NSMutableAttributedString(attributedString: source)
         let full = NSRange(location: 0, length: result.length)
-
-        // Fit embedded images to the text width (never upscale), preserving aspect ratio.
-        result.enumerateAttribute(.attachment, in: full) { value, _, _ in
-            guard let attachment = value as? NSTextAttachment, let image = attachment.image,
-                  image.size.width > 0 else { return }
-            let maxWidth = availableWidth > 0 ? availableWidth : image.size.width
-            let factor = min(1, maxWidth / image.size.width)
-            attachment.bounds = CGRect(x: 0, y: 0, width: image.size.width * factor, height: image.size.height * factor)
-        }
 
         let bodySize = dominantFontSize(in: result) ?? referenceBodySize
         let metrics = UIFontMetrics(forTextStyle: .body)

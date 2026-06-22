@@ -222,6 +222,35 @@ struct StoryDocumentTests {
     }
 
     @Test
+    func fittingImageAttachment_fitsLineWidthAndPreservesAspect() {
+        let attachment = FittingImageTextAttachment()
+        attachment.image = solidImage(width: 800, height: 400) // 2:1
+        let narrow = CGRect(x: 0, y: 0, width: 300, height: CGFloat.greatestFiniteMagnitude)
+
+        let bounds = attachment.attachmentBounds(for: nil, proposedLineFragment: narrow, glyphPosition: .zero, characterIndex: 0)
+        #expect(bounds.width <= narrow.width, "image overflowed the line width: \(bounds.width)")
+        #expect(abs(bounds.width / bounds.height - 2) < 0.01, "aspect ratio not preserved: \(bounds)")
+
+        // Never upscales an image narrower than the line.
+        attachment.image = solidImage(width: 100, height: 50)
+        let small = attachment.attachmentBounds(for: nil, proposedLineFragment: narrow, glyphPosition: .zero, characterIndex: 0)
+        #expect(small.width == 100, "small image was upscaled: \(small.width)")
+    }
+
+    @Test
+    func pdfStory_imageAttachmentsAreSelfSizing() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let ns = NSAttributedString(attributed)
+
+        // The self-sizing subclass must survive the AttributedString round trip.
+        var fitting = 0
+        ns.enumerateAttribute(.attachment, in: NSRange(location: 0, length: ns.length)) { value, _, _ in
+            if value is FittingImageTextAttachment { fitting += 1 }
+        }
+        #expect(fitting >= 1, "expected self-sizing image attachments, found \(fitting)")
+    }
+
+    @Test
     func plainTextFile_isReturnedAsIs() throws {
         let attributed = try #require(StoryDocument.richText(from: Data("Hello world".utf8), filename: "story.txt"))
         #expect(String(attributed.characters) == "Hello world")
@@ -230,6 +259,14 @@ struct StoryDocumentTests {
     @Test
     func unsupportedFormat_returnsNil() {
         #expect(StoryDocument.richText(from: Data("anything".utf8), filename: "story.bin") == nil)
+    }
+
+    /// A solid-color image of the given pixel size, for attachment-sizing tests.
+    private func solidImage(width: CGFloat, height: CGFloat) -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: width, height: height)).image { context in
+            UIColor.gray.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        }
     }
 
     /// Splits text into words, trimming surrounding punctuation and dropping empties.

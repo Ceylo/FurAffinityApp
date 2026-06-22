@@ -331,13 +331,13 @@ public enum StoryDocument {
         emitImages(above: -.greatestFiniteMagnitude)
     }
 
-    /// Appends `image` as its own centered paragraph via a text attachment. The reader
-    /// sizes the attachment to the text width; here we only carry the image.
+    /// Appends `image` as its own centered paragraph via a self-sizing text attachment
+    /// that fits the line width at layout time.
     private static func appendImage(_ image: UIImage, to result: NSMutableAttributedString) {
         if result.length > 0 {
             result.append(NSAttributedString(string: "\n"))
         }
-        let attachment = NSTextAttachment()
+        let attachment = FittingImageTextAttachment()
         attachment.image = image
         let start = result.length
         result.append(NSAttributedString(attachment: attachment))
@@ -622,6 +622,26 @@ public enum StoryDocument {
             end -= 1
         }
         return attributed.attributedSubstring(from: NSRange(location: start, length: end - start))
+    }
+}
+
+/// A text attachment that sizes its image to the available line-fragment width at
+/// layout time — never upscaling, preserving aspect ratio. Sizing at layout avoids the
+/// zero-width first-layout problem of sizing against the text view's bounds.
+final class FittingImageTextAttachment: NSTextAttachment {
+    private func fittedBounds(proposedWidth: CGFloat) -> CGRect {
+        guard let image, image.size.width > 0 else { return .zero }
+        let maxWidth = proposedWidth > 0 ? proposedWidth : image.size.width
+        let factor = min(1, maxWidth / image.size.width)
+        return CGRect(x: 0, y: 0, width: image.size.width * factor, height: image.size.height * factor)
+    }
+
+    override func attachmentBounds(for attributes: [NSAttributedString.Key: Any], location: NSTextLocation, textContainer: NSTextContainer?, proposedLineFragment: CGRect, position: CGPoint) -> CGRect {
+        fittedBounds(proposedWidth: proposedLineFragment.width)
+    }
+
+    override func attachmentBounds(for textContainer: NSTextContainer?, proposedLineFragment lineFrag: CGRect, glyphPosition position: CGPoint, characterIndex charIndex: Int) -> CGRect {
+        fittedBounds(proposedWidth: lineFrag.width)
     }
 }
 
