@@ -188,6 +188,40 @@ struct StoryDocumentTests {
     }
 
     @Test
+    func pdfStory_separatesCenteredTitleFromByline() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // The centered title and its byline used to soft-wrap onto one line.
+        #expect(text.contains("LIMA NOX - BOXES\nby Amber Calliope"), "title/byline not split: \(text.prefix(400))")
+        #expect(!text.contains("LIMA NOX - BOXES by Amber Calliope"))
+    }
+
+    @Test
+    func pdfStory_separatesHeadingFromBodyOnVerticalGap() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // The bold chapter heading fills the line width, so only the blank line of vertical
+        // space below it marks the paragraph break before the body.
+        #expect(text.contains("Dyeter |\nI can feel them"), "heading/body not split: \(text.prefix(600))")
+        #expect(!text.contains("Dyeter | I can feel them"))
+    }
+
+    @Test
+    func pdfStory_putsEachDialogueTurnOnItsOwnLine() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // Adjacent dialogue turns (opening curly quote) used to merge — either by a
+        // same-row geometry split or, for lines with no character bounds, a soft wrap.
+        #expect(text.contains("“Yes?...“\n“Yes.“"), "dialogue turns merged: \(text.prefix(1600))")
+        #expect(text.contains("“Scientific Study Diacrees–“\n“Under section 9 yes–“"))
+        #expect(!text.contains("“Yes?...“ “Yes.“"))
+        #expect(!text.contains("Diacrees–“ “Under"))
+    }
+
+    @Test
     func plainTextFile_isReturnedAsIs() throws {
         let attributed = try #require(StoryDocument.richText(from: Data("Hello world".utf8), filename: "story.txt"))
         #expect(String(attributed.characters) == "Hello world")

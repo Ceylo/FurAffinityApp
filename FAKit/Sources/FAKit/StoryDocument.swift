@@ -256,6 +256,7 @@ public enum StoryDocument {
         for (index, line) in lines.enumerated() {
             emitImages(above: line.maxY)
             let substring = attributed.attributedSubstring(from: line.range)
+            let centered = line.hasBounds && isCentered(line, pageMidX: pageMidX, leftMargin: leftMargin)
 
             let join: LineJoin
             if index == 0 {
@@ -263,11 +264,30 @@ public enum StoryDocument {
                 join = result.length > 0 ? .paragraph : .softWrap
             } else {
                 let previous = lines[index - 1]
-                if isSpuriousSplit(previous: previous, line: line, next: substring,
-                                   result: result, spaceWidth: spaceWidth) {
+                let previousCentered = previous.hasBounds && isCentered(previous, pageMidX: pageMidX, leftMargin: leftMargin)
+                let head = firstNonSpaceScalar(in: substring)
+                let openingQuote = head == "\u{201C}" || head == "\u{2018}"
+                if openingQuote, !endsMidClause(result) {
+                    // An opening quote that doesn't continue an unfinished clause starts a
+                    // new dialogue turn → its own paragraph, even when the line reports no
+                    // usable geometry. A quote after a line ending mid-clause (e.g.
+                    // `…the` + `“experiments”`) is a wrapped quoted word, not a new turn.
+                    join = .paragraph
+                } else if isSpuriousSplit(previous: previous, line: line, next: substring,
+                                          result: result, spaceWidth: spaceWidth) {
                     // PDFKit broke one logical row/word in two (e.g. at a curly apostrophe);
                     // rejoin without a separator so contractions stay whole.
                     join = .noSeparator
+                } else if centered || previousCentered {
+                    // Centered title/byline lines stand alone, and the first body line
+                    // after a centered block opens a new paragraph.
+                    join = .paragraph
+                } else if line.hasBounds, previous.hasBounds,
+                          previous.minY - line.maxY > m.medianHeight {
+                    // A roughly blank line of vertical space separates two blocks (e.g. a
+                    // heading from the body) → new paragraph. Tall, noisy lines overlap and
+                    // give negative gaps, so they don't trigger false breaks.
+                    join = .paragraph
                 } else if !line.hasBounds || !previous.hasBounds {
                     // Line-fill test: if the previous line had room for this line's first
                     // word (plus a space), it ended early on purpose → new paragraph;
@@ -289,7 +309,6 @@ public enum StoryDocument {
             // In a document that indents the first line of each paragraph, restore that
             // indent as a leading tab — matching the DOCX `<w:tab>` path. Centered lines
             // get alignment instead, never a tab.
-            let centered = line.hasBounds && isCentered(line, pageMidX: pageMidX, leftMargin: leftMargin)
             let isParagraphStart = join == .paragraph || (index == 0 && result.length == 0)
             let indented = indentParagraphs && isParagraphStart && !centered
 
@@ -434,6 +453,22 @@ public enum StoryDocument {
         return nil
     }
 
+    /// True when the already-emitted text ends mid-clause — its last non-space scalar is a
+    /// lowercase letter — so the next line is a wrapped continuation rather than a new
+    /// block. Lines ending in punctuation, a quote, or a capital read as finished.
+    private static func endsMidClause(_ result: NSMutableAttributedString) -> Bool {
+        let string = result.string as NSString
+        var index = string.length - 1
+        while index >= 0 {
+            guard let scalar = Unicode.Scalar(string.character(at: index)) else { return false }
+            if !CharacterSet.whitespacesAndNewlines.contains(scalar) {
+                return CharacterSet.lowercaseLetters.contains(scalar)
+            }
+            index -= 1
+        }
+        return false
+    }
+
     /// True when a line reads like the continuation of a wrapped sentence rather than a
     /// new paragraph — i.e. it starts with a lowercase letter. Paragraphs open with a
     /// capital, an opening quote, or a digit/symbol.
@@ -469,10 +504,16 @@ public enum StoryDocument {
                                         next substring: NSAttributedString,
                                         result: NSMutableAttributedString,
                                         spaceWidth: CGFloat) -> Bool {
-        // Same row, continuing to the right of where the previous fragment ended.
+        // Same row, continuing to the right of where the previous fragment ended — but
+        // only when the fragment continues a word (its first non-space scalar is a
+        // lowercase letter or an apostrophe). This keeps the lone-apostrophe merge
+        // (`There` + `’`) while no longer merging an adjacent dialogue turn, which opens
+        // with a capital or an opening quote.
         if line.hasBounds, previous.hasBounds,
            line.minX >= previous.maxX - spaceWidth,
-           line.minY < previous.maxY, previous.minY < line.maxY {
+           line.minY < previous.maxY, previous.minY < line.maxY,
+           let head = firstNonSpaceScalar(in: substring),
+           CharacterSet.lowercaseLetters.contains(head) || head == "\u{2019}" || head == "'" {
             return true
         }
 
