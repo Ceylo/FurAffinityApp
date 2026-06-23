@@ -315,12 +315,29 @@ struct StoryDocumentTests {
         let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
         let text = String(attributed.characters)
 
-        // Short split fragments ("they don" / "And I’") whose collapsed bounds looked centered
-        // used to be split off and centered. They rejoin the monologue they continue.
+        // A lowercase split fragment ("they don") continuing a full previous line rejoins the
+        // monologue it continues — and never gets centered.
         #expect(text.contains("because they don’t know how to just let the weather machines"), "'weather machines' fragment broke out: \(text.prefix(60))")
-        #expect(text.contains("guess… And I’m out of detergent"), "'out of detergent' fragment broke out")
         #expect(!isCenterAligned("they don’t know how", in: attributed), "split fragment wrongly centered")
+
+        // A capitalized split head ("And I’" + "m out…") following a line that ended well short
+        // ("…I guess…") opens a new paragraph beat — but stays left-aligned, not centered.
+        #expect(text.contains("guess…\nAnd I’m out of detergent"), "'out of detergent' beat didn't break")
         #expect(!isCenterAligned("And I’m out of detergent", in: attributed), "split fragment wrongly centered")
+    }
+
+    @Test
+    func pdfStory_breaksMonologueBeatsAfterShortLines() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // Capitalized monologue beats whose previous visual line ended well short of the margin
+        // each start their own paragraph, even when PDFKit splits their first word into a narrow
+        // head fragment (which used to be blanket-joined).
+        #expect(text.contains("better.\nOk TV , let’s see"), "#1 'Ok TV' beat didn't break: \(text.prefix(60))")
+        #expect(text.contains("\nTool.\nOk, yeah time to start walking away"), "#3 'Tool.'/'Ok, yeah' didn't break")
+        #expect(text.contains("\nThere’s people here.. Don’t make a scene"), "#4 'There's people here' didn't break")
+        #expect(text.contains("thanks.“\nThat’s"), "#5 'That's ok' beat didn't break")
     }
 
     @Test

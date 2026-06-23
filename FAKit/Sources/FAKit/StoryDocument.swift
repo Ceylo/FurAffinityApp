@@ -345,13 +345,15 @@ public enum StoryDocument {
                     // PDFs' noisy geometry otherwise mistakes short wrapped lines for
                     // paragraph starts).
                     let available = bodyRight - previous.maxX
-                    let nextWordWouldFit = available >= spaceWidth + line.firstWordWidth
-                    // A split head (e.g. "Don" before "’t remember…") reports only a partial
-                    // first word, so the line-fill test under-measures it and a near-full
-                    // previous line looks like it ended early. Don't let it spuriously start a
-                    // paragraph — it's a wrapped continuation.
+                    // A split head (e.g. "And I’" before "m out…") reports only a partial first
+                    // word; floor its width so the line-fill test stops trusting the bogus-narrow
+                    // value. A previous line that ended well short still reads as a paragraph end,
+                    // while a near-full one (e.g. "…Enough." before "Don" + "’t remember…") stays
+                    // a soft-wrapped continuation.
                     let splitHead = wordContinuesOntoNextLine(at: index)
-                    join = nextWordWouldFit && !beginsLikeContinuation(substring) && !splitHead ? .paragraph : .softWrap
+                    let firstWordWidth = splitHead ? max(line.firstWordWidth, m.medianHeight * 1.5) : line.firstWordWidth
+                    let nextWordWouldFit = available >= spaceWidth + firstWordWidth
+                    join = nextWordWouldFit && !beginsLikeContinuation(substring) ? .paragraph : .softWrap
                 }
             }
 
