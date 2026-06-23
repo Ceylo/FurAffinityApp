@@ -50,19 +50,9 @@ struct AudioScrubber: View {
 }
 
 #Preview {
-    @Previewable
-    var controller = AudioPlaybackController(
-        streamUrl: URL(string: "https://d.furaffinity.net/art/baumarius/music/1722994974/1722994974.baumarius_fading_light.mp3")!,
-        title: "Some title",
-        author: "author",
-        coverImageUrl: URL(string: "https://d.furaffinity.net/art/baumarius/music/1722994974/1722994974.thumbnail.baumarius_fading_light.mp3.jpg")!,
-        errorStorage: ErrorStorage()
-    )
-    
     AudioScrubber(
-        controller: controller,
+        controller: .preview(duration: 100),
         isScrubbing: .constant(true),
         scrubValue: .constant(70)
     )
-    .task { await controller.prepare() }
 }

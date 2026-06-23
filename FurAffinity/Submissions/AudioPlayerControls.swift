@@ -69,17 +69,5 @@ struct AudioPlayerControls: View {
 }
 
 #Preview {
-    @Previewable
-    var controller = AudioPlaybackController(
-        streamUrl: URL(string: "https://d.furaffinity.net/art/baumarius/music/1722994974/1722994974.baumarius_fading_light.mp3")!,
-        title: "Some title",
-        author: "author",
-        coverImageUrl: URL(string: "https://d.furaffinity.net/art/baumarius/music/1722994974/1722994974.thumbnail.baumarius_fading_light.mp3.jpg")!,
-        errorStorage: ErrorStorage()
-    )
-    
-    AudioPlayerControls(
-        controller: controller
-    )
-    .task { await controller.prepare() }
+    AudioPlayerControls(controller: .preview(currentTime: 70, duration: 100))
 }

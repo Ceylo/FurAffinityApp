@@ -318,6 +318,26 @@ final class AudioPlaybackController {
     }
 }
 
+#if DEBUG
+extension AudioPlaybackController {
+    /// A controller seeded with fixed playback values for SwiftUI previews —
+    /// no live `AVPlayer`, no network — so previews can render the scrubber
+    /// tint at a known progress. Do not call `prepare()` on it.
+    static func preview(currentTime: Double = 0, duration: Double = 100) -> AudioPlaybackController {
+        let controller = AudioPlaybackController(
+            streamUrl: URL(string: "https://example.invalid/preview.mp3")!,
+            title: "Some title",
+            author: "author",
+            coverImageUrl: URL(string: "https://example.invalid/preview.jpg")!,
+            errorStorage: ErrorStorage()
+        )
+        controller.currentTime = currentTime
+        controller.duration = duration
+        return controller
+    }
+}
+#endif
+
 private enum AudioPlaybackError: LocalizedError {
     case playbackFailed
 
