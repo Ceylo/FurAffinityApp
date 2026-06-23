@@ -145,6 +145,21 @@ YCH for
     }
 
     @Test
+    func audioSubmission_isParsed() throws {
+        let url = URL(string: "https://www.furaffinity.net/view/57658790/")!
+        let data = testData("www.furaffinity.net:view:57658790:audio.html")
+        let page = try FASubmissionPage(data: data, url: url)
+
+        #expect(page.previewImageUrl == URL(string: "https://t.furaffinity.net/57658790@600-1722994974.jpg")!)
+        #expect(page.content == .audio(.init(
+            streamUrl: URL(string: "https://d.furaffinity.net/art/baumarius/music/1722994974/1722994974.baumarius_fading_light.mp3")!,
+            downloadUrl: URL(string: "https://d.furaffinity.net/download/art/baumarius/music/1722994974/1722994974.baumarius_fading_light.mp3")!,
+            coverImageUrl: URL(string: "https://d.furaffinity.net/art/baumarius/music/1722994974/1722994974.thumbnail.baumarius_fading_light.mp3.jpg")!
+        )))
+        #expect(page.metadata.category == "Music")
+    }
+
+    @Test
     func submissionPageWithCommentsDisabled_isParsed() async throws {
         let url = URL(string: "https://www.furaffinity.net/view/52209828/")!
         let data = testData("www.furaffinity.net:view:52209828-disabled-comments.html")

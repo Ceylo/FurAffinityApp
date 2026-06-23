@@ -449,6 +449,45 @@ extension FASubmission {
             )
         }
     }
+
+    static var demoAudio: FASubmission {
+        get async {
+            let htmlDescription = "An original music piece, streamable inline."
+
+            return await FASubmission(
+                url: URL(string: "https://www.furaffinity.net/view/57658790/")!,
+                previewImageUrl: URL(string: "https://t.furaffinity.net/57658790@600-1722994974.jpg")!,
+                content: .audio(.init(
+                    streamUrl: URL(string: "https://d.furaffinity.net/art/baumarius/music/1722994974/1722994974.baumarius_fading_light.mp3")!,
+                    downloadUrl: URL(string: "https://d.furaffinity.net/download/art/baumarius/music/1722994974/1722994974.baumarius_fading_light.mp3")!,
+                    coverImageUrl: URL(string: "https://d.furaffinity.net/art/baumarius/music/1722994974/1722994974.thumbnail.baumarius_fading_light.mp3.jpg")!
+                )),
+                metadata: FASubmission.Metadata(
+                    title: "Fading Light",
+                    author: "baumarius",
+                    displayAuthor: "Baumarius",
+                    datetime: "Aug 7, 2024 12:42 PM",
+                    naturalDatetime: "2 years ago",
+                    viewCount: 128,
+                    commentCount: 0,
+                    favoriteCount: 21,
+                    rating: .general,
+                    category: "Music",
+                    theme: "Classical",
+                    species: "Unspecified / Any",
+                    fileSize: "8.42 MB",
+                    keywords: ["classical", "cello", "harp", "piano"],
+                    folders: []
+                ),
+                description: try! AttributedString(FAHTML: htmlDescription.selfContainedFAHtmlSubmission),
+                isFavorite: false,
+                favoriteUrl: URL(string: "https://www.furaffinity.net/fav/57658790/?key=0000000000000000000000000000000000000000")!,
+                comments: [],
+                targetCommentId: nil,
+                acceptsNewComments: true
+            )
+        }
+    }
 }
 
 extension FAJournal {
