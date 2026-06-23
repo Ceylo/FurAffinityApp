@@ -17,14 +17,35 @@ struct SubmissionView: View {
     var favoriteAction: () -> Void
     var replyAction: @MainActor (_ parentCid: Int?, _ text: CommentReply) async throws -> Void
     var sendNoteAction: (_ destinationUser: String, _ subject: String, _ text: String) async throws -> Void
+    var downloadDocument: (_ url: URL) async throws -> Data
     
     struct ReplySession {
         let parentCid: Int?
     }
     @State private var replySession: CommentReplySession?
     @State private var fullResolutionMediaFileUrl: URL?
+    @State private var documentFileUrl: URL?
     @State private var noteReplySession: NoteReplySession?
-    
+
+    /// True for content kinds saved as a document (to Files) rather than an
+    /// image (to Photos): text and audio.
+    private var savesToFiles: Bool {
+        switch submission.content {
+        case .text, .audio: return true
+        case .image: return false
+        }
+    }
+
+    /// The downloaded file backing Save/Share, whichever content kind applies.
+    private var savableFileUrl: URL? {
+        savesToFiles ? documentFileUrl : fullResolutionMediaFileUrl
+    }
+
+    private var imageResolution: String? {
+        if case let .image(image) = submission.content { return image.resolution }
+        return nil
+    }
+
     var header: some View {
         TitleAuthorHeader(
             username: submission.author,
@@ -36,19 +57,42 @@ struct SubmissionView: View {
         .padding(.horizontal, 10)
     }
     
-    var mainImage: some View {
-        SubmissionMainImage(
-            widthOnHeightRatio: submission.widthOnHeightRatio,
-            thumbnailImage: thumbnail,
-            fullResolutionMediaUrl: submission.fullResolutionMediaUrl,
-            fullResolutionMediaFileUrl: $fullResolutionMediaFileUrl
-        )
+    @ViewBuilder
+    var mainContent: some View {
+        switch submission.content {
+        case let .image(image):
+            SubmissionMainImage(
+                widthOnHeightRatio: image.widthOnHeightRatio,
+                thumbnailImage: thumbnail,
+                fullResolutionMediaUrl: image.mediaUrl,
+                fullResolutionMediaFileUrl: $fullResolutionMediaFileUrl
+            )
+        case let .text(text):
+            SubmissionTextContent(
+                title: submission.title,
+                textContent: text,
+                thumbnail: thumbnail,
+                previewImageUrl: submission.previewImageUrl,
+                documentFileUrl: $documentFileUrl,
+                downloadDocument: downloadDocument
+            )
+        case let .audio(audio):
+            SubmissionAudioContent(
+                audioContent: audio,
+                title: submission.title,
+                author: submission.author,
+                thumbnail: thumbnail,
+                documentFileUrl: $documentFileUrl,
+                downloadDocument: downloadDocument
+            )
+        }
     }
-    
+
     var submissionControls: some View {
         SubmissionControlsView(
             submissionUrl: submission.url,
-            mediaFileUrl: fullResolutionMediaFileUrl,
+            mediaFileUrl: savableFileUrl,
+            savesToFiles: savesToFiles,
             favoritesCount: submission.favoriteCount,
             isFavorite: submission.isFavorite,
             favoriteAction: favoriteAction,
@@ -57,7 +101,7 @@ struct SubmissionView: View {
             replyAction: {
                 replySession = .init(parentCid: nil, among: [])
             },
-            metadataTarget: .submissionMetadata(submission.metadata),
+            metadataTarget: .submissionMetadata(submission.metadata, resolution: imageResolution),
             errorStorage: errorStorage
         )
         .padding(.horizontal, 10)
@@ -92,7 +136,7 @@ struct SubmissionView: View {
         List {
             Group {
                 header
-                mainImage
+                mainContent
                 submissionControls
                 // When glass effect is used in a list with light mode, shadow gets clipped.
                 // This padding is a workaround to prevent clipping.
@@ -131,20 +175,24 @@ struct SubmissionView: View {
                 }
                 
                 Button {
-                    Task {
-                        await MediaSaveHandler(errorStorage: errorStorage).saveMedia(atFileUrl: fullResolutionMediaFileUrl!)
+                    if savesToFiles {
+                        exportToFiles([savableFileUrl!])
+                    } else {
+                        Task {
+                            await MediaSaveHandler(errorStorage: errorStorage).saveMedia(atFileUrl: savableFileUrl!)
+                        }
                     }
                 } label: {
-                    Label("Save Image", systemImage: "square.and.arrow.down")
+                    Label(savesToFiles ? "Save to Files" : "Save Image", systemImage: "square.and.arrow.down")
                 }
-                .disabled(fullResolutionMediaFileUrl == nil)
-                
+                .disabled(savableFileUrl == nil)
+
                 Button {
-                    share([fullResolutionMediaFileUrl!])
+                    share([savableFileUrl!])
                 } label: {
-                    Label("Share Image", systemImage: "square.and.arrow.up")
+                    Label(savesToFiles ? "Share" : "Share Image", systemImage: "square.and.arrow.up")
                 }
-                .disabled(fullResolutionMediaFileUrl == nil)
+                .disabled(savableFileUrl == nil)
                 
                 Button {
                     replySession = .init(parentCid: nil, among: [])
@@ -168,18 +216,38 @@ struct SubmissionView: View {
     }
 }
 
-#Preview {
+#Preview("Image submission") {
     @Previewable
     @State var errorStorage = ErrorStorage()
     
     NavigationStack {
-        withAsync({ await FASubmission.demo }) {
+        withAsync({ await FASubmission.demoImage }) {
             SubmissionView(
                 submission: $0,
                 avatarUrl: FAURLs.avatarUrl(for: $0.author),
                 favoriteAction: {},
                 replyAction: { _, _ in },
-                sendNoteAction: { _, _, _ in }
+                sendNoteAction: { _, _, _ in },
+                downloadDocument: { try await OfflineFASession.default.file(at: $0) }
+            )
+        }
+    }
+    .environment(errorStorage)
+}
+
+#Preview("Text submission") {
+    @Previewable
+    @State var errorStorage = ErrorStorage()
+    
+    NavigationStack {
+        withAsync({ await FASubmission.demoText }) {
+            SubmissionView(
+                submission: $0,
+                avatarUrl: FAURLs.avatarUrl(for: $0.author),
+                favoriteAction: {},
+                replyAction: { _, _ in },
+                sendNoteAction: { _, _, _ in },
+                downloadDocument: { try await OfflineFASession.default.file(at: $0) }
             )
         }
     }

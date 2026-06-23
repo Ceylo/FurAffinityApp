@@ -24,7 +24,9 @@ extension Rating {
 
 struct SubmissionMetadataView: View {
     var metadata: FASubmission.Metadata
-    
+    /// Image-only; text submissions have no resolution.
+    var resolution: String?
+
     var body: some View {
         List {
             Section {
@@ -37,7 +39,9 @@ struct SubmissionMetadataView: View {
                         initialDisplayedDate: .absolute
                     )
                 }
-                LabeledContent("Resolution", value: metadata.resolution)
+                if let resolution {
+                    LabeledContent("Resolution", value: resolution)
+                }
                 LabeledContent("File Size", value: metadata.fileSize)
             }
             
@@ -83,7 +87,7 @@ struct SubmissionMetadataView: View {
 
 #Preview {
     NavigationStack {
-        withAsync({ await FASubmission.demo.metadata }) { metadata in
+        withAsync({ await FASubmission.demoImage.metadata }) { metadata in
             SubmissionMetadataView(
                 metadata: metadata
             )

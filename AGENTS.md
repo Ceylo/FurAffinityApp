@@ -85,6 +85,7 @@ FAKit: SwiftSoup, Cache, SwiftGraph, swift-collections.
 ## Working Notes
 
 - Layer discipline: parsers in `FAPages`, network/session in `FAKit`, UI state in `FurAffinity`.
+- Only remote-loading wrappers that own `@Environment(Model.self)` (e.g. `RemoteSubmissionView`) may depend on `Model`. Leaf/content views must receive what they need via inputs or injected closures — never reach into `Model`.
 - Prefer existing helpers before adding new wrappers.
 - Tests: use fixture HTML, no live FA requests.
 - Login: cookie-based; never handle the user's FA password directly.

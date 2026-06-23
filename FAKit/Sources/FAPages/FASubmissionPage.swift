@@ -42,8 +42,55 @@ extension Rating {
 }
 
 public struct FASubmissionPage: FAPage {
+    /// The main content of a submission. Each kind carries exactly one media URL.
+    public enum Content: Hashable, Sendable {
+        case image(ImageContent)
+        case text(TextContent)
+        case audio(AudioContent)
+    }
+
+    public struct ImageContent: Hashable, Sendable {
+        /// `data-fullview-src`; for images this is also the download URL.
+        public let mediaUrl: URL
+        public let widthOnHeightRatio: Float
+        public let resolution: String
+
+        public init(mediaUrl: URL, widthOnHeightRatio: Float, resolution: String) {
+            self.mediaUrl = mediaUrl
+            self.widthOnHeightRatio = widthOnHeightRatio
+            self.resolution = resolution
+        }
+    }
+
+    public struct TextContent: Hashable, Sendable {
+        /// The Download button href; the readable document.
+        public let documentUrl: URL
+        /// `data-fullview-src`; a rendered page-thumbnail (e.g. `.docx.jpg`).
+        public let renderedPreviewUrl: URL
+
+        public init(documentUrl: URL, renderedPreviewUrl: URL) {
+            self.documentUrl = documentUrl
+            self.renderedPreviewUrl = renderedPreviewUrl
+        }
+    }
+
+    public struct AudioContent: Hashable, Sendable {
+        /// `<audio>` src; the streamable media (progressive playback).
+        public let streamUrl: URL
+        /// The Download button href; the savable/shareable file.
+        public let downloadUrl: URL
+        /// `data-fullview-src`; the rendered cover thumbnail (`.mp3.jpg`).
+        public let coverImageUrl: URL
+
+        public init(streamUrl: URL, downloadUrl: URL, coverImageUrl: URL) {
+            self.streamUrl = streamUrl
+            self.downloadUrl = downloadUrl
+            self.coverImageUrl = coverImageUrl
+        }
+    }
+
     public struct Metadata: Hashable, Sendable {
-        public init(title: String, author: String, displayAuthor: String, datetime: String, naturalDatetime: String, viewCount: Int, commentCount: Int, favoriteCount: Int, rating: Rating, category: String, theme: String, species: String, resolution: String, fileSize: String, keywords: [String], folders: [FAFolder]) {
+        public init(title: String, author: String, displayAuthor: String, datetime: String, naturalDatetime: String, viewCount: Int, commentCount: Int, favoriteCount: Int, rating: Rating, category: String, theme: String, species: String, fileSize: String, keywords: [String], folders: [FAFolder]) {
             self.title = title
             self.author = author
             self.displayAuthor = displayAuthor
@@ -56,35 +103,32 @@ public struct FASubmissionPage: FAPage {
             self.category = category
             self.theme = theme
             self.species = species
-            self.resolution = resolution
             self.fileSize = fileSize
             self.keywords = keywords
             self.folders = folders
         }
-        
+
         public let title: String
         public let author: String
         public let displayAuthor: String
         public let datetime: String
         public let naturalDatetime: String
-        
+
         public let viewCount: Int
         public let commentCount: Int
         public let favoriteCount: Int
         public let rating: Rating
-        
+
         public let category: String
         public let theme: String
         public let species: String
-        public let resolution: String
         public let fileSize: String
         public let keywords: [String]
         public let folders: [FAFolder]
     }
-    
+
     public let previewImageUrl: URL
-    public let fullResolutionMediaUrl: URL
-    public let widthOnHeightRatio: Float
+    public let content: Content
     public let metadata: Metadata
     public let htmlDescription: String
     public let isFavorite: Bool
@@ -92,6 +136,33 @@ public struct FASubmissionPage: FAPage {
     public let comments: [FAPageComment]
     public let targetCommentId: Int?
     public let acceptsNewComments: Bool
+}
+
+/// Parses the `submission-content-stats` table into a `category → value` dictionary.
+/// Text submissions omit some rows (e.g. "Resolution"), so callers must tolerate misses.
+func submissionContentStats(in submissionMainContentNode: Elements) throws -> [String: String] {
+    let submissionContentStatsNode = try submissionMainContentNode
+        .select("div div.submission-content-stats")
+    let spans = try submissionContentStatsNode.select("> span")
+    guard spans.count == 2 else {
+        throw FAPagesError.parserFailureError()
+    }
+    let categories = try spans[0].select("> span").map { try $0.text() }
+    let values = try spans[1].select("> span").map { try $0.text() }
+
+    guard !categories.isEmpty, categories.count == values.count else {
+        throw FAPagesError.parserFailureError()
+    }
+    return Dictionary(uniqueKeysWithValues: zip(categories, values))
+}
+
+/// Extracts the `Download` option button href as an absolute URL.
+/// Shared by text and audio submissions.
+func downloadButtonUrl(in optionButtons: Elements) throws -> URL {
+    let downloadNode = try optionButtons
+        .first(where: { try $0.text() == "Download" })
+        .unwrap()
+    return try URL(unsafeString: "https:" + downloadNode.attr("href"))
 }
 
 extension FASubmissionPage {
@@ -115,19 +186,47 @@ extension FASubmissionPage {
             let fullViewStr = try submissionImgNode.attr("data-fullview-src")
             let previewUrl = try URL(unsafeString: "https:" + previewStr)
             let fullViewUrl = try URL(unsafeString: "https:" + fullViewStr)
-            
+
             self.previewImageUrl = previewUrl
-            self.fullResolutionMediaUrl = fullViewUrl
-            
-            let favoriteNode = try submissionContentNode.select("div.submission-content-inner div#submission-options a.button")
-            let favoriteUrlNode = try favoriteNode
+
+            let optionButtons = try submissionContentNode
+                .select("div.submission-content-inner div#submission-options a.button")
+            let favoriteUrlNode = try optionButtons
                 .first(where: { ["+Fav", "-Fav"].contains(try $0.text()) })
                 .unwrap()
-            
+
             let favoriteUrlStr = try favoriteUrlNode.attr("href")
             let favoriteStatusStr = try favoriteUrlNode.text()
             self.favoriteUrl = try URL(unsafeString: FAURLs.homeUrl.absoluteString + favoriteUrlStr)
             self.isFavorite = favoriteStatusStr == "-Fav"
+
+            let isTextSubmission = try !submissionContentNode
+                .select("div.submission-area.submission-writing").isEmpty()
+            let isAudioSubmission = try !submissionContentNode
+                .select("div.submission-area.submission-music").isEmpty()
+            if isTextSubmission {
+                let downloadUrl = try downloadButtonUrl(in: optionButtons)
+                self.content = .text(.init(documentUrl: downloadUrl, renderedPreviewUrl: fullViewUrl))
+            } else if isAudioSubmission {
+                let streamUrl = try URL(unsafeString: "https:" + submissionContentNode
+                    .select("div.submission-area audio#c-musicPlayer_inner").attr("src"))
+                let downloadUrl = try downloadButtonUrl(in: optionButtons)
+                self.content = .audio(.init(
+                    streamUrl: streamUrl,
+                    downloadUrl: downloadUrl,
+                    coverImageUrl: fullViewUrl
+                ))
+            } else {
+                let stats = try submissionContentStats(in: submissionMainContentNode)
+                let resolution = try stats["Resolution"].unwrap()
+                let groups = try #/(\d+) x (\d+)/#.wholeMatch(in: resolution).unwrap()
+                let widthOnHeightRatio = try Float(groups.1).unwrap() / Float(groups.2).unwrap()
+                self.content = .image(.init(
+                    mediaUrl: fullViewUrl,
+                    widthOnHeightRatio: widthOnHeightRatio,
+                    resolution: resolution
+                ))
+            }
             
             let descriptionQuery = "div div.submission-details div section.submission-description div.section-body div.submission-description-text"
             let descriptionNode = try submissionMainContentNode.select(descriptionQuery)
@@ -149,9 +248,6 @@ extension FASubmissionPage {
             self.acceptsNewComments = !commentsDisabled
             
             self.metadata = try .init(root: doc)
-            
-            let groups = try #/(\d+) x (\d+)/#.wholeMatch(in: self.metadata.resolution).unwrap()
-            self.widthOnHeightRatio = try Float(groups.1).unwrap() / Float(groups.2).unwrap()
         } catch {
             logger.error("\(#file) - \(error)")
             throw error
@@ -204,23 +300,10 @@ extension FASubmissionPage.Metadata {
             .select(#"div div[class*="c-contentRating"]"#)
         self.rating = try .init(contentRatingNode.text()).unwrap()
 
-        let submissionContentStatsNode = try submissionMainContentNode
-            .select("div div.submission-content-stats")
-        let spans = try submissionContentStatsNode.select("> span")
-        guard spans.count == 2 else {
-            throw FAPagesError.parserFailureError()
-        }
-        let catories = try spans[0].select("> span").map { try $0.text() }
-        let values = try spans[1].select("> span").map { try $0.text() }
-        
-        guard !catories.isEmpty, catories.count == values.count else {
-            throw FAPagesError.parserFailureError()
-        }
-        let stats = Dictionary(uniqueKeysWithValues: zip(catories, values))
+        let stats = try submissionContentStats(in: submissionMainContentNode)
         self.category = try stats["Category"].unwrap()
         self.theme = try stats["Theme"].unwrap()
         self.species = try stats["Species"].unwrap()
-        self.resolution = try stats["Resolution"].unwrap()
         self.fileSize = try stats["File Size"].unwrap()
 
         let keywordNodes = try submissionMainContentNode
@@ -260,7 +343,6 @@ extension FASubmissionPage.Metadata {
             category: category,
             theme: theme,
             species: species,
-            resolution: resolution,
             fileSize: fileSize,
             keywords: keywords,
             folders: folders

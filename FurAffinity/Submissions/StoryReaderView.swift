@@ -1,0 +1,162 @@
+//
+//  StoryReaderView.swift
+//  FurAffinity
+//
+//  Created by Ceylo on 21/06/2026.
+//
+
+import SwiftUI
+import Defaults
+
+/// Reads a story submission. When we can extract its text it is rendered as native,
+/// reflowing text at the same size as the submission description, with a nav-bar menu
+/// to switch to the original document (QuickLook). Formats we can't extract show the
+/// original document directly with no menu. Presented in a sheet with a Done button.
+struct StoryReaderView: View {
+    struct Content: Identifiable {
+        /// Reflowed rich text, or `nil` for formats we couldn't extract.
+        var text: AttributedString?
+        /// The downloaded document on disk, shown via QuickLook.
+        var documentUrl: URL
+
+        var id: String { documentUrl.absoluteString }
+    }
+
+    var title: String
+    var content: Content
+    @Default(.storyReaderShowsOriginalDocument) private var showsOriginal
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if let text = content.text, !showsOriginal {
+                    StoryTextView(attributedText: text)
+                        .ignoresSafeArea(edges: .bottom)
+                } else {
+                    QuickLookPreview(fileUrl: content.documentUrl)
+                        .ignoresSafeArea()
+                }
+            }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+                // Only offer the choice when there's reflowed text to switch between.
+                if content.text != nil {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Menu {
+                            Picker("Story view", selection: $showsOriginal) {
+                                Text("Reflowed").tag(false)
+                                Text("Original").tag(true)
+                            }
+                            .pickerStyle(.inline)
+                        } label: {
+                            Image(systemName: "textformat")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// A scrollable, read-only `UITextView` rendering the extracted rich text.
+/// Run fonts are normalized so the document's dominant size maps to the user's
+/// Dynamic Type body size (other sizes scale proportionally), foreground color is
+/// forced to `.label` for light/dark, and paragraphs gain spacing for readability.
+private struct StoryTextView: UIViewRepresentable {
+    var attributedText: AttributedString
+
+    /// Default `.body` point size at the standard content-size category; the
+    /// document's dominant run size is mapped to this, then scaled by Dynamic Type.
+    private let referenceBodySize: CGFloat = 17
+
+    func makeUIView(context: Context) -> UITextView {
+        let view = UITextView(usingTextLayoutManager: true)
+        view.isEditable = false
+        view.isScrollEnabled = true
+        view.backgroundColor = nil
+        view.textColor = .label
+        view.adjustsFontForContentSizeCategory = true
+        view.dataDetectorTypes = [.link]
+        view.textContainerInset = .init(top: 12, left: 12, bottom: 12, right: 12)
+        return view
+    }
+
+    func updateUIView(_ view: UITextView, context: Context) {
+        view.attributedText = normalized(NSAttributedString(attributedText))
+    }
+
+    /// Rescales run fonts relative to the dominant body size and applies paragraph
+    /// spacing, wrapping fonts in `UIFontMetrics` so they track Dynamic Type. Embedded
+    /// images size themselves to the line width via `FittingImageTextAttachment`.
+    private func normalized(_ source: NSAttributedString) -> NSAttributedString {
+        let result = NSMutableAttributedString(attributedString: source)
+        let full = NSRange(location: 0, length: result.length)
+
+        let bodySize = dominantFontSize(in: result) ?? referenceBodySize
+        let metrics = UIFontMetrics(forTextStyle: .body)
+
+        result.enumerateAttribute(.font, in: full) { value, range, _ in
+            let font = value as? UIFont ?? .systemFont(ofSize: bodySize)
+            let scaled = font.fontDescriptor.withSize(font.pointSize / bodySize * referenceBodySize)
+            let base = UIFont(descriptor: scaled, size: scaled.pointSize)
+            result.addAttribute(.font, value: metrics.scaledFont(for: base), range: range)
+        }
+
+        // Wrapped lines within a paragraph get a modest gap; paragraph breaks (`\n`,
+        // which includes the stacked title lines) add more on top so they stand out.
+        // Any alignment the extractor set (e.g. centered titles) is preserved.
+        let lineSpacing = metrics.scaledValue(for: referenceBodySize * 0.35)
+        let paragraphSpacing = metrics.scaledValue(for: referenceBodySize * 0.7)
+        result.enumerateAttribute(.paragraphStyle, in: full) { value, range, _ in
+            let paragraph = NSMutableParagraphStyle()
+            if let existing = value as? NSParagraphStyle { paragraph.setParagraphStyle(existing) }
+            paragraph.lineSpacing = lineSpacing
+            paragraph.paragraphSpacing = paragraphSpacing
+            paragraph.lineBreakMode = .byWordWrapping
+            result.addAttribute(.paragraphStyle, value: paragraph, range: range)
+        }
+
+        // `attributedText` ignores `view.textColor`, so set a dynamic color the text
+        // view re-resolves at draw time — keeping the reader readable in dark mode,
+        // both at launch and on live appearance changes.
+        result.addAttribute(.foregroundColor, value: UIColor.label, range: full)
+
+        return result
+    }
+
+    /// The run size covering the most characters — treated as the body size.
+    private func dominantFontSize(in text: NSAttributedString) -> CGFloat? {
+        var lengthBySize: [CGFloat: Int] = [:]
+        text.enumerateAttribute(.font, in: NSRange(location: 0, length: text.length)) { value, range, _ in
+            guard let font = value as? UIFont else { return }
+            lengthBySize[font.pointSize, default: 0] += range.length
+        }
+        return lengthBySize.max { $0.value < $1.value }?.key
+    }
+}
+
+#Preview {
+    let sample = """
+    The vault door groaned open as the wind howled across the wasteland. \
+    She tightened her grip on the rifle and stepped into the light.
+
+    Somewhere beyond the dunes, a radio crackled to life — the first voice \
+    she had heard in days.
+    """
+
+    Color.clear
+        .sheet(isPresented: .constant(true)) {
+            StoryReaderView(
+                title: "Prepared for the Fallout",
+                content: .init(
+                    text: AttributedString(sample),
+                    documentUrl: URL(string: "file:///preview.txt")!
+                )
+            )
+        }
+}

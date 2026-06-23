@@ -17,7 +17,7 @@ enum FATarget: Hashable {
     case favorites(url: URL)
     case journals(url: URL)
     case watchlist(url: URL)
-    case submissionMetadata(FASubmission.Metadata)
+    case submissionMetadata(FASubmission.Metadata, resolution: String?)
 }
 
 fileprivate func ~=(regex: Regex<Substring>, str: String) -> Bool {

@@ -20,6 +20,9 @@ extension Defaults.Keys {
     
     // MARK: - Display
     static let animateAvatars = Key<Bool>("animateAvatars", default: true)
+    /// Story reader: show the original document (QuickLook) instead of the reflowed
+    /// native text. `false` = reflowed.
+    static let storyReaderShowsOriginalDocument = Key<Bool>("storyReaderShowsOriginalDocument", default: false)
     
     // MARK: - Notifications
     static let notifySubmissions = Key<Bool>("notifySubmissions", default: true)
@@ -84,6 +87,7 @@ extension Defaults.Keys {
     static let all = [
         lastViewedSubmissionID,
         animateAvatars,
+        storyReaderShowsOriginalDocument,
         settingsSchemaVersion,
         didMigrateBadgeSettings
     ] + notifications + badges + latestNotificationIDs

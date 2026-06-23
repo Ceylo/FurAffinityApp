@@ -130,6 +130,10 @@ public class OnlineFASession: FASession {
         return try await FASubmission(page, url: url)
     }
     
+    public func file(at url: URL) async throws -> Data {
+        try await dataSource.httpData(from: url, cookies: cookies)
+    }
+
     public func toggleFavorite(for submission: FASubmission) async throws -> FASubmission {
         let data = try await dataSource.httpData(from: submission.favoriteUrl, cookies: cookies)
         let page = try await make(FASubmissionPage.self, with: data, url: submission.url)

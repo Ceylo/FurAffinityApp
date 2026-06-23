@@ -76,6 +76,9 @@ public protocol FASession: AnyObject, Equatable {
     func submission(for url: URL) async throws -> FASubmission
     func toggleFavorite(for submission: FASubmission) async throws -> FASubmission
     func postComment<C: Commentable>(on commentable: C, replytoCid: Int?, contents: String) async throws -> C
+
+    /// Downloads the raw bytes of a file (e.g. a text submission's document).
+    func file(at url: URL) async throws -> Data
     
     // MARK: - Journals
     func journals(for url: URL) async throws -> FAUserJournals
