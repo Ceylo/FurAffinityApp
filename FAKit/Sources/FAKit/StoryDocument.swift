@@ -214,7 +214,7 @@ public enum StoryDocument {
                 // this one opens like a paragraph (not a wrapped continuation, not centered).
                 let endedEarly = m.bodyRight - previous.maxX >= m.spaceWidth + line.firstWordWidth
                 guard endedEarly, !beginsLikeContinuation(substring),
-                      !isCentered(line, pageMidX: m.pageMidX, leftMargin: m.leftMargin) else { continue }
+                      !isCentered(line, pageMidX: m.pageMidX, leftMargin: m.leftMargin, bodyRight: m.bodyRight) else { continue }
                 total += 1
                 if line.minX - m.leftMargin >= m.indentThreshold { indented += 1 }
             }
@@ -256,7 +256,7 @@ public enum StoryDocument {
         for (index, line) in lines.enumerated() {
             emitImages(above: line.maxY)
             let substring = attributed.attributedSubstring(from: line.range)
-            let centered = line.hasBounds && isCentered(line, pageMidX: pageMidX, leftMargin: leftMargin)
+            let centered = line.hasBounds && isCentered(line, pageMidX: pageMidX, leftMargin: leftMargin, bodyRight: bodyRight)
 
             let join: LineJoin
             if index == 0 {
@@ -264,10 +264,14 @@ public enum StoryDocument {
                 join = result.length > 0 ? .paragraph : .softWrap
             } else {
                 let previous = lines[index - 1]
-                let previousCentered = previous.hasBounds && isCentered(previous, pageMidX: pageMidX, leftMargin: leftMargin)
+                let previousCentered = previous.hasBounds && isCentered(previous, pageMidX: pageMidX, leftMargin: leftMargin, bodyRight: bodyRight)
                 let head = firstNonSpaceScalar(in: substring)
                 let openingQuote = head == "\u{201C}" || head == "\u{2018}"
-                if openingQuote, !endsMidClause(result) {
+                if isLoneQuoteGlyph(substring) {
+                    // A lone quote glyph is a close quote PDFKit split off the previous
+                    // line — attach it with no separator, never a new dialogue turn.
+                    join = .noSeparator
+                } else if openingQuote, !endsMidClause(result) {
                     // An opening quote that doesn't continue an unfinished clause starts a
                     // new dialogue turn → its own paragraph, even when the line reports no
                     // usable geometry. A quote after a line ending mid-clause (e.g.
@@ -278,6 +282,10 @@ public enum StoryDocument {
                     // PDFKit broke one logical row/word in two (e.g. at a curly apostrophe);
                     // rejoin without a separator so contractions stay whole.
                     join = .noSeparator
+                } else if isShoutLine(substring) {
+                    // A standalone all-caps shout/SFX stands on its own paragraph rather
+                    // than soft-wrapping into the full line above it.
+                    join = .paragraph
                 } else if centered || previousCentered {
                     // Centered title/byline lines stand alone, and the first body line
                     // after a centered block opens a new paragraph.
@@ -477,12 +485,41 @@ public enum StoryDocument {
         return CharacterSet.lowercaseLetters.contains(scalar)
     }
 
-    /// True when a line is centered on the page (its midpoint sits at the page center and
-    /// it does not start at the body's left margin) — e.g. a centered title.
-    private static func isCentered(_ line: PDFLine, pageMidX: CGFloat, leftMargin: CGFloat) -> Bool {
+    /// True when a line is centered on the page — its midpoint sits at the page center,
+    /// it is inset from *both* margins by a roughly equal amount, and it occupies well
+    /// under the full text column (e.g. a short centered title). Requiring a symmetric
+    /// inset and a short width keeps a full-width body line — whose noisy per-character
+    /// bounds can drift into a balanced-looking midpoint — from being mistaken for centered.
+    private static func isCentered(_ line: PDFLine, pageMidX: CGFloat, leftMargin: CGFloat, bodyRight: CGFloat) -> Bool {
         guard line.hasBounds else { return false }
+        let bodyWidth = bodyRight - leftMargin
+        guard bodyWidth > 0 else { return false }
         let mid = (line.minX + line.maxX) / 2
-        return abs(mid - pageMidX) <= 12 && line.minX > leftMargin + 12
+        let leftInset = line.minX - leftMargin
+        let rightInset = bodyRight - line.maxX
+        let lineWidth = line.maxX - line.minX
+        return abs(mid - pageMidX) <= 12
+            && leftInset > 12 && rightInset > 12
+            && abs(leftInset - rightInset) <= max(leftInset, rightInset) * 0.5
+            && lineWidth <= bodyWidth * 0.6
+    }
+
+    /// True when a line's only visible content is a single quote glyph — PDFKit split a
+    /// trailing close quote onto its own line. It attaches to the previous line rather
+    /// than opening a new dialogue turn.
+    private static func isLoneQuoteGlyph(_ substring: NSAttributedString) -> Bool {
+        let trimmed = substring.string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count == 1, let scalar = trimmed.unicodeScalars.first else { return false }
+        return "\u{201C}\u{201D}\u{2018}\u{2019}\"'".unicodeScalars.contains(scalar)
+    }
+
+    /// True when a line is a standalone shout/sound-effect — every cased letter is
+    /// uppercase, with at least two of them — so it stands on its own paragraph instead
+    /// of soft-wrapping into an adjacent full line.
+    private static func isShoutLine(_ substring: NSAttributedString) -> Bool {
+        let letters = substring.string.unicodeScalars.filter { CharacterSet.letters.contains($0) }
+        guard letters.count >= 2 else { return false }
+        return letters.allSatisfy { CharacterSet.uppercaseLetters.contains($0) }
     }
 
     /// Prepends a tab carrying `substring`'s leading run attributes, so a first-line

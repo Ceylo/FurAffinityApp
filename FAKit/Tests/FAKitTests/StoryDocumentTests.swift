@@ -251,6 +251,51 @@ struct StoryDocumentTests {
     }
 
     @Test
+    func pdfStory_doesNotCenterFullWidthBodyLine() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let ns = NSAttributedString(attributed)
+        let text = ns.string
+
+        // A left-aligned body line whose noisy bounds happened to look balanced used to be
+        // mistaken for a centered title — split onto its own line and centered. It must stay
+        // soft-wrapped into the sentence and keep default (non-centered) alignment.
+        #expect(text.contains("sensation to be working on something like this"), "body line broke out: \(text.prefix(700))")
+        #expect(!text.contains("\nworking on something"), "body line started a spurious paragraph")
+
+        let range = (text as NSString).range(of: "working on something")
+        try #require(range.location != NSNotFound)
+        var centered = false
+        ns.enumerateAttribute(.paragraphStyle, in: range) { value, _, _ in
+            if let style = value as? NSParagraphStyle, style.alignment == .center { centered = true }
+        }
+        #expect(!centered, "body line was wrongly centered")
+    }
+
+    @Test
+    func pdfStory_attachesDanglingCloseQuoteToPreviousLine() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // PDFKit splits a trailing close quote onto its own line; it must rejoin the line
+        // it closes rather than becoming a lone paragraph.
+        #expect(text.contains("we aren’t here to discuss the mess.“"), "close quote not reattached: \(text.prefix(900))")
+        #expect(text.contains("such things as.. Breaker failures.“"))
+        #expect(!text.contains("mess.\n“"))
+        #expect(!text.contains("failures.\n“"))
+    }
+
+    @Test
+    func pdfStory_putsAllCapsShoutOnItsOwnLine() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // The all-caps shout was soft-wrapping into the giant alarm SFX above it; it must
+        // stand on its own paragraph.
+        #expect(text.contains("\nOK FINE I'M GETTING UP!!!"), "shout merged into SFX: \(text.prefix(1200))")
+        #expect(!text.contains("RrriiIIINNNG OK FINE"))
+    }
+
+    @Test
     func plainTextFile_isReturnedAsIs() throws {
         let attributed = try #require(StoryDocument.richText(from: Data("Hello world".utf8), filename: "story.txt"))
         #expect(String(attributed.characters) == "Hello world")
