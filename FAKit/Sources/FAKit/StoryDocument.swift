@@ -213,8 +213,9 @@ public enum StoryDocument {
                 // Geometry-only paragraph-start guess: the previous line ended early and
                 // this one opens like a paragraph (not a wrapped continuation, not centered).
                 let endedEarly = m.bodyRight - previous.maxX >= m.spaceWidth + line.firstWordWidth
+                let length = substring.string.trimmingCharacters(in: .whitespacesAndNewlines).count
                 guard endedEarly, !beginsLikeContinuation(substring),
-                      !isCentered(line, pageMidX: m.pageMidX, leftMargin: m.leftMargin, bodyRight: m.bodyRight) else { continue }
+                      !isCentered(line, textLength: length, pageMidX: m.pageMidX, leftMargin: m.leftMargin, bodyRight: m.bodyRight) else { continue }
                 total += 1
                 if line.minX - m.leftMargin >= m.indentThreshold { indented += 1 }
             }
@@ -253,10 +254,40 @@ public enum StoryDocument {
         let spaceWidth = m.spaceWidth
         let pageMidX = m.pageMidX
 
+        let substrings = lines.map { attributed.attributedSubstring(from: $0.range) }
+
+        // True when PDFKit split a word across `lines[i]`/`lines[i+1]` (typically at a curly
+        // apostrophe, or a same-row fragment continuing to the right): the head line's first
+        // word is then only a partial word, so its width and "title" appearance are bogus.
+        func wordContinuesOntoNextLine(at i: Int) -> Bool {
+            guard i + 1 < lines.count, let head = firstNonSpaceScalar(in: substrings[i + 1]) else { return false }
+            // Contraction tail: "don" + "’t".
+            if head == "\u{2019}" || head == "'" { return true }
+            // Same row, continuing to the right with a lowercase tail: "I’" + "m out".
+            let next = lines[i + 1]
+            return lines[i].hasBounds && next.hasBounds
+                && next.minX >= lines[i].maxX - spaceWidth
+                && next.minY < lines[i].maxY && lines[i].minY < next.maxY
+                && CharacterSet.lowercaseLetters.contains(head)
+        }
+
+        // A standalone centered title/byline: passes the geometry + character cap and isn't a
+        // split fragment (whose collapsed bounds can look centered).
+        let centeredFlags = lines.indices.map { i -> Bool in
+            guard lines[i].hasBounds else { return false }
+            let length = substrings[i].string.trimmingCharacters(in: .whitespacesAndNewlines).count
+            return isCentered(lines[i], textLength: length, pageMidX: pageMidX, leftMargin: leftMargin, bodyRight: bodyRight)
+                && !wordContinuesOntoNextLine(at: i)
+        }
+
+        let sfxFlags = lines.indices.map { i in
+            isStandaloneSFX(lines[i], text: substrings[i].string, bodyRight: bodyRight, leftMargin: leftMargin)
+        }
+
         for (index, line) in lines.enumerated() {
             emitImages(above: line.maxY)
-            let substring = attributed.attributedSubstring(from: line.range)
-            let centered = line.hasBounds && isCentered(line, pageMidX: pageMidX, leftMargin: leftMargin, bodyRight: bodyRight)
+            let substring = substrings[index]
+            let centered = centeredFlags[index]
 
             let join: LineJoin
             if index == 0 {
@@ -264,7 +295,7 @@ public enum StoryDocument {
                 join = result.length > 0 ? .paragraph : .softWrap
             } else {
                 let previous = lines[index - 1]
-                let previousCentered = previous.hasBounds && isCentered(previous, pageMidX: pageMidX, leftMargin: leftMargin, bodyRight: bodyRight)
+                let previousCentered = centeredFlags[index - 1]
                 let head = firstNonSpaceScalar(in: substring)
                 let openingQuote = head == "\u{201C}" || head == "\u{2018}"
                 if isLoneQuoteGlyph(substring) {
@@ -285,6 +316,11 @@ public enum StoryDocument {
                 } else if isShoutLine(substring) {
                     // A standalone all-caps shout/SFX stands on its own paragraph rather
                     // than soft-wrapping into the full line above it.
+                    join = .paragraph
+                } else if sfxFlags[index] || sfxFlags[index - 1] {
+                    // A short onomatopoeia line trailing off in a hyphen (e.g.
+                    // "step stoc toc toc step-") stands alone instead of soft-wrapping into
+                    // the prose around it.
                     join = .paragraph
                 } else if centered || previousCentered {
                     // Centered title/byline lines stand alone, and the first body line
@@ -310,7 +346,12 @@ public enum StoryDocument {
                     // paragraph starts).
                     let available = bodyRight - previous.maxX
                     let nextWordWouldFit = available >= spaceWidth + line.firstWordWidth
-                    join = nextWordWouldFit && !beginsLikeContinuation(substring) ? .paragraph : .softWrap
+                    // A split head (e.g. "Don" before "’t remember…") reports only a partial
+                    // first word, so the line-fill test under-measures it and a near-full
+                    // previous line looks like it ended early. Don't let it spuriously start a
+                    // paragraph — it's a wrapped continuation.
+                    let splitHead = wordContinuesOntoNextLine(at: index)
+                    join = nextWordWouldFit && !beginsLikeContinuation(substring) && !splitHead ? .paragraph : .softWrap
                 }
             }
 
@@ -485,13 +526,19 @@ public enum StoryDocument {
         return CharacterSet.lowercaseLetters.contains(scalar)
     }
 
+    /// A centered line must also be short in characters — a real title or byline is a few
+    /// words. Long body lines whose per-character bounds collapse into a narrow, symmetric,
+    /// mid-page span pass the geometry test but never the character cap.
+    private static let centeredMaxLength = 40
+
     /// True when a line is centered on the page — its midpoint sits at the page center,
-    /// it is inset from *both* margins by a roughly equal amount, and it occupies well
-    /// under the full text column (e.g. a short centered title). Requiring a symmetric
-    /// inset and a short width keeps a full-width body line — whose noisy per-character
-    /// bounds can drift into a balanced-looking midpoint — from being mistaken for centered.
-    private static func isCentered(_ line: PDFLine, pageMidX: CGFloat, leftMargin: CGFloat, bodyRight: CGFloat) -> Bool {
-        guard line.hasBounds else { return false }
+    /// it is inset from *both* margins by a roughly equal amount, it occupies well under
+    /// the full text column, and it is short in characters (e.g. a centered title).
+    /// Requiring a symmetric inset, a short width *and* a short length keeps a full-width
+    /// body line — whose noisy per-character bounds can drift into a balanced-looking
+    /// midpoint — from being mistaken for centered.
+    private static func isCentered(_ line: PDFLine, textLength: Int, pageMidX: CGFloat, leftMargin: CGFloat, bodyRight: CGFloat) -> Bool {
+        guard line.hasBounds, textLength <= centeredMaxLength else { return false }
         let bodyWidth = bodyRight - leftMargin
         guard bodyWidth > 0 else { return false }
         let mid = (line.minX + line.maxX) / 2
@@ -520,6 +567,23 @@ public enum StoryDocument {
         let letters = substring.string.unicodeScalars.filter { CharacterSet.letters.contains($0) }
         guard letters.count >= 2 else { return false }
         return letters.allSatisfy { CharacterSet.uppercaseLetters.contains($0) }
+    }
+
+    /// True when a line is a short onomatopoeia/sound effect that trails off in a hyphen
+    /// (e.g. "step stoc toc toc step-") and so should stand on its own paragraph. The hyphen
+    /// must sit well short of the right margin — a hyphen *at* the margin is a word PDFKit
+    /// wrapped, not a deliberate trailing sound — and the line must be short, so normal prose
+    /// (which fills the column or ends in real punctuation) never qualifies.
+    private static func isStandaloneSFX(_ line: PDFLine, text: String, bodyRight: CGFloat, leftMargin: CGFloat) -> Bool {
+        guard line.hasBounds else { return false }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 3, trimmed.count <= 30 else { return false }
+        let scalars = Array(trimmed.unicodeScalars)
+        guard scalars.count >= 2, scalars.last == "-",
+              CharacterSet.letters.contains(scalars[scalars.count - 2]) else { return false }
+        let bodyWidth = bodyRight - leftMargin
+        guard bodyWidth > 0 else { return false }
+        return bodyRight - line.maxX > bodyWidth * 0.15
     }
 
     /// Prepends a tab carrying `substring`'s leading run attributes, so a first-line

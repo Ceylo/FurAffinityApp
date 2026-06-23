@@ -296,6 +296,66 @@ struct StoryDocumentTests {
     }
 
     @Test
+    func pdfStory_doesNotCenterCollapsedLongLines() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // Long monologue lines whose per-character bounds collapse into a narrow, symmetric,
+        // mid-page span used to pass the geometry centering test — rendered centered and split
+        // onto their own paragraph. They must read as normal left-aligned prose, joined to the
+        // line they continue.
+        #expect(text.contains("wooden walls and foyer staircases of this building"), "foyer line broke out: \(text.prefix(60))")
+        #expect(text.contains("thanks weather people, really doing your job"), "weather-people line broke out")
+        #expect(!isCenterAligned("and foyer staircases of this building", in: attributed), "collapsed long line wrongly centered")
+        #expect(!isCenterAligned("weather people, really doing your job", in: attributed), "collapsed long line wrongly centered")
+    }
+
+    @Test
+    func pdfStory_joinsCenteredSplitFragments() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // Short split fragments ("they don" / "And I’") whose collapsed bounds looked centered
+        // used to be split off and centered. They rejoin the monologue they continue.
+        #expect(text.contains("because they don’t know how to just let the weather machines"), "'weather machines' fragment broke out: \(text.prefix(60))")
+        #expect(text.contains("guess… And I’m out of detergent"), "'out of detergent' fragment broke out")
+        #expect(!isCenterAligned("they don’t know how", in: attributed), "split fragment wrongly centered")
+        #expect(!isCenterAligned("And I’m out of detergent", in: attributed), "split fragment wrongly centered")
+    }
+
+    @Test
+    func pdfStory_keepsContractionSplitHeadJoined() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // "Don’t" is split by PDFKit into "Don" + "’t remember…"; the narrow fragment used to
+        // fool the line-fill test into starting a new paragraph. It stays a wrapped continuation.
+        #expect(text.contains("Enough. Don’t remember that little grease stain pip"), "split head broke the paragraph")
+        #expect(!text.contains("Enough.\nDon’t remember"))
+    }
+
+    @Test
+    func pdfStory_putsTrailingOffOnomatopoeiaOnItsOwnLine() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // Short sound-effect lines trailing off in a hyphen used to soft-wrap into the prose
+        // around them — merging "Huff" into "step", gluing "thoc…" onto "Not today..". They
+        // must stand on their own paragraphs.
+        #expect(text.contains("\nstep stoc toc toc step-"), "onomatopoeia merged into prose")
+        #expect(text.contains("\nthoc stoc tac toc step-"))
+        #expect(!text.contains("Huffstep"))
+        #expect(!text.contains("today.. thoc"))
+    }
+
+    @Test
+    func pdfStory_keepsGenuineCenteredTitles() throws {
+        // The character cap must not strip alignment from a real (short) centered title.
+        let lima = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        #expect(isCenterAligned("LIMA NOX - BOXES", in: lima), "LIMA title lost its centering")
+    }
+
+    @Test
     func plainTextFile_isReturnedAsIs() throws {
         let attributed = try #require(StoryDocument.richText(from: Data("Hello world".utf8), filename: "story.txt"))
         #expect(String(attributed.characters) == "Hello world")
@@ -312,6 +372,18 @@ struct StoryDocumentTests {
             UIColor.gray.setFill()
             context.fill(CGRect(x: 0, y: 0, width: width, height: height))
         }
+    }
+
+    /// Whether the first occurrence of `substring` carries centered paragraph alignment.
+    private func isCenterAligned(_ substring: String, in attributed: AttributedString) -> Bool {
+        let ns = NSAttributedString(attributed)
+        let range = (ns.string as NSString).range(of: substring)
+        guard range.location != NSNotFound else { return false }
+        var centered = false
+        ns.enumerateAttribute(.paragraphStyle, in: range) { value, _, _ in
+            if let style = value as? NSParagraphStyle, style.alignment == .center { centered = true }
+        }
+        return centered
     }
 
     /// Splits text into words, trimming surrounding punctuation and dropping empties.
