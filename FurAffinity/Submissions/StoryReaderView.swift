@@ -6,36 +6,35 @@
 //
 
 import SwiftUI
+import Defaults
 
-/// Reads a story submission. Extracted text is rendered as native, reflowing text
-/// at the same size as the submission description; formats we can't extract fall
-/// back to a QuickLook document preview. Presented in a sheet with a Done button.
+/// Reads a story submission. When we can extract its text it is rendered as native,
+/// reflowing text at the same size as the submission description, with a nav-bar menu
+/// to switch to the original document (QuickLook). Formats we can't extract show the
+/// original document directly with no menu. Presented in a sheet with a Done button.
 struct StoryReaderView: View {
-    enum Content: Identifiable {
-        case text(AttributedString)
-        case document(URL)
+    struct Content: Identifiable {
+        /// Reflowed rich text, or `nil` for formats we couldn't extract.
+        var text: AttributedString?
+        /// The downloaded document on disk, shown via QuickLook.
+        var documentUrl: URL
 
-        var id: String {
-            switch self {
-            case .text: "text"
-            case .document(let url): url.absoluteString
-            }
-        }
+        var id: String { documentUrl.absoluteString }
     }
 
     var title: String
     var content: Content
+    @Default(.storyReaderShowsOriginalDocument) private var showsOriginal
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
             Group {
-                switch content {
-                case .text(let text):
+                if let text = content.text, !showsOriginal {
                     StoryTextView(attributedText: text)
                         .ignoresSafeArea(edges: .bottom)
-                case .document(let url):
-                    QuickLookPreview(fileUrl: url)
+                } else {
+                    QuickLookPreview(fileUrl: content.documentUrl)
                         .ignoresSafeArea()
                 }
             }
@@ -44,6 +43,20 @@ struct StoryReaderView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
+                }
+                // Only offer the choice when there's reflowed text to switch between.
+                if content.text != nil {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Menu {
+                            Picker("Story view", selection: $showsOriginal) {
+                                Text("Reflowed").tag(false)
+                                Text("Original").tag(true)
+                            }
+                            .pickerStyle(.inline)
+                        } label: {
+                            Image(systemName: "textformat")
+                        }
+                    }
                 }
             }
         }
@@ -138,6 +151,12 @@ private struct StoryTextView: UIViewRepresentable {
 
     Color.clear
         .sheet(isPresented: .constant(true)) {
-            StoryReaderView(title: "Prepared for the Fallout", content: .text(AttributedString(sample)))
+            StoryReaderView(
+                title: "Prepared for the Fallout",
+                content: .init(
+                    text: AttributedString(sample),
+                    documentUrl: URL(string: "file:///preview.txt")!
+                )
+            )
         }
 }
