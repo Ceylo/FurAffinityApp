@@ -121,6 +121,16 @@ struct StoryDocumentTests {
     }
 
     @Test
+    func pdfStory_preservesEmphasisFromBundledRobotoFont() throws {
+        // LIMA tags emphasis via Roboto-Bold/Italic faces, but iOS doesn't ship
+        // Roboto, so PDFKit substitutes Helvetica and drops the traits unless we
+        // register the bundled faces. With them registered, the run traits survive.
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        #expect(hasTrait(.traitBold, in: attributed) || hasTrait(.traitItalic, in: attributed),
+                "expected bold/italic runs once the bundled Roboto faces are registered")
+    }
+
+    @Test
     func pdfStory_doesNotSplitContractionsAtCurlyQuotes() throws {
         let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
         let text = String(attributed.characters)

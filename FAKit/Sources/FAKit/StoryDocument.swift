@@ -42,6 +42,25 @@ public enum StoryDocument {
         return ns.map { AttributedString($0) }
     }
 
+    /// Registers the bundled Roboto faces with the process once. iOS doesn't ship
+    /// Roboto, so PDFKit otherwise substitutes it with Helvetica and drops the
+    /// embedded bold/italic faces — making Roboto-based comic PDFs (e.g. LIMA) lose
+    /// their emphasis. With the faces registered, PDFKit matches them by PostScript
+    /// name and the run traits survive into the reflow.
+    private static let bundledFontsRegistered: Void = {
+        guard let urls = Bundle.module.urls(forResourcesWithExtension: "ttf", subdirectory: nil) else { return }
+        for url in urls {
+            var error: Unmanaged<CFError>?
+            // Already-registered is fine (the static runs once, but be defensive).
+            if !CTFontManagerRegisterFontsForURL(url as CFURL, .process, &error),
+               let error = error?.takeRetainedValue() {
+                logger.error("Failed to register bundled font \(url.lastPathComponent): \(error)")
+            }
+        }
+    }()
+
+    private static func registerBundledFonts() { _ = bundledFontsRegistered }
+
     static func font(size: CGFloat, bold: Bool, italic: Bool) -> UIFont {
         var traits: UIFontDescriptor.SymbolicTraits = []
         if bold { traits.insert(.traitBold) }
@@ -74,6 +93,7 @@ public enum StoryDocument {
     }
 
     private static func pdfText(from data: Data) -> NSAttributedString? {
+        registerBundledFonts()
         guard let document = PDFDocument(data: data) else { return nil }
 
         let indentParagraphs = documentUsesFirstLineIndent(document)
