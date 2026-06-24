@@ -56,6 +56,11 @@ struct StoryReaderView: View {
                 }
             }
         }
+        // The reader is the only screen that follows device tilt; the rest of the
+        // app stays portrait. onDisappear forces back to portrait so dismissing
+        // while held in landscape snaps the app upright, and closes the gate.
+        .onAppear { DeviceOrientationControl.enableLandscape() }
+        .onDisappear { DeviceOrientationControl.resetToPortrait() }
     }
 }
 
