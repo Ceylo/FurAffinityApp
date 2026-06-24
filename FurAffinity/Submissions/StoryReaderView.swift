@@ -11,7 +11,7 @@ import Defaults
 /// Reads a story submission. When we can extract its text it is rendered as native,
 /// reflowing text at the same size as the submission description, with a nav-bar menu
 /// to switch to the original document (QuickLook). Formats we can't extract show the
-/// original document directly with no menu. Presented in a sheet with a Done button.
+/// original document directly with no menu. Presented in a swipe-to-dismiss sheet.
 struct StoryReaderView: View {
     struct Content: Identifiable {
         /// Reflowed rich text, or `nil` for formats we couldn't extract.
@@ -25,7 +25,6 @@ struct StoryReaderView: View {
     var title: String
     var content: Content
     @Default(.storyReaderShowsOriginalDocument) private var showsOriginal
-    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
@@ -41,9 +40,6 @@ struct StoryReaderView: View {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                }
                 // Only offer the choice when there's reflowed text to switch between.
                 if content.text != nil {
                     ToolbarItem(placement: .topBarTrailing) {
