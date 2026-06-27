@@ -14,6 +14,7 @@ struct SubmissionView: View {
     var submission: FASubmission
     var avatarUrl: URL?
     var thumbnail: DynamicThumbnail?
+    var thumbnailWidthOnHeightRatio: Float?
     var favoriteAction: () -> Void
     var replyAction: @MainActor (_ parentCid: Int?, _ text: CommentReply) async throws -> Void
     var sendNoteAction: (_ destinationUser: String, _ subject: String, _ text: String) async throws -> Void
@@ -26,6 +27,7 @@ struct SubmissionView: View {
     @State private var fullResolutionMediaFileUrl: URL?
     @State private var documentFileUrl: URL?
     @State private var noteReplySession: NoteReplySession?
+    @State private var audioController: AudioPlaybackController?
 
     /// True for content kinds saved as a document (to Files) rather than an
     /// image (to Photos): text and audio.
@@ -82,6 +84,8 @@ struct SubmissionView: View {
                 title: submission.title,
                 author: submission.author,
                 thumbnail: thumbnail,
+                thumbnailWidthOnHeightRatio: thumbnailWidthOnHeightRatio,
+                controller: $audioController,
                 documentFileUrl: $documentFileUrl,
                 downloadDocument: downloadDocument
             )
@@ -222,25 +226,6 @@ struct SubmissionView: View {
     
     NavigationStack {
         withAsync({ await FASubmission.demoImage }) {
-            SubmissionView(
-                submission: $0,
-                avatarUrl: FAURLs.avatarUrl(for: $0.author),
-                favoriteAction: {},
-                replyAction: { _, _ in },
-                sendNoteAction: { _, _, _ in },
-                downloadDocument: { try await OfflineFASession.default.file(at: $0) }
-            )
-        }
-    }
-    .environment(errorStorage)
-}
-
-#Preview("Text submission") {
-    @Previewable
-    @State var errorStorage = ErrorStorage()
-    
-    NavigationStack {
-        withAsync({ await FASubmission.demoText }) {
             SubmissionView(
                 submission: $0,
                 avatarUrl: FAURLs.avatarUrl(for: $0.author),

@@ -56,9 +56,11 @@ struct SubmissionMainImage: View {
         GeometryReader { geometry in
             if let errorMessage {
                 Centered {
-                    Text("Oops, image loading failed 😞")
-                    Text(errorMessage)
-                        .font(.caption)
+                    VStack(spacing: 10) {
+                        Text("Oops, image loading failed 😞")
+                        Text(errorMessage)
+                            .font(.caption)
+                    }
                 }
             } else {
                 Group {
@@ -99,7 +101,7 @@ struct SubmissionMainImage: View {
     }
     
     func prepareFullResolutionMedia(sourceUrl: URL, loadedImage: UIImage) {
-        guard let fileUrl = cachedImageFileURL(for: sourceUrl) else {
+        guard let fileUrl = try? cachedImageFileURL(for: sourceUrl) else {
             return
         }
         fullResolutionMediaFileUrl = fileUrl

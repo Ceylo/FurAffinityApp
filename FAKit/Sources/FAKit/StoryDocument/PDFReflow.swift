@@ -1,92 +1,231 @@
 //
-//  StoryDocument.swift
+//  PDFReflow.swift
 //  FAKit
 //
-//  Created by Ceylo on 21/06/2026.
+//  Created by Ceylo on 27/06/2026.
 //
 
 import Foundation
-import UIKit
 import PDFKit
-import ZIPFoundation
 
-/// Extracts readable rich text from a downloaded story-submission document so it
-/// can be rendered as native, reflowing text while keeping bold/italic, relative
-/// font sizes and paragraph structure. Returns `nil` for formats we can't read
-/// (the caller should fall back to a document preview).
-///
-/// Runs carry only fonts (size + traits), never a foreground color, so the reader
-/// can apply `.label` and stay correct in light/dark mode. Sizes are expressed
-/// relative to ``bodyPointSize`` so the reader can normalize them to the user's
-/// Dynamic Type body size.
-public enum StoryDocument {
-    /// Reference body size; heading/emphasis runs use multiples of this. The
-    /// reader normalizes against the document's dominant size, so the absolute
-    /// value only matters as a common baseline across formats.
-    static let bodyPointSize: CGFloat = 17
-
-    public static func richText(from data: Data, filename: String) -> AttributedString? {
-        let ns: NSAttributedString?
-        switch (filename as NSString).pathExtension.lowercased() {
-        case "txt", "text", "md":
-            ns = String(data: data, encoding: .utf8).map(plainAttributed)
-        case "rtf":
-            ns = rtfText(from: data)
-        case "pdf":
-            ns = pdfText(from: data)
-        case "docx":
-            ns = docxText(from: data)
-        default:
-            ns = nil
-        }
-        return ns.map { AttributedString($0) }
-    }
-
-    static func font(size: CGFloat, bold: Bool, italic: Bool) -> UIFont {
-        var traits: UIFontDescriptor.SymbolicTraits = []
-        if bold { traits.insert(.traitBold) }
-        if italic { traits.insert(.traitItalic) }
-        let base = UIFont.systemFont(ofSize: size)
-        guard !traits.isEmpty,
-              let descriptor = base.fontDescriptor.withSymbolicTraits(traits) else {
-            return base
-        }
-        return UIFont(descriptor: descriptor, size: size)
-    }
-
-    private static func plainAttributed(_ string: String) -> NSAttributedString {
-        NSAttributedString(
-            string: string,
-            attributes: [.font: font(size: bodyPointSize, bold: false, italic: false)]
-        )
-    }
-
-    private static func rtfText(from data: Data) -> NSAttributedString? {
-        guard let attributed = try? NSMutableAttributedString(
-            data: data,
-            options: [.documentType: NSAttributedString.DocumentType.rtf],
-            documentAttributes: nil
-        ) else { return nil }
-
-        // Drop baked-in colors so the reader's `.label` keeps dark mode readable.
-        attributed.removeAttribute(.foregroundColor, range: NSRange(location: 0, length: attributed.length))
-        return attributed.length > 0 ? attributed : nil
-    }
-
-    private static func pdfText(from data: Data) -> NSAttributedString? {
+enum PDFReflow {
+    static func text(from data: Data, bodyPointSize: CGFloat) -> NSAttributedString? {
+        registerBundledFonts()
         guard let document = PDFDocument(data: data) else { return nil }
 
-        let indentParagraphs = documentUsesFirstLineIndent(document)
+        let indentParagraphs = PDFReflow.documentUsesFirstLineIndent(document, bodyPointSize: bodyPointSize)
 
         let result = NSMutableAttributedString()
         for index in 0..<document.pageCount {
             guard let page = document.page(at: index) else { continue }
-            appendReflowed(page: page, to: result, indentParagraphs: indentParagraphs)
+            PDFReflow.appendReflowed(
+                page: page,
+                to: result,
+                indentParagraphs: indentParagraphs,
+                bodyPointSize: bodyPointSize
+            )
         }
 
         result.removeAttribute(.foregroundColor, range: NSRange(location: 0, length: result.length))
         let trimmedResult = trimmed(result)
         return trimmedResult.length > 0 ? trimmedResult : nil
+    }
+
+    /// Registers the bundled Roboto faces with the process once. iOS doesn't ship
+    /// Roboto, so PDFKit otherwise substitutes it with Helvetica and drops the
+    /// embedded bold/italic faces — making Roboto-based comic PDFs (e.g. LIMA) lose
+    /// their emphasis. With the faces registered, PDFKit matches them by PostScript
+    /// name and the run traits survive into the reflow.
+    private static let bundledFontsRegistered: Void = {
+        guard let urls = Bundle.module.urls(forResourcesWithExtension: "ttf", subdirectory: nil) else { return }
+        for url in urls {
+            var error: Unmanaged<CFError>?
+            // Already-registered is fine (the static runs once, but be defensive).
+            if !CTFontManagerRegisterFontsForURL(url as CFURL, .process, &error),
+                let error = error?.takeRetainedValue()
+            {
+                logger.error("Failed to register bundled font \(url.lastPathComponent): \(error)")
+            }
+        }
+    }()
+
+    private static func registerBundledFonts() { _ = bundledFontsRegistered }
+
+    /// Reconstructs paragraphs from a PDF page: PDFKit already breaks the text into
+    /// visual lines (a `\n` per line, which is what shows orphaned words on screen).
+    /// A break is a *soft wrap* (rejoined with a space) when the previous line was
+    /// full — the next line's leading word wouldn't have fit (line-fill test);
+    /// otherwise the line ended early on purpose and starts a new *paragraph*. This
+    /// keeps short title lines on their own and detects paragraph ends regardless of
+    /// vertical spacing. Lines whose glyphs report no geometry still have their text
+    /// emitted (joined as a soft wrap) so no words are lost. Original per-character
+    /// fonts (size + traits) are preserved. When the document indents the first line of
+    /// each paragraph, restore that indent as a leading tab.
+    private static func appendReflowed(
+        page: PDFPage,
+        to result: NSMutableAttributedString,
+        indentParagraphs: Bool,
+        bodyPointSize: CGFloat
+    ) {
+        let (attributed, lines) = visualLines(of: page)
+
+        // Embedded illustrations, kept in reading order by their top edge (PDF y-up).
+        let images = embeddedImages(on: page).sorted { $0.top > $1.top }
+        var nextImage = 0
+        func emitImages(above top: CGFloat) {
+            while nextImage < images.count, images[nextImage].top >= top {
+                appendImage(images[nextImage].image, to: result)
+                nextImage += 1
+            }
+        }
+
+        guard !lines.isEmpty || !images.isEmpty else { return }
+
+        let m = metrics(for: lines, page: page, bodyPointSize: bodyPointSize)
+        let bodyRight = m.bodyRight
+        let leftMargin = m.leftMargin
+        let spaceWidth = m.spaceWidth
+        let pageMidX = m.pageMidX
+
+        let substrings = lines.map { attributed.attributedSubstring(from: $0.range) }
+
+        // True when PDFKit split a word across `lines[i]`/`lines[i+1]` (typically at a curly
+        // apostrophe, or a same-row fragment continuing to the right): the head line's first
+        // word is then only a partial word, so its width and "title" appearance are bogus.
+        func wordContinuesOntoNextLine(at i: Int) -> Bool {
+            guard i + 1 < lines.count, let head = firstNonSpaceScalar(in: substrings[i + 1]) else { return false }
+            // Contraction tail: "don" + "’t".
+            if head == "\u{2019}" || head == "'" { return true }
+            // Same row, continuing to the right with a lowercase tail: "I’" + "m out".
+            let next = lines[i + 1]
+            return lines[i].hasBounds && next.hasBounds
+                && next.minX >= lines[i].maxX - spaceWidth
+                && next.minY < lines[i].maxY && lines[i].minY < next.maxY
+                && CharacterSet.lowercaseLetters.contains(head)
+        }
+
+        // A standalone centered title/byline: passes the geometry + character cap and isn't a
+        // split fragment (whose collapsed bounds can look centered).
+        let centeredFlags = lines.indices.map { i -> Bool in
+            guard lines[i].hasBounds else { return false }
+            let length = substrings[i].string.trimmingCharacters(in: .whitespacesAndNewlines).count
+            return isCentered(
+                lines[i],
+                textLength: length,
+                pageMidX: pageMidX,
+                leftMargin: leftMargin,
+                bodyRight: bodyRight
+            )
+                && !wordContinuesOntoNextLine(at: i)
+        }
+
+        let sfxFlags = lines.indices.map { i in
+            isStandaloneSFX(lines[i], text: substrings[i].string, bodyRight: bodyRight, leftMargin: leftMargin)
+        }
+
+        for (index, line) in lines.enumerated() {
+            emitImages(above: line.maxY)
+            let substring = substrings[index]
+            let centered = centeredFlags[index]
+
+            let join: LineJoin
+            if index == 0 {
+                // First line of a later page continues as a new paragraph.
+                join = result.length > 0 ? .paragraph : .softWrap
+            } else {
+                let previous = lines[index - 1]
+                let previousCentered = centeredFlags[index - 1]
+                let head = firstNonSpaceScalar(in: substring)
+                let openingQuote = head == "\u{201C}" || head == "\u{2018}"
+                if isLoneQuoteGlyph(substring) {
+                    // A lone quote glyph is a close quote PDFKit split off the previous
+                    // line — attach it with no separator, never a new dialogue turn.
+                    join = .noSeparator
+                } else if openingQuote, !endsMidClause(result) {
+                    // An opening quote that doesn't continue an unfinished clause starts a
+                    // new dialogue turn → its own paragraph, even when the line reports no
+                    // usable geometry. A quote after a line ending mid-clause (e.g.
+                    // `…the` + `“experiments”`) is a wrapped quoted word, not a new turn.
+                    join = .paragraph
+                } else if isSpuriousSplit(
+                    previous: previous,
+                    line: line,
+                    next: substring,
+                    result: result,
+                    spaceWidth: spaceWidth
+                ) {
+                    // PDFKit broke one logical row/word in two (e.g. at a curly apostrophe);
+                    // rejoin without a separator so contractions stay whole.
+                    join = .noSeparator
+                } else if isShoutLine(substring) {
+                    // A standalone all-caps shout/SFX stands on its own paragraph rather
+                    // than soft-wrapping into the full line above it.
+                    join = .paragraph
+                } else if sfxFlags[index] || sfxFlags[index - 1] {
+                    // A short onomatopoeia line trailing off in a hyphen (e.g.
+                    // "step stoc toc toc step-") stands alone instead of soft-wrapping into
+                    // the prose around it.
+                    join = .paragraph
+                } else if centered || previousCentered {
+                    // Centered title/byline lines stand alone, and the first body line
+                    // after a centered block opens a new paragraph.
+                    join = .paragraph
+                } else if line.hasBounds, previous.hasBounds,
+                    previous.minY - line.maxY > m.medianHeight
+                {
+                    // A roughly blank line of vertical space separates two blocks (e.g. a
+                    // heading from the body) → new paragraph. Tall, noisy lines overlap and
+                    // give negative gaps, so they don't trigger false breaks.
+                    join = .paragraph
+                } else if !line.hasBounds || !previous.hasBounds {
+                    // Line-fill test: if the previous line had room for this line's first
+                    // word (plus a space), it ended early on purpose → new paragraph;
+                    // otherwise it was full → soft wrap we rejoin. Without geometry on
+                    // either line we can't tell, so default to a soft wrap.
+                    join = .softWrap
+                } else {
+                    // A new paragraph needs both room on the previous line *and* a line
+                    // that reads like a paragraph opening — one starting with a lowercase
+                    // letter is a soft-wrapped continuation, not a new paragraph (these
+                    // PDFs' noisy geometry otherwise mistakes short wrapped lines for
+                    // paragraph starts).
+                    let available = bodyRight - previous.maxX
+                    // A split head (e.g. "And I’" before "m out…") reports only a partial first
+                    // word; floor its width so the line-fill test stops trusting the bogus-narrow
+                    // value. A previous line that ended well short still reads as a paragraph end,
+                    // while a near-full one (e.g. "…Enough." before "Don" + "’t remember…") stays
+                    // a soft-wrapped continuation.
+                    let splitHead = wordContinuesOntoNextLine(at: index)
+                    let firstWordWidth =
+                        splitHead ? max(line.firstWordWidth, m.medianHeight * 1.5) : line.firstWordWidth
+                    let nextWordWouldFit = available >= spaceWidth + firstWordWidth
+                    join = nextWordWouldFit && !beginsLikeContinuation(substring) ? .paragraph : .softWrap
+                }
+            }
+
+            // In a document that indents the first line of each paragraph, restore that
+            // indent as a leading tab — matching the DOCX `<w:tab>` path. Centered lines
+            // get alignment instead, never a tab.
+            let isParagraphStart = join == .paragraph || (index == 0 && result.length == 0)
+            let indented = indentParagraphs && isParagraphStart && !centered
+
+            let emitted = indented ? prependingTab(to: substring) : substring
+            appendSeparated(emitted, to: result, join: join)
+
+            // A line centered on the page keeps centered alignment (e.g. a title); the
+            // reader preserves it. Apply it to the emitted content only, not the leading
+            // separator, which belongs to the previous paragraph.
+            if centered, emitted.length > 0 {
+                let range = NSRange(location: result.length - emitted.length, length: emitted.length)
+                let style = NSMutableParagraphStyle()
+                style.alignment = .center
+                result.addAttribute(.paragraphStyle, value: style, range: range)
+            }
+        }
+
+        // Any images sitting below the last line of text (or all images on an
+        // illustration-only page).
+        emitImages(above: -.greatestFiniteMagnitude)
     }
 
     /// A visual line of a PDF page: a contiguous run of characters sharing a row,
@@ -141,20 +280,27 @@ public enum StoryDocument {
         func flushLine(end: Int) {
             let length = end - lineStart
             if length > 0 {
-                var minX = CGFloat.greatestFiniteMagnitude, maxX = -CGFloat.greatestFiniteMagnitude
-                var minY = CGFloat.greatestFiniteMagnitude, maxY = -CGFloat.greatestFiniteMagnitude
-                var firstWordMinX = CGFloat.greatestFiniteMagnitude, firstWordMaxX = -CGFloat.greatestFiniteMagnitude
-                var firstWordStarted = false, firstWordEnded = false
+                var minX = CGFloat.greatestFiniteMagnitude
+                var maxX = -CGFloat.greatestFiniteMagnitude
+                var minY = CGFloat.greatestFiniteMagnitude
+                var maxY = -CGFloat.greatestFiniteMagnitude
+                var firstWordMinX = CGFloat.greatestFiniteMagnitude
+                var firstWordMaxX = -CGFloat.greatestFiniteMagnitude
+                var firstWordStarted = false
+                var firstWordEnded = false
                 var hasBounds = false
                 for i in lineStart..<end {
-                    let isSpace = Unicode.Scalar(string.character(at: i))
+                    let isSpace =
+                        Unicode.Scalar(string.character(at: i))
                         .map { CharacterSet.whitespacesAndNewlines.contains($0) } ?? false
                     let bounds = page.characterBounds(at: i)
                     let valid = bounds.width > 0 && bounds.height > 0
                     if valid {
                         hasBounds = true
-                        minX = min(minX, bounds.minX); maxX = max(maxX, bounds.maxX)
-                        minY = min(minY, bounds.minY); maxY = max(maxY, bounds.maxY)
+                        minX = min(minX, bounds.minX)
+                        maxX = max(maxX, bounds.maxX)
+                        minY = min(minY, bounds.minY)
+                        maxY = max(maxY, bounds.maxY)
                     }
                     if !firstWordEnded {
                         if isSpace {
@@ -166,12 +312,28 @@ public enum StoryDocument {
                         }
                     }
                 }
-                if !hasBounds { minX = 0; maxX = 0; minY = 0; maxY = 0 }
-                if !firstWordStarted { firstWordMinX = minX; firstWordMaxX = maxX }
-                lines.append(PDFLine(range: NSRange(location: lineStart, length: length),
-                                     minX: minX, maxX: maxX, minY: minY, maxY: maxY,
-                                     firstWordMinX: firstWordMinX, firstWordMaxX: firstWordMaxX,
-                                     hasBounds: hasBounds))
+                if !hasBounds {
+                    minX = 0
+                    maxX = 0
+                    minY = 0
+                    maxY = 0
+                }
+                if !firstWordStarted {
+                    firstWordMinX = minX
+                    firstWordMaxX = maxX
+                }
+                lines.append(
+                    PDFLine(
+                        range: NSRange(location: lineStart, length: length),
+                        minX: minX,
+                        maxX: maxX,
+                        minY: minY,
+                        maxY: maxY,
+                        firstWordMinX: firstWordMinX,
+                        firstWordMaxX: firstWordMaxX,
+                        hasBounds: hasBounds
+                    )
+                )
             }
             lineStart = end + 1
         }
@@ -182,7 +344,7 @@ public enum StoryDocument {
         return (attributed, lines)
     }
 
-    private static func metrics(for lines: [PDFLine], page: PDFPage) -> PageMetrics {
+    private static func metrics(for lines: [PDFLine], page: PDFPage, bodyPointSize: CGFloat) -> PageMetrics {
         let bounded = lines.filter(\.hasBounds)
         let medianHeight = median(bounded.map(\.height)) ?? bodyPointSize
         return PageMetrics(
@@ -191,7 +353,8 @@ public enum StoryDocument {
             leftMargin: bounded.map(\.minX).min() ?? 0,
             spaceWidth: medianHeight * 0.25,
             indentThreshold: max(medianHeight, 12),
-            pageMidX: page.bounds(for: .mediaBox).midX)
+            pageMidX: page.bounds(for: .mediaBox).midX
+        )
     }
 
     /// Decides whether the document indents the first line of each paragraph (restore a
@@ -199,15 +362,17 @@ public enum StoryDocument {
     /// so we vote: a likely paragraph-start line counts as indented when its left edge
     /// sits a clear step right of the body's left margin. Block-style documents reliably
     /// score zero indented starts; indent-style documents score enough to win.
-    private static func documentUsesFirstLineIndent(_ document: PDFDocument) -> Bool {
-        var indented = 0, total = 0
+    private static func documentUsesFirstLineIndent(_ document: PDFDocument, bodyPointSize: CGFloat) -> Bool {
+        var indented = 0
+        var total = 0
         for index in 0..<document.pageCount {
             guard let page = document.page(at: index) else { continue }
             let (attributed, lines) = visualLines(of: page)
             guard lines.count > 1 else { continue }
-            let m = metrics(for: lines, page: page)
+            let m = metrics(for: lines, page: page, bodyPointSize: bodyPointSize)
             for i in 1..<lines.count {
-                let line = lines[i], previous = lines[i - 1]
+                let line = lines[i]
+                let previous = lines[i - 1]
                 guard line.hasBounds, previous.hasBounds else { continue }
                 let substring = attributed.attributedSubstring(from: line.range)
                 // Geometry-only paragraph-start guess: the previous line ended early and
@@ -215,169 +380,19 @@ public enum StoryDocument {
                 let endedEarly = m.bodyRight - previous.maxX >= m.spaceWidth + line.firstWordWidth
                 let length = substring.string.trimmingCharacters(in: .whitespacesAndNewlines).count
                 guard endedEarly, !beginsLikeContinuation(substring),
-                      !isCentered(line, textLength: length, pageMidX: m.pageMidX, leftMargin: m.leftMargin, bodyRight: m.bodyRight) else { continue }
+                    !isCentered(
+                        line,
+                        textLength: length,
+                        pageMidX: m.pageMidX,
+                        leftMargin: m.leftMargin,
+                        bodyRight: m.bodyRight
+                    )
+                else { continue }
                 total += 1
                 if line.minX - m.leftMargin >= m.indentThreshold { indented += 1 }
             }
         }
         return indented >= 2 && indented * 3 >= total
-    }
-
-    /// Reconstructs paragraphs from a PDF page: PDFKit already breaks the text into
-    /// visual lines (a `\n` per line, which is what shows orphaned words on screen).
-    /// A break is a *soft wrap* (rejoined with a space) when the previous line was
-    /// full — the next line's leading word wouldn't have fit (line-fill test);
-    /// otherwise the line ended early on purpose and starts a new *paragraph*. This
-    /// keeps short title lines on their own and detects paragraph ends regardless of
-    /// vertical spacing. Lines whose glyphs report no geometry still have their text
-    /// emitted (joined as a soft wrap) so no words are lost. Original per-character
-    /// fonts (size + traits) are preserved. When the document indents the first line of
-    /// each paragraph, restore that indent as a leading tab.
-    private static func appendReflowed(page: PDFPage, to result: NSMutableAttributedString, indentParagraphs: Bool) {
-        let (attributed, lines) = visualLines(of: page)
-
-        // Embedded illustrations, kept in reading order by their top edge (PDF y-up).
-        let images = embeddedImages(on: page).sorted { $0.top > $1.top }
-        var nextImage = 0
-        func emitImages(above top: CGFloat) {
-            while nextImage < images.count, images[nextImage].top >= top {
-                appendImage(images[nextImage].image, to: result)
-                nextImage += 1
-            }
-        }
-
-        guard !lines.isEmpty || !images.isEmpty else { return }
-
-        let m = metrics(for: lines, page: page)
-        let bodyRight = m.bodyRight
-        let leftMargin = m.leftMargin
-        let spaceWidth = m.spaceWidth
-        let pageMidX = m.pageMidX
-
-        let substrings = lines.map { attributed.attributedSubstring(from: $0.range) }
-
-        // True when PDFKit split a word across `lines[i]`/`lines[i+1]` (typically at a curly
-        // apostrophe, or a same-row fragment continuing to the right): the head line's first
-        // word is then only a partial word, so its width and "title" appearance are bogus.
-        func wordContinuesOntoNextLine(at i: Int) -> Bool {
-            guard i + 1 < lines.count, let head = firstNonSpaceScalar(in: substrings[i + 1]) else { return false }
-            // Contraction tail: "don" + "’t".
-            if head == "\u{2019}" || head == "'" { return true }
-            // Same row, continuing to the right with a lowercase tail: "I’" + "m out".
-            let next = lines[i + 1]
-            return lines[i].hasBounds && next.hasBounds
-                && next.minX >= lines[i].maxX - spaceWidth
-                && next.minY < lines[i].maxY && lines[i].minY < next.maxY
-                && CharacterSet.lowercaseLetters.contains(head)
-        }
-
-        // A standalone centered title/byline: passes the geometry + character cap and isn't a
-        // split fragment (whose collapsed bounds can look centered).
-        let centeredFlags = lines.indices.map { i -> Bool in
-            guard lines[i].hasBounds else { return false }
-            let length = substrings[i].string.trimmingCharacters(in: .whitespacesAndNewlines).count
-            return isCentered(lines[i], textLength: length, pageMidX: pageMidX, leftMargin: leftMargin, bodyRight: bodyRight)
-                && !wordContinuesOntoNextLine(at: i)
-        }
-
-        let sfxFlags = lines.indices.map { i in
-            isStandaloneSFX(lines[i], text: substrings[i].string, bodyRight: bodyRight, leftMargin: leftMargin)
-        }
-
-        for (index, line) in lines.enumerated() {
-            emitImages(above: line.maxY)
-            let substring = substrings[index]
-            let centered = centeredFlags[index]
-
-            let join: LineJoin
-            if index == 0 {
-                // First line of a later page continues as a new paragraph.
-                join = result.length > 0 ? .paragraph : .softWrap
-            } else {
-                let previous = lines[index - 1]
-                let previousCentered = centeredFlags[index - 1]
-                let head = firstNonSpaceScalar(in: substring)
-                let openingQuote = head == "\u{201C}" || head == "\u{2018}"
-                if isLoneQuoteGlyph(substring) {
-                    // A lone quote glyph is a close quote PDFKit split off the previous
-                    // line — attach it with no separator, never a new dialogue turn.
-                    join = .noSeparator
-                } else if openingQuote, !endsMidClause(result) {
-                    // An opening quote that doesn't continue an unfinished clause starts a
-                    // new dialogue turn → its own paragraph, even when the line reports no
-                    // usable geometry. A quote after a line ending mid-clause (e.g.
-                    // `…the` + `“experiments”`) is a wrapped quoted word, not a new turn.
-                    join = .paragraph
-                } else if isSpuriousSplit(previous: previous, line: line, next: substring,
-                                          result: result, spaceWidth: spaceWidth) {
-                    // PDFKit broke one logical row/word in two (e.g. at a curly apostrophe);
-                    // rejoin without a separator so contractions stay whole.
-                    join = .noSeparator
-                } else if isShoutLine(substring) {
-                    // A standalone all-caps shout/SFX stands on its own paragraph rather
-                    // than soft-wrapping into the full line above it.
-                    join = .paragraph
-                } else if sfxFlags[index] || sfxFlags[index - 1] {
-                    // A short onomatopoeia line trailing off in a hyphen (e.g.
-                    // "step stoc toc toc step-") stands alone instead of soft-wrapping into
-                    // the prose around it.
-                    join = .paragraph
-                } else if centered || previousCentered {
-                    // Centered title/byline lines stand alone, and the first body line
-                    // after a centered block opens a new paragraph.
-                    join = .paragraph
-                } else if line.hasBounds, previous.hasBounds,
-                          previous.minY - line.maxY > m.medianHeight {
-                    // A roughly blank line of vertical space separates two blocks (e.g. a
-                    // heading from the body) → new paragraph. Tall, noisy lines overlap and
-                    // give negative gaps, so they don't trigger false breaks.
-                    join = .paragraph
-                } else if !line.hasBounds || !previous.hasBounds {
-                    // Line-fill test: if the previous line had room for this line's first
-                    // word (plus a space), it ended early on purpose → new paragraph;
-                    // otherwise it was full → soft wrap we rejoin. Without geometry on
-                    // either line we can't tell, so default to a soft wrap.
-                    join = .softWrap
-                } else {
-                    // A new paragraph needs both room on the previous line *and* a line
-                    // that reads like a paragraph opening — one starting with a lowercase
-                    // letter is a soft-wrapped continuation, not a new paragraph (these
-                    // PDFs' noisy geometry otherwise mistakes short wrapped lines for
-                    // paragraph starts).
-                    let available = bodyRight - previous.maxX
-                    let nextWordWouldFit = available >= spaceWidth + line.firstWordWidth
-                    // A split head (e.g. "Don" before "’t remember…") reports only a partial
-                    // first word, so the line-fill test under-measures it and a near-full
-                    // previous line looks like it ended early. Don't let it spuriously start a
-                    // paragraph — it's a wrapped continuation.
-                    let splitHead = wordContinuesOntoNextLine(at: index)
-                    join = nextWordWouldFit && !beginsLikeContinuation(substring) && !splitHead ? .paragraph : .softWrap
-                }
-            }
-
-            // In a document that indents the first line of each paragraph, restore that
-            // indent as a leading tab — matching the DOCX `<w:tab>` path. Centered lines
-            // get alignment instead, never a tab.
-            let isParagraphStart = join == .paragraph || (index == 0 && result.length == 0)
-            let indented = indentParagraphs && isParagraphStart && !centered
-
-            let emitted = indented ? prependingTab(to: substring) : substring
-            appendSeparated(emitted, to: result, join: join)
-
-            // A line centered on the page keeps centered alignment (e.g. a title); the
-            // reader preserves it. Apply it to the emitted content only, not the leading
-            // separator, which belongs to the previous paragraph.
-            if centered, emitted.length > 0 {
-                let range = NSRange(location: result.length - emitted.length, length: emitted.length)
-                let style = NSMutableParagraphStyle()
-                style.alignment = .center
-                result.addAttribute(.paragraphStyle, value: style, range: range)
-            }
-        }
-
-        // Any images sitting below the last line of text (or all images on an
-        // illustration-only page).
-        emitImages(above: -.greatestFiniteMagnitude)
     }
 
     /// Appends `image` as its own centered paragraph via a self-sizing text attachment
@@ -392,7 +407,11 @@ public enum StoryDocument {
         result.append(NSAttributedString(attachment: attachment))
         let style = NSMutableParagraphStyle()
         style.alignment = .center
-        result.addAttribute(.paragraphStyle, value: style, range: NSRange(location: start, length: result.length - start))
+        result.addAttribute(
+            .paragraphStyle,
+            value: style,
+            range: NSRange(location: start, length: result.length - start)
+        )
         result.append(NSAttributedString(string: "\n"))
     }
 
@@ -432,15 +451,22 @@ public enum StoryDocument {
                 guard CGPDFScannerPopNumber(scanner, &number) else { return }
                 values[i] = CGFloat(number)
             }
-            let matrix = CGAffineTransform(a: values[0], b: values[1], c: values[2],
-                                           d: values[3], tx: values[4], ty: values[5])
+            let matrix = CGAffineTransform(
+                a: values[0],
+                b: values[1],
+                c: values[2],
+                d: values[3],
+                tx: values[4],
+                ty: values[5]
+            )
             s.ctm = matrix.concatenating(s.ctm)
         }
         CGPDFOperatorTableSetCallback(table, "Do") { scanner, info in
             let s = Unmanaged<PDFImageScanner>.fromOpaque(info!).takeUnretainedValue()
             var name: UnsafePointer<Int8>?
             guard CGPDFScannerPopName(scanner, &name), let name,
-                  s.imageNames.contains(String(cString: name)) else { return }
+                s.imageNames.contains(String(cString: name))
+            else { return }
             s.placements.append(CGRect(x: 0, y: 0, width: 1, height: 1).applying(s.ctm))
         }
 
@@ -462,28 +488,42 @@ public enum StoryDocument {
 
         final class Collector { var names = Set<String>() }
         let collector = Collector()
-        CGPDFDictionaryApplyFunction(xobjects, { key, value, info in
-            let collector = Unmanaged<Collector>.fromOpaque(info!).takeUnretainedValue()
-            var stream: CGPDFStreamRef?
-            guard CGPDFObjectGetValue(value, .stream, &stream), let stream,
-                  let streamDict = CGPDFStreamGetDictionary(stream) else { return }
-            var subtype: UnsafePointer<Int8>?
-            if CGPDFDictionaryGetName(streamDict, "Subtype", &subtype), let subtype,
-               String(cString: subtype) == "Image" {
-                collector.names.insert(String(cString: key))
-            }
-        }, Unmanaged.passUnretained(collector).toOpaque())
+        CGPDFDictionaryApplyFunction(
+            xobjects,
+            { key, value, info in
+                let collector = Unmanaged<Collector>.fromOpaque(info!).takeUnretainedValue()
+                var stream: CGPDFStreamRef?
+                guard CGPDFObjectGetValue(value, .stream, &stream), let stream,
+                    let streamDict = CGPDFStreamGetDictionary(stream)
+                else { return }
+                var subtype: UnsafePointer<Int8>?
+                if CGPDFDictionaryGetName(streamDict, "Subtype", &subtype), let subtype,
+                    String(cString: subtype) == "Image"
+                {
+                    collector.names.insert(String(cString: key))
+                }
+            },
+            Unmanaged.passUnretained(collector).toOpaque()
+        )
         return collector.names
     }
 
     /// Renders the given page rectangle (PDF coordinates) to a `UIImage` at `scale`× — a
     /// robust way to capture an embedded image regardless of its encoding or masks.
     private static func renderImage(from page: PDFPage, rect: CGRect, scale: CGFloat = 2) -> UIImage? {
-        let width = Int((rect.width * scale).rounded()), height = Int((rect.height * scale).rounded())
+        let width = Int((rect.width * scale).rounded())
+        let height = Int((rect.height * scale).rounded())
         guard width > 0, height > 0,
-              let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8,
-                                      bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
-                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+            let context = CGContext(
+                data: nil,
+                width: width,
+                height: height,
+                bitsPerComponent: 8,
+                bytesPerRow: 0,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            )
+        else { return nil }
         context.scaleBy(x: scale, y: scale)
         context.translateBy(x: -rect.minX, y: -rect.minY)
         page.draw(with: .mediaBox, to: context)
@@ -537,7 +577,13 @@ public enum StoryDocument {
     /// Requiring a symmetric inset, a short width *and* a short length keeps a full-width
     /// body line — whose noisy per-character bounds can drift into a balanced-looking
     /// midpoint — from being mistaken for centered.
-    private static func isCentered(_ line: PDFLine, textLength: Int, pageMidX: CGFloat, leftMargin: CGFloat, bodyRight: CGFloat) -> Bool {
+    private static func isCentered(
+        _ line: PDFLine,
+        textLength: Int,
+        pageMidX: CGFloat,
+        leftMargin: CGFloat,
+        bodyRight: CGFloat
+    ) -> Bool {
         guard line.hasBounds, textLength <= centeredMaxLength else { return false }
         let bodyWidth = bodyRight - leftMargin
         guard bodyWidth > 0 else { return false }
@@ -574,13 +620,15 @@ public enum StoryDocument {
     /// must sit well short of the right margin — a hyphen *at* the margin is a word PDFKit
     /// wrapped, not a deliberate trailing sound — and the line must be short, so normal prose
     /// (which fills the column or ends in real punctuation) never qualifies.
-    private static func isStandaloneSFX(_ line: PDFLine, text: String, bodyRight: CGFloat, leftMargin: CGFloat) -> Bool {
+    private static func isStandaloneSFX(_ line: PDFLine, text: String, bodyRight: CGFloat, leftMargin: CGFloat) -> Bool
+    {
         guard line.hasBounds else { return false }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.count >= 3, trimmed.count <= 30 else { return false }
         let scalars = Array(trimmed.unicodeScalars)
         guard scalars.count >= 2, scalars.last == "-",
-              CharacterSet.letters.contains(scalars[scalars.count - 2]) else { return false }
+            CharacterSet.letters.contains(scalars[scalars.count - 2])
+        else { return false }
         let bodyWidth = bodyRight - leftMargin
         guard bodyWidth > 0 else { return false }
         return bodyRight - line.maxX > bodyWidth * 0.15
@@ -590,7 +638,10 @@ public enum StoryDocument {
     /// indent renders without inflating the line height.
     private static func prependingTab(to substring: NSAttributedString) -> NSAttributedString {
         guard substring.length > 0 else { return substring }
-        let result = NSMutableAttributedString(string: "\t", attributes: substring.attributes(at: 0, effectiveRange: nil))
+        let result = NSMutableAttributedString(
+            string: "\t",
+            attributes: substring.attributes(at: 0, effectiveRange: nil)
+        )
         result.append(substring)
         return result
     }
@@ -601,20 +652,24 @@ public enum StoryDocument {
     /// (geometry), or it completes a *contraction* across the break (an apostrophe with a
     /// lowercase tail). The lowercase tail keeps real dialogue lines — which open with a
     /// capital or an opening quote `“`/`‘` — from being merged.
-    private static func isSpuriousSplit(previous: PDFLine, line: PDFLine,
-                                        next substring: NSAttributedString,
-                                        result: NSMutableAttributedString,
-                                        spaceWidth: CGFloat) -> Bool {
+    private static func isSpuriousSplit(
+        previous: PDFLine,
+        line: PDFLine,
+        next substring: NSAttributedString,
+        result: NSMutableAttributedString,
+        spaceWidth: CGFloat
+    ) -> Bool {
         // Same row, continuing to the right of where the previous fragment ended — but
         // only when the fragment continues a word (its first non-space scalar is a
         // lowercase letter or an apostrophe). This keeps the lone-apostrophe merge
         // (`There` + `’`) while no longer merging an adjacent dialogue turn, which opens
         // with a capital or an opening quote.
         if line.hasBounds, previous.hasBounds,
-           line.minX >= previous.maxX - spaceWidth,
-           line.minY < previous.maxY, previous.minY < line.maxY,
-           let head = firstNonSpaceScalar(in: substring),
-           CharacterSet.lowercaseLetters.contains(head) || head == "\u{2019}" || head == "'" {
+            line.minX >= previous.maxX - spaceWidth,
+            line.minY < previous.maxY, previous.minY < line.maxY,
+            let head = firstNonSpaceScalar(in: substring),
+            CharacterSet.lowercaseLetters.contains(head) || head == "\u{2019}" || head == "'"
+        {
             return true
         }
 
@@ -643,7 +698,8 @@ public enum StoryDocument {
         if isApostrophe(prevChar), isLowercaseLetter(nextChar) { return true }
         // prev ends with a letter, next is apostrophe + lowercase: "don" + "’t".
         if let prevChar, CharacterSet.letters.contains(prevChar), isApostrophe(nextChar),
-           nextString.length >= 2, isLowercaseLetter(Unicode.Scalar(nextString.character(at: 1))) {
+            nextString.length >= 2, isLowercaseLetter(Unicode.Scalar(nextString.character(at: 1)))
+        {
             return true
         }
         return false
@@ -652,7 +708,11 @@ public enum StoryDocument {
     /// Appends `substring` to `result`, separating it from the existing text per
     /// `join`: a paragraph break (`\n`) or a soft-wrap space — joining hyphenated
     /// words without the hyphen.
-    private static func appendSeparated(_ substring: NSAttributedString, to result: NSMutableAttributedString, join: LineJoin) {
+    private static func appendSeparated(
+        _ substring: NSAttributedString,
+        to result: NSMutableAttributedString,
+        join: LineJoin
+    ) {
         if result.length == 0 {
             result.append(substring)
             return
@@ -674,7 +734,8 @@ public enum StoryDocument {
         let existing = result.string as NSString
         let lastChar = existing.character(at: existing.length - 1)
         if Unicode.Scalar(lastChar) == "-", existing.length >= 2,
-           CharacterSet.letters.contains(Unicode.Scalar(existing.character(at: existing.length - 2))!) {
+            CharacterSet.letters.contains(Unicode.Scalar(existing.character(at: existing.length - 2))!)
+        {
             result.deleteCharacters(in: NSRange(location: existing.length - 1, length: 1))
             result.append(substring)
         } else {
@@ -690,28 +751,8 @@ public enum StoryDocument {
         return sorted.count.isMultiple(of: 2) ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
     }
 
-    private static func docxText(from data: Data) -> NSAttributedString? {
-        guard let archive = try? Archive(data: data, accessMode: .read, pathEncoding: nil),
-              let entry = archive["word/document.xml"] else {
-            return nil
-        }
-
-        var xml = Data()
-        guard (try? archive.extract(entry) { xml.append($0) }) != nil else {
-            return nil
-        }
-
-        let parser = XMLParser(data: xml)
-        let delegate = DocxTextParser()
-        parser.delegate = delegate
-        guard parser.parse() else { return nil }
-
-        let result = trimmed(delegate.result)
-        return result.length > 0 ? result : nil
-    }
-
     /// Trims leading/trailing whitespace and newlines, preserving run attributes.
-    private static func trimmed(_ attributed: NSAttributedString) -> NSAttributedString {
+    static func trimmed(_ attributed: NSAttributedString) -> NSAttributedString {
         let string = attributed.string as NSString
         let whitespace = CharacterSet.whitespacesAndNewlines
         var start = 0
@@ -726,26 +767,6 @@ public enum StoryDocument {
     }
 }
 
-/// A text attachment that sizes its image to the available line-fragment width at
-/// layout time — never upscaling, preserving aspect ratio. Sizing at layout avoids the
-/// zero-width first-layout problem of sizing against the text view's bounds.
-final class FittingImageTextAttachment: NSTextAttachment {
-    private func fittedBounds(proposedWidth: CGFloat) -> CGRect {
-        guard let image, image.size.width > 0 else { return .zero }
-        let maxWidth = proposedWidth > 0 ? proposedWidth : image.size.width
-        let factor = min(1, maxWidth / image.size.width)
-        return CGRect(x: 0, y: 0, width: image.size.width * factor, height: image.size.height * factor)
-    }
-
-    override func attachmentBounds(for attributes: [NSAttributedString.Key: Any], location: NSTextLocation, textContainer: NSTextContainer?, proposedLineFragment: CGRect, position: CGPoint) -> CGRect {
-        fittedBounds(proposedWidth: proposedLineFragment.width)
-    }
-
-    override func attachmentBounds(for textContainer: NSTextContainer?, proposedLineFragment lineFrag: CGRect, glyphPosition position: CGPoint, characterIndex charIndex: Int) -> CGRect {
-        fittedBounds(proposedWidth: lineFrag.width)
-    }
-}
-
 /// Mutable state threaded through the content-stream scan that locates image draws:
 /// the current transform, the graphics-state stack, and the collected image rectangles.
 private final class PDFImageScanner {
@@ -755,68 +776,4 @@ private final class PDFImageScanner {
     var placements: [CGRect] = []
 
     init(imageNames: Set<String>) { self.imageNames = imageNames }
-}
-
-/// Builds an attributed string from a Word `document.xml`: text inside `<w:t>`,
-/// run traits from `<w:b>` / `<w:i>` / `<w:sz>`, paragraph breaks on `</w:p>`,
-/// line breaks on `<w:br>`, tabs on `<w:tab>`. Paragraphs are separated by a
-/// single newline; the reader supplies paragraph spacing.
-private final class DocxTextParser: NSObject, XMLParserDelegate {
-    private(set) var result = NSMutableAttributedString()
-
-    /// Typical Word default body size (half-points are halved into points).
-    private let defaultSize: CGFloat = 12
-
-    private var stack: [String] = []
-    private var inText = false
-
-    // Current run state, applied when the run's text is emitted.
-    private var bold = false
-    private var italic = false
-    private var size: CGFloat = 12
-
-    private var insideRun: Bool { stack.contains("w:r") }
-
-    private func boolValue(_ attributes: [String: String]) -> Bool {
-        switch attributes["w:val"]?.lowercased() {
-        case "0", "false", "off": return false
-        default: return true
-        }
-    }
-
-    private func append(_ string: String) {
-        let font = StoryDocument.font(size: size, bold: bold, italic: italic)
-        result.append(NSAttributedString(string: string, attributes: [.font: font]))
-    }
-
-    func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName: String?, attributes: [String: String]) {
-        stack.append(elementName)
-        switch elementName {
-        case "w:t": inText = true
-        case "w:tab" where insideRun: append("\t")
-        case "w:br", "w:cr": if insideRun { append("\n") }
-        case "w:b" where insideRun: bold = boolValue(attributes)
-        case "w:i" where insideRun: italic = boolValue(attributes)
-        case "w:sz" where insideRun:
-            if let raw = attributes["w:val"], let halfPoints = Double(raw) {
-                size = CGFloat(halfPoints) / 2
-            }
-        default: break
-        }
-    }
-
-    func parser(_ parser: XMLParser, foundCharacters string: String) {
-        guard inText else { return }
-        append(string)
-    }
-
-    func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName: String?) {
-        switch elementName {
-        case "w:t": inText = false
-        case "w:r": bold = false; italic = false; size = defaultSize
-        case "w:p": if result.length > 0 { result.append(NSAttributedString(string: "\n")) }
-        default: break
-        }
-        if stack.last == elementName { stack.removeLast() }
-    }
 }

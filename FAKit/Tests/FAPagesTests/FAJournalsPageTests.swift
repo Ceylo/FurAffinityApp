@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  FAJournalsPageTests.swift
 //  FAKit
 //
 //  Created by Ceylo on 11/10/2024.

@@ -10,7 +10,7 @@ import FAKit
 
 struct CommentsView: View {
     /// Horizontal indentation added per reply depth, and the spacing between thread trunks.
-    static let indentationStep = 16.0
+    nonisolated static let indentationStep = 16.0
 
     var comments: [FAComment]
     var highlightedCommentId: Int?

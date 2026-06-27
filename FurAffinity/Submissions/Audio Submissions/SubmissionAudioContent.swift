@@ -5,8 +5,8 @@
 //  Created by Ceylo on 21/06/2026.
 //
 
-import SwiftUI
 import FAKit
+import SwiftUI
 
 /// Renders an audio/music submission: the cover art plus an inline native player
 /// that streams the mp3 progressively, with background/lock-screen playback driven
@@ -15,34 +15,39 @@ import FAKit
 /// does not wait on that download.
 struct SubmissionAudioContent: View {
     @Environment(ErrorStorage.self) private var errorStorage
-    
+
     var audioContent: FASubmission.AudioContent
     var title: String
     var author: String
     var thumbnail: DynamicThumbnail?
+    var thumbnailWidthOnHeightRatio: Float?
+    @Binding var controller: AudioPlaybackController?
     @Binding var documentFileUrl: URL?
     var downloadDocument: (_ url: URL) async throws -> Data
-    
-    @State private var controller: AudioPlaybackController?
-    
+
     var body: some View {
         VStack(spacing: 12) {
-            FAImage(audioContent.coverImageUrl)
-                .aspectRatio(contentMode: .fit)
-                .frame(maxWidth: .infinity)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.secondary.opacity(0.3))
-                }
-            
+            SubmissionMainImage(
+                widthOnHeightRatio: thumbnailWidthOnHeightRatio ?? 1,
+                thumbnailImage: thumbnail,
+                fullResolutionMediaUrl: audioContent.coverImageUrl,
+                displayProgress: false,
+                allowZoomableSheet: false,
+                fullResolutionMediaFileUrl: .constant(nil)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.secondary.opacity(0.3))
+            }
+
             playerArea
         }
         .padding(.horizontal, 10)
-        .task { await preparePlayer() }
+        .task { await prepareController() }
         .task { await downloadFile() }
     }
-    
+
     @ViewBuilder
     private var playerArea: some View {
         if let controller {
@@ -51,8 +56,9 @@ struct SubmissionAudioContent: View {
             ProgressView()
         }
     }
-    
-    private func preparePlayer() async {
+
+    private func prepareController() async {
+        guard controller == nil else { return }  // idempotent across recycle/reappear
         let controller = AudioPlaybackController(
             streamUrl: audioContent.streamUrl,
             title: title,
@@ -63,7 +69,7 @@ struct SubmissionAudioContent: View {
         self.controller = controller
         await controller.prepare()
     }
-    
+
     /// Downloads the mp3 in the background to back Save/Share. Independent of
     /// playback, which streams immediately.
     private func downloadFile() async {
@@ -84,10 +90,12 @@ struct SubmissionAudioContent: View {
 #Preview {
     @Previewable
     @State var errorStorage = ErrorStorage()
-    
+    @Previewable
+    @State var controller: AudioPlaybackController?
+
     withAsync({ await FASubmission.demoAudio }) { submission in
         let audio: FASubmission.AudioContent = {
-            guard case let .audio(audio) = submission.content else {
+            guard case .audio(let audio) = submission.content else {
                 fatalError("demoAudio must be an audio submission")
             }
             return audio
@@ -97,6 +105,8 @@ struct SubmissionAudioContent: View {
             title: submission.title,
             author: submission.author,
             thumbnail: nil,
+            thumbnailWidthOnHeightRatio: nil,
+            controller: $controller,
             documentFileUrl: .constant(nil),
             downloadDocument: { try await OfflineFASession.default.file(at: $0) }
         )

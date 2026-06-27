@@ -61,11 +61,17 @@ struct SubmissionTextContent: View {
                 readStory()
             } label: {
                 HStack {
-                    if isDownloading {
-                        ProgressView()
-                    } else {
-                        Image(systemName: "book")
+                    // Keep the leading glyph slot a fixed, text-matched size so the
+                    // button height stays steady when the spinner replaces the icon.
+                    Group {
+                        if isDownloading {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Image(systemName: "book")
+                        }
                     }
+                    .frame(width: 17, height: 17)
                     Text(isDownloading ? "Downloading…" : "Read story")
                 }
             }

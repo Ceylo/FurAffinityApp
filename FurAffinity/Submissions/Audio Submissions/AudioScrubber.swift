@@ -15,14 +15,14 @@ struct AudioScrubber: View {
     var controller: AudioPlaybackController
     @Binding var isScrubbing: Bool
     @Binding var scrubValue: Double
-    
+
     var body: some View {
         GeometryReader { geometry in
             let width = geometry.size.width
             let duration = controller.duration
             let value = isScrubbing ? scrubValue : controller.currentTime
             let fraction = duration > 0 ? min(max(value / duration, 0), 1) : 0
-            
+
             ZStack(alignment: .leading) {
                 Capsule()
                     .fill(.secondary.opacity(0.3))

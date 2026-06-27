@@ -10,6 +10,7 @@ import Defaults
 import FAKit
 import Intents
 import UserNotifications
+import Kingfisher
 
 private struct LatestNotificationIDs {
     var submissionID: Int
@@ -432,13 +433,10 @@ enum BackgroundRefreshManager {
         guard let url = FAURLs.avatarUrl(for: author) else {
             return nil
         }
-        guard await kingfisherImageDataProvider(url) != nil else {
+        guard let url = try? await KingfisherManager.shared.retrieveFAImageFile(with: url) else {
             return nil
         }
-        guard let file = cachedImageFileURL(for: url) else {
-            return nil
-        }
-        return INImage(url: file)
+        return INImage(url: url)
     }
 
     /// Enriches a pending notification into a Communication Notification whose leading
@@ -508,10 +506,7 @@ enum BackgroundRefreshManager {
     /// Returns `nil` if the thumbnail can't be fetched, or if blurring fails (so the
     /// unblurred NSFW image is never attached by accident).
     private static func submissionAttachment(thumbnailURL url: URL, needsBlur: Bool) async -> [UNNotificationAttachment]? {
-        guard await kingfisherImageDataProvider(url) != nil else {
-            return nil
-        }
-        guard let file = cachedImageFileURL(for: url) else {
+        guard let file = try? await KingfisherManager.shared.retrieveFAImageFile(with: url) else {
             return nil
         }
 
