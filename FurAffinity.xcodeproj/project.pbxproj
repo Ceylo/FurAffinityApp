@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 55;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -62,6 +62,9 @@
 		87750CEB2D44F67B00A4A205 /* View+scrollToItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87750CEA2D44F67B00A4A205 /* View+scrollToItem.swift */; };
 		877929D02744386E003AE828 /* FASession+CanvasPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877929CF2744386E003AE828 /* FASession+CanvasPreview.swift */; };
 		877C8A9D2A0043D000B2F02B /* NotificationsActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877C8A9C2A0043D000B2F02B /* NotificationsActionView.swift */; };
+		877D54822FF036E100BA9802 /* QuickLookPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877D547E2FF036E100BA9802 /* QuickLookPreview.swift */; };
+		877D54832FF036E100BA9802 /* SubmissionTextContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877D54802FF036E100BA9802 /* SubmissionTextContent.swift */; };
+		877D54842FF036E100BA9802 /* StoryReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877D547F2FF036E100BA9802 /* StoryReaderView.swift */; };
 		877FD54D29EC939E00230996 /* JournalControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877FD54C29EC939E00230996 /* JournalControlsView.swift */; };
 		878401452CB9747D0099CAC8 /* UserJournalsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878401442CB9747D0099CAC8 /* UserJournalsView.swift */; };
 		878401472CB994330099CAC8 /* RemoteUserJournalsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878401462CB994330099CAC8 /* RemoteUserJournalsView.swift */; };
@@ -240,6 +243,9 @@
 		877929CF2744386E003AE828 /* FASession+CanvasPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FASession+CanvasPreview.swift"; sourceTree = "<group>"; };
 		877C8A9C2A0043D000B2F02B /* NotificationsActionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsActionView.swift; sourceTree = "<group>"; };
 		877D547B2FF02BA400BA9802 /* DocxTextParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocxTextParser.swift; sourceTree = "<group>"; };
+		877D547E2FF036E100BA9802 /* QuickLookPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookPreview.swift; sourceTree = "<group>"; };
+		877D547F2FF036E100BA9802 /* StoryReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryReaderView.swift; sourceTree = "<group>"; };
+		877D54802FF036E100BA9802 /* SubmissionTextContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionTextContent.swift; sourceTree = "<group>"; };
 		877FD54C29EC939E00230996 /* JournalControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalControlsView.swift; sourceTree = "<group>"; };
 		878401442CB9747D0099CAC8 /* UserJournalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserJournalsView.swift; sourceTree = "<group>"; };
 		878401462CB994330099CAC8 /* RemoteUserJournalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteUserJournalsView.swift; sourceTree = "<group>"; };
@@ -326,10 +332,6 @@
 		FA0000000000000000000009 /* AudioPlaybackController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlaybackController.swift; sourceTree = "<group>"; };
 		FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudflareResolutionOverlay.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		877D547D2FF0353E00BA9802 /* Text Submissions */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Text Submissions"; sourceTree = "<group>"; };
-/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		3600B5E43729B19FE61F3219 /* Frameworks */ = {
@@ -476,7 +478,7 @@
 				87566B83297DD02300FD3199 /* SubmissionMainImage.swift */,
 				873E65EF27528FC6009C8767 /* SubmissionControlsView.swift */,
 				8708DA252D74CF19000B419C /* SubmissionMetadataView.swift */,
-				877D547D2FF0353E00BA9802 /* Text Submissions */,
+				877D54812FF036E100BA9802 /* Text Submissions */,
 				877D547C2FF0351C00BA9802 /* Audio Submissions */,
 			);
 			path = Submissions;
@@ -550,6 +552,16 @@
 				FA0000000000000000000009 /* AudioPlaybackController.swift */,
 			);
 			path = "Audio Submissions";
+			sourceTree = "<group>";
+		};
+		877D54812FF036E100BA9802 /* Text Submissions */ = {
+			isa = PBXGroup;
+			children = (
+				877D547E2FF036E100BA9802 /* QuickLookPreview.swift */,
+				877D547F2FF036E100BA9802 /* StoryReaderView.swift */,
+				877D54802FF036E100BA9802 /* SubmissionTextContent.swift */,
+			);
+			path = "Text Submissions";
 			sourceTree = "<group>";
 		};
 		877FD54B29EC90B600230996 /* Comments */ = {
@@ -686,9 +698,6 @@
 			);
 			dependencies = (
 				F48539DEA404F48156AED323 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				877D547D2FF0353E00BA9802 /* Text Submissions */,
 			);
 			name = FurAffinity;
 			packageProductDependencies = (
@@ -871,6 +880,9 @@
 				8741BA2F29EC3FF700501A84 /* JournalView.swift in Sources */,
 				87F5EE8F29C5D9DD00649C5B /* DateTimeButton.swift in Sources */,
 				879C89FC2E2AFA8400F59A74 /* View+applying.swift in Sources */,
+				877D54822FF036E100BA9802 /* QuickLookPreview.swift in Sources */,
+				877D54832FF036E100BA9802 /* SubmissionTextContent.swift in Sources */,
+				877D54842FF036E100BA9802 /* StoryReaderView.swift in Sources */,
 				87307E1F2FC78CF10069E7F2 /* CloudflareChallengeSheet.swift in Sources */,
 				76DD1A515EB54A13BA763698 /* CloudflareResolutionOverlay.swift in Sources */,
 				87D64FC92C887DE200AB6F44 /* UserProfileControl.swift in Sources */,
