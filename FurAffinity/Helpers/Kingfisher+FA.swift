@@ -16,7 +16,7 @@ private extension KFImageProtocol {
         self
             .backgroundDecode()
             .reducePriorityOnDisappear(true)
-            .downloader(downloaderWithUserAgent)
+            .downloader(downloaderWithCloudFlareCookie)
             .requestModifier(FAUserAgentRequestModifier())
             .diskCacheExpiration(.days((7...14).randomElement()!))
             .diskCacheAccessExtending(.none)
@@ -45,7 +45,7 @@ let kingfisherImageDataProvider: @Sendable (URL) async -> (data: Data, mimeType:
         _ = try await KingfisherManager.shared.retrieveImage(
             with: url,
             options: [
-                .downloader(downloaderWithUserAgent),
+                .downloader(downloaderWithCloudFlareCookie),
                 .requestModifier(FAUserAgentRequestModifier()),
                 .diskCacheExpiration(.days((7...14).randomElement()!)),
                 .diskCacheAccessExtendingExpiration(.none),
@@ -121,7 +121,7 @@ func prefetch(_ urls: [URL], priority: Float = URLSessionTask.lowPriority) {
     let prefetcher = ImagePrefetcher(
         urls: urls,
         options: [
-            .downloader(downloaderWithUserAgent),
+            .downloader(downloaderWithCloudFlareCookie),
             .requestModifier(FAUserAgentRequestModifier()),
             .downloadPriority(priority),
             .diskCacheExpiration(.days((7...14).randomElement()!)),
@@ -181,7 +181,7 @@ struct Prefetch: View {
 }
 
 @MainActor
-private let downloaderWithUserAgent: ImageDownloader = {
+private let downloaderWithCloudFlareCookie: ImageDownloader = {
     let downloader = ImageDownloader(name: "FurAffinity Downloader")
     downloader.delegate = DownloadDelegate.shared
     return downloader
