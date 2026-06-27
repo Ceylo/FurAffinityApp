@@ -21,7 +21,7 @@ struct CachedImageFileURLTests {
 
         let results = await withTaskGroup(of: URL?.self) { group in
             for _ in 0 ..< 16 {
-                group.addTask { cachedImageFileURL(for: url) }
+                group.addTask { try? cachedImageFileURL(for: url) }
             }
             var collected = [URL?]()
             for await result in group {
@@ -47,6 +47,8 @@ struct CachedImageFileURLTests {
     @Test
     func returnsNilWhenNotCached() {
         let url = URL(string: "https://a.furaffinity.net/not-cached-\(UUID().uuidString).gif")!
-        #expect(cachedImageFileURL(for: url) == nil)
+        #expect(throws: (any Error).self) {
+            try cachedImageFileURL(for: url)
+        }
     }
 }

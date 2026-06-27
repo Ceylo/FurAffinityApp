@@ -101,7 +101,7 @@ struct SubmissionMainImage: View {
     }
     
     func prepareFullResolutionMedia(sourceUrl: URL, loadedImage: UIImage) {
-        guard let fileUrl = cachedImageFileURL(for: sourceUrl) else {
+        guard let fileUrl = try? cachedImageFileURL(for: sourceUrl) else {
             return
         }
         fullResolutionMediaFileUrl = fileUrl

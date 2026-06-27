@@ -336,11 +336,10 @@ final class AudioPlaybackController {
 
     private func loadArtwork() async {
         do {
-            let result = try await KingfisherManager.shared.retrieveImage(
-                with: coverImageUrl,
-                options: [.requestModifier(FAUserAgentRequestModifier())]
+            let image = try await KingfisherManager.shared.retrieveFAImage(
+                with: coverImageUrl
             )
-            let artwork = Self.makeArtwork(from: result.image)
+            let artwork = Self.makeArtwork(from: image)
             var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
             info[MPMediaItemPropertyArtwork] = artwork
             MPNowPlayingInfoCenter.default().nowPlayingInfo = info

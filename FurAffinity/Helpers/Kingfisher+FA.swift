@@ -5,14 +5,37 @@
 //  Created by Ceylo on 05/10/2024.
 //
 
+import FAKit
 import Foundation
 import Kingfisher
 import SwiftUI
-import FAKit
 import os
 
-private extension KFImageProtocol {
-    func defaultConfiguration() -> Self {
+enum KFError: LocalizedError {
+    case missingFile(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .missingFile(let description):
+            description
+        }
+    }
+}
+
+extension KingfisherOptionsInfo {
+    @MainActor
+    static var defaultsForFA: Self {
+        [
+            .downloader(downloaderWithCloudFlareCookie),
+            .requestModifier(FAUserAgentRequestModifier()),
+            .diskCacheExpiration(.days((7...14).randomElement()!)),
+            .diskCacheAccessExtendingExpiration(.none),
+        ]
+    }
+}
+
+extension KFImageProtocol {
+    fileprivate func defaultConfiguration() -> Self {
         self
             .backgroundDecode()
             .reducePriorityOnDisappear(true)
@@ -36,32 +59,44 @@ struct FAUserAgentRequestModifier: AsyncImageDownloadRequestModifier {
     }
 }
 
-/// Image-data provider used by `FAImageInliner` to fetch images for HTML inlining.
-/// Reuses Kingfisher's cache: a cache hit skips download entirely, and a cache miss
-/// downloads through `downloaderWithUserAgent` and populates the cache for later use.
-@MainActor
-let kingfisherImageDataProvider: @Sendable (URL) async -> (data: Data, mimeType: String)? = { url in
-    do {
-        _ = try await KingfisherManager.shared.retrieveImage(
+extension KingfisherManager {
+    func retrieveFAImage(with url: URL) async throws -> KFCrossPlatformImage {
+        try await retrieveFAImageResult(with: url).image
+    }
+
+    @MainActor
+    private func retrieveFAImageResult(with url: URL, waitForCache: Bool = false) async throws -> RetrieveImageResult {
+        var options: KingfisherOptionsInfo = .defaultsForFA
+        if waitForCache {
+            options.append(.waitForCache)
+        }
+
+        return try await KingfisherManager.shared.retrieveImage(
             with: url,
-            options: [
-                .downloader(downloaderWithCloudFlareCookie),
-                .requestModifier(FAUserAgentRequestModifier()),
-                .diskCacheExpiration(.days((7...14).randomElement()!)),
-                .diskCacheAccessExtendingExpiration(.none),
-                .waitForCache
-            ]
+            options: options
         )
+    }
+
+    /// Image-data provider used by `FAImageInliner` to fetch images for HTML inlining.
+    /// Reuses Kingfisher's cache: a cache hit skips download entirely, and a cache miss
+    /// downloads through `downloaderWithUserAgent` and populates the cache for later use.
+    func retrieveFAImageData(with url: URL) async throws -> (data: Data, mimeType: String) {
+        _ = try await retrieveFAImageResult(with: url, waitForCache: true)
         // Original bytes live in the disk cache; the memory cache holds the decoded image.
         let cache = ImageCache.default
-        guard let data = try cache.diskStorage.value(forKey: url.cacheKey) else {
-            logger.error("Kingfisher data provider: image cached but disk bytes missing for \(url)")
-            return nil
-        }
+        let data = try cache.diskStorage.value(forKey: url.cacheKey)
+            .unwrap(
+                throwing: KFError.missingFile(
+                    "Kingfisher data provider: image cached but disk bytes missing for \(url)"
+                )
+            )
+
         return (data, FAImageInliner.mimeType(for: url))
-    } catch {
-        logger.error("Kingfisher data provider failed for \(url): \(error)")
-        return nil
+    }
+    
+    func retrieveFAImageFile(with url: URL) async throws -> URL {
+        _ = try await retrieveFAImageResult(with: url, waitForCache: true)
+        return try cachedImageFileURL(for: url)
     }
 }
 
@@ -70,39 +105,34 @@ let kingfisherImageDataProvider: @Sendable (URL) async -> (data: Data, mimeType:
 /// concurrent calls — or distinct URLs sharing a filename, e.g. each author's
 /// `<username>.gif` avatar — can't collide on one path and race their copies. The
 /// extension is preserved since iOS infers the image type from it.
-func cachedImageFileURL(for url: URL) -> URL? {
+func cachedImageFileURL(for url: URL) throws -> URL {
     let cacheKey = url.cacheKey
     let cache = ImageCache.default
     guard cache.diskStorage.isCached(forKey: cacheKey) else {
-        return nil
+        throw KFError.missingFile("File for \(url) not found in disk cache")
     }
 
     let path = cache.cachePath(forKey: cacheKey)
     let fileManager = FileManager.default
     let pathWithExtension = URL.temporaryDirectory
         .appending(component: "\(UUID().uuidString)-\(url.lastPathComponent)")
-    do {
-        try fileManager.copyItem(atPath: path, toPath: pathWithExtension.path(percentEncoded: false))
-        return pathWithExtension
-    } catch {
-        logger.error("\(error)")
-        return nil
-    }
+    try fileManager.copyItem(atPath: path, toPath: pathWithExtension.path(percentEncoded: false))
+    return pathWithExtension
 }
 
 #if DEBUG
-/// Test seam: seeds the disk cache so `cachedImageFileURL` can be tested without a
-/// fetch. Here (not in the test) so the test target needn't link Kingfisher.
-func seedDiskCacheForTesting(_ data: Data, for url: URL) throws {
-    try ImageCache.default.diskStorage.store(value: data, forKey: url.cacheKey)
-}
+    /// Test seam: seeds the disk cache so `cachedImageFileURL` can be tested without a
+    /// fetch. Here (not in the test) so the test target needn't link Kingfisher.
+    func seedDiskCacheForTesting(_ data: Data, for url: URL) throws {
+        try ImageCache.default.diskStorage.store(value: data, forKey: url.cacheKey)
+    }
 #endif
 
 @MainActor
 func FAImage(_ url: URL?) -> KFImage {
     KFImage(url)
-    // not strictly needed but this is the implicit behavior of KFAnimatedImage,
-    // so this makes both functions consistent
+        // not strictly needed but this is the implicit behavior of KFAnimatedImage,
+        // so this makes both functions consistent
         .resizable()
         .defaultConfiguration()
 }
@@ -120,12 +150,8 @@ func FAAnimatedImage(_ url: URL?) -> KFAnimatedImage {
 func prefetch(_ urls: [URL], priority: Float = URLSessionTask.lowPriority) {
     let prefetcher = ImagePrefetcher(
         urls: urls,
-        options: [
-            .downloader(downloaderWithCloudFlareCookie),
-            .requestModifier(FAUserAgentRequestModifier()),
-            .downloadPriority(priority),
-            .diskCacheExpiration(.days((7...14).randomElement()!)),
-            .diskCacheAccessExtendingExpiration(.none)
+        options: .defaultsForFA + [
+            .downloadPriority(priority)
         ]
     )
     prefetcher.maxConcurrentDownloads = 100
@@ -136,7 +162,7 @@ func prefetch(_ urls: [URL], priority: Float = URLSessionTask.lowPriority) {
 func prefetchAvatars(for comments: some Collection<FAComment>) {
     var allComments = [FAVisibleComment]()
     comments.recursiveForEach { comment in
-        if case let .visible(visibleComment) = comment {
+        if case .visible(let visibleComment) = comment {
             allComments.append(visibleComment)
         }
     }
@@ -174,7 +200,7 @@ struct Prefetch: View {
     init(_ url: URL) {
         prefetch([url])
     }
-    
+
     var body: some View {
         EmptyView()
     }
@@ -189,7 +215,7 @@ private let downloaderWithCloudFlareCookie: ImageDownloader = {
 
 actor DownloadDelegate: ImageDownloaderDelegate {
     @MainActor static let shared = DownloadDelegate()
-    
+
     private init() {}
 
     // Serializes the read-of-shared-storage + write-to-downloader-storage in
@@ -206,15 +232,16 @@ actor DownloadDelegate: ImageDownloaderDelegate {
     public func downloadStartDate(for url: URL) -> Date? {
         downloadStartDates[url]
     }
-    
+
     nonisolated private func setCloudflareCookie(for url: URL, on downloader: ImageDownloader) {
         guard let downloaderCookieStorage = downloader.sessionConfiguration.httpCookieStorage
         else { return }
 
         cookieLock.withLock {
-            guard let cf_clearance = HTTPCookieStorage.shared
-                .cookies(for: url)?
-                .first(where: { $0.name == "cf_clearance" })
+            guard
+                let cf_clearance = HTTPCookieStorage.shared
+                    .cookies(for: url)?
+                    .first(where: { $0.name == "cf_clearance" })
             else { return }
 
             // Already seeded with the same value: nothing to do, keep the lock window empty.
@@ -228,19 +255,19 @@ actor DownloadDelegate: ImageDownloaderDelegate {
             downloaderCookieStorage.setCookie(cf_clearance)
         }
     }
-    
+
     nonisolated func imageDownloader(
         _ downloader: ImageDownloader,
         willDownloadImageForURL url: URL,
         with request: URLRequest?
     ) {
         setCloudflareCookie(for: url, on: downloader)
-        
+
         let startDate = Date()
         Task {
             await setDownloadStartDate(startDate, for: url)
         }
-        
+
         if let request {
             let method = request.httpMethod ?? "GET"
             logger.info("[KF] \(method) request on \(url)")
@@ -248,8 +275,13 @@ actor DownloadDelegate: ImageDownloaderDelegate {
             logger.info("[KF] Request on \(url)")
         }
     }
-    
-    nonisolated func imageDownloader(_ downloader: ImageDownloader, didFinishDownloadingImageForURL url: URL, with response: URLResponse?, error: (any Error)?) {
+
+    nonisolated func imageDownloader(
+        _ downloader: ImageDownloader,
+        didFinishDownloadingImageForURL url: URL,
+        with response: URLResponse?,
+        error: (any Error)?
+    ) {
         Task {
             await setDownloadStartDate(nil, for: url)
         }
