@@ -7,8 +7,6 @@
 
 import Foundation
 import UIKit
-import PDFKit
-import ZIPFoundation
 
 /// Extracts readable rich text from a downloaded story-submission document so it
 /// can be rendered as native, reflowing text while keeping bold/italic, relative
@@ -35,62 +33,47 @@ public enum StoryDocument {
         case "pdf":
             ns = PDFReflow.text(from: data, bodyPointSize: bodyPointSize)
         case "docx":
-            ns = docxText(from: data)
+            ns = DocxTextParser.text(from: data)
         default:
             ns = nil
         }
         return ns.map { AttributedString($0) }
     }
 
-    static func font(size: CGFloat, bold: Bool, italic: Bool) -> UIFont {
-        var traits: UIFontDescriptor.SymbolicTraits = []
-        if bold { traits.insert(.traitBold) }
-        if italic { traits.insert(.traitItalic) }
-        let base = UIFont.systemFont(ofSize: size)
-        guard !traits.isEmpty,
-              let descriptor = base.fontDescriptor.withSymbolicTraits(traits) else {
-            return base
-        }
-        return UIFont(descriptor: descriptor, size: size)
-    }
-
     private static func plainAttributed(_ string: String) -> NSAttributedString {
         NSAttributedString(
             string: string,
-            attributes: [.font: font(size: bodyPointSize, bold: false, italic: false)]
+            attributes: [.font: UIFont.systemFont(ofSize: bodyPointSize)]
         )
     }
 
     private static func rtfText(from data: Data) -> NSAttributedString? {
-        guard let attributed = try? NSMutableAttributedString(
-            data: data,
-            options: [.documentType: NSAttributedString.DocumentType.rtf],
-            documentAttributes: nil
-        ) else { return nil }
+        guard
+            let attributed = try? NSMutableAttributedString(
+                data: data,
+                options: [.documentType: NSAttributedString.DocumentType.rtf],
+                documentAttributes: nil
+            )
+        else { return nil }
 
         // Drop baked-in colors so the reader's `.label` keeps dark mode readable.
         attributed.removeAttribute(.foregroundColor, range: NSRange(location: 0, length: attributed.length))
         return attributed.length > 0 ? attributed : nil
     }
-    
-    private static func docxText(from data: Data) -> NSAttributedString? {
-        guard let archive = try? Archive(data: data, accessMode: .read, pathEncoding: nil),
-              let entry = archive["word/document.xml"] else {
-            return nil
+}
+
+extension UIFont {
+    static func font(ofSize size: CGFloat, bold: Bool, italic: Bool) -> UIFont {
+        var traits: UIFontDescriptor.SymbolicTraits = []
+        if bold { traits.insert(.traitBold) }
+        if italic { traits.insert(.traitItalic) }
+        let base = UIFont.systemFont(ofSize: size)
+        guard !traits.isEmpty,
+            let descriptor = base.fontDescriptor.withSymbolicTraits(traits)
+        else {
+            return base
         }
-
-        var xml = Data()
-        guard (try? archive.extract(entry) { xml.append($0) }) != nil else {
-            return nil
-        }
-
-        let parser = XMLParser(data: xml)
-        let delegate = DocxTextParser()
-        parser.delegate = delegate
-        guard parser.parse() else { return nil }
-
-        let result = PDFReflow.trimmed(delegate.result)
-        return result.length > 0 ? result : nil
+        return UIFont(descriptor: descriptor, size: size)
     }
 }
 
@@ -105,13 +88,22 @@ final class FittingImageTextAttachment: NSTextAttachment {
         return CGRect(x: 0, y: 0, width: image.size.width * factor, height: image.size.height * factor)
     }
 
-    override func attachmentBounds(for attributes: [NSAttributedString.Key: Any], location: NSTextLocation, textContainer: NSTextContainer?, proposedLineFragment: CGRect, position: CGPoint) -> CGRect {
+    override func attachmentBounds(
+        for attributes: [NSAttributedString.Key: Any],
+        location: NSTextLocation,
+        textContainer: NSTextContainer?,
+        proposedLineFragment: CGRect,
+        position: CGPoint
+    ) -> CGRect {
         fittedBounds(proposedWidth: proposedLineFragment.width)
     }
 
-    override func attachmentBounds(for textContainer: NSTextContainer?, proposedLineFragment lineFrag: CGRect, glyphPosition position: CGPoint, characterIndex charIndex: Int) -> CGRect {
+    override func attachmentBounds(
+        for textContainer: NSTextContainer?,
+        proposedLineFragment lineFrag: CGRect,
+        glyphPosition position: CGPoint,
+        characterIndex charIndex: Int
+    ) -> CGRect {
         fittedBounds(proposedWidth: lineFrag.width)
     }
 }
-
-

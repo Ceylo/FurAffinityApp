@@ -5,14 +5,36 @@
 //  Created by Ceylo on 27/06/2026.
 //
 
-
 import Foundation
+import UIKit
+import ZIPFoundation
 
 /// Builds an attributed string from a Word `document.xml`: text inside `<w:t>`,
 /// run traits from `<w:b>` / `<w:i>` / `<w:sz>`, paragraph breaks on `</w:p>`,
 /// line breaks on `<w:br>`, tabs on `<w:tab>`. Paragraphs are separated by a
 /// single newline; the reader supplies paragraph spacing.
 final class DocxTextParser: NSObject, XMLParserDelegate {
+    static func text(from data: Data) -> NSAttributedString? {
+        guard let archive = try? Archive(data: data, accessMode: .read, pathEncoding: nil),
+            let entry = archive["word/document.xml"]
+        else {
+            return nil
+        }
+
+        var xml = Data()
+        guard (try? archive.extract(entry) { xml.append($0) }) != nil else {
+            return nil
+        }
+
+        let parser = XMLParser(data: xml)
+        let delegate = DocxTextParser()
+        parser.delegate = delegate
+        guard parser.parse() else { return nil }
+
+        let result = PDFReflow.trimmed(delegate.result)
+        return result.length > 0 ? result : nil
+    }
+
     private(set) var result = NSMutableAttributedString()
 
     /// Typical Word default body size (half-points are halved into points).
@@ -36,11 +58,17 @@ final class DocxTextParser: NSObject, XMLParserDelegate {
     }
 
     private func append(_ string: String) {
-        let font = StoryDocument.font(size: size, bold: bold, italic: italic)
+        let font = UIFont.font(ofSize: size, bold: bold, italic: italic)
         result.append(NSAttributedString(string: string, attributes: [.font: font]))
     }
 
-    func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName: String?, attributes: [String: String]) {
+    func parser(
+        _ parser: XMLParser,
+        didStartElement elementName: String,
+        namespaceURI: String?,
+        qualifiedName: String?,
+        attributes: [String: String]
+    ) {
         stack.append(elementName)
         switch elementName {
         case "w:t": inText = true
@@ -64,7 +92,10 @@ final class DocxTextParser: NSObject, XMLParserDelegate {
     func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName: String?) {
         switch elementName {
         case "w:t": inText = false
-        case "w:r": bold = false; italic = false; size = defaultSize
+        case "w:r":
+            bold = false
+            italic = false
+            size = defaultSize
         case "w:p": if result.length > 0 { result.append(NSAttributedString(string: "\n")) }
         default: break
         }
