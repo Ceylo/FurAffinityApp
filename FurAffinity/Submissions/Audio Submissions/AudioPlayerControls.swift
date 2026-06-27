@@ -38,7 +38,8 @@ struct AudioPlayerControls: View {
                 if #available(iOS 26, *) {
                     $0.buttonStyle(.glass)
                 } else {
-                    $0.buttonStyle(.plain)
+                    $0.buttonStyle(.bordered)
+                        .clipShape(Circle())
                 }
             }
             
