@@ -20,29 +20,34 @@ struct SubmissionAudioContent: View {
     var title: String
     var author: String
     var thumbnail: DynamicThumbnail?
+    var thumbnailWidthOnHeightRatio: Float?
+    @Binding var controller: AudioPlaybackController?
     @Binding var documentFileUrl: URL?
     var downloadDocument: (_ url: URL) async throws -> Data
-    
-    @State private var controller: AudioPlaybackController?
-    
+
     var body: some View {
         VStack(spacing: 12) {
-            FAImage(audioContent.coverImageUrl)
-                .aspectRatio(contentMode: .fit)
-                .frame(maxWidth: .infinity)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.secondary.opacity(0.3))
-                }
-            
+            SubmissionMainImage(
+                widthOnHeightRatio: thumbnailWidthOnHeightRatio ?? 1,
+                thumbnailImage: thumbnail,
+                fullResolutionMediaUrl: audioContent.coverImageUrl,
+                displayProgress: false,
+                allowZoomableSheet: false,
+                fullResolutionMediaFileUrl: .constant(nil)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.secondary.opacity(0.3))
+            }
+
             playerArea
         }
         .padding(.horizontal, 10)
-        .task { await preparePlayer() }
+        .task { await prepareController() }
         .task { await downloadFile() }
     }
-    
+
     @ViewBuilder
     private var playerArea: some View {
         if let controller {
@@ -51,8 +56,9 @@ struct SubmissionAudioContent: View {
             ProgressView()
         }
     }
-    
-    private func preparePlayer() async {
+
+    private func prepareController() async {
+        guard controller == nil else { return }   // idempotent across recycle/reappear
         let controller = AudioPlaybackController(
             streamUrl: audioContent.streamUrl,
             title: title,
@@ -84,7 +90,9 @@ struct SubmissionAudioContent: View {
 #Preview {
     @Previewable
     @State var errorStorage = ErrorStorage()
-    
+    @Previewable
+    @State var controller: AudioPlaybackController?
+
     withAsync({ await FASubmission.demoAudio }) { submission in
         let audio: FASubmission.AudioContent = {
             guard case let .audio(audio) = submission.content else {
@@ -97,6 +105,8 @@ struct SubmissionAudioContent: View {
             title: submission.title,
             author: submission.author,
             thumbnail: nil,
+            thumbnailWidthOnHeightRatio: nil,
+            controller: $controller,
             documentFileUrl: .constant(nil),
             downloadDocument: { try await OfflineFASession.default.file(at: $0) }
         )
