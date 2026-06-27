@@ -56,9 +56,11 @@ struct SubmissionMainImage: View {
         GeometryReader { geometry in
             if let errorMessage {
                 Centered {
-                    Text("Oops, image loading failed 😞")
-                    Text(errorMessage)
-                        .font(.caption)
+                    VStack(spacing: 10) {
+                        Text("Oops, image loading failed 😞")
+                        Text(errorMessage)
+                            .font(.caption)
+                    }
                 }
             } else {
                 Group {
