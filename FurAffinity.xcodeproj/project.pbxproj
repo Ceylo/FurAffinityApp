@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 55;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -146,9 +146,6 @@
 		CEA17A1100000000000000FE /* CommentThreadFocus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA17A1100000000000000FD /* CommentThreadFocus.swift */; };
 		CEA17A110000000000000202 /* CommentsWidthMeasuring.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA17A110000000000000201 /* CommentsWidthMeasuring.swift */; };
 		D84FB74D89392ACC0D73E55D /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 630BB43B07A3008252B5171B /* UserNotificationsUI.framework */; };
-		FA0000000000000000000002 /* QuickLookPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000001 /* QuickLookPreview.swift */; };
-		FA0000000000000000000004 /* SubmissionTextContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000003 /* SubmissionTextContent.swift */; };
-		FA0000000000000000000006 /* StoryReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000005 /* StoryReaderView.swift */; };
 		FA0000000000000000000008 /* SubmissionAudioContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000007 /* SubmissionAudioContent.swift */; };
 		FA000000000000000000000A /* AudioPlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000009 /* AudioPlaybackController.swift */; };
 		FB227FE8FD7642FAD0C63BF7 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E6731320A5B4D6196E99F0F9 /* UserNotifications.framework */; };
@@ -325,13 +322,14 @@
 		CEA17A1100000000000000FD /* CommentThreadFocus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentThreadFocus.swift; sourceTree = "<group>"; };
 		CEA17A110000000000000201 /* CommentsWidthMeasuring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsWidthMeasuring.swift; sourceTree = "<group>"; };
 		E6731320A5B4D6196E99F0F9 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
-		FA0000000000000000000001 /* QuickLookPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookPreview.swift; sourceTree = "<group>"; };
-		FA0000000000000000000003 /* SubmissionTextContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionTextContent.swift; sourceTree = "<group>"; };
-		FA0000000000000000000005 /* StoryReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryReaderView.swift; sourceTree = "<group>"; };
 		FA0000000000000000000007 /* SubmissionAudioContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionAudioContent.swift; sourceTree = "<group>"; };
 		FA0000000000000000000009 /* AudioPlaybackController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlaybackController.swift; sourceTree = "<group>"; };
 		FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudflareResolutionOverlay.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		877D547D2FF0353E00BA9802 /* Text Submissions */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Text Submissions"; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		3600B5E43729B19FE61F3219 /* Frameworks */ = {
@@ -478,13 +476,8 @@
 				87566B83297DD02300FD3199 /* SubmissionMainImage.swift */,
 				873E65EF27528FC6009C8767 /* SubmissionControlsView.swift */,
 				8708DA252D74CF19000B419C /* SubmissionMetadataView.swift */,
-				FA0000000000000000000001 /* QuickLookPreview.swift */,
-				FA0000000000000000000003 /* SubmissionTextContent.swift */,
-				FA0000000000000000000007 /* SubmissionAudioContent.swift */,
-				878AB7152FEB2D4800E78CFB /* AudioScrubber.swift */,
-				878AB7132FEB2D3E00E78CFB /* AudioPlayerControls.swift */,
-				FA0000000000000000000009 /* AudioPlaybackController.swift */,
-				FA0000000000000000000005 /* StoryReaderView.swift */,
+				877D547D2FF0353E00BA9802 /* Text Submissions */,
+				877D547C2FF0351C00BA9802 /* Audio Submissions */,
 			);
 			path = Submissions;
 			sourceTree = "<group>";
@@ -546,6 +539,17 @@
 				8799FAE12741672E0068A049 /* SubmissionFeedItemView.swift */,
 			);
 			path = SubmissionsFeed;
+			sourceTree = "<group>";
+		};
+		877D547C2FF0351C00BA9802 /* Audio Submissions */ = {
+			isa = PBXGroup;
+			children = (
+				FA0000000000000000000007 /* SubmissionAudioContent.swift */,
+				878AB7152FEB2D4800E78CFB /* AudioScrubber.swift */,
+				878AB7132FEB2D3E00E78CFB /* AudioPlayerControls.swift */,
+				FA0000000000000000000009 /* AudioPlaybackController.swift */,
+			);
+			path = "Audio Submissions";
 			sourceTree = "<group>";
 		};
 		877FD54B29EC90B600230996 /* Comments */ = {
@@ -682,6 +686,9 @@
 			);
 			dependencies = (
 				F48539DEA404F48156AED323 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				877D547D2FF0353E00BA9802 /* Text Submissions */,
 			);
 			name = FurAffinity;
 			packageProductDependencies = (
@@ -885,12 +892,9 @@
 				87B0933C2AED6D53008DFDE7 /* DatetimePair.swift in Sources */,
 				87F074A82C91AF0C00218D0E /* RemoteSubmissionView.swift in Sources */,
 				8708DA262D74CF19000B419C /* SubmissionMetadataView.swift in Sources */,
-				FA0000000000000000000002 /* QuickLookPreview.swift in Sources */,
 				878AB7162FEB2D4800E78CFB /* AudioScrubber.swift in Sources */,
-				FA0000000000000000000004 /* SubmissionTextContent.swift in Sources */,
 				FA0000000000000000000008 /* SubmissionAudioContent.swift in Sources */,
 				FA000000000000000000000A /* AudioPlaybackController.swift in Sources */,
-				FA0000000000000000000006 /* StoryReaderView.swift in Sources */,
 				875EF2E82C1E1FF7000D4BFB /* Comparable.swift in Sources */,
 				87919B2329F1CED6006FC2D6 /* Commenting.swift in Sources */,
 				873E66112752AAB2009C8767 /* MediaSaveHandler.swift in Sources */,
