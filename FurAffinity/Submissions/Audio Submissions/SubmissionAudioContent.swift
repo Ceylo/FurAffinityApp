@@ -5,8 +5,8 @@
 //  Created by Ceylo on 21/06/2026.
 //
 
-import SwiftUI
 import FAKit
+import SwiftUI
 
 /// Renders an audio/music submission: the cover art plus an inline native player
 /// that streams the mp3 progressively, with background/lock-screen playback driven
@@ -15,7 +15,7 @@ import FAKit
 /// does not wait on that download.
 struct SubmissionAudioContent: View {
     @Environment(ErrorStorage.self) private var errorStorage
-    
+
     var audioContent: FASubmission.AudioContent
     var title: String
     var author: String
@@ -58,7 +58,7 @@ struct SubmissionAudioContent: View {
     }
 
     private func prepareController() async {
-        guard controller == nil else { return }   // idempotent across recycle/reappear
+        guard controller == nil else { return }  // idempotent across recycle/reappear
         let controller = AudioPlaybackController(
             streamUrl: audioContent.streamUrl,
             title: title,
@@ -69,7 +69,7 @@ struct SubmissionAudioContent: View {
         self.controller = controller
         await controller.prepare()
     }
-    
+
     /// Downloads the mp3 in the background to back Save/Share. Independent of
     /// playback, which streams immediately.
     private func downloadFile() async {
@@ -95,7 +95,7 @@ struct SubmissionAudioContent: View {
 
     withAsync({ await FASubmission.demoAudio }) { submission in
         let audio: FASubmission.AudioContent = {
-            guard case let .audio(audio) = submission.content else {
+            guard case .audio(let audio) = submission.content else {
                 fatalError("demoAudio must be an audio submission")
             }
             return audio

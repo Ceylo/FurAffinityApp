@@ -13,10 +13,10 @@ import SwiftUI
 /// `AudioPlaybackController`'s observable state instead.
 struct AudioPlayerControls: View {
     var controller: AudioPlaybackController
-    
+
     @State private var isScrubbing = false
     @State private var scrubValue = 0.0
-    
+
     var body: some View {
         HStack(alignment: .bottom, spacing: 20) {
             Button {
@@ -42,14 +42,14 @@ struct AudioPlayerControls: View {
                         .clipShape(Circle())
                 }
             }
-            
+
             VStack {
                 AudioScrubber(
                     controller: controller,
                     isScrubbing: $isScrubbing,
                     scrubValue: $scrubValue
                 )
-                
+
                 HStack {
                     Text(timeLabel(isScrubbing ? scrubValue : controller.currentTime))
                     Spacer()
@@ -62,7 +62,7 @@ struct AudioPlayerControls: View {
         }
         .padding(20)
     }
-    
+
     private func timeLabel(_ seconds: Double) -> String {
         guard seconds.isFinite, seconds >= 0 else { return "--:--" }
         let total = Int(seconds.rounded())

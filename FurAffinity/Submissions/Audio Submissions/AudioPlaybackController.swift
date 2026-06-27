@@ -5,11 +5,10 @@
 //  Created by Ceylo on 22/06/2026.
 //
 
-import SwiftUI
 import AVFoundation
-import MediaPlayer
-import Kingfisher
 import FAKit
+import Kingfisher
+import MediaPlayer
 import os
 
 /// Owns the `AVPlayer` and every playback side-effect for an audio submission so
@@ -79,10 +78,13 @@ final class AudioPlaybackController {
         guard player == nil else { return }
 
         let userAgent = await FAUserAgent.current()
-        let asset = AVURLAsset(url: streamUrl, options: [
-            AVURLAssetHTTPCookiesKey: HTTPCookieStorage.shared.cookies ?? [],
-            "AVURLAssetHTTPHeaderFieldsKey": ["User-Agent": userAgent],
-        ])
+        let asset = AVURLAsset(
+            url: streamUrl,
+            options: [
+                AVURLAssetHTTPCookiesKey: HTTPCookieStorage.shared.cookies ?? [],
+                "AVURLAssetHTTPHeaderFieldsKey": ["User-Agent": userAgent],
+            ]
+        )
         let item = AVPlayerItem(asset: asset)
         let player = AVPlayer(playerItem: item)
         self.player = player
@@ -121,7 +123,7 @@ final class AudioPlaybackController {
     /// `timeControlStatus` observer), so this works whether play is triggered
     /// here or by the native transport controls.
     func play() {
-        if didReachEnd { seek(to: 0) }   // clears didReachEnd, seeks to start
+        if didReachEnd { seek(to: 0) }  // clears didReachEnd, seeks to start
         player?.play()
         MPNowPlayingInfoCenter.default().playbackState = .playing
     }
@@ -215,7 +217,8 @@ final class AudioPlaybackController {
                 guard let self, !self.isSeeking else { return }
                 self.currentTime = time.seconds
                 if let itemDuration = self.player?.currentItem?.duration.seconds,
-                   itemDuration.isFinite {
+                    itemDuration.isFinite
+                {
                     self.duration = itemDuration
                 }
                 self.updateNowPlayingPlaybackState()
@@ -355,23 +358,23 @@ final class AudioPlaybackController {
 }
 
 #if DEBUG
-extension AudioPlaybackController {
-    /// A controller seeded with fixed playback values for SwiftUI previews —
-    /// no live `AVPlayer`, no network — so previews can render the scrubber
-    /// tint at a known progress. Do not call `prepare()` on it.
-    static func preview(currentTime: Double = 0, duration: Double = 100) -> AudioPlaybackController {
-        let controller = AudioPlaybackController(
-            streamUrl: URL(string: "https://example.invalid/preview.mp3")!,
-            title: "Some title",
-            author: "author",
-            coverImageUrl: URL(string: "https://example.invalid/preview.jpg")!,
-            errorStorage: ErrorStorage()
-        )
-        controller.currentTime = currentTime
-        controller.duration = duration
-        return controller
+    extension AudioPlaybackController {
+        /// A controller seeded with fixed playback values for SwiftUI previews —
+        /// no live `AVPlayer`, no network — so previews can render the scrubber
+        /// tint at a known progress. Do not call `prepare()` on it.
+        static func preview(currentTime: Double = 0, duration: Double = 100) -> AudioPlaybackController {
+            let controller = AudioPlaybackController(
+                streamUrl: URL(string: "https://example.invalid/preview.mp3")!,
+                title: "Some title",
+                author: "author",
+                coverImageUrl: URL(string: "https://example.invalid/preview.jpg")!,
+                errorStorage: ErrorStorage()
+            )
+            controller.currentTime = currentTime
+            controller.duration = duration
+            return controller
+        }
     }
-}
 #endif
 
 private enum AudioPlaybackError: LocalizedError {
