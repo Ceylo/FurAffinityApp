@@ -30,7 +30,8 @@ struct AudioPlayerControls: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 24, height: 24)
-                    .padding(.leading, 4)
+                    .padding(.leading, controller.isPlaying ? 3 : 6)
+                    .padding(.trailing, controller.isPlaying ? 3 : 0)
                     .padding(.vertical, 8)
             }
             .applying {

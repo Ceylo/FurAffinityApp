@@ -257,3 +257,22 @@ struct SubmissionView: View {
     }
     .environment(errorStorage)
 }
+
+#Preview("Audio submission") {
+    @Previewable
+    @State var errorStorage = ErrorStorage()
+    
+    NavigationStack {
+        withAsync({ await FASubmission.demoAudio }) {
+            SubmissionView(
+                submission: $0,
+                avatarUrl: FAURLs.avatarUrl(for: $0.author),
+                favoriteAction: {},
+                replyAction: { _, _ in },
+                sendNoteAction: { _, _, _ in },
+                downloadDocument: { try await OfflineFASession.default.file(at: $0) }
+            )
+        }
+    }
+    .environment(errorStorage)
+}
