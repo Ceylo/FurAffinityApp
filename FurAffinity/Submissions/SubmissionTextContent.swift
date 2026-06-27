@@ -61,11 +61,17 @@ struct SubmissionTextContent: View {
                 readStory()
             } label: {
                 HStack {
-                    if isDownloading {
-                        ProgressView()
-                    } else {
-                        Image(systemName: "book")
+                    // Keep the leading glyph slot a fixed, text-matched size so the
+                    // button height stays steady when the spinner replaces the icon.
+                    Group {
+                        if isDownloading {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Image(systemName: "book")
+                        }
                     }
+                    .frame(width: 17, height: 17)
                     Text(isDownloading ? "Downloading…" : "Read story")
                 }
             }
@@ -108,7 +114,7 @@ struct SubmissionTextContent: View {
                 let text = await Task.detached {
                     StoryDocument.richText(from: data, filename: filename)
                 }.value
-                let content: StoryReaderView.Content = text.map { .text($0) } ?? .document(fileUrl)
+                let content = StoryReaderView.Content(text: text, documentUrl: fileUrl)
                 loadedContent = content
                 readerContent = content
             }

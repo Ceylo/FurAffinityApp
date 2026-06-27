@@ -121,6 +121,268 @@ struct StoryDocumentTests {
     }
 
     @Test
+    func pdfStory_preservesEmphasisFromBundledRobotoFont() throws {
+        // LIMA tags emphasis via Roboto-Bold/Italic faces, but iOS doesn't ship
+        // Roboto, so PDFKit substitutes Helvetica and drops the traits unless we
+        // register the bundled faces. With them registered, the run traits survive.
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        #expect(hasTrait(.traitBold, in: attributed) || hasTrait(.traitItalic, in: attributed),
+                "expected bold/italic runs once the bundled Roboto faces are registered")
+    }
+
+    @Test
+    func pdfStory_doesNotSplitContractionsAtCurlyQuotes() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // PDFKit splits these at the curly apostrophe (a separate font run); the reflow
+        // must rejoin the fragments so contractions stay whole.
+        #expect(text.contains("it’s scrutinous"), "contraction split: \(text.prefix(500))")
+        #expect(text.contains("I don’t entirely find"))
+        #expect(text.contains("There’s a light coming"))
+        #expect(text.contains("It’s cold in this room"))
+        // The broken forms must not survive.
+        #expect(!text.contains("it’\ns"))
+        #expect(!text.contains("There’\ns"))
+        #expect(!text.contains("don\n’t"))
+    }
+
+    @Test
+    func pdfStory_restoresFirstLineIndentTabs() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1642368831.typhin_princess_tells_her_story.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // This PDF indents the first line of each paragraph (positionally, not as a tab
+        // character); restore it as a leading tab so paragraphs read as in the source.
+        #expect(text.contains("\n\tThe wizard Elimaio"), "missing paragraph indent: \(String(text.prefix(400)))")
+        #expect(text.contains("\n\tOnce we were alone"))
+        // The justified body's noisy geometry must not produce spurious breaks: clauses
+        // split at curly quotes stay joined, as do plain soft wraps.
+        #expect(text.contains("my new “normal”, but I was wrong."))
+        #expect(text.contains("the “experiments”. And yes,"))
+        #expect(text.contains("as they disappeared once the door"))
+    }
+
+    @Test
+    func pdfStory_blockStyleDocumentGetsNoIndentTabs() throws {
+        // A document that separates paragraphs by spacing (not first-line indents) must
+        // not gain spurious tabs from the noisy per-character geometry.
+        let attributed = try #require(StoryDocument.richText(from: testData("1781832277.vixyyfox_3000_-redfurythings.pdf"), filename: "story.pdf"))
+        #expect(!String(attributed.characters).contains("\t"))
+    }
+
+    @Test
+    func pdfStory_respectsCenteredTitleAlignment() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let ns = NSAttributedString(attributed)
+        let titleRange = (ns.string as NSString).range(of: "LIMA NOX - BOXES")
+        try #require(titleRange.location != NSNotFound)
+
+        var centered = false
+        ns.enumerateAttribute(.paragraphStyle, in: titleRange) { value, _, _ in
+            if let style = value as? NSParagraphStyle, style.alignment == .center { centered = true }
+        }
+        #expect(centered, "centered title lost its alignment")
+    }
+
+    @Test
+    func pdfStory_preservesEmbeddedImages() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let ns = NSAttributedString(attributed)
+
+        var images = 0
+        ns.enumerateAttribute(.attachment, in: NSRange(location: 0, length: ns.length)) { value, _, _ in
+            if let attachment = value as? NSTextAttachment, attachment.image != nil { images += 1 }
+        }
+        #expect(images >= 1, "expected inline images, found \(images)")
+    }
+
+    @Test
+    func pdfStory_separatesCenteredTitleFromByline() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // The centered title and its byline used to soft-wrap onto one line.
+        #expect(text.contains("LIMA NOX - BOXES\nby Amber Calliope"), "title/byline not split: \(text.prefix(400))")
+        #expect(!text.contains("LIMA NOX - BOXES by Amber Calliope"))
+    }
+
+    @Test
+    func pdfStory_separatesHeadingFromBodyOnVerticalGap() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // The bold chapter heading fills the line width, so only the blank line of vertical
+        // space below it marks the paragraph break before the body.
+        #expect(text.contains("Dyeter |\nI can feel them"), "heading/body not split: \(text.prefix(600))")
+        #expect(!text.contains("Dyeter | I can feel them"))
+    }
+
+    @Test
+    func pdfStory_putsEachDialogueTurnOnItsOwnLine() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // Adjacent dialogue turns (opening curly quote) used to merge — either by a
+        // same-row geometry split or, for lines with no character bounds, a soft wrap.
+        #expect(text.contains("“Yes?...“\n“Yes.“"), "dialogue turns merged: \(text.prefix(1600))")
+        #expect(text.contains("“Scientific Study Diacrees–“\n“Under section 9 yes–“"))
+        #expect(!text.contains("“Yes?...“ “Yes.“"))
+        #expect(!text.contains("Diacrees–“ “Under"))
+    }
+
+    @Test
+    func fittingImageAttachment_fitsLineWidthAndPreservesAspect() {
+        let attachment = FittingImageTextAttachment()
+        attachment.image = solidImage(width: 800, height: 400) // 2:1
+        let narrow = CGRect(x: 0, y: 0, width: 300, height: CGFloat.greatestFiniteMagnitude)
+
+        let bounds = attachment.attachmentBounds(for: nil, proposedLineFragment: narrow, glyphPosition: .zero, characterIndex: 0)
+        #expect(bounds.width <= narrow.width, "image overflowed the line width: \(bounds.width)")
+        #expect(abs(bounds.width / bounds.height - 2) < 0.01, "aspect ratio not preserved: \(bounds)")
+
+        // Never upscales an image narrower than the line.
+        attachment.image = solidImage(width: 100, height: 50)
+        let small = attachment.attachmentBounds(for: nil, proposedLineFragment: narrow, glyphPosition: .zero, characterIndex: 0)
+        #expect(small.width == 100, "small image was upscaled: \(small.width)")
+    }
+
+    @Test
+    func pdfStory_imageAttachmentsAreSelfSizing() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let ns = NSAttributedString(attributed)
+
+        // The self-sizing subclass must survive the AttributedString round trip.
+        var fitting = 0
+        ns.enumerateAttribute(.attachment, in: NSRange(location: 0, length: ns.length)) { value, _, _ in
+            if value is FittingImageTextAttachment { fitting += 1 }
+        }
+        #expect(fitting >= 1, "expected self-sizing image attachments, found \(fitting)")
+    }
+
+    @Test
+    func pdfStory_doesNotCenterFullWidthBodyLine() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let ns = NSAttributedString(attributed)
+        let text = ns.string
+
+        // A left-aligned body line whose noisy bounds happened to look balanced used to be
+        // mistaken for a centered title — split onto its own line and centered. It must stay
+        // soft-wrapped into the sentence and keep default (non-centered) alignment.
+        #expect(text.contains("sensation to be working on something like this"), "body line broke out: \(text.prefix(700))")
+        #expect(!text.contains("\nworking on something"), "body line started a spurious paragraph")
+
+        let range = (text as NSString).range(of: "working on something")
+        try #require(range.location != NSNotFound)
+        var centered = false
+        ns.enumerateAttribute(.paragraphStyle, in: range) { value, _, _ in
+            if let style = value as? NSParagraphStyle, style.alignment == .center { centered = true }
+        }
+        #expect(!centered, "body line was wrongly centered")
+    }
+
+    @Test
+    func pdfStory_attachesDanglingCloseQuoteToPreviousLine() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // PDFKit splits a trailing close quote onto its own line; it must rejoin the line
+        // it closes rather than becoming a lone paragraph.
+        #expect(text.contains("we aren’t here to discuss the mess.“"), "close quote not reattached: \(text.prefix(900))")
+        #expect(text.contains("such things as.. Breaker failures.“"))
+        #expect(!text.contains("mess.\n“"))
+        #expect(!text.contains("failures.\n“"))
+    }
+
+    @Test
+    func pdfStory_putsAllCapsShoutOnItsOwnLine() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // The all-caps shout was soft-wrapping into the giant alarm SFX above it; it must
+        // stand on its own paragraph.
+        #expect(text.contains("\nOK FINE I'M GETTING UP!!!"), "shout merged into SFX: \(text.prefix(1200))")
+        #expect(!text.contains("RrriiIIINNNG OK FINE"))
+    }
+
+    @Test
+    func pdfStory_doesNotCenterCollapsedLongLines() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // Long monologue lines whose per-character bounds collapse into a narrow, symmetric,
+        // mid-page span used to pass the geometry centering test — rendered centered and split
+        // onto their own paragraph. They must read as normal left-aligned prose, joined to the
+        // line they continue.
+        #expect(text.contains("wooden walls and foyer staircases of this building"), "foyer line broke out: \(text.prefix(60))")
+        #expect(text.contains("thanks weather people, really doing your job"), "weather-people line broke out")
+        #expect(!isCenterAligned("and foyer staircases of this building", in: attributed), "collapsed long line wrongly centered")
+        #expect(!isCenterAligned("weather people, really doing your job", in: attributed), "collapsed long line wrongly centered")
+    }
+
+    @Test
+    func pdfStory_joinsCenteredSplitFragments() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // A lowercase split fragment ("they don") continuing a full previous line rejoins the
+        // monologue it continues — and never gets centered.
+        #expect(text.contains("because they don’t know how to just let the weather machines"), "'weather machines' fragment broke out: \(text.prefix(60))")
+        #expect(!isCenterAligned("they don’t know how", in: attributed), "split fragment wrongly centered")
+
+        // A capitalized split head ("And I’" + "m out…") following a line that ended well short
+        // ("…I guess…") opens a new paragraph beat — but stays left-aligned, not centered.
+        #expect(text.contains("guess…\nAnd I’m out of detergent"), "'out of detergent' beat didn't break")
+        #expect(!isCenterAligned("And I’m out of detergent", in: attributed), "split fragment wrongly centered")
+    }
+
+    @Test
+    func pdfStory_breaksMonologueBeatsAfterShortLines() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // Capitalized monologue beats whose previous visual line ended well short of the margin
+        // each start their own paragraph, even when PDFKit splits their first word into a narrow
+        // head fragment (which used to be blanket-joined).
+        #expect(text.contains("better.\nOk TV , let’s see"), "#1 'Ok TV' beat didn't break: \(text.prefix(60))")
+        #expect(text.contains("\nTool.\nOk, yeah time to start walking away"), "#3 'Tool.'/'Ok, yeah' didn't break")
+        #expect(text.contains("\nThere’s people here.. Don’t make a scene"), "#4 'There's people here' didn't break")
+        #expect(text.contains("thanks.“\nThat’s"), "#5 'That's ok' beat didn't break")
+    }
+
+    @Test
+    func pdfStory_keepsContractionSplitHeadJoined() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // "Don’t" is split by PDFKit into "Don" + "’t remember…"; the narrow fragment used to
+        // fool the line-fill test into starting a new paragraph. It stays a wrapped continuation.
+        #expect(text.contains("Enough. Don’t remember that little grease stain pip"), "split head broke the paragraph")
+        #expect(!text.contains("Enough.\nDon’t remember"))
+    }
+
+    @Test
+    func pdfStory_putsTrailingOffOnomatopoeiaOnItsOwnLine() throws {
+        let attributed = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        let text = String(attributed.characters)
+
+        // Short sound-effect lines trailing off in a hyphen used to soft-wrap into the prose
+        // around them — merging "Huff" into "step", gluing "thoc…" onto "Not today..". They
+        // must stand on their own paragraphs.
+        #expect(text.contains("\nstep stoc toc toc step-"), "onomatopoeia merged into prose")
+        #expect(text.contains("\nthoc stoc tac toc step-"))
+        #expect(!text.contains("Huffstep"))
+        #expect(!text.contains("today.. thoc"))
+    }
+
+    @Test
+    func pdfStory_keepsGenuineCenteredTitles() throws {
+        // The character cap must not strip alignment from a real (short) centered title.
+        let lima = try #require(StoryDocument.richText(from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"), filename: "story.pdf"))
+        #expect(isCenterAligned("LIMA NOX - BOXES", in: lima), "LIMA title lost its centering")
+    }
+
+    @Test
     func plainTextFile_isReturnedAsIs() throws {
         let attributed = try #require(StoryDocument.richText(from: Data("Hello world".utf8), filename: "story.txt"))
         #expect(String(attributed.characters) == "Hello world")
@@ -129,6 +391,26 @@ struct StoryDocumentTests {
     @Test
     func unsupportedFormat_returnsNil() {
         #expect(StoryDocument.richText(from: Data("anything".utf8), filename: "story.bin") == nil)
+    }
+
+    /// A solid-color image of the given pixel size, for attachment-sizing tests.
+    private func solidImage(width: CGFloat, height: CGFloat) -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: width, height: height)).image { context in
+            UIColor.gray.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        }
+    }
+
+    /// Whether the first occurrence of `substring` carries centered paragraph alignment.
+    private func isCenterAligned(_ substring: String, in attributed: AttributedString) -> Bool {
+        let ns = NSAttributedString(attributed)
+        let range = (ns.string as NSString).range(of: substring)
+        guard range.location != NSNotFound else { return false }
+        var centered = false
+        ns.enumerateAttribute(.paragraphStyle, in: range) { value, _, _ in
+            if let style = value as? NSParagraphStyle, style.alignment == .center { centered = true }
+        }
+        return centered
     }
 
     /// Splits text into words, trimming surrounding punctuation and dropping empties.

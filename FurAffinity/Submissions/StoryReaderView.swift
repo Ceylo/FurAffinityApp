@@ -6,47 +6,61 @@
 //
 
 import SwiftUI
+import Defaults
 
-/// Reads a story submission. Extracted text is rendered as native, reflowing text
-/// at the same size as the submission description; formats we can't extract fall
-/// back to a QuickLook document preview. Presented in a sheet with a Done button.
+/// Reads a story submission. When we can extract its text it is rendered as native,
+/// reflowing text at the same size as the submission description, with a nav-bar menu
+/// to switch to the original document (QuickLook). Formats we can't extract show the
+/// original document directly with no menu. Presented in a swipe-to-dismiss sheet.
 struct StoryReaderView: View {
-    enum Content: Identifiable {
-        case text(AttributedString)
-        case document(URL)
+    struct Content: Identifiable {
+        /// Reflowed rich text, or `nil` for formats we couldn't extract.
+        var text: AttributedString?
+        /// The downloaded document on disk, shown via QuickLook.
+        var documentUrl: URL
 
-        var id: String {
-            switch self {
-            case .text: "text"
-            case .document(let url): url.absoluteString
-            }
-        }
+        var id: String { documentUrl.absoluteString }
     }
 
     var title: String
     var content: Content
-    @Environment(\.dismiss) private var dismiss
+    @Default(.storyReaderShowsOriginalDocument) private var showsOriginal
 
     var body: some View {
         NavigationStack {
             Group {
-                switch content {
-                case .text(let text):
+                if let text = content.text, !showsOriginal {
                     StoryTextView(attributedText: text)
                         .ignoresSafeArea(edges: .bottom)
-                case .document(let url):
-                    QuickLookPreview(fileUrl: url)
+                } else {
+                    QuickLookPreview(fileUrl: content.documentUrl)
                         .ignoresSafeArea()
                 }
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                // Only offer the choice when there's reflowed text to switch between.
+                if content.text != nil {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Menu {
+                            Picker("Story view", selection: $showsOriginal) {
+                                Text("Reflowed").tag(false)
+                                Text("Original").tag(true)
+                            }
+                            .pickerStyle(.inline)
+                        } label: {
+                            Image(systemName: "textformat")
+                        }
+                    }
                 }
             }
         }
+        // The reader is the only screen that follows device tilt; the rest of the
+        // app stays portrait. onDisappear forces back to portrait so dismissing
+        // while held in landscape snaps the app upright, and closes the gate.
+        .onAppear { DeviceOrientationControl.enableLandscape() }
+        .onDisappear { DeviceOrientationControl.resetToPortrait() }
     }
 }
 
@@ -78,7 +92,8 @@ private struct StoryTextView: UIViewRepresentable {
     }
 
     /// Rescales run fonts relative to the dominant body size and applies paragraph
-    /// spacing, wrapping fonts in `UIFontMetrics` so they track Dynamic Type.
+    /// spacing, wrapping fonts in `UIFontMetrics` so they track Dynamic Type. Embedded
+    /// images size themselves to the line width via `FittingImageTextAttachment`.
     private func normalized(_ source: NSAttributedString) -> NSAttributedString {
         let result = NSMutableAttributedString(attributedString: source)
         let full = NSRange(location: 0, length: result.length)
@@ -95,11 +110,17 @@ private struct StoryTextView: UIViewRepresentable {
 
         // Wrapped lines within a paragraph get a modest gap; paragraph breaks (`\n`,
         // which includes the stacked title lines) add more on top so they stand out.
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.lineSpacing = metrics.scaledValue(for: referenceBodySize * 0.35)
-        paragraph.paragraphSpacing = metrics.scaledValue(for: referenceBodySize * 0.7)
-        paragraph.lineBreakMode = .byWordWrapping
-        result.addAttribute(.paragraphStyle, value: paragraph, range: full)
+        // Any alignment the extractor set (e.g. centered titles) is preserved.
+        let lineSpacing = metrics.scaledValue(for: referenceBodySize * 0.35)
+        let paragraphSpacing = metrics.scaledValue(for: referenceBodySize * 0.7)
+        result.enumerateAttribute(.paragraphStyle, in: full) { value, range, _ in
+            let paragraph = NSMutableParagraphStyle()
+            if let existing = value as? NSParagraphStyle { paragraph.setParagraphStyle(existing) }
+            paragraph.lineSpacing = lineSpacing
+            paragraph.paragraphSpacing = paragraphSpacing
+            paragraph.lineBreakMode = .byWordWrapping
+            result.addAttribute(.paragraphStyle, value: paragraph, range: range)
+        }
 
         // `attributedText` ignores `view.textColor`, so set a dynamic color the text
         // view re-resolves at draw time — keeping the reader readable in dark mode,
@@ -131,6 +152,12 @@ private struct StoryTextView: UIViewRepresentable {
 
     Color.clear
         .sheet(isPresented: .constant(true)) {
-            StoryReaderView(title: "Prepared for the Fallout", content: .text(AttributedString(sample)))
+            StoryReaderView(
+                title: "Prepared for the Fallout",
+                content: .init(
+                    text: AttributedString(sample),
+                    documentUrl: URL(string: "file:///preview.txt")!
+                )
+            )
         }
 }
