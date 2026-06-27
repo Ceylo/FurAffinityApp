@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  DynamicThumbnail.swift
 //  
 //
 //  Created by Ceylo on 17/06/2024.

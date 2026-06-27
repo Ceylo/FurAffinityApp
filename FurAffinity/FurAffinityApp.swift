@@ -116,6 +116,7 @@ struct RootView: View {
 @main
 struct FurAffinityApp: App {
     @State private var model = Model()
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() {
         let device = UIDevice.current
