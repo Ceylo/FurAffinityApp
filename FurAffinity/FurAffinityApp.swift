@@ -5,16 +5,17 @@
 //  Created by Ceylo on 17/10/2021.
 //
 
-import SwiftUI
-import FAKit
 import AmplitudeSwift
-import UserNotifications
 import Defaults
+import FAKit
+import Kingfisher
+import SwiftUI
+import UserNotifications
 
 enum BuildConfiguration: CustomStringConvertible {
     case debug
     case release
-    
+
     var description: String {
         switch self {
         case .debug:
@@ -26,9 +27,9 @@ enum BuildConfiguration: CustomStringConvertible {
 }
 
 #if DEBUG
-let buildConfiguration = BuildConfiguration.debug
+    let buildConfiguration = BuildConfiguration.debug
 #else
-let buildConfiguration = BuildConfiguration.release
+    let buildConfiguration = BuildConfiguration.release
 #endif
 
 @MainActor
@@ -36,7 +37,7 @@ private let amplitude: Amplitude? = {
     guard Secrets.amplitudeApiKey != Secrets.placeholderApiKey else {
         return nil
     }
-    
+
     let trackingOptions = TrackingOptions()
         .disableTrackCity()
         .disableTrackRegion()
@@ -44,13 +45,13 @@ private let amplitude: Amplitude? = {
         .disableTrackDMA()
         .disableTrackIpAddress()
         .disableTrackIDFV()
-    
+
     let config = Configuration(
         apiKey: Secrets.amplitudeApiKey,
         trackingOptions: trackingOptions,
         autocapture: [.sessions, .appLifecycles]
     )
-    
+
     return Amplitude(configuration: config)
 }()
 
@@ -121,13 +122,17 @@ struct FurAffinityApp: App {
     init() {
         let device = UIDevice.current
         let appState = UIApplication.shared.applicationState
-        logger.info("Launched FurAffinity \(Bundle.main.version.shortDescription) on \(device.systemName) \(device.systemVersion), \(buildConfiguration) build [CFDIAG] applicationState=\(appState.rawValue)")
+        logger.info(
+            "Launched FurAffinity \(Bundle.main.version.shortDescription) on \(device.systemName) \(device.systemVersion), \(buildConfiguration) build [CFDIAG] applicationState=\(appState.rawValue)"
+        )
         _ = amplitude
         logger.info("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized")")
-        
+
         Defaults.runSettingsMigrations()
         BackgroundRefreshManager.register()
-        FAImageInliner.dataProvider = kingfisherImageDataProvider
+        FAImageInliner.dataProvider = {
+            try? await KingfisherManager.shared.retrieveFAImageData(with: $0)
+        }
         UNUserNotificationCenter.current().delegate = NotificationCoordinator.shared
     }
 

@@ -38,6 +38,7 @@ struct RemoteSubmissionView: View {
                     submission: submission,
                     avatarUrl: FAURLs.avatarUrl(for: submission.author),
                     thumbnail: previewData?.dynamicThumbnail,
+                    thumbnailWidthOnHeightRatio: previewData?.thumbnailWidthOnHeightRatio,
                     favoriteAction: {
                         let originalState = submission
                         updateHandler.update(with: submission.togglingFavorite())

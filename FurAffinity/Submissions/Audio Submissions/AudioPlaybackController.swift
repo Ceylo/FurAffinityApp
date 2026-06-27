@@ -5,11 +5,10 @@
 //  Created by Ceylo on 22/06/2026.
 //
 
-import SwiftUI
 import AVFoundation
-import MediaPlayer
-import Kingfisher
 import FAKit
+import Kingfisher
+import MediaPlayer
 import os
 
 /// Owns the `AVPlayer` and every playback side-effect for an audio submission so
@@ -38,8 +37,17 @@ final class AudioPlaybackController {
     private var statusObservation: NSKeyValueObservation?
     private var timeControlObservation: NSKeyValueObservation?
     private var interruptionObserver: NSObjectProtocol?
+    private var endObserver: NSObjectProtocol?
     private var audioSessionConfigured = false
     private var audioSessionActivated = false
+
+    /// True while an `AVPlayer` seek is in flight, so the periodic time observer
+    /// doesn't overwrite `currentTime` with the stale pre-seek position.
+    @ObservationIgnored private var isSeeking = false
+    /// Guards overlapping seeks: only the latest seek's completion clears `isSeeking`.
+    @ObservationIgnored private var seekToken = 0
+    /// True when playback reached the end and is parked there; `play()` restarts.
+    @ObservationIgnored private var didReachEnd = false
 
     /// Captured at setup so `deinit` (nonisolated) can release resources without
     /// touching main-actor-isolated state.
@@ -70,10 +78,13 @@ final class AudioPlaybackController {
         guard player == nil else { return }
 
         let userAgent = await FAUserAgent.current()
-        let asset = AVURLAsset(url: streamUrl, options: [
-            AVURLAssetHTTPCookiesKey: HTTPCookieStorage.shared.cookies ?? [],
-            "AVURLAssetHTTPHeaderFieldsKey": ["User-Agent": userAgent],
-        ])
+        let asset = AVURLAsset(
+            url: streamUrl,
+            options: [
+                AVURLAssetHTTPCookiesKey: HTTPCookieStorage.shared.cookies ?? [],
+                "AVURLAssetHTTPHeaderFieldsKey": ["User-Agent": userAgent],
+            ]
+        )
         let item = AVPlayerItem(asset: asset)
         let player = AVPlayer(playerItem: item)
         self.player = player
@@ -86,15 +97,18 @@ final class AudioPlaybackController {
         addPeriodicTimeObserver(to: player)
         configureRemoteCommands(for: player)
         observeInterruptions()
+        observeEnd(of: item)
         updateNowPlayingStaticInfo()
         await loadArtwork()
 
         let commandCenter = MPRemoteCommandCenter.shared()
         let token = timeObserverToken
         let observer = interruptionObserver
+        let endObserver = endObserver
         teardown = {
             if let token { player.removeTimeObserver(token) }
             if let observer { NotificationCenter.default.removeObserver(observer) }
+            if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
             commandCenter.playCommand.removeTarget(nil)
             commandCenter.pauseCommand.removeTarget(nil)
             commandCenter.togglePlayPauseCommand.removeTarget(nil)
@@ -109,6 +123,7 @@ final class AudioPlaybackController {
     /// `timeControlStatus` observer), so this works whether play is triggered
     /// here or by the native transport controls.
     func play() {
+        if didReachEnd { seek(to: 0) }  // clears didReachEnd, seeks to start
         player?.play()
         MPNowPlayingInfoCenter.default().playbackState = .playing
     }
@@ -119,10 +134,18 @@ final class AudioPlaybackController {
     }
 
     func seek(to seconds: Double) {
-        let time = CMTime(seconds: seconds, preferredTimescale: 600)
-        player?.seek(to: time)
         currentTime = seconds
+        didReachEnd = false
+        isSeeking = true
+        seekToken += 1
+        let token = seekToken
         updateNowPlayingPlaybackState()
+        player?.seek(to: CMTime(seconds: seconds, preferredTimescale: 600)) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, token == self.seekToken else { return }
+                self.isSeeking = false
+            }
+        }
     }
 
     // MARK: - Audio session
@@ -191,12 +214,28 @@ final class AudioPlaybackController {
             queue: .main
         ) { [weak self] time in
             MainActor.assumeIsolated {
-                guard let self else { return }
+                guard let self, !self.isSeeking else { return }
                 self.currentTime = time.seconds
                 if let itemDuration = self.player?.currentItem?.duration.seconds,
-                   itemDuration.isFinite {
+                    itemDuration.isFinite
+                {
                     self.duration = itemDuration
                 }
+                self.updateNowPlayingPlaybackState()
+            }
+        }
+    }
+
+    private func observeEnd(of item: AVPlayerItem) {
+        endObserver = NotificationCenter.default.addObserver(
+            forName: AVPlayerItem.didPlayToEndTimeNotification,
+            object: item,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.didReachEnd = true
+                self.isPlaying = false
                 self.updateNowPlayingPlaybackState()
             }
         }
@@ -297,11 +336,10 @@ final class AudioPlaybackController {
 
     private func loadArtwork() async {
         do {
-            let result = try await KingfisherManager.shared.retrieveImage(
-                with: coverImageUrl,
-                options: [.requestModifier(FAUserAgentRequestModifier())]
+            let image = try await KingfisherManager.shared.retrieveFAImage(
+                with: coverImageUrl
             )
-            let artwork = Self.makeArtwork(from: result.image)
+            let artwork = Self.makeArtwork(from: image)
             var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
             info[MPMediaItemPropertyArtwork] = artwork
             MPNowPlayingInfoCenter.default().nowPlayingInfo = info
@@ -319,23 +357,23 @@ final class AudioPlaybackController {
 }
 
 #if DEBUG
-extension AudioPlaybackController {
-    /// A controller seeded with fixed playback values for SwiftUI previews —
-    /// no live `AVPlayer`, no network — so previews can render the scrubber
-    /// tint at a known progress. Do not call `prepare()` on it.
-    static func preview(currentTime: Double = 0, duration: Double = 100) -> AudioPlaybackController {
-        let controller = AudioPlaybackController(
-            streamUrl: URL(string: "https://example.invalid/preview.mp3")!,
-            title: "Some title",
-            author: "author",
-            coverImageUrl: URL(string: "https://example.invalid/preview.jpg")!,
-            errorStorage: ErrorStorage()
-        )
-        controller.currentTime = currentTime
-        controller.duration = duration
-        return controller
+    extension AudioPlaybackController {
+        /// A controller seeded with fixed playback values for SwiftUI previews —
+        /// no live `AVPlayer`, no network — so previews can render the scrubber
+        /// tint at a known progress. Do not call `prepare()` on it.
+        static func preview(currentTime: Double = 0, duration: Double = 100) -> AudioPlaybackController {
+            let controller = AudioPlaybackController(
+                streamUrl: URL(string: "https://example.invalid/preview.mp3")!,
+                title: "Some title",
+                author: "author",
+                coverImageUrl: URL(string: "https://example.invalid/preview.jpg")!,
+                errorStorage: ErrorStorage()
+            )
+            controller.currentTime = currentTime
+            controller.duration = duration
+            return controller
+        }
     }
-}
 #endif
 
 private enum AudioPlaybackError: LocalizedError {
