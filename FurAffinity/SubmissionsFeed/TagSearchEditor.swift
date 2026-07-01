@@ -73,6 +73,8 @@ struct TagSearchEditor: View {
             Image(systemName: "tag")
                 .font(.caption2)
             Text(tag)
+                .lineLimit(1)
+                .fixedSize()
             Button {
                 remove(tag)
             } label: {
@@ -94,6 +96,8 @@ struct TagSearchEditor: View {
                 .font(.caption2)
             Text(tag)
                 .strikethrough()
+                .lineLimit(1)
+                .fixedSize()
             Button {
                 remove(tag)
             } label: {
@@ -132,6 +136,8 @@ struct TagSearchEditor: View {
                     HStack(spacing: 4) {
                         Image(systemName: "plus")
                         Text("Add tag")
+                            .lineLimit(1)
+                            .fixedSize()
                     }
                     .padding(.vertical, 5)
                     .padding(.horizontal, 8)
