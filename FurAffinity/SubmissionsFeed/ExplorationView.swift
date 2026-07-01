@@ -14,6 +14,8 @@ import Collections
 struct ExplorationView: View {
     @Environment(Model.self) private var model
     @State private var searchText = ""
+    @State private var includedTags: [String] = []
+    @State private var excludedTags: [String] = []
     @State private var debounceTask: Task<Void, Never>?
     @FocusState private var searchFieldFocused: Bool
 
@@ -89,14 +91,14 @@ struct ExplorationView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(.secondary)
 
-            TextField("Search FurAffinity", text: $searchText)
+            TextField("Search everywhere", text: $searchText)
                 .submitLabel(.search)
                 .focused($searchFieldFocused)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .onSubmit {
                     debounceTask?.cancel()
-                    triggerSearch(text: searchText)
+                    runSearch()
                     searchFieldFocused = false
                 }
 
@@ -146,35 +148,49 @@ struct ExplorationView: View {
     var body: some View {
         VStack(spacing: 0) {
             searchBar
+            TagSearchEditor(includedTags: $includedTags, excludedTags: $excludedTags)
             if model.explorationShowingRecentUploads {
                 recentUploadsLabel
             }
             contentGroup
         }
-        .onChange(of: searchText) { _, newValue in
+        .onChange(of: searchText) { _, _ in
             debounceTask?.cancel()
             debounceTask = Task {
                 try? await Task.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { return }
-                triggerSearch(text: newValue)
+                runSearch()
             }
         }
+        .onChange(of: includedTags) { _, _ in
+            debounceTask?.cancel()
+            runSearch()
+        }
+        .onChange(of: excludedTags) { _, _ in
+            debounceTask?.cancel()
+            runSearch()
+        }
         .onAppear {
-            // Seed the field from the remembered query and run the initial search
+            // Seed the inputs from the remembered query and run the initial search
             // (empty query → recent uploads) only once.
             searchText = model.explorationQuery.text
+            includedTags = model.explorationQuery.includedTags
+            excludedTags = model.explorationQuery.excludedTags
             if model.explorationResults == nil {
                 Task { await model.searchSubmissions(model.explorationQuery) }
             }
         }
     }
 
-    /// Runs a new search when the query text actually changed. Skipping equal
-    /// text avoids re-searching on the programmatic seed in `onAppear`.
-    private func triggerSearch(text: String) {
-        guard text != model.explorationQuery.text else { return }
+    /// Runs a new search built from the current text + tag inputs. Skipping a
+    /// query equal to the remembered one avoids re-searching on the programmatic
+    /// seed in `onAppear` and other no-op changes.
+    private func runSearch() {
         var query = model.explorationQuery
-        query.text = text
+        query.text = searchText
+        query.includedTags = includedTags
+        query.excludedTags = excludedTags
+        guard query != model.explorationQuery else { return }
         Task { await model.searchSubmissions(query) }
     }
 }

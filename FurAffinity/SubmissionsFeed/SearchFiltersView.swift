@@ -64,15 +64,6 @@ struct SearchFiltersView: View {
                     }
                 }
 
-                Section("Match words") {
-                    Picker("Match", selection: $query.matchMode) {
-                        Text("All").tag(FASearchQuery.MatchMode.all)
-                        Text("Any").tag(FASearchQuery.MatchMode.any)
-                        Text("Extended").tag(FASearchQuery.MatchMode.extended)
-                    }
-                    .pickerStyle(.segmented)
-                }
-
                 Section {
                     Toggle("General", isOn: ratingBinding(.general))
                     Toggle("Mature", isOn: ratingBinding(.mature))

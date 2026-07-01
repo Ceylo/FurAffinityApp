@@ -76,7 +76,8 @@ struct FAURLsTests {
             ratings: [.general],
             contentTypes: [.art, .music],
             genders: [.male],
-            matchMode: .any,
+            includedTags: [],
+            excludedTags: [],
             page: 3
         )
         let items = try queryItems(of: FAURLs.searchUrl(for: query))
@@ -88,7 +89,8 @@ struct FAURLsTests {
         #expect(items["rating-general"] == "1")
         #expect(items["type-art"] == "1")
         #expect(items["type-music"] == "1")
-        #expect(items["mode"] == "any")
+        // The app always searches in extended mode.
+        #expect(items["mode"] == "extended")
         #expect(items["page"] == "3")
         #expect(items["perpage"] == "72")
     }
@@ -100,6 +102,38 @@ struct FAURLsTests {
         let items = try queryItems(of: FAURLs.searchUrl(for: query))
         // Matches the q produced by the site when every gender box is checked.
         #expect(items["q"] == "@keywords male female trans_male trans_female intersex non_binary")
+    }
+
+    @Test
+    func searchUrl_includedTagsFoldIntoKeywords() throws {
+        var query = FASearchQuery.default
+        query.includedTags = ["wolf"]
+        let emptyText = try queryItems(of: FAURLs.searchUrl(for: query))
+        #expect(emptyText["q"] == "@keywords wolf")
+
+        query.text = "dragon"
+        let withText = try queryItems(of: FAURLs.searchUrl(for: query))
+        #expect(withText["q"] == "dragon @keywords wolf")
+    }
+
+    @Test
+    func searchUrl_excludedTagsOnly() throws {
+        var query = FASearchQuery.default
+        query.excludedTags = ["bird"]
+        let items = try queryItems(of: FAURLs.searchUrl(for: query))
+        #expect(items["q"] == "@keywords !bird")
+    }
+
+    @Test
+    func searchUrl_gendersIncludedAndExcludedCombine() throws {
+        var query = FASearchQuery.default
+        query.text = "cat"
+        query.genders = [.male]
+        query.includedTags = ["wolf"]
+        query.excludedTags = ["bird"]
+        let items = try queryItems(of: FAURLs.searchUrl(for: query))
+        // Single @keywords operator, order: genders → included → excluded (as !tag).
+        #expect(items["q"] == "cat @keywords male wolf !bird")
     }
 
     private func queryItems(of url: URL) throws -> [String: String] {

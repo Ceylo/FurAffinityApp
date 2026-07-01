@@ -57,12 +57,6 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
         case nonBinary = "non_binary"
     }
 
-    public enum MatchMode: String, Codable, Sendable, CaseIterable {
-        case all
-        case any
-        case extended
-    }
-
     public var text: String
     public var sortOrder: SortOrder
     public var sortDirection: SortDirection
@@ -70,7 +64,11 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
     public var ratings: Set<Rating>
     public var contentTypes: Set<ContentType>
     public var genders: Set<Gender>
-    public var matchMode: MatchMode
+    /// Tags searched against a submission's **tags only** (folded into the
+    /// `@keywords` operator). Arrays preserve user-entered order.
+    public var includedTags: [String]
+    /// Tags that must **not** be present (emitted as `!tag` under `@keywords`).
+    public var excludedTags: [String]
     public var page: Int
 
     public init(
@@ -81,7 +79,8 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
         ratings: Set<Rating>,
         contentTypes: Set<ContentType>,
         genders: Set<Gender>,
-        matchMode: MatchMode,
+        includedTags: [String],
+        excludedTags: [String],
         page: Int
     ) {
         self.text = text
@@ -91,12 +90,14 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
         self.ratings = ratings
         self.contentTypes = contentTypes
         self.genders = genders
-        self.matchMode = matchMode
+        self.includedTags = includedTags
+        self.excludedTags = excludedTags
         self.page = page
     }
 
     /// Mirrors the `/search/` form defaults: relevancy, descending, last 5 years,
-    /// all ratings and content types on, extended match, first page.
+    /// all ratings and content types on, no tag filters, first page. The app
+    /// always searches in extended mode (required by the `@keywords`/`!` operators).
     public static let `default` = FASearchQuery(
         text: "",
         sortOrder: .relevancy,
@@ -105,7 +106,8 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
         ratings: Set(Rating.allCases),
         contentTypes: Set(ContentType.allCases),
         genders: [],
-        matchMode: .extended,
+        includedTags: [],
+        excludedTags: [],
         page: 1
     )
 }

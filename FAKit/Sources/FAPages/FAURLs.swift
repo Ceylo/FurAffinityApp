@@ -176,23 +176,30 @@ public enum FAURLs {
             items.append(.init(name: "type-\(type.rawValue)", value: "1"))
         }
 
-        items.append(.init(name: "mode", value: query.matchMode.rawValue))
+        // The @keywords / ! operators require extended mode, so we always use it.
+        items.append(.init(name: "mode", value: "extended"))
         items.append(.init(name: "page", value: "\(query.page)"))
         items.append(.init(name: "perpage", value: "72"))
 
         return searchUrl.appending(queryItems: items)
     }
 
-    /// The `q` value: the user's text, with any selected genders folded in as an
-    /// `@keywords male female …` operator (matching what the site's JS produces).
+    /// The `q` value: the user's free text, plus any tag-scoped criteria (selected
+    /// genders, included tags, and excluded tags) folded into a single `@keywords`
+    /// operator — matching what the site's JS produces. A single `@keywords` prefix
+    /// covers every following token; excluded tags are emitted as `!tag`. Order is
+    /// genders → included tags → excluded tags.
     private static func searchQueryText(for query: FASearchQuery) -> String {
-        guard !query.genders.isEmpty else { return query.text }
-
         let genderTokens = FASearchQuery.Gender.allCases
             .filter { query.genders.contains($0) }
             .map(\.rawValue)
-            .joined(separator: " ")
-        let keywords = "@keywords \(genderTokens)"
+
+        let positive = genderTokens + query.includedTags
+        let negative = query.excludedTags.map { "!\($0)" }
+        let all = positive + negative
+        guard !all.isEmpty else { return query.text }
+
+        let keywords = "@keywords " + all.joined(separator: " ")
         return query.text.isEmpty ? keywords : "\(query.text) \(keywords)"
     }
 
