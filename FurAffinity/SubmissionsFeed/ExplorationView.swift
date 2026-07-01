@@ -15,6 +15,7 @@ struct ExplorationView: View {
     @Environment(Model.self) private var model
     @State private var searchText = ""
     @State private var debounceTask: Task<Void, Never>?
+    @FocusState private var searchFieldFocused: Bool
 
     private func itemView(for preview: FASubmissionPreview) -> some View {
         ZStack(alignment: .leading) {
@@ -59,6 +60,7 @@ struct ExplorationView: View {
                 }
             }
             .listStyle(.plain)
+            .scrollDismissesKeyboard(.immediately)
             .onChange(of: model.explorationResults, initial: true) { _, newValue in
                 guard let previews = newValue else { return }
                 prefetchThumbnails(for: previews, availableWidth: geometry.size.width)
@@ -81,7 +83,39 @@ struct ExplorationView: View {
         }
     }
 
-    var body: some View {
+    private var searchBar: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.secondary)
+
+            TextField("Search FurAffinity", text: $searchText)
+                .submitLabel(.search)
+                .focused($searchFieldFocused)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .onSubmit {
+                    debounceTask?.cancel()
+                    triggerSearch(text: searchText)
+                    searchFieldFocused = false
+                }
+
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Capsule().fill(.quaternary))
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+    }
+
+    private var contentGroup: some View {
         Group {
             if let results = model.explorationResults {
                 if results.isEmpty {
@@ -95,18 +129,17 @@ struct ExplorationView: View {
                 }
             }
         }
-        .searchable(
-            text: $searchText,
-            placement: .navigationBarDrawer(displayMode: .always),
-            prompt: "Search FurAffinity"
-        )
-        .onSubmit(of: .search) {
-            triggerSearch(text: searchText)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            searchBar
+            contentGroup
         }
         .onChange(of: searchText) { _, newValue in
             debounceTask?.cancel()
             debounceTask = Task {
-                try? await Task.sleep(for: .milliseconds(500))
+                try? await Task.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { return }
                 triggerSearch(text: newValue)
             }

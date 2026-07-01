@@ -29,13 +29,18 @@ struct SubmissionsTabView: View {
     @State private var mode: Mode = .following
     @State private var showingFilters = false
 
-    @ViewBuilder
     private var content: some View {
-        switch mode {
-        case .following:
+        ZStack {
+            // Kept mounted across mode switches (hidden, not torn down) so the
+            // Following feed retains its scroll position when the user dips into
+            // Explore and back. Explore stays lazy so it doesn't eagerly search.
             SubmissionsFeedView()
-        case .explore:
-            ExplorationView()
+                .opacity(mode == .following ? 1 : 0)
+                .allowsHitTesting(mode == .following)
+
+            if mode == .explore {
+                ExplorationView()
+            }
         }
     }
 
