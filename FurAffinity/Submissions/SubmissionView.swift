@@ -74,7 +74,7 @@ struct SubmissionView: View {
                 title: submission.title,
                 textContent: text,
                 thumbnail: thumbnail,
-                previewImageUrl: submission.previewImageUrl,
+                thumbnailWidthOnHeightRatio: thumbnailWidthOnHeightRatio,
                 documentFileUrl: $documentFileUrl,
                 downloadDocument: downloadDocument
             )

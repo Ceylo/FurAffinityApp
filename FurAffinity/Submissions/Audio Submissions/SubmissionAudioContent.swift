@@ -31,19 +31,13 @@ struct SubmissionAudioContent: View {
                 widthOnHeightRatio: thumbnailWidthOnHeightRatio ?? 1,
                 thumbnailImage: thumbnail,
                 fullResolutionMediaUrl: audioContent.coverImageUrl,
-                displayProgress: false,
                 allowZoomableSheet: false,
                 fullResolutionMediaFileUrl: .constant(nil)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay {
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.secondary.opacity(0.3))
-            }
 
             playerArea
+                .padding(.horizontal, 10)
         }
-        .padding(.horizontal, 10)
         .task { await prepareController() }
         .task { await downloadFile() }
     }
