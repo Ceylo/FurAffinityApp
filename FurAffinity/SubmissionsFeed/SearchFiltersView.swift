@@ -76,11 +76,13 @@ struct SearchFiltersView: View {
                 Section {
                     Toggle("General", isOn: ratingBinding(.general))
                     Toggle("Mature", isOn: ratingBinding(.mature))
+                        .disabled(!model.explorationAllowedRatings.contains(.mature))
                     Toggle("Adult", isOn: ratingBinding(.adult))
+                        .disabled(!model.explorationAllowedRatings.contains(.adult))
                 } header: {
                     Text("Rating")
                 } footer: {
-                    Text("Mature and adult results only appear if your FurAffinity account allows them.")
+                    Text("Mature and adult are disabled unless your FurAffinity account allows them.")
                 }
 
                 Section("Content type") {
