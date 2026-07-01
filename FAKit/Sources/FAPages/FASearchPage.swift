@@ -13,6 +13,10 @@ public struct FASearchPage: FAPage {
     /// `true` when the search ran with no query and the site fell back to showing
     /// recent uploads (the `#search-results.query-not-provided` warning state).
     public let displayingRecentUploads: Bool
+    /// Ratings the account is allowed to search. FA renders the sidebar rating
+    /// checkboxes `disabled` for the ones it restricts (e.g. General-only accounts
+    /// can't toggle Mature/Adult).
+    public let allowedRatings: Set<Rating>
 }
 
 extension FASearchPage {
@@ -29,6 +33,17 @@ extension FASearchPage {
 
             let resultsNode = try doc.select("#search-results").first()
             self.displayingRecentUploads = resultsNode?.hasClass("query-not-provided") ?? false
+
+            let ratingInputs = try doc.select("input[name^=rating-]")
+            if ratingInputs.isEmpty() {
+                // Defensive: no rating inputs found → stay optimistic (allow all).
+                self.allowedRatings = Set(Rating.allCases)
+            } else {
+                self.allowedRatings = Set(try ratingInputs.compactMap { input -> Rating? in
+                    guard !input.hasAttr("disabled") else { return nil }
+                    return Rating(searchParamName: try input.attr("name"))
+                })
+            }
         } catch {
             logger.error("\(#file) - \(error)")
             throw error

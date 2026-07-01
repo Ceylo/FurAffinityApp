@@ -40,8 +40,12 @@ class OfflineFASession: FASession {
     
     func submissionPreviews(from sid: Int?) async -> [FASubmissionPreview] { submissionPreviews }
 
-    func searchSubmissionPreviews(_ query: FASearchQuery) async throws -> [FASubmissionPreview] {
-        submissionPreviews
+    func search(_ query: FASearchQuery) async throws -> FASearchResults {
+        FASearchResults(
+            previews: submissionPreviews,
+            allowedRatings: Set(Rating.allCases),
+            displayingRecentUploads: false
+        )
     }
 
     func deleteSubmissionPreviews(_ previews: [FASubmissionPreview]) async throws {

@@ -119,4 +119,14 @@ extension Rating {
         case .adult: "adult"
         }
     }
+
+    /// Maps a `/search/` form checkbox `name` (`rating-general` etc.) to a rating.
+    public init?(searchParamName: String) {
+        switch searchParamName {
+        case "rating-general": self = .general
+        case "rating-mature": self = .mature
+        case "rating-adult": self = .adult
+        default: return nil
+        }
+    }
 }

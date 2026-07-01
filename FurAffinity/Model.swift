@@ -295,13 +295,14 @@ class Model: NotificationsNuker, NotificationsDeleter {
         defer { isLoadingExploration = false }
 
         await storeLocalizedError(in: errorStorage, action: "Search", webBrowserURL: FAURLs.searchUrl(for: explorationQuery)) {
-            let results = try await getSession().searchSubmissionPreviews(explorationQuery)
+            let results = try await getSession().search(explorationQuery)
+            let previews = results.previews
             // A full page means more may exist; a short page means we've reached the end.
-            explorationCanLoadMore = results.count >= Self.searchPageSize
+            explorationCanLoadMore = previews.count >= Self.searchPageSize
             if replacing {
-                explorationResults = OrderedSet(results)
+                explorationResults = OrderedSet(previews)
             } else {
-                explorationResults = (explorationResults ?? []).appending(contentsOf: results)
+                explorationResults = (explorationResults ?? []).appending(contentsOf: previews)
             }
         }
     }

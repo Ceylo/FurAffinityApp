@@ -16,6 +16,9 @@ struct FASearchPageTests {
         let page = try FASearchPage(data: data, url: FAURLs.searchUrl)
         #expect(page.submissions.count == 72)
         #expect(page.displayingRecentUploads == true)
+        // The fixture was captured on a General-only account: FA renders the
+        // Mature/Adult rating checkboxes `disabled`.
+        #expect(page.allowedRatings == [.general])
 
         let submission = FASubmissionsPage.Submission(
             sid: 65413735,

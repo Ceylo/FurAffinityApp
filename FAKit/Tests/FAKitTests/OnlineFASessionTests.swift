@@ -34,14 +34,16 @@ struct OnlineFASessionTests {
     }
 
     @Test
-    func searchSubmissionPreviews_returnsResults() async throws {
+    func search_returnsResults() async throws {
         let searchUrl = FAURLs.searchUrl(for: .default)
         let session = try await makeLoggedInSession(extraData: [
             searchUrl: testData("www.furaffinity.net:search:")
         ])
-        let previews = try await session.searchSubmissionPreviews(.default)
-        #expect(previews.count == 72)
-        #expect(previews.first?.sid == 65413735)
+        let results = try await session.search(.default)
+        #expect(results.previews.count == 72)
+        #expect(results.previews.first?.sid == 65413735)
+        #expect(results.displayingRecentUploads == true)
+        #expect(results.allowedRatings == [.general])
     }
 
     @Test
