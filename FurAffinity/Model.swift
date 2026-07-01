@@ -49,6 +49,12 @@ class Model: NotificationsNuker, NotificationsDeleter {
     private(set) var explorationCanLoadMore = false
     /// `true` while a search/page fetch is in flight.
     private(set) var isLoadingExploration = false
+    /// Ratings the account may search. Optimistically all ratings until a loaded
+    /// page reveals FA restricts some (then the disallowed filter toggles grey out).
+    private(set) var explorationAllowedRatings: Set<Rating> = Set(Rating.allCases)
+    /// `true` when the last search had no keyword and FA returned recent uploads
+    /// instead — surfaced in the UI so results aren't mistaken for a keyword search.
+    private(set) var explorationShowingRecentUploads = false
     
     /// `nil` until a fetch actually happened.
     /// After a fetch it contains all found notes, or an empty array if none was found.
@@ -290,6 +296,14 @@ class Model: NotificationsNuker, NotificationsDeleter {
         await fetchExplorationResults(replacing: false)
     }
 
+    /// Pull-to-refresh: re-runs the current query from page 1 without clearing the
+    /// visible results first, so the list stays put under the refresh spinner.
+    func refreshExploration() async {
+        explorationQuery.page = 1
+        explorationCanLoadMore = false
+        await fetchExplorationResults(replacing: true)
+    }
+
     private func fetchExplorationResults(replacing: Bool) async {
         isLoadingExploration = true
         defer { isLoadingExploration = false }
@@ -297,6 +311,8 @@ class Model: NotificationsNuker, NotificationsDeleter {
         await storeLocalizedError(in: errorStorage, action: "Search", webBrowserURL: FAURLs.searchUrl(for: explorationQuery)) {
             let results = try await getSession().search(explorationQuery)
             let previews = results.previews
+            explorationAllowedRatings = results.allowedRatings
+            explorationShowingRecentUploads = results.displayingRecentUploads
             // A full page means more may exist; a short page means we've reached the end.
             explorationCanLoadMore = previews.count >= Self.searchPageSize
             if replacing {
