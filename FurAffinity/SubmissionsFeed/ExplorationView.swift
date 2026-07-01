@@ -61,6 +61,7 @@ struct ExplorationView: View {
             }
             .listStyle(.plain)
             .scrollDismissesKeyboard(.immediately)
+            .refreshable { await model.refreshExploration() }
             .onChange(of: model.explorationResults, initial: true) { _, newValue in
                 guard let previews = newValue else { return }
                 prefetchThumbnails(for: previews, availableWidth: geometry.size.width)
@@ -131,9 +132,23 @@ struct ExplorationView: View {
         }
     }
 
+    /// Shown when a keyword-less search fell back to FA's recent uploads, so the
+    /// results aren't mistaken for matches of a forgotten query.
+    private var recentUploadsLabel: some View {
+        Text("Recent uploads")
+            .font(.subheadline)
+            .foregroundColor(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             searchBar
+            if model.explorationShowingRecentUploads {
+                recentUploadsLabel
+            }
             contentGroup
         }
         .onChange(of: searchText) { _, newValue in
