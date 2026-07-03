@@ -15,8 +15,10 @@ import os
 /// `SubmissionAudioContent` can stay a thin shell: the authenticated asset, the
 /// audio session (play over the silent switch + background), Now Playing info for
 /// the lock screen, remote transport commands, interruption handling, and error
-/// surfacing. Playback lives for the controller's lifetime; teardown happens on
-/// `deinit`.
+/// surfacing. It also owns the background mp3 download that backs Save/Share,
+/// exposing the resulting file via `documentFileUrl`. Playback and the download
+/// live for the controller's lifetime; teardown (including download cancellation)
+/// happens on `deinit`.
 @MainActor
 @Observable
 final class AudioPlaybackController {
@@ -24,9 +26,14 @@ final class AudioPlaybackController {
     private let title: String
     private let author: String
     private let coverImageUrl: URL
+    private let downloadUrl: URL
+    private let downloadDocument: (_ url: URL) async throws -> Data
     private let errorStorage: ErrorStorage
 
     private(set) var player: AVPlayer?
+
+    /// Local file URL of the downloaded mp3 once available, for Save/Share.
+    private(set) var documentFileUrl: URL?
 
     /// Observable playback state driving the SwiftUI transport controls.
     private(set) var isPlaying = false
@@ -54,22 +61,32 @@ final class AudioPlaybackController {
     @ObservationIgnored
     private nonisolated(unsafe) var teardown: (() -> Void)?
 
+    /// Unstructured download task, so a view `.task` cancellation can't touch it;
+    /// it's cancelled from `deinit` when the submission actually leaves the stack.
+    @ObservationIgnored
+    private nonisolated(unsafe) var downloadTask: Task<Void, Never>?
+
     init(
         streamUrl: URL,
         title: String,
         author: String,
         coverImageUrl: URL,
+        downloadUrl: URL,
+        downloadDocument: @escaping (_ url: URL) async throws -> Data,
         errorStorage: ErrorStorage
     ) {
         self.streamUrl = streamUrl
         self.title = title
         self.author = author
         self.coverImageUrl = coverImageUrl
+        self.downloadUrl = downloadUrl
+        self.downloadDocument = downloadDocument
         self.errorStorage = errorStorage
     }
 
     deinit {
         teardown?()
+        downloadTask?.cancel()
     }
 
     /// Builds the authenticated player and wires observers, Now Playing, and
@@ -115,6 +132,33 @@ final class AudioPlaybackController {
             commandCenter.changePlaybackPositionCommand.removeTarget(nil)
             MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
             try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        }
+    }
+
+    /// Downloads the mp3 in the background to back Save/Share, independent of
+    /// playback (which streams immediately). Idempotent across reappear. Genuine
+    /// failures surface via `errorStorage`; navigation-driven cancellation (the
+    /// task is cancelled from `deinit`) is silent.
+    func startFileDownload() {
+        guard downloadTask == nil else { return }
+        downloadTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let data = try await self.downloadDocument(self.downloadUrl)
+                let fileUrl = FileManager.default.temporaryDirectory
+                    .appendingPathComponent(self.downloadUrl.lastPathComponent)
+                try data.write(to: fileUrl, options: .atomic)
+                self.documentFileUrl = fileUrl
+            } catch {
+                if !isCancellationError(error) {
+                    storeError(
+                        error,
+                        in: self.errorStorage,
+                        action: "Audio Download",
+                        webBrowserURL: self.downloadUrl
+                    )
+                }
+            }
         }
     }
 
@@ -367,6 +411,8 @@ final class AudioPlaybackController {
                 title: "Some title",
                 author: "author",
                 coverImageUrl: URL(string: "https://example.invalid/preview.jpg")!,
+                downloadUrl: URL(string: "https://example.invalid/preview.mp3")!,
+                downloadDocument: { _ in Data() },
                 errorStorage: ErrorStorage()
             )
             controller.currentTime = currentTime

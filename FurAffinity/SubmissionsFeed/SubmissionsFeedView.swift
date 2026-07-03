@@ -295,9 +295,7 @@ extension SubmissionsFeedView {
     /// surfaces cancellation as `URLError(.cancelled)`, so check that too.
     static func isCancellation(_ error: Error) -> Bool {
         if Task.isCancelled { return true }
-        if error is CancellationError { return true }
-        if let urlError = error as? URLError, urlError.code == .cancelled { return true }
-        return false
+        return isCancellationError(error)
     }
 
     func fetchSubmissionPreviews() async throws {

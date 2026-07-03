@@ -39,7 +39,10 @@ struct SubmissionAudioContent: View {
                 .padding(.horizontal, 10)
         }
         .task { await prepareController() }
-        .task { await downloadFile() }
+        .onAppear { documentFileUrl = controller?.documentFileUrl }
+        .onChange(of: controller?.documentFileUrl) { _, url in
+            documentFileUrl = url
+        }
     }
 
     @ViewBuilder
@@ -58,26 +61,13 @@ struct SubmissionAudioContent: View {
             title: title,
             author: author,
             coverImageUrl: audioContent.coverImageUrl,
+            downloadUrl: audioContent.downloadUrl,
+            downloadDocument: downloadDocument,
             errorStorage: errorStorage
         )
         self.controller = controller
         await controller.prepare()
-    }
-
-    /// Downloads the mp3 in the background to back Save/Share. Independent of
-    /// playback, which streams immediately.
-    private func downloadFile() async {
-        await storeLocalizedError(
-            in: errorStorage,
-            action: "Audio Download",
-            webBrowserURL: audioContent.downloadUrl
-        ) {
-            let data = try await downloadDocument(audioContent.downloadUrl)
-            let fileUrl = FileManager.default.temporaryDirectory
-                .appendingPathComponent(audioContent.downloadUrl.lastPathComponent)
-            try data.write(to: fileUrl, options: .atomic)
-            documentFileUrl = fileUrl
-        }
+        controller.startFileDownload()
     }
 }
 
