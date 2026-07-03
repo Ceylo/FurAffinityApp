@@ -24,6 +24,22 @@ struct TagSearchEditor: View {
     @State private var newTagText = ""
     @FocusState private var addFieldFocused: Bool
 
+    /// One laid-out element of the chip zone. Flattening the tags and the add
+    /// control into a single collection lets `WrappingHStack`'s collection-based
+    /// initializer measure and wrap each element individually — its ViewBuilder
+    /// initializer treats a `ForEach` as one non-wrapping unit instead.
+    private enum ChipItem: Hashable {
+        case included(String)
+        case excluded(String)
+        case addControl
+    }
+
+    private var chipItems: [ChipItem] {
+        includedTags.map(ChipItem.included)
+            + excludedTags.map(ChipItem.excluded)
+            + [.addControl]
+    }
+
     /// Normalizes user input into a tag token, or nil if it's empty. FA tags
     /// contain no spaces and are case-insensitive.
     private static func normalize(_ raw: String) -> String? {
@@ -50,18 +66,34 @@ struct TagSearchEditor: View {
         excludedTags.removeAll { $0 == tag }
     }
 
-    private func commitNewTag() {
-        let excluded = newTagText.trimmingCharacters(in: .whitespaces).hasPrefix("!")
-        guard let tag = Self.normalize(newTagText) else {
-            newTagText = ""
-            isAddingTag = false
-            return
-        }
+    /// Adds one token to the appropriate array. A leading `!` (e.g. `!bird`)
+    /// marks it excluded; otherwise included. Normalizes and de-dupes across
+    /// both arrays.
+    private func addToken(_ raw: String) {
+        let excluded = raw.trimmingCharacters(in: .whitespaces).hasPrefix("!")
+        guard let tag = Self.normalize(raw) else { return }
         remove(tag)
         if excluded {
             excludedTags.append(tag)
         } else {
             includedTags.append(tag)
+        }
+    }
+
+    /// Turns whitespace-separated input into individual chips as the user types.
+    /// Complete tokens (all but a trailing partial word) are committed; the
+    /// partial stays in the field. A trailing space commits every token.
+    private func tokenizeIfNeeded(_ text: String) {
+        guard text.contains(where: \.isWhitespace) else { return }
+        var tokens = text.split(whereSeparator: \.isWhitespace).map(String.init)
+        let remainder = (text.last?.isWhitespace ?? false) ? "" : (tokens.popLast() ?? "")
+        for token in tokens { addToken(token) }
+        newTagText = remainder
+    }
+
+    private func commitNewTag() {
+        for token in newTagText.split(whereSeparator: \.isWhitespace).map(String.init) {
+            addToken(token)
         }
         newTagText = ""
         // Keep the field open for quick multi-tag entry.
@@ -152,23 +184,21 @@ struct TagSearchEditor: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Tags · searched in submission tags only")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            WrappingHStack(
-                alignment: .leading,
-                spacing: .constant(6),
-                lineSpacing: 6
-            ) {
-                ForEach(includedTags, id: \.self) { includedChip($0) }
-                ForEach(excludedTags, id: \.self) { excludedChip($0) }
-                addTagControl
+        WrappingHStack(
+            chipItems,
+            id: \.self,
+            spacing: .constant(6),
+            lineSpacing: 6
+        ) { item in
+            switch item {
+            case .included(let tag): includedChip(tag)
+            case .excluded(let tag): excludedChip(tag)
+            case .addControl: addTagControl
             }
         }
-        .padding(.horizontal)
-        .padding(.bottom, 4)
+        .onChange(of: newTagText) { _, newValue in
+            tokenizeIfNeeded(newValue)
+        }
         .onChange(of: isAddingTag) { _, adding in
             if !adding { newTagText = "" }
         }
@@ -177,10 +207,18 @@ struct TagSearchEditor: View {
 
 #Preview {
     struct PreviewWrapper: View {
-        @State var included = ["wolf", "forest"]
-        @State var excluded = ["bird"]
+        @State var included = ["wolf", "forest", "digital", "landscape", "nighttime"]
+        @State var excluded = ["bird", "watermark"]
         var body: some View {
-            TagSearchEditor(includedTags: $included, excludedTags: $excluded)
+            Form {
+                Section {
+                    TagSearchEditor(includedTags: $included, excludedTags: $excluded)
+                } header: {
+                    Text("Tags")
+                } footer: {
+                    Text("Searched in submission tags only.")
+                }
+            }
         }
     }
     return PreviewWrapper()

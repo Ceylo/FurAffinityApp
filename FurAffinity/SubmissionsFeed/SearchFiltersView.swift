@@ -44,6 +44,17 @@ struct SearchFiltersView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    TextField("Search everywhere", text: $query.text)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .submitLabel(.search)
+                } header: {
+                    Text("Search")
+                } footer: {
+                    Text("Matches a submission's title, description, and keywords.")
+                }
+
                 Section("Sort") {
                     Picker("Order", selection: $query.sortOrder) {
                         Text("Relevancy").tag(FASearchQuery.SortOrder.relevancy)
@@ -93,6 +104,17 @@ struct SearchFiltersView: View {
                     Text("Gender")
                 } footer: {
                     Text("Filters by gender keywords tagged on submissions.")
+                }
+
+                Section {
+                    TagSearchEditor(
+                        includedTags: $query.includedTags,
+                        excludedTags: $query.excludedTags
+                    )
+                } header: {
+                    Text("Tags")
+                } footer: {
+                    Text("Searched in submission tags only.")
                 }
 
                 Section {
