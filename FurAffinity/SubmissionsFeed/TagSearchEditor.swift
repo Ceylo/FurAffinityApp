@@ -213,20 +213,18 @@ struct TagSearchEditor: View {
 }
 
 #Preview {
-    struct PreviewWrapper: View {
-        @State var included: OrderedSet = ["wolf", "forest", "digital", "landscape", "nighttime"]
-        @State var excluded: OrderedSet = ["bird", "watermark"]
-        var body: some View {
-            Form {
-                Section {
-                    TagSearchEditor(includedTags: $included, excludedTags: $excluded)
-                } header: {
-                    Text("Tags")
-                } footer: {
-                    Text("Searched in submission tags only.")
-                }
-            }
+    @Previewable
+    @State var included: OrderedSet = ["wolf", "forest", "digital", "landscape", "nighttime"]
+    @Previewable
+    @State var excluded: OrderedSet = ["bird", "watermark"]
+    
+    Form {
+        Section {
+            TagSearchEditor(includedTags: $included, excludedTags: $excluded)
+        } header: {
+            Text("Tags")
+        } footer: {
+            Text("Searched in submission tags only.")
         }
     }
-    return PreviewWrapper()
 }
