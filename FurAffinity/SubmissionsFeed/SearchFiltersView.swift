@@ -54,6 +54,17 @@ struct SearchFiltersView: View {
                 } footer: {
                     Text("Matches a submission's title, description, and keywords.")
                 }
+                
+                Section {
+                    TagSearchEditor(
+                        includedTags: $query.includedTags,
+                        excludedTags: $query.excludedTags
+                    )
+                } header: {
+                    Text("Tags")
+                } footer: {
+                    Text("Searched in submission tags only.")
+                }
 
                 Section("Sort") {
                     Picker("Order", selection: $query.sortOrder) {
@@ -104,17 +115,6 @@ struct SearchFiltersView: View {
                     Text("Gender")
                 } footer: {
                     Text("Filters by gender keywords tagged on submissions.")
-                }
-
-                Section {
-                    TagSearchEditor(
-                        includedTags: $query.includedTags,
-                        excludedTags: $query.excludedTags
-                    )
-                } header: {
-                    Text("Tags")
-                } footer: {
-                    Text("Searched in submission tags only.")
                 }
 
                 Section {
