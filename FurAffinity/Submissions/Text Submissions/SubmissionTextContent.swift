@@ -17,7 +17,7 @@ struct SubmissionTextContent: View {
     var title: String
     var textContent: FASubmission.TextContent
     var thumbnail: DynamicThumbnail?
-    var previewImageUrl: URL
+    var thumbnailWidthOnHeightRatio: Float?
     @Binding var documentFileUrl: URL?
     var downloadDocument: (_ url: URL) async throws -> Data
 
@@ -32,30 +32,28 @@ struct SubmissionTextContent: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            FAImage(coverUrl)
-                .aspectRatio(contentMode: .fit)
-                .frame(maxWidth: .infinity)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.secondary.opacity(0.3))
-                }
-                .overlay {
-                    if isDownloading {
-                        ZStack {
-                            Color.black.opacity(0.25)
-                            ProgressView()
-                                .controlSize(.large)
-                                .tint(.white)
-                        }
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+            SubmissionMainImage(
+                widthOnHeightRatio: thumbnailWidthOnHeightRatio ?? 1,
+                thumbnailImage: thumbnail,
+                fullResolutionMediaUrl: coverUrl,
+                allowZoomableSheet: false,
+                fullResolutionMediaFileUrl: .constant(nil)
+            )
+            .overlay {
+                if isDownloading {
+                    ZStack {
+                        Color.black.opacity(0.25)
+                        ProgressView()
+                            .controlSize(.large)
+                            .tint(.white)
                     }
                 }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    readStory()
-                }
-                .disabled(isDownloading)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                readStory()
+            }
+            .disabled(isDownloading)
 
             Button {
                 readStory()
@@ -84,8 +82,8 @@ struct SubmissionTextContent: View {
                 }
             }
             .disabled(isDownloading)
+            .padding(.horizontal, 10)
         }
-        .padding(.horizontal, 10)
         .sheet(item: $readerContent) { content in
             StoryReaderView(title: title, content: content)
         }
@@ -127,18 +125,18 @@ struct SubmissionTextContent: View {
     @Previewable
     @State var errorStorage = ErrorStorage()
 
-    withAsync({ () -> (FASubmission.TextContent, URL) in
+    withAsync({ () -> FASubmission.TextContent in
         let submission = await FASubmission.demoText
         guard case let .text(text) = submission.content else {
             fatalError("demoText must be a text submission")
         }
-        return (text, submission.previewImageUrl)
-    }) { data in
+        return text
+    }) { text in
         SubmissionTextContent(
             title: "Prepared for the Fallout",
-            textContent: data.0,
+            textContent: text,
             thumbnail: nil,
-            previewImageUrl: data.1,
+            thumbnailWidthOnHeightRatio: nil,
             documentFileUrl: .constant(nil),
             downloadDocument: { try await OfflineFASession.default.file(at: $0) }
         )

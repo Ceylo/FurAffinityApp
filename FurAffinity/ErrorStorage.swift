@@ -13,6 +13,15 @@ class ErrorStorage {
     var error: RichLocalizedError?
 }
 
+/// Whether `error` is navigation-driven cancellation rather than a genuine
+/// failure. The underlying URLSession call surfaces cancellation as
+/// `URLError(.cancelled)`, so check that too.
+func isCancellationError(_ error: Error) -> Bool {
+    if error is CancellationError { return true }
+    if let urlError = error as? URLError, urlError.code == .cancelled { return true }
+    return false
+}
+
 func storeLocalizedError(
     in storage: ErrorStorage,
     action: String,

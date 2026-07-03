@@ -90,9 +90,18 @@ struct SubmissionMainImage: View {
                     .ignoresSafeArea()
                 }
                 .aspectRatio(contentMode: .fit)
-                .onTapGesture {
-                    if allowZoomableSheet && fullResolutionImage != nil {
-                        showZoomableSheet = true
+                // Only attach the tap gesture when zooming is allowed; otherwise it
+                // would silently consume taps meant for a wrapping handler (e.g. the
+                // text cover's tap-to-read).
+                .applying {
+                    if allowZoomableSheet {
+                        $0.onTapGesture {
+                            if fullResolutionImage != nil {
+                                showZoomableSheet = true
+                            }
+                        }
+                    } else {
+                        $0
                     }
                 }
             }
