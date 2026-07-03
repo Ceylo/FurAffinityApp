@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OrderedCollections
 
 /// A full description of a furaffinity.net search, mirroring the fields of the
 /// `/search/` form. `Codable` so the whole query can be persisted (remembered
@@ -66,9 +67,9 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
     public var genders: Set<Gender>
     /// Tags searched against a submission's **tags only** (folded into the
     /// `@keywords` operator). Arrays preserve user-entered order.
-    public var includedTags: [String]
+    public var includedTags: OrderedSet<String>
     /// Tags that must **not** be present (emitted as `!tag` under `@keywords`).
-    public var excludedTags: [String]
+    public var excludedTags: OrderedSet<String>
     public var page: Int
 
     public init(
@@ -79,8 +80,8 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
         ratings: Set<Rating>,
         contentTypes: Set<ContentType>,
         genders: Set<Gender>,
-        includedTags: [String],
-        excludedTags: [String],
+        includedTags: OrderedSet<String>,
+        excludedTags: OrderedSet<String>,
         page: Int
     ) {
         self.text = text

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import WrappingHStack
+import OrderedCollections
 
 /// A chip-based editor for tag-scoped search criteria. Unlike the free-text bar
 /// (which searches everywhere in a submission's metadata), these tags search a
@@ -17,8 +18,8 @@ import WrappingHStack
 /// tag" affordance opens an inline field; a leading `!` (e.g. `!bird`) adds an
 /// excluded chip, otherwise an included one.
 struct TagSearchEditor: View {
-    @Binding var includedTags: [String]
-    @Binding var excludedTags: [String]
+    @Binding var includedTags: OrderedSet<String>
+    @Binding var excludedTags: OrderedSet<String>
 
     @State private var isAddingTag = false
     @State private var newTagText = ""
@@ -52,18 +53,18 @@ struct TagSearchEditor: View {
     }
 
     private func moveToExcluded(_ tag: String) {
-        includedTags.removeAll { $0 == tag }
+        includedTags.remove(tag)
         if !excludedTags.contains(tag) { excludedTags.append(tag) }
     }
 
     private func moveToIncluded(_ tag: String) {
-        excludedTags.removeAll { $0 == tag }
+        excludedTags.remove(tag)
         if !includedTags.contains(tag) { includedTags.append(tag) }
     }
 
     private func remove(_ tag: String) {
-        includedTags.removeAll { $0 == tag }
-        excludedTags.removeAll { $0 == tag }
+        includedTags.remove(tag)
+        excludedTags.remove(tag)
     }
 
     /// Adds one token to the appropriate array. A leading `!` (e.g. `!bird`)
@@ -107,6 +108,7 @@ struct TagSearchEditor: View {
             Text(tag)
                 .lineLimit(1)
                 .fixedSize()
+                .onTapGesture { moveToExcluded(tag) }
             Button {
                 remove(tag)
             } label: {
@@ -119,7 +121,7 @@ struct TagSearchEditor: View {
         .background(Color.accentColor.opacity(0.18))
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .contentShape(RoundedRectangle(cornerRadius: 10))
-        .onTapGesture { moveToExcluded(tag) }
+        
     }
 
     private func excludedChip(_ tag: String) -> some View {
@@ -130,6 +132,7 @@ struct TagSearchEditor: View {
                 .strikethrough()
                 .lineLimit(1)
                 .fixedSize()
+                .onTapGesture { moveToIncluded(tag) }
             Button {
                 remove(tag)
             } label: {
@@ -143,7 +146,7 @@ struct TagSearchEditor: View {
         .background(Color.red.opacity(0.15))
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .contentShape(RoundedRectangle(cornerRadius: 10))
-        .onTapGesture { moveToIncluded(tag) }
+        
     }
 
     private var addTagControl: some View {
@@ -207,8 +210,8 @@ struct TagSearchEditor: View {
 
 #Preview {
     struct PreviewWrapper: View {
-        @State var included = ["wolf", "forest", "digital", "landscape", "nighttime"]
-        @State var excluded = ["bird", "watermark"]
+        @State var included: OrderedSet = ["wolf", "forest", "digital", "landscape", "nighttime"]
+        @State var excluded: OrderedSet = ["bird", "watermark"]
         var body: some View {
             Form {
                 Section {
