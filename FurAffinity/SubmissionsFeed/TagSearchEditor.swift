@@ -115,6 +115,8 @@ struct TagSearchEditor: View {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(.secondary)
             }
+            // 🫠 https://forums.developer.apple.com/forums/thread/747558
+            .buttonStyle(.borderless)
         }
         .padding(.vertical, 5)
         .padding(.horizontal, 8)
@@ -139,6 +141,8 @@ struct TagSearchEditor: View {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(.secondary)
             }
+            // 🫠 https://forums.developer.apple.com/forums/thread/747558
+            .buttonStyle(.borderless)
         }
         .foregroundStyle(.red)
         .padding(.vertical, 5)
