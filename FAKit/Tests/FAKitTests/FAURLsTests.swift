@@ -76,8 +76,7 @@ struct FAURLsTests {
             ratings: [.general],
             contentTypes: [.art, .music],
             genders: [.male],
-            includedTags: [],
-            excludedTags: [],
+            tags: [],
             page: 3
         )
         let items = try queryItems(of: FAURLs.searchUrl(for: query))
@@ -107,7 +106,7 @@ struct FAURLsTests {
     @Test
     func searchUrl_includedTagsFoldIntoKeywords() throws {
         var query = FASearchQuery.default
-        query.includedTags = ["wolf"]
+        query.tags = ["wolf"]
         let emptyText = try queryItems(of: FAURLs.searchUrl(for: query))
         #expect(emptyText["q"] == "@keywords wolf")
 
@@ -119,7 +118,7 @@ struct FAURLsTests {
     @Test
     func searchUrl_excludedTagsOnly() throws {
         var query = FASearchQuery.default
-        query.excludedTags = ["bird"]
+        query.tags = ["!bird"]
         let items = try queryItems(of: FAURLs.searchUrl(for: query))
         #expect(items["q"] == "@keywords !bird")
     }
@@ -129,10 +128,9 @@ struct FAURLsTests {
         var query = FASearchQuery.default
         query.text = "cat"
         query.genders = [.male]
-        query.includedTags = ["wolf"]
-        query.excludedTags = ["bird"]
+        query.tags = ["wolf", "!bird"]
         let items = try queryItems(of: FAURLs.searchUrl(for: query))
-        // Single @keywords operator, order: genders → included → excluded (as !tag).
+        // Single @keywords operator, order: genders → tags in entered order.
         #expect(items["q"] == "cat @keywords male wolf !bird")
     }
 

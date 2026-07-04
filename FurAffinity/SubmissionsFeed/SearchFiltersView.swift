@@ -56,10 +56,7 @@ struct SearchFiltersView: View {
                 }
                 
                 Section {
-                    TagSearchEditor(
-                        includedTags: $query.includedTags,
-                        excludedTags: $query.excludedTags
-                    )
+                    TagSearchEditor(tags: $query.tags)
                 } header: {
                     Text("Tags")
                 } footer: {

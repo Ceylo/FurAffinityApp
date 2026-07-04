@@ -14,12 +14,12 @@ import OrderedCollections
 /// submission's **tags only** via FA's `@keywords` operator. Included tags must
 /// be present; excluded tags must not (`!tag`).
 ///
-/// Tapping a chip toggles it between included and excluded. The trailing "Add
-/// tag" affordance opens an inline field; a leading `!` (e.g. `!bird`) adds an
-/// excluded chip, otherwise an included one.
+/// Tags share a single ordered set: an excluded tag is stored with a leading `!`
+/// (e.g. `!bird`), so toggling include/exclude is an in-place prefix flip that
+/// preserves the chip's position. Tapping a chip toggles it; the trailing "Add
+/// tag" affordance opens an inline field where a leading `!` adds an excluded chip.
 struct TagSearchEditor: View {
-    @Binding var includedTags: OrderedSet<String>
-    @Binding var excludedTags: OrderedSet<String>
+    @Binding var tags: OrderedSet<String>
 
     @State private var isAddingTag = false
     @State private var newTagText = ""
@@ -29,56 +29,59 @@ struct TagSearchEditor: View {
     /// control into a single collection lets `WrappingHStack`'s collection-based
     /// initializer measure and wrap each element individually — its ViewBuilder
     /// initializer treats a `ForEach` as one non-wrapping unit instead.
-    private enum ChipItem: Hashable {
-        case included(String)
-        case excluded(String)
+    private enum Item: Hashable {
+        case tag(String)
         case addControl
     }
 
-    private var chipItems: [ChipItem] {
-        includedTags.map(ChipItem.included)
-            + excludedTags.map(ChipItem.excluded)
-            + [.addControl]
+    private var chipItems: [Item] {
+        tags.map(Item.tag) + (isAddingTag ? [] : [.addControl])
     }
 
-    /// Normalizes user input into a tag token, or nil if it's empty. FA tags
-    /// contain no spaces and are case-insensitive.
-    private static func normalize(_ raw: String) -> String? {
-        let trimmed = raw
-            .trimmingCharacters(in: .whitespaces)
+    // MARK: - Token helpers
+
+    private func isExcluded(_ token: String) -> Bool { token.hasPrefix("!") }
+
+    /// The displayed tag text, without the `!` exclusion marker.
+    private func label(_ token: String) -> String {
+        isExcluded(token) ? String(token.dropFirst()) : token
+    }
+
+    /// Normalizes user input into a stored token, or nil if it has no base text.
+    /// FA tags are case-insensitive and contain no spaces; a single leading `!`
+    /// is preserved as the exclusion marker (extra `!`s are collapsed).
+    private func normalizedToken(_ raw: String) -> String? {
+        let trimmed = raw.trimmingCharacters(in: .whitespaces)
+        let excluded = trimmed.hasPrefix("!")
+        let base = trimmed
             .drop(while: { $0 == "!" })
             .trimmingCharacters(in: .whitespaces)
             .lowercased()
-        return trimmed.isEmpty ? nil : trimmed
+        guard !base.isEmpty else { return nil }
+        return excluded ? "!" + base : base
     }
 
-    private func moveToExcluded(_ tag: String) {
-        includedTags.remove(tag)
-        if !excludedTags.contains(tag) { excludedTags.append(tag) }
-    }
-
-    private func moveToIncluded(_ tag: String) {
-        excludedTags.remove(tag)
-        if !includedTags.contains(tag) { includedTags.append(tag) }
-    }
-
-    private func remove(_ tag: String) {
-        includedTags.remove(tag)
-        excludedTags.remove(tag)
-    }
-
-    /// Adds one token to the appropriate array. A leading `!` (e.g. `!bird`)
-    /// marks it excluded; otherwise included. Normalizes and de-dupes across
-    /// both arrays.
+    /// Adds one token, de-duping both polarities of the same base tag so a tag
+    /// can't appear twice (e.g. adding `bird` after `!bird` replaces it).
     private func addToken(_ raw: String) {
-        let excluded = raw.trimmingCharacters(in: .whitespaces).hasPrefix("!")
-        guard let tag = Self.normalize(raw) else { return }
-        remove(tag)
-        if excluded {
-            excludedTags.append(tag)
-        } else {
-            includedTags.append(tag)
-        }
+        guard let token = normalizedToken(raw) else { return }
+        let base = label(token)
+        tags.remove(base)
+        tags.remove("!" + base)
+        tags.append(token)
+    }
+
+    /// Flips a chip between included and excluded **in place**, keeping its slot
+    /// in the ordered set so the chip doesn't jump.
+    private func toggleExclusion(_ token: String) {
+        guard let index = tags.firstIndex(of: token) else { return }
+        let flipped = isExcluded(token) ? label(token) : "!" + token
+        tags.remove(at: index)
+        tags.insert(flipped, at: index)
+    }
+
+    private func remove(_ token: String) {
+        tags.remove(token)
     }
 
     /// Turns whitespace-separated input into individual chips as the user types.
@@ -92,25 +95,34 @@ struct TagSearchEditor: View {
         newTagText = remainder
     }
 
-    private func commitNewTag() {
+    /// Commits whatever is left in the field into chips and clears it.
+    private func commitRemainder() {
         for token in newTagText.split(whereSeparator: \.isWhitespace).map(String.init) {
             addToken(token)
         }
         newTagText = ""
+    }
+
+    private func commitNewTag() {
+        commitRemainder()
         // Keep the field open for quick multi-tag entry.
         addFieldFocused = true
     }
 
-    private func includedChip(_ tag: String) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: "tag")
+    // MARK: - Views
+
+    private func chip(_ token: String) -> some View {
+        let excluded = isExcluded(token)
+        return HStack(spacing: 4) {
+            Image(systemName: excluded ? "minus.circle" : "tag")
                 .font(.caption2)
-            Text(tag)
+            Text(label(token))
+                .strikethrough(excluded)
                 .lineLimit(1)
                 .fixedSize()
-                .onTapGesture { moveToExcluded(tag) }
+                .onTapGesture { toggleExclusion(token) }
             Button {
-                remove(tag)
+                remove(token)
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(.secondary)
@@ -118,109 +130,83 @@ struct TagSearchEditor: View {
             // 🫠 https://forums.developer.apple.com/forums/thread/747558
             .buttonStyle(.borderless)
         }
+        .foregroundStyle(excluded ? Color.red : Color.primary)
         .padding(.vertical, 5)
         .padding(.horizontal, 8)
-        .background(Color.accentColor.opacity(0.18))
+        .background((excluded ? Color.red : Color.accentColor).opacity(excluded ? 0.15 : 0.18))
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .contentShape(RoundedRectangle(cornerRadius: 10))
-        
     }
 
-    private func excludedChip(_ tag: String) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: "minus.circle")
-                .font(.caption2)
-            Text(tag)
-                .strikethrough()
-                .lineLimit(1)
-                .fixedSize()
-                .onTapGesture { moveToIncluded(tag) }
-            Button {
-                remove(tag)
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.secondary)
+    private var addControl: some View {
+        Button {
+            withAnimation { isAddingTag = true }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "plus")
+                Text("Add tag")
+                    .lineLimit(1)
+                    .fixedSize()
             }
-            // 🫠 https://forums.developer.apple.com/forums/thread/747558
-            .buttonStyle(.borderless)
+            .padding(.vertical, 5)
+            .padding(.horizontal, 8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(Color.secondary.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [4]))
+            )
         }
-        .foregroundStyle(.red)
-        .padding(.vertical, 5)
-        .padding(.horizontal, 8)
-        .background(Color.red.opacity(0.15))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .contentShape(RoundedRectangle(cornerRadius: 10))
-        
+        .buttonStyle(.plain)
     }
 
-    private var addTagControl: some View {
+    var body: some View {
+        // A bare Group so the Form renders the chips and the add field as
+        // separate rows — the field then gets a full-width, native row height.
         Group {
+            if !isAddingTag || !tags.isEmpty {
+                WrappingHStack(
+                    chipItems,
+                    id: \.self,
+                    spacing: .constant(6),
+                    lineSpacing: 6
+                ) { item in
+                    switch item {
+                    case .tag(let token): chip(token)
+                    case .addControl: addControl
+                    }
+                }
+                .animation(.default, value: tags)
+            }
+
             if isAddingTag {
                 TextField("tag", text: $newTagText)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .submitLabel(.done)
                     .focused($addFieldFocused)
-                    .frame(minWidth: 60)
-                    .onSubmit { commitNewTag() }
-                    .padding(.vertical, 5)
-                    .padding(.horizontal, 8)
-                    .background(Color.secondary.opacity(0.15))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-            } else {
-                Button {
-                    isAddingTag = true
-                    addFieldFocused = true
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "plus")
-                        Text("Add tag")
-                            .lineLimit(1)
-                            .fixedSize()
+                    .onAppear { addFieldFocused = true }
+                    .onChange(of: newTagText) { _, newValue in
+                        tokenizeIfNeeded(newValue)
                     }
-                    .padding(.vertical, 5)
-                    .padding(.horizontal, 8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(Color.secondary.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [4]))
-                    )
-                }
-                .buttonStyle(.plain)
+                    .onSubmit { commitNewTag() }
+                    .onChange(of: addFieldFocused) { _, focused in
+                        // Blur commits the remainder and collapses back to the button.
+                        if !focused {
+                            commitRemainder()
+                            withAnimation { isAddingTag = false }
+                        }
+                    }
             }
-        }
-    }
-
-    var body: some View {
-        WrappingHStack(
-            chipItems,
-            id: \.self,
-            spacing: .constant(6),
-            lineSpacing: 6
-        ) { item in
-            switch item {
-            case .included(let tag): includedChip(tag)
-            case .excluded(let tag): excludedChip(tag)
-            case .addControl: addTagControl
-            }
-        }
-        .onChange(of: newTagText) { _, newValue in
-            tokenizeIfNeeded(newValue)
-        }
-        .onChange(of: isAddingTag) { _, adding in
-            if !adding { newTagText = "" }
         }
     }
 }
 
 #Preview {
     @Previewable
-    @State var included: OrderedSet = ["wolf", "forest", "digital", "landscape", "nighttime"]
-    @Previewable
-    @State var excluded: OrderedSet = ["bird", "watermark"]
-    
+    @State var tags: OrderedSet = ["wolf", "forest", "!bird", "!watermark"]
+
     Form {
         Section {
-            TagSearchEditor(includedTags: $included, excludedTags: $excluded)
+            TagSearchEditor(tags: $tags)
         } header: {
             Text("Tags")
         } footer: {

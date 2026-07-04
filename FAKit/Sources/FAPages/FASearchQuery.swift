@@ -66,10 +66,10 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
     public var contentTypes: Set<ContentType>
     public var genders: Set<Gender>
     /// Tags searched against a submission's **tags only** (folded into the
-    /// `@keywords` operator). Arrays preserve user-entered order.
-    public var includedTags: OrderedSet<String>
-    /// Tags that must **not** be present (emitted as `!tag` under `@keywords`).
-    public var excludedTags: OrderedSet<String>
+    /// `@keywords` operator), in user-entered order. An excluded tag is stored
+    /// with a leading `!` (e.g. `!bird`) — the same token form `@keywords` uses,
+    /// and `!` can't appear inside a real FA tag so there's no ambiguity.
+    public var tags: OrderedSet<String>
     public var page: Int
 
     public init(
@@ -80,8 +80,7 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
         ratings: Set<Rating>,
         contentTypes: Set<ContentType>,
         genders: Set<Gender>,
-        includedTags: OrderedSet<String>,
-        excludedTags: OrderedSet<String>,
+        tags: OrderedSet<String>,
         page: Int
     ) {
         self.text = text
@@ -91,8 +90,7 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
         self.ratings = ratings
         self.contentTypes = contentTypes
         self.genders = genders
-        self.includedTags = includedTags
-        self.excludedTags = excludedTags
+        self.tags = tags
         self.page = page
     }
 
@@ -107,8 +105,7 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
         ratings: Set(Rating.allCases),
         contentTypes: Set(ContentType.allCases),
         genders: [],
-        includedTags: [],
-        excludedTags: [],
+        tags: [],
         page: 1
     )
 }

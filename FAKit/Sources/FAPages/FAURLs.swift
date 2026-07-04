@@ -185,18 +185,16 @@ public enum FAURLs {
     }
 
     /// The `q` value: the user's free text, plus any tag-scoped criteria (selected
-    /// genders, included tags, and excluded tags) folded into a single `@keywords`
-    /// operator — matching what the site's JS produces. A single `@keywords` prefix
-    /// covers every following token; excluded tags are emitted as `!tag`. Order is
-    /// genders → included tags → excluded tags.
+    /// genders and tags) folded into a single `@keywords` operator — matching what
+    /// the site's JS produces. A single `@keywords` prefix covers every following
+    /// token; excluded tags already carry their `!` prefix. Order is genders →
+    /// tags in entered order.
     private static func searchQueryText(for query: FASearchQuery) -> String {
         let genderTokens = FASearchQuery.Gender.allCases
             .filter { query.genders.contains($0) }
             .map(\.rawValue)
 
-        let positive = genderTokens + query.includedTags
-        let negative = query.excludedTags.map { "!\($0)" }
-        let all = positive + negative
+        let all = genderTokens + Array(query.tags)
         guard !all.isEmpty else { return query.text }
 
         let keywords = "@keywords " + all.joined(separator: " ")
