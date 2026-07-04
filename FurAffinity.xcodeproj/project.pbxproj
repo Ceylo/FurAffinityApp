@@ -153,6 +153,7 @@
 		CEA17A1100000000000000FC /* ContinueThreadRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA17A1100000000000000FB /* ContinueThreadRow.swift */; };
 		CEA17A1100000000000000FE /* CommentThreadFocus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA17A1100000000000000FD /* CommentThreadFocus.swift */; };
 		CEA17A110000000000000202 /* CommentsWidthMeasuring.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA17A110000000000000201 /* CommentsWidthMeasuring.swift */; };
+		D17E358F6EBAEE2AB484011F /* UsernameField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D2364BADB5ED5A6F51CD91C /* UsernameField.swift */; };
 		D84FB74D89392ACC0D73E55D /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 630BB43B07A3008252B5171B /* UserNotificationsUI.framework */; };
 		FA0000000000000000000008 /* SubmissionAudioContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000007 /* SubmissionAudioContent.swift */; };
 		FA000000000000000000000A /* AudioPlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000009 /* AudioPlaybackController.swift */; };
@@ -195,6 +196,7 @@
 		3033B05A545010E29F30F1FD /* FlowLayout.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		33F4DE8504EE8E5896B9AA6A /* ExplorationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExplorationView.swift; sourceTree = "<group>"; };
 		5984ACB60D47CABBFCF22AD3 /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		5D2364BADB5ED5A6F51CD91C /* UsernameField.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UsernameField.swift; sourceTree = "<group>"; };
 		630BB43B07A3008252B5171B /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = SDKROOT; };
 		702AF02EF9EF07FD91BDCD6C /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7311AE39DCFA90D16A020EBA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS14.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
@@ -662,6 +664,7 @@
 				8758895B2DCD150F00CB7793 /* WatchingPill.swift */,
 				878EBC982EDB8CF6006A68D3 /* ErrorDisplay.swift */,
 				3033B05A545010E29F30F1FD /* FlowLayout.swift */,
+				5D2364BADB5ED5A6F51CD91C /* UsernameField.swift */,
 			);
 			path = "Helper Views";
 			sourceTree = "<group>";
@@ -979,6 +982,7 @@
 				43F70DE346902EBD915BC069 /* SubmissionsTabView.swift in Sources */,
 				64F2F57A2708E6F09AEDA450 /* TagSearchEditor.swift in Sources */,
 				8100B7C9FB003874702EC4E9 /* FlowLayout.swift in Sources */,
+				D17E358F6EBAEE2AB484011F /* UsernameField.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
