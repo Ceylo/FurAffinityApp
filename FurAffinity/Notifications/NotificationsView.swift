@@ -136,7 +136,7 @@ struct NotificationsView: View {
                 hasJournals: !notifications.journals.isEmpty,
                 nuker: actions
             )
-            .padding(.trailing, 20)
+            .padding(.trailing, 16)
         }
         .swap(when: noNotification) {
             ScrollView {

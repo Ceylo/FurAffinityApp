@@ -111,8 +111,7 @@ struct SubmissionsTabView: View {
             .toolbar(.hidden, for: .navigationBar)
             .overlay(alignment: .topTrailing) {
                 floatingControls
-                    .padding(.trailing, 20)
-                    .padding(.top, 6)
+                    .padding(.trailing, 16)
             }
             .sheet(isPresented: $showingFilters) {
                 SearchFiltersView(query: model.explorationQuery)
