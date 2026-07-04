@@ -54,7 +54,17 @@ struct SearchFiltersView: View {
                 } footer: {
                     Text("Matches a submission's title, description, and keywords.")
                 }
-                
+
+                Section {
+                    LabeledContent("User") {
+                        UsernameField(username: $query.author)
+                    }
+                } header: {
+                    Text("User")
+                } footer: {
+                    Text("Only show submissions by this user (their static, lowercase name).")
+                }
+
                 Section {
                     TagSearchEditor(tags: $query.tags)
                 } header: {
