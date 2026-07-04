@@ -174,7 +174,7 @@ struct TagSearchEditor: View {
                     case .addControl: addControl
                     }
                 }
-                .animation(.default, value: tags)
+                .animation(.default.speed(2), value: tags)
             }
 
             if isAddingTag {

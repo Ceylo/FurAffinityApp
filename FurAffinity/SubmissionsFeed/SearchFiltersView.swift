@@ -60,7 +60,7 @@ struct SearchFiltersView: View {
                 } header: {
                     Text("Tags")
                 } footer: {
-                    Text("Searched in submission tags only.")
+                    Text("Searched in submission tags only. Tap a tag to exclude it.")
                 }
 
                 Section("Sort") {
