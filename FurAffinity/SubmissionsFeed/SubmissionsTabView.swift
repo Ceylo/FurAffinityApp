@@ -16,7 +16,7 @@ import FAKit
 struct SubmissionsTabView: View {
     @Environment(Model.self) private var model
 
-    enum Mode: Hashable {
+    enum Mode: Hashable, CaseIterable {
         case following
         case explore
 
@@ -30,7 +30,7 @@ struct SubmissionsTabView: View {
         /// The SF Symbol shown on the mode-switch button for the current mode.
         var symbol: String {
             switch self {
-            case .following: "heart"
+            case .following: "person.2.fill"
             case .explore: "safari"
             }
         }
@@ -62,8 +62,9 @@ struct SubmissionsTabView: View {
     private var modeSwitch: some View {
         Menu {
             Picker("Mode", selection: $mode) {
-                Label("Following", systemImage: "heart").tag(Mode.following)
-                Label("Explore", systemImage: "safari").tag(Mode.explore)
+                ForEach(Mode.allCases, id: \.self) { mode in
+                    Label(mode.title, systemImage: mode.symbol).tag(mode)
+                }
             }
         } label: {
             ActionControl(systemImage: mode.symbol)
