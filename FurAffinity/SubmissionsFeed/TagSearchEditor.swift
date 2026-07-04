@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import WrappingHStack
 import OrderedCollections
 
 /// A chip-based editor for tag-scoped search criteria. Unlike the free-text bar
@@ -25,17 +24,12 @@ struct TagSearchEditor: View {
     @State private var newTagText = ""
     @FocusState private var addFieldFocused: Bool
 
-    /// One laid-out element of the chip zone. Flattening the tags and the add
-    /// control into a single collection lets `WrappingHStack`'s collection-based
-    /// initializer measure and wrap each element individually — its ViewBuilder
-    /// initializer treats a `ForEach` as one non-wrapping unit instead.
-    private enum Item: Hashable {
-        case tag(String)
-        case addControl
-    }
+    /// `id` is the base tag (label without `!`) so toggling include/exclude keeps
+    /// the same identity and recolors in place instead of collapsing.
+    private struct Chip: Identifiable { let id: String; let token: String }
 
-    private var chipItems: [Item] {
-        tags.map(Item.tag) + (isAddingTag ? [] : [.addControl])
+    private var chips: [Chip] {
+        tags.map { Chip(id: label($0), token: $0) }
     }
 
     // MARK: - Token helpers
@@ -85,20 +79,25 @@ struct TagSearchEditor: View {
     }
 
     /// Turns whitespace-separated input into individual chips as the user types.
-    /// Complete tokens (all but a trailing partial word) are committed; the
-    /// partial stays in the field. A trailing space commits every token.
+    /// The trailing partial word stays in the field; a trailing space commits it too.
+    /// `withAnimation` is explicit because a text-input transaction otherwise
+    /// suppresses the chips' implicit insertion animation.
     private func tokenizeIfNeeded(_ text: String) {
         guard text.contains(where: \.isWhitespace) else { return }
         var tokens = text.split(whereSeparator: \.isWhitespace).map(String.init)
         let remainder = (text.last?.isWhitespace ?? false) ? "" : (tokens.popLast() ?? "")
-        for token in tokens { addToken(token) }
+        withAnimation(.default.speed(2)) {
+            for token in tokens { addToken(token) }
+        }
         newTagText = remainder
     }
 
     /// Commits whatever is left in the field into chips and clears it.
     private func commitRemainder() {
-        for token in newTagText.split(whereSeparator: \.isWhitespace).map(String.init) {
-            addToken(token)
+        withAnimation(.default.speed(2)) {
+            for token in newTagText.split(whereSeparator: \.isWhitespace).map(String.init) {
+                addToken(token)
+            }
         }
         newTagText = ""
     }
@@ -159,22 +158,24 @@ struct TagSearchEditor: View {
     }
 
     var body: some View {
-        // A bare Group so the Form renders the chips and the add field as
-        // separate rows — the field then gets a full-width, native row height.
+        // Separate Form rows so the add field gets a full-width, native row height.
         Group {
             if !isAddingTag || !tags.isEmpty {
-                WrappingHStack(
-                    chipItems,
-                    id: \.self,
-                    spacing: .constant(6),
-                    lineSpacing: 6
-                ) { item in
-                    switch item {
-                    case .tag(let token): chip(token)
-                    case .addControl: addControl
+                // Known limitation: a leaving chip holds its layout slot until the
+                // scale transition finishes (scale is a render transform), so
+                // neighbours only slide in to close the gap after the shrink.
+                FlowLayout(spacing: 6, lineSpacing: 6) {
+                    ForEach(chips) { model in
+                        chip(model.token)
+                            .transition(.scale(scale: 0.1, anchor: .leading).combined(with: .opacity))
+                    }
+                    if !isAddingTag {
+                        addControl
+                            .transition(.scale(scale: 0.1, anchor: .leading).combined(with: .opacity))
                     }
                 }
                 .animation(.default.speed(2), value: tags)
+                .animation(.default.speed(2), value: isAddingTag)
             }
 
             if isAddingTag {

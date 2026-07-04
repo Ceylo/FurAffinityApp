@@ -13,6 +13,7 @@
 		50599C71B1FD0BDBC8E34245 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7311AE39DCFA90D16A020EBA /* Foundation.framework */; };
 		64F2F57A2708E6F09AEDA450 /* TagSearchEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B0E85C4773BEEEEBD9B20CA /* TagSearchEditor.swift */; };
 		76DD1A515EB54A13BA763698 /* CloudflareResolutionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */; };
+		8100B7C9FB003874702EC4E9 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3033B05A545010E29F30F1FD /* FlowLayout.swift */; };
 		8708DA262D74CF19000B419C /* SubmissionMetadataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8708DA252D74CF19000B419C /* SubmissionMetadataView.swift */; };
 		8708DA292D74D4D4000B419C /* WrappingHStack in Frameworks */ = {isa = PBXBuildFile; productRef = 8708DA282D74D4D4000B419C /* WrappingHStack */; };
 		87098D362CB14F1000E7BD94 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 87098D352CB14F1000E7BD94 /* Kingfisher */; };
@@ -191,6 +192,7 @@
 
 /* Begin PBXFileReference section */
 		12CC924CA9E594B2F3D1049C /* NotificationContent.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationContent.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		3033B05A545010E29F30F1FD /* FlowLayout.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		33F4DE8504EE8E5896B9AA6A /* ExplorationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExplorationView.swift; sourceTree = "<group>"; };
 		5984ACB60D47CABBFCF22AD3 /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		630BB43B07A3008252B5171B /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = SDKROOT; };
@@ -659,6 +661,7 @@
 				87E58C632DBCE9E00022F731 /* UserNameView.swift */,
 				8758895B2DCD150F00CB7793 /* WatchingPill.swift */,
 				878EBC982EDB8CF6006A68D3 /* ErrorDisplay.swift */,
+				3033B05A545010E29F30F1FD /* FlowLayout.swift */,
 			);
 			path = "Helper Views";
 			sourceTree = "<group>";
@@ -975,6 +978,7 @@
 				4795204787AD8342F991F685 /* SearchFiltersView.swift in Sources */,
 				43F70DE346902EBD915BC069 /* SubmissionsTabView.swift in Sources */,
 				64F2F57A2708E6F09AEDA450 /* TagSearchEditor.swift in Sources */,
+				8100B7C9FB003874702EC4E9 /* FlowLayout.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
