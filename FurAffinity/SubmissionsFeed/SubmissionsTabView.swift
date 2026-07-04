@@ -53,10 +53,7 @@ struct SubmissionsTabView: View {
                 ExplorationView()
             }
         }
-        // Always fill the available space so the top-trailing overlay pins to the
-        // screen corner from the start. Otherwise, while the feed is still loading
-        // (empty, zero-size content), the ZStack collapses to the screen center and
-        // the floating controls appear there before snapping to the corner.
+        // To have the floating controls in top-right from the start.
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
