@@ -9,8 +9,10 @@ import SwiftUI
 import FAKit
 
 /// Hosts the two modes of the first tab — the watched-users feed ("Following")
-/// and search ("Explore") — and owns the shared nav-bar chrome: a title dropdown
-/// menu to switch modes plus the mode-specific trailing action.
+/// and search ("Explore"). Rather than a nav bar (which adds height and blurs
+/// the feed cards under it), the mode switch and the mode-specific context
+/// action float as a pair of round Liquid-Glass buttons over the top-trailing
+/// corner of the list.
 struct SubmissionsTabView: View {
     @Environment(Model.self) private var model
 
@@ -22,6 +24,14 @@ struct SubmissionsTabView: View {
             switch self {
             case .following: "Following"
             case .explore: "Explore"
+            }
+        }
+
+        /// The SF Symbol shown on the mode-switch button for the current mode.
+        var symbol: String {
+            switch self {
+            case .following: "heart"
+            case .explore: "safari"
             }
         }
     }
@@ -44,26 +54,21 @@ struct SubmissionsTabView: View {
         }
     }
 
-    private var titleMenu: some View {
+    /// Icon-only mode switch: a glass circle whose icon reflects the current
+    /// mode, tapping it opens a picker to switch modes.
+    private var modeSwitch: some View {
         Menu {
             Picker("Mode", selection: $mode) {
                 Label("Following", systemImage: "heart").tag(Mode.following)
                 Label("Explore", systemImage: "safari").tag(Mode.explore)
             }
         } label: {
-            HStack(spacing: 4) {
-                Text(mode.title)
-                    .font(.headline)
-                Image(systemName: "chevron.down")
-                    .font(.caption2)
-                    .fontWeight(.semibold)
-            }
-            .foregroundStyle(.primary)
+            GlassCircleLabel(systemImage: mode.symbol)
         }
     }
 
     @ViewBuilder
-    private var trailingAction: some View {
+    private var contextAction: some View {
         switch mode {
         case .following:
             SubmissionsFeedActionView()
@@ -71,25 +76,68 @@ struct SubmissionsTabView: View {
             Button {
                 showingFilters = true
             } label: {
-                Label("Filters", systemImage: "line.3.horizontal.decrease.circle")
+                GlassCircleLabel(systemImage: "line.3.horizontal.decrease")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var floatingControls: some View {
+        if #available(iOS 26, *) {
+            GlassEffectContainer(spacing: 8) {
+                HStack(spacing: 8) {
+                    modeSwitch
+                    contextAction
+                }
+            }
+        } else {
+            HStack(spacing: 8) {
+                modeSwitch
+                contextAction
             }
         }
     }
 
     var body: some View {
         content
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    titleMenu
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    trailingAction
-                }
+            .toolbar(.hidden, for: .navigationBar)
+            .overlay(alignment: .topTrailing) {
+                floatingControls
+                    .padding(.trailing, 20)
+                    .padding(.top, 6)
             }
             .sheet(isPresented: $showingFilters) {
                 SearchFiltersView(query: model.explorationQuery)
             }
+    }
+}
+
+/// A round Liquid-Glass icon button label, matching `ActionControl().opaque()`
+/// but for an arbitrary SF Symbol (the mode switch and filters buttons).
+private struct GlassCircleLabel: View {
+    let systemImage: String
+    var size: Double = 18
+
+    var body: some View {
+        if #available(iOS 26, *) {
+            Image(systemName: systemImage)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .tint(.primary)
+                .frame(width: size, height: size)
+                .padding(13)
+                .glassEffect()
+        } else {
+            Image(systemName: systemImage)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: size, height: size)
+                .foregroundColor(.accentColor)
+                .padding(5)
+                .background(.thinMaterial)
+                .clipShape(Circle())
+                .padding(5)
+        }
     }
 }
 
