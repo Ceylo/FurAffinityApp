@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0E06AEA6028467B9110C67E9 /* NotificationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99B6D6EA7F946B29E403A1C9 /* NotificationViewController.swift */; };
+		20C2E71EC8643BB66D83821F /* AnimatedImageTextAttachment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4448C613F3263B298240B850 /* AnimatedImageTextAttachment.swift */; };
 		50599C71B1FD0BDBC8E34245 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7311AE39DCFA90D16A020EBA /* Foundation.framework */; };
 		76DD1A515EB54A13BA763698 /* CloudflareResolutionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */; };
 		8708DA262D74CF19000B419C /* SubmissionMetadataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8708DA252D74CF19000B419C /* SubmissionMetadataView.swift */; };
@@ -187,6 +188,7 @@
 
 /* Begin PBXFileReference section */
 		12CC924CA9E594B2F3D1049C /* NotificationContent.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationContent.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		4448C613F3263B298240B850 /* AnimatedImageTextAttachment.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnimatedImageTextAttachment.swift; sourceTree = "<group>"; };
 		5984ACB60D47CABBFCF22AD3 /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		630BB43B07A3008252B5171B /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = SDKROOT; };
 		702AF02EF9EF07FD91BDCD6C /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -647,6 +649,7 @@
 				87E58C632DBCE9E00022F731 /* UserNameView.swift */,
 				8758895B2DCD150F00CB7793 /* WatchingPill.swift */,
 				878EBC982EDB8CF6006A68D3 /* ErrorDisplay.swift */,
+				4448C613F3263B298240B850 /* AnimatedImageTextAttachment.swift */,
 			);
 			path = "Helper Views";
 			sourceTree = "<group>";
@@ -780,13 +783,13 @@
 			);
 			mainGroup = 8716E7DF271C659C00C0BC4A;
 			packageReferences = (
-				87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */,
-				879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
+				87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version.git" */,
+				879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect.git" */,
 				877173732C35878700B84624 /* XCRemoteSwiftPackageReference "Amplitude-Swift" */,
-				87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */,
-				87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults" */,
-				8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack" */,
-				871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms" */,
+				87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher.git" */,
+				87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults.git" */,
+				8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack.git" */,
+				871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms.git" */,
 			);
 			productRefGroup = 8716E7E9271C659C00C0BC4A /* Products */;
 			projectDirPath = "";
@@ -959,6 +962,7 @@
 				8773058329D5FB8E004F8019 /* SubmissionView.swift in Sources */,
 				8733DDFF28FAD58D00CD8BCF /* SwapView.swift in Sources */,
 				B955B3A262FCFEE6696E3642 /* AppDelegate.swift in Sources */,
+				20C2E71EC8643BB66D83821F /* AnimatedImageTextAttachment.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1298,7 +1302,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack" */ = {
+		8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/dkk/WrappingHStack.git";
 			requirement = {
@@ -1306,7 +1310,7 @@
 				minimumVersion = 2.2.11;
 			};
 		};
-		87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+		87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
 			requirement = {
@@ -1314,7 +1318,7 @@
 				minimumVersion = 8.5.0;
 			};
 		};
-		871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
+		871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-algorithms.git";
 			requirement = {
@@ -1330,7 +1334,7 @@
 				minimumVersion = 1.9.2;
 			};
 		};
-		879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */ = {
+		879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/siteline/SwiftUI-Introspect.git";
 			requirement = {
@@ -1338,7 +1342,7 @@
 				minimumVersion = 26.0.0;
 			};
 		};
-		87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults" */ = {
+		87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/Defaults.git";
 			requirement = {
@@ -1346,7 +1350,7 @@
 				minimumVersion = 9.0.3;
 			};
 		};
-		87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */ = {
+		87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/mxcl/Version.git";
 			requirement = {
@@ -1359,17 +1363,17 @@
 /* Begin XCSwiftPackageProductDependency section */
 		8708DA282D74D4D4000B419C /* WrappingHStack */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack" */;
+			package = 8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack.git" */;
 			productName = WrappingHStack;
 		};
 		87098D352CB14F1000E7BD94 /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			package = 87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher.git" */;
 			productName = Kingfisher;
 		};
 		871034812E8F12A80030F36E /* Collections */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms" */;
+			package = 871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms.git" */;
 			productName = Collections;
 		};
 		8761834D271F5E570021A051 /* FAKit */ = {
@@ -1383,17 +1387,17 @@
 		};
 		87B0233E2CD54F9200F4D400 /* Defaults */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults" */;
+			package = 87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults.git" */;
 			productName = Defaults;
 		};
 		87C1A0AC284B6E5400529F8C /* Version */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */;
+			package = 87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version.git" */;
 			productName = Version;
 		};
 		87E796162C99994D0020EACD /* SwiftUIIntrospect */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */;
+			package = 879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect.git" */;
 			productName = SwiftUIIntrospect;
 		};
 		87FA100B271F5E570021A051 /* FALogging */ = {

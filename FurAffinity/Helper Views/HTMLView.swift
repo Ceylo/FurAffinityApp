@@ -6,6 +6,9 @@
 //
 
 import SwiftUI
+import Defaults
+import ImageIO
+import UniformTypeIdentifiers
 
 // Rendering HTML is a pain…
 // - WKWebView embeds a UIScrollView and cannot size itself based on its contents
@@ -16,43 +19,53 @@ import SwiftUI
 // so we use UITextView with manual sizing, which unfortunately has to be asynchronous
 struct HTMLView: View {
     var text: AttributedString
-    
+    @Default(.animateAvatars) var animateAvatars
+
     @State private var height: CGFloat
-    
+
     init(text: AttributedString, initialHeight: CGFloat = 0) {
         self.text = text
         self._height = State(initialValue: initialHeight)
     }
-    
+
     var body: some View {
         GeometryReader { geometry in
-            TextViewImpl(text: text, viewWidth: geometry.size.width, neededHeight: $height)
+            TextViewImpl(text: text,
+                         animateGIFs: animateAvatars,
+                         viewWidth: geometry.size.width,
+                         neededHeight: $height)
         }
         .frame(height: height)
     }
-    
+
     struct TextViewImpl: UIViewRepresentable {
         var text: AttributedString
+        var animateGIFs: Bool
         var viewWidth: CGFloat
         @Binding var neededHeight: CGFloat
-        
+
+        func makeCoordinator() -> Coordinator {
+            Coordinator()
+        }
+
         func makeUIView(context: Context) -> UITextView {
             let view = UITextView(usingTextLayoutManager: true)
             view.isEditable = false
             view.isScrollEnabled = false
             view.setContentCompressionResistancePriority(.fittingSizeLevel, for: .horizontal)
-            view.attributedText = NSAttributedString(text)
+            applyText(to: view, context: context)
             view.linkTextAttributes = [
                 .underlineStyle : NSNumber(value: NSUnderlineStyle.single.union(.patternDot).union(.byWord).rawValue),
                 .underlineColor : UIColor(white: 0.5, alpha: 0.8),
             ]
             view.backgroundColor = nil
             view.textContainerInset = .init(top: 3, left: 3, bottom: 3, right: 3)
-            
+
             return view
         }
-        
+
         func updateUIView(_ view: UITextView, context: Context) {
+            applyText(to: view, context: context)
             let bounds = CGSize(width: viewWidth,
                                 height: .greatestFiniteMagnitude)
             let fittingSize = view.systemLayoutSizeFitting(bounds)
@@ -60,6 +73,62 @@ struct HTMLView: View {
             Task {
                 neededHeight = fittingSize.height
             }
+        }
+
+        /// Assigns the (possibly GIF-swapped) attributed text only when the content
+        /// or the animation flag actually changed, so width-only relayouts don't
+        /// rebuild the string or restart the GIF decoders.
+        private func applyText(to view: UITextView, context: Context) {
+            let coordinator = context.coordinator
+            guard coordinator.appliedText != text
+                || coordinator.appliedAnimateGIFs != animateGIFs
+            else { return }
+
+            view.attributedText = Self.attributedText(from: text, animateGIFs: animateGIFs)
+            coordinator.appliedText = text
+            coordinator.appliedAnimateGIFs = animateGIFs
+        }
+
+        /// Converts to `NSAttributedString` and, when `animateGIFs` is on, swaps each
+        /// static animated-GIF attachment for an `AnimatedImageTextAttachment` that
+        /// renders a live `AnimatedImageView`. Non-GIF attachments are left untouched.
+        private static func attributedText(from text: AttributedString, animateGIFs: Bool) -> NSAttributedString {
+            let base = NSAttributedString(text)
+            guard animateGIFs else { return base }
+
+            let mutable = NSMutableAttributedString(attributedString: base)
+            let fullRange = NSRange(location: 0, length: mutable.length)
+            mutable.enumerateAttribute(.attachment, in: fullRange) { value, range, _ in
+                guard let attachment = value as? NSTextAttachment,
+                      !(attachment is AnimatedImageTextAttachment),
+                      let data = attachment.fileWrapper?.regularFileContents ?? attachment.contents,
+                      isAnimatedGIF(data)
+                else { return }
+
+                let animated = AnimatedImageTextAttachment(gifData: data)
+                animated.bounds = attachment.bounds
+                animated.image = attachment.image // static first-frame fallback
+                mutable.addAttribute(.attachment, value: animated, range: range)
+            }
+            return mutable
+        }
+
+        private static func isAnimatedGIF(_ data: Data) -> Bool {
+            // "GIF8" magic — cheap reject before decoding.
+            guard data.starts(with: [0x47, 0x49, 0x46, 0x38]) else { return false }
+            guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
+                return false
+            }
+            if let type = CGImageSourceGetType(source),
+               UTType(type as String) != .gif {
+                return false
+            }
+            return CGImageSourceGetCount(source) > 1
+        }
+
+        final class Coordinator {
+            var appliedText: AttributedString?
+            var appliedAnimateGIFs: Bool?
         }
     }
 }
