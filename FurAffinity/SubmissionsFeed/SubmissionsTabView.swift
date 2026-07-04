@@ -38,6 +38,7 @@ struct SubmissionsTabView: View {
 
     @State private var mode: Mode = .following
     @State private var showingFilters = false
+    @Namespace var namespace
 
     private var content: some View {
         ZStack {
@@ -84,11 +85,12 @@ struct SubmissionsTabView: View {
     @ViewBuilder
     private var floatingControls: some View {
         if #available(iOS 26, *) {
-            GlassEffectContainer(spacing: 8) {
-                HStack(spacing: 8) {
+            GlassEffectContainer {
+                HStack(spacing: 10) {
                     modeSwitch
                     contextAction
                 }
+                .glassEffectUnion(id: "floatingControls", namespace: namespace)
             }
         } else {
             HStack(spacing: 8) {
