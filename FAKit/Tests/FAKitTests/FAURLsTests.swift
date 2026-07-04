@@ -77,6 +77,7 @@ struct FAURLsTests {
             contentTypes: [.art, .music],
             genders: [.male],
             tags: [],
+            author: "",
             page: 3
         )
         let items = try queryItems(of: FAURLs.searchUrl(for: query))
@@ -121,6 +122,25 @@ struct FAURLsTests {
         query.tags = ["!bird"]
         let items = try queryItems(of: FAURLs.searchUrl(for: query))
         #expect(items["q"] == "@keywords !bird")
+    }
+
+    @Test
+    func searchUrl_authorOnly() throws {
+        var query = FASearchQuery.default
+        query.author = "fender"
+        let items = try queryItems(of: FAURLs.searchUrl(for: query))
+        #expect(items["q"] == "@lower fender")
+    }
+
+    @Test
+    func searchUrl_authorWithTextAndTags() throws {
+        var query = FASearchQuery.default
+        query.text = "dragon"
+        query.author = "fender"
+        query.tags = ["wolf"]
+        let items = try queryItems(of: FAURLs.searchUrl(for: query))
+        // Order: free text → @lower author → @keywords tags.
+        #expect(items["q"] == "dragon @lower fender @keywords wolf")
     }
 
     @Test

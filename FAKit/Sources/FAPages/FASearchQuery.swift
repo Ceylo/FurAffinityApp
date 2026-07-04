@@ -70,6 +70,10 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
     /// with a leading `!` (e.g. `!bird`) — the same token form `@keywords` uses,
     /// and `!` can't appear inside a real FA tag so there's no ambiguity.
     public var tags: OrderedSet<String>
+    /// Scopes the search to a single author via the `@lower <author>` operator.
+    /// This is the static, lowercase username (`author`/`username`, not
+    /// `displayAuthor`). `""` means no author filter.
+    public var author: String
     public var page: Int
 
     public init(
@@ -81,6 +85,7 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
         contentTypes: Set<ContentType>,
         genders: Set<Gender>,
         tags: OrderedSet<String>,
+        author: String,
         page: Int
     ) {
         self.text = text
@@ -91,6 +96,7 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
         self.contentTypes = contentTypes
         self.genders = genders
         self.tags = tags
+        self.author = author
         self.page = page
     }
 
@@ -106,6 +112,7 @@ public struct FASearchQuery: Codable, Sendable, Equatable {
         contentTypes: Set(ContentType.allCases),
         genders: [],
         tags: [],
+        author: "",
         page: 1
     )
 }

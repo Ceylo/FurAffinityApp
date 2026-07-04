@@ -184,21 +184,29 @@ public enum FAURLs {
         return searchUrl.appending(queryItems: items)
     }
 
-    /// The `q` value: the user's free text, plus any tag-scoped criteria (selected
-    /// genders and tags) folded into a single `@keywords` operator — matching what
-    /// the site's JS produces. A single `@keywords` prefix covers every following
-    /// token; excluded tags already carry their `!` prefix. Order is genders →
-    /// tags in entered order.
+    /// The `q` value: the user's free text, an optional `@lower <author>` author
+    /// scope, plus any tag-scoped criteria (selected genders and tags) folded into
+    /// a single `@keywords` operator — matching what the site's JS produces. A
+    /// single `@keywords` prefix covers every following token; excluded tags
+    /// already carry their `!` prefix. Order is free text → `@lower <author>` →
+    /// `@keywords` (genders → tags in entered order).
     private static func searchQueryText(for query: FASearchQuery) -> String {
+        var operators: [String] = []
+
+        if !query.author.isEmpty {
+            operators.append("@lower \(query.author)")
+        }
+
         let genderTokens = FASearchQuery.Gender.allCases
             .filter { query.genders.contains($0) }
             .map(\.rawValue)
+        let keywordTokens = genderTokens + Array(query.tags)
+        if !keywordTokens.isEmpty {
+            operators.append("@keywords " + keywordTokens.joined(separator: " "))
+        }
 
-        let all = genderTokens + Array(query.tags)
-        guard !all.isEmpty else { return query.text }
-
-        let keywords = "@keywords " + all.joined(separator: " ")
-        return query.text.isEmpty ? keywords : "\(query.text) \(keywords)"
+        let tokens = (query.text.isEmpty ? [] : [query.text]) + operators
+        return tokens.joined(separator: " ")
     }
 
     public static func submissionUrl(sid: Int) -> URL {
