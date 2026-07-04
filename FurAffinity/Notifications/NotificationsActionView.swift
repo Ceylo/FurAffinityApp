@@ -79,6 +79,15 @@ struct NotificationsActionView: View {
             .nukeAlert("Journals", "journal notifications", show: $showNukeJournalsAlert) {
                 try await nuker.nukeAllJournalNotifications()
             }
+            .applying { control in
+                if #available(iOS 26, *) {
+                    GlassEffectContainer {
+                        control.glassEffect()
+                    }
+                } else {
+                    control
+                }
+            }
         }
     }
 }

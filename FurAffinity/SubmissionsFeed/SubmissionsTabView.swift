@@ -64,7 +64,8 @@ struct SubmissionsTabView: View {
                 Label("Explore", systemImage: "safari").tag(Mode.explore)
             }
         } label: {
-            GlassCircleLabel(systemImage: mode.symbol)
+            ActionControl(systemImage: mode.symbol)
+                .opaque()
         }
     }
 
@@ -77,7 +78,8 @@ struct SubmissionsTabView: View {
             Button {
                 showingFilters = true
             } label: {
-                GlassCircleLabel(systemImage: "line.3.horizontal.decrease")
+                ActionControl(systemImage: "line.3.horizontal.decrease")
+                    .opaque()
             }
         }
     }
@@ -88,7 +90,9 @@ struct SubmissionsTabView: View {
             GlassEffectContainer {
                 HStack(spacing: 10) {
                     modeSwitch
+                        .glassEffect()
                     contextAction
+                        .glassEffect()
                 }
                 .glassEffectUnion(id: "floatingControls", namespace: namespace)
             }
