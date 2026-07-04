@@ -83,6 +83,20 @@ struct ExplorationView: View {
         }
     }
 
+    /// Shown when a search failed with nothing to display, so the user isn't left
+    /// staring at a spinner that never resolves. Matches `RemoteView`'s failure
+    /// state: a plain message with pull-to-refresh as the retry path. The
+    /// underlying error is surfaced separately via the shared error alert.
+    private var loadFailed: some View {
+        ScrollView {
+            Text("Loading failed")
+                .foregroundStyle(.secondary)
+                .font(.title)
+        }
+        .defaultScrollAnchor(.center)
+        .refreshable { await model.refreshExploration() }
+    }
+
     private var contentGroup: some View {
         Group {
             if let results = model.explorationResults {
@@ -91,6 +105,8 @@ struct ExplorationView: View {
                 } else {
                     resultsList(results)
                 }
+            } else if model.explorationLoadFailed {
+                loadFailed
             } else {
                 Centered {
                     ProgressView()

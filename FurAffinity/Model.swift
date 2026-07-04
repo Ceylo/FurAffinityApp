@@ -49,6 +49,9 @@ class Model: NotificationsNuker, NotificationsDeleter {
     private(set) var explorationCanLoadMore = false
     /// `true` while a search/page fetch is in flight.
     private(set) var isLoadingExploration = false
+    /// `true` when the most recent fetch failed while there was nothing to show,
+    /// so the UI can offer a retry instead of an endless spinner.
+    private(set) var explorationLoadFailed = false
     /// Ratings the account may search. Optimistically all ratings until a loaded
     /// page reveals FA restricts some (then the disallowed filter toggles grey out).
     private(set) var explorationAllowedRatings: Set<Rating> = Set(Rating.allCases)
@@ -152,6 +155,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             explorationResults = nil
             explorationCanLoadMore = false
             isLoadingExploration = false
+            explorationLoadFailed = false
             Defaults[.lastViewedSubmissionID] = nil
             return
         }
@@ -292,8 +296,13 @@ class Model: NotificationsNuker, NotificationsDeleter {
     /// fetch is already running.
     func loadMoreExploration() async {
         guard explorationCanLoadMore, !isLoadingExploration else { return }
+        let previousPage = explorationQuery.page
         explorationQuery.page += 1
-        await fetchExplorationResults(replacing: false)
+        // Roll the page back on failure so a retry re-fetches the same page
+        // instead of skipping it.
+        if await !fetchExplorationResults(replacing: false) {
+            explorationQuery.page = previousPage
+        }
     }
 
     /// Pull-to-refresh: re-runs the current query from page 1 without clearing the
@@ -304,10 +313,14 @@ class Model: NotificationsNuker, NotificationsDeleter {
         await fetchExplorationResults(replacing: true)
     }
 
-    private func fetchExplorationResults(replacing: Bool) async {
+    /// Returns `true` if the fetch succeeded.
+    @discardableResult
+    private func fetchExplorationResults(replacing: Bool) async -> Bool {
         isLoadingExploration = true
+        explorationLoadFailed = false
         defer { isLoadingExploration = false }
 
+        var succeeded = false
         await storeLocalizedError(in: errorStorage, action: "Search", webBrowserURL: FAURLs.searchUrl(for: explorationQuery)) {
             let results = try await getSession().search(explorationQuery)
             let previews = results.previews
@@ -320,7 +333,10 @@ class Model: NotificationsNuker, NotificationsDeleter {
             } else {
                 explorationResults = (explorationResults ?? []).appending(contentsOf: previews)
             }
+            succeeded = true
         }
+        explorationLoadFailed = !succeeded
+        return succeeded
     }
     
     // MARK: - Commentable
