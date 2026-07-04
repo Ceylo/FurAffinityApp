@@ -14,7 +14,7 @@ import FAKit
 /// `LabeledContent` so each site provides its own label.
 struct UsernameField: View {
     @Binding var username: String
-    var placeholder: String = "static user name"
+    var placeholder: String = "static, lowercase user name"
 
     @State private var avatarUrl: URL?
 

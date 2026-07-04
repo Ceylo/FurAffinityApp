@@ -45,24 +45,20 @@ struct SearchFiltersView: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Search everywhere", text: $query.text)
+                    TextField("Search in title, description and tags", text: $query.text)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .submitLabel(.search)
                 } header: {
                     Text("Search")
-                } footer: {
-                    Text("Matches a submission's title, description, and keywords.")
                 }
 
                 Section {
-                    LabeledContent("User") {
-                        UsernameField(username: $query.author)
-                    }
+                    UsernameField(username: $query.author)
                 } header: {
                     Text("User")
                 } footer: {
-                    Text("Only show submissions by this user (their static, lowercase name).")
+                    Text("Only show submissions by this user. Matches on full usernames only.")
                 }
 
                 Section {
