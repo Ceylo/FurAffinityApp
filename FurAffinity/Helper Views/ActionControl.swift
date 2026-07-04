@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ActionControl: View {
     private var _opaque: Bool = false
-    private var size: Double = 18
+    private var size: Double = 24
     var systemImage: String = "ellipsis"
 
     init(systemImage: String = "ellipsis") {
@@ -30,7 +30,8 @@ struct ActionControl: View {
                     .aspectRatio(contentMode: .fit)
                     .tint(.primary)
                     .frame(width: size, height: size)
-                    .padding(13)
+                    .padding(10)
+                    .offset(y: 1)
             } else {
                 Image(systemName: systemImage)
                     .resizable()
@@ -69,8 +70,7 @@ struct ActionControl: View {
                         control
                     }
                 }
-                .padding(.trailing, 20)
-                .padding(.top, 6)
+                .padding(.trailing, 16)
             }
             .toolbar {
                 ToolbarItem {
@@ -78,6 +78,13 @@ struct ActionControl: View {
                         ActionControl()
                     }
                 }
+            }
+            .overlay(alignment: .topTrailing) {
+                Rectangle()
+                    .stroke(Color.red)
+                    .frame(width: 44, height: 100)
+                    .padding(.trailing, 16)
+                    .offset(y: -54)
             }
     }
 }
