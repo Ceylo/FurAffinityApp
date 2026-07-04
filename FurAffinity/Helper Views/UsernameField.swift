@@ -18,7 +18,10 @@ struct UsernameField: View {
 
     @State private var avatarUrl: URL?
 
-    private var isValid: Bool { FAUsername.isValid(username) }
+    // Drives the text color via an independent @State flip so SwiftUI re-applies
+    // the TextField's foreground style live while it's first responder.
+    // https://www.hackingwithswift.com/forums/swiftui/textfield-foregroundcolor-not-updating-live/
+    @State private var isValid = false
 
     var body: some View {
         HStack {
@@ -30,9 +33,12 @@ struct UsernameField: View {
                 .autocorrectionDisabled()
                 .foregroundStyle(username.isEmpty || isValid ? Color.primary : Color.red)
         }
+        .onChange(of: username, initial: true) { _, newValue in
+            isValid = FAUsername.isValid(newValue)
+        }
         .onAppear {
             // Show a pre-filled user's avatar right away, without debouncing.
-            if avatarUrl == nil, isValid {
+            if avatarUrl == nil, FAUsername.isValid(username) {
                 avatarUrl = FAURLs.avatarUrl(for: username)
             }
         }
@@ -40,7 +46,7 @@ struct UsernameField: View {
             // Debounce: only load once typing settles. The changing task id
             // auto-cancels the previous sleep on each keystroke.
             try? await Task.sleep(for: .seconds(1))
-            guard !Task.isCancelled, isValid else { return }
+            guard !Task.isCancelled, FAUsername.isValid(username) else { return }
             avatarUrl = FAURLs.avatarUrl(for: username)
         }
     }
