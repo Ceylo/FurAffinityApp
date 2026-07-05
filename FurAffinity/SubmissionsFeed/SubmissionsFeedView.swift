@@ -156,11 +156,7 @@ struct SubmissionsFeedView: View {
                 .swap(when: items.isEmpty) {
                     noPreview
                 }
-                .onChange(of: model.submissionPreviews, initial: true) { _, newValue in
-                    guard let previews = newValue else { return }
-                    prefetchThumbnails(for: previews, availableWidth: geometry.size.width)
-                    prefetchAvatars(for: previews)
-                }
+                .prefetchingPreviews(model.submissionPreviews, availableWidth: geometry.size.width)
             }
         }
     }

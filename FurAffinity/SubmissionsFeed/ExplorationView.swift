@@ -50,11 +50,7 @@ struct ExplorationView: View {
             .listStyle(.plain)
             .scrollDismissesKeyboard(.immediately)
             .refreshable { await model.refreshExploration() }
-            .onChange(of: model.explorationResults, initial: true) { _, newValue in
-                guard let previews = newValue else { return }
-                prefetchThumbnails(for: previews, availableWidth: geometry.size.width)
-                prefetchAvatars(for: previews)
-            }
+            .prefetchingPreviews(model.explorationResults, availableWidth: geometry.size.width)
         }
     }
 

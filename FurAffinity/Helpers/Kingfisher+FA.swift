@@ -196,6 +196,24 @@ func prefetchThumbnails(for previews: some Collection<FASubmissionPreview>, avai
     prefetch(thumbnails)
 }
 
+extension View {
+    /// Prefetches thumbnails and avatars for `previews` whenever they change (and
+    /// once on appear), so a feed/results list has its images warming before the
+    /// user scrolls. `availableWidth` sizes the thumbnail requests; callers inside
+    /// a `GeometryReader` pass `geometry.size.width`.
+    @MainActor
+    func prefetchingPreviews<C: Collection<FASubmissionPreview> & Equatable>(
+        _ previews: C?,
+        availableWidth: CGFloat
+    ) -> some View {
+        onChange(of: previews, initial: true) { _, newValue in
+            guard let newValue else { return }
+            prefetchThumbnails(for: newValue, availableWidth: availableWidth)
+            prefetchAvatars(for: newValue)
+        }
+    }
+}
+
 struct Prefetch: View {
     init(_ url: URL) {
         prefetch([url])
