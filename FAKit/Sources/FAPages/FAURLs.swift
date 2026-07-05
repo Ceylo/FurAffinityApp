@@ -153,6 +153,10 @@ public enum FAURLs {
     
     public static let searchUrl = URL(string: "https://www.furaffinity.net/search/")!
 
+    /// Results requested per search page (`perpage`). Single source of truth: also
+    /// used by the client to decide whether a full page means more may follow.
+    public static let searchPageSize = 72
+
     /// Builds the `GET /search/` URL for `query`. Checked checkboxes are emitted
     /// as `rating-general=1`, `type-art=1`, …; radios/selects as `range=…`,
     /// `order-by=…`, etc. Enums are iterated in `CaseIterable` order so the
@@ -179,7 +183,7 @@ public enum FAURLs {
         // The @keywords / ! operators require extended mode, so we always use it.
         items.append(.init(name: "mode", value: "extended"))
         items.append(.init(name: "page", value: "\(query.page)"))
-        items.append(.init(name: "perpage", value: "72"))
+        items.append(.init(name: "perpage", value: "\(searchPageSize)"))
 
         return searchUrl.appending(queryItems: items)
     }

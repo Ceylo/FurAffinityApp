@@ -278,7 +278,6 @@ class Model: NotificationsNuker, NotificationsDeleter {
     }
 
     // MARK: - Exploration (search)
-    private static let searchPageSize = 72
 
     /// Runs a fresh search (page 1), replacing any previous results, and persists
     /// the criteria so they are remembered next launch.
@@ -327,7 +326,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             explorationAllowedRatings = results.allowedRatings
             explorationShowingRecentUploads = results.displayingRecentUploads
             // A full page means more may exist; a short page means we've reached the end.
-            explorationCanLoadMore = previews.count >= Self.searchPageSize
+            explorationCanLoadMore = previews.count >= FAURLs.searchPageSize
             if replacing {
                 explorationResults = OrderedSet(previews)
             } else {
