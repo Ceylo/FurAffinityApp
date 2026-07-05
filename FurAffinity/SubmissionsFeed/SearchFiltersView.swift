@@ -83,9 +83,9 @@ struct SearchFiltersView: View {
                 Section {
                     Toggle("General", isOn: toggleBinding(.general, in: \.ratings))
                     Toggle("Mature", isOn: toggleBinding(.mature, in: \.ratings))
-                        .disabled(!model.explorationAllowedRatings.contains(.mature))
+                        .disabled(!model.searchAllowedRatings.contains(.mature))
                     Toggle("Adult", isOn: toggleBinding(.adult, in: \.ratings))
-                        .disabled(!model.explorationAllowedRatings.contains(.adult))
+                        .disabled(!model.searchAllowedRatings.contains(.adult))
                 } header: {
                     Text("Rating")
                 } footer: {

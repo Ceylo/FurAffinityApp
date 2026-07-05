@@ -115,7 +115,7 @@ struct SubmissionsTabView: View {
                     .padding(.trailing, 16)
             }
             .sheet(isPresented: $showingFilters) {
-                SearchFiltersView(query: model.explorationQuery)
+                SearchFiltersView(query: model.searchQuery)
             }
     }
 }

@@ -24,14 +24,14 @@ struct ExplorationView: View {
         }
         // Drives pagination: appears as the user scrolls to the bottom.
         .onAppear {
-            Task { await model.loadMoreExploration() }
+            Task { await model.loadMoreSearchResults() }
         }
     }
 
     private func resultsList(_ results: OrderedSet<FASubmissionPreview>) -> some View {
         GeometryReader { geometry in
             List {
-                if model.explorationShowingRecentUploads {
+                if model.searchShowingRecentUploads {
                     recentUploadsNotice
                         .listRowInsets(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 120))
                         .listRowSeparator(.hidden)
@@ -42,15 +42,15 @@ struct ExplorationView: View {
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
 
-                if model.explorationCanLoadMore {
+                if model.searchCanLoadMore {
                     loadMoreRow
                         .listRowSeparator(.hidden)
                 }
             }
             .listStyle(.plain)
             .scrollDismissesKeyboard(.immediately)
-            .refreshable { await model.refreshExploration() }
-            .prefetchingPreviews(model.explorationResults, availableWidth: geometry.size.width)
+            .refreshable { await model.refreshSearch() }
+            .prefetchingPreviews(model.searchResults, availableWidth: geometry.size.width)
         }
     }
 
@@ -79,18 +79,18 @@ struct ExplorationView: View {
                 .font(.title)
         }
         .defaultScrollAnchor(.center)
-        .refreshable { await model.refreshExploration() }
+        .refreshable { await model.refreshSearch() }
     }
 
     private var contentGroup: some View {
         Group {
-            if let results = model.explorationResults {
+            if let results = model.searchResults {
                 if results.isEmpty {
                     noResults
                 } else {
                     resultsList(results)
                 }
-            } else if model.explorationLoadFailed {
+            } else if model.searchLoadFailed {
                 loadFailed
             } else {
                 Centered {
@@ -121,8 +121,8 @@ struct ExplorationView: View {
         .onAppear {
             // Run the initial search (empty query → recent uploads) only once;
             // the query itself is edited and applied from the Filters sheet.
-            if model.explorationResults == nil {
-                Task { await model.searchSubmissions(model.explorationQuery) }
+            if model.searchResults == nil {
+                Task { await model.searchSubmissions(model.searchQuery) }
             }
         }
     }

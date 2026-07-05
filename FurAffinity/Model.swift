@@ -41,23 +41,23 @@ class Model: NotificationsNuker, NotificationsDeleter {
     // MARK: - Exploration (search)
     /// `nil` until a search actually happened. Kept apart from the watched-feed
     /// state so the two Submissions-tab modes never interfere.
-    private(set) var explorationResults: OrderedSet<FASubmissionPreview>?
+    private(set) var searchResults: OrderedSet<FASubmissionPreview>?
     /// Current search criteria, seeded from the persisted value on launch and
     /// written back when the user runs a new search (filters are remembered).
-    private(set) var explorationQuery: FASearchQuery = Defaults[.lastSearchQuery]
+    private(set) var searchQuery: FASearchQuery = Defaults[.lastSearchQuery]
     /// `true` while the last fetched page came back full, so more may exist.
-    private(set) var explorationCanLoadMore = false
+    private(set) var searchCanLoadMore = false
     /// `true` while a search/page fetch is in flight.
-    private(set) var isLoadingExploration = false
+    private(set) var isLoadingSearch = false
     /// `true` when the most recent fetch failed while there was nothing to show,
     /// so the UI can offer a retry instead of an endless spinner.
-    private(set) var explorationLoadFailed = false
+    private(set) var searchLoadFailed = false
     /// Ratings the account may search. Optimistically all ratings until a loaded
     /// page reveals FA restricts some (then the disallowed filter toggles grey out).
-    private(set) var explorationAllowedRatings: Set<Rating> = Set(Rating.allCases)
+    private(set) var searchAllowedRatings: Set<Rating> = Set(Rating.allCases)
     /// `true` when the last search had no keyword and FA returned recent uploads
     /// instead — surfaced in the UI so results aren't mistaken for a keyword search.
-    private(set) var explorationShowingRecentUploads = false
+    private(set) var searchShowingRecentUploads = false
     
     /// `nil` until a fetch actually happened.
     /// After a fetch it contains all found notes, or an empty array if none was found.
@@ -152,10 +152,10 @@ class Model: NotificationsNuker, NotificationsDeleter {
             displayedNotificationCount = 0
             autorefreshSubscription = nil
             shouldCheckForNewerSubmissionsAfterRestore = false
-            explorationResults = nil
-            explorationCanLoadMore = false
-            isLoadingExploration = false
-            explorationLoadFailed = false
+            searchResults = nil
+            searchCanLoadMore = false
+            isLoadingSearch = false
+            searchLoadFailed = false
             Defaults[.lastViewedSubmissionID] = nil
             return
         }
@@ -284,57 +284,57 @@ class Model: NotificationsNuker, NotificationsDeleter {
     func searchSubmissions(_ query: FASearchQuery) async {
         var query = query
         query.page = 1
-        explorationQuery = query
+        searchQuery = query
         Defaults[.lastSearchQuery] = query
-        explorationResults = nil
-        explorationCanLoadMore = false
-        await fetchExplorationResults(replacing: true)
+        searchResults = nil
+        searchCanLoadMore = false
+        await fetchSearchResults(replacing: true)
     }
 
     /// Fetches the next page and appends it. No-op when there's nothing more or a
     /// fetch is already running.
-    func loadMoreExploration() async {
-        guard explorationCanLoadMore, !isLoadingExploration else { return }
-        let previousPage = explorationQuery.page
-        explorationQuery.page += 1
+    func loadMoreSearchResults() async {
+        guard searchCanLoadMore, !isLoadingSearch else { return }
+        let previousPage = searchQuery.page
+        searchQuery.page += 1
         // Roll the page back on failure so a retry re-fetches the same page
         // instead of skipping it.
-        if await !fetchExplorationResults(replacing: false) {
-            explorationQuery.page = previousPage
+        if await !fetchSearchResults(replacing: false) {
+            searchQuery.page = previousPage
         }
     }
 
     /// Pull-to-refresh: re-runs the current query from page 1 without clearing the
     /// visible results first, so the list stays put under the refresh spinner.
-    func refreshExploration() async {
-        explorationQuery.page = 1
-        explorationCanLoadMore = false
-        await fetchExplorationResults(replacing: true)
+    func refreshSearch() async {
+        searchQuery.page = 1
+        searchCanLoadMore = false
+        await fetchSearchResults(replacing: true)
     }
 
     /// Returns `true` if the fetch succeeded.
     @discardableResult
-    private func fetchExplorationResults(replacing: Bool) async -> Bool {
-        isLoadingExploration = true
-        explorationLoadFailed = false
-        defer { isLoadingExploration = false }
+    private func fetchSearchResults(replacing: Bool) async -> Bool {
+        isLoadingSearch = true
+        searchLoadFailed = false
+        defer { isLoadingSearch = false }
 
         var succeeded = false
-        await storeLocalizedError(in: errorStorage, action: "Search", webBrowserURL: FAURLs.searchUrl(for: explorationQuery)) {
-            let results = try await getSession().search(explorationQuery)
+        await storeLocalizedError(in: errorStorage, action: "Search", webBrowserURL: FAURLs.searchUrl(for: searchQuery)) {
+            let results = try await getSession().search(searchQuery)
             let previews = results.previews
-            explorationAllowedRatings = results.allowedRatings
-            explorationShowingRecentUploads = results.displayingRecentUploads
+            searchAllowedRatings = results.allowedRatings
+            searchShowingRecentUploads = results.displayingRecentUploads
             // A full page means more may exist; a short page means we've reached the end.
-            explorationCanLoadMore = previews.count >= FAURLs.searchPageSize
+            searchCanLoadMore = previews.count >= FAURLs.searchPageSize
             if replacing {
-                explorationResults = OrderedSet(previews)
+                searchResults = OrderedSet(previews)
             } else {
-                explorationResults = (explorationResults ?? []).appending(contentsOf: previews)
+                searchResults = (searchResults ?? []).appending(contentsOf: previews)
             }
             succeeded = true
         }
-        explorationLoadFailed = !succeeded
+        searchLoadFailed = !succeeded
         return succeeded
     }
     
