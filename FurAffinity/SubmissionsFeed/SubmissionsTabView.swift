@@ -81,7 +81,7 @@ struct SubmissionsTabView: View {
             Button {
                 showingFilters = true
             } label: {
-                ActionControl(systemImage: "line.3.horizontal.decrease")
+                ActionControl(systemImage: "line.3.horizontal.decrease.circle")
                     .opaque()
             }
         }
