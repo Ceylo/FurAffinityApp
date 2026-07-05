@@ -114,22 +114,10 @@ struct SubmissionsFeedView: View {
         case let .fetchTrigger(targetScrollItem):
             fetchTriggerView(with: targetScrollItem, scrollProxy: scrollProxy)
         case let .submissionPreview(preview):
-            ZStack(alignment: .leading) {
-                NavigationLink(value: FATarget.submission(
-                    url: preview.url, previewData: preview
-                )) {
-                    // Empty navigation link with 0 opacity is a trick to have full width
-                    // navigation without a trailing chevron
-                    EmptyView()
+            SubmissionPreviewRow(preview: preview)
+                .onItemFrameChanged(listGeometry: geometry) { frame in
+                    followItem(preview, frame: frame, geometry: geometry)
                 }
-                .opacity(0)
-                
-                SubmissionFeedItemView<TitleAuthorHeader>(submission: preview)
-                    .id(preview.sid)
-                    .onItemFrameChanged(listGeometry: geometry) { frame in
-                        followItem(preview, frame: frame, geometry: geometry)
-                    }
-            }
         }
     }
     

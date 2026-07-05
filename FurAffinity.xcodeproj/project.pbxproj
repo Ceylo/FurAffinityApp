@@ -12,6 +12,7 @@
 		4795204787AD8342F991F685 /* SearchFiltersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99DA99CD89D5D269A5D3BD27 /* SearchFiltersView.swift */; };
 		50599C71B1FD0BDBC8E34245 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7311AE39DCFA90D16A020EBA /* Foundation.framework */; };
 		64F2F57A2708E6F09AEDA450 /* TagSearchEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B0E85C4773BEEEEBD9B20CA /* TagSearchEditor.swift */; };
+		69C72E0CA41C86B6DF5E1726 /* SubmissionPreviewRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D28B447376CAFDB034915BBD /* SubmissionPreviewRow.swift */; };
 		76DD1A515EB54A13BA763698 /* CloudflareResolutionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */; };
 		8100B7C9FB003874702EC4E9 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3033B05A545010E29F30F1FD /* FlowLayout.swift */; };
 		8708DA262D74CF19000B419C /* SubmissionMetadataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8708DA252D74CF19000B419C /* SubmissionMetadataView.swift */; };
@@ -338,6 +339,7 @@
 		CEA17A1100000000000000FB /* ContinueThreadRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContinueThreadRow.swift; sourceTree = "<group>"; };
 		CEA17A1100000000000000FD /* CommentThreadFocus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentThreadFocus.swift; sourceTree = "<group>"; };
 		CEA17A110000000000000201 /* CommentsWidthMeasuring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsWidthMeasuring.swift; sourceTree = "<group>"; };
+		D28B447376CAFDB034915BBD /* SubmissionPreviewRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SubmissionPreviewRow.swift; sourceTree = "<group>"; };
 		D56727047B968FBBC1AC85BB /* SubmissionsTabView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SubmissionsTabView.swift; sourceTree = "<group>"; };
 		E6731320A5B4D6196E99F0F9 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		FA0000000000000000000007 /* SubmissionAudioContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionAudioContent.swift; sourceTree = "<group>"; };
@@ -555,6 +557,7 @@
 				99DA99CD89D5D269A5D3BD27 /* SearchFiltersView.swift */,
 				D56727047B968FBBC1AC85BB /* SubmissionsTabView.swift */,
 				7B0E85C4773BEEEEBD9B20CA /* TagSearchEditor.swift */,
+				D28B447376CAFDB034915BBD /* SubmissionPreviewRow.swift */,
 			);
 			path = SubmissionsFeed;
 			sourceTree = "<group>";
@@ -798,13 +801,13 @@
 			);
 			mainGroup = 8716E7DF271C659C00C0BC4A;
 			packageReferences = (
-				87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */,
-				879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
+				87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version.git" */,
+				879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect.git" */,
 				877173732C35878700B84624 /* XCRemoteSwiftPackageReference "Amplitude-Swift" */,
-				87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */,
-				87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults" */,
-				8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack" */,
-				871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms" */,
+				87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher.git" */,
+				87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults.git" */,
+				8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack.git" */,
+				871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms.git" */,
 			);
 			productRefGroup = 8716E7E9271C659C00C0BC4A /* Products */;
 			projectDirPath = "";
@@ -983,6 +986,7 @@
 				64F2F57A2708E6F09AEDA450 /* TagSearchEditor.swift in Sources */,
 				8100B7C9FB003874702EC4E9 /* FlowLayout.swift in Sources */,
 				D17E358F6EBAEE2AB484011F /* UsernameField.swift in Sources */,
+				69C72E0CA41C86B6DF5E1726 /* SubmissionPreviewRow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1322,7 +1326,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack" */ = {
+		8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/dkk/WrappingHStack.git";
 			requirement = {
@@ -1330,7 +1334,7 @@
 				minimumVersion = 2.2.11;
 			};
 		};
-		87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+		87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
 			requirement = {
@@ -1338,7 +1342,7 @@
 				minimumVersion = 8.5.0;
 			};
 		};
-		871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
+		871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-algorithms.git";
 			requirement = {
@@ -1354,7 +1358,7 @@
 				minimumVersion = 1.9.2;
 			};
 		};
-		879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */ = {
+		879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/siteline/SwiftUI-Introspect.git";
 			requirement = {
@@ -1362,7 +1366,7 @@
 				minimumVersion = 26.0.0;
 			};
 		};
-		87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults" */ = {
+		87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/Defaults.git";
 			requirement = {
@@ -1370,7 +1374,7 @@
 				minimumVersion = 9.0.3;
 			};
 		};
-		87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */ = {
+		87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/mxcl/Version.git";
 			requirement = {
@@ -1383,17 +1387,17 @@
 /* Begin XCSwiftPackageProductDependency section */
 		8708DA282D74D4D4000B419C /* WrappingHStack */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack" */;
+			package = 8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack.git" */;
 			productName = WrappingHStack;
 		};
 		87098D352CB14F1000E7BD94 /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			package = 87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher.git" */;
 			productName = Kingfisher;
 		};
 		871034812E8F12A80030F36E /* Collections */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms" */;
+			package = 871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms.git" */;
 			productName = Collections;
 		};
 		8761834D271F5E570021A051 /* FAKit */ = {
@@ -1407,17 +1411,17 @@
 		};
 		87B0233E2CD54F9200F4D400 /* Defaults */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults" */;
+			package = 87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults.git" */;
 			productName = Defaults;
 		};
 		87C1A0AC284B6E5400529F8C /* Version */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */;
+			package = 87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version.git" */;
 			productName = Version;
 		};
 		87E796162C99994D0020EACD /* SwiftUIIntrospect */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */;
+			package = 879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect.git" */;
 			productName = SwiftUIIntrospect;
 		};
 		87FA100B271F5E570021A051 /* FALogging */ = {

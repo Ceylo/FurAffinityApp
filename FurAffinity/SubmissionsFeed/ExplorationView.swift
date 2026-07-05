@@ -16,22 +16,6 @@ import Collections
 struct ExplorationView: View {
     @Environment(Model.self) private var model
 
-    private func itemView(for preview: FASubmissionPreview) -> some View {
-        ZStack(alignment: .leading) {
-            NavigationLink(value: FATarget.submission(
-                url: preview.url, previewData: preview
-            )) {
-                // Empty navigation link with 0 opacity is a trick to have full width
-                // navigation without a trailing chevron
-                EmptyView()
-            }
-            .opacity(0)
-
-            SubmissionFeedItemView<TitleAuthorHeader>(submission: preview)
-                .id(preview.sid)
-        }
-    }
-
     private var loadMoreRow: some View {
         HStack {
             Spacer()
@@ -53,7 +37,7 @@ struct ExplorationView: View {
                         .listRowSeparator(.hidden)
                 }
                 ForEach(Array(results)) { preview in
-                    itemView(for: preview)
+                    SubmissionPreviewRow(preview: preview)
                 }
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
