@@ -38,7 +38,10 @@ struct AvatarView: View {
                 Rectangle()
                     .foregroundColor(.white.opacity(0.1))
             }
-            .onFailureImage(.defaultAvatar)
+            .onFailureView {
+                Image(uiImage: .defaultAvatar)
+                    .resizable()
+            }
             .fade(duration: fadeDuration)
     }
     

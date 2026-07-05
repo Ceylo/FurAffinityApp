@@ -63,7 +63,7 @@ public struct FAChallengeView: View {
     /// A rendered checkbox is a sized challenges.cloudflare.com iframe still on the
     /// challenge page; the elapsed gate avoids escalating during the brief window
     /// before a managed challenge resolves itself.
-    static func interactionRequired(snapshot: CFDOMSnapshot, elapsed: TimeInterval) -> Bool {
+    nonisolated static func interactionRequired(snapshot: CFDOMSnapshot, elapsed: TimeInterval) -> Bool {
         snapshot.onChallenge && snapshot.tsW >= 50 && snapshot.tsH >= 30 && elapsed >= 2.0
     }
 
