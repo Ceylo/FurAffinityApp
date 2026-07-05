@@ -47,6 +47,11 @@ struct ExplorationView: View {
     private func resultsList(_ results: OrderedSet<FASubmissionPreview>) -> some View {
         GeometryReader { geometry in
             List {
+                if model.explorationShowingRecentUploads {
+                    recentUploadsNotice
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.hidden)
+                }
                 ForEach(Array(results)) { preview in
                     itemView(for: preview)
                 }
@@ -115,24 +120,27 @@ struct ExplorationView: View {
         }
     }
 
-    /// Shown when a keyword-less search fell back to FA's recent uploads, so the
-    /// results aren't mistaken for matches of a forgotten query.
-    private var recentUploadsLabel: some View {
-        Text("Recent uploads")
-            .font(.subheadline)
-            .foregroundColor(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal)
-            .padding(.bottom, 8)
+    /// First-row notice when a keyword-less search fell back to recent uploads.
+    /// Scrolls away with the results; text stays clear of the floating controls.
+    private var recentUploadsNotice: some View {
+        VStack(spacing: 0) {
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "info.circle")
+                    .foregroundStyle(.secondary)
+                Text("Search query not provided. Displaying recent uploads.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+            }
+            .padding(.leading, 16)
+            .padding(.trailing, 120) // clears the floating controls
+            .padding(.vertical, 10)
+            Divider()
+        }
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            if model.explorationShowingRecentUploads {
-                recentUploadsLabel
-            }
-            contentGroup
-        }
+        contentGroup
         .onAppear {
             // Run the initial search (empty query → recent uploads) only once;
             // the query itself is edited and applied from the Filters sheet.
