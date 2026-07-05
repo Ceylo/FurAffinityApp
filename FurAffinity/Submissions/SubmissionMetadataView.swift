@@ -7,7 +7,6 @@
 
 import SwiftUI
 import FAKit
-import WrappingHStack
 
 extension Rating {
     var displayDescription: String {
@@ -60,12 +59,14 @@ struct SubmissionMetadataView: View {
             
             if !metadata.keywords.isEmpty {
                 Section("Keywords") {
-                    WrappingHStack(metadata.keywords, lineSpacing: 5) {
-                        Text($0)
-                            .padding(5)
-                            .padding(.horizontal, 5)
-                            .background(Color.secondary.opacity(0.2))
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                    FlowLayout(spacing: 8, lineSpacing: 5) {
+                        ForEach(metadata.keywords, id: \.self) { keyword in
+                            Text(keyword)
+                                .padding(5)
+                                .padding(.horizontal, 5)
+                                .background(Color.secondary.opacity(0.2))
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
                     }
                 }
             }

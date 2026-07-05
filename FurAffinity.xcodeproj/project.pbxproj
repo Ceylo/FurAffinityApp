@@ -16,7 +16,6 @@
 		76DD1A515EB54A13BA763698 /* CloudflareResolutionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */; };
 		8100B7C9FB003874702EC4E9 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3033B05A545010E29F30F1FD /* FlowLayout.swift */; };
 		8708DA262D74CF19000B419C /* SubmissionMetadataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8708DA252D74CF19000B419C /* SubmissionMetadataView.swift */; };
-		8708DA292D74D4D4000B419C /* WrappingHStack in Frameworks */ = {isa = PBXBuildFile; productRef = 8708DA282D74D4D4000B419C /* WrappingHStack */; };
 		87098D362CB14F1000E7BD94 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 87098D352CB14F1000E7BD94 /* Kingfisher */; };
 		87098D382CB19E4D00E7BD94 /* Kingfisher+FA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */; };
 		87098D3A2CB2BEF000E7BD94 /* UserDefaultKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87098D392CB2BEF000E7BD94 /* UserDefaultKeys.swift */; };
@@ -365,7 +364,6 @@
 				87E796172C99994D0020EACD /* SwiftUIIntrospect in Frameworks */,
 				87C1A0AD284B6E5400529F8C /* Version in Frameworks */,
 				871034822E8F12A80030F36E /* Collections in Frameworks */,
-				8708DA292D74D4D4000B419C /* WrappingHStack in Frameworks */,
 				87098D362CB14F1000E7BD94 /* Kingfisher in Frameworks */,
 				877173752C35878700B84624 /* AmplitudeSwift in Frameworks */,
 				8761834E271F5E570021A051 /* FAKit in Frameworks */,
@@ -729,7 +727,6 @@
 				87E796162C99994D0020EACD /* SwiftUIIntrospect */,
 				87098D352CB14F1000E7BD94 /* Kingfisher */,
 				87B0233E2CD54F9200F4D400 /* Defaults */,
-				8708DA282D74D4D4000B419C /* WrappingHStack */,
 				871034812E8F12A80030F36E /* Collections */,
 			);
 			productName = FurAffinity;
@@ -806,7 +803,6 @@
 				877173732C35878700B84624 /* XCRemoteSwiftPackageReference "Amplitude-Swift" */,
 				87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher.git" */,
 				87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults.git" */,
-				8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack.git" */,
 				871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms.git" */,
 			);
 			productRefGroup = 8716E7E9271C659C00C0BC4A /* Products */;
@@ -1326,14 +1322,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack.git" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/dkk/WrappingHStack.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.2.11;
-			};
-		};
 		87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
@@ -1385,11 +1373,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		8708DA282D74D4D4000B419C /* WrappingHStack */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 8708DA272D74D4D4000B419C /* XCRemoteSwiftPackageReference "WrappingHStack.git" */;
-			productName = WrappingHStack;
-		};
 		87098D352CB14F1000E7BD94 /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher.git" */;
