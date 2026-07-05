@@ -37,6 +37,27 @@ class Model: NotificationsNuker, NotificationsDeleter {
     /// Set once after a cold-launch restore from a persisted scroll position, to
     /// ask SubmissionsFeedView to run a scroll-preserving newer-submissions check.
     var shouldCheckForNewerSubmissionsAfterRestore = false
+
+    // MARK: - Exploration (search)
+    /// `nil` until a search actually happened. Kept apart from the watched-feed
+    /// state so the two Submissions-tab modes never interfere.
+    private(set) var searchResults: OrderedSet<FASubmissionPreview>?
+    /// Current search criteria, seeded from the persisted value on launch and
+    /// written back when the user runs a new search (filters are remembered).
+    private(set) var searchQuery: FASearchQuery = Defaults[.lastSearchQuery]
+    /// `true` while the last fetched page came back full, so more may exist.
+    private(set) var searchCanLoadMore = false
+    /// `true` while a search/page fetch is in flight.
+    private(set) var isLoadingSearch = false
+    /// `true` when the most recent fetch failed while there was nothing to show,
+    /// so the UI can offer a retry instead of an endless spinner.
+    private(set) var searchLoadFailed = false
+    /// Ratings the account may search. Optimistically all ratings until a loaded
+    /// page reveals FA restricts some (then the disallowed filter toggles grey out).
+    private(set) var searchAllowedRatings: Set<Rating> = Set(Rating.allCases)
+    /// `true` when the last search had no keyword and FA returned recent uploads
+    /// instead — surfaced in the UI so results aren't mistaken for a keyword search.
+    private(set) var searchShowingRecentUploads = false
     
     /// `nil` until a fetch actually happened.
     /// After a fetch it contains all found notes, or an empty array if none was found.
@@ -131,6 +152,10 @@ class Model: NotificationsNuker, NotificationsDeleter {
             displayedNotificationCount = 0
             autorefreshSubscription = nil
             shouldCheckForNewerSubmissionsAfterRestore = false
+            searchResults = nil
+            searchCanLoadMore = false
+            isLoadingSearch = false
+            searchLoadFailed = false
             Defaults[.lastViewedSubmissionID] = nil
             return
         }
@@ -250,6 +275,67 @@ class Model: NotificationsNuker, NotificationsDeleter {
         } catch {
             logger.error("Failed nuking submissions: \(error)")
         }
+    }
+
+    // MARK: - Exploration (search)
+
+    /// Runs a fresh search (page 1), replacing any previous results, and persists
+    /// the criteria so they are remembered next launch.
+    func searchSubmissions(_ query: FASearchQuery) async {
+        var query = query
+        query.page = 1
+        searchQuery = query
+        Defaults[.lastSearchQuery] = query
+        searchResults = nil
+        searchCanLoadMore = false
+        await fetchSearchResults(replacing: true)
+    }
+
+    /// Fetches the next page and appends it. No-op when there's nothing more or a
+    /// fetch is already running.
+    func loadMoreSearchResults() async {
+        guard searchCanLoadMore, !isLoadingSearch else { return }
+        let previousPage = searchQuery.page
+        searchQuery.page += 1
+        // Roll the page back on failure so a retry re-fetches the same page
+        // instead of skipping it.
+        if await !fetchSearchResults(replacing: false) {
+            searchQuery.page = previousPage
+        }
+    }
+
+    /// Pull-to-refresh: re-runs the current query from page 1 without clearing the
+    /// visible results first, so the list stays put under the refresh spinner.
+    func refreshSearch() async {
+        searchQuery.page = 1
+        searchCanLoadMore = false
+        await fetchSearchResults(replacing: true)
+    }
+
+    /// Returns `true` if the fetch succeeded.
+    @discardableResult
+    private func fetchSearchResults(replacing: Bool) async -> Bool {
+        isLoadingSearch = true
+        searchLoadFailed = false
+        defer { isLoadingSearch = false }
+
+        var succeeded = false
+        await storeLocalizedError(in: errorStorage, action: "Search", webBrowserURL: FAURLs.searchUrl(for: searchQuery)) {
+            let results = try await getSession().search(searchQuery)
+            let previews = results.previews
+            searchAllowedRatings = results.allowedRatings
+            searchShowingRecentUploads = results.displayingRecentUploads
+            // A full page means more may exist; a short page means we've reached the end.
+            searchCanLoadMore = previews.count >= FAURLs.searchPageSize
+            if replacing {
+                searchResults = OrderedSet(previews)
+            } else {
+                searchResults = (searchResults ?? []).appending(contentsOf: previews)
+            }
+            succeeded = true
+        }
+        searchLoadFailed = !succeeded
+        return succeeded
     }
     
     // MARK: - Commentable

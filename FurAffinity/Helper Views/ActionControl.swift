@@ -9,32 +9,37 @@ import SwiftUI
 
 struct ActionControl: View {
     private var _opaque: Bool = false
-    private var size: Double = 18
-    
+    private var size: Double = 24
+    var systemImage: String = "ellipsis"
+
+    init(systemImage: String = "ellipsis") {
+        self.systemImage = systemImage
+    }
+
     func opaque(_ opaque: Bool = true) -> some View {
         var copy = self
         copy._opaque = opaque
         return copy
     }
-    
+
     var body: some View {
         if #available(iOS 26, *) {
             if _opaque {
-                Image(systemName: "ellipsis")
+                Image(systemName: systemImage)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .tint(.primary)
                     .frame(width: size, height: size)
-                    .padding(13)
-                    .glassEffect()
+                    .padding(10)
+                    .offset(y: 1)
             } else {
-                Image(systemName: "ellipsis")
+                Image(systemName: systemImage)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: size, height: size)
             }
         } else {
-            Image(systemName: "ellipsis")
+            Image(systemName: systemImage)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: size, height: size)
@@ -49,29 +54,37 @@ struct ActionControl: View {
 
 #Preview {
     NavigationStack {
-        HStack {
-            Spacer()
-            
-            Button {
-                
-            } label: {
-                ActionControl()
-                    .opaque()
+        // A floating control (opaque + glass, as in SubmissionsTabView) overlaid
+        // at the top-trailing corner, next to the system-supplied toolbar button
+        // of the same style — the two glass capsules should match in size.
+        Color.clear
+            .overlay(alignment: .topTrailing) {
+                Button {} label: {
+                    ActionControl(systemImage: "heart")
+                        .opaque()
+                }
+                .applying { control in
+                    if #available(iOS 26, *) {
+                        GlassEffectContainer { control.glassEffect() }
+                    } else {
+                        control
+                    }
+                }
+                .padding(.trailing, 16)
             }
-            .padding(.trailing, 16)
-        }
-        
-        Spacer()
-        
-        Text("Hi")
             .toolbar {
                 ToolbarItem {
-                    Button {
-                        
-                    } label: {
+                    Button {} label: {
                         ActionControl()
                     }
                 }
+            }
+            .overlay(alignment: .topTrailing) {
+                Rectangle()
+                    .stroke(Color.red)
+                    .frame(width: 44, height: 100)
+                    .padding(.trailing, 16)
+                    .offset(y: -54)
             }
     }
 }

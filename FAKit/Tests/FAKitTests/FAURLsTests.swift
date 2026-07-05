@@ -55,4 +55,110 @@ struct FAURLsTests {
         #expect(parsed.page == expectedPage)
         #expect(parsed.watchDirection == expectedWatchDirection)
     }
+
+    @Test
+    func searchUrl_defaultQuery() throws {
+        let url = FAURLs.searchUrl(for: .default)
+        #expect(url.absoluteString == "https://www.furaffinity.net/search/?"
+            + "q=&order-by=relevancy&order-direction=desc&range=5years"
+            + "&rating-general=1&rating-mature=1&rating-adult=1"
+            + "&type-art=1&type-music=1&type-flash=1&type-story=1&type-photo=1&type-poetry=1"
+            + "&mode=extended&page=1&perpage=72")
+    }
+
+    @Test
+    func searchUrl_populatedQuery() throws {
+        let query = FASearchQuery(
+            text: "wolf",
+            sortOrder: .date,
+            sortDirection: .ascending,
+            dateRange: .thirtyDays,
+            ratings: [.general],
+            contentTypes: [.art, .music],
+            genders: [.male],
+            tags: [],
+            author: "",
+            page: 3
+        )
+        let items = try queryItems(of: FAURLs.searchUrl(for: query))
+        // A selected gender folds into q as an @keywords operator.
+        #expect(items["q"] == "wolf @keywords male")
+        #expect(items["order-by"] == "date")
+        #expect(items["order-direction"] == "asc")
+        #expect(items["range"] == "30days")
+        #expect(items["rating-general"] == "1")
+        #expect(items["type-art"] == "1")
+        #expect(items["type-music"] == "1")
+        // The app always searches in extended mode.
+        #expect(items["mode"] == "extended")
+        #expect(items["page"] == "3")
+        #expect(items["perpage"] == "72")
+    }
+
+    @Test
+    func searchUrl_allGendersAppendKeywords() throws {
+        var query = FASearchQuery.default
+        query.genders = Set(FASearchQuery.Gender.allCases)
+        let items = try queryItems(of: FAURLs.searchUrl(for: query))
+        // Matches the q produced by the site when every gender box is checked.
+        #expect(items["q"] == "@keywords male female trans_male trans_female intersex non_binary")
+    }
+
+    @Test
+    func searchUrl_includedTagsFoldIntoKeywords() throws {
+        var query = FASearchQuery.default
+        query.tags = ["wolf"]
+        let emptyText = try queryItems(of: FAURLs.searchUrl(for: query))
+        #expect(emptyText["q"] == "@keywords wolf")
+
+        query.text = "dragon"
+        let withText = try queryItems(of: FAURLs.searchUrl(for: query))
+        #expect(withText["q"] == "dragon @keywords wolf")
+    }
+
+    @Test
+    func searchUrl_excludedTagsOnly() throws {
+        var query = FASearchQuery.default
+        query.tags = ["!bird"]
+        let items = try queryItems(of: FAURLs.searchUrl(for: query))
+        #expect(items["q"] == "@keywords !bird")
+    }
+
+    @Test
+    func searchUrl_authorOnly() throws {
+        var query = FASearchQuery.default
+        query.author = "fender"
+        let items = try queryItems(of: FAURLs.searchUrl(for: query))
+        #expect(items["q"] == "@lower fender")
+    }
+
+    @Test
+    func searchUrl_authorWithTextAndTags() throws {
+        var query = FASearchQuery.default
+        query.text = "dragon"
+        query.author = "fender"
+        query.tags = ["wolf"]
+        let items = try queryItems(of: FAURLs.searchUrl(for: query))
+        // Order: free text → @lower author → @keywords tags.
+        #expect(items["q"] == "dragon @lower fender @keywords wolf")
+    }
+
+    @Test
+    func searchUrl_gendersIncludedAndExcludedCombine() throws {
+        var query = FASearchQuery.default
+        query.text = "cat"
+        query.genders = [.male]
+        query.tags = ["wolf", "!bird"]
+        let items = try queryItems(of: FAURLs.searchUrl(for: query))
+        // Single @keywords operator, order: genders → tags in entered order.
+        #expect(items["q"] == "cat @keywords male wolf !bird")
+    }
+
+    private func queryItems(of url: URL) throws -> [String: String] {
+        let components = try URLComponents(url: url, resolvingAgainstBaseURL: false).unwrap()
+        return Dictionary(
+            (components.queryItems ?? []).map { ($0.name, $0.value ?? "") },
+            uniquingKeysWith: { first, _ in first }
+        )
+    }
 }

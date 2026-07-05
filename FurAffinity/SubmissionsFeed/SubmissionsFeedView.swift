@@ -114,22 +114,10 @@ struct SubmissionsFeedView: View {
         case let .fetchTrigger(targetScrollItem):
             fetchTriggerView(with: targetScrollItem, scrollProxy: scrollProxy)
         case let .submissionPreview(preview):
-            ZStack(alignment: .leading) {
-                NavigationLink(value: FATarget.submission(
-                    url: preview.url, previewData: preview
-                )) {
-                    // Empty navigation link with 0 opacity is a trick to have full width
-                    // navigation without a trailing chevron
-                    EmptyView()
+            SubmissionPreviewRow(preview: preview)
+                .onItemFrameChanged(listGeometry: geometry) { frame in
+                    followItem(preview, frame: frame, geometry: geometry)
                 }
-                .opacity(0)
-                
-                SubmissionFeedItemView<TitleAuthorHeader>(submission: preview)
-                    .id(preview.sid)
-                    .onItemFrameChanged(listGeometry: geometry) { frame in
-                        followItem(preview, frame: frame, geometry: geometry)
-                    }
-            }
         }
     }
     
@@ -157,27 +145,18 @@ struct SubmissionsFeedView: View {
                 }
                 .trackListFrame()
                 .listStyle(.plain)
-                .overlay(alignment: .topTrailing) {
-                    SubmissionsFeedActionView()
-                        .padding(.trailing, 20)
-                        .padding(.top, 6)
-                }
-                // Toolbar needs to be setup before refresh control…
+                // The nav bar chrome (inline title, mode menu, trailing action)
+                // is owned by the enclosing SubmissionsTabView so both feed modes
+                // can share it. Keeping the title/toolbar above the refresh
+                // control there preserves the "toolbar before refresh" ordering.
                 // https://stackoverflow.com/a/64700545/869385
-                .navigationTitle("Submissions")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar(.hidden, for: .navigationBar)
                 .refreshable {
                     refresh(pulled: true)
                 }
                 .swap(when: items.isEmpty) {
                     noPreview
                 }
-                .onChange(of: model.submissionPreviews, initial: true) { _, newValue in
-                    guard let previews = newValue else { return }
-                    prefetchThumbnails(for: previews, availableWidth: geometry.size.width)
-                    prefetchAvatars(for: previews)
-                }
+                .prefetchingPreviews(model.submissionPreviews, availableWidth: geometry.size.width)
             }
         }
     }

@@ -7,7 +7,6 @@
 
 import SwiftUI
 import FAKit
-import Combine
 
 struct NoteEditor: View {
     @ObservedObject var reply: NoteReply
@@ -18,12 +17,7 @@ struct NoteEditor: View {
     @FocusState private var subjectHasFocus: Bool
     @FocusState private var textEditorHasFocus: Bool
     @State private var actionInProgress: ReplyEditorAction?
-    @State private var avatarUrl: URL?
-    // Should not be needed but looks like
-    // https://www.hackingwithswift.com/forums/100-days-of-swiftui/unusual-behavior-when-trying-to-change-the-style-of-the-text-in-a-swiftui-textfield/28414
-    // is not solved…
-    @State private var isUsernameValid = false
-    
+
     var canCancel: Bool { actionInProgress == nil }
     var canSubmit: Bool {
         guard actionInProgress == nil else {
@@ -82,23 +76,7 @@ struct NoteEditor: View {
     
     var toField: some View {
         LabeledContent("To:") {
-            AvatarView(avatarUrl: avatarUrl)
-                .fadeDuration(0)
-                .frame(width: 32, height: 32)
-            TextField("static user name", text: $reply.destinationUser)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .foregroundStyle(isUsernameValid ? Color.primary : Color.red)
-                .onReceive(
-                    reply.$destinationUser
-                        .debounce(for: 1.0, scheduler: RunLoop.main)
-                ) { user in
-                    guard reply.isUsernameValid else { return }
-                    avatarUrl = FAURLs.avatarUrl(for: user)
-                }
-                .onChange(of: reply.isUsernameValid, initial: true) { _, newValue in
-                    isUsernameValid = newValue
-                }
+            UsernameField(username: $reply.destinationUser)
         }
         .focused($destinationUserHasFocus)
         .foregroundStyle(.secondary)
@@ -123,7 +101,6 @@ struct NoteEditor: View {
     func setDefaultFieldContents() {
         if reply.destinationUser.isEmpty && !defaultContents.destinationUser.isEmpty {
             reply.destinationUser = defaultContents.destinationUser
-            avatarUrl = FAURLs.avatarUrl(for: defaultContents.destinationUser)
         }
         
         if reply.subject.isEmpty {

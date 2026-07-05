@@ -31,7 +31,7 @@ let package = Package(
         ),
         .target(
             name: "FAPages",
-            dependencies: ["SwiftSoup", "FALogging"]
+            dependencies: ["SwiftSoup", "FALogging", .product(name: "OrderedCollections", package: "swift-collections")]
         ),
         .testTarget(
             name: "FAPagesTests",

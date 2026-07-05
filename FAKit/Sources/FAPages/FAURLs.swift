@@ -151,6 +151,68 @@ public enum FAURLs {
         }
     }
     
+    public static let searchUrl = URL(string: "https://www.furaffinity.net/search/")!
+
+    /// Results requested per search page (`perpage`). Single source of truth: also
+    /// used by the client to decide whether a full page means more may follow.
+    public static let searchPageSize = 72
+
+    /// Builds the `GET /search/` URL for `query`. Checked checkboxes are emitted
+    /// as `rating-general=1`, `type-art=1`, …; radios/selects as `range=…`,
+    /// `order-by=…`, etc. Enums are iterated in `CaseIterable` order so the
+    /// produced query string is deterministic (and testable).
+    ///
+    /// Gender has no form param: the site appends the selected values to the `q`
+    /// text as an `@keywords male female …` operator, so we do the same.
+    public static func searchUrl(for query: FASearchQuery) -> URL {
+        var items: [URLQueryItem] = [
+            .init(name: "q", value: searchQueryText(for: query)),
+            .init(name: "order-by", value: query.sortOrder.rawValue),
+            .init(name: "order-direction", value: query.sortDirection.rawValue),
+            .init(name: "range", value: query.dateRange.rawValue),
+        ]
+
+        for rating in Rating.allCases where query.ratings.contains(rating) {
+            items.append(.init(name: "rating-\(rating.searchParamSuffix)", value: "1"))
+        }
+
+        for type in FASearchQuery.ContentType.allCases where query.contentTypes.contains(type) {
+            items.append(.init(name: "type-\(type.rawValue)", value: "1"))
+        }
+
+        // The @keywords / ! operators require extended mode, so we always use it.
+        items.append(.init(name: "mode", value: "extended"))
+        items.append(.init(name: "page", value: "\(query.page)"))
+        items.append(.init(name: "perpage", value: "\(searchPageSize)"))
+
+        return searchUrl.appending(queryItems: items)
+    }
+
+    /// The `q` value: the user's free text, an optional `@lower <author>` author
+    /// scope, plus any tag-scoped criteria (selected genders and tags) folded into
+    /// a single `@keywords` operator — matching what the site's JS produces. A
+    /// single `@keywords` prefix covers every following token; excluded tags
+    /// already carry their `!` prefix. Order is free text → `@lower <author>` →
+    /// `@keywords` (genders → tags in entered order).
+    private static func searchQueryText(for query: FASearchQuery) -> String {
+        var operators: [String] = []
+
+        if !query.author.isEmpty {
+            operators.append("@lower \(query.author)")
+        }
+
+        let genderTokens = FASearchQuery.Gender.allCases
+            .filter { query.genders.contains($0) }
+            .map(\.rawValue)
+        let keywordTokens = genderTokens + Array(query.tags)
+        if !keywordTokens.isEmpty {
+            operators.append("@keywords " + keywordTokens.joined(separator: " "))
+        }
+
+        let tokens = (query.text.isEmpty ? [] : [query.text]) + operators
+        return tokens.joined(separator: " ")
+    }
+
     public static func submissionUrl(sid: Int) -> URL {
         URL(string: "https://www.furaffinity.net/view/\(sid)/")!
     }

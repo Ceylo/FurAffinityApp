@@ -34,6 +34,25 @@ public struct FANotificationPreviews: Equatable, Sendable {
     }
 }
 
+/// Result of a `/search/` query: the previews plus metadata read off the search
+/// page (which ratings the account may search, and whether the site fell back to
+/// recent uploads because no query was provided).
+public struct FASearchResults: Sendable {
+    public let previews: [FASubmissionPreview]
+    public let allowedRatings: Set<Rating>
+    public let displayingRecentUploads: Bool
+
+    public init(
+        previews: [FASubmissionPreview],
+        allowedRatings: Set<Rating>,
+        displayingRecentUploads: Bool
+    ) {
+        self.previews = previews
+        self.allowedRatings = allowedRatings
+        self.displayingRecentUploads = displayingRecentUploads
+    }
+}
+
 public enum NotesBox: String, CaseIterable, Sendable {
     case inbox
     case sent
@@ -65,6 +84,9 @@ public protocol FASession: AnyObject, Equatable {
     /// If `nil`, the latest submission previews are provided.
     func submissionPreviews(from sid: Int?) async throws -> [FASubmissionPreview]
     func nukeSubmissions() async throws
+
+    // MARK: - Search
+    func search(_ query: FASearchQuery) async throws -> FASearchResults
     
     // MARK: - User gallery
     func galleryLike(for url: URL) async throws -> FAUserGalleryLike
