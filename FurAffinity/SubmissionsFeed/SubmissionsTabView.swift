@@ -8,7 +8,7 @@
 import SwiftUI
 import FAKit
 
-/// Hosts the two modes of the first tab — the watched-users feed ("Following")
+/// Hosts the two modes of the first tab — the watched-users feed ("Followed")
 /// and search ("Explore"). Rather than a nav bar (which adds height and blurs
 /// the feed cards under it), the mode switch and the mode-specific context
 /// action float as a pair of round Liquid-Glass buttons over the top-trailing
@@ -17,12 +17,12 @@ struct SubmissionsTabView: View {
     @Environment(Model.self) private var model
 
     enum Mode: Hashable, CaseIterable {
-        case following
+        case followed
         case explore
 
         var title: String {
             switch self {
-            case .following: "Following"
+            case .followed: "Followed"
             case .explore: "Explore"
             }
         }
@@ -30,24 +30,24 @@ struct SubmissionsTabView: View {
         /// The SF Symbol shown on the mode-switch button for the current mode.
         var symbol: String {
             switch self {
-            case .following: "person.2.fill"
+            case .followed: "person.2.fill"
             case .explore: "safari"
             }
         }
     }
 
-    @State private var mode: Mode = .following
+    @State private var mode: Mode = .followed
     @State private var showingFilters = false
     @Namespace var namespace
 
     private var content: some View {
         ZStack {
             // Kept mounted across mode switches (hidden, not torn down) so the
-            // Following feed retains its scroll position when the user dips into
+            // Followed feed retains its scroll position when the user dips into
             // Explore and back. Explore stays lazy so it doesn't eagerly search.
             SubmissionsFeedView()
-                .opacity(mode == .following ? 1 : 0)
-                .allowsHitTesting(mode == .following)
+                .opacity(mode == .followed ? 1 : 0)
+                .allowsHitTesting(mode == .followed)
 
             if mode == .explore {
                 ExplorationView()
@@ -75,7 +75,7 @@ struct SubmissionsTabView: View {
     @ViewBuilder
     private var contextAction: some View {
         switch mode {
-        case .following:
+        case .followed:
             SubmissionsFeedActionView()
         case .explore:
             Button {
