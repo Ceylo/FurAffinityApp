@@ -57,6 +57,20 @@ public class OnlineFASession: FASession {
         lhs.username == rhs.username
     }
     
+    /// Drops the parser's `nil` (unparseable) entries and maps the rest to
+    /// `FASubmissionPreview`, logging how many survived. `label` distinguishes the
+    /// feed ("submission previews") and search ("search results") log lines.
+    private func previews(
+        from submissions: [FASubmissionsPage.Submission?],
+        label: String
+    ) -> [FASubmissionPreview] {
+        let previews = submissions
+            .compactMap { $0 }
+            .map { FASubmissionPreview($0) }
+        logger.info("Got \(submissions.count) \(label) (\(previews.count) after filter)")
+        return previews
+    }
+
     // MARK: - Submissions feed
     public func submissionPreviews(from sid: Int?) async throws -> [FASubmissionPreview] {
         let url = if let sid {
@@ -66,12 +80,8 @@ public class OnlineFASession: FASession {
         }
         let data = try await dataSource.httpData(from: url, cookies: cookies)
         let page = try await make(FASubmissionsPage.self, with: data, url: url)
-        
-        let previews = page.submissions
-            .compactMap { $0 }
-            .map { FASubmissionPreview($0) }
-        logger.info("Got \(page.submissions.count) submission previews (\(previews.count) after filter)")
-        return previews
+
+        return previews(from: page.submissions, label: "submission previews")
     }
     
     public func deleteSubmissionPreviews(_ previews: [FASubmissionPreview]) async throws {
@@ -105,12 +115,8 @@ public class OnlineFASession: FASession {
         let data = try await dataSource.httpData(from: url, cookies: cookies)
         let page = try await make(FASearchPage.self, with: data, url: url)
 
-        let previews = page.submissions
-            .compactMap { $0 }
-            .map { FASubmissionPreview($0) }
-        logger.info("Got \(page.submissions.count) search results (\(previews.count) after filter)")
         return FASearchResults(
-            previews: previews,
+            previews: previews(from: page.submissions, label: "search results"),
             allowedRatings: page.allowedRatings,
             displayingRecentUploads: page.displayingRecentUploads
         )
