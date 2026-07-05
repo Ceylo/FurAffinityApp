@@ -19,32 +19,43 @@ Two main code areas:
 ## Key Files
 
 **App:**
-- `FurAffinityApp.swift`: entry point, Amplitude init.
-- `Model.swift`: `@Observable @MainActor` — session, feeds, notes, notifications, autorefresh, error storage.
-- `HomeView.swift`: login/autologin flow.
-- `LoggedInView.swift`: tab shell with per-tab `NavigationStack`s.
+- `FurAffinityApp.swift`: entry point, Amplitude init, `@UIApplicationDelegateAdaptor`.
+- `AppDelegate.swift`: `OrientationGate`/`DeviceOrientationControl` — app is portrait everywhere except the landscape-capable story reader (iPhone only; iPad rotates freely).
+- `Model.swift`: `@Observable @MainActor` — session, feeds, search results/query, notes, notifications, autorefresh, error storage.
 - `Helpers/FATarget.swift`: FA URL → navigation target.
 - `Helpers/InAppNavigation.swift`: `FATarget` → destination view.
 - `Helper Views/RemoteView.swift`: loading/refresh wrapper for remote content.
-- `ErrorStorage.swift`: user-facing error storage.
 - `Helpers/Kingfisher+FA.swift`: image loading/prefetching with FA headers.
 
 **FAKit:**
-- `FAKit/FASession.swift`: session protocol.
 - `FAKit/OnlineFASession.swift`: network impl — fetch, parse, map to domain models.
 - `FAKit/HTTPDataSource.swift`: async HTTP abstraction.
 - `FAKit/URLSession+HTTPDataSource.swift`: URLSession impl, status handling, Cloudflare error, logging.
 - `FAKit/FALoginView.swift`: login web view + cookie cache.
-- `FAPages/FAPage.swift`: parser protocol.
 - `FAPages/FAURLs.swift`: canonical FA URLs + parsing helpers.
+- `FAPages/FASearchPage.swift` + `FASearchQuery.swift`: search results parser and typed query (keywords, tag include/exclude, author `@lower` scope, rating/type/gender, date range, sort). `FAUsername.swift`: shared username validator.
+- `FAKit/StoryDocument/`: extracts reflowing rich text from downloaded story documents — `StoryDocument` (entry point, dispatches by extension: txt/md/rtf/pdf/docx), `PDFReflow`, `DocxTextParser`. Runs carry only font size + traits (no color) so the reader stays correct in light/dark. Bundled Roboto fonts live in `FAKit/Resources/Fonts/`.
 
 `FAPages` parsers: immutable parsed fields, SwiftSoup init, log failures, throw on missing required HTML.
-
-Feature UI folders: `SubmissionsFeed/`, `Submissions/`, `Notes/`, `Notifications/`, `User/`, `Journal/`, `Comments/`, `Settings/`.
 
 ## Navigation
 
 URL-centered. `FATarget.init?(with:)` maps FA URLs to typed cases; `view(for:)` returns the destination view. Convert FA links in rich HTML via `AttributedString.convertingLinksForInAppNavigation()` to route in-app when possible.
+
+## Submission Content Kinds
+
+`FASubmission.content` is an enum — `.image(ImageContent)`, `.text(TextContent)`, `.audio(AudioContent)` (typealiased from `FASubmissionPage`). `SubmissionView` switches on it to render `SubmissionMainImage`, `SubmissionTextContent`, or `SubmissionAudioContent`; text and audio are document-backed (Save to Files / Share the downloaded file), image is not.
+
+- **Text (story)**: `Submissions/Text Submissions/` — `StoryReaderView` renders `StoryDocument`-extracted rich text with a Reflowed/Original toggle (Original falls back to `QuickLookPreview` of the raw document) and landscape support (via `DeviceOrientationControl`). See [[project_pdfkit_lossy_extraction]].
+- **Audio (music)**: `Submissions/Audio Submissions/` — `AudioPlaybackController` streams via `AVPlayer` and publishes lock-screen playback via `MPNowPlayingInfoCenter`/`MPRemoteCommandCenter` (`MPMediaItemArtwork` must be built off-main, see [[project_mpartwork_isolation_crash]]); `AudioPlayerControls`/`AudioScrubber` are the inline UI.
+
+## Search / Explore
+
+The first tab is `SubmissionsTabView`, which hosts two modes — **Followed** (`SubmissionsFeedView`, the watched-users feed) and **Explore** (`ExplorationView`, furaffinity.net search). The mode switch and context action float as Liquid-Glass buttons over the list corner instead of a nav bar. `Model.searchSubmissions`/`loadMoreSearchResults` call `FASession.search(FASearchQuery)`; the query is persisted (`Defaults[.lastSearchQuery]`) so filters are remembered. Search inputs (tags via `TagSearchEditor`, author via `UsernameField`, rating/type/etc.) live in the `SearchFiltersView` sheet — `.searchable` can't be used here, see [[project_searchable_sibling_suppression]].
+
+## Comment Threads
+
+`Comments/` renders threaded replies with connector lines (`CommentThreadConnector`, widths measured via `CommentsWidthMeasuring`). Very deep sub-threads collapse behind a `ContinueThreadRow` that pushes a focused view; `CommentThreadFocus` carries the deep-linked cid to auto-focus.
 
 ## Remote Loading
 
@@ -79,8 +90,8 @@ xcrun simctl list devices available | grep -E "iPhone|iPad"   # list available d
 
 ## Dependencies
 
-App: AmplitudeSwift, Defaults, Kingfisher, SwiftUI-Introspect, Version, WrappingHStack, swift-algorithms.
-FAKit: SwiftSoup, Cache, SwiftGraph, swift-collections.
+App: AmplitudeSwift, Defaults, Kingfisher, SwiftUI-Introspect, Version, swift-algorithms. (Wrapping layouts use the in-house `Helper Views/FlowLayout.swift` — WrappingHStack was dropped.)
+FAKit: SwiftSoup, Cache, SwiftGraph, swift-collections, ZIPFoundation (DOCX unzip for `StoryDocument`).
 
 ## Working Notes
 
