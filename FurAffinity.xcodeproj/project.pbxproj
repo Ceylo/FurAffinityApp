@@ -798,12 +798,12 @@
 			);
 			mainGroup = 8716E7DF271C659C00C0BC4A;
 			packageReferences = (
-				87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version.git" */,
-				879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect.git" */,
+				87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */,
+				879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
 				877173732C35878700B84624 /* XCRemoteSwiftPackageReference "Amplitude-Swift" */,
-				87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher.git" */,
-				87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults.git" */,
-				871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms.git" */,
+				87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults" */,
+				871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms" */,
 			);
 			productRefGroup = 8716E7E9271C659C00C0BC4A /* Products */;
 			projectDirPath = "";
@@ -1322,7 +1322,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher.git" */ = {
+		87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
 			requirement = {
@@ -1330,7 +1330,7 @@
 				minimumVersion = 8.5.0;
 			};
 		};
-		871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms.git" */ = {
+		871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-algorithms.git";
 			requirement = {
@@ -1346,7 +1346,7 @@
 				minimumVersion = 1.9.2;
 			};
 		};
-		879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect.git" */ = {
+		879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/siteline/SwiftUI-Introspect.git";
 			requirement = {
@@ -1354,7 +1354,7 @@
 				minimumVersion = 26.0.0;
 			};
 		};
-		87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults.git" */ = {
+		87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/Defaults.git";
 			requirement = {
@@ -1362,7 +1362,7 @@
 				minimumVersion = 9.0.3;
 			};
 		};
-		87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version.git" */ = {
+		87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/mxcl/Version.git";
 			requirement = {
@@ -1375,12 +1375,12 @@
 /* Begin XCSwiftPackageProductDependency section */
 		87098D352CB14F1000E7BD94 /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher.git" */;
+			package = 87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */;
 			productName = Kingfisher;
 		};
 		871034812E8F12A80030F36E /* Collections */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms.git" */;
+			package = 871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms" */;
 			productName = Collections;
 		};
 		8761834D271F5E570021A051 /* FAKit */ = {
@@ -1394,17 +1394,17 @@
 		};
 		87B0233E2CD54F9200F4D400 /* Defaults */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults.git" */;
+			package = 87B0233D2CD54F9200F4D400 /* XCRemoteSwiftPackageReference "Defaults" */;
 			productName = Defaults;
 		};
 		87C1A0AC284B6E5400529F8C /* Version */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version.git" */;
+			package = 87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */;
 			productName = Version;
 		};
 		87E796162C99994D0020EACD /* SwiftUIIntrospect */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect.git" */;
+			package = 879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */;
 			productName = SwiftUIIntrospect;
 		};
 		87FA100B271F5E570021A051 /* FALogging */ = {
