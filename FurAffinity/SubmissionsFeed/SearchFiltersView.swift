@@ -20,24 +20,15 @@ struct SearchFiltersView: View {
         _query = State(initialValue: query)
     }
 
-    private func ratingBinding(_ rating: Rating) -> Binding<Bool> {
+    /// A `Bool` binding that toggles `element`'s membership in the `Set` at
+    /// `keyPath` on `query`. Backs the rating / content-type / gender checkboxes.
+    private func toggleBinding<T: Hashable>(
+        _ element: T,
+        in keyPath: WritableKeyPath<FASearchQuery, Set<T>>
+    ) -> Binding<Bool> {
         Binding(
-            get: { query.ratings.contains(rating) },
-            set: { query.ratings.formSymmetricToggle(rating, on: $0) }
-        )
-    }
-
-    private func contentTypeBinding(_ type: FASearchQuery.ContentType) -> Binding<Bool> {
-        Binding(
-            get: { query.contentTypes.contains(type) },
-            set: { query.contentTypes.formSymmetricToggle(type, on: $0) }
-        )
-    }
-
-    private func genderBinding(_ gender: FASearchQuery.Gender) -> Binding<Bool> {
-        Binding(
-            get: { query.genders.contains(gender) },
-            set: { query.genders.formSymmetricToggle(gender, on: $0) }
+            get: { query[keyPath: keyPath].contains(element) },
+            set: { query[keyPath: keyPath].formSymmetricToggle(element, on: $0) }
         )
     }
 
@@ -90,10 +81,10 @@ struct SearchFiltersView: View {
                 }
 
                 Section {
-                    Toggle("General", isOn: ratingBinding(.general))
-                    Toggle("Mature", isOn: ratingBinding(.mature))
+                    Toggle("General", isOn: toggleBinding(.general, in: \.ratings))
+                    Toggle("Mature", isOn: toggleBinding(.mature, in: \.ratings))
                         .disabled(!model.explorationAllowedRatings.contains(.mature))
-                    Toggle("Adult", isOn: ratingBinding(.adult))
+                    Toggle("Adult", isOn: toggleBinding(.adult, in: \.ratings))
                         .disabled(!model.explorationAllowedRatings.contains(.adult))
                 } header: {
                     Text("Rating")
@@ -102,17 +93,17 @@ struct SearchFiltersView: View {
                 }
 
                 Section("Content type") {
-                    Toggle("Art", isOn: contentTypeBinding(.art))
-                    Toggle("Music", isOn: contentTypeBinding(.music))
-                    Toggle("Flash", isOn: contentTypeBinding(.flash))
-                    Toggle("Story", isOn: contentTypeBinding(.story))
-                    Toggle("Photo", isOn: contentTypeBinding(.photo))
-                    Toggle("Poetry", isOn: contentTypeBinding(.poetry))
+                    Toggle("Art", isOn: toggleBinding(.art, in: \.contentTypes))
+                    Toggle("Music", isOn: toggleBinding(.music, in: \.contentTypes))
+                    Toggle("Flash", isOn: toggleBinding(.flash, in: \.contentTypes))
+                    Toggle("Story", isOn: toggleBinding(.story, in: \.contentTypes))
+                    Toggle("Photo", isOn: toggleBinding(.photo, in: \.contentTypes))
+                    Toggle("Poetry", isOn: toggleBinding(.poetry, in: \.contentTypes))
                 }
 
                 Section {
                     ForEach(FASearchQuery.Gender.allCases, id: \.self) { gender in
-                        Toggle(gender.displayName, isOn: genderBinding(gender))
+                        Toggle(gender.displayName, isOn: toggleBinding(gender, in: \.genders))
                     }
                 } header: {
                     Text("Gender")
