@@ -49,7 +49,7 @@ struct ExplorationView: View {
             List {
                 if model.explorationShowingRecentUploads {
                     recentUploadsNotice
-                        .listRowInsets(EdgeInsets())
+                        .listRowInsets(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 120))
                         .listRowSeparator(.hidden)
                 }
                 ForEach(Array(results)) { preview in
@@ -123,7 +123,7 @@ struct ExplorationView: View {
     /// First-row notice when a keyword-less search fell back to recent uploads.
     /// Scrolls away with the results; text stays clear of the floating controls.
     private var recentUploadsNotice: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 10) {
             HStack(alignment: .top, spacing: 8) {
                 Image(systemName: "info.circle")
                     .foregroundStyle(.secondary)
@@ -132,9 +132,6 @@ struct ExplorationView: View {
                     .foregroundStyle(.secondary)
                 Spacer(minLength: 0)
             }
-            .padding(.leading, 16)
-            .padding(.trailing, 120) // clears the floating controls
-            .padding(.vertical, 10)
             Divider()
         }
     }
