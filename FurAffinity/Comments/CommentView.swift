@@ -82,8 +82,7 @@ struct CommentView: View {
         HStack(alignment: .top) {
             AvatarView(avatarUrl: nil)
                 .frame(width: avatarSize, height: avatarSize)
-                .padding(.top, 5)
-            
+
             textBubble
         }
     }
