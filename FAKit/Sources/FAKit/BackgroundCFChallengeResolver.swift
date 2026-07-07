@@ -94,7 +94,7 @@ final class BackgroundCFChallengeResolver: NSObject, WKNavigationDelegate {
         for stale in existing {
             HTTPCookieStorage.shared.deleteCookie(stale)
         }
-        HTTPCookieStorage.shared.setCookie(clearance)
+        HTTPCookieStorage.shared.setCookie(clearance.normalizedForSharedStorage)
         logger.debug("[CFDIAG] CF background resolver: success — new clearance \(clearance.loggingDescription)")
 
         finish(success: true)

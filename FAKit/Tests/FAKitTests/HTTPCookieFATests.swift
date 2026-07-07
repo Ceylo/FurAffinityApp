@@ -7,6 +7,7 @@
 
 import Testing
 import Foundation
+import FAPages
 @testable import FAKit
 
 struct HTTPCookieFATests {
@@ -36,5 +37,50 @@ struct HTTPCookieFATests {
     @Test func onlyClearanceReturnsEmpty() {
         let cookies = [cookie(name: "cf_clearance", domain: ".furaffinity.net")]
         #expect(cookies.faAuthCookies.isEmpty)
+    }
+
+    @Test func normalizedClearancePreservesEssentialsAndDropsSameSite() {
+        // HTTPCookie itself clamps far-future expiry, so compare the normalized
+        // cookie against the original's resolved expiry rather than the raw input.
+        let original = HTTPCookie(properties: [
+            .name: "cf_clearance",
+            .value: "abc123",
+            .domain: ".furaffinity.net",
+            .path: "/",
+            .secure: true,
+            .expires: Date(timeIntervalSinceNow: 3600),
+            .sameSitePolicy: HTTPCookieStringPolicy.sameSiteStrict,
+        ])!
+
+        let normalized = original.normalizedForSharedStorage
+        #expect(normalized.name == "cf_clearance")
+        #expect(normalized.value == "abc123")
+        #expect(normalized.domain == ".furaffinity.net")
+        #expect(normalized.path == "/")
+        #expect(normalized.isSecure)
+        #expect(normalized.expiresDate == original.expiresDate)
+        // The SameSite policy iOS 27 would otherwise honor must be gone so the
+        // cookie replays unrestricted on first-party www.furaffinity.net requests.
+        #expect(normalized.sameSitePolicy == nil)
+    }
+
+    @Test func normalizedClearanceReplaysFromStorageForFAURL() {
+        let storage = HTTPCookieStorage.sharedCookieStorage(
+            forGroupContainerIdentifier: "test.cf.normalize.\(UUID().uuidString)"
+        )
+        for stale in storage.cookies ?? [] { storage.deleteCookie(stale) }
+
+        let original = HTTPCookie(properties: [
+            .name: "cf_clearance",
+            .value: "xyz789",
+            .domain: ".furaffinity.net",
+            .path: "/",
+            .secure: true,
+            .sameSitePolicy: HTTPCookieStringPolicy.sameSiteStrict,
+        ])!
+
+        storage.setCookie(original.normalizedForSharedStorage)
+        let returned = storage.cookies(for: FAURLs.homeUrl) ?? []
+        #expect(returned.contains { $0.name == "cf_clearance" && $0.value == "xyz789" })
     }
 }
