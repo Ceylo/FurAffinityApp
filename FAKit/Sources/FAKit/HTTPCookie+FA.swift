@@ -24,18 +24,19 @@ extension HTTPCookie {
     /// depositing into `HTTPCookieStorage.shared` so it reliably replays on
     /// subsequent URLSession requests.
     ///
-    /// On iOS 27 the `cf_clearance` cookie WKWebView produces during login can
-    /// carry a partitioning (CHIPS) attribute and/or a `SameSite` policy that
-    /// `HTTPCookieStorage.shared` now honors: `setCookie` silos the cookie by
-    /// top-level site, so the unpartitioned `cookies(for:)` lookup URLSession
-    /// performs no longer returns it and FA keeps issuing CloudFlare challenges.
-    /// iOS 26 ignored those attributes, so the same build worked there.
+    /// On iOS 27 the `cf_clearance` cookie WKWebView produces during login carries
+    /// a `StoragePartition` (CHIPS) attribute that `HTTPCookieStorage.shared` now
+    /// honors: `setCookie` silos it by top-level site, so the unpartitioned
+    /// `cookies(for:)` lookup URLSession performs no longer returns it and FA keeps
+    /// issuing CloudFlare challenges. iOS 26 doesn't attach the attribute, so the
+    /// same build worked there. (The cookie also carries `SameSite=none` on 27, but
+    /// that's permissive and was empirically confirmed *not* causal — the partition
+    /// key is; see Scripts/cf_clearance_ios26_vs_ios27.md.)
     ///
     /// Rebuilding via `HTTPCookie(properties:)` from only the standard keys
-    /// (name/value/domain/path/expiry/secure) produces an unpartitioned cookie
-    /// with no `SameSite` restriction by construction, while remaining a no-op
-    /// for cookies that never had those attributes. Falls back to `self` if the
-    /// rebuild somehow fails.
+    /// (name/value/domain/path/expiry/secure) produces an unpartitioned cookie by
+    /// construction, while remaining a no-op for cookies that never had those
+    /// attributes. Falls back to `self` if the rebuild somehow fails.
     var normalizedForSharedStorage: HTTPCookie {
         var properties: [HTTPCookiePropertyKey: Any] = [
             .name: name,

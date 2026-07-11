@@ -59,8 +59,10 @@ struct HTTPCookieFATests {
         #expect(normalized.path == "/")
         #expect(normalized.isSecure)
         #expect(normalized.expiresDate == original.expiresDate)
-        // The SameSite policy iOS 27 would otherwise honor must be gone so the
-        // cookie replays unrestricted on first-party www.furaffinity.net requests.
+        // The rebuild also drops SameSite. Not the causal attribute on iOS 27
+        // (the CHIPS StoragePartition key is; see HTTPCookie+FA.swift), but there's
+        // no public property key to synthesize a partitioned cookie here, so this
+        // asserts the observable part of the rebuild.
         #expect(normalized.sameSitePolicy == nil)
     }
 
