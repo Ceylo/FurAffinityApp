@@ -120,8 +120,11 @@ public class ZoomableViewController : UIViewController, UIScrollViewDelegate {
         scrollView.contentSize = originalContentSize
         scrollView.zoomScale = fitZoomLevel
         
+        // Not animated: the presenting hero zoom transition already animates the
+        // thumbnail into this view, so an animated initial zoom here would read as
+        // an unexpected second animation once the transition settles.
         Task {
-            scrollView.setZoomScale(initialScale, animated: true)
+            scrollView.setZoomScale(initialScale, animated: false)
         }
     }
     
