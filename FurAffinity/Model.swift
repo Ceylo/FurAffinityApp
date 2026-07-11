@@ -96,7 +96,6 @@ class Model: NotificationsNuker, NotificationsDeleter {
             .sink { [unowned self] in
                 let current = DefaultsChangeLog.snapshot()
                 DefaultsChangeLog.logChanges(from: lastLoggedDefaults, to: current)
-                logLastViewedSubmissionTitle(from: lastLoggedDefaults, to: current) // TEMP
                 lastLoggedDefaults = current
             }
             .store(in: &subscriptions)
@@ -107,16 +106,6 @@ class Model: NotificationsNuker, NotificationsDeleter {
                 updateDisplayedNotificationCount()
             }
             .store(in: &subscriptions)
-    }
-
-    // TEMP debugging aid: log the title of the submission behind lastViewedSubmissionID
-    // whenever it changes, to check the Followed-feed centered-item tracking.
-    private func logLastViewedSubmissionTitle(from old: [String: Any], to new: [String: Any]) {
-        let key = Defaults.Keys.lastViewedSubmissionID.name
-        guard !DefaultsChangeLog.valuesEqual(old[key], new[key]) else { return }
-        let sid = new[key] as? Int
-        let title = sid.flatMap { id in submissionPreviews?.first { $0.sid == id }?.title }
-        logger.info("lastViewedSubmissionID → \(sid.map(String.init) ?? "nil"): \(title ?? "<no matching submission>")")
     }
 
     func setSession(_ session: (any FASession)?) async throws {
