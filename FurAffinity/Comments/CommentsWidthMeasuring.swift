@@ -7,14 +7,6 @@
 
 import SwiftUI
 
-/// Width of the comments container, measured once from a stable (non-scrolling) anchor.
-private struct CommentsWidthKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
-    }
-}
-
 private struct CommentsAvailableWidthKey: EnvironmentKey {
     static let defaultValue: CGFloat = 0
 }
@@ -43,14 +35,11 @@ private struct CommentsWidthMeasuringModifier: ViewModifier {
     var writeBack: Binding<CGFloat>?
     func body(content: Content) -> some View {
         content
-            // The container background never scrolls, so the measured width is stable and the
+            // The List frame itself never scrolls, so the measured width is stable and the
             // cutoff is fixed up front instead of shifting as rows recycle during scrolling.
-            .background(GeometryReader {
-                Color.clear.preference(key: CommentsWidthKey.self, value: $0.size.width)
-            })
-            .onPreferenceChange(CommentsWidthKey.self) {
-                width = $0
-                writeBack?.wrappedValue = $0
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { newWidth in
+                width = newWidth
+                writeBack?.wrappedValue = newWidth
             }
             .environment(\.commentsAvailableWidth, width)
     }
