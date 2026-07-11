@@ -25,6 +25,10 @@ public struct Zoomable<Content: View>: UIViewControllerRepresentable {
     
     public init(@ViewBuilder content: () -> Content) {
         self.host = UIHostingController(rootView: content())
+        // Don't inset the hosted image by the safe area: the scroll view fills the
+        // screen edge-to-edge, so a safe-area inset here would leave a margin
+        // (e.g. under the status bar) when the image is panned to its edge.
+        self.host.safeAreaRegions = []
     }
     
     public func initialZoomLevel(_ zoomLevel: ZoomLevel) -> Self {
