@@ -83,24 +83,20 @@ class Model: NotificationsNuker, NotificationsDeleter {
     
     private var subscriptions = Set<AnyCancellable>()
     private var autorefreshSubscription: AnyCancellable?
+    /// Last logged UserDefaults snapshot, so state-update logs show only the diff.
+    @ObservationIgnored private var lastLoggedDefaults: [String: Any] = [:]
     init() {
+        lastLoggedDefaults = Self.defaultsSnapshot()
         Defaults.publisher(keys: Defaults.Keys.all, options: [])
             // Defaults delivers KVO synchronously on whichever thread mutates a key
             // (e.g. background refresh writing latestNotificationIDs off the main actor).
             // These sinks are @MainActor-isolated, so hop to main before entering them to
             // avoid an executor-isolation crash. See defaultsWriteFromBackground… test.
             .receive(on: DispatchQueue.main)
-            .sink {
-                let userDefaults = UserDefaults.standard
-                let preferences = Defaults.Keys.all
-                    .compactMap { key in
-                        userDefaults.object(forKey: key.name).map { value in
-                            (key.name, value)
-                        }
-                    }
-                    .sorted(by: { $0.0 < $1.0 })
-                
-                logger.info("UserDefaults state update: \(preferences)")
+            .sink { [unowned self] in
+                let current = Self.defaultsSnapshot()
+                logDefaultsChanges(from: lastLoggedDefaults, to: current)
+                lastLoggedDefaults = current
             }
             .store(in: &subscriptions)
         
@@ -111,7 +107,46 @@ class Model: NotificationsNuker, NotificationsDeleter {
             }
             .store(in: &subscriptions)
     }
-    
+
+    /// Current values of every tracked Defaults key, keyed by name.
+    private static func defaultsSnapshot() -> [String: Any] {
+        let userDefaults = UserDefaults.standard
+        var snapshot = [String: Any]()
+        for key in Defaults.Keys.all {
+            if let value = userDefaults.object(forKey: key.name) {
+                snapshot[key.name] = value
+            }
+        }
+        return snapshot
+    }
+
+    /// UserDefaults values are property-list objects (NSObject subclasses), so compare via isEqual.
+    private static func defaultsValuesEqual(_ lhs: Any?, _ rhs: Any?) -> Bool {
+        switch (lhs, rhs) {
+        case (nil, nil): return true
+        case let (lhs?, rhs?): return (lhs as? NSObject)?.isEqual(rhs) ?? false
+        default: return false
+        }
+    }
+
+    /// Logs only the keys that changed between two snapshots (added `+`, removed `-`, changed `~`).
+    private func logDefaultsChanges(from old: [String: Any], to new: [String: Any]) {
+        var changes = [String]()
+        for key in Set(old.keys).union(new.keys).sorted() {
+            let oldValue = old[key]
+            let newValue = new[key]
+            guard !Self.defaultsValuesEqual(oldValue, newValue) else { continue }
+            switch (oldValue, newValue) {
+            case let (nil, newValue?): changes.append("+ \(key) = \(newValue)")
+            case let (oldValue?, nil): changes.append("- \(key) (was \(oldValue))")
+            case let (oldValue?, newValue?): changes.append("~ \(key): \(oldValue) → \(newValue)")
+            default: break
+            }
+        }
+        guard !changes.isEmpty else { return }
+        logger.info("UserDefaults state update:\n\(changes.joined(separator: "\n"))")
+    }
+
     func setSession(_ session: (any FASession)?) async throws {
         guard self.session !== session else { return }
         if session != nil {
