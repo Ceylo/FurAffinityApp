@@ -60,7 +60,7 @@ public struct FALoginView: View {
         // without OnlineFASession's stored auth cookies clobbering them on
         // every request.
         for cookie in rawCookies where cookie.name == "cf_clearance" {
-            HTTPCookieStorage.shared.setCookie(cookie)
+            HTTPCookieStorage.shared.setCookie(cookie.normalizedForSharedStorage)
         }
         let authCookies = rawCookies.filter { $0.name != "cf_clearance" }
 

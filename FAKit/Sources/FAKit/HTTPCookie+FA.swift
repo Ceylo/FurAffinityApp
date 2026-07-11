@@ -18,3 +18,38 @@ extension Collection where Element == HTTPCookie {
         filter { $0.name != "cf_clearance" && $0.domain.contains(FAURLs.domain) }
     }
 }
+
+extension HTTPCookie {
+    /// A plain, first-party, unpartitioned rebuild of this cookie suitable for
+    /// depositing into `HTTPCookieStorage.shared` so it reliably replays on
+    /// subsequent URLSession requests.
+    ///
+    /// On iOS 27 the `cf_clearance` cookie WKWebView produces during login carries
+    /// a `StoragePartition` (CHIPS) attribute that `HTTPCookieStorage.shared` now
+    /// honors: `setCookie` silos it by top-level site, so the unpartitioned
+    /// `cookies(for:)` lookup URLSession performs no longer returns it and FA keeps
+    /// issuing CloudFlare challenges. iOS 26 doesn't attach the attribute, so the
+    /// same build worked there. (The cookie also carries `SameSite=none` on 27, but
+    /// that's permissive and was empirically confirmed *not* causal — the partition
+    /// key is; see Scripts/cf_clearance_ios26_vs_ios27.md.)
+    ///
+    /// Rebuilding via `HTTPCookie(properties:)` from only the standard keys
+    /// (name/value/domain/path/expiry/secure) produces an unpartitioned cookie by
+    /// construction, while remaining a no-op for cookies that never had those
+    /// attributes. Falls back to `self` if the rebuild somehow fails.
+    var normalizedForSharedStorage: HTTPCookie {
+        var properties: [HTTPCookiePropertyKey: Any] = [
+            .name: name,
+            .value: value,
+            .domain: domain,
+            .path: path,
+        ]
+        if let expiresDate {
+            properties[.expires] = expiresDate
+        }
+        if isSecure {
+            properties[.secure] = true
+        }
+        return HTTPCookie(properties: properties) ?? self
+    }
+}

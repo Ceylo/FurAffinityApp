@@ -154,7 +154,7 @@ public struct FAChallengeView: View {
         for stale in existing {
             HTTPCookieStorage.shared.deleteCookie(stale)
         }
-        HTTPCookieStorage.shared.setCookie(clearance)
+        HTTPCookieStorage.shared.setCookie(clearance.normalizedForSharedStorage)
         logger.info("CloudFlare challenge resolved; new clearance: \(clearance.loggingDescription)")
 
         hasResolved = true
