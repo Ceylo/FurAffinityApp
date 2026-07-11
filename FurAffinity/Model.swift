@@ -86,7 +86,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
     /// Last logged UserDefaults snapshot, so state-update logs show only the diff.
     @ObservationIgnored private var lastLoggedDefaults: [String: Any] = [:]
     init() {
-        lastLoggedDefaults = Self.defaultsSnapshot()
+        lastLoggedDefaults = DefaultsChangeLog.snapshot()
         Defaults.publisher(keys: Defaults.Keys.all, options: [])
             // Defaults delivers KVO synchronously on whichever thread mutates a key
             // (e.g. background refresh writing latestNotificationIDs off the main actor).
@@ -94,8 +94,8 @@ class Model: NotificationsNuker, NotificationsDeleter {
             // avoid an executor-isolation crash. See defaultsWriteFromBackground… test.
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
-                let current = Self.defaultsSnapshot()
-                logDefaultsChanges(from: lastLoggedDefaults, to: current)
+                let current = DefaultsChangeLog.snapshot()
+                DefaultsChangeLog.logChanges(from: lastLoggedDefaults, to: current)
                 logLastViewedSubmissionTitle(from: lastLoggedDefaults, to: current) // TEMP
                 lastLoggedDefaults = current
             }
@@ -109,50 +109,11 @@ class Model: NotificationsNuker, NotificationsDeleter {
             .store(in: &subscriptions)
     }
 
-    /// Current values of every tracked Defaults key, keyed by name.
-    private static func defaultsSnapshot() -> [String: Any] {
-        let userDefaults = UserDefaults.standard
-        var snapshot = [String: Any]()
-        for key in Defaults.Keys.all {
-            if let value = userDefaults.object(forKey: key.name) {
-                snapshot[key.name] = value
-            }
-        }
-        return snapshot
-    }
-
-    /// UserDefaults values are property-list objects (NSObject subclasses), so compare via isEqual.
-    private static func defaultsValuesEqual(_ lhs: Any?, _ rhs: Any?) -> Bool {
-        switch (lhs, rhs) {
-        case (nil, nil): return true
-        case let (lhs?, rhs?): return (lhs as? NSObject)?.isEqual(rhs) ?? false
-        default: return false
-        }
-    }
-
-    /// Logs only the keys that changed between two snapshots (added `+`, removed `-`, changed `~`).
-    private func logDefaultsChanges(from old: [String: Any], to new: [String: Any]) {
-        var changes = [String]()
-        for key in Set(old.keys).union(new.keys).sorted() {
-            let oldValue = old[key]
-            let newValue = new[key]
-            guard !Self.defaultsValuesEqual(oldValue, newValue) else { continue }
-            switch (oldValue, newValue) {
-            case let (nil, newValue?): changes.append("+ \(key) = \(newValue)")
-            case let (oldValue?, nil): changes.append("- \(key) (was \(oldValue))")
-            case let (oldValue?, newValue?): changes.append("~ \(key): \(oldValue) → \(newValue)")
-            default: break
-            }
-        }
-        guard !changes.isEmpty else { return }
-        logger.info("UserDefaults state update:\n\(changes.joined(separator: "\n"))")
-    }
-
     // TEMP debugging aid: log the title of the submission behind lastViewedSubmissionID
     // whenever it changes, to check the Followed-feed centered-item tracking.
     private func logLastViewedSubmissionTitle(from old: [String: Any], to new: [String: Any]) {
         let key = Defaults.Keys.lastViewedSubmissionID.name
-        guard !Self.defaultsValuesEqual(old[key], new[key]) else { return }
+        guard !DefaultsChangeLog.valuesEqual(old[key], new[key]) else { return }
         let sid = new[key] as? Int
         let title = sid.flatMap { id in submissionPreviews?.first { $0.sid == id }?.title }
         logger.info("lastViewedSubmissionID → \(sid.map(String.init) ?? "nil"): \(title ?? "<no matching submission>")")

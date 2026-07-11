@@ -8,6 +8,7 @@
 import Foundation
 import OSLog
 import FALogging
+import Defaults
 
 let logger = PersistentLogger(subsystem: Bundle.main.bundleIdentifier!, category: "FA")
 private let signpostLog = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FA")
@@ -35,6 +36,48 @@ enum LogExportRange {
         case .last24Hours: "last 24h"
         case .all: "all"
         }
+    }
+}
+
+/// Snapshots and diff-logs UserDefaults so state-update logs show only what changed.
+enum DefaultsChangeLog {
+    /// Current values of every tracked Defaults key, keyed by name.
+    static func snapshot() -> [String: Any] {
+        let userDefaults = UserDefaults.standard
+        var snapshot = [String: Any]()
+        for key in Defaults.Keys.all {
+            if let value = userDefaults.object(forKey: key.name) {
+                snapshot[key.name] = value
+            }
+        }
+        return snapshot
+    }
+
+    /// UserDefaults values are property-list objects (NSObject subclasses), so compare via isEqual.
+    static func valuesEqual(_ lhs: Any?, _ rhs: Any?) -> Bool {
+        switch (lhs, rhs) {
+        case (nil, nil): return true
+        case let (lhs?, rhs?): return (lhs as? NSObject)?.isEqual(rhs) ?? false
+        default: return false
+        }
+    }
+
+    /// Logs only the keys that changed between two snapshots (added `+`, removed `-`, changed `~`).
+    static func logChanges(from old: [String: Any], to new: [String: Any]) {
+        var changes = [String]()
+        for key in Set(old.keys).union(new.keys).sorted() {
+            let oldValue = old[key]
+            let newValue = new[key]
+            guard !valuesEqual(oldValue, newValue) else { continue }
+            switch (oldValue, newValue) {
+            case let (nil, newValue?): changes.append("+ \(key) = \(newValue)")
+            case let (oldValue?, nil): changes.append("- \(key) (was \(oldValue))")
+            case let (oldValue?, newValue?): changes.append("~ \(key): \(oldValue) → \(newValue)")
+            default: break
+            }
+        }
+        guard !changes.isEmpty else { return }
+        logger.info("UserDefaults state update:\n\(changes.joined(separator: "\n"))")
     }
 }
 
