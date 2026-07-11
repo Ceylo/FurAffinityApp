@@ -25,6 +25,7 @@ struct SubmissionMainImage: View {
     @State private var showZoomableSheet = false
     @State private var errorMessage: String?
     @State private var fullResolutionImage: UIImage?
+    @Namespace private var zoomNamespace
     
     private func configure(_ image: some KFImageProtocol, geometry: GeometryProxy) -> some KFImageProtocol {
         image
@@ -70,7 +71,8 @@ struct SubmissionMainImage: View {
                         configure(FAImage(fullResolutionMediaUrl), geometry: geometry)
                     }
                 }
-                .fadingSheet(isPresented: $showZoomableSheet) {
+                .matchedTransitionSource(id: "zoom", in: zoomNamespace)
+                .fullScreenCover(isPresented: $showZoomableSheet) {
                     Zoomable {
                         Group {
                             if canAnimate(fullResolutionMediaUrl) {
@@ -88,6 +90,8 @@ struct SubmissionMainImage: View {
                     .primaryZoomLevel(.fill)
                     .secondaryZoomLevel(.fit)
                     .ignoresSafeArea()
+                    .background(.background)
+                    .navigationTransition(.zoom(sourceID: "zoom", in: zoomNamespace))
                 }
                 .aspectRatio(contentMode: .fit)
                 // Only attach the tap gesture when zooming is allowed; otherwise it
