@@ -77,7 +77,8 @@ enum DefaultsChangeLog {
             }
         }
         guard !changes.isEmpty else { return }
-        logger.info("UserDefaults state update:\n\(changes.joined(separator: "\n"))")
+        let separator = changes.count == 1 ? " " : "\n"
+        logger.info("UserDefaults state update:\(separator)\(changes.joined(separator: "\n"))")
     }
 }
 
