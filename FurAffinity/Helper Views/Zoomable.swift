@@ -70,7 +70,8 @@ public class ZoomableViewController : UIViewController, UIScrollViewDelegate {
     let initialZoomLevel: ZoomLevel
     let primaryZoomLevel: ZoomLevel
     let secondaryZoomLevel: ZoomLevel
-    
+    private var didConfigureInitialZoom = false
+
     init(
         view: UIView,
         initialZoomLevel: ZoomLevel,
@@ -116,6 +117,8 @@ public class ZoomableViewController : UIViewController, UIScrollViewDelegate {
     public override func didMove(toParent parent: UIViewController?) {
         super.didMove(toParent: parent)
         guard parent != nil else { return }
+        guard !didConfigureInitialZoom else { return }
+        didConfigureInitialZoom = true
 
         let fitZoomLevel = zoomToFit(size: originalContentSize)
         scrollView.minimumZoomScale = fitZoomLevel
