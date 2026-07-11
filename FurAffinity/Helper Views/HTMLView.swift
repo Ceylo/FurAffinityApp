@@ -103,7 +103,8 @@ final class GIFOverlayTextView: UITextView {
     private struct GIF {
         let range: NSRange
         let data: Data
-        let size: CGSize
+        /// Baseline-relative layout bounds (`NSTextAttachment.bounds`).
+        let bounds: CGRect
     }
 
     private var gifs: [GIF] = []
@@ -174,15 +175,15 @@ final class GIFOverlayTextView: UITextView {
                                              layoutManager: layoutManager,
                                              contentManager: contentManager) {
                 overlay.isHidden = false
-                // Draw the GIF at the attachment's own size, left-aligned to the
-                // segment and vertically centered on the line — matching how the
-                // static attachment sits inline (the segment spans the full line
-                // height, which for a tall image is bigger than the image itself).
+                // Match TextKit's static-attachment placement: bounds are baseline-relative
+                // (y-up, origin on the baseline), so the top sits at
+                // `baseline - bounds.origin.y - bounds.height`. Baseline-anchoring (vs.
+                // centering on the line) keeps GIFs aligned with static neighbors.
                 overlay.frame = CGRect(
-                    x: segment.minX,
-                    y: segment.midY - gif.size.height / 2,
-                    width: gif.size.width,
-                    height: gif.size.height
+                    x: segment.rect.minX,
+                    y: segment.baselineY - gif.bounds.origin.y - gif.bounds.height,
+                    width: gif.bounds.width,
+                    height: gif.bounds.height
                 )
             } else {
                 overlay.isHidden = true
@@ -190,13 +191,20 @@ final class GIFOverlayTextView: UITextView {
         }
     }
 
-    /// The line-segment rect (in this view's coordinate space) enclosing the
-    /// attachment at `nsRange`, or nil if it isn't laid out yet.
+    private struct LineSegment {
+        /// Segment rect in this view's coordinate space (spans the full line height).
+        let rect: CGRect
+        /// Baseline Y in this view's coordinate space — TextKit's attachment datum.
+        let baselineY: CGFloat
+    }
+
+    /// The line segment (in this view's coordinate space) enclosing the attachment
+    /// at `nsRange`, or nil if it isn't laid out yet.
     private func lineSegmentRect(
         for nsRange: NSRange,
         layoutManager: NSTextLayoutManager,
         contentManager: NSTextContentManager
-    ) -> CGRect? {
+    ) -> LineSegment? {
         guard let start = contentManager.location(layoutManager.documentRange.location,
                                                   offsetBy: nsRange.location),
               let end = contentManager.location(start, offsetBy: nsRange.length),
@@ -204,8 +212,10 @@ final class GIFOverlayTextView: UITextView {
         else { return nil }
 
         var segmentRect: CGRect?
-        layoutManager.enumerateTextSegments(in: textRange, type: .standard, options: []) { _, frame, _, _ in
+        var segmentBaseline: CGFloat = 0
+        layoutManager.enumerateTextSegments(in: textRange, type: .standard, options: []) { _, frame, baselinePosition, _ in
             segmentRect = frame
+            segmentBaseline = baselinePosition
             return false // first segment is enough for a single attachment
         }
         guard var rect = segmentRect else { return nil }
@@ -213,7 +223,9 @@ final class GIFOverlayTextView: UITextView {
         // offset by textContainerInset (contentOffset is 0 for this non-scrolling view).
         rect.origin.x += textContainerInset.left
         rect.origin.y += textContainerInset.top
-        return rect
+        // `baselinePosition` is relative to the segment frame's top edge.
+        let baselineY = rect.minY + segmentBaseline
+        return LineSegment(rect: rect, baselineY: baselineY)
     }
 
     private static func findGIFs(in attributedString: NSAttributedString) -> [GIF] {
@@ -224,7 +236,7 @@ final class GIFOverlayTextView: UITextView {
                   let data = attachment.fileWrapper?.regularFileContents ?? attachment.contents,
                   isAnimatedGIF(data)
             else { return }
-            result.append(GIF(range: range, data: data, size: attachment.bounds.size))
+            result.append(GIF(range: range, data: data, bounds: attachment.bounds))
         }
         return result
     }
