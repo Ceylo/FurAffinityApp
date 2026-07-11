@@ -7,50 +7,8 @@
 
 import SwiftUI
 
-struct ViewFrameKey: PreferenceKey {
-    typealias Value = CGRect?
-    static let defaultValue: CGRect? = nil
-    static func reduce(value: inout Value, nextValue: () -> Value) {
-        value = value?.union(nextValue() ?? .null)
-    }
-}
-
-struct ItemFrameTracking: ViewModifier {
-    var listGeometry: GeometryProxy
-    var frameUpdated: (CGRect?) -> Void
-    
-    func body(content: Content) -> some View {
-        content
-            .background {
-                GeometryReader { itemGeometry in
-                    let itemFrameIgnoringSafeArea = itemGeometry.frame(in: .named("ListFrame.Scroll"))
-                    let parentListFrame = listGeometry.frame(in: .global)
-                    let parentListOffset = parentListFrame.origin
-                    let itemFrame = CGRect(
-                        origin: CGPoint(x: itemFrameIgnoringSafeArea.origin.x - parentListOffset.x,
-                                        y: itemFrameIgnoringSafeArea.origin.y - parentListOffset.y),
-                        size: itemFrameIgnoringSafeArea.size)
-                    let visible = parentListFrame.intersects(itemFrameIgnoringSafeArea)
-                    
-                    Color.clear.preference(key: ViewFrameKey.self,
-                                           value: visible ? itemFrame : nil)
-                }
-            }
-            .onPreferenceChange(ViewFrameKey.self) { [frameUpdated] frame in
-                frameUpdated(frame)
-            }
-    }
-}
-
-struct ListFrameTracking: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .coordinateSpace(name: "ListFrame.Scroll")
-    }
-}
-
 public extension View {
-    
+
     /// Add an action to perform when a List item frame changes. To be used along with ``trackListFrame()``.
     ///
     /// It can be used with this pattern:
@@ -70,11 +28,26 @@ public extension View {
     ///   - frameUpdated: A closure called each time an item position changes due to scrolling in the List.
     ///   If the item goes out of List's frame, the given CGRect is nil
     func onItemFrameChanged(listGeometry: GeometryProxy, _ frameUpdated: @escaping (CGRect?) -> Void) -> some View {
-        modifier(ItemFrameTracking(listGeometry: listGeometry, frameUpdated: frameUpdated))
+        // Snapshot the list frame outside the @Sendable transform closure so it
+        // doesn't capture the non-Sendable GeometryProxy. The enclosing
+        // GeometryReader re-applies this modifier when the list frame changes.
+        let parentListFrame = listGeometry.frame(in: .global)
+        return onGeometryChange(for: CGRect?.self) { itemGeometry in
+            let itemFrameIgnoringSafeArea = itemGeometry.frame(in: .named("ListFrame.Scroll"))
+            let parentListOffset = parentListFrame.origin
+            let itemFrame = CGRect(
+                origin: CGPoint(x: itemFrameIgnoringSafeArea.origin.x - parentListOffset.x,
+                                y: itemFrameIgnoringSafeArea.origin.y - parentListOffset.y),
+                size: itemFrameIgnoringSafeArea.size)
+            let visible = parentListFrame.intersects(itemFrameIgnoringSafeArea)
+            return visible ? itemFrame : nil
+        } action: { frame in
+            frameUpdated(frame)
+        }
     }
-    
+
     /// Makes a List view ready for use along with ``onItemFrameChanged(listGeometry:_:)``.
     func trackListFrame() -> some View {
-        modifier(ListFrameTracking())
+        coordinateSpace(.named("ListFrame.Scroll"))
     }
 }
