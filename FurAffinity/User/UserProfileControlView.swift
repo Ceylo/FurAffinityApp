@@ -25,6 +25,7 @@ struct UserProfileControlView: View {
                 }
                 .padding(5)
             }
+            .scrollClipDisabled()
         } else {
             ScrollView(.horizontal) {
                 HStack(spacing: 0) {
