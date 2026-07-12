@@ -1,13 +1,14 @@
 # Fur Affinity
-- [Preview](#preview)
-- [Project Goals](#project-goals)
-- [Features](#features)
-- [Installation](#installation)
-- [Can I trust this app?](#can-i-trust-this-app)
-- [How does it get access to my account?](#how-does-it-get-access-to-my-account)
-- [Will I get banned from Fur Affinity for using this app?](#will-i-get-banned-from-fur-affinity-for-using-this-app)
-- [Technologies used and required iOS version](#technologies-used-and-required-ios-version)
-- [Privacy policy](#privacy-policy)
+- [Fur Affinity](#fur-affinity)
+  - [Preview](#preview)
+  - [Project Goals](#project-goals)
+  - [Features](#features)
+  - [Installation](#installation)
+  - [Can I trust this app?](#can-i-trust-this-app)
+  - [How does it get access to my account?](#how-does-it-get-access-to-my-account)
+  - [Will I get banned from Fur Affinity for using this app?](#will-i-get-banned-from-fur-affinity-for-using-this-app)
+  - [Technologies used and required iOS version](#technologies-used-and-required-ios-version)
+  - [Privacy policy](#privacy-policy)
 
 ## Preview
 
@@ -20,7 +21,7 @@ This project is written to be able to benefit from [furaffinity.net](https://www
 
 - [x] Submissions feed
 - [x] Notifications feed (journals, submission comments & journal comments, shouts)
-- [x] Notes (read only)
+- [x] Notes (read & write)
 - [x] In-app navigation for any submission and journal
   - [x] Submission download & fav
   - [x] Animated GIFs
@@ -32,8 +33,8 @@ This project is written to be able to benefit from [furaffinity.net](https://www
   - [x] Shouts
   - [x] Gallery, scraps, favorites, journals and watchlist
   - [x] Follow/unfollow
-- [ ] iOS notifications
-- [ ] Exploration
+- [x] iOS notifications (triggered by occasional background refresh, not real time)
+- [x] Exploration mode (ie. https://www.furaffinity.net/search)
 
 ## Installation
 See the steps on the official website: [furaffinity.app](https://furaffinity.app).
@@ -48,8 +49,8 @@ The app displays furaffinity.net login webpage to let you enter account details.
 As of May 2022, Fur Affinity staff allows the use of the application as long as it does not make excessive requests to furaffinity.net. This goes against apps that download the full gallery of a user for instance, but not against this app which, from furaffinity.net's point of view, behaves very similarly to a usual web browsing experience.
 
 ## Technologies used and required iOS version
-This project is fully written in Swift and is based on SwiftUI, Swift Concurrency and other APIs introduced in iOS 17.
-As such iOS 17.4 or later is required to run the latest version of the app. If you're still on iOS 16, the latest compatible version is 1.9.1.
+This project is fully written in Swift and is based on SwiftUI, Swift Concurrency and other APIs introduced in iOS 18.
+As such iOS 18.0 or later is required to run the latest version of the app. If you're still on iOS 17, the latest compatible version is 1.17.
 
 ## Privacy policy
 See the [Privacy Policy](Privacy%20Policy.md) page.

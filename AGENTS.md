@@ -4,7 +4,7 @@
 
 Native iOS app for furaffinity.net. Logs in via web view, stores FA session cookies, fetches pages over HTTP, parses HTML, and renders native SwiftUI views.
 
-- **Platform**: iOS 17.4+ · **Language**: Swift 6 · **Frameworks**: SwiftUI, Swift Concurrency · **Package Manager**: SPM
+- **Platform**: iOS 18.0+ · **Language**: Swift 6 · **Frameworks**: SwiftUI, Swift Concurrency · **Package Manager**: SPM
 
 Two main code areas:
 - `FurAffinity/`: iOS app — SwiftUI screens, app state, navigation, settings, image loading.
