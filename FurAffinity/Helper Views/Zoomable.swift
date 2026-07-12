@@ -63,34 +63,8 @@ public struct Zoomable<Content: View>: UIViewControllerRepresentable {
     }
 }
 
-/// Scroll view that declines to start its own pan for a vertical-dominant drag when
-/// there is no vertical scroll room, letting the touches fall through to the
-/// fullScreenCover's zoom-transition dismiss gesture (pull-to-dismiss). Horizontal
-/// drags and any vertically-scrollable state keep scrolling normally.
-class DismissFriendlyScrollView: UIScrollView {
-    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-        // Only gate our own pan; leave pinch/zoom, tap, etc. to the default behavior.
-        guard gestureRecognizer == panGestureRecognizer else {
-            return super.gestureRecognizerShouldBegin(gestureRecognizer)
-        }
-
-        // Velocity is reliable at begin time; translation is still ~0.
-        let velocity = panGestureRecognizer.velocity(in: self)
-        let verticalDominant = abs(velocity.y) > abs(velocity.x)
-
-        let insets = adjustedContentInset
-        let range = contentSize.height + insets.top + insets.bottom - bounds.height
-        let canScrollVertically = range > 0.5
-
-        if verticalDominant && !canScrollVertically {
-            return false
-        }
-        return super.gestureRecognizerShouldBegin(gestureRecognizer)
-    }
-}
-
 public class ZoomableViewController : UIViewController, UIScrollViewDelegate {
-    let scrollView = DismissFriendlyScrollView()
+    let scrollView = UIScrollView()
     let contentView: UIView
     let originalContentSize: CGSize
     let initialZoomLevel: ZoomLevel
@@ -153,11 +127,8 @@ public class ZoomableViewController : UIViewController, UIScrollViewDelegate {
         scrollView.contentSize = originalContentSize
         scrollView.zoomScale = fitZoomLevel
         
-        // Not animated: the presenting hero zoom transition already animates the
-        // thumbnail into this view, so an animated initial zoom here would read as
-        // an unexpected second animation once the transition settles.
         Task {
-            scrollView.setZoomScale(initialScale, animated: false)
+            scrollView.setZoomScale(initialScale, animated: true)
         }
     }
     
