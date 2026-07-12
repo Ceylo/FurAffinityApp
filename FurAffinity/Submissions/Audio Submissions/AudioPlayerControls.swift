@@ -70,6 +70,8 @@ struct AudioPlayerControls: View {
     }
 }
 
+#if DEBUG
 #Preview {
     AudioPlayerControls(controller: .preview(currentTime: 70, duration: 100))
 }
+#endif

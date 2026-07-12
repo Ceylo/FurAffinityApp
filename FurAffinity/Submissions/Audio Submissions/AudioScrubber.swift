@@ -49,6 +49,7 @@ struct AudioScrubber: View {
     }
 }
 
+#if DEBUG
 #Preview {
     AudioScrubber(
         controller: .preview(duration: 100),
@@ -56,3 +57,4 @@ struct AudioScrubber: View {
         scrubValue: .constant(70)
     )
 }
+#endif
