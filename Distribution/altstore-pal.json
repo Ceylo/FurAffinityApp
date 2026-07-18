@@ -20,31 +20,49 @@
       "screenshots": [
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.15/screenshots/feed.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.18/screenshots/feed.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.15/screenshots/submission.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.18/screenshots/submission.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.15/screenshots/notifications.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.18/screenshots/notifications.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.15/screenshots/notes.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.18/screenshots/notes.heic",
           "width": 1170
         },
         {
           "height": 2532,
-          "imageURL": "https://get.furaffinity.app/altstore/releases/1.15/screenshots/note reply.heic",
+          "imageURL": "https://get.furaffinity.app/altstore/releases/1.18/screenshots/comment-reply.heic",
           "width": 1170
         }
       ],
       "versions": [
+        {
+          "version": "1.18",
+          "buildVersion": "2",
+          "date": "2026-07-13T20:00:00+01:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n📱 FEATURES\n- Text (story) submissions can now be read natively in the app. A reflowing reader keeps most of the original formatting while adapting for mobile screen, with dark mode support. A Reflowed/Original toggle allows switching to the original formatting. Stories can be read in landscape as well, and can be saved to Files or shared.\n- Music (audio) submissions are now supported aswell with an inline streaming player, plus locked-screen playback controls.\n- New Explore mode in the Submissions tab lets you search furaffinity.net submissions, with filters for tags (include/exclude), author, rating, content type, gender, date range and sort order.\n\n🐞 BUGFIXES\n- Fixed missing avatars on some notifications.\n- Fixed CloudFlare-protected login on iOS 27.\n\n📦 MISCELLANEOUS\n- Background refresh is more reliable: queued notifications are posted in feed order, and resume correctly after interruption.\n- The app checks for newer submissions right after launch, instead of only displaying the previously seen submissions.\n- Comment threads are easier to follow: replies are now connected with thread lines and very deep sub-threads collapse automatically.\n- Inline GIFs in submission descriptions and comments now animate.\n- Support for iOS 17 has been removed. The app now requires iOS 18 or later.",
+          "downloadURL": "https://get.furaffinity.app/altstore/releases/1.18/adp/",
+          "size": 9175967,
+          "minOSVersion": "18.0"
+        },
+        {
+          "version": "1.17",
+          "buildVersion": "1",
+          "date": "2026-06-07T18:00:00+01:00",
+          "localizedDescription": "💬 The Fur Affinity app is available through AltStore PAL, AltStore World and SideStore. See https://furaffinity.app/ for more details.\n\n📱 FEATURES\n- Cloudflare challenges from furaffinity.net are now handled: the app solves them in the background, so browsing and logging in keep working when the site is behind Cloudflare.\n- The app now refreshes in the background and sends you local iOS notifications when there's something new for you: new submissions in your feed, new notes, and new notifications (favorites, comments, watches, shouts) — even while the app is closed\n- The Notes tab can now browse the Archive and Trash boxes in addition to Inbox and Sent\n- New swipe actions allow notes to be moved to Archive or Trash, and marked back as unread\n- A \"Send a Note\" action was added on submissions, and \"Comment\" and \"Send a Note\" actions were added to the journals menu\n\n📦 MISCELLANEOUS\n- Settings now separate app badge counts from iOS notifications, so you can turn each on or off independently\n- The app now keeps an on-device log you can export to help diagnose issues, plus a new \"Clear Application Logs\" button in Settings\n\n⚠️ Note for AltStore Classic users: the app now contains an extension. You might get asked by AltStore upon installation whether you want to preserve the extension, which will count toward your weekly App ID limit. If you remove the app's extension, you'll lose preview of submissions on long press on iOS notifications.",
+          "downloadURL": "https://get.furaffinity.app/altstore/releases/1.17/adp/",
+          "size": 12059533,
+          "minOSVersion": "17.4"
+        },
         {
           "version": "1.16.3",
           "buildVersion": "1",
@@ -183,8 +201,12 @@
       ],
       "appPermissions": {
         "privacy": {
-          "NSPhotoLibraryAddUsageDescription": "Chosen images will be saved to the Photo Library."
-        }
+          "NSPhotoLibraryAddUsageDescription": "Chosen images will be saved to the Photo Library.",
+          "NSUserNotificationsUsageDescription": "Notifications may include alerts, sounds and icon badges when new submissions, journals, comments or notes are available. These can be configured in Settings."
+        },
+        "entitlements": [
+          "com.apple.developer.usernotifications.communication"
+        ]
       }
     }
   ]
