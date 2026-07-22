@@ -5,6 +5,8 @@
 //  Created by Ceylo on 24/10/2021.
 //
 
+#if !os(Android)
+
 import Foundation
 
 public struct CloudflareChallengeRequired: LocalizedError {
@@ -121,3 +123,5 @@ extension URLSession: HTTPDataSource {
         }
     }
 }
+
+#endif

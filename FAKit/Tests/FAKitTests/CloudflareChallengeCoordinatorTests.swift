@@ -5,6 +5,8 @@
 //  Created by Ceylo on 31/05/2026.
 //
 
+#if !os(Android)
+
 import Testing
 import Foundation
 @testable import FAKit
@@ -135,3 +137,5 @@ struct CloudflareChallengeCoordinatorTests {
         #expect(coordinator.pending == false)
     }
 }
+
+#endif

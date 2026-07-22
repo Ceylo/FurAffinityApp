@@ -5,7 +5,10 @@
 //  Created by Ceylo on 17/06/2024.
 //
 
+import Foundation
+#if canImport(SwiftUI)
 import SwiftUI
+#endif
 
 public struct DynamicThumbnail: Hashable, Sendable {
     private let thumbnailUrl: URL
@@ -45,7 +48,9 @@ public struct DynamicThumbnail: Hashable, Sendable {
         return bestThumbnailUrl(for: UInt(size.maxDimension))
     }
     
+    #if canImport(SwiftUI)
     public func bestThumbnailUrl(for geometry: GeometryProxy) -> URL {
         bestThumbnailUrl(for: geometry.size)
     }
+    #endif
 }

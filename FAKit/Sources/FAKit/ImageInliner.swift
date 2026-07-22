@@ -5,6 +5,8 @@
 //  Created by Ceylo on 28/05/2026.
 //
 
+#if !os(Android)
+
 import Foundation
 import FAPages
 import UniformTypeIdentifiers
@@ -80,3 +82,5 @@ actor ImageInliner {
         return modified
     }
 }
+
+#endif

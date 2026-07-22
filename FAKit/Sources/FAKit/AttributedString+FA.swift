@@ -5,6 +5,8 @@
 //  Created by Ceylo on 11/04/2022.
 //
 
+#if !os(Android)
+
 import Foundation
 import UIKit
 
@@ -67,3 +69,5 @@ private extension NSAttributedString {
         return mutable
     }
 }
+
+#endif

@@ -5,6 +5,8 @@
 //  Created by Ceylo on 27/06/2026.
 //
 
+#if !os(Android)
+
 import Foundation
 import PDFKit
 
@@ -777,3 +779,5 @@ private final class PDFImageScanner {
 
     init(imageNames: Set<String>) { self.imageNames = imageNames }
 }
+
+#endif

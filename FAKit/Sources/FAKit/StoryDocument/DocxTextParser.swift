@@ -5,6 +5,8 @@
 //  Created by Ceylo on 27/06/2026.
 //
 
+#if !os(Android)
+
 import Foundation
 import UIKit
 import ZIPFoundation
@@ -102,3 +104,5 @@ final class DocxTextParser: NSObject, XMLParserDelegate {
         if stack.last == elementName { stack.removeLast() }
     }
 }
+
+#endif

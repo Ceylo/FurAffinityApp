@@ -5,6 +5,8 @@
 //  Created by Ceylo on 28/05/2026.
 //
 
+#if !os(Android)
+
 import Testing
 import Foundation
 @testable import FAKit
@@ -122,3 +124,5 @@ private actor CallCounter {
     private(set) var value = 0
     func increment() { value += 1 }
 }
+
+#endif

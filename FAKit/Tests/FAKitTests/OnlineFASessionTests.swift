@@ -4,6 +4,9 @@
 
 import Testing
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 import FAPages
 @testable import FAKit
 

@@ -5,6 +5,8 @@
 //  Created by Ceylo on 21/06/2026.
 //
 
+#if !os(Android)
+
 import Foundation
 import UIKit
 
@@ -107,3 +109,5 @@ final class FittingImageTextAttachment: NSTextAttachment {
         fittedBounds(proposedWidth: lineFrag.width)
     }
 }
+
+#endif

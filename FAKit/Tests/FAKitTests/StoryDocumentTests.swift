@@ -5,6 +5,8 @@
 //  Created by Ceylo on 21/06/2026.
 //
 
+#if !os(Android)
+
 import Testing
 import Foundation
 import UIKit
@@ -433,3 +435,5 @@ struct StoryDocumentTests {
         return found
     }
 }
+
+#endif

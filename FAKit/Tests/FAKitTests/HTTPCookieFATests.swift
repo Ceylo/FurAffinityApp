@@ -7,6 +7,9 @@
 
 import Testing
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 import FAPages
 @testable import FAKit
 
@@ -39,6 +42,8 @@ struct HTTPCookieFATests {
         #expect(cookies.faAuthCookies.isEmpty)
     }
 
+    // Apple-only: SameSite / shared cookie storage APIs are absent on corelibs Foundation.
+    #if !os(Android)
     @Test func normalizedClearancePreservesEssentialsAndDropsSameSite() {
         // HTTPCookie itself clamps far-future expiry, so compare the normalized
         // cookie against the original's resolved expiry rather than the raw input.
@@ -85,4 +90,5 @@ struct HTTPCookieFATests {
         let returned = storage.cookies(for: FAURLs.homeUrl) ?? []
         #expect(returned.contains { $0.name == "cf_clearance" && $0.value == "xyz789" })
     }
+    #endif
 }

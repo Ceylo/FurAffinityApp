@@ -5,6 +5,8 @@
 //  Created by Ceylo on 31/05/2026.
 //
 
+#if !os(Android)
+
 import Testing
 import Foundation
 @testable import FAKit
@@ -59,3 +61,5 @@ struct FAChallengeViewDOMTests {
         #expect(!FAChallengeView.interactionRequired(snapshot: snapshot(), elapsed: 1.9))
     }
 }
+
+#endif

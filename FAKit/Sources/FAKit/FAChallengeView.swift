@@ -5,6 +5,8 @@
 //  Created by Ceylo on 27/05/2026.
 //
 
+#if !os(Android)
+
 import SwiftUI
 import FAPages
 import WebKit
@@ -165,3 +167,5 @@ public struct FAChallengeView: View {
 #Preview {
     FAChallengeView(onResolved: {})
 }
+
+#endif

@@ -5,6 +5,8 @@
 //  Created by Ceylo on 29/05/2026.
 //
 
+#if !os(Android)
+
 import Foundation
 import UIKit
 import Observation
@@ -206,3 +208,5 @@ public final class CloudflareChallengeCoordinator {
         waiter.continuation.resume(returning: .cancelled)
     }
 }
+
+#endif

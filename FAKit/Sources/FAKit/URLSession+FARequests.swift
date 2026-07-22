@@ -6,7 +6,12 @@
 //
 
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+#if canImport(WebKit)
 import WebKit
+#endif
 
 @MainActor
 public enum FAUserAgent {
@@ -19,6 +24,7 @@ public enum FAUserAgent {
     private static var cached: String?
     private static var pendingTask: Task<String, Never>?
 
+    #if canImport(WebKit)
     /// The exact User-Agent a WKWebView produces when configured with
     /// `applicationNameForUserAgent = applicationName`. URLSession requests must use
     /// this identical string so the `cf_clearance` cookie obtained inside the login
@@ -50,6 +56,31 @@ public enum FAUserAgent {
         pendingTask = nil
         return ua
     }
+    #else
+    /// The User-Agent the platform WebView reports. Resolved live (never
+    /// hardcoded) since `cf_clearance` is bound to the exact string; the Android
+    /// WebView provider is installed by the app layer.
+    public static func current() async -> String {
+        if let cached { return cached }
+        if let pendingTask { return await pendingTask.value }
+
+        guard let provider = webViewUserAgentProvider else {
+            logger.error("FAUserAgent: no WebView user-agent provider installed")
+            return applicationName
+        }
+
+        let task = Task<String, Never> { await provider() }
+        pendingTask = task
+        let ua = await task.value
+        cached = ua
+        pendingTask = nil
+        return ua
+    }
+
+    /// Installed by the app layer with a closure that reads `navigator.userAgent`
+    /// from the system WebView.
+    public static var webViewUserAgentProvider: (@Sendable () async -> String)?
+    #endif
 }
 
 public extension URLSession {

@@ -5,6 +5,8 @@
 //  Created by Ceylo on 24/10/2021.
 //
 
+#if !os(Android)
+
 import SwiftUI
 import FAPages
 import WebKit
@@ -85,3 +87,5 @@ public struct FALoginView: View {
 #Preview {
     FALoginView(session: .constant(nil), onError: { _ in })
 }
+
+#endif

@@ -5,6 +5,8 @@
 //  Created by Ceylo on 10/09/2024.
 //
 
+#if !os(Android)
+
 import Foundation
 import Cache
 
@@ -116,3 +118,5 @@ actor CSSInliner {
         logger.info("Cached css for \(theme) theme")
     }
 }
+
+#endif

@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 import FAPages
 
 public class OnlineFASession: FASession {
@@ -386,7 +389,7 @@ extension OnlineFASession {
         if let dataSource {
             resolvedDataSource = dataSource
         } else {
-            resolvedDataSource = await URLSession.sharedForFARequests
+            resolvedDataSource = try await FADefaultDataSource.resolve()
         }
         let data = try await resolvedDataSource.httpData(from: FAURLs.homeUrl, cookies: cookies)
         let page = try await make(FAHomePage.self, with: data, url: FAURLs.homeUrl)

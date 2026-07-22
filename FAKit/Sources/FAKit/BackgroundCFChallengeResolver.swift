@@ -5,6 +5,8 @@
 //  Created by Ceylo on 31/05/2026.
 //
 
+#if !os(Android)
+
 import Foundation
 import WebKit
 import FAPages
@@ -109,3 +111,5 @@ final class BackgroundCFChallengeResolver: NSObject, WKNavigationDelegate {
         continuation = nil
     }
 }
+
+#endif

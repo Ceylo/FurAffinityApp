@@ -6,6 +6,8 @@
 //
 
 
+#if !os(Android)
+
 import UIKit
 
 enum FATheme: CustomStringConvertible {
@@ -35,3 +37,5 @@ extension FATheme {
         }
     }
 }
+
+#endif

@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 public enum HTTPMethod: String, CustomStringConvertible, Sendable {
     public var description: String { rawValue }

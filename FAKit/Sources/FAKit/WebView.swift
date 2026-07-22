@@ -5,6 +5,8 @@
 //  Created by Ceylo on 02/11/2021.
 //
 
+#if !os(Android)
+
 import SwiftUI
 import WebKit
 import Combine
@@ -189,3 +191,5 @@ struct WebView: UIViewRepresentable {
             cookies: .constant([]),
             clearCookies: false)
 }
+
+#endif
