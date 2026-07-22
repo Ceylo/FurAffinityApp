@@ -33,6 +33,7 @@ let package = Package(
                 .product(name: "SkipWeb", package: "skip-web"),
                 .product(name: "FAKit", package: "FAKit"),
                 .product(name: "FALogging", package: "FAKit"),
+                .product(name: "FAPages", package: "FAKit"),
             ],
             path: "FurAffinityUI",
             plugins: [.plugin(name: "skipstone", package: "skip")]

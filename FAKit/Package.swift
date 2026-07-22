@@ -13,6 +13,9 @@ let package = Package(
         .library(
             name: "FALogging",
             targets: ["FALogging"]),
+        .library(
+            name: "FAPages",
+            targets: ["FAPages"]),
     ],
     dependencies: [
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.5"),

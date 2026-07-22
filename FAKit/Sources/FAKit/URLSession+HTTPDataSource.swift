@@ -9,12 +9,6 @@
 
 import Foundation
 
-public struct CloudflareChallengeRequired: LocalizedError {
-    public var errorDescription: String? {
-        "furaffinity.net is requiring a CloudFlare challenge to continue browsing."
-    }
-}
-
 extension URLSession: HTTPDataSource {
     enum Error: LocalizedError {
         case failureStatus(description: String)

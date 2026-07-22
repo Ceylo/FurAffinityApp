@@ -11,14 +11,9 @@ import FAKit
 
 struct AndroidRootView: View {
     var body: some View {
-        VStack(spacing: 16) {
-            Text("Fur Affinity")
-                .font(.largeTitle)
-            Text("Android port — scaffolding")
-                .foregroundStyle(.secondary)
-        }
-        .task {
-            logger.info("Android root view appeared")
-        }
+        AndroidNetworkingDebugView()
+            .task {
+                logger.info("Android root view appeared")
+            }
     }
 }
