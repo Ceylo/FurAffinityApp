@@ -1,3 +1,8 @@
 xcuserdata
 Distribution/raw assets/*
 buildServer.json
+
+# Skip / Android
+.build/
+Android/.gradle/
+Android/app/build/
