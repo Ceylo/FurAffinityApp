@@ -1,0 +1,27 @@
+
+copyright "#{Time.now.year}"
+
+force(true) # Skip HTML report verification
+automatic_release(true)
+skip_screenshots(false)
+precheck_include_in_app_purchases(false)
+
+#skip_binary_upload(true)
+submit_for_review(true)
+
+submission_information({
+    add_id_info_serves_ads: false,
+    add_id_info_uses_idfa: false,
+    add_id_info_tracks_install: false,
+    add_id_info_tracks_action: false,
+    add_id_info_limits_tracking: false,
+    content_rights_has_rights: false,
+    content_rights_contains_third_party_content: false,
+    export_compliance_contains_third_party_cryptography: false,
+    export_compliance_encryption_updated: false,
+    export_compliance_platform: 'ios',
+    export_compliance_compliance_required: false,
+    export_compliance_uses_encryption: false,
+    export_compliance_is_exempt: false,
+    export_compliance_contains_proprietary_cryptography: false
+})

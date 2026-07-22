@@ -1,0 +1,41 @@
+// swift-tools-version: 6.1
+// The Skip (https://skip.dev) app package for the Android build.
+//
+// The iOS app is built by FurAffinity.xcodeproj and is unaffected by this
+// manifest.
+//
+// The FurAffinityUI target's directory holds the Android-only entry point plus a
+// `Shared/` folder of *symlinks* into ../FurAffinity for each shared source as it
+// is ported. Skip's transpiler walks the whole target directory (it honors
+// neither SwiftPM `sources:` nor `exclude:`), so the allowlist has to be the set
+// of files physically present under this directory — the symlinks are that
+// allowlist. The real files never move and the iOS Xcode target is untouched.
+import PackageDescription
+
+let package = Package(
+    name: "FurAffinityApp",
+    defaultLocalization: "en",
+    platforms: [.iOS(.v18), .macOS(.v14)],
+    products: [
+        .library(name: "FurAffinityUI", type: .dynamic, targets: ["FurAffinityUI"]),
+    ],
+    dependencies: [
+        .package(url: "https://source.skip.tools/skip.git", from: "1.9.4"),
+        .package(url: "https://source.skip.tools/skip-fuse-ui.git", from: "1.0.0"),
+        .package(url: "https://source.skip.tools/skip-web.git", from: "0.11.2"),
+        .package(path: "FAKit"),
+    ],
+    targets: [
+        .target(
+            name: "FurAffinityUI",
+            dependencies: [
+                .product(name: "SkipFuseUI", package: "skip-fuse-ui"),
+                .product(name: "SkipWeb", package: "skip-web"),
+                .product(name: "FAKit", package: "FAKit"),
+                .product(name: "FALogging", package: "FAKit"),
+            ],
+            path: "FurAffinityUI",
+            plugins: [.plugin(name: "skipstone", package: "skip")]
+        ),
+    ]
+)

@@ -1,0 +1,12 @@
+# Skip configuration for FurAffinityUI module
+#
+# Kotlin dependencies and Gradle build options for this module can be configured here
+#build:
+#  contents:
+#    - block: 'dependencies'
+#      contents:
+#        - 'implementation("androidx.compose.runtime:runtime")'
+
+# this is a natively-compiled Skip Fuse module
+skip:
+  mode: 'native'

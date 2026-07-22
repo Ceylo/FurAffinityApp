@@ -1,0 +1,294 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		491F27822DA55B72004926EE /* FurAffinityUI in Frameworks */ = {isa = PBXBuildFile; productRef = 491F27812DA55B72004926EE /* FurAffinityUI */; };
+		491F27832DA55B72004926EE /* FurAffinityUI in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 491F27812DA55B72004926EE /* FurAffinityUI */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		496BDBEE2B8A7E9C00C09264 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 496BDBED2B8A7E9C00C09264 /* Localizable.xcstrings */; };
+		499CD43B2AC5B799001AE8D8 /* Main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49F90C2B2A52156200F06D93 /* Main.swift */; };
+		499CD4402AC5B799001AE8D8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 49F90C2F2A52156300F06D93 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		499CD44A2AC5B9C6001AE8D8 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				491F27832DA55B72004926EE /* FurAffinityUI in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		4900101C2BACEA710000DE33 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		493609562A6B7EAE00C401E2 /* FurAffinityUI */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FurAffinityUI; path = ..; sourceTree = "<group>"; };
+		496BDBEB2B89A47800C09264 /* FurAffinityUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FurAffinityUI.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		496BDBED2B8A7E9C00C09264 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = Localizable.xcstrings; path = ../Sources/FurAffinityUI/Resources/Localizable.xcstrings; sourceTree = "<group>"; };
+		496EB72F2A6AE4DE00C1253A /* Skip.env */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Skip.env; path = ../Skip.env; sourceTree = "<group>"; };
+		496EB72F2A6AE4DE00C1253B /* FurAffinityUI.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = FurAffinityUI.xcconfig; sourceTree = "<group>"; };
+		496EB72F2A6AE4DE00C1253C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
+		4971EFA92FA4FEA50002D3F7 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
+		499AB9082B0581F4005E8330 /* plugins */ = {isa = PBXFileReference; lastKnownFileType = folder; name = plugins; path = ../../Intermediates.noindex/BuildToolPluginIntermediates; sourceTree = BUILT_PRODUCTS_DIR; };
+		49F90C2B2A52156200F06D93 /* Main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Main.swift; path = Sources/Main.swift; sourceTree = SOURCE_ROOT; };
+		49F90C2F2A52156300F06D93 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		49F90C312A52156300F06D93 /* Entitlements.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Entitlements.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		499CD43C2AC5B799001AE8D8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				491F27822DA55B72004926EE /* FurAffinityUI in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		496BDBEC2B89A47800C09264 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				496BDBEB2B89A47800C09264 /* FurAffinityUI.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		49AB54462B066A7E007B79B2 /* SkipStone */ = {
+			isa = PBXGroup;
+			children = (
+				499AB9082B0581F4005E8330 /* plugins */,
+			);
+			name = SkipStone;
+			sourceTree = "<group>";
+		};
+		49F90C1F2A52156200F06D93 = {
+			isa = PBXGroup;
+			children = (
+				496EB72F2A6AE4DE00C1253C /* README.md */,
+				496EB72F2A6AE4DE00C1253A /* Skip.env */,
+				496EB72F2A6AE4DE00C1253B /* FurAffinityUI.xcconfig */,
+				496BDBED2B8A7E9C00C09264 /* Localizable.xcstrings */,
+				493609562A6B7EAE00C401E2 /* FurAffinityUI */,
+				49F90C2A2A52156200F06D93 /* App */,
+				49AB54462B066A7E007B79B2 /* SkipStone */,
+				496BDBEC2B89A47800C09264 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		49F90C2A2A52156200F06D93 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				49F90C2B2A52156200F06D93 /* Main.swift */,
+				49F90C2F2A52156300F06D93 /* Assets.xcassets */,
+				49F90C312A52156300F06D93 /* Entitlements.plist */,
+				4900101C2BACEA710000DE33 /* Info.plist */,
+				4971EFA92FA4FEA50002D3F7 /* InfoPlist.xcstrings */,
+			);
+			name = App;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		499CD4382AC5B799001AE8D8 /* FurAffinityUI App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 499CD4412AC5B799001AE8D8 /* Build configuration list for PBXNativeTarget "FurAffinityUI App" */;
+			buildPhases = (
+				499CD43A2AC5B799001AE8D8 /* Sources */,
+				499CD43C2AC5B799001AE8D8 /* Frameworks */,
+				499CD43E2AC5B799001AE8D8 /* Resources */,
+				499CD4452AC5B869001AE8D8 /* Run skip gradle */,
+				499CD44A2AC5B9C6001AE8D8 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "FurAffinityUI App";
+			packageProductDependencies = (
+				491F27812DA55B72004926EE /* FurAffinityUI */,
+			);
+			productName = App;
+			productReference = 496BDBEB2B89A47800C09264 /* FurAffinityUI.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		49F90C202A52156200F06D93 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1430;
+				LastUpgradeCheck = 1630;
+			};
+			buildConfigurationList = 49F90C232A52156200F06D93 /* Build configuration list for PBXProject "FurAffinityUI" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				es,
+				ja,
+				"zh-Hans",
+			);
+			mainGroup = 49F90C1F2A52156200F06D93;
+			packageReferences = (
+			);
+			productRefGroup = 496BDBEC2B89A47800C09264 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				499CD4382AC5B799001AE8D8 /* FurAffinityUI App */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		499CD43E2AC5B799001AE8D8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4971EFAA2FA4FEA50002D3F7 /* InfoPlist.xcstrings in Resources */,
+				499CD4402AC5B799001AE8D8 /* Assets.xcassets in Resources */,
+				496BDBEE2B8A7E9C00C09264 /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		499CD4452AC5B869001AE8D8 /* Run skip gradle */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Run skip gradle";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = "/bin/sh -e";
+			shellScript = "if [ \"${SKIP_ZERO}\" != \"\" ]; then\n  echo \"note: skipping skip due to SKIP_ZERO\"\n  exit 0\nelif [ \"${ENABLE_PREVIEWS}\" = \"YES\" ]; then\n  echo \"note: skipping skip due to ENABLE_PREVIEWS\"\n  exit 0\nelif [ \"${ACTION}\" = \"install\" ]; then\n  echo \"note: skipping skip due to archive install\"\n  exit 0\nelif [ \"${SKIP_ACTION}\" = \"none\" ]; then\n  echo \"note: skipping skip due to SKIP_ACTION none\"\n  exit 0\nelse\n  SKIP_ACTION=\"${SKIP_ACTION:-launch}\"\nfi\nPATH=${BUILD_ROOT}/Release:${BUILD_ROOT}/Debug:${BUILD_ROOT}/../../SourcePackages/artifacts/skip/skip/skip.artifactbundle/macos:${PATH}:${HOMEBREW_PREFIX:-/opt/homebrew}/bin\necho \"note: running gradle build with: $(which skip) gradle -p ${PWD}/../Android ${SKIP_ACTION:-launch}${CONFIGURATION:-Debug}\"\nskip gradle -p ../Android ${SKIP_ACTION:-launch}${CONFIGURATION:-Debug}\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		499CD43A2AC5B799001AE8D8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				499CD43B2AC5B799001AE8D8 /* Main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		499CD4422AC5B799001AE8D8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 496EB72F2A6AE4DE00C1253B /* FurAffinityUI.xcconfig */;
+			buildSettings = {
+				ENABLE_PREVIEWS = YES;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+			};
+			name = Debug;
+		};
+		499CD4432AC5B799001AE8D8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 496EB72F2A6AE4DE00C1253B /* FurAffinityUI.xcconfig */;
+			buildSettings = {
+				ENABLE_PREVIEWS = YES;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+			};
+			name = Release;
+		};
+		49F90C4B2A52156300F06D93 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		49F90C4C2A52156300F06D93 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf-with-dsym;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		499CD4412AC5B799001AE8D8 /* Build configuration list for PBXNativeTarget "FurAffinityUI App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				499CD4422AC5B799001AE8D8 /* Debug */,
+				499CD4432AC5B799001AE8D8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		49F90C232A52156200F06D93 /* Build configuration list for PBXProject "FurAffinityUI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				49F90C4B2A52156300F06D93 /* Debug */,
+				49F90C4C2A52156300F06D93 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		491F27812DA55B72004926EE /* FurAffinityUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FurAffinityUI;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 49F90C202A52156200F06D93 /* Project object */;
+}

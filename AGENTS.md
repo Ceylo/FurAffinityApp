@@ -10,6 +10,12 @@ Two main code areas:
 - `FurAffinity/`: iOS app — SwiftUI screens, app state, navigation, settings, image loading.
 - `FAKit/`: Swift Package — `FAPages` (HTML parsers) and `FAKit` (domain models + session API).
 
+An in-progress **Android port** builds the same SwiftUI source with [Skip](https://skip.dev)
+Fuse (root `Package.swift` + `FurAffinityUI/` target + `Android/`/`Darwin/` scaffolding). The
+iOS Xcode target is unaffected — shared files stay in place and are pulled into the Android
+build as symlinks under `FurAffinityUI/Shared/`. See `Android/README.md` for build/run/test and
+the symlink-farm rationale.
+
 ## Architecture
 
 `FurAffinityApp` injects `Model` → `RootView` shows `HomeView` (login/autologin via `FALoginView`) or `LoggedInView` (tabs). SwiftUI views call `Model` methods → `FASession` protocol → `OnlineFASession` (HTTP via `HTTPDataSource`, parsing via `FAPages`) → domain structs.

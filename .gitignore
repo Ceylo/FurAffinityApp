@@ -6,3 +6,7 @@ buildServer.json
 .build/
 Android/.gradle/
 Android/app/build/
+DerivedData/
+Package.resolved
+local.properties
+*.moved-aside

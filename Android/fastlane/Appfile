@@ -1,0 +1,11 @@
+# This file contains the app distribution configuration
+# for the Android half of the Skip app.
+# You can find the documentation at https://docs.fastlane.tools
+
+# Load the shared Skip.env properties with the app info
+require('dotenv')
+Dotenv.load('../../Skip.env')
+package_name(ENV['PRODUCT_BUNDLE_IDENTIFIER'].sub("-", "_"))
+
+# Path to the json secret file - Follow https://docs.fastlane.tools/actions/supply/#setup to get one
+json_key_file("fastlane/apikey.json")
