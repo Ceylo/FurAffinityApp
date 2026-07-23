@@ -8,12 +8,6 @@
 import SwiftUI
 import FAKit
 
-struct UserPreviewData: Hashable {
-    var username: String
-    var displayName: String?
-    var avatarUrl: URL?
-}
-
 struct UserPreviewView: View {
     var preview: UserPreviewData
     

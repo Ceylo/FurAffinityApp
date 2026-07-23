@@ -13,11 +13,13 @@ extension CGPoint {
     }
 }
 
+#if canImport(UIKit)
 extension UIScrollView {
     var reachedTop: Bool {
         return abs(contentOffset.y + adjustedContentInset.top) < 1e-6
     }
 }
+#endif
 
 extension URL {
     func replacingScheme(with newScheme: String) -> URL? {

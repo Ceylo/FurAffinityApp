@@ -42,6 +42,12 @@ let package = Package(
                 .product(name: "Version", package: "Version"),
             ],
             path: "FurAffinityUI",
+            // Marks a compile of *this* module — Android and its Darwin bridge alike.
+            // Shared sources use `#if !FA_SKIP_MODULE` to keep bits that only exist in
+            // the iOS Xcode target (SwiftUI previews and their demo data) out of it.
+            // `os(Android)` can't do that job: the Darwin bridge compile of this module
+            // is not Android.
+            swiftSettings: [.define("FA_SKIP_MODULE")],
             plugins: [.plugin(name: "skipstone", package: "skip")]
         ),
     ]

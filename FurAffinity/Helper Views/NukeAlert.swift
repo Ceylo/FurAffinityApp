@@ -12,7 +12,7 @@ struct NukeAlert: ViewModifier {
     var nukeText: String
     @Binding var showAlert: Bool
     var nukeAction: () async throws -> Void
-    @Environment(ErrorStorage.self) private var errorStorage
+    @Environment(ErrorStorage.self) var errorStorage
     private var actionTitle: String {
         "Nuke All \(nukeTitle)"
     }

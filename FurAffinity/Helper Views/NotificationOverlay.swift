@@ -29,8 +29,12 @@ struct NotificationOverlay: View {
         }
     }
     
+    /// SkipUI has no Liquid Glass, so Android always uses the material badge.
     @ViewBuilder
     func badge(_ count: Int) -> some View {
+#if os(Android)
+        materialBadge(count)
+#else
         if #available(iOS 26, *) {
             Text(text(count: count))
                 .font(.callout)
@@ -39,15 +43,20 @@ struct NotificationOverlay: View {
                 .padding(.vertical, 8)
                 .glassEffect()
         } else {
-            Text(text(count: count))
-                .font(.callout)
-                .foregroundColor(Color.primary)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(.thinMaterial)
-                .cornerRadius(16)
-                .shadow(color: .black.opacity(0.33) , radius: 5, x: 0, y: 0)
+            materialBadge(count)
         }
+#endif
+    }
+
+    func materialBadge(_ count: Int) -> some View {
+        Text(text(count: count))
+            .font(.callout)
+            .foregroundColor(Color.primary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(.thinMaterial)
+            .cornerRadius(16)
+            .shadow(color: .black.opacity(0.33) , radius: 5, x: 0, y: 0)
     }
     
     var body: some View {
@@ -98,8 +107,10 @@ private struct Checkerboard: Shape {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview(traits: .sizeThatFitsLayout) {
     NotificationOverlay(itemCount: .constant(12))
         .padding()
         .background(Checkerboard(rows: 5, columns: 16).fill(.cyan))
 }
+#endif

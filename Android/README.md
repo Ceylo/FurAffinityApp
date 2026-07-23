@@ -113,3 +113,29 @@ project. While iterating, re-point the root `Package.swift` at a local clone:
 ```
 
 then push to the `android` branch before the step's gate.
+
+## Rules for shared sources
+
+A file under `FurAffinityUI/Shared/` is compiled **twice more** than the iOS target
+compiles it: once for Android (`os(Android)` true) and once for the module's Darwin
+bridge (`os(Android)` **false**, UIKit importable). Both compiles see only this module —
+never the iOS app target — so:
+
+- Guard anything that exists only in the Xcode target (SwiftUI `#Preview`s and their
+  demo data) with `#if !FA_SKIP_MODULE`. That flag is defined by `Package.swift` for
+  both Skip compiles; `os(Android)` cannot express it.
+- Guard Darwin-only frameworks (`Combine`, `OSLog`, Kingfisher, Liquid Glass) with
+  `#if !os(Android)` / `#if canImport(…)`; those are genuinely per-platform.
+- `#if` blocks must contain balanced braces — split an `if/else` into two whole
+  branches rather than fencing one arm.
+- `@State`/`@Environment` on a bridged view must be **internal**, not `private`.
+- SkipUI has no `@Entry` macro: write the `EnvironmentKey` by hand.
+- Two `CGSize` types are in scope in this module, so `CGSize`/`CGFloat` can't be named
+  unambiguously. Use `Double`, and keep size math in FAKit.
+
+If a build fails with `missing required module 'CJNI'` across unrelated packages, the
+incremental state is stale (typically after a `Package.swift` or FAKit change). Wipe it:
+
+```
+rm -rf .build/plugins/outputs .build/Darwin .build/Android
+```

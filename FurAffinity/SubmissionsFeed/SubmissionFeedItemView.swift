@@ -7,7 +7,9 @@
 
 import SwiftUI
 import FAKit
+#if canImport(Kingfisher)
 import Kingfisher
+#endif
 
 protocol SubmissionHeaderView: View {
     @MainActor
@@ -17,12 +19,17 @@ protocol SubmissionHeaderView: View {
 struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
     var submission: FASubmissionPreview
     
-    @State private var errorMessage: String?
+    @State var errorMessage: String?
     
     var previewImage: some View {
         GeometryReader { geometry in
-            if geometry.size.maxDimension > 0 {
-                let url = submission.dynamicThumbnail.bestThumbnailUrl(for: geometry)
+            // Plain Doubles rather than the CGSize overload: two CGSize types are in
+            // scope in the Skip module, so `geometry.size` can't be passed there.
+            let width = Double(geometry.size.width)
+            let height = Double(geometry.size.height)
+            if max(width, height) > 0 {
+                let url = submission.dynamicThumbnail
+                    .bestThumbnailUrl(availableWidth: width, availableHeight: height)
                 if let errorMessage {
                     Centered {
                         VStack(spacing: 10) {
@@ -49,7 +56,7 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
                 }
             }
         }
-        .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
+        .aspectRatio(Double(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
     }
     
     var body: some View {
@@ -60,7 +67,9 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
         }
     }
     
+    /// Diagnostic only, and Kingfisher-specific: Coil manages its own cache on Android.
     func controlCacheBehavior(for url: URL) async {
+#if canImport(Kingfisher)
         let cacheType = ImageCache.default.imageCachedType(forKey: url.cacheKey)
         let downloadStartDate = await DownloadDelegate.shared.downloadStartDate(for: url)
         if let downloadStartDate {
@@ -69,10 +78,13 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
         } else if cacheType == .none {
             logger.info("Thumbnail for \"\(submission.title)\" isn't downloading yet")
         }
+#endif
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     SubmissionFeedItemView<TitleAuthorHeader>(submission: OfflineFASession.default.submissionPreviews[0])
         .preferredColorScheme(.dark)
 }
+#endif

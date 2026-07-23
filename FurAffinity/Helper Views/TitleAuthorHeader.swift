@@ -78,6 +78,7 @@ extension TitleAuthorHeader: SubmissionHeaderView {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview(traits: .sizeThatFitsLayout) {
     withAsync({ try await Model.empty }) {
         NavigationStack {
@@ -95,3 +96,4 @@ extension TitleAuthorHeader: SubmissionHeaderView {
         .environment($0)
     }
 }
+#endif

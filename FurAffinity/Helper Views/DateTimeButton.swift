@@ -16,7 +16,8 @@ struct DateTimeButton: View {
     var datetime: String
     var naturalDatetime: String
     var initialDisplayedDate: DisplayedDate = .natural
-    @State private var showExactDatetime = false
+    // Skip bridges these views: bridged @State/@Environment must not be private.
+    @State var showExactDatetime = false
     
     private var dateToDisplay: String {
         (initialDisplayedDate == .natural) == showExactDatetime ? datetime : naturalDatetime
@@ -33,8 +34,10 @@ struct DateTimeButton: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     DateTimeButton(datetime: "Apr 7th, 2022, 11:58 AM",
                    naturalDatetime: "8 months ago",
                    initialDisplayedDate: .natural)
 }
+#endif

@@ -47,7 +47,14 @@ public struct DynamicThumbnail: Hashable, Sendable {
         let size = size.fitting(in: Self.maximumThumbnailSize)
         return bestThumbnailUrl(for: UInt(size.maxDimension))
     }
-    
+
+    /// Same sizing, expressed in plain `Double`s. Callers in the Skip/Android module
+    /// can't name `CGSize` unambiguously (two CGSize types are in scope there), so the
+    /// size math stays here.
+    public func bestThumbnailUrl(availableWidth: Double, availableHeight: Double) -> URL {
+        bestThumbnailUrl(for: CGSize(width: availableWidth, height: availableHeight))
+    }
+
     #if canImport(SwiftUI)
     public func bestThumbnailUrl(for geometry: GeometryProxy) -> URL {
         bestThumbnailUrl(for: geometry.size)

@@ -7,11 +7,31 @@
 
 
 import SwiftUI
-import Combine
 import FAKit
+#if !os(Android)
+import Combine
+#endif
+
+#if os(Android)
+/// Combine is unavailable on Android. This keeps `FALink`'s `send(_:)` call site
+/// identical until in-app navigation is ported; taps are dropped for now.
+final class NavigationStream: Sendable {
+    func send(_ target: FATarget) {}
+}
+#else
+typealias NavigationStream = PassthroughSubject<FATarget, Never>
+#endif
+
+// A hand-written EnvironmentKey rather than @Entry: SkipUI doesn't provide that macro.
+private struct NavigationStreamKey: EnvironmentKey {
+    static var defaultValue: NavigationStream { .init() }
+}
 
 extension EnvironmentValues {
-    @Entry var navigationStream: PassthroughSubject<FATarget, Never> = .init()
+    var navigationStream: NavigationStream {
+        get { self[NavigationStreamKey.self] }
+        set { self[NavigationStreamKey.self] = newValue }
+    }
 }
 
 /// - Warning: This view should be avoided in scrolling content,
@@ -22,7 +42,7 @@ struct FALink<ContentView: View>: View {
     var contentView: ContentView
     
     private var fullWidthTapArea = false
-    @Environment(\.navigationStream) private var navigationStream
+    @Environment(\.navigationStream) var navigationStream
     
     func withFullWidthTapArea() -> Self {
         var copy = self
@@ -56,6 +76,7 @@ struct FALink<ContentView: View>: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     withAsync({ try await Model.demo }) {
         NavigationStack {
@@ -78,3 +99,4 @@ struct FALink<ContentView: View>: View {
         .environment($0)
     }
 }
+#endif

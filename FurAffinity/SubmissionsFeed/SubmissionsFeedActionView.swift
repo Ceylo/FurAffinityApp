@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct SubmissionsFeedActionView: View {
-    @Environment(Model.self) private var model
-    @State private var showNukeAlert = false
+    @Environment(Model.self) var model
+    @State var showNukeAlert = false
     
     var body: some View {
         Menu {
@@ -28,6 +28,7 @@ struct SubmissionsFeedActionView: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     withAsync({ try await Model.demo }) {
         SubmissionsFeedActionView()
@@ -37,3 +38,4 @@ struct SubmissionsFeedActionView: View {
             .environment($0.errorStorage)
     }
 }
+#endif
