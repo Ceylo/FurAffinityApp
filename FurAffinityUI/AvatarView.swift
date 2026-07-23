@@ -7,9 +7,13 @@
 //  surface (`init(avatarUrl:)`, `.cornerRadius`, `.fadeDuration`) but is built on the
 //  Coil-backed `FAImage`.
 //
+//  The default-avatar image and the border color come from this module's own
+//  Assets.xcassets, which Skip mirrors into Android resources: `DefaultAvatar` is a PNG
+//  rendition of the iOS `.heic` (which Android can't decode) and `BorderOverlay.colorset`
+//  is a symlink to the iOS one, so the border matches on both platforms.
+//
 //  Deferred to a later step: honoring `@Default(.animateAvatars)` with real animated-GIF
-//  avatars (needs `coil-gif`), and the shared `.defaultAvatar`/`Color.borderOverlay`
-//  assets. For now avatars are static with a neutral placeholder and border.
+//  avatars (needs `coil-gif`).
 //
 //  `Double` (not `CGFloat`) throughout: two CGFloat typealiases (both aka Double) are
 //  visible here and lookup is ambiguous; Double is the same type and unambiguous.
@@ -43,11 +47,20 @@ struct AvatarView: View {
     var body: some View {
         FAImage(avatarUrl)
             .placeholder { Color.white.opacity(0.1) }
+            .onFailureView {
+                Image("DefaultAvatar", bundle: .module)
+                    .resizable()
+            }
             .fade(duration: fade)
             .clipShape(RoundedRectangle(cornerRadius: radius))
             .overlay {
                 RoundedRectangle(cornerRadius: radius)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    .stroke(Color.borderOverlay, lineWidth: 1)
             }
     }
+}
+
+extension Color {
+    /// The shared `BorderOverlay` colorset (black @0.1 light / white @0.2 dark).
+    static let borderOverlay = Color("BorderOverlay", bundle: .module)
 }

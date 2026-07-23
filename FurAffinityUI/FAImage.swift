@@ -27,11 +27,13 @@ import FAPages
 struct FAImageView: View {
     let url: URL?
     fileprivate var placeholderView: AnyView?
+    fileprivate var failureView: AnyView?
     fileprivate var onFailureHandler: ((any Error) -> Void)?
     fileprivate var fadeDuration: Double = 0
 
     // @State on a bridged view must be internal, not private (Skip inventory #5).
     @State var image: UIImage?
+    @State var failed = false
 
     init(_ url: URL?) {
         self.url = url
@@ -49,6 +51,13 @@ struct FAImageView: View {
         return copy
     }
 
+    /// Shown instead of the placeholder once the load has failed.
+    func onFailureView<P: View>(@ViewBuilder _ content: () -> P) -> Self {
+        var copy = self
+        copy.failureView = AnyView(content())
+        return copy
+    }
+
     func fade(duration: Double) -> Self {
         var copy = self
         copy.fadeDuration = duration
@@ -63,6 +72,8 @@ struct FAImageView: View {
             if let image {
                 Image(uiImage: image)
                     .resizable()
+            } else if failed, let failureView {
+                failureView
             } else if let placeholderView {
                 placeholderView
             } else {
@@ -74,7 +85,11 @@ struct FAImageView: View {
 
     private func load() async {
         image = nil
-        guard let url else { return }
+        failed = false
+        guard let url else {
+            failed = true
+            return
+        }
         if let data = await CoilImageLoader.load(url), let decoded = UIImage(data: data) {
             if fadeDuration > 0 {
                 withAnimation(.easeInOut(duration: fadeDuration)) { image = decoded }
@@ -82,6 +97,7 @@ struct FAImageView: View {
                 image = decoded
             }
         } else {
+            failed = true
             onFailureHandler?(FAImageError.loadFailed(url))
         }
     }

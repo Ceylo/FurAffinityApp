@@ -42,6 +42,8 @@ let package = Package(
                 .product(name: "Version", package: "Version"),
             ],
             path: "FurAffinityUI",
+            // Skip mirrors the catalog's imagesets/colorsets into Android resources.
+            resources: [.process("Resources")],
             // Marks a compile of *this* module — Android and its Darwin bridge alike.
             // Shared sources use `#if !FA_SKIP_MODULE` to keep bits that only exist in
             // the iOS Xcode target (SwiftUI previews and their demo data) out of it.
