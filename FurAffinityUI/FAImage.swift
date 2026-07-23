@@ -146,12 +146,15 @@ func prefetchAvatars(for previews: some Collection<FASubmissionPreview>) {
 }
 
 func prefetchThumbnails(for previews: some Collection<FASubmissionPreview>, availableWidth: Double) {
-    // Warms the base thumbnail URLs (what the feed view requests). Size-optimized
-    // variants via `dynamicThumbnail.bestThumbnailUrl(for: CGSize)` are deferred: CGSize
-    // is ambiguous and CoreGraphics isn't importable in the native module. `_ =
-    // availableWidth` keeps the shared call-site signature until that refinement lands.
-    _ = availableWidth
-    prefetch(previews.map(\.thumbnailUrl))
+    // Same sizing as iOS, but through FAKit's plain-Double entry point: CGSize is
+    // ambiguous in this module, so the size math stays inside FAKit.
+    // thumbnailWidthOnHeightRatio = width / height, so height = width / ratio.
+    prefetch(previews.map { preview in
+        preview.dynamicThumbnail.bestThumbnailUrl(
+            availableWidth: availableWidth,
+            availableHeight: availableWidth / Double(preview.thumbnailWidthOnHeightRatio)
+        )
+    })
 }
 
 extension View {
