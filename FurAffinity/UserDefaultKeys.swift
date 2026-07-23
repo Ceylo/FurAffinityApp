@@ -125,6 +125,11 @@ extension Defaults {
     /// registration domain — so `object(forKey:)` is never `nil` and cannot tell a fresh
     /// install from a real one.
     private static func startingSchemaVersion() -> Int {
+#if os(Android)
+        // SkipFoundation marks `persistentDomain(forName:)` unavailable, and there are no
+        // legacy Android installs to migrate: every install is a fresh one.
+        return currentSettingsSchemaVersion
+#else
         guard let bundleID = Bundle.main.bundleIdentifier,
               let persisted = UserDefaults.standard.persistentDomain(forName: bundleID)
         else { return currentSettingsSchemaVersion }
@@ -137,6 +142,7 @@ extension Defaults {
             return currentSettingsSchemaVersion   // fresh install
         }
         return persisted[Keys.didMigrateBadgeSettings.name] as? Bool == true ? 1 : 0
+#endif
     }
 
     /// v1: seed the per-content badge toggles from the legacy notification toggles so that
