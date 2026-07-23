@@ -16,7 +16,8 @@ struct AndroidRootView: View {
     var body: some View {
         Group {
             if let session {
-                LoggedInPlaceholderView(session: session)
+                // Phase B: real Coil-backed feed images stand in for the feed (step 7).
+                AndroidFeedPreview(session: session)
             } else {
                 AndroidLoginView(onSession: { session = $0 })
             }
@@ -24,23 +25,6 @@ struct AndroidRootView: View {
         .task {
             logger.info("Android root view appeared")
             AndroidDefaultsRoundTrip.run()
-        }
-    }
-}
-
-struct LoggedInPlaceholderView: View {
-    let session: OnlineFASession
-
-    var body: some View {
-        VStack(spacing: 16) {
-            Text("Logged in")
-                .font(.largeTitle)
-            Text(session.displayUsername)
-                .font(.title2)
-                .foregroundStyle(.secondary)
-            Text("Feed comes next (step 7)")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
         }
     }
 }

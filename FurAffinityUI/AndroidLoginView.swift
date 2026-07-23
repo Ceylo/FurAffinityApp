@@ -15,7 +15,8 @@ import FAKit
 import FAPages
 
 struct AndroidLoginView: View {
-    /// Called on the main actor with the established session (nil = not yet).
+    /// Called on the main actor with the established session. The Coil image layer's FA
+    /// credentials are seeded separately via `CoilImageLoader.configure` below.
     var onSession: (OnlineFASession) -> Void
 
     // @State embedding skip-web must be internal, not private (Skip inventory #5).
@@ -70,6 +71,10 @@ struct AndroidLoginView: View {
             return
         }
         let cookieHeader = await navigator.cookieHeader(for: FAURLs.homeUrl) ?? ""
+
+        // Seed the Coil image layer with FA's UA + Cloudflare cookie header so avatar
+        // and thumbnail loads replay the clearance the WebView just obtained.
+        CoilImageLoader.configure(userAgent: userAgent, cookie: cookieHeader)
 
         let httpCookies = webCookies.map { $0.asHTTPCookie }.compactMap { $0 }
         let authCookies = httpCookies.filter { $0.name != "cf_clearance" && $0.name != "__cf_bm" }
