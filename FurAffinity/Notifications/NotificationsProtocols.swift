@@ -1,0 +1,26 @@
+//
+//  NotificationsProtocols.swift
+//  FurAffinity
+//
+//  Created by Ceylo on 24/07/2026.
+//
+
+import FAKit
+
+/// Split out of the notification views so `Model` can declare its conformances without
+/// dragging the notifications UI into the Android build.
+@MainActor
+protocol NotificationsNuker: Sendable {
+    func nukeAllSubmissionCommentNotifications() async throws -> Void
+    func nukeAllJournalCommentNotifications() async throws -> Void
+    func nukeAllShoutNotifications() async throws -> Void
+    func nukeAllJournalNotifications() async throws -> Void
+}
+
+@MainActor
+protocol NotificationsDeleter: Sendable {
+    func deleteSubmissionCommentNotifications(_ items: [FANotificationPreview]) -> Void
+    func deleteJournalCommentNotifications(_ items: [FANotificationPreview]) -> Void
+    func deleteShoutNotifications(_ items: [FANotificationPreview]) -> Void
+    func deleteJournalNotifications(_ items: [FANotificationPreview]) -> Void
+}

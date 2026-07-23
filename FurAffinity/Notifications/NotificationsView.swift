@@ -56,14 +56,6 @@ extension ListedSection {
 
 extension FANotificationPreview: FANavigable {}
 
-@MainActor
-protocol NotificationsDeleter: Sendable {
-    func deleteSubmissionCommentNotifications(_ items: [FANotificationPreview]) -> Void
-    func deleteJournalCommentNotifications(_ items: [FANotificationPreview]) -> Void
-    func deleteShoutNotifications(_ items: [FANotificationPreview]) -> Void
-    func deleteJournalNotifications(_ items: [FANotificationPreview]) -> Void
-}
-
 struct NotificationsView: View {
     var notifications: FANotificationPreviews
     var actions: NotificationsDeleter & NotificationsNuker

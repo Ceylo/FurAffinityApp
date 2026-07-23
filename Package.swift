@@ -25,6 +25,8 @@ let package = Package(
         .package(url: "https://source.skip.tools/skip-web.git", from: "0.11.2"),
         .package(path: "FAKit"),
         .package(url: "https://github.com/Ceylo/Defaults.git", branch: "android"),
+        .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.3"),
+        .package(url: "https://github.com/mxcl/Version.git", from: "2.0.0"),
     ],
     targets: [
         .target(
@@ -36,6 +38,8 @@ let package = Package(
                 .product(name: "FALogging", package: "FAKit"),
                 .product(name: "FAPages", package: "FAKit"),
                 .product(name: "Defaults", package: "Defaults"),
+                .product(name: "OrderedCollections", package: "swift-collections"),
+                .product(name: "Version", package: "Version"),
             ],
             path: "FurAffinityUI",
             plugins: [.plugin(name: "skipstone", package: "skip")]

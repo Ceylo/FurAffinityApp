@@ -7,14 +7,6 @@
 
 import SwiftUI
 
-@MainActor
-protocol NotificationsNuker: Sendable {
-    func nukeAllSubmissionCommentNotifications() async throws -> Void
-    func nukeAllJournalCommentNotifications() async throws -> Void
-    func nukeAllShoutNotifications() async throws -> Void
-    func nukeAllJournalNotifications() async throws -> Void
-}
-
 struct NotificationsActionView: View {
     var hasSubmissionComments: Bool
     var hasJournalComments: Bool

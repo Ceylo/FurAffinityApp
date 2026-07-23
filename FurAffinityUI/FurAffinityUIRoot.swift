@@ -9,13 +9,10 @@
 //
 
 import Foundation
-import FALogging
 import SkipFuse
 import SwiftUI
 
-// Superseded by Helpers/Logs.swift once that file joins the Package.swift
-// `sources:` allowlist.
-let logger = PersistentLogger(subsystem: "net.furaffinity.app", category: "FA")
+// `logger` now comes from the shared Shared/Logs.swift.
 
 /// The shared top-level view, loaded from the platform-specific app delegates below.
 /* SKIP @bridge */public struct FurAffinityUIRootView: View {

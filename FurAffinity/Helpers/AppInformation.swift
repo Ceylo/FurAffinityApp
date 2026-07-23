@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Observation
 import Version
 
 struct Release: Decodable {
@@ -40,6 +41,10 @@ class AppInformation {
     var isUpToDate: Bool?
 
     func fetch() async throws {
+#if os(Android)
+        // The update check reads the iOS release feed and relies on the Darwin
+        // URLSession extension; nothing to check on Android.
+#else
         let url = URL(string: "https://api.github.com/repos/Ceylo/FurAffinityApp/releases/latest")!
         if let data = try? await URLSession.shared.httpData(from: url, cookies: nil) {
             let release = try JSONDecoder().decode(Release.self, from: data)
@@ -49,5 +54,6 @@ class AppInformation {
             latestRelease = nil
             isUpToDate = nil
         }
+#endif
     }
 }

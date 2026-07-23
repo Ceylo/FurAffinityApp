@@ -1,0 +1,1 @@
+../../FurAffinity/Model.swift
