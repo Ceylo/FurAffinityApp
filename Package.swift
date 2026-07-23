@@ -24,6 +24,7 @@ let package = Package(
         .package(url: "https://source.skip.tools/skip-fuse-ui.git", from: "1.0.0"),
         .package(url: "https://source.skip.tools/skip-web.git", from: "0.11.2"),
         .package(path: "FAKit"),
+        .package(url: "https://github.com/Ceylo/Defaults.git", branch: "android"),
     ],
     targets: [
         .target(
@@ -34,6 +35,7 @@ let package = Package(
                 .product(name: "FAKit", package: "FAKit"),
                 .product(name: "FALogging", package: "FAKit"),
                 .product(name: "FAPages", package: "FAKit"),
+                .product(name: "Defaults", package: "Defaults"),
             ],
             path: "FurAffinityUI",
             plugins: [.plugin(name: "skipstone", package: "skip")]

@@ -23,6 +23,7 @@ struct AndroidRootView: View {
         }
         .task {
             logger.info("Android root view appeared")
+            AndroidDefaultsRoundTrip.run()
         }
     }
 }

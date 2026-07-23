@@ -1,5 +1,5 @@
 {
-  "originHash" : "7f992f66218341445aacd434f8bdc85169ac2370c5b81de2751ff8fc1eebf7fb",
+  "originHash" : "1b28a68582e6128d071247489f7bd7c6f229cb3b388a2fa7003d0d457749d7b1",
   "pins" : [
     {
       "identity" : "amplitude-swift",
@@ -40,10 +40,10 @@
     {
       "identity" : "defaults",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/sindresorhus/Defaults.git",
+      "location" : "https://github.com/Ceylo/Defaults.git",
       "state" : {
-        "revision" : "00a7465a0668a87fa159e779b9d80f1f9652357e",
-        "version" : "9.0.9"
+        "branch" : "android",
+        "revision" : "4f7ad452d44470a8f9be759f26a4cce9f159194b"
       }
     },
     {
@@ -80,15 +80,6 @@
       "state" : {
         "revision" : "0c0290ff6b24942dadb83a929ffaaa1481df04a2",
         "version" : "1.1.1"
-      }
-    },
-    {
-      "identity" : "swift-syntax",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/swiftlang/swift-syntax",
-      "state" : {
-        "revision" : "79e4b74a295b6eb74a8b585e3a39d29e70c1dbd1",
-        "version" : "603.0.2"
       }
     },
     {
