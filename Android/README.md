@@ -46,13 +46,41 @@ skip checkup                 # verifies toolchain (Xcode, Android SDK, Gradle, J
 skip android sdk install     # if the Android SDK/NDK is missing
 ```
 
-An emulator (AVD) must be booted before launching:
+## Emulator
+
+Nothing in the Skip toolchain boots an AVD for you. `skip app launch --android`
+fails with the emulator reported as **offline** both when no emulator is running
+*and* while one is still booting, so boot one first and wait for it:
 
 ```
-~/Library/Android/sdk/emulator/emulator -list-avds
-~/Library/Android/sdk/emulator/emulator -avd <name> &
-~/Library/Android/sdk/platform-tools/adb devices     # wait for `device`
+Scripts/start-android-emulator.sh            # boots, waits, never touches the app
+skip app launch --android
 ```
+
+The script is idempotent (a second run just confirms the running device), picks
+the only installed AVD unless given a name or `$ANDROID_AVD`, and leaves the
+emulator detached so it survives the script exiting or being interrupted. It
+takes optional emulator flags: `Scripts/start-android-emulator.sh <avd> -no-window`.
+
+Doing it by hand needs the same two non-obvious parts — detaching the process,
+and waiting for `sys.boot_completed` rather than just for adb to see the device:
+
+```
+SDK=~/Library/Android/sdk                    # adb/emulator are not on PATH
+$SDK/emulator/emulator -list-avds            # e.g. emulator-34-medium_phone
+nohup $SDK/emulator/emulator -avd <name> >/tmp/emulator.log 2>&1 &
+$SDK/platform-tools/adb wait-for-device shell 'while [ "$(getprop sys.boot_completed)" != 1 ]; do sleep 1; done'
+$SDK/platform-tools/adb devices              # must read `device`, not `offline`
+```
+
+Troubleshooting:
+
+- **`offline` with the emulator window up** — adb lost the connection:
+  `adb kill-server` (it restarts on the next command). The script does this once
+  automatically if a device is still offline halfway through its timeout.
+- **`emulator -list-avds` is empty** — `skip android sdk install` creates the AVD.
+- **AVD hangs on boot** — `adb emu kill`, then relaunch with `-no-snapshot-load`
+  to bypass a corrupt quick-boot snapshot.
 
 ## Build
 
@@ -71,6 +99,8 @@ Transpiled Kotlin lands under `.build/` (e.g.
 ```
 skip app launch --android    # builds the bridge, installs, and launches on the emulator
 ```
+
+Boot an emulator first (see [Emulator](#emulator)) — this does not start one.
 
 `ANDROID_PACKAGE_NAME` in `Skip.env` **must** equal the Swift module name lowered
 to a dotted namespace (`FurAffinityUI` → `fur.affinity.ui`); the generated app
