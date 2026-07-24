@@ -86,7 +86,10 @@ adb logcat -s FurAffinityUI                  # or filter by tag
 
 Open `Android/` in Android Studio to attach a debugger to the Kotlin/JNI side.
 Swift-side logic runs natively (Skip Fuse), so `PersistentLogger` output appears
-in logcat as well.
+in logcat as well — tagged `<subsystem>/<category>`, i.e. `fur.affinity.ui/FA` for
+the app module and `FurAffinity/FAKit` / `FurAffinity/FAPages` for FAKit
+(`Bundle.main.bundleIdentifier` is nil there, so the subsystem falls back to the
+literal `FurAffinity`).
 
 ## Test
 
@@ -124,8 +127,15 @@ never the iOS app target — so:
 - Guard anything that exists only in the Xcode target (SwiftUI `#Preview`s and their
   demo data) with `#if !FA_SKIP_MODULE`. That flag is defined by `Package.swift` for
   both Skip compiles; `os(Android)` cannot express it.
-- Guard Darwin-only frameworks (`Combine`, `OSLog`, Kingfisher, Liquid Glass) with
+- Guard Darwin-only frameworks (`Combine`, Kingfisher, Liquid Glass) with
   `#if !os(Android)` / `#if canImport(…)`; those are genuinely per-platform.
+- **`import os` needs no guard.** Android's Swift SDK has no `os` module, so FAKit
+  ships one: a target literally named `os` (`FAKit/Sources/OSCompat/`) that re-exports
+  `AndroidLogging`'s `Logger` and vends a no-op `OSSignposter`. It is only ever a
+  dependency `.when(platforms: [.android])`, so Darwin still resolves the system
+  module. Only `Logger` + the `OSSignposter` subset FAKit/FAPages use are covered —
+  anything else from `os` (e.g. `OSAllocatedUnfairLock`) still needs a guard, or an
+  addition to the shim.
 - `#if` blocks must contain balanced braces — split an `if/else` into two whole
   branches rather than fencing one arm.
 - `@State`/`@Environment` on a bridged view must be **internal**, not `private`.
@@ -148,4 +158,12 @@ incremental state is stale (typically after a `Package.swift` or FAKit change). 
 
 ```
 rm -rf .build/plugins/outputs .build/Darwin .build/Android
+```
+
+If that is not enough (it is not, for a FAKit source or manifest change), drop the
+SwiftPM build description too — it keeps `.build/checkouts`, so nothing is re-fetched:
+
+```
+rm -rf .build/aarch64-unknown-linux-android28 .build/plugins .build/build.db \
+       .build/debug.yaml .build/Darwin .build/Android
 ```
