@@ -1,5 +1,5 @@
 {
-  "originHash" : "1b28a68582e6128d071247489f7bd7c6f229cb3b388a2fa7003d0d457749d7b1",
+  "originHash" : "1248349dbf50b9db2e9d5a07fc2b7306d562fe64ecbd41185962a818d8888069",
   "pins" : [
     {
       "identity" : "amplitude-swift",
@@ -65,12 +65,30 @@
       }
     },
     {
+      "identity" : "swift-android-native",
+      "kind" : "remoteSourceControl",
+      "location" : "https://source.skip.tools/swift-android-native.git",
+      "state" : {
+        "revision" : "7e6e833e6f163a2b75340f75c70b1d96ea6b8135",
+        "version" : "1.5.1"
+      }
+    },
+    {
       "identity" : "swift-collections",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-collections.git",
       "state" : {
         "revision" : "a0cb0954ecb21e4e31b0070e6ed5674e8556685a",
         "version" : "1.6.0"
+      }
+    },
+    {
+      "identity" : "swift-jni",
+      "kind" : "remoteSourceControl",
+      "location" : "https://source.skip.tools/swift-jni.git",
+      "state" : {
+        "revision" : "fe76ac21aca639976833b5ea3e875dc072519ac4",
+        "version" : "0.5.0"
       }
     },
     {
