@@ -5,6 +5,7 @@
 //  Created by Ceylo on 14/11/2021.
 //
 
+import Foundation
 import SwiftUI
 import FAKit
 #if canImport(Kingfisher)
@@ -23,13 +24,9 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
     
     var previewImage: some View {
         GeometryReader { geometry in
-            // Plain Doubles rather than the CGSize overload: two CGSize types are in
-            // scope in the Skip module, so `geometry.size` can't be passed there.
-            let width = Double(geometry.size.width)
-            let height = Double(geometry.size.height)
-            if max(width, height) > 0 {
-                let url = submission.dynamicThumbnail
-                    .bestThumbnailUrl(availableWidth: width, availableHeight: height)
+            let size = geometry.faSize
+            if size.maxDimension > 0 {
+                let url = submission.dynamicThumbnail.bestThumbnailUrl(for: size)
                 if let errorMessage {
                     Centered {
                         VStack(spacing: 10) {

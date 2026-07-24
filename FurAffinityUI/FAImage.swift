@@ -146,14 +146,15 @@ func prefetchAvatars(for previews: some Collection<FASubmissionPreview>) {
 }
 
 func prefetchThumbnails(for previews: some Collection<FASubmissionPreview>, availableWidth: Double) {
-    // Same sizing as iOS, but through FAKit's plain-Double entry point: CGSize is
-    // ambiguous in this module, so the size math stays inside FAKit.
     // thumbnailWidthOnHeightRatio = width / height, so height = width / ratio.
+    // Foundation.CGSize (explicitly qualified — SkipSwiftUI's CGSize is also in scope)
+    // built straight from Doubles here, so no bridging cast is needed.
     prefetch(previews.map { preview in
-        preview.dynamicThumbnail.bestThumbnailUrl(
-            availableWidth: availableWidth,
-            availableHeight: availableWidth / Double(preview.thumbnailWidthOnHeightRatio)
+        let size = Foundation.CGSize(
+            width: availableWidth,
+            height: availableWidth / Double(preview.thumbnailWidthOnHeightRatio)
         )
+        return preview.dynamicThumbnail.bestThumbnailUrl(for: size)
     })
 }
 

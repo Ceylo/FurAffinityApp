@@ -53,26 +53,6 @@ struct DynamicThumbnailTests {
         #expect(thumbnail.bestThumbnailUrl(for: CGSize(width: 1, height: 1)) == expected)
     }
 
-    /// The plain-`Double` entry point used where `CGSize` can't be named (the Skip
-    /// module) must bucket identically to the `CGSize` one.
-    @Test("bestThumbnailUrl(availableWidth:availableHeight:)", arguments: [
-        (300.0, 600.0, "https://t.fa/123@600-123.jpg"),
-        (900.0, 300.0, "https://t.fa/123@600-123.jpg"),
-        (300.0, 300.0, "https://t.fa/123@300-123.jpg"),
-        (320.0, 320.0, "https://t.fa/123@320-123.jpg"),
-        (30.0, 30.0, "https://t.fa/123@200-123.jpg"),
-    ])
-    func bestThumbnailUrl_doubles(width: Double, height: Double, expected: String) async throws {
-        let url = try URL(string: Self.baseUrl).unwrap()
-        let expected = try URL(string: expected).unwrap()
-        let thumbnail = DynamicThumbnail(thumbnailUrl: url)
-        #expect(thumbnail.bestThumbnailUrl(availableWidth: width, availableHeight: height) == expected)
-        #expect(
-            thumbnail.bestThumbnailUrl(availableWidth: width, availableHeight: height)
-            == thumbnail.bestThumbnailUrl(for: CGSize(width: width, height: height))
-        )
-    }
-
     /// Viewport exactly matching a thumbnail size — expects that exact thumbnail (320).
     @Test("bestThumbnailUrl - viewport exactly matches a thumbnail size")
     func bestThumbnailUrl_exactMatchThumbnailSize() async throws {

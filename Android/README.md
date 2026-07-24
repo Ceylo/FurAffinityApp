@@ -130,8 +130,18 @@ never the iOS app target — so:
   branches rather than fencing one arm.
 - `@State`/`@Environment` on a bridged view must be **internal**, not `private`.
 - SkipUI has no `@Entry` macro: write the `EnvironmentKey` by hand.
-- Two `CGSize` types are in scope in this module, so `CGSize`/`CGFloat` can't be named
-  unambiguously. Use `Double`, and keep size math in FAKit.
+- **`CGSize` is fine to use** — but the module has more than one type named `CGSize`
+  in scope: `Foundation.CGSize` (which FAKit extends and its APIs take) and the one
+  SkipSwiftUI's SwiftUI façade vendors (returned by `GeometryProxy.size` etc.). Rules:
+  - As a **type annotation** the bare name `CGSize` is ambiguous — qualify it
+    (`Foundation.CGSize`). In an **expression** it usually infers fine from context.
+  - A value from a SwiftUI API (`geometry.size`) is the *façade* `CGSize`: it lacks
+    FAKit's `maxDimension`/`fitting` and won't pass to `bestThumbnailUrl(for:)`.
+    Convert it with `Foundation.CGSize(_:)` from `CGSizeBridge.swift`, exposed on
+    `GeometryProxy` as `.faSize`.
+  - `import SkipSwiftUI` (needed to *name* the façade type in that bridge initializer)
+    makes `GeometryProxy` ambiguous, so keep it in its own file that names no other
+    SwiftUI type.
 
 If a build fails with `missing required module 'CJNI'` across unrelated packages, the
 incremental state is stale (typically after a `Package.swift` or FAKit change). Wipe it:
