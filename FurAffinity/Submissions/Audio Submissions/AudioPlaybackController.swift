@@ -9,7 +9,6 @@ import AVFoundation
 import FAKit
 import Kingfisher
 import MediaPlayer
-import os
 
 /// Owns the `AVPlayer` and every playback side-effect for an audio submission so
 /// `SubmissionAudioContent` can stay a thin shell: the authenticated asset, the

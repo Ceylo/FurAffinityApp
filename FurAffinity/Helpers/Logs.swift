@@ -8,19 +8,9 @@
 import Foundation
 import FALogging
 import Defaults
-// OSLog (signposts) and the log-file export are Darwin-only; Android keeps just the
-// PersistentLogger and the Defaults diff log.
-#if !os(Android)
-import OSLog
-#endif
 
 private let loggingSubsystem = Bundle.main.bundleIdentifier ?? "net.furaffinity.app"
 let logger = PersistentLogger(subsystem: loggingSubsystem, category: "FA")
-
-#if !os(Android)
-private let signpostLog = Logger(subsystem: loggingSubsystem, category: "FA")
-let signposter = OSSignposter(logger: signpostLog)
-#endif
 
 /// The time window to include when exporting application logs.
 enum LogExportRange {
