@@ -42,9 +42,7 @@ struct AndroidRootView: View {
                     .tag(Tab.submissions)
 
                     NavigationStack {
-                        // Stands in for SettingsView until the rest of its surface is
-                        // ported; on iOS this is a screen pushed from Settings.
-                        NotificationSettingsView()
+                        SettingsView()
                             .navigationDestination(for: FATarget.self) { target in
                                 notPortedYet(target)
                             }

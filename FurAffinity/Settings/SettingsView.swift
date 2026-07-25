@@ -11,22 +11,38 @@ import FALogging
 import Defaults
 
 struct SettingsView: View {
-    @Environment(Model.self) private var model
-    @State private var dumpingLogs = false
-    
+    // Not private: this view is bridged on Android, and skipstone rejects private
+    // state/environment properties there.
+    @Environment(Model.self) var model
+    @State var dumpingLogs = false
+
+    // Android has no `@Default` — see AndroidAppStorage.swift.
+#if os(Android)
+    @AppStorage(.animateAvatars) var animateAvatars: Bool
+    @AppStorage(.addMessageToSharedItems) var addMessageToSharedItems: Bool
+#else
     @Default(.animateAvatars) private var animateAvatars: Bool
     @Default(.addMessageToSharedItems) private var addMessageToSharedItems
-    
-    @State private var cachedFileSize = "unknown"
-    
-    @State private var cleaningCache = false
-    
+#endif
+
+    @State var cachedFileSize = "unknown"
+
+    @State var cleaningCache = false
+
+#if os(Android)
+    // The Settings tab already provides a NavigationStack.
+    var body: some View {
+        content
+            .navigationTitle("Settings")
+    }
+#else
     var body: some View {
         NavigationStack {
             content
                 .navigationTitle("Settings")
         }
     }
+#endif
 
     private var content: some View {
         Form {
@@ -35,8 +51,12 @@ struct SettingsView: View {
                 Link("Privacy policy", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/blob/main/Privacy%20Policy.md")!)
                 Link("Feature request & bug report", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/issues")!)
                 LabeledContent("Current version", value: model.appInfo.currentVersion.shortDescription)
+
+                // `AppInformation.fetch()` is a no-op on Android, so these rows could
+                // only ever show "…".
+#if !os(Android)
                 LabeledContent("Latest available version", value:  (model.appInfo.latestRelease?.version.shortDescription ?? "…"))
-                
+
                 if let latestRelease = model.appInfo.latestRelease,
                    let isUpToDate = model.appInfo.isUpToDate,
                    !isUpToDate {
@@ -49,6 +69,7 @@ struct SettingsView: View {
                         .padding(.bottom, 5)
                     }
                 }
+#endif
             }
             
             Section("Display") {
@@ -152,9 +173,11 @@ struct SettingsView: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     withAsync({ try await Model.demo }) {
         SettingsView()
             .environment($0)
     }
 }
+#endif
