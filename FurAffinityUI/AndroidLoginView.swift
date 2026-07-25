@@ -25,6 +25,10 @@ struct AndroidLoginView: View {
     @State var status = "Log in and clear Cloudflare…"
     @State var establishing = false
     @State var establishedUsername: String?
+    // Temporary step-2 gate for the fork's Text(AttributedString); removed in step 5.
+    // NOT inside `#if DEBUG`: skipstone skips those blocks when generating the bridge,
+    // so a @State declared there gets no state box and never triggers recomposition.
+    @State var demoDescription: AttributedString?
 
     // Never override the UA: setting customUserAgent on the Android WebView empties
     // navigator.userAgentData, which Cloudflare reads as a bot signal.
@@ -46,6 +50,18 @@ struct AndroidLoginView: View {
                 onSession(OfflineFASession.default)
             }
             .padding(.bottom, 8)
+
+            // Temporary gate for the fork's Text(AttributedString); removed in step 5
+            // once HTMLView renders descriptions for real.
+            ScrollView {
+                Text(demoDescription ?? AttributedString("<no demo description>"))
+                    .padding(8)
+            }
+            .frame(height: 220)
+            .environment(\.openURL, OpenURLAction { url in
+                logger.info("Demo description link tapped: \(url)")
+                return .handled
+            })
             #endif
 
             WebView(
@@ -58,6 +74,13 @@ struct AndroidLoginView: View {
                 }
             )
         }
+        #if DEBUG
+        .task {
+            let description = await FASubmission.demoImage.description
+            logger.info("Demo description loaded: \(String(description.characters).count) chars")
+            demoDescription = description
+        }
+        #endif
     }
 
     /// After each navigation, if we're on a real (non-interstitial) logged-in page,
