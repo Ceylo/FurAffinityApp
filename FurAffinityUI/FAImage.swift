@@ -90,7 +90,14 @@ struct FAImageView: View {
             failed = true
             return
         }
-        if let data = await CoilImageLoader.load(url), let decoded = UIImage(data: data) {
+        let fetchStart = Date()
+        let data = await CoilImageLoader.load(url)
+        let fetchMs = Int(Date().timeIntervalSince(fetchStart) * 1000)
+        let decodeStart = Date()
+        let decodedImage = data.flatMap { UIImage(data: $0) }
+        let decodeMs = Int(Date().timeIntervalSince(decodeStart) * 1000)
+        logger.debug("render fetch=\(fetchMs)ms decode=\(decodeMs)ms url=\(url.absoluteString)")
+        if let decoded = decodedImage {
             if fadeDuration > 0 {
                 withAnimation(.easeInOut(duration: fadeDuration)) { image = decoded }
             } else {
@@ -127,6 +134,7 @@ func FAAnimatedImage(_ url: URL?) -> FAImageView {
 /// Warm Coil's disk cache for `urls` (fire-and-forget).
 func prefetch(_ urls: [URL]) {
     for url in urls {
+        logger.debug("prefetch url=\(url.absoluteString)")
         Task.detached { _ = await CoilImageLoader.load(url) }
     }
 }
@@ -146,6 +154,7 @@ func prefetchAvatars(for previews: some Collection<FASubmissionPreview>) {
 }
 
 func prefetchThumbnails(for previews: some Collection<FASubmissionPreview>, availableWidth: Double) {
+    logger.debug("prefetchThumbnails count=\(previews.count) availableWidth=\(availableWidth)")
     // thumbnailWidthOnHeightRatio = width / height, so height = width / ratio.
     // Foundation.CGSize (explicitly qualified — SkipSwiftUI's CGSize is also in scope)
     // built straight from Doubles here, so no bridging cast is needed.

@@ -75,10 +75,13 @@ class FACoilBridge {
         fun load(url: String): ByteArray? {
             val loader = imageLoader()
             val diskCache = loader.diskCache
+            val start = System.nanoTime()
 
             // Cache hit: encoded bytes already on disk under key == url.
             diskCache?.openSnapshot(url)?.use { snapshot ->
-                return diskCache.fileSystem.read(snapshot.data) { readByteArray() }
+                val bytes = diskCache.fileSystem.read(snapshot.data) { readByteArray() }
+                Log.d(TAG, "diskHit ${ms(start)}ms ${bytes.size}B $url")
+                return bytes
             }
 
             val request = ImageRequest.Builder(context())
@@ -97,7 +100,10 @@ class FACoilBridge {
                     val bytes = diskCache?.openSnapshot(url)?.use { snapshot ->
                         diskCache.fileSystem.read(snapshot.data) { readByteArray() }
                     }
-                    if (bytes != null) return bytes
+                    if (bytes != null) {
+                        Log.d(TAG, "network ${ms(start)}ms ${bytes.size}B attempts=$attempt $url")
+                        return bytes
+                    }
                     Log.e(TAG, "no disk-cache bytes for $url after success")
                     return null
                 }
@@ -110,6 +116,8 @@ class FACoilBridge {
                 Thread.sleep(250L * attempt)
             }
         }
+
+        private fun ms(startNanos: Long) = (System.nanoTime() - startNanos) / 1_000_000
 
         private fun context() = ProcessInfo.processInfo.androidContext
 
