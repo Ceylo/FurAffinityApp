@@ -135,17 +135,40 @@ The iOS build must stay green at every step:
 xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
-## Forks (later steps)
+## Forks
 
-`Defaults` and `Kingfisher` are ported to Android on `Ceylo/<repo>` `android`
-branches, referenced by URL + branch from both `Package.swift` and the Xcode
-project. While iterating, re-point the root `Package.swift` at a local clone:
+| Fork | Why |
+|---|---|
+| `Ceylo/Defaults` | Android port |
+| `Ceylo/Kingfisher` | Android port |
+| `Ceylo/skip-ui` | implements `listRowInsets` (upstream: `@available(*, unavailable)`) |
+| `Ceylo/skip-fuse-ui` | ditto — the Fuse side of the same modifier |
+
+All on an `android` branch, referenced by URL + branch from `Package.swift` (and,
+for Defaults/Kingfisher, the Xcode project too). While iterating, re-point the root
+`Package.swift` at a local clone:
 
 ```
-.package(path: "../SkipForks/Defaults")     // instead of the URL + branch
+.package(path: "../../SkipForks/Defaults")     // instead of the URL + branch
 ```
 
 then push to the `android` branch before the step's gate.
+
+### Why skip-ui / skip-fuse-ui are forked
+
+SkipUI's `List` hardcodes a 16 dp horizontal + 8 dp vertical inset on every row
+(`List.contentModifier(level:)`) and `listRowInsets` is unavailable, so rows cannot
+go full-bleed. That also silently breaks image prefetching: the row renders 32 dp
+narrower than the width the list reports, so `bestThumbnailUrl(for:)` snaps to a
+different size bucket and every prefetched thumbnail URL is one no row asks for.
+
+The patch threads an optional `EdgeInsets` through `ListItemModifier` into
+`contentModifier`, each edge defaulting to the existing constant, and un-`unavailable`s
+`View.listRowInsets` in both repos (skip-ui alone is unreachable from a native Fuse
+module). See `SkipSpike/UPSTREAM_INVENTORY.md` §B item 5b for the upstream context.
+
+**Note:** skip-ui arrives transitively via skip-fuse-ui, so overriding it needs its own
+entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
 
 ## Rules for shared sources
 

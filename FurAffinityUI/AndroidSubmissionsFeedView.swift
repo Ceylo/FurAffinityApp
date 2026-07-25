@@ -34,11 +34,9 @@ struct AndroidSubmissionsFeedView: View {
             } else {
                 List {
                     ForEach(Array(previews)) { preview in
-                        // SkipUI has no `listRowInsets`; padding gives the same
-                        // vertical rhythm as the iOS feed.
                         SubmissionPreviewRow(preview: preview)
-                            .padding(.vertical, 10)
                             .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
                     }
                 }
                 .listStyle(.plain)
