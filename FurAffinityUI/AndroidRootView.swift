@@ -11,7 +11,7 @@ import SwiftUI
 import FAKit
 
 struct AndroidRootView: View {
-    @State var session: OnlineFASession?
+    @State var session: (any FASession)?
     @State var model = Model()
     @State var navigationStream = NavigationStream()
 

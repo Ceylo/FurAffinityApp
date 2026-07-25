@@ -9,6 +9,7 @@
 //
 
 import Foundation
+import Defaults
 import SkipFuse
 import SwiftUI
 
@@ -33,6 +34,10 @@ import SwiftUI
 
     /* SKIP @bridge */public func onInit() {
         logger.debug("onInit")
+        // Matches FurAffinityApp.init() on iOS. A no-op on a fresh Android install
+        // (see Defaults.startingSchemaVersion), but it stamps the schema version so a
+        // later migration knows where to resume.
+        Defaults.runSettingsMigrations()
     }
 
     /* SKIP @bridge */public func onLaunch() {

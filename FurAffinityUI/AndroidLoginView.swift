@@ -17,7 +17,7 @@ import FAPages
 struct AndroidLoginView: View {
     /// Called on the main actor with the established session. The Coil image layer's FA
     /// credentials are seeded separately via `CoilImageLoader.configure` below.
-    var onSession: (OnlineFASession) -> Void
+    var onSession: (any FASession) -> Void
 
     // @State embedding skip-web must be internal, not private (Skip inventory #5).
     @State var navigator = WebViewNavigator()
@@ -37,6 +37,17 @@ struct AndroidLoginView: View {
                 .foregroundStyle(.secondary)
                 .padding(8)
                 .frame(maxWidth: .infinity, alignment: .leading)
+
+            // Entry point for driving ported screens on the emulator without solving a
+            // Cloudflare challenge, which needs a real click in the emulator window.
+            // Deliberately not behind `#if DEBUG`: skipstone skips those blocks when it
+            // generates the view bridge.
+            Button("Continue offline (debug)") {
+                establishedUsername = OfflineFASession.default.username
+                status = "Offline session."
+                onSession(OfflineFASession.default)
+            }
+            .padding(.bottom, 8)
 
             WebView(
                 configuration: config,
