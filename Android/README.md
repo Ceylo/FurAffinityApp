@@ -39,6 +39,26 @@ ln -s ../../FurAffinity/<subpath>/<File>.swift FurAffinityUI/Shared/<File>.swift
 Keep the link's basename equal to the target's, and preserve subfolders only if
 two files share a name.
 
+### Sharing asset-catalog entries
+
+`FurAffinityUI/Resources/Assets.xcassets` is this module's own catalog, which Skip
+mirrors into Android resources. To single-source an entry with the iOS catalog,
+symlink the **`Contents.json`**, not the `.colorset`/`.imageset` directory:
+
+```
+mkdir Foo.colorset
+ln -s ../../../../FurAffinity/Assets.xcassets/Foo.colorset/Contents.json Foo.colorset/Contents.json
+```
+
+Skip's resource copy does not follow a symlinked *directory* — it silently copies
+nothing, and the entry never reaches the APK. The failure is quiet: `Color(_:bundle:)`
+falls back to an opaque default, so a 10%-alpha border renders as a solid grey one
+instead of erroring. After changing a catalog, confirm the file actually landed:
+
+```
+find .build/plugins/outputs/android/FurAffinityUI/destination/skipstone/FurAffinityUI/src/main/assets -type f
+```
+
 ## Prerequisites
 
 ```

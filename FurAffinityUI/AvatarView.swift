@@ -10,7 +10,9 @@
 //  The default-avatar image and the border color come from this module's own
 //  Assets.xcassets, which Skip mirrors into Android resources: `DefaultAvatar` is a PNG
 //  rendition of the iOS `.heic` (which Android can't decode) and `BorderOverlay.colorset`
-//  is a symlink to the iOS one, so the border matches on both platforms.
+//  single-sources the iOS one — as a real directory holding a *symlinked* `Contents.json`,
+//  because Skip's resource copy does not follow a symlinked *directory* (see
+//  Android/README.md §Sharing asset-catalog entries).
 //
 //  Deferred to a later step: honoring `@Default(.animateAvatars)` with real animated-GIF
 //  avatars (needs `coil-gif`).
