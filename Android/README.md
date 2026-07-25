@@ -114,6 +114,15 @@ adb logcat | grep -i fur.affinity           # app logs (tagged fur.affinity.ui.F
 adb logcat -s FurAffinityUI                  # or filter by tag
 ```
 
+The **installed app id is `com.example.id1234`**, not `net.furaffinity.spike` — so
+`adb shell run-as com.example.id1234 …` is how you reach its data directory (the
+image cache lives at `cache/fa_coil_cache`).
+
+Every `skip app launch --android` drops the WebView's Cloudflare clearance, so the
+next run shows FA's "Verify you are human" checkbox. It needs a **real click in the
+emulator window**: synthetic `adb shell input tap` events do not clear it (that was
+the cause of the old "CF loop").
+
 Open `Android/` in Android Studio to attach a debugger to the Kotlin/JNI side.
 Swift-side logic runs natively (Skip Fuse), so `PersistentLogger` output appears
 in logcat as well — tagged `<subsystem>/<category>`, i.e. `fur.affinity.ui/FA` for
@@ -169,6 +178,50 @@ module). See `SkipSpike/UPSTREAM_INVENTORY.md` §B item 5b for the upstream cont
 
 **Note:** skip-ui arrives transitively via skip-fuse-ui, so overriding it needs its own
 entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
+
+## Images
+
+iOS gets a memory cache, background decoding, request coalescing and a bounded
+download queue from Kingfisher. Android has none of that for free, so the pipeline is
+three Android-only pieces:
+
+```
+FACoilBridge.kt        OkHttp + coil3's standalone DiskCache. Returns an on-disk PATH.
+CoilImageLoader.swift  AnyDynamicObject/JNI driver for it.
+FAImageStore.swift     memory LRU, coalescing, concurrency gate, off-main decode.
+FAImage.swift          KFImage-shaped view + the prefetch API shared views call.
+```
+
+Rules that are easy to get wrong here:
+
+- **Nothing decodes on the main actor.** `.task` on a SwiftUI view is MainActor-isolated,
+  so anything after an `await` in it resumes on the main thread. Decoding belongs on
+  `FAImageStore`'s queue.
+- **Never block on a `Task.detached`.** FurAffinityUI is a *native* Skip module, so a
+  blocking JNI call there pins a Swift cooperative-pool thread. Go through
+  `FAImageStore`'s gate, which submits to a real `DispatchQueue`.
+- **No image bytes cross JNI.** The bridge returns a path; `FAImageStore` decodes it.
+- **`UIImage(contentsOfFile:)` needs a `file://` URI**, despite the name — SkipUI
+  implements it with `Uri.parse` + `ContentResolver.openInputStream`, and a bare
+  filesystem path yields nil with no error.
+- **The width passed to `prefetchingPreviews` must be the width the row renders at.**
+  `bestThumbnailUrl(for:)` snaps to discrete buckets, so a few dp of difference changes
+  the URL and silently voids every prefetch. This is what the `listRowInsets` fork is for.
+- FA challenges roughly half of all bare image requests (probabilistic, per request), so
+  the bridge's retry loop is load-bearing, not defensive padding.
+
+Measured on the emulator before/after this work — cold, disk cache wiped, time for the
+first visible thumbnail to appear:
+
+| | before | after |
+|---|---|---|
+| first visible thumbnail | 4783 ms | 342 ms |
+| per-URL network fetch (p50) | 48 ms | 48 ms |
+| requests per feed page | 148 | 84 |
+| thumbnail prefetches actually used | 0 / 72 | 72 / 72 |
+
+The network was never the problem: the visible rows were queued behind ~144 unbounded
+prefetches. Scrolling 72 items and back now serves 93 images from memory vs 38 re-decodes.
 
 ## Rules for shared sources
 

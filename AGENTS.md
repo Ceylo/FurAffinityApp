@@ -15,8 +15,12 @@ Fuse (root `Package.swift` + `FurAffinityUI/` target + `Android/`/`Darwin/` scaf
 iOS Xcode target is unaffected — shared files stay in place and are pulled into the Android
 build as symlinks under `FurAffinityUI/Shared/`. `import os` works on both platforms:
 FAKit ships an Android-only compatibility target named `os` (`FAKit/Sources/OSCompat/`)
-vending `Logger` (→ logcat) and a no-op `OSSignposter`. See `Android/README.md` for
-build/run/test and the symlink-farm rationale.
+vending `Logger` (→ logcat) and a no-op `OSSignposter`. Four dependencies are forked on
+`Ceylo/<repo>` `android` branches — `Defaults`, `Kingfisher`, and `skip-ui`/`skip-fuse-ui`
+(the latter two to implement `listRowInsets`, unavailable upstream). Images go through an
+Android-only pipeline (`FAImageStore` + `FACoilBridge`) rather than Kingfisher. See
+`Android/README.md` for build/run/test, the symlink-farm rationale, the fork list, and the
+image-pipeline rules.
 
 ## Architecture
 
