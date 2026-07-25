@@ -102,6 +102,18 @@ Transpiled Kotlin lands under `.build/` (e.g.
 today); Skip also reads `distributionUrl` out of that file. Skip's catalog pins
 AGP 9.2.0 / Kotlin 2.3.0 / compileSdk 36 / JVM 17.
 
+### Why settings.gradle.kts writes local.properties
+
+AGP resolves the Android SDK **per build**, and Skip's transpiled modules are *included*
+builds under `.build/` with no `local.properties` of their own — so `Android/local.properties`
+does not cover them. `skip gradle` exports `ANDROID_HOME` for the Gradle process it spawns;
+Android Studio does not, and its builds failed with `SDK location not found` pointing at
+`.build/plugins/outputs/…/skipstone/local.properties`. The `gradle.projectsLoaded` hook at
+the end of `Android/settings.gradle.kts` mirrors `sdk.dir` into every included build, after
+`includeBuild` and before those projects configure (`settingsEvaluated` is too early —
+"Included builds are not yet available for this build"). It rewrites on every sync, since
+`.build/` is regularly wiped.
+
 ## Run
 
 ```
@@ -133,8 +145,12 @@ the cause of the old "CF loop").
 
 Open `Android/` in Android Studio to attach a debugger to the Kotlin/JNI side (its
 `.idea/` is git-ignored; `gradle.xml` there caches paths under `.build/` and is
-regenerated on sync). Alternating between Studio and `skip` can invalidate the Swift
-incremental state — see the wipe at the end of [Rules for shared sources](#rules-for-shared-sources).
+regenerated on sync — as is `.gradle/config.properties`, whose loss is what makes
+Studio warn about an invalid Gradle JDK).
+**Never let Studio and `skip`/Xcode build at the same time**: both drive the same Swift
+package through `skip android build`, and concurrent invocations fail with
+`missing required module 'AndroidNDK'` and `error: cancelled`. Sequentially they are
+fine — no wipe needed between drivers.
 Swift-side logic runs natively (Skip Fuse), so `PersistentLogger` output appears
 in logcat as well — tagged `<subsystem>/<category>`, i.e. `fur.affinity.ui/FA` for
 the app module and `FurAffinity/FAKit` / `FurAffinity/FAPages` for FAKit
@@ -270,10 +286,8 @@ never the iOS app target — so:
     makes `GeometryProxy` ambiguous, so keep it in its own file that names no other
     SwiftUI type.
 
-If a build fails with `missing required module 'CJNI'` (or `'AndroidNDK'`) across
-unrelated packages, the incremental state is stale — typically after a `Package.swift`
-or FAKit change, or after driving the build from Android Studio and `skip` in turn with
-different `JAVA_HOME`/`ANDROID_HOME` in the environment. Wipe it:
+If a build fails with `missing required module 'CJNI'` across unrelated packages, the
+incremental state is stale (typically after a `Package.swift` or FAKit change). Wipe it:
 
 ```
 rm -rf .build/plugins/outputs .build/Darwin .build/Android
