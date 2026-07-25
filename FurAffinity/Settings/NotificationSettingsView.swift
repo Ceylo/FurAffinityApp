@@ -9,6 +9,25 @@ import SwiftUI
 import Defaults
 
 struct NotificationSettingsView: View {
+    // Android has no `@Default`, and it can't be shimmed: skipstone recognizes state
+    // property wrappers by attribute name, so only a literal `@AppStorage` gets the
+    // bridge that makes a toggle persist and recompose. See AndroidAppStorage.swift,
+    // which is also what lets these name the same `Defaults.Key`s. Bridged state
+    // properties must be internal, not private.
+#if os(Android)
+    @AppStorage(.notifySubmissions) var notifySubmissions: Bool
+    @AppStorage(.notifyNotes) var notifyNotes: Bool
+    @AppStorage(.notifySubmissionComments) var notifySubmissionComments: Bool
+    @AppStorage(.notifyJournalComments) var notifyJournalComments: Bool
+    @AppStorage(.notifyShouts) var notifyShouts: Bool
+    @AppStorage(.notifyJournals) var notifyJournals: Bool
+
+    @AppStorage(.badgeNotes) var badgeNotes: Bool
+    @AppStorage(.badgeSubmissionComments) var badgeSubmissionComments: Bool
+    @AppStorage(.badgeJournalComments) var badgeJournalComments: Bool
+    @AppStorage(.badgeShouts) var badgeShouts: Bool
+    @AppStorage(.badgeJournals) var badgeJournals: Bool
+#else
     @Default(.notifySubmissions) private var notifySubmissions
     @Default(.notifyNotes) private var notifyNotes
     @Default(.notifySubmissionComments) private var notifySubmissionComments
@@ -21,6 +40,7 @@ struct NotificationSettingsView: View {
     @Default(.badgeJournalComments) private var badgeJournalComments
     @Default(.badgeShouts) private var badgeShouts
     @Default(.badgeJournals) private var badgeJournals
+#endif
 
     var body: some View {
         Form {
@@ -32,7 +52,7 @@ struct NotificationSettingsView: View {
                 Toggle("Shouts", isOn: $notifyShouts)
                 Toggle("Journals", isOn: $notifyJournals)
             } header: {
-                Text("iOS Notifications")
+                Text("Notifications")
             } footer: {
                 Text("These notifications are not delivered in real-time and may be unavailable on CloudFlare challenge failure.")
             }
@@ -53,8 +73,10 @@ struct NotificationSettingsView: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     NavigationStack {
         NotificationSettingsView()
     }
 }
+#endif

@@ -2,9 +2,10 @@
 //  AndroidRootView.swift
 //  FurAffinityUI (Android)
 //
-//  Root of the Android app: the login flow until a session exists, then the shared
-//  Followed feed driven by the shared `Model`. Tapping a card is still a stub —
-//  porting submission detail and the `InAppNavigation` fan-out is a later step.
+//  Root of the Android app: the login flow until a session exists, then the ported
+//  tabs driven by the shared `Model`, mirroring `LoggedInView` on iOS. Tabs are added
+//  as screens are ported. Tapping a feed card is still a stub — porting submission
+//  detail and the `InAppNavigation` fan-out is a later step.
 //
 
 import SwiftUI
@@ -14,16 +15,44 @@ struct AndroidRootView: View {
     @State var session: (any FASession)?
     @State var model = Model()
     @State var navigationStream = NavigationStream()
+    @State var selectedTab: Tab = .submissions
+
+    enum Tab {
+        case submissions
+        case settings
+    }
 
     var body: some View {
         Group {
             if session != nil {
-                NavigationStack {
-                    AndroidSubmissionsFeedView()
-                        .navigationTitle("Submissions")
-                        .navigationDestination(for: FATarget.self) { target in
-                            notPortedYet(target)
-                        }
+                TabView(selection: $selectedTab) {
+                    NavigationStack {
+                        AndroidSubmissionsFeedView()
+                            .navigationTitle("Submissions")
+                            .navigationDestination(for: FATarget.self) { target in
+                                notPortedYet(target)
+                            }
+                    }
+                    // SkipUI maps a fixed set of SF Symbols onto Material icons and
+                    // draws a warning triangle for the rest, so these two don't match
+                    // LoggedInView's `rectangle.grid.2x2` / `slider.horizontal.3`.
+                    .tabItem {
+                        Label("Submissions", systemImage: "list.bullet")
+                    }
+                    .tag(Tab.submissions)
+
+                    NavigationStack {
+                        // Stands in for SettingsView until the rest of its surface is
+                        // ported; on iOS this is a screen pushed from Settings.
+                        NotificationSettingsView()
+                            .navigationDestination(for: FATarget.self) { target in
+                                notPortedYet(target)
+                            }
+                    }
+                    .tabItem {
+                        Label("Settings", systemImage: "gearshape")
+                    }
+                    .tag(Tab.settings)
                 }
             } else {
                 AndroidLoginView(onSession: { session = $0 })
