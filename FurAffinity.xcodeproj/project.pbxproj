@@ -159,6 +159,7 @@
 		D17E358F6EBAEE2AB484011F /* UsernameField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D2364BADB5ED5A6F51CD91C /* UsernameField.swift */; };
 		D1B7779E7CB722ADBFB21575 /* GeometryProxy+FASize.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58119C7E67EC670409E1D1CC /* GeometryProxy+FASize.swift */; };
 		D84FB74D89392ACC0D73E55D /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 630BB43B07A3008252B5171B /* UserNotificationsUI.framework */; };
+		DA348CE7A0CF8BABDB01FBFA /* ImageCacheControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */; };
 		FA0000000000000000000008 /* SubmissionAudioContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000007 /* SubmissionAudioContent.swift */; };
 		FA000000000000000000000A /* AudioPlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000009 /* AudioPlaybackController.swift */; };
 		FB227FE8FD7642FAD0C63BF7 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E6731320A5B4D6196E99F0F9 /* UserNotifications.framework */; };
@@ -347,6 +348,7 @@
 		D28B447376CAFDB034915BBD /* SubmissionPreviewRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SubmissionPreviewRow.swift; sourceTree = "<group>"; };
 		D56727047B968FBBC1AC85BB /* SubmissionsTabView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SubmissionsTabView.swift; sourceTree = "<group>"; };
 		E47802CF8DFEA36285E68BE4 /* PendingNotificationRecord.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PendingNotificationRecord.swift; sourceTree = "<group>"; };
+		E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ImageCacheControl.swift; sourceTree = "<group>"; };
 		E6731320A5B4D6196E99F0F9 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		FA0000000000000000000007 /* SubmissionAudioContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionAudioContent.swift; sourceTree = "<group>"; };
 		FA0000000000000000000009 /* AudioPlaybackController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlaybackController.swift; sourceTree = "<group>"; };
@@ -550,6 +552,7 @@
 				875FDC7D2D21D2D300CF8AE5 /* DelayedToggle.swift */,
 				8774EE732DFB78B90074E015 /* Replying.swift */,
 				58119C7E67EC670409E1D1CC /* GeometryProxy+FASize.swift */,
+				E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -997,6 +1000,7 @@
 				3A6366CC81F99000EEA67C28 /* NotificationsProtocols.swift in Sources */,
 				8D16CEE3C73D5479356A41B9 /* UserPreviewData.swift in Sources */,
 				D1B7779E7CB722ADBFB21575 /* GeometryProxy+FASize.swift in Sources */,
+				DA348CE7A0CF8BABDB01FBFA /* ImageCacheControl.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

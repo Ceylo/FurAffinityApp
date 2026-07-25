@@ -8,7 +8,6 @@
 import SwiftUI
 import FAKit
 import FALogging
-import Kingfisher
 import Defaults
 
 struct SettingsView: View {
@@ -99,7 +98,7 @@ struct SettingsView: View {
                     cleaningCache = true
                     
                     Task {
-                        await ImageCache.default.clearCache()
+                        await ImageCacheControl.clear()
                         updateCachedFileSize()
                         cleaningCache = false
                     }
@@ -131,11 +130,8 @@ struct SettingsView: View {
     }
 
     func updateCachedFileSize() {
-        if let size = try? ImageCache.default.diskStorage.totalSize() {
-            cachedFileSize = ByteCountFormatter.string(
-                fromByteCount: Int64(size),
-                countStyle: .file
-            )
+        if let size = ImageCacheControl.formattedDiskSize() {
+            cachedFileSize = size
         }
     }
     

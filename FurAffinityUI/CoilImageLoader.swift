@@ -89,4 +89,31 @@ enum CoilImageLoader {
         return nil
         #endif
     }
+
+    /// Bytes the disk cache currently holds, or nil if the bridge is unavailable.
+    static func diskCacheSizeBytes() -> Int64? {
+        #if canImport(Android)
+        guard let bridge else { return nil }
+        do {
+            let size: Int64? = try bridge.cacheSizeBytes()
+            return size
+        } catch {
+            logger.error("CoilImageLoader.cacheSizeBytes threw: \(error)")
+            return nil
+        }
+        #else
+        return nil
+        #endif
+    }
+
+    /// Empties the disk cache. Blocking (file I/O over JNI) — call off the main actor.
+    static func clearDiskCache() {
+        #if canImport(Android)
+        guard let bridge else { return }
+        let ok: Bool? = try? bridge.clearCache()
+        if ok != true {
+            logger.error("CoilImageLoader.clearDiskCache did not confirm")
+        }
+        #endif
+    }
 }

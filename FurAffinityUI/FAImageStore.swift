@@ -166,6 +166,16 @@ actor FAImageStore {
         FAImageMemoryCache.shared.removeAll()
     }
 
+    /// Empty both caches, for the Settings row. The disk clear is blocking JNI file
+    /// I/O, so it goes through the gate like every other blocking call here rather
+    /// than onto a `Task.detached`, which would pin a cooperative-pool thread. The
+    /// memory cache goes too — otherwise visible rows would keep rendering from a
+    /// cache the user just emptied.
+    func clearAllCaches() async {
+        await gated(.high) { CoilImageLoader.clearDiskCache() }
+        memory.removeAll()
+    }
+
     // MARK: - Fetch + decode
 
     private func fetchAndDecode(_ url: URL, priority: FAImagePriority) async -> UIImage? {
