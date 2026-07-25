@@ -8,15 +8,22 @@
 
 import SwiftUI
 import FAKit
-#if !os(Android)
+#if !FA_SKIP_MODULE
 import Combine
 #endif
 
-#if os(Android)
-/// Combine is unavailable on Android. This keeps `FALink`'s `send(_:)` call site
-/// identical until in-app navigation is ported; taps are dropped for now.
-final class NavigationStream: Sendable {
-    func send(_ target: FATarget) {}
+#if FA_SKIP_MODULE
+/// Combine is unavailable on Android, so the stream *is* the navigation path:
+/// `send(_:)` pushes, and the Android root binds `path` to its `NavigationStack`.
+/// Keyed on the module rather than on `os(Android)` so the module's Darwin bridge
+/// compile sees the same type as Android does.
+@Observable
+final class NavigationStream {
+    var path: [FATarget] = []
+
+    func send(_ target: FATarget) {
+        path.append(target)
+    }
 }
 #else
 typealias NavigationStream = PassthroughSubject<FATarget, Never>

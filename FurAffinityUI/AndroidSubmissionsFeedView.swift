@@ -21,9 +21,6 @@ struct AndroidSubmissionsFeedView: View {
         GeometryReader { geometry in
             content(availableWidth: Double(geometry.size.width))
         }
-        .overlay(alignment: .top) {
-            errorBanner
-        }
     }
 
     @ViewBuilder
@@ -63,23 +60,6 @@ struct AndroidSubmissionsFeedView: View {
             .frame(maxWidth: .infinity)
         }
         .refreshable { await refresh() }
-    }
-
-    @ViewBuilder
-    private var errorBanner: some View {
-        if let error = errorStorage.error {
-            VStack(spacing: 4) {
-                Text(error.relatedAction ?? "Error")
-                    .font(.headline)
-                Text(error.errorDescription ?? "Something went wrong.")
-                    .font(.footnote)
-                    .multilineTextAlignment(.center)
-                Button("Dismiss") { errorStorage.error = nil }
-            }
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(.thinMaterial)
-        }
     }
 
     private func refresh() async {

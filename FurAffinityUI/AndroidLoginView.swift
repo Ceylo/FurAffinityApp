@@ -17,7 +17,7 @@ import FAPages
 struct AndroidLoginView: View {
     /// Called on the main actor with the established session. The Coil image layer's FA
     /// credentials are seeded separately via `CoilImageLoader.configure` below.
-    var onSession: (OnlineFASession) -> Void
+    var onSession: (any FASession) -> Void
 
     // @State embedding skip-web must be internal, not private (Skip inventory #5).
     @State var navigator = WebViewNavigator()
@@ -37,6 +37,16 @@ struct AndroidLoginView: View {
                 .foregroundStyle(.secondary)
                 .padding(8)
                 .frame(maxWidth: .infinity, alignment: .leading)
+
+            #if DEBUG
+            // Skips Cloudflare entirely so the ported screens can be exercised on the
+            // emulator with no login. FA image URLs still need the WebView's clearance,
+            // so images render their placeholders in this mode.
+            Button("Use offline demo data") {
+                onSession(OfflineFASession.default)
+            }
+            .padding(.bottom, 8)
+            #endif
 
             WebView(
                 configuration: config,
