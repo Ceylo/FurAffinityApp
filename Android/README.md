@@ -282,6 +282,15 @@ never the iOS app target — so:
   both Skip compiles; `os(Android)` cannot express it.
 - Guard Darwin-only frameworks (`Combine`, Kingfisher, Liquid Glass) with
   `#if !os(Android)` / `#if canImport(…)`; those are genuinely per-platform.
+- **An Android substitution file must not be `#if os(Android)`-guarded.** When a
+  shared file calls one name that resolves per platform (`ImageCacheControl`,
+  `clearLoginCookies`, `share`), the Android declaration lives in `FurAffinityUI/`
+  while the iOS one stays out of this module. `os(Android)` is false for the Darwin
+  bridge compile, so a file-level guard there leaves shared callers with *no*
+  declaration at all. Leave the file unguarded and put `#if canImport(Android)`
+  around the JNI inside, with a Darwin no-op — the way `CoilImageLoader` does. This
+  fails quietly: `skip android build` and the APK are both green, and only
+  `skip app launch --android` (which builds the bridge) reports it.
 - **`import os` needs no guard.** Android's Swift SDK has no `os` module, so FAKit
   ships one: a target literally named `os` (`FAKit/Sources/OSCompat/`) that re-exports
   `AndroidLogging`'s `Logger` and vends a no-op `OSSignposter`. It is only ever a
@@ -292,6 +301,19 @@ never the iOS app target — so:
 - `#if` blocks must contain balanced braces — split an `if/else` into two whole
   branches rather than fencing one arm.
 - `@State`/`@Environment` on a bridged view must be **internal**, not `private`.
+- **State property wrappers are matched by attribute name.** skipstone emits a
+  bridged view's `Java_initState_<name>`/`Java_syncState_<name>` from the literal
+  attribute (`@State`, `@AppStorage`, …). A wrapper of your own gets no entry, so its
+  box is never given a Compose state and the value neither persists nor recomposes —
+  silently. That is why Android settings toggles are written `@AppStorage(.someKey)`
+  (`FurAffinityUI/AndroidAppStorage.swift` adds the `Defaults.Key` initializer) rather
+  than behind a re-declared `@Default`; wrapping `AppStorage`, or
+  `typealias Default = AppStorage`, does not help. To check, grep the generated
+  bridge:
+
+```
+grep Java_initState_ .build/plugins/outputs/*/FurAffinityUI/destination/skipstone/SkipBridgeGenerated/<View>_Bridge.swift
+```
 - SkipUI has no `@Entry` macro: write the `EnvironmentKey` by hand.
 - **`CGSize` is fine to use** — but the module has more than one type named `CGSize`
   in scope: `Foundation.CGSize` (which FAKit extends and its APIs take) and the one
