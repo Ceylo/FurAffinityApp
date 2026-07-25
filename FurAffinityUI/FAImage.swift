@@ -5,9 +5,9 @@
 //  The Android counterpart of the iOS `Kingfisher+FA.swift`. iOS renders FA images
 //  with Kingfisher (`FAImage`/`FAAnimatedImage` return `KFImage`/`KFAnimatedImage`);
 //  Android can't compile Kingfisher's ImageIO pipeline, so here `FAImage(_:)` /
-//  `FAAnimatedImage(_:)` return `FAImageView` — a small SwiftUI view that loads encoded
-//  bytes through `CoilImageLoader` (Coil 3 + FA's Cloudflare headers) and renders
-//  `Image(uiImage:)`.
+//  `FAAnimatedImage(_:)` return `FAImageView` — a small SwiftUI view that renders
+//  `Image(uiImage:)` from `FAImageStore` (memory cache + coalescing + bounded, off-main
+//  fetch and decode over `CoilImageLoader`).
 //
 //  `FAImageView` mirrors the slice of Kingfisher's `KFImage` API the shared feed uses
 //  (`.placeholder`, `.onFailure`, `.fade`, `.resizable`) so a symlinked
@@ -20,7 +20,7 @@ import SwiftUI
 import FAKit
 import FAPages
 
-/// A KFImage-shaped SwiftUI view backed by Coil. The KF-style configuration methods
+/// A KFImage-shaped SwiftUI view backed by `FAImageStore`. The KF-style configuration methods
 /// return `Self` so callers can chain `.placeholder { }.onFailure { }.fade(...)` exactly
 /// as on iOS; the trailing standard modifiers (`.aspectRatio`, `.onAppear`, …) then
 /// apply to the resulting `View`.
@@ -84,24 +84,33 @@ struct FAImageView: View {
     }
 
     private func load() async {
-        image = nil
-        failed = false
         guard let url else {
+            image = nil
             failed = true
             return
         }
-        let fetchStart = Date()
-        let data = await CoilImageLoader.load(url)
-        let fetchMs = Int(Date().timeIntervalSince(fetchStart) * 1000)
-        let decodeStart = Date()
-        let decodedImage = data.flatMap { UIImage(data: $0) }
-        let decodeMs = Int(Date().timeIntervalSince(decodeStart) * 1000)
-        logger.debug("render fetch=\(fetchMs)ms decode=\(decodeMs)ms url=\(url.absoluteString)")
-        if let decoded = decodedImage {
+        // Seed from the memory cache so a row scrolled back into view renders on its
+        // first frame. Only clear a stale image when the URL actually changed —
+        // resetting unconditionally is what makes every re-appearance flash its
+        // placeholder.
+        if let cached = FAImageStore.shared.cachedImage(for: url) {
+            logger.debug("render memory url=\(url.absoluteString)")
+            image = cached
+            failed = false
+            return
+        }
+        image = nil
+        failed = false
+
+        let start = Date()
+        let loaded = await FAImageStore.shared.image(for: url)
+        let elapsedMs = Int(Date().timeIntervalSince(start) * 1000)
+        logger.debug("render \(elapsedMs)ms url=\(url.absoluteString)")
+        if let loaded {
             if fadeDuration > 0 {
-                withAnimation(.easeInOut(duration: fadeDuration)) { image = decoded }
+                withAnimation(.easeInOut(duration: fadeDuration)) { image = loaded }
             } else {
-                image = decoded
+                image = loaded
             }
         } else {
             failed = true
@@ -131,11 +140,26 @@ func FAAnimatedImage(_ url: URL?) -> FAImageView {
 
 // MARK: - Prefetching (mirrors Kingfisher+FA.swift so shared list views compile)
 
-/// Warm Coil's disk cache for `urls` (fire-and-forget).
+/// How many leading URLs are warmed at high priority, matching
+/// `Kingfisher+FA.swift`'s split: the first screenful should not queue behind the
+/// rest of the page.
+private let highPriorityPrefetchCount = 3
+
+/// Warm the disk cache for `urls` (fire-and-forget).
+///
+/// Deduplicated first: one author can appear a dozen times in a feed page, and the
+/// avatar list would otherwise ask for the same URL a dozen times.  `FAImageStore`
+/// coalesces the rest — including against a visible row's own load — and bounds the
+/// concurrency, so this no longer spawns one blocking task per URL.
 func prefetch(_ urls: [URL]) {
-    for url in urls {
-        logger.debug("prefetch url=\(url.absoluteString)")
-        Task.detached { _ = await CoilImageLoader.load(url) }
+    var seen = Set<URL>()
+    let unique = urls.filter { seen.insert($0).inserted }
+    logger.debug("prefetch \(unique.count) urls (\(urls.count) before dedupe)")
+    for (index, url) in unique.enumerated() {
+        let priority: FAImagePriority = index < highPriorityPrefetchCount ? .high : .low
+        Task(priority: priority.taskPriority) {
+            await FAImageStore.shared.warm(url, priority: priority)
+        }
     }
 }
 

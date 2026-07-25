@@ -57,5 +57,8 @@ import SwiftUI
 
     /* SKIP @bridge */public func onLowMemory() {
         logger.debug("onLowMemory")
+        // Decoded images are the app's largest reclaimable allocation; the disk cache
+        // behind them is untouched, so this only costs a re-decode.
+        FAImageStore.shared.clearMemoryCache()
     }
 }

@@ -2,11 +2,11 @@
 //  CoilImageLoader.swift
 //  FurAffinityUI (Android)
 //
-//  Native-Swift driver for the Kotlin `FACoilBridge` (Coil 3). FurAffinityUI is a
-//  native Skip module, so it can't `import coil3.*`; instead it reaches the bridge by
+//  Native-Swift driver for the Kotlin `FACoilBridge`. FurAffinityUI is a native Skip
+//  module, so it can't `import coil3.*`/`okhttp3.*`; instead it reaches the bridge by
 //  class name through SkipBridge's `AnyDynamicObject` (@dynamicMemberLookup /
-//  @dynamicCallable JNI reflection). The bridge hands back the *encoded* image bytes,
-//  which callers turn into `UIImage(data:)`.
+//  @dynamicCallable JNI reflection). The bridge hands back an on-disk *path*, never
+//  image bytes — callers decode it off the main actor via `UIImage(contentsOfFile:)`.
 //
 //  Credentials (FA UA + Cloudflare cookie header) are seeded once via `configure`
 //  after login; `load` then just fetches. Android-only: the JNI machinery lives behind
@@ -48,38 +48,45 @@ enum CoilImageLoader {
         #endif
     }
 
-    /// True when `url`'s encoded bytes are already in Coil's disk cache (no network).
+    /// True when `url`'s encoded bytes are already in the disk cache (no network).
     static func isCached(_ url: URL) -> Bool {
-        #if canImport(Android)
-        guard let bridge else { return false }
-        let cached: Bool? = try? bridge.isCached(url.absoluteString)
-        return cached ?? false
-        #else
-        return false
-        #endif
+        cachedPath(url) != nil
     }
 
-    /// Fetch (or cache-hit) the encoded image bytes for `url`. The blocking JNI/Coil
-    /// call runs off the calling actor.
-    static func load(_ url: URL) async -> Data? {
+    /// On-disk path of `url`'s already-cached bytes, or nil if it isn't cached.
+    /// Cheap and non-blocking — a journal lookup, no I/O of the bytes themselves.
+    static func cachedPath(_ url: URL) -> String? {
         #if canImport(Android)
-        let urlString = url.absoluteString
-        return await Task.detached { loadSync(urlString) }.value
+        guard let bridge else { return nil }
+        do {
+            let path: String? = try bridge.cachedPath(url.absoluteString)
+            return path
+        } catch {
+            logger.error("CoilImageLoader.cachedPath threw for \(url): \(error)")
+            return nil
+        }
         #else
         return nil
         #endif
     }
 
-    #if canImport(Android)
-    private static func loadSync(_ urlString: String) -> Data? {
+    /// On-disk path of `url`'s bytes, downloading them into the cache if needed.
+    ///
+    /// **Blocking** — the JNI call runs the HTTP request and its Cloudflare retries
+    /// synchronously. Callers must already be off the main actor and off the Swift
+    /// cooperative pool; `FAImageStore` owns that (a bounded `DispatchQueue` gate).
+    static func fetchPath(_ url: URL) -> String? {
+        #if canImport(Android)
         guard let bridge else { return nil }
         do {
-            let data: Data? = try bridge.load(urlString)
-            return data
+            let path: String? = try bridge.fetch(url.absoluteString)
+            return path
         } catch {
-            logger.error("CoilImageLoader.load threw for \(urlString): \(error)")
+            logger.error("CoilImageLoader.fetch threw for \(url): \(error)")
             return nil
         }
+        #else
+        return nil
+        #endif
     }
-    #endif
 }
