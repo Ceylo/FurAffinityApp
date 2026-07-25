@@ -4,7 +4,9 @@ buildServer.json
 
 # Skip / Android
 .build/
+.idea/
 Android/.gradle/
+Android/.kotlin/
 Android/app/build/
 DerivedData/
 Package.resolved

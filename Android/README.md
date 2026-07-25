@@ -94,6 +94,14 @@ Transpiled Kotlin lands under `.build/` (e.g.
 `.build/plugins/outputs`, `.build/Darwin`, and `.build/Android` after changing
 `Skip.env` — the generated Gradle module namespace is cached there.
 
+### Two sources of the Gradle version
+
+`skip gradle` (and the Xcode `Run skip gradle` phase) shells out to the `gradle` on
+`PATH` — the Homebrew one — and ignores `gradlew`. Android Studio uses the wrapper,
+`Android/gradle/wrapper/gradle-wrapper.properties`. **Keep the two equal** (9.6.1
+today); Skip also reads `distributionUrl` out of that file. Skip's catalog pins
+AGP 9.2.0 / Kotlin 2.3.0 / compileSdk 36 / JVM 17.
+
 ## Run
 
 ```
@@ -123,7 +131,10 @@ next run shows FA's "Verify you are human" checkbox. It needs a **real click in 
 emulator window**: synthetic `adb shell input tap` events do not clear it (that was
 the cause of the old "CF loop").
 
-Open `Android/` in Android Studio to attach a debugger to the Kotlin/JNI side.
+Open `Android/` in Android Studio to attach a debugger to the Kotlin/JNI side (its
+`.idea/` is git-ignored; `gradle.xml` there caches paths under `.build/` and is
+regenerated on sync). Alternating between Studio and `skip` can invalidate the Swift
+incremental state — see the wipe at the end of [Rules for shared sources](#rules-for-shared-sources).
 Swift-side logic runs natively (Skip Fuse), so `PersistentLogger` output appears
 in logcat as well — tagged `<subsystem>/<category>`, i.e. `fur.affinity.ui/FA` for
 the app module and `FurAffinity/FAKit` / `FurAffinity/FAPages` for FAKit
@@ -259,8 +270,10 @@ never the iOS app target — so:
     makes `GeometryProxy` ambiguous, so keep it in its own file that names no other
     SwiftUI type.
 
-If a build fails with `missing required module 'CJNI'` across unrelated packages, the
-incremental state is stale (typically after a `Package.swift` or FAKit change). Wipe it:
+If a build fails with `missing required module 'CJNI'` (or `'AndroidNDK'`) across
+unrelated packages, the incremental state is stale — typically after a `Package.swift`
+or FAKit change, or after driving the build from Android Studio and `skip` in turn with
+different `JAVA_HOME`/`ANDROID_HOME` in the environment. Wipe it:
 
 ```
 rm -rf .build/plugins/outputs .build/Darwin .build/Android
