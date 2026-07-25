@@ -64,6 +64,14 @@ struct AndroidRootView: View {
         .task(id: session?.username) {
             await connect()
         }
+        // Logging out clears the model's session; drop ours too so the login screen
+        // comes back. Only fires on a change, so the nil `model.session` this view
+        // starts with — before `connect()` has run — doesn't bounce it.
+        .onChange(of: model.session == nil) { _, hasNoSession in
+            if hasNoSession {
+                session = nil
+            }
+        }
     }
 
     private func notPortedYet(_ target: FATarget) -> some View {

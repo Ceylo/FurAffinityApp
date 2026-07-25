@@ -139,7 +139,7 @@ struct SettingsView: View {
         Task { @MainActor in
             await withTaskCancellationHandler {
                 do {
-                    await FALoginView.logout()
+                    await clearLoginCookies()
                     try await Task.sleep(for: .milliseconds(100))
                     try await model.setSession(nil)
                 } catch {
