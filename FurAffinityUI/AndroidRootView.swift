@@ -39,6 +39,14 @@ struct AndroidRootView: View {
         .environment(model)
         .environment(model.errorStorage)
         .environment(\.navigationStream, navigationStream)
+        .environment(\.openURL, OpenURLAction { url in
+            // Rich text runs its links through `convertingLinksForInAppNavigation()`,
+            // which rewrites the ones we can handle to the app scheme; `FATarget` maps
+            // that back. Anything else — ko-fi, Twitter — goes to the browser.
+            guard let target = FATarget(with: url) else { return .systemAction }
+            navigationStream.send(target)
+            return .handled
+        })
         .task(id: session?.username) {
             await connect()
         }
