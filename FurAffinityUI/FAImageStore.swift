@@ -160,11 +160,35 @@ actor FAImageStore {
         _ = await path(for: url, priority: priority)
     }
 
-    /// The on-disk file backing `url`, downloading it if needed, as a `file://` URL.
-    /// Backs Save/Share of the full-resolution media. Shares `path(for:)`'s in-flight
-    /// entry, so asking for an image a view is already loading costs no second download.
-    func fileUrl(for url: URL, priority: FAImagePriority = .high) async -> URL? {
-        await path(for: url, priority: priority).map { URL(fileURLWithPath: $0) }
+    /// The bytes behind `url` on disk, under `url`'s own filename, downloading them if
+    /// needed. Backs Save/Share of the full-resolution media.
+    ///
+    /// The copy is the point: the coil cache names entries by content hash and gives
+    /// them no extension, so saving or sharing one straight out of the cache produces a
+    /// nameless file the receiving app can't even assign a MIME type to. Shares
+    /// `path(for:)`'s in-flight entry, so this costs no second download.
+    func namedFileUrl(for url: URL, priority: FAImagePriority = .high) async -> URL? {
+        guard let path = await path(for: url, priority: priority) else { return nil }
+        let cached = URL(fileURLWithPath: path)
+
+        let name = url.lastPathComponent
+        guard !name.isEmpty else { return cached }
+
+        let directory = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("fa-media", isDirectory: true)
+        let destination = directory.appendingPathComponent(name)
+        let fileManager = FileManager.default
+        if fileManager.fileExists(atPath: destination.path) {
+            return destination
+        }
+        do {
+            try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+            try fileManager.copyItem(at: cached, to: destination)
+            return destination
+        } catch {
+            logger.error("Could not stage \(name) for save/share: \(error)")
+            return cached
+        }
     }
 
     /// Drop decoded images; the disk cache is untouched. Called from

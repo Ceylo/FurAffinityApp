@@ -120,16 +120,25 @@ extension View {
     }
 }
 
-// MARK: - Sharing (step 4)
+// MARK: - Sharing
 
+/// The iOS signature is `[Any]` because `UIActivityViewController` takes anything;
+/// every call site in the ported screens passes a single local file URL.
 @MainActor
 func share(_ items: [Any]) {
-    logger.info("share() is not implemented on Android yet")
+    guard let url = items.compactMap({ $0 as? URL }).first else {
+        logger.error("share() called with no file URL")
+        return
+    }
+    Task { _ = await MediaBridge.shareOffMain(fileUrl: url) }
 }
 
+/// Android has no "Save to Files" exporter distinct from sharing; the system chooser
+/// includes the Files app. Only reachable from document-backed submissions, which
+/// aren't ported.
 @MainActor
 func exportToFiles(_ urls: [URL]) {
-    logger.info("exportToFiles() is not implemented on Android yet")
+    share(urls)
 }
 
 // MARK: - Thumbnails

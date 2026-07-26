@@ -25,6 +25,7 @@ struct SubmissionMainImage: View {
 
     // @State on a bridged view must be internal, not private (Skip inventory #5).
     @State var errorMessage: String?
+    @State var showZoomableCover = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -48,6 +49,19 @@ struct SubmissionMainImage: View {
                         errorMessage = error.localizedDescription
                     }
                     .aspectRatio(contentMode: .fit)
+                    // iOS presents the viewer from a `fadingSheet` (UIKit-backed).
+                    .fullScreenCover(isPresented: $showZoomableCover) {
+                        zoomableCover
+                    }
+                    // Only when zooming is allowed, so this doesn't silently eat taps
+                    // meant for a wrapping handler — same reason as iOS.
+                    .applying {
+                        if allowZoomableSheet {
+                            $0.onTapGesture { showZoomableCover = true }
+                        } else {
+                            $0
+                        }
+                    }
             }
         }
         .aspectRatio(CGFloat(widthOnHeightRatio), contentMode: .fit)
@@ -55,7 +69,32 @@ struct SubmissionMainImage: View {
         // load and reports no path, so ask the store directly — it coalesces with the
         // load already in flight, so this costs no second download.
         .task(id: fullResolutionMediaUrl) {
-            fullResolutionMediaFileUrl = await FAImageStore.shared.fileUrl(for: fullResolutionMediaUrl)
+            fullResolutionMediaFileUrl = await FAImageStore.shared.namedFileUrl(for: fullResolutionMediaUrl)
+        }
+    }
+
+    private var zoomableCover: some View {
+        ZStack(alignment: .topLeading) {
+            Color.black
+                .ignoresSafeArea()
+
+            Zoomable {
+                FAImage(fullResolutionMediaUrl)
+            }
+            .contentAspectRatio(Double(widthOnHeightRatio))
+            .initialZoomLevel(.boundedFill(maxScaledFit: 2))
+            .primaryZoomLevel(.fill)
+            .secondaryZoomLevel(.fit)
+            .ignoresSafeArea()
+
+            // fullScreenCover has no navigation chrome, so it needs its own way out.
+            Button {
+                showZoomableCover = false
+            } label: {
+                Image(systemName: "xmark")
+                    .foregroundStyle(.white)
+                    .padding(16)
+            }
         }
     }
 }
