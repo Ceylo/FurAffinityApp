@@ -16,6 +16,8 @@ func view(for target: FATarget) -> some View {
     switch target {
     case let .submission(url, previewData):
         RemoteSubmissionView(url: url, previewData: previewData)
+    case let .submissionMetadata(metadata, resolution):
+        SubmissionMetadataView(metadata: metadata, resolution: resolution)
     default:
         notPortedYet
     }

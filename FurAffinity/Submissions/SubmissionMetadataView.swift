@@ -86,6 +86,7 @@ struct SubmissionMetadataView: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     NavigationStack {
         withAsync({ await FASubmission.demoImage.metadata }) { metadata in
@@ -95,3 +96,4 @@ struct SubmissionMetadataView: View {
         }
     }
 }
+#endif

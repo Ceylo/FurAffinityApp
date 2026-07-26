@@ -13,14 +13,17 @@ Two main code areas:
 An in-progress **Android port** builds the same SwiftUI source with [Skip](https://skip.dev)
 Fuse (root `Package.swift` + `FurAffinityUI/` target + `Android/`/`Darwin/` scaffolding). The
 iOS Xcode target is unaffected — shared files stay in place and are pulled into the Android
-build as symlinks under `FurAffinityUI/Shared/`. `import os` works on both platforms:
+build as symlinks under `FurAffinityUI/Shared/`. Ported so far: the Followed feed and the
+submission detail screen (image, zoomable viewer, favorite, Save/Share, description with
+in-app links, read-only comments, metadata). `import os` works on both platforms:
 FAKit ships an Android-only compatibility target named `os` (`FAKit/Sources/OSCompat/`)
 vending `Logger` (→ logcat) and a no-op `OSSignposter`. Four dependencies are forked on
 `Ceylo/<repo>` `android` branches — `Defaults`, `Kingfisher`, and `skip-ui`/`skip-fuse-ui`
-(the latter two to implement `listRowInsets`, unavailable upstream). Images go through an
-Android-only pipeline (`FAImageStore` + `FACoilBridge`) rather than Kingfisher. See
-`Android/README.md` for build/run/test, the symlink-farm rationale, the fork list, and the
-image-pipeline rules.
+(the latter two for `listRowInsets`, `Text(AttributedString)` and `FlowRow`, all
+unavailable or absent upstream). Images go through an Android-only pipeline
+(`FAImageStore` + `FACoilBridge`) rather than Kingfisher, and Save/Share through
+`FAMediaBridge`. See `Android/README.md` for build/run/test, the symlink-farm rationale,
+the fork list, what the submission screen defers and why, and the image-pipeline rules.
 
 ## Architecture
 

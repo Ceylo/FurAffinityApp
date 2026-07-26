@@ -197,8 +197,8 @@ xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,name=iP
 |---|---|
 | `Ceylo/Defaults` | Android port |
 | `Ceylo/Kingfisher` | Android port |
-| `Ceylo/skip-ui` | implements `listRowInsets` (upstream: `@available(*, unavailable)`) |
-| `Ceylo/skip-fuse-ui` | ditto — the Fuse side of the same modifier |
+| `Ceylo/skip-ui` | `listRowInsets`; `Text(bridgedMarkdown:)`; `FlowRow`; SF Symbol mappings |
+| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(AttributedString)`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
 
 All on an `android` branch, referenced by URL + branch from `Package.swift` (and,
 for Defaults/Kingfisher, the Xcode project too). While iterating, re-point the root
@@ -225,6 +225,30 @@ module). See `SkipSpike/UPSTREAM_INVENTORY.md` §B item 5b for the upstream cont
 
 **Note:** skip-ui arrives transitively via skip-fuse-ui, so overriding it needs its own
 entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
+
+### The other fork patches
+
+- **`Text(AttributedString)`** is `@available(*, unavailable)` upstream, which blocks all
+  rich text. SkipUI's rich-text model *is* markdown (an `AttributedString` renders
+  through its `MarkdownNode`), so the Fuse side re-emits attributed content as escaped
+  markdown — `[text](<url>)` for links, `**`/`*`/`~` for inline presentation intents —
+  and `SkipUI.Text(bridgedMarkdown:)` parses it. That init deliberately bypasses
+  `LocalizedStringKey`: the content is user data and must not be bundle-looked-up or
+  `String.format`ed. `markdownRepresentation` returns nil when nothing needs markdown and
+  `Text` then falls back to `verbatim`, because SkipUI only builds a `MarkdownNode` when
+  the string actually contains a link or emphasis construct and renders the source
+  verbatim otherwise — which would expose the escapes.
+- **`FlowRow`** replaces SwiftUI's `Layout` protocol, which SkipUI doesn't implement and
+  which can't be emulated: a `Layout` enumerates and places its subviews, and an opaque
+  `Content` gives a Fuse module no access to them. Compose wraps natively, so it is a
+  container instead, with `FurAffinityUI/FlowLayout.swift` keeping the iOS call signature.
+- **`glassEffect`** and **`AnyTransition.animation`** become pass-throughs rather than
+  `unavailable`. `#available(iOS 26, *)` is vacuously true off-Apple, so a shared source
+  takes its Liquid Glass branch on Android; making the call unbuildable is worse than
+  ignoring an effect Compose can't express.
+- **SF Symbol mappings** for the symbols this app uses (`safari`,
+  `square.and.arrow.down`, `bubble`, `exclamationmark.bubble`, `ellipsis.bubble`,
+  `message`, `text.badge.star`). Unmapped names render as a warning triangle.
 
 ## Images
 
@@ -270,6 +294,69 @@ first visible thumbnail to appear:
 The network was never the problem: the visible rows were queued behind ~144 unbounded
 prefetches. Scrolling 72 items and back now serves 93 images from memory vs 38 re-decodes.
 
+## Submission screen
+
+Tapping a feed card pushes the same `RemoteSubmissionView` → `SubmissionView` the iOS app
+draws. Those, and `RemoteView`, `SubmissionPreviewView`, `SubmissionControlsView`,
+`SubmissionMetadataView` and all of `Comments/`, are symlinked **verbatim**.
+
+Ported: the image, the zoomable full-screen viewer, favorite (with the optimistic
+`UpdateHandler` rollback), Save to gallery, Share, the description with in-app link
+routing, read-only threaded comments, and the metadata screen.
+
+Deferred, with the reason:
+
+| Not ported | Why |
+|---|---|
+| Comment posting, note sending | SkipSwiftUI has no `ObservableObject`/`@StateObject`, and the whole `Replying`/`CommentEditor` machinery is built on them. Android passes `replyAction: nil` / `acceptsNewReplies: false`, so the swipe/context reply paths are inert. |
+| Story (`.text`) and music (`.audio`) submissions | `StoryDocument` (PDFKit reflow, DOCX, QuickLook) and AVPlayer + `MPNowPlayingInfoCenter` are Apple-only stacks. Both render a placeholder with a link to the file. |
+| `scrollToItem` (scroll a deep-linked comment into view) | see below |
+
+### Android-only substitutes
+
+Each keeps the iOS name and signature so symlinked callers compile unchanged:
+`SubmissionMainImage` (the iOS one is written against Kingfisher's `KFImageProtocol`),
+`HTMLView`, `Zoomable`, `UserNameView`, `FlowLayout`, `MediaSaveHandler`,
+`RemoteContentToolbarItem`, `SubmissionTextContent`/`SubmissionAudioContent`, and the
+no-ops in `SubmissionShims.swift`.
+
+`InAppLinkConversion.swift` duplicates ~20 lines of `InAppNavigation.swift` — the
+link-rewriting half. Splitting the iOS file instead would mean an `.xcodeproj` edit, so
+this is a knowing duplication: **keep the two in sync.** The other half, `view(for:)`,
+can't be shared at all (it names screens that don't exist here) and lives in
+`AndroidNavigationDestination.swift`.
+
+### A `ViewModifier` must not defer its `content`
+
+`ViewModifier.Content` reaches Swift as a `JavaBackedView` around a JNI **local**
+reference, valid only for the frame that built the modifier. Using it synchronously is
+fine; capturing it in a closure Compose invokes later aborts the process:
+
+```
+JNI DETECTED ERROR IN APPLICATION: jobject is an invalid JNI transition frame reference
+  from kotlin.Pair skip.bridge.SwiftBackedFunction1.Swift_invoke(long, java.lang.Object)
+```
+
+That is what `ScrollToItemModifier` does — `ScrollViewReader { reader in content.onFirstAppear { … } }`
+— so `scrollToItem` is an Android no-op. In a tombstone, look for
+`SwiftBackedFunction*.invoke` directly under the SkipUI container owning the closure.
+
+### Save and Share
+
+`FAMediaBridge.kt` (app module, reached by name through `AnyDynamicObject` like
+`FACoilBridge`) inserts into MediaStore's `Pictures/FurAffinity` and starts
+`ACTION_SEND`. Two things the manifest must carry, both easy to lose in a regeneration:
+
+- `<provider android:name="androidx.core.content.FileProvider">` with
+  `${applicationId}.fileprovider` and `@xml/file_paths`. Shared files sit in the app
+  cache, which no other app may read, so they go out as `content://` URIs.
+- `WRITE_EXTERNAL_STORAGE` with `maxSdkVersion="28"` — the MediaStore insert needs no
+  permission under scoped storage, but does on API ≤28.
+
+`FAImageStore.namedFileUrl(for:)` stages the bytes under the media URL's own filename
+first: the coil cache names entries by content hash with **no extension**, so saving or
+sharing straight out of it yields a nameless file with no detectable MIME type.
+
 ## Rules for shared sources
 
 A file under `FurAffinityUI/Shared/` is compiled **twice more** than the iOS target
@@ -291,7 +378,14 @@ never the iOS app target — so:
   addition to the shim.
 - `#if` blocks must contain balanced braces — split an `if/else` into two whole
   branches rather than fencing one arm.
-- `@State`/`@Environment` on a bridged view must be **internal**, not `private`.
+- `@State`/`@Environment` on a bridged view must be **internal**, not `private`, and so
+  must a `ViewModifier` struct itself. Same for a *generic* `ViewModifier`: skipstone's
+  generated bridge calls its `body` without the `content:` label, so type-erase the
+  generic parameter instead (see `ScrollToItemModifier`).
+- **`@State` inside `#if DEBUG` never recomposes.** Skipstone skips those blocks when it
+  generates `<View>_Bridge.swift`, so the property gets no `StateSupport`: writes land in
+  the box and the view never redraws, silently. Declare it outside the guard. To check a
+  view, `grep Java_initState_ $(find .build -name "<View>_Bridge.swift")`.
 - SkipUI has no `@Entry` macro: write the `EnvironmentKey` by hand.
 - **`CGSize` is fine to use** — but the module has more than one type named `CGSize`
   in scope: `Foundation.CGSize` (which FAKit extends and its APIs take) and the one
