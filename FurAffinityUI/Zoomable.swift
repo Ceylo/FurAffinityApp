@@ -105,10 +105,13 @@ public struct Zoomable<Content: View>: View {
                 .onTapGesture(count: 2) {
                     toggleZoom(in: viewport)
                 }
-                .onAppear {
-                    guard !didApplyInitialZoom else { return }
+                // Keyed on the viewport, not `onAppear`: the first composition can run
+                // before Compose has measured it, and every zoom level derives from that
+                // size — applying at 0×0 would silently latch the viewer at fit.
+                .onChange(of: Foundation.CGSize(geometry.size), initial: true) { _, size in
+                    guard !didApplyInitialZoom, size.width > 0, size.height > 0 else { return }
                     didApplyInitialZoom = true
-                    scale = self.scale(for: initialZoomLevel, in: viewport)
+                    scale = self.scale(for: initialZoomLevel, in: size)
                     baseScale = scale
                 }
         }

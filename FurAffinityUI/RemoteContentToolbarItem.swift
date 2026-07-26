@@ -28,7 +28,8 @@ struct RemoteContentToolbarItem<ContentsView: View>: ToolbarContent {
         guard Defaults[.addMessageToSharedItems] else {
             return nil
         }
-        return Text("Sent from the FurAffinity unofficial App for iPhone (https://furaffinity.app/)")
+        // The iOS copy says "for iPhone"; this build is not that.
+        return Text("Sent from the FurAffinity unofficial App for Android (https://furaffinity.app/)")
     }
 
     var body: some ToolbarContent {

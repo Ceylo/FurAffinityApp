@@ -57,7 +57,14 @@ struct SubmissionMainImage: View {
                     // meant for a wrapping handler — same reason as iOS.
                     .applying {
                         if allowZoomableSheet {
-                            $0.onTapGesture { showZoomableCover = true }
+                            // Only once there is something to zoom: the cover has no
+                            // content of its own, so opening it early is a black screen.
+                            // iOS gates on its loaded image the same way.
+                            $0.onTapGesture {
+                                if fullResolutionMediaFileUrl != nil {
+                                    showZoomableCover = true
+                                }
+                            }
                         } else {
                             $0
                         }
@@ -68,7 +75,12 @@ struct SubmissionMainImage: View {
         // Publishing the file URL is what enables Save and Share. `FAImage` owns the
         // load and reports no path, so ask the store directly — it coalesces with the
         // load already in flight, so this costs no second download.
+        //
+        // Skipped where the caller can't use it: `SubmissionPreviewView` and the audio
+        // cover pass `.constant(nil)`, and staging a copy of every previewed thumbnail
+        // for a binding that discards it is pure waste.
         .task(id: fullResolutionMediaUrl) {
+            guard allowZoomableSheet else { return }
             fullResolutionMediaFileUrl = await FAImageStore.shared.namedFileUrl(for: fullResolutionMediaUrl)
         }
     }

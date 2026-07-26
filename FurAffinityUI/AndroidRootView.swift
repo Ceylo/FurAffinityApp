@@ -40,10 +40,17 @@ struct AndroidRootView: View {
         .environment(model.errorStorage)
         .environment(\.navigationStream, navigationStream)
         .environment(\.openURL, OpenURLAction { url in
-            // Rich text runs its links through `convertingLinksForInAppNavigation()`,
-            // which rewrites the ones we can handle to the app scheme; `FATarget` maps
-            // that back. Anything else — ko-fi, Twitter — goes to the browser.
-            guard let target = FATarget(with: url) else { return .systemAction }
+            // Only the app scheme is ours. Rich text runs its links through
+            // `convertingLinksForInAppNavigation()`, which rewrites the navigable ones
+            // to that scheme; `FATarget` maps them back.
+            //
+            // Matching on `FATarget(with:)` alone would be wrong: it normalises the
+            // scheme to https before matching, so a *plain* FA URL matches too — and
+            // SkipUI routes every `Link` through this action, so "Open in Web Browser"
+            // would push another copy of the page it is trying to leave.
+            guard url.scheme == appNavigationScheme, let target = FATarget(with: url) else {
+                return .systemAction
+            }
             navigationStream.send(target)
             return .handled
         })

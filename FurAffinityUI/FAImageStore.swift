@@ -174,20 +174,42 @@ actor FAImageStore {
         let name = url.lastPathComponent
         guard !name.isEmpty else { return cached }
 
-        let directory = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("fa-media", isDirectory: true)
-        let destination = directory.appendingPathComponent(name)
+        // Off the actor and onto a real queue: this copies a multi-megabyte file, and
+        // every other load would otherwise serialize behind it.
+        return await gated(priority) { Self.staged(cached, as: name, for: url) ?? cached }
+    }
+
+    /// Copies `source` to a stable location named `name`, or nil if that fails.
+    ///
+    /// One directory per source URL, so two submissions whose media share a filename
+    /// don't collide. The copy goes to a unique temporary name and is then moved into
+    /// place, so a copy interrupted midway can't leave a truncated file that later calls
+    /// would hand out as if it were complete.
+    private nonisolated static func staged(_ source: URL, as name: String, for url: URL) -> URL? {
         let fileManager = FileManager.default
+        guard let caches = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+            logger.error("No caches directory to stage \(name) in")
+            return nil
+        }
+
+        let directory = caches
+            .appendingPathComponent("fa-media", isDirectory: true)
+            .appendingPathComponent(String(url.absoluteString.hashValue, radix: 16), isDirectory: true)
+        let destination = directory.appendingPathComponent(name)
         if fileManager.fileExists(atPath: destination.path) {
             return destination
         }
+
+        let partial = directory.appendingPathComponent("." + UUID().uuidString)
         do {
             try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
-            try fileManager.copyItem(at: cached, to: destination)
+            try fileManager.copyItem(at: source, to: partial)
+            try fileManager.moveItem(at: partial, to: destination)
             return destination
         } catch {
+            try? fileManager.removeItem(at: partial)
             logger.error("Could not stage \(name) for save/share: \(error)")
-            return cached
+            return nil
         }
     }
 
