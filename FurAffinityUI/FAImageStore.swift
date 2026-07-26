@@ -160,6 +160,13 @@ actor FAImageStore {
         _ = await path(for: url, priority: priority)
     }
 
+    /// The on-disk file backing `url`, downloading it if needed, as a `file://` URL.
+    /// Backs Save/Share of the full-resolution media. Shares `path(for:)`'s in-flight
+    /// entry, so asking for an image a view is already loading costs no second download.
+    func fileUrl(for url: URL, priority: FAImagePriority = .high) async -> URL? {
+        await path(for: url, priority: priority).map { URL(fileURLWithPath: $0) }
+    }
+
     /// Drop decoded images; the disk cache is untouched. Called from
     /// `FurAffinityUIAppDelegate.onLowMemory()`.
     nonisolated func clearMemoryCache() {

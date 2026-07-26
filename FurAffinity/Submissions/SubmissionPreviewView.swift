@@ -52,6 +52,7 @@ struct SubmissionPreviewView: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     NavigationStack {
         SubmissionPreviewView(
@@ -59,3 +60,4 @@ struct SubmissionPreviewView: View {
         )
     }
 }
+#endif

@@ -14,6 +14,8 @@ import FAKit
 @MainActor @ViewBuilder
 func view(for target: FATarget) -> some View {
     switch target {
+    case let .submission(url, previewData):
+        RemoteSubmissionView(url: url, previewData: previewData)
     default:
         notPortedYet
     }

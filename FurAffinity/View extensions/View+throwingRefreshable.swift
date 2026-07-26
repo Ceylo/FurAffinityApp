@@ -7,11 +7,12 @@
 
 import SwiftUI
 
-private struct RefreshableWithError: ViewModifier {
+// Skip bridges views: a bridged view and its @Environment must not be private.
+struct RefreshableWithError: ViewModifier {
     var action: String
     var webBrowserURL: URL?
     var closure: () async throws -> Void
-    @Environment(ErrorStorage.self) private var errorStorage
+    @Environment(ErrorStorage.self) var errorStorage
 
     func body(content: Content) -> some View {
         content

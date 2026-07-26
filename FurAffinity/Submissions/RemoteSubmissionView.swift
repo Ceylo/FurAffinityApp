@@ -9,8 +9,9 @@ import SwiftUI
 import FAKit
 
 struct RemoteSubmissionView: View {
-    @Environment(Model.self) private var model
-    @Environment(ErrorStorage.self) private var errorStorage
+    // Skip bridges these views: bridged @State/@Environment must not be private.
+    @Environment(Model.self) var model
+    @Environment(ErrorStorage.self) var errorStorage
     
     var url: URL
     var previewData: FASubmissionPreview?
@@ -76,6 +77,7 @@ struct RemoteSubmissionView: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     withAsync({ try await Model.demo }) {
         RemoteSubmissionView(
@@ -87,3 +89,4 @@ struct RemoteSubmissionView: View {
         .environment($0.errorStorage)
     }
 }
+#endif

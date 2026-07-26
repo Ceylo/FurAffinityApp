@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Combine
 
 fileprivate extension ActionState {
     var saveButtonImageName: String {
@@ -37,6 +36,7 @@ struct SaveButton: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     ForEach([false, true], id: \.self) { disabled in
         HStack {
@@ -49,3 +49,4 @@ struct SaveButton: View {
         }
     }
 }
+#endif

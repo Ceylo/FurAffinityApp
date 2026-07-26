@@ -74,7 +74,8 @@ struct SubmissionControlsView: View {
         self.saveHandler = MediaSaveHandler(errorStorage: errorStorage)
     }
 
-    @State private var saveHandler: MediaSaveHandler
+    // Skip bridges these views: bridged @State/@Environment must not be private.
+    @State var saveHandler: MediaSaveHandler
     
     var body: some View {
         HStack {
@@ -148,6 +149,7 @@ struct SubmissionControlsView: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview(traits: .sizeThatFitsLayout) {
     @Previewable
     @State var errorStorage = ErrorStorage()
@@ -201,3 +203,4 @@ struct SubmissionControlsView: View {
             .frame(height: 18)
     }
 }
+#endif
