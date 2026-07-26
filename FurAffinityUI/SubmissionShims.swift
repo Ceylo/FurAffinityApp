@@ -108,16 +108,6 @@ extension View {
     ) -> some View {
         self
     }
-
-    /// Focusing a deep-linked comment needs the collapse machinery from step 6.
-    func autoFocusingDeepHighlight(
-        in comments: [FAComment],
-        targetCid: Int?,
-        acceptsNewReplies: Bool,
-        replyAction: ((_ cid: Int) -> Void)?
-    ) -> some View {
-        self
-    }
 }
 
 // MARK: - Sharing

@@ -28,6 +28,16 @@ struct ContinueThreadRow: View {
         }
     }
 
+    /// SkipUI has no automatic grammar agreement — it renders `^[…](inflect: true)`
+    /// literally — so Android pluralises by hand.
+    private var hiddenCountText: Text {
+        #if os(Android)
+        Text(hiddenCount == 1 ? "1 reply" : "\(hiddenCount) replies")
+        #else
+        Text("^[\(hiddenCount) reply](inflect: true)")
+        #endif
+    }
+
     var body: some View {
         HStack(alignment: .top) {
             Image(systemName: "ellipsis.bubble")
@@ -38,7 +48,7 @@ struct ContinueThreadRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Continue thread")
                     .font(.subheadline.weight(.medium))
-                Text("^[\(hiddenCount) reply](inflect: true)")
+                hiddenCountText
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -60,6 +70,7 @@ struct ContinueThreadRow: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     NavigationStack {
         List {
@@ -72,3 +83,4 @@ struct ContinueThreadRow: View {
         .listStyle(.plain)
     }
 }
+#endif
