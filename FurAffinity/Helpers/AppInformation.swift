@@ -40,6 +40,14 @@ class AppInformation {
     var latestRelease: Release?
     var isUpToDate: Bool?
 
+    /// Whether `fetch()` can ever produce a `latestRelease`, so a UI can hide the
+    /// update rows instead of leaving them at their placeholder forever.
+#if os(Android)
+    let tracksLatestRelease = false
+#else
+    let tracksLatestRelease = true
+#endif
+
     func fetch() async throws {
 #if os(Android)
         // The update check reads the iOS release feed and relies on the Darwin

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0E06AEA6028467B9110C67E9 /* NotificationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99B6D6EA7F946B29E403A1C9 /* NotificationViewController.swift */; };
+		298B0B52ED8820794C7B8313 /* FADefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59717C36FFF4AB8448942F96 /* FADefault.swift */; };
 		2EDFB020CB332BCD78AAAC83 /* LoginCookies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DAE7CF11945226ED5F47626 /* LoginCookies.swift */; };
 		3A6366CC81F99000EEA67C28 /* NotificationsProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24EA1B59AE1F6A51D2D71E4C /* NotificationsProtocols.swift */; };
 		43F70DE346902EBD915BC069 /* SubmissionsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D56727047B968FBBC1AC85BB /* SubmissionsTabView.swift */; };
@@ -206,6 +207,7 @@
 		3DAE7CF11945226ED5F47626 /* LoginCookies.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LoginCookies.swift; sourceTree = "<group>"; };
 		50D365DFE524C75006DA1FBF /* UserPreviewData.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UserPreviewData.swift; sourceTree = "<group>"; };
 		58119C7E67EC670409E1D1CC /* GeometryProxy+FASize.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "GeometryProxy+FASize.swift"; sourceTree = "<group>"; };
+		59717C36FFF4AB8448942F96 /* FADefault.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FADefault.swift; sourceTree = "<group>"; };
 		5984ACB60D47CABBFCF22AD3 /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		5D2364BADB5ED5A6F51CD91C /* UsernameField.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UsernameField.swift; sourceTree = "<group>"; };
 		630BB43B07A3008252B5171B /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = SDKROOT; };
@@ -556,6 +558,7 @@
 				58119C7E67EC670409E1D1CC /* GeometryProxy+FASize.swift */,
 				E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */,
 				3DAE7CF11945226ED5F47626 /* LoginCookies.swift */,
+				59717C36FFF4AB8448942F96 /* FADefault.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -1005,6 +1008,7 @@
 				D1B7779E7CB722ADBFB21575 /* GeometryProxy+FASize.swift in Sources */,
 				DA348CE7A0CF8BABDB01FBFA /* ImageCacheControl.swift in Sources */,
 				2EDFB020CB332BCD78AAAC83 /* LoginCookies.swift in Sources */,
+				298B0B52ED8820794C7B8313 /* FADefault.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

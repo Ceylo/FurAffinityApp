@@ -305,15 +305,23 @@ never the iOS app target — so:
   bridged view's `Java_initState_<name>`/`Java_syncState_<name>` from the literal
   attribute (`@State`, `@AppStorage`, …). A wrapper of your own gets no entry, so its
   box is never given a Compose state and the value neither persists nor recomposes —
-  silently. That is why Android settings toggles are written `@AppStorage(.someKey)`
-  (`FurAffinityUI/AndroidAppStorage.swift` adds the `Defaults.Key` initializer) rather
-  than behind a re-declared `@Default`; wrapping `AppStorage`, or
-  `typealias Default = AppStorage`, does not help. To check, grep the generated
-  bridge:
+  silently. Wrapping `AppStorage`, or `typealias Default = AppStorage`, does not help,
+  and skipstone is a closed binary (the `skip` Homebrew cask), so the list can't be
+  extended. To check whether a property got bridged, grep the generated bridge:
 
 ```
 grep Java_initState_ .build/plugins/outputs/*/FurAffinityUI/destination/skipstone/SkipBridgeGenerated/<View>_Bridge.swift
 ```
+
+  A custom wrapper can still work if it **owns its own box** instead of relying on
+  that codegen — see `FurAffinityUI/AndroidFADefault.swift`, which backs the app's
+  `@FADefault`. `BridgedAppStorageBox`, `Java_initStateSupport()` and
+  `Binding(appStorageBox:)` are public skip-fuse-ui API, and the generated
+  `rememberSaveable` only supplies *lifetime*: one support object kept alive across
+  recompositions. A static box per key gives the same guarantee for process-lived app
+  settings, and reading it during body evaluation still reads the Compose
+  `MutableState` inside the composition, which is what registers the recomposition
+  dependency. This does **not** generalize to per-view-instance state.
 - SkipUI has no `@Entry` macro: write the `EnvironmentKey` by hand.
 - **`CGSize` is fine to use** — but the module has more than one type named `CGSize`
   in scope: `Foundation.CGSize` (which FAKit extends and its APIs take) and the one

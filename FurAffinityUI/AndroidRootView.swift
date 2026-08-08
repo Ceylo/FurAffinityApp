@@ -41,16 +41,13 @@ struct AndroidRootView: View {
                     }
                     .tag(Tab.submissions)
 
-                    NavigationStack {
-                        SettingsView()
-                            .navigationDestination(for: FATarget.self) { target in
-                                notPortedYet(target)
-                            }
-                    }
-                    .tabItem {
-                        Label("Settings", systemImage: "gearshape")
-                    }
-                    .tag(Tab.settings)
+                    // SettingsView brings its own NavigationStack, same as on iOS,
+                    // and has no FATarget destinations.
+                    SettingsView()
+                        .tabItem {
+                            Label("Settings", systemImage: "gearshape")
+                        }
+                        .tag(Tab.settings)
                 }
             } else {
                 AndroidLoginView(onSession: { session = $0 })
