@@ -7,11 +7,30 @@
 
 
 import SwiftUI
-import Combine
 import FAKit
 
+/// One-way channel from tappable links to the navigation host.
+///
+/// Events carry a monotonic ID because `FATarget` is `Hashable`: without it, an
+/// `.onChange` observer would silently drop two identical consecutive navigations.
+@Observable
+final class NavigationStream {
+    struct Event: Equatable {
+        let target: FATarget
+        let id: Int
+    }
+
+    private(set) var latest: Event?
+    private var nextID = 0
+
+    func send(_ target: FATarget) {
+        nextID += 1
+        latest = .init(target: target, id: nextID)
+    }
+}
+
 extension EnvironmentValues {
-    @Entry var navigationStream: PassthroughSubject<FATarget, Never> = .init()
+    @Entry var navigationStream = NavigationStream()
 }
 
 /// - Warning: This view should be avoided in scrolling content,
