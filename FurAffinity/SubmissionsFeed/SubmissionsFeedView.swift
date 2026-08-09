@@ -171,8 +171,13 @@ struct SubmissionsFeedView: View {
             NotificationOverlay(itemCount: $newSubmissionsCount)
                 .offset(y: 40)
         }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            autorefreshIfNeeded()
+        .task {
+            let events = NotificationCenter.default
+                .notifications(named: UIApplication.willEnterForegroundNotification)
+                .map { _ in () }
+            for await _ in events {
+                autorefreshIfNeeded()
+            }
         }
         // One-shot newer-submissions check after a cold-launch restore, reusing the
         // foreground autorefresh's scroll-preserving choreography. `initial: true`
