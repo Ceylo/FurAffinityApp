@@ -9,18 +9,18 @@ import SwiftUI
 import Defaults
 
 struct NotificationSettingsView: View {
-    @FADefault(.notifySubmissions) private var notifySubmissions: Bool
-    @FADefault(.notifyNotes) private var notifyNotes: Bool
-    @FADefault(.notifySubmissionComments) private var notifySubmissionComments: Bool
-    @FADefault(.notifyJournalComments) private var notifyJournalComments: Bool
-    @FADefault(.notifyShouts) private var notifyShouts: Bool
-    @FADefault(.notifyJournals) private var notifyJournals: Bool
+    @Default(.notifySubmissions) private var notifySubmissions: Bool
+    @Default(.notifyNotes) private var notifyNotes: Bool
+    @Default(.notifySubmissionComments) private var notifySubmissionComments: Bool
+    @Default(.notifyJournalComments) private var notifyJournalComments: Bool
+    @Default(.notifyShouts) private var notifyShouts: Bool
+    @Default(.notifyJournals) private var notifyJournals: Bool
 
-    @FADefault(.badgeNotes) private var badgeNotes: Bool
-    @FADefault(.badgeSubmissionComments) private var badgeSubmissionComments: Bool
-    @FADefault(.badgeJournalComments) private var badgeJournalComments: Bool
-    @FADefault(.badgeShouts) private var badgeShouts: Bool
-    @FADefault(.badgeJournals) private var badgeJournals: Bool
+    @Default(.badgeNotes) private var badgeNotes: Bool
+    @Default(.badgeSubmissionComments) private var badgeSubmissionComments: Bool
+    @Default(.badgeJournalComments) private var badgeJournalComments: Bool
+    @Default(.badgeShouts) private var badgeShouts: Bool
+    @Default(.badgeJournals) private var badgeJournals: Bool
 
     var body: some View {
         Form {

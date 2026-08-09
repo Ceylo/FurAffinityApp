@@ -191,6 +191,34 @@ The iOS build must stay green at every step:
 xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
+## Defaults
+
+`@Default(.someKey)` works on Android: `Ceylo/Defaults@android` guards its SwiftUI
+support out (importing SwiftUI → SkipUI → CJNI from a plain SwiftPM package breaks the
+build), so the app module re-declares the wrapper in
+`FurAffinityUI/AndroidDefault.swift`. Shared screens spell it exactly as on iOS, and it
+is reactive to writes from anywhere via `AppStorageSupport`'s SharedPreferences
+listener.
+
+**Known bug — `Defaults[key] = value` does not persist on Android.** Measured in one
+process: `UserDefaults.standard.set(false, forKey:)` and `set(7, forKey:)` both land in
+`shared_prefs/defaults.xml`, while `Defaults[.animateAvatars] = false` and
+`Defaults[.settingsSchemaVersion] = 9` do not — though `Defaults[...]` reads back the
+new value, so the loss is silent. `Defaults._set` calls SkipFoundation's
+`set(_ value: Any?, forKey:)` with whatever `toSerializable` boxes the value into, and
+that setter ends in a `// we ignore` branch for types it doesn't recognize.
+
+Nothing on Android depends on it *yet* — `runSettingsMigrations()` is a no-op here and
+`@Default` writes through `AppStorage` — but any ported screen that writes a setting
+through `Defaults[...]` will silently lose it. Fix belongs in the fork's
+`UserDefaults._set` (call the typed overloads), not in the app.
+
+To check what actually persisted:
+
+```
+adb shell run-as com.example.id1234 cat shared_prefs/defaults.xml
+```
+
 ## Forks
 
 | Fork | Why |

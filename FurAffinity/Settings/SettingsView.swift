@@ -16,8 +16,8 @@ struct SettingsView: View {
     @Environment(Model.self) var model
     @State var dumpingLogs = false
 
-    @FADefault(.animateAvatars) private var animateAvatars: Bool
-    @FADefault(.addMessageToSharedItems) private var addMessageToSharedItems: Bool
+    @Default(.animateAvatars) private var animateAvatars: Bool
+    @Default(.addMessageToSharedItems) private var addMessageToSharedItems: Bool
 
     @State var cachedFileSize = "unknown"
 

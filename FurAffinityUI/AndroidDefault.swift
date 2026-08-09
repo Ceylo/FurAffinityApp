@@ -1,11 +1,15 @@
 //
-//  AndroidFADefault.swift
+//  AndroidDefault.swift
 //  FurAffinityUI (Android)
 //
-//  Android's `@FADefault`, the app's own defaults-backed property wrapper. iOS aliases
-//  it to Defaults' `@Default` (FurAffinity/Helpers/FADefault.swift); this is the
-//  Android implementation, so shared settings screens declare a toggle once with no
-//  `#if`.
+//  Defaults' `@Default` for Android. `Ceylo/Defaults@android` guards its SwiftUI
+//  support behind `#if !os(Android)` — importing SwiftUI (→ SkipUI → CJNI) from a plain
+//  SwiftPM package breaks the Skip build — so the name is free here, and declaring it
+//  in the app module (which does link CJNI) lets shared screens write
+//  `@Default(.someKey)` exactly as they do on iOS, with no `#if`.
+//
+//  `#if os(Android)` is correct here, unlike the other substitution files: the Darwin
+//  bridge compile of this module resolves `Default` from the real Defaults package.
 //
 //  Why this can't just be `@AppStorage`: skipstone recognizes state property wrappers
 //  by *attribute name* and generates each bridged view's `Java_initState_<name>` from
@@ -22,7 +26,14 @@
 //  `MutableState` inside the composition, which is what registers the recomposition
 //  dependency.
 //
+//  Reactivity matches iOS: `AppStorageSupport` registers a SharedPreferences change
+//  listener, so a write from anywhere — not just this wrapper — updates every view
+//  showing the key. Verified on the emulator.
+//
 //  Bool-only: every settings key the ported screens read is a Bool.
+//
+//  NOTE: writing through `Defaults[key] = value` does *not* persist on Android — see
+//  Android/README.md §Defaults. This wrapper writes via `AppStorage`, which does.
 //
 
 #if os(Android)
@@ -32,11 +43,11 @@ import SkipSwiftUI
 import Defaults
 
 @propertyWrapper
-struct FADefault {
+struct Default {
     private let storage: AppStorage<Bool>
 
     init(_ key: Defaults.Key<Bool>) {
-        storage = FADefaultStorage.storage(for: key)
+        storage = DefaultStorage.storage(for: key)
     }
 
     var wrappedValue: Bool {
@@ -56,7 +67,7 @@ struct FADefault {
 ///
 /// `AppStorage` is a struct over a reference-type box, so copies of a cached value all
 /// read and write the same state.
-private enum FADefaultStorage {
+private enum DefaultStorage {
     nonisolated(unsafe) private static var storages = [String: AppStorage<Bool>]()
     private static let lock = NSLock()
 
@@ -75,12 +86,5 @@ private enum FADefaultStorage {
         return storage
     }
 }
-
-#else
-
-// The module's Darwin bridge compile has the real Defaults, same as iOS.
-import Defaults
-
-typealias FADefault = Default
 
 #endif
