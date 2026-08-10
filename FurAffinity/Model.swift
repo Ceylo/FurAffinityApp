@@ -169,7 +169,6 @@ class Model: NotificationsNuker, NotificationsDeleter {
         autorefreshTask = Task { [weak self] in
             let events = NotificationCenter.default
                 .notifications(named: UIApplication.willEnterForegroundNotification)
-                .map { _ in () }
             for await _ in events {
                 await self?.autorefreshIfNeeded()
             }
