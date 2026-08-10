@@ -7,7 +7,6 @@
 
 import SwiftUI
 import FAKit
-import Combine
 import Defaults
 import OrderedCollections
 
@@ -81,31 +80,36 @@ class Model: NotificationsNuker, NotificationsDeleter {
     /// This is then displayed to the user in a unified way, through ErrorDisplay.
     var errorStorage = ErrorStorage()
     
-    private var subscriptions = Set<AnyCancellable>()
-    private var autorefreshSubscription: AnyCancellable?
+    @ObservationIgnored private var observationTasks: [Task<Void, Never>] = []
+    @ObservationIgnored private var autorefreshTask: Task<Void, Never>?
     /// Last logged UserDefaults snapshot, so state-update logs show only the diff.
     @ObservationIgnored private var lastLoggedDefaults: [String: Any] = [:]
     init() {
         lastLoggedDefaults = DefaultsChangeLog.snapshot()
-        Defaults.publisher(keys: Defaults.Keys.all, options: [])
-            // Defaults delivers KVO synchronously on whichever thread mutates a key
-            // (e.g. background refresh writing latestNotificationIDs off the main actor).
-            // These sinks are @MainActor-isolated, so hop to main before entering them to
-            // avoid an executor-isolation crash. See defaultsWriteFromBackground… test.
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
+        // Defaults yields from whichever thread mutates a key (KVO is synchronous, e.g.
+        // background refresh writing latestNotificationIDs off the main actor), but these
+        // loop bodies run in the enclosing @MainActor context, so the hop is structural.
+        // See defaultsWriteFromBackground… test.
+        observationTasks.append(Task { [weak self] in
+            for await _ in Defaults.updates(Defaults.Keys.all, initial: false) {
+                guard let self else { return }
                 let current = DefaultsChangeLog.snapshot()
                 DefaultsChangeLog.logChanges(from: lastLoggedDefaults, to: current)
                 lastLoggedDefaults = current
             }
-            .store(in: &subscriptions)
-        
-        Defaults.publisher(keys: Defaults.Keys.badges)
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
+        })
+
+        observationTasks.append(Task { [weak self] in
+            for await _ in Defaults.updates(Defaults.Keys.badges) {
+                guard let self else { return }
                 updateDisplayedNotificationCount()
             }
-            .store(in: &subscriptions)
+        })
+    }
+
+    deinit {
+        observationTasks.forEach { $0.cancel() }
+        autorefreshTask?.cancel()
     }
 
     func setSession(_ session: (any FASession)?) async throws {
@@ -146,7 +150,8 @@ class Model: NotificationsNuker, NotificationsDeleter {
             notificationPreviews = nil
             lastNotificationPreviewsFetchDate = nil
             displayedNotificationCount = 0
-            autorefreshSubscription = nil
+            autorefreshTask?.cancel()
+            autorefreshTask = nil
             shouldCheckForNewerSubmissionsAfterRestore = false
             searchResults = nil
             searchCanLoadMore = false
@@ -161,13 +166,13 @@ class Model: NotificationsNuker, NotificationsDeleter {
         try await fetchNotificationPreviews()
         await updateAppInfo()
         
-        autorefreshSubscription = NotificationCenter.default
-            .publisher(for: UIApplication.willEnterForegroundNotification)
-            .sink { [unowned self] _ in
-                Task {
-                    await autorefreshIfNeeded()
-                }
+        autorefreshTask = Task { [weak self] in
+            let events = NotificationCenter.default
+                .notifications(named: UIApplication.willEnterForegroundNotification)
+            for await _ in events {
+                await self?.autorefreshIfNeeded()
             }
+        }
     }
     
     static func shouldAutoRefresh(with lastRefreshDate: Date?) -> Bool {

@@ -8,7 +8,8 @@
 import SwiftUI
 import FAKit
 
-final class NoteReply: ObservableObject, ReplyStorage {
+@Observable
+final class NoteReply: ReplyStorage {
     var isValidForSubmission: Bool {
         isUsernameValid && !subject.isEmpty && !text.isEmpty
     }
@@ -23,9 +24,9 @@ final class NoteReply: ObservableObject, ReplyStorage {
         text = ""
     }
     
-    @Published var destinationUser = ""
-    @Published var subject = ""
-    @Published var text = ""
+    var destinationUser = ""
+    var subject = ""
+    var text = ""
 }
 
 struct NoteReplySession: ReplySession {

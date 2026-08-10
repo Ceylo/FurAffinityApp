@@ -143,6 +143,7 @@
 		87FACE0200000000000DEECF /* NotificationDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FACE0100000000000DEECF /* NotificationDeepLink.swift */; };
 		87FACE0400000000000DEECF /* NotificationCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FACE0300000000000DEECF /* NotificationCoordinatorTests.swift */; };
 		87FACE0600000000000DEECF /* LoggedInViewTabTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FACE0500000000000DEECF /* LoggedInViewTabTests.swift */; };
+		87FACE0800000000000DEECF /* NavigationStreamTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FACE0700000000000DEECF /* NavigationStreamTests.swift */; };
 		87FE0DA72974609E005713DB /* SubmissionsFeedActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FE0DA62974609E005713DB /* SubmissionsFeedActionView.swift */; };
 		87FE0DA929747C0C005713DB /* AppInformation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FE0DA829747C0C005713DB /* AppInformation.swift */; };
 		9D9673BCD0A3A58360370D7B /* ExplorationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F4DE8504EE8E5896B9AA6A /* ExplorationView.swift */; };
@@ -330,6 +331,7 @@
 		87FACE0100000000000DEECF /* NotificationDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationDeepLink.swift; sourceTree = "<group>"; };
 		87FACE0300000000000DEECF /* NotificationCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCoordinatorTests.swift; sourceTree = "<group>"; };
 		87FACE0500000000000DEECF /* LoggedInViewTabTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggedInViewTabTests.swift; sourceTree = "<group>"; };
+		87FACE0700000000000DEECF /* NavigationStreamTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationStreamTests.swift; sourceTree = "<group>"; };
 		87FE0DA62974609E005713DB /* SubmissionsFeedActionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionsFeedActionView.swift; sourceTree = "<group>"; };
 		87FE0DA829747C0C005713DB /* AppInformation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInformation.swift; sourceTree = "<group>"; };
 		99B6D6EA7F946B29E403A1C9 /* NotificationViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationViewController.swift; sourceTree = "<group>"; };
@@ -617,6 +619,7 @@
 				87CCD2F72FC4991600768FDB /* BackgroundRefreshNotificationBuilderTests.swift */,
 				87FACE0300000000000DEECF /* NotificationCoordinatorTests.swift */,
 				87FACE0500000000000DEECF /* LoggedInViewTabTests.swift */,
+				87FACE0700000000000DEECF /* NavigationStreamTests.swift */,
 				87AA1111AABB111100111111 /* MockFASession.swift */,
 				87AA3333AABB333300333333 /* ModelTests.swift */,
 				87AA5555AABB555500555555 /* CachedImageFileURLTests.swift */,
@@ -994,6 +997,7 @@
 				87CCD2F92FC49A2000768FDB /* BackgroundRefreshNotificationBuilderTests.swift in Sources */,
 				87FACE0400000000000DEECF /* NotificationCoordinatorTests.swift in Sources */,
 				87FACE0600000000000DEECF /* LoggedInViewTabTests.swift in Sources */,
+				87FACE0800000000000DEECF /* NavigationStreamTests.swift in Sources */,
 				8791D60329C4D627003FDBBE /* FATargetTests.swift in Sources */,
 				87CF0CA200000000000F0C02 /* CommentFocusTargetTests.swift in Sources */,
 				87AA2222AABB222200222222 /* MockFASession.swift in Sources */,

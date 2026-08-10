@@ -7,7 +7,6 @@
 
 import SwiftUI
 import WebKit
-import Combine
 
 struct WebView: UIViewRepresentable {
     var initialUrl: URL

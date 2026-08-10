@@ -9,7 +9,7 @@ import SwiftUI
 import FAKit
 
 struct NoteEditor: View {
-    @ObservedObject var reply: NoteReply
+    @Bindable var reply: NoteReply
     var defaultContents: NoteReplySession.DefaultContents
     var handler: (_ action: ReplyEditorAction) async -> Void
     
@@ -154,7 +154,7 @@ struct NoteEditor: View {
 
 #Preview("New note") {
     @Previewable
-    @StateObject var reply = NoteReply()
+    @State var reply = NoteReply()
     
     NoteEditor(
         reply: reply,
