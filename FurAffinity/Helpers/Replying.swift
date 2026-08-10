@@ -9,7 +9,7 @@ import SwiftUI
 import FAKit
 
 @MainActor
-protocol ReplyStorage: ObservableObject, Sendable {
+protocol ReplyStorage: Observable, Sendable {
     init()
     var isValidForSubmission: Bool { get }
     func reset()
@@ -41,7 +41,7 @@ protocol ReplyEditor<SomeReplyStorage>: View {
 struct Replying<SomeReplyEditor: ReplyEditor>: ViewModifier {
     @Binding var replySession: SomeReplyEditor.SomeReplySession?
     var replyAction: @MainActor (_ replySession: SomeReplyEditor.SomeReplySession, _ text: SomeReplyEditor.SomeReplyStorage) async throws -> Void
-    @StateObject private var replyStorage = SomeReplyEditor.SomeReplyStorage()
+    @State private var replyStorage = SomeReplyEditor.SomeReplyStorage()
     @State private var replySent: Bool?
     @State private var localErrorStorage = ErrorStorage()
     

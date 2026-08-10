@@ -9,16 +9,17 @@ import Foundation
 import SwiftUI
 import FAKit
 
-final class CommentReply: ObservableObject, ReplyStorage {
+@Observable
+final class CommentReply: ReplyStorage {
     var isValidForSubmission: Bool {
         !commentText.isEmpty
     }
-    
+
     func reset() {
         commentText = ""
     }
-    
-    @Published var commentText: String = ""
+
+    var commentText: String = ""
 }
 
 struct CommentReplySession: ReplySession {

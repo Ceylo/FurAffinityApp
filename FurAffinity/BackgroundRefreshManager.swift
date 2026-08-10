@@ -411,10 +411,14 @@ enum BackgroundRefreshManager {
         guard let url = FAURLs.avatarUrl(for: author) else {
             return nil
         }
-        guard let url = try? await KingfisherManager.shared.retrieveFAImageFile(with: url) else {
+        let file: URL
+        do {
+            file = try await KingfisherManager.shared.retrieveFAImageFile(with: url)
+        } catch {
+            logger.error("Failed to get avatar file for \(author) at \(url): \(error)")
             return nil
         }
-        return INImage(url: url)
+        return INImage(url: file)
     }
 
     /// Enriches a pending notification into a Communication Notification whose leading
@@ -484,7 +488,11 @@ enum BackgroundRefreshManager {
     /// Returns `nil` if the thumbnail can't be fetched, or if blurring fails (so the
     /// unblurred NSFW image is never attached by accident).
     private static func submissionAttachment(thumbnailURL url: URL, needsBlur: Bool) async -> [UNNotificationAttachment]? {
-        guard let file = try? await KingfisherManager.shared.retrieveFAImageFile(with: url) else {
+        let file: URL
+        do {
+            file = try await KingfisherManager.shared.retrieveFAImageFile(with: url)
+        } catch {
+            logger.error("Failed to get thumbnail file at \(url): \(error)")
             return nil
         }
 
