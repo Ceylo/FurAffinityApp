@@ -3,9 +3,9 @@
 //  FurAffinityUI (Android)
 //
 //  Root of the Android app: the login flow until a session exists, then the shared
-//  Followed feed driven by the shared `Model`, inside a `NavigationStack` whose path
-//  *is* the `NavigationStream` (Android has no Combine, see FALink.swift). Pushed
-//  destinations come from `view(for:)` in AndroidNavigationDestination.swift.
+//  Followed feed driven by the shared `Model`, inside a `NavigationStack` fed by the
+//  shared `NavigationStream` (same as iOS's LoggedInView). Pushed destinations come
+//  from `view(for:)` in AndroidNavigationDestination.swift.
 //
 
 import SwiftUI
@@ -15,13 +15,12 @@ struct AndroidRootView: View {
     @State var session: (any FASession)?
     @State var model = Model()
     @State var navigationStream = NavigationStream()
+    @State var path = [FATarget]()
 
     var body: some View {
-        @Bindable var navigation = navigationStream
-
         Group {
             if session != nil {
-                NavigationStack(path: $navigation.path) {
+                NavigationStack(path: $path) {
                     AndroidSubmissionsFeedView()
                         .navigationTitle("Submissions")
                         .navigationDestination(for: FATarget.self) { target in
@@ -39,6 +38,10 @@ struct AndroidRootView: View {
         .environment(model)
         .environment(model.errorStorage)
         .environment(\.navigationStream, navigationStream)
+        .onChange(of: navigationStream.latest) { _, event in
+            guard let event else { return }
+            path.append(event.target)
+        }
         .environment(\.openURL, OpenURLAction { url in
             // Only the app scheme is ours. Rich text runs its links through
             // `convertingLinksForInAppNavigation()`, which rewrites the navigable ones

@@ -367,8 +367,9 @@ never the iOS app target — so:
 - Guard anything that exists only in the Xcode target (SwiftUI `#Preview`s and their
   demo data) with `#if !FA_SKIP_MODULE`. That flag is defined by `Package.swift` for
   both Skip compiles; `os(Android)` cannot express it.
-- Guard Darwin-only frameworks (`Combine`, Kingfisher, Liquid Glass) with
-  `#if !os(Android)` / `#if canImport(…)`; those are genuinely per-platform.
+- Guard Darwin-only frameworks and APIs (Kingfisher, Liquid Glass, `UIApplication`,
+  `Defaults.updates`) with `#if !os(Android)` / `#if canImport(…)`; those are
+  genuinely per-platform.
 - **`import os` needs no guard.** Android's Swift SDK has no `os` module, so FAKit
   ships one: a target literally named `os` (`FAKit/Sources/OSCompat/`) that re-exports
   `AndroidLogging`'s `Logger` and vends a no-op `OSSignposter`. It is only ever a

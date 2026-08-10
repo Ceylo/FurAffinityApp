@@ -9,20 +9,6 @@
 import SwiftUI
 import FAKit
 
-#if FA_SKIP_MODULE
-/// The Android root has no `.onChange`-driven host, so the stream *is* the
-/// navigation path: `send(_:)` pushes, and the root binds `path` to its
-/// `NavigationStack`. Keyed on the module rather than on `os(Android)` so the
-/// module's Darwin bridge compile sees the same type as Android does.
-@Observable
-final class NavigationStream {
-    var path: [FATarget] = []
-
-    func send(_ target: FATarget) {
-        path.append(target)
-    }
-}
-#else
 /// One-way channel from tappable links to the navigation host.
 ///
 /// Events carry a monotonic ID because `FATarget` is `Hashable`: without it, an
@@ -42,7 +28,6 @@ final class NavigationStream {
         latest = .init(target: target, id: nextID)
     }
 }
-#endif
 
 // A hand-written EnvironmentKey rather than @Entry: SkipUI doesn't provide that macro.
 private struct NavigationStreamKey: EnvironmentKey {
