@@ -8,9 +8,10 @@
 //
 //  - `NSUserActivity` / `defaultScrollAnchor`: no Android equivalent, and neither
 //    affects what is drawn.
-//  - Comment posting and note sending are out of scope for the port: SkipSwiftUI has no
-//    `ObservableObject`/`@StateObject`, which the whole Replying/CommentEditor machinery
-//    is built on. The sheets are no-ops and their sessions are never set.
+//  - Comment posting and note sending are out of scope for the port: their editor UI
+//    isn't ported, so the sheets are no-ops and their sessions are never set. (The
+//    `ObservableObject` that used to block sharing the machinery is gone — iOS moved
+//    `ReplyStorage` to `@Observable` — so only the editors themselves are left.)
 //  - `share` / `exportToFiles` land in step 4 (FAMediaBridge).
 //
 

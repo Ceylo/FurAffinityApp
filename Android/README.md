@@ -308,7 +308,7 @@ Deferred, with the reason:
 
 | Not ported | Why |
 |---|---|
-| Comment posting, note sending | SkipSwiftUI has no `ObservableObject`/`@StateObject`, and the whole `Replying`/`CommentEditor` machinery is built on them. Android passes `replyAction: nil` / `acceptsNewReplies: false`, so the swipe/context reply paths are inert. |
+| Comment posting, note sending | The `CommentEditor`/`NoteEditor` UI isn't ported. Android passes `replyAction: nil` / `acceptsNewReplies: false`, so the swipe/context reply paths are inert. (`Replying`'s storage is now `@Observable`, not `ObservableObject`, so the machinery around the editors is no longer the blocker.) |
 | Story (`.text`) and music (`.audio`) submissions | `StoryDocument` (PDFKit reflow, DOCX, QuickLook) and AVPlayer + `MPNowPlayingInfoCenter` are Apple-only stacks. Both render a placeholder with a link to the file. |
 | `scrollToItem` (scroll a deep-linked comment into view) | see below |
 
