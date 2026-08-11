@@ -53,17 +53,38 @@ ln -s ../../../../FurAffinity/Assets.xcassets/Foo.colorset/Contents.json Foo.col
 Skip's resource copy does not follow a symlinked *directory* — it silently copies
 nothing, and the entry never reaches the APK. The failure is quiet: `Color(_:bundle:)`
 falls back to an opaque default, so a 10%-alpha border renders as a solid grey one
-instead of erroring. After changing a catalog, confirm the file actually landed:
+instead of erroring. After changing a catalog, confirm the entry actually landed
+(the mirrored tree is itself made of symlinks, so `find -type f` won't list them):
 
 ```
-find .build/plugins/outputs/android/FurAffinityUI/destination/skipstone/FurAffinityUI/src/main/assets -type f
+ls -R .build/plugins/outputs/*/FurAffinityUI/destination/skipstone/FurAffinityUI/src/main/assets
 ```
+
+The path segment after `outputs/` is the **checkout directory's name**, not the word
+`android` — it differs per worktree, hence the glob.
+
+### Generated art
+
+An entry big enough that a second copy in git would hurt is generated from the iOS
+art instead, and git-ignored. `Scripts/generate-android-assets.sh` writes those —
+today just `AppIcon`, a 512×512 light/dark pair downscaled from two 1024×1024 PNGs
+(the view draws it at 100 pt). It is idempotent and takes under a second, so run it
+after checking out and whenever the iOS art changes:
+
+```
+Scripts/generate-android-assets.sh
+```
+
+A SwiftPM prebuild plugin would be nicer, but it cannot work: `Image(_:bundle:)`
+resolves through this module's catalog **in the source tree**, and the plugin
+sandbox forbids writing there.
 
 ## Prerequisites
 
 ```
-skip checkup                 # verifies toolchain (Xcode, Android SDK, Gradle, JDK)
-skip android sdk install     # if the Android SDK/NDK is missing
+skip checkup                     # verifies toolchain (Xcode, Android SDK, Gradle, JDK)
+skip android sdk install         # if the Android SDK/NDK is missing
+Scripts/generate-android-assets.sh   # derived art (see Generated art above)
 ```
 
 ## Emulator
@@ -331,6 +352,50 @@ first visible thumbnail to appear:
 
 The network was never the problem: the visible rows were queued behind ~144 unbounded
 prefetches. Scrolling 72 items and back now serves 93 images from memory vs 38 re-decodes.
+
+## Login and the long-lived WebView
+
+The logged-out screen is the shared `HomeView` — same icon, buttons and footer as
+iOS, from the same file. Four things in it needed handling, all of them the general
+rules in [Rules for shared sources](#rules-for-shared-sources) applied once each:
+
+| In HomeView | Guard |
+|---|---|
+| the Liquid Glass button branch | `#if FA_SKIP_MODULE` takes the pre-iOS-26 capsules instead. `#available(iOS 26, *)` is vacuously true off-Apple, and `GlassButtonStyle` is unavailable / `.glassProminent` absent. The capsule pair lives in `legacyButtons` so the `#if` holds balanced braces |
+| `ErrorDisplay`, `NotificationCoordinator` | `#if !FA_SKIP_MODULE`; errors reach the user through `AndroidRootView`'s banner, and nothing delivers notifications here |
+| the six `@State`/`@Environment` wrappers | internal, not private |
+| `UIApplication.shared.applicationState` | dropped from a log line that already carries `scenePhase` |
+
+`FurAffinityUI/FALoginView.swift` is the Android substitute for FAKit's WebKit one,
+matching its public surface (`session` binding, `onError`, `makeSession()`) so the
+shared caller compiles unchanged. It cannot live in FAKit — it needs skip-web (see
+`FAHTTPDataSource` for the CJNI rationale) — and it is unguarded, so the Darwin
+bridge compile finds it too; this module's declaration shadows FAKit's.
+
+### Why a hidden WebView is mounted for the whole session
+
+`FAWebSessionView` (in `FAWebSession.swift`) keeps a 1×1, `opacity(0.001)`,
+hit-testing-disabled WebView at the root of `AndroidRootView` for the life of the
+app, the way `RootView` does with `FAChallengeView` on iOS. Two things need a live
+WebView long after any login screen is gone:
+
+- `cf_clearance` is bound to the byte-exact WebView User-Agent, which is read out of
+  a real WebView via JS (a 1 dp one runs scripts fine — verified).
+- `FAHTTPDataSource`'s fallback for a challenged request is to navigate a cleared
+  WebView and read the DOM.
+
+So `FAWebSession.shared` owns the navigator, and `establishSession()` — cookies →
+`OnlineFASession` — always runs against *it*, never against a screen's own WebView.
+Cookies are process-global on Android (`CookieManager`), so the hidden WebView sees
+whatever clearance and auth the visible login sheet just earned.
+
+`makeSession()` (autologin) first `awaitReady()`s that view's first
+`onNavigationFinished`: a `WebViewNavigator` with no attached engine returns an
+*empty cookie list* rather than an error, so a cold-launch autologin that skipped
+the wait would silently look logged out.
+
+Costs worth knowing: while the login sheet is up there are two WebView instances,
+and the hidden one loads FA's home page — ads and all — once per launch.
 
 ## Submission screen
 
