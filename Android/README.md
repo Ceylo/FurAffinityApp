@@ -395,6 +395,13 @@ That is what `ScrollToItemModifier` does — `ScrollViewReader { reader in conte
 first: the coil cache names entries by content hash with **no extension**, so saving or
 sharing straight out of it yields a nameless file with no detectable MIME type.
 
+`FileManager.default.temporaryDirectory` is safe to share from and needs no platform
+branch: the Android build of corelibs Foundation resolves it through `XDG_CACHE_HOME`
+(that string is in `libFoundation.so`; `/tmp` and `TMPDIR` are not), and
+`AndroidBridgeBootstrap` points that at `context.cacheDir`. So the exported log
+(`generateLogFile` in `Logs.swift`) already lands inside the app cache `@xml/file_paths`
+exposes — no `/tmp` involved.
+
 ## Rules for shared sources
 
 A file under `FurAffinityUI/Shared/` is compiled **twice more** than the iOS target
