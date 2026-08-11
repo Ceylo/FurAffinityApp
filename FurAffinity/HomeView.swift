@@ -12,21 +12,33 @@ import FAKit
 // bridged view's members must be visible to skipstone's generated bridge.
 struct HomeViewButtonContents: View {
     var text: String
-    
+    /// Marks the primary action, so it doesn't read as a peer of the secondary one.
+    var prominent = false
+
     var body: some View {
         HStack {
             Spacer()
             Text(text)
                 .padding(10)
                 .font(.headline)
-                .tint(.primary)
+                // Not `.tint`: it only reaches the label through the enclosing
+                // Button on iOS, and `Link` has no such path at all.
+                .foregroundStyle(prominent ? Color.white : Color.primary)
             Spacer()
         }
-        .background(Color.borderOverlay.opacity(0.5))
+        // `.accentColor` would be the obvious fill, but on Android it resolves to
+        // Material's dynamic primary, which flips to a pale tint in dark mode
+        // (#4C5E8B → #B8C6EE) and leaves the light label unreadable. `.blue` is
+        // systemBlue on both platforms — dark enough for a white label in either
+        // appearance, and what `.accentColor` already resolves to on iOS.
+        .background(prominent ? Color.blue : Color.borderOverlay.opacity(0.5))
         .clipShape(.capsule(style: .continuous))
         .overlay {
-            Capsule(style: .continuous)
-                .stroke(Color.buttonBorderOverlay.opacity(0.25), lineWidth: 1)
+            // A border on a filled capsule reads as noise.
+            if !prominent {
+                Capsule(style: .continuous)
+                    .stroke(Color.buttonBorderOverlay.opacity(0.25), lineWidth: 1)
+            }
         }
     }
 }
@@ -67,7 +79,7 @@ struct HomeView: View {
         Button {
             showLoginView = true
         } label: {
-            HomeViewButtonContents(text: "Login with furaffinity.net")
+            HomeViewButtonContents(text: "Login with furaffinity.net", prominent: true)
         }
 
         Link(destination: FAURLs.signupUrl) {
