@@ -7,12 +7,9 @@
 //  surface (`init(avatarUrl:)`, `.cornerRadius`, `.fadeDuration`) but is built on the
 //  Coil-backed `FAImage`.
 //
-//  The default-avatar image and the border color come from this module's own
-//  Assets.xcassets, which Skip mirrors into Android resources: `DefaultAvatar` is a PNG
-//  rendition of the iOS `.heic` (which Android can't decode) and `BorderOverlay.colorset`
-//  single-sources the iOS one — as a real directory holding a *symlinked* `Contents.json`,
-//  because Skip's resource copy does not follow a symlinked *directory* (see
-//  Android/README.md §Sharing asset-catalog entries).
+//  `DefaultAvatar` comes from this module's own Assets.xcassets, which Skip mirrors into
+//  Android resources: a PNG rendition of the iOS `.heic`, which Android can't decode.
+//  `Color.borderOverlay` lives in Colors.swift.
 //
 //  Deferred to a later step: honoring `@Default(.animateAvatars)` with real animated-GIF
 //  avatars (needs `coil-gif`).
@@ -60,9 +57,4 @@ struct AvatarView: View {
                     .stroke(Color.borderOverlay, lineWidth: 1)
             }
     }
-}
-
-extension Color {
-    /// The shared `BorderOverlay` colorset (black @0.1 light / white @0.2 dark).
-    static let borderOverlay = Color("BorderOverlay", bundle: .module)
 }
