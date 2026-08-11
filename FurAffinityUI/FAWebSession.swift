@@ -113,7 +113,8 @@ final class FAWebSession {
             webViewFetch: { url in
                 let html = try await navigator.fetchPageHTML(url)
                 return Data(html.utf8)
-            }
+            },
+            liveCookieHeader: { await navigator.cookieHeader(for: FAURLs.homeUrl) }
         )
 
         return try await OnlineFASession(cookies: authCookies, dataSource: dataSource)

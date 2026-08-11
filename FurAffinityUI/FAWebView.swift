@@ -62,6 +62,14 @@ extension WebViewNavigator {
         return ua.isEmpty ? nil : ua
     }
 
+    /// Evaluate a script and flatten "threw" and "returned nothing" into one nil.
+    @MainActor
+    func evaluatedString(_ script: String) async -> String? {
+        let result = try? await evaluateJavaScript(script)
+        guard let value = result ?? nil else { return nil }
+        return FAInterstitial.decodeEvaluatedString(value)
+    }
+
     /// Fetch a page by navigating the cleared WebView to it and reading the DOM.
     @MainActor
     func fetchPageHTML(_ url: URL) async throws -> String {
@@ -69,7 +77,19 @@ extension WebViewNavigator {
         guard let raw = try await evaluateJavaScript("document.documentElement.outerHTML") else {
             throw FAWebViewFetchError.noHTML(url)
         }
-        return FAInterstitial.decodeEvaluatedString(raw)
+        let html = FAInterstitial.decodeEvaluatedString(raw)
+
+        // This fallback is the last thing between Cloudflare and the parser, and
+        // whatever it returns reaches the parser as a missing-element error naming
+        // only the parser's own first required field — identical whether it was
+        // handed a challenge interstitial, a page the WebView never navigated away
+        // from, or a logged-out page. Say which.
+        let landed = await evaluatedString("location.href") ?? "<unknown>"
+        let title = await evaluatedString("document.title") ?? "<unknown>"
+        let interstitial = FAInterstitial.isInterstitial(html: html, length: html.count)
+        logger.warning("[CFDIAG] WebView fallback for \(url.absoluteString): landed=\(landed) title=\(title) length=\(html.count) interstitial=\(interstitial)")
+
+        return html
     }
 }
 

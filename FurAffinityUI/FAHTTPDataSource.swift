@@ -30,12 +30,16 @@ import FoundationNetworking
 struct FAHTTPDataSource: HTTPDataSource {
     /// Navigates the cleared WebView to `url` and returns the page's decoded HTML.
     typealias WebViewFetch = @Sendable (URL) async throws -> Data
+    /// Reads the WebView's `Cookie:` header *now*, to compare against the one
+    /// frozen at session creation.
+    typealias CookieHeaderProbe = @Sendable () async -> String?
 
     private let session: URLSession
     private let userAgent: String
     /// The WebView's `Cookie:` header for FA (cf_clearance + __cf_bm + auth).
     private let baseCookieHeader: String
     private let webViewFetch: WebViewFetch?
+    private let liveCookieHeader: CookieHeaderProbe?
 
     // A top-level-navigation header set consistent with a Chrome-on-Android UA.
     // Deliberately no `sec-ch-ua*` Client Hints: they must agree with the UA's
@@ -54,7 +58,8 @@ struct FAHTTPDataSource: HTTPDataSource {
     init(
         userAgent: String,
         cookieHeader: String,
-        webViewFetch: WebViewFetch? = nil
+        webViewFetch: WebViewFetch? = nil,
+        liveCookieHeader: CookieHeaderProbe? = nil
     ) {
         let config = URLSessionConfiguration.default
         // Per-request Cookie header rather than a cookie store: HTTPCookieStorage's
@@ -65,11 +70,17 @@ struct FAHTTPDataSource: HTTPDataSource {
         self.userAgent = userAgent
         self.baseCookieHeader = cookieHeader
         self.webViewFetch = webViewFetch
+        self.liveCookieHeader = liveCookieHeader
     }
 
     /// A copy with refreshed clearance/auth cookies (after a re-login or CF re-solve).
     func withCookieHeader(_ header: String) -> FAHTTPDataSource {
-        FAHTTPDataSource(userAgent: userAgent, cookieHeader: header, webViewFetch: webViewFetch)
+        FAHTTPDataSource(
+            userAgent: userAgent,
+            cookieHeader: header,
+            webViewFetch: webViewFetch,
+            liveCookieHeader: liveCookieHeader
+        )
     }
 
     func httpData(
@@ -113,7 +124,8 @@ struct FAHTTPDataSource: HTTPDataSource {
 
         let isChallenge = http.value(forHTTPHeaderField: "cf-mitigated") == "challenge"
         if isChallenge {
-            logger.warning("\(url): Cloudflare challenge on URLSession fetch; trying WebView fallback")
+            logger.warning("\(url): Cloudflare challenge on URLSession fetch (HTTP \(http.statusCode)); trying WebView fallback")
+            await logClearanceDiagnostics(sent: header)
             if let webViewFetch, method == .GET {
                 return try await webViewFetch(request.url ?? url)
             }
@@ -126,6 +138,45 @@ struct FAHTTPDataSource: HTTPDataSource {
             throw FAHTTPError.failureStatus(url: url, code: http.statusCode)
         }
         return data
+    }
+
+    /// Tests the "the header frozen at session creation went stale" hypothesis: the
+    /// cookies actually sent, against what the WebView would send right now.
+    private func logClearanceDiagnostics(sent: String) async {
+        logger.warning("[CFDIAG] sent cookies: \(Self.cookieFingerprint(sent))")
+        guard let liveCookieHeader else {
+            logger.warning("[CFDIAG] no live cookie probe wired up")
+            return
+        }
+        let live = await liveCookieHeader() ?? ""
+        logger.warning("[CFDIAG] live cookies: \(Self.cookieFingerprint(live))")
+        let sentClearance = Self.cookieValue("cf_clearance", in: sent)
+        let liveClearance = Self.cookieValue("cf_clearance", in: live)
+        logger.warning("[CFDIAG] cf_clearance drifted=\(sentClearance != liveClearance) sentPresent=\(sentClearance != nil) livePresent=\(liveClearance != nil)")
+    }
+
+    /// Cookie names with the first 8 characters of each value — enough to tell
+    /// "same clearance as before" from "it rotated", without logging the token.
+    private static func cookieFingerprint(_ header: String) -> String {
+        var parts = [String]()
+        for pair in header.split(separator: ";") {
+            let trimmed = pair.trimmingCharacters(in: .whitespaces)
+            guard let separator = trimmed.firstIndex(of: "=") else { continue }
+            let name = String(trimmed[trimmed.startIndex..<separator])
+            let value = String(trimmed[trimmed.index(after: separator)...])
+            parts.append("\(name)=\(String(value.prefix(8)))…")
+        }
+        return parts.isEmpty ? "<none>" : parts.joined(separator: " ")
+    }
+
+    private static func cookieValue(_ name: String, in header: String) -> String? {
+        for pair in header.split(separator: ";") {
+            let trimmed = pair.trimmingCharacters(in: .whitespaces)
+            guard let separator = trimmed.firstIndex(of: "=") else { continue }
+            guard String(trimmed[trimmed.startIndex..<separator]) == name else { continue }
+            return String(trimmed[trimmed.index(after: separator)...])
+        }
+        return nil
     }
 
     /// Merge the base WebView cookie header with any per-request auth cookies.
