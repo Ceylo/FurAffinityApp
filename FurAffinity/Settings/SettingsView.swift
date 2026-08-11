@@ -130,8 +130,11 @@ struct SettingsView: View {
                     dumpingLogs = false
                 }
             }
-            if let fileUrl = try? generateLogFile(range: range) {
+            do {
+                let fileUrl = try generateLogFile(range: range)
                 await share([fileUrl])
+            } catch {
+                logger.error("Could not export logs: \(error)")
             }
         }
     }
