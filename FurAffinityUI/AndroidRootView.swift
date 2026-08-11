@@ -27,6 +27,9 @@ struct AndroidRootView: View {
                             view(for: target)
                         }
                 }
+                .autorefreshingOnForeground {
+                    await model.autorefreshIfNeeded()
+                }
             } else {
                 AndroidLoginView(onSession: { session = $0 })
             }

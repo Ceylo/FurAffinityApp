@@ -81,7 +81,6 @@ class Model: NotificationsNuker, NotificationsDeleter {
     var errorStorage = ErrorStorage()
     
     @ObservationIgnored private var observationTasks: [Task<Void, Never>] = []
-    @ObservationIgnored private var autorefreshTask: Task<Void, Never>?
     /// Last logged UserDefaults snapshot, so state-update logs show only the diff.
     @ObservationIgnored private var lastLoggedDefaults: [String: Any] = [:]
     init() {
@@ -109,7 +108,6 @@ class Model: NotificationsNuker, NotificationsDeleter {
 
     deinit {
         observationTasks.forEach { $0.cancel() }
-        autorefreshTask?.cancel()
     }
 
     func setSession(_ session: (any FASession)?) async throws {
@@ -150,8 +148,6 @@ class Model: NotificationsNuker, NotificationsDeleter {
             notificationPreviews = nil
             lastNotificationPreviewsFetchDate = nil
             displayedNotificationCount = 0
-            autorefreshTask?.cancel()
-            autorefreshTask = nil
             shouldCheckForNewerSubmissionsAfterRestore = false
             searchResults = nil
             searchCanLoadMore = false
@@ -165,18 +161,6 @@ class Model: NotificationsNuker, NotificationsDeleter {
         _ = try await fetchNotePreviews(from: .inbox)
         try await fetchNotificationPreviews()
         await updateAppInfo()
-
-        // Re-checks stale data when the app returns to the foreground.
-        // Darwin-only: UIApplication doesn't exist on Android.
-#if !os(Android)
-        autorefreshTask = Task { [weak self] in
-            let events = NotificationCenter.default
-                .notifications(named: UIApplication.willEnterForegroundNotification)
-            for await _ in events {
-                await self?.autorefreshIfNeeded()
-            }
-        }
-#endif
     }
     
     static func shouldAutoRefresh(with lastRefreshDate: Date?) -> Bool {
@@ -189,13 +173,19 @@ class Model: NotificationsNuker, NotificationsDeleter {
         return true
     }
     
-    private func autorefreshIfNeeded() async {
+    /// Re-checks stale data when the app returns to the foreground, driven by
+    /// `ForegroundAutorefresh` on each platform's logged-in root.
+    func autorefreshIfNeeded() async {
+        // The fetches below all need a session; without this guard a foreground event
+        // while logged out would surface an error banner.
+        guard session != nil else { return }
+
         // Note how submission previews are not checked here. This is for two reasons:
         // - SubmissionsFeedView has special scroll handling and needs to control
         // when refresh happens
         // - SubmissionsFeedView is always loaded first, so there's no risk that it
         // cannot subscribe to willEnterForegroundNotification
-        
+
         if Self.shouldAutoRefresh(with: lastInboxNotePreviewsFetchDate) {
             await storeLocalizedError(in: errorStorage, action: "Notes Auto-Refresh", webBrowserURL: FAURLs.notesInboxUrl) {
                 _ = try await fetchNotePreviews(from: .inbox)

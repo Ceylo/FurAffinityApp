@@ -141,6 +141,9 @@ struct LoggedInView: View {
             tabBarAppearance.configureWithDefaultBackground()
             UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
         }
+        .autorefreshingOnForeground {
+            await model.autorefreshIfNeeded()
+        }
         .backgroundRefreshLifecycle()
     }
 }
