@@ -18,14 +18,9 @@ import SkipBridge
 
 func clearLoginCookies() async {
     #if canImport(Android)
-    do {
-        let bridge = try AnyDynamicObject(className: "fur.affinity.ui.FACookieBridge")
-        let ok: Bool? = try bridge.clearCookies()
-        if ok != true {
-            logger.error("clearLoginCookies: FACookieBridge did not confirm")
-        }
-    } catch {
-        logger.error("clearLoginCookies: could not reach FACookieBridge: \(error)")
+    let ok = await clearCookiesOffMain()
+    if !ok {
+        logger.error("clearLoginCookies: FACookieBridge did not confirm")
     }
     #endif
 
@@ -33,3 +28,24 @@ func clearLoginCookies() async {
     // authenticating requests after the cookies are gone.
     CoilImageLoader.configure(userAgent: "", cookie: "")
 }
+
+#if canImport(Android)
+/// `FACookieBridge.clearCookies` waits for `removeAllCookies`, whose callback is
+/// delivered on the UI thread — so the call itself must be made from another thread, or
+/// the two deadlock. Hopping to a global queue and *awaiting* leaves the main actor
+/// suspended and the UI thread free to deliver that callback.
+private func clearCookiesOffMain() async -> Bool {
+    await withCheckedContinuation { continuation in
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let bridge = try AnyDynamicObject(className: "fur.affinity.ui.FACookieBridge")
+                let ok: Bool? = try bridge.clearCookies()
+                continuation.resume(returning: ok == true)
+            } catch {
+                logger.error("clearLoginCookies: could not reach FACookieBridge: \(error)")
+                continuation.resume(returning: false)
+            }
+        }
+    }
+}
+#endif
