@@ -2,18 +2,21 @@
 //  AndroidRootView.swift
 //  FurAffinityUI (Android)
 //
-//  Root of the Android app: the login flow until a session exists, then the ported
-//  tabs driven by the shared `Model`, mirroring `LoggedInView` on iOS. Tabs are added
-//  as screens are ported. The Submissions tab is a `NavigationStack` fed by the shared
-//  `NavigationStream`; pushed destinations come from `view(for:)` in
+//  Root of the Android app, mirroring iOS's `RootView`: the shared `HomeView` until
+//  a session exists, then the ported tabs — which stand in for `LoggedInView` and
+//  grow as screens are ported. The Submissions tab is a `NavigationStack` fed by the
+//  shared `NavigationStream`; pushed destinations come from `view(for:)` in
 //  AndroidNavigationDestination.swift.
+//
+//  HomeView owns the session on both platforms (it calls `model.setSession`), so
+//  this view only reads `model.session` — including for logout, which SettingsView
+//  performs by setting it back to nil.
 //
 
 import SwiftUI
 import FAKit
 
 struct AndroidRootView: View {
-    @State var session: (any FASession)?
     @State var model = Model()
     @State var navigationStream = NavigationStream()
     @State var path = [FATarget]()
@@ -26,7 +29,25 @@ struct AndroidRootView: View {
 
     var body: some View {
         ZStack {
-            if session != nil {
+            if model.session == nil {
+                HomeView()
+                    // Entry point for driving ported screens on the emulator without
+                    // solving a Cloudflare challenge, which needs a real click in the
+                    // emulator window. Deliberately not behind `#if DEBUG`: skipstone
+                    // skips those blocks when it generates the view bridge. FA image
+                    // URLs still need the WebView's clearance, so images show
+                    // placeholders in this mode.
+                    .overlay(alignment: .top) {
+                        Button("Continue offline (debug)") {
+                            Task {
+                                await storeLocalizedError(in: model.errorStorage, action: "Sign In", webBrowserURL: nil) {
+                                    try await model.setSession(OfflineFASession.default)
+                                }
+                            }
+                        }
+                        .font(.footnote)
+                    }
+            } else {
                 TabView(selection: $selectedTab) {
                     NavigationStack(path: $path) {
                         AndroidSubmissionsFeedView()
@@ -51,8 +72,6 @@ struct AndroidRootView: View {
                         }
                         .tag(Tab.settings)
                 }
-            } else {
-                AndroidLoginView(onSession: { session = $0 })
             }
 
             // The app's long-lived WebView, mirroring RootView's hidden
@@ -91,17 +110,6 @@ struct AndroidRootView: View {
             navigationStream.send(target)
             return .handled
         })
-        .task(id: session?.username) {
-            await connect()
-        }
-        // Logging out clears the model's session; drop ours too so the login screen
-        // comes back. Only fires on a change, so the nil `model.session` this view
-        // starts with — before `connect()` has run — doesn't bounce it.
-        .onChange(of: model.session == nil) { _, hasNoSession in
-            if hasNoSession {
-                session = nil
-            }
-        }
         .autorefreshingOnForeground {
             await model.autorefreshIfNeeded()
         }
@@ -121,14 +129,6 @@ struct AndroidRootView: View {
             .padding()
             .frame(maxWidth: .infinity)
             .background(.thinMaterial)
-        }
-    }
-
-    private func connect() async {
-        guard let session, model.session == nil else { return }
-        logger.info("Connecting model to session for \(session.username)")
-        await storeLocalizedError(in: model.errorStorage, action: "Sign In", webBrowserURL: nil) {
-            try await model.setSession(session)
         }
     }
 }

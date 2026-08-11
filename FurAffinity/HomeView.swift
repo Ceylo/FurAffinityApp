@@ -8,7 +8,9 @@
 import SwiftUI
 import FAKit
 
-private struct HomeViewButtonContents: View {
+// Internal, not private: this file is shared with the Android build, where a
+// bridged view's members must be visible to skipstone's generated bridge.
+struct HomeViewButtonContents: View {
     var text: String
     
     var body: some View {
@@ -30,15 +32,17 @@ private struct HomeViewButtonContents: View {
 }
 
 struct HomeView: View {
-    @State private var checkingConnection = true
-    @Environment(Model.self) private var model
-    @Environment(\.scenePhase) private var scenePhase
-    @Environment(ErrorStorage.self) private var errorStorage
-    @State private var showLoginView = false
-    @State private var localSession: OnlineFASession?
-    @State private var didTryAutologin = false
-    @State private var loginErrorStorage = ErrorStorage()
-    
+    // Internal, not private: a bridged view's @State/@Environment must be visible
+    // to skipstone's generated bridge (see RemoteView.swift).
+    @State var checkingConnection = true
+    @Environment(Model.self) var model
+    @Environment(\.scenePhase) var scenePhase
+    @Environment(ErrorStorage.self) var errorStorage
+    @State var showLoginView = false
+    @State var localSession: OnlineFASession?
+    @State var didTryAutologin = false
+    @State var loginErrorStorage = ErrorStorage()
+
     func updateSession() async throws {
         checkingConnection = true
         defer {
@@ -58,6 +62,38 @@ struct HomeView: View {
         try await task.value
     }
     
+    @ViewBuilder
+    var legacyButtons: some View {
+        Button {
+            showLoginView = true
+        } label: {
+            HomeViewButtonContents(text: "Login with furaffinity.net")
+        }
+
+        Link(destination: FAURLs.signupUrl) {
+            HomeViewButtonContents(text: "Register")
+        }
+    }
+
+#if !FA_SKIP_MODULE
+    @available(iOS 26, *)
+    @ViewBuilder
+    var glassButtons: some View {
+        Button("Login with furaffinity.net  ") {
+            showLoginView = true
+        }
+        .buttonStyle(.glassProminent)
+        .font(.title2)
+
+        Link(destination: FAURLs.signupUrl) {
+            Text("Register")
+                .padding(.horizontal, 5)
+        }
+        .buttonStyle(.glass)
+        .font(.title2)
+    }
+#endif
+
     var center: some View {
         ZStack {
             VStack(spacing: 100) {
@@ -69,36 +105,29 @@ struct HomeView: View {
                         AppIcon()
                         
                         VStack(spacing: 30) {
+                            // `#available(iOS 26, *)` is vacuously true off-Apple, so
+                            // Skip would take the Liquid Glass branch — where
+                            // GlassButtonStyle is unavailable and `.glassProminent`
+                            // doesn't exist at all.
+#if FA_SKIP_MODULE
+                            legacyButtons
+#else
                             if #available(iOS 26, *) {
-                                Button("Login with furaffinity.net  ") {
-                                    showLoginView = true
-                                }
-                                .buttonStyle(.glassProminent)
-                                .font(.title2)
-                                
-                                Link(destination: FAURLs.signupUrl) {
-                                    Text("Register")
-                                        .padding(.horizontal, 5)
-                                }
-                                .buttonStyle(.glass)
-                                .font(.title2)
+                                glassButtons
                             } else {
-                                Button {
-                                    showLoginView = true
-                                } label: {
-                                    HomeViewButtonContents(text: "Login with furaffinity.net")
-                                }
-                                
-                                Link(destination: FAURLs.signupUrl) {
-                                    HomeViewButtonContents(text: "Register")
-                                }
+                                legacyButtons
                             }
+#endif
                         }
                         .padding(.horizontal)
                     }
                 }
             }
+            // Android surfaces errors through AndroidRootView's own banner, which
+            // covers this screen too.
+#if !FA_SKIP_MODULE
             ErrorDisplay()
+#endif
         }
         .task {
             await autologinIfActive()
@@ -112,7 +141,11 @@ struct HomeView: View {
         // !checkingConnection avoids racing the cold-launch autologin window.
         .onChange(of: checkingConnection) { _, checking in
             if !checking && model.session == nil {
+                // Nothing delivers notifications on Android, so there is no
+                // coordinator in that module.
+#if !FA_SKIP_MODULE
                 NotificationCoordinator.shared.pendingDeepLink = nil
+#endif
             }
         }
         .sheet(
@@ -168,7 +201,7 @@ struct HomeView: View {
     /// stale "Auto-login failed" alert at the next foreground. The
     /// `.onChange(of: scenePhase)` trigger resumes the deferred attempt.
     func autologinIfActive() async {
-        logger.debug("[CFDIAG] HomeView autologin trigger; scenePhase=\(String(describing: scenePhase)), applicationState=\(UIApplication.shared.applicationState.rawValue), didTryAutologin=\(didTryAutologin)")
+        logger.debug("[CFDIAG] HomeView autologin trigger; scenePhase=\(String(describing: scenePhase)), didTryAutologin=\(didTryAutologin)")
         guard scenePhase == .active else {
             logger.debug("[CFDIAG] HomeView autologin DEFERRED; app not active (scenePhase=\(String(describing: scenePhase)))")
             return
@@ -191,6 +224,7 @@ struct HomeView: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     withAsync({ try await Model.demo }) {
         HomeView()
@@ -198,3 +232,4 @@ struct HomeView: View {
             .environment($0.errorStorage)
     }
 }
+#endif
