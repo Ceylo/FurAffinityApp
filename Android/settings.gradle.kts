@@ -1,5 +1,16 @@
 // This gradle project is part of a conventional Skip app project.
 pluginManagement {
+    // Derive the launcher mipmaps and the in-app AppIcon from the iOS asset catalog.
+    // Configuration time is the one place that orders correctly for both consumers —
+    // this module's resource merge and the skipstone included build's resource copy —
+    // since an app:preBuild dependency cannot order against a separate included build.
+    val assetsResult = providers.exec {
+        commandLine("/bin/sh", "-c", "'${settings.rootDir.parent}/Scripts/generate-android-assets.sh'")
+        environment("PATH", "${System.getenv("PATH")}:/opt/homebrew/bin")
+    }
+    print(assetsResult.standardOutput.asText.get())
+    print(assetsResult.standardError.asText.get())
+
     // Initialize the Skip plugin folder and perform a pre-build for non-Xcode builds
     val pluginPath = File.createTempFile("skip-plugin-path", ".tmp")
 

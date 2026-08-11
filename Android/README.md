@@ -66,10 +66,33 @@ The path segment after `outputs/` is the **checkout directory's name**, not the 
 ### Generated art
 
 An entry big enough that a second copy in git would hurt is generated from the iOS
-art instead, and git-ignored. `Scripts/generate-android-assets.sh` writes those —
-today just `AppIcon`, a 512×512 light/dark pair downscaled from two 1024×1024 PNGs
-(the view draws it at 100 pt). It is idempotent and takes under a second, so run it
-after checking out and whenever the iOS art changes:
+art instead, and git-ignored. `Scripts/generate-android-assets.sh` writes two sets:
+
+- the in-app `AppIcon`, a 512×512 light/dark pair downscaled from two 1024×1024 PNGs
+  (the view draws it at 100 pt);
+- the launcher icon — `mipmap-*/ic_launcher_foreground.png` at the adaptive layer's
+  108 dp and `mipmap-*/ic_launcher.png` at the legacy 48 dp, both from the light art
+  (an adaptive icon has no dark variant).
+
+`mipmap-anydpi/ic_launcher.xml` and `values/ic_launcher_background.xml` are
+hand-written and committed. The art is a full-bleed rounded square whose subject
+touches every edge, so the XML insets the foreground by 16.7% into the 72 dp safe
+zone rather than letting a circular launcher mask clip the ears; the background is a
+solid colour sampled from the art's yellow field, visible only in the parallax band.
+Skip's template `<monochrome>` layer is gone — keeping it would leave Skip's sun as
+the themed-icon variant.
+
+`Android/settings.gradle.kts` runs the script at configuration time (first statement
+in `pluginManagement`, same `providers.exec` mechanism as `skip plugin --prebuild`),
+so a Gradle build or an Android Studio sync regenerates everything. That is the one
+place that orders correctly for *both* consumers — the app module's resource merge
+and the skipstone included build's resource copy — since an `app:preBuild` task
+dependency cannot order against a separate included build. The script is therefore
+written to be a true no-op when up to date, content-compared rather than rewritten.
+
+`skip android build` goes through SwiftPM only and never runs Gradle, so it stays a
+documented prerequisite; skipping it there costs a blank in-app icon. It is
+idempotent and takes under a second:
 
 ```
 Scripts/generate-android-assets.sh
