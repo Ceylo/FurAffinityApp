@@ -3,13 +3,12 @@
 //  FurAffinityUI (Android)
 //
 //  Android counterpart of the iOS `RemoteContentToolbarItem`. Identical menu — Open in
-//  Web Browser, Share Link, then the caller's items — but it can't be symlinked: the
-//  iOS one reads its share-message preference through `@Default`, and the Defaults
-//  fork compiles its whole SwiftUI layer out on Android (`@Default` is built on
-//  `@StateObject`, which SkipSwiftUI doesn't have).
+//  Web Browser, Share Link, then the caller's items — and identical code, save for one
+//  string: the share message says "for Android" where the iOS one says "for iPhone".
+//  That is the only reason this isn't a symlink.
 //
-//  Reading `Defaults[...]` directly costs only live updates while the menu is open,
-//  which no user can observe: the settings screen isn't ported.
+//  Nothing shows that message yet: SkipUI's `ShareLink` only puts EXTRA_TEXT and
+//  EXTRA_SUBJECT in the intent and drops `message` on the floor.
 //
 
 import SwiftUI
@@ -23,12 +22,12 @@ struct RemoteContentToolbarItem<ContentsView: View>: ToolbarContent {
 
     var url: URL
     var additionalToolbarItems: () -> ContentsView
+    @Default(.addMessageToSharedItems) private var addMessageToSharedItems
 
     private var shareMessage: Text? {
-        guard Defaults[.addMessageToSharedItems] else {
+        guard addMessageToSharedItems else {
             return nil
         }
-        // The iOS copy says "for iPhone"; this build is not that.
         return Text("Sent from the FurAffinity unofficial App for Android (https://furaffinity.app/)")
     }
 
