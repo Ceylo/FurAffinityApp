@@ -9,18 +9,18 @@ import SwiftUI
 import Defaults
 
 struct NotificationSettingsView: View {
-    @Default(.notifySubmissions) private var notifySubmissions
-    @Default(.notifyNotes) private var notifyNotes
-    @Default(.notifySubmissionComments) private var notifySubmissionComments
-    @Default(.notifyJournalComments) private var notifyJournalComments
-    @Default(.notifyShouts) private var notifyShouts
-    @Default(.notifyJournals) private var notifyJournals
+    @Default(.notifySubmissions) private var notifySubmissions: Bool
+    @Default(.notifyNotes) private var notifyNotes: Bool
+    @Default(.notifySubmissionComments) private var notifySubmissionComments: Bool
+    @Default(.notifyJournalComments) private var notifyJournalComments: Bool
+    @Default(.notifyShouts) private var notifyShouts: Bool
+    @Default(.notifyJournals) private var notifyJournals: Bool
 
-    @Default(.badgeNotes) private var badgeNotes
-    @Default(.badgeSubmissionComments) private var badgeSubmissionComments
-    @Default(.badgeJournalComments) private var badgeJournalComments
-    @Default(.badgeShouts) private var badgeShouts
-    @Default(.badgeJournals) private var badgeJournals
+    @Default(.badgeNotes) private var badgeNotes: Bool
+    @Default(.badgeSubmissionComments) private var badgeSubmissionComments: Bool
+    @Default(.badgeJournalComments) private var badgeJournalComments: Bool
+    @Default(.badgeShouts) private var badgeShouts: Bool
+    @Default(.badgeJournals) private var badgeJournals: Bool
 
     var body: some View {
         Form {
@@ -32,7 +32,7 @@ struct NotificationSettingsView: View {
                 Toggle("Shouts", isOn: $notifyShouts)
                 Toggle("Journals", isOn: $notifyJournals)
             } header: {
-                Text("iOS Notifications")
+                Text("Notifications")
             } footer: {
                 Text("These notifications are not delivered in real-time and may be unavailable on CloudFlare challenge failure.")
             }
@@ -53,8 +53,10 @@ struct NotificationSettingsView: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     NavigationStack {
         NotificationSettingsView()
     }
 }
+#endif

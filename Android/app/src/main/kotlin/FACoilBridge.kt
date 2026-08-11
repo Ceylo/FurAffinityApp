@@ -53,6 +53,10 @@ class FACoilBridge {
 
     fun fetch(url: String): String? = Companion.fetch(url)
 
+    fun cacheSizeBytes(): Long = Companion.cacheSizeBytes()
+
+    fun clearCache(): Boolean = Companion.clearCache()
+
     companion object {
         private const val TAG = "FACoilBridge"
         // FA challenges roughly half of all bare requests (measured: ~13% of URLs still
@@ -137,6 +141,22 @@ class FACoilBridge {
                 }
                 Log.i(TAG, "retry $attempt for $url ($failure)")
                 Thread.sleep(250L * attempt)
+            }
+        }
+
+        /// Bytes currently held on disk. Backs the Settings row, so it is only ever
+        /// read for display.
+        fun cacheSizeBytes(): Long = diskCache().size
+
+        /// Empties the disk cache. Coil's `clear()` deletes the whole cache directory
+        /// and recreates it, so the same DiskCache instance stays usable.
+        fun clearCache(): Boolean {
+            return try {
+                diskCache().clear()
+                true
+            } catch (e: Exception) {
+                Log.e(TAG, "clearCache failed: $e")
+                false
             }
         }
 

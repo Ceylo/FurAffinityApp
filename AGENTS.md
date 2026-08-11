@@ -13,9 +13,11 @@ Two main code areas:
 An in-progress **Android port** builds the same SwiftUI source with [Skip](https://skip.dev)
 Fuse (root `Package.swift` + `FurAffinityUI/` target + `Android/`/`Darwin/` scaffolding). The
 iOS Xcode target is unaffected — shared files stay in place and are pulled into the Android
-build as symlinks under `FurAffinityUI/Shared/`. Ported so far: the Followed feed and the
+build as symlinks under `FurAffinityUI/Shared/`. Ported so far: the Followed feed, the
 submission detail screen (image, zoomable viewer, favorite, Save/Share, description with
-in-app links, read-only comments, metadata). `import os` works on both platforms:
+in-app links, read-only comments, metadata) and the Settings tab (shared `SettingsView` /
+`NotificationSettingsView`, image-cache control, log sharing, logout).
+`import os` works on both platforms:
 FAKit ships an Android-only compatibility target named `os` (`FAKit/Sources/OSCompat/`)
 vending `Logger` (→ logcat) and a no-op `OSSignposter`. Four dependencies are forked on
 `Ceylo/<repo>` `android` branches — `Defaults`, `Kingfisher`, and `skip-ui`/`skip-fuse-ui`

@@ -205,11 +205,22 @@ new value — both ends were talking to the orphan store. The fork exposes
 `Defaults.defaultSuite` for it, and `FurAffinityUI/AndroidDefaultsSuite.swift` assigns
 the shared-preferences-backed one from `onInit()` (`Application.onCreate`), which has
 to happen before the first key is created: a key captures its suite and registers its
-default value into it right away.
+default value into it right away. `Defaults.runSettingsMigrations()` touches keys, so
+it runs *after* `installDefaultsSuite()` in `onInit()`.
 
 Serialization is *not* a problem: `set(_:Any?, forKey:)` carries `Bool`, `Int` and
 `String` across JNI to shared_prefs unchanged (measured), so no typed-setter routing
 is needed.
+
+`@Default(.someKey)` works on Android too, and shared screens spell it exactly as on
+iOS. `Ceylo/Defaults@android` guards the package's SwiftUI support out (importing
+SwiftUI → SkipUI → CJNI from a plain SwiftPM package breaks the build), so the app
+module re-declares the wrapper over `@AppStorage` in `FurAffinityUI/AndroidDefault.swift`.
+Correct storage isn't enough to drop that re-declaration: skipstone matches state
+property wrappers by *attribute name* when it generates a view's bridge, so a wrapper
+it doesn't know about gets no `initState` entry and never triggers recomposition. The
+wrapper has to own a Compose-visible box, which `@AppStorage` provides. It is reactive
+to writes from anywhere via `AppStorageSupport`'s SharedPreferences listener.
 
 To check what actually persisted — never trust a read-back of `Defaults[…]`, that is
 what hid this:
@@ -384,6 +395,13 @@ That is what `ScrollToItemModifier` does — `ScrollViewReader { reader in conte
 first: the coil cache names entries by content hash with **no extension**, so saving or
 sharing straight out of it yields a nameless file with no detectable MIME type.
 
+`FileManager.default.temporaryDirectory` is safe to share from and needs no platform
+branch: the Android build of corelibs Foundation resolves it through `XDG_CACHE_HOME`
+(that string is in `libFoundation.so`; `/tmp` and `TMPDIR` are not), and
+`AndroidBridgeBootstrap` points that at `context.cacheDir`. So the exported log
+(`generateLogFile` in `Logs.swift`) already lands inside the app cache `@xml/file_paths`
+exposes — no `/tmp` involved.
+
 ## Rules for shared sources
 
 A file under `FurAffinityUI/Shared/` is compiled **twice more** than the iOS target
@@ -402,6 +420,18 @@ never the iOS app target — so:
   `scenePhase` modifier. Skip marks that notification unavailable on both layers and
   points at `ScenePhase`, which on Android reads a Compose state fed by the Activity
   lifecycle.
+- **An Android substitution file must not be `#if os(Android)`-guarded.** When a
+  shared file calls one name that resolves per platform (`ImageCacheControl`,
+  `clearLoginCookies`, `share`), the Android declaration lives in `FurAffinityUI/`
+  while the iOS one stays out of this module. `os(Android)` is false for the Darwin
+  bridge compile, so a file-level guard there leaves shared callers with *no*
+  declaration at all. Leave the file unguarded and put `#if canImport(Android)`
+  around the JNI inside, with a Darwin no-op — the way `CoilImageLoader` does. This
+  fails quietly: `skip android build` and the APK are both green, and only
+  `skip app launch --android` (which builds the bridge) reports it.
+  The exception is a name a *package* already declares on Darwin: `AndroidDefault.swift`
+  is `#if os(Android)`-guarded precisely because the bridge compile resolves `Default`
+  from the real Defaults package, and an unguarded declaration would collide.
 - **`import os` needs no guard.** Android's Swift SDK has no `os` module, so FAKit
   ships one: a target literally named `os` (`FAKit/Sources/OSCompat/`) that re-exports
   `AndroidLogging`'s `Logger` and vends a no-op `OSSignposter`. It is only ever a
@@ -415,6 +445,27 @@ never the iOS app target — so:
   must a `ViewModifier` struct itself. Same for a *generic* `ViewModifier`: skipstone's
   generated bridge calls its `body` without the `content:` label, so type-erase the
   generic parameter instead (see `ScrollToItemModifier`).
+- **State property wrappers are matched by attribute name.** skipstone emits a
+  bridged view's `Java_initState_<name>`/`Java_syncState_<name>` from the literal
+  attribute (`@State`, `@AppStorage`, …). A wrapper of your own gets no entry, so its
+  box is never given a Compose state and the value neither persists nor recomposes —
+  silently. Wrapping `AppStorage`, or `typealias Default = AppStorage`, does not help,
+  and skipstone is a closed binary (the `skip` Homebrew cask), so the list can't be
+  extended. To check whether a property got bridged, grep the generated bridge:
+
+```
+grep Java_initState_ .build/plugins/outputs/*/FurAffinityUI/destination/skipstone/SkipBridgeGenerated/<View>_Bridge.swift
+```
+
+  A custom wrapper can still work if it **owns its own box** instead of relying on
+  that codegen — see `FurAffinityUI/AndroidDefault.swift`, which backs `@Default` on
+  Android. `BridgedAppStorageBox`, `Java_initStateSupport()` and
+  `Binding(appStorageBox:)` are public skip-fuse-ui API, and the generated
+  `rememberSaveable` only supplies *lifetime*: one support object kept alive across
+  recompositions. A static box per key gives the same guarantee for process-lived app
+  settings, and reading it during body evaluation still reads the Compose
+  `MutableState` inside the composition, which is what registers the recomposition
+  dependency. This does **not** generalize to per-view-instance state.
 - **`@State` inside `#if DEBUG` never recomposes.** Skipstone skips those blocks when it
   generates `<View>_Bridge.swift`, so the property gets no `StateSupport`: writes land in
   the box and the view never redraws, silently. Declare it outside the guard. To check a

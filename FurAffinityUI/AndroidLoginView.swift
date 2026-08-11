@@ -38,15 +38,17 @@ struct AndroidLoginView: View {
                 .padding(8)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            #if DEBUG
-            // Skips Cloudflare entirely so the ported screens can be exercised on the
-            // emulator with no login. FA image URLs still need the WebView's clearance,
-            // so images render their placeholders in this mode.
-            Button("Use offline demo data") {
+            // Entry point for driving ported screens on the emulator without solving a
+            // Cloudflare challenge, which needs a real click in the emulator window.
+            // Deliberately not behind `#if DEBUG`: skipstone skips those blocks when it
+            // generates the view bridge. FA image URLs still need the WebView's
+            // clearance, so images show placeholders in this mode.
+            Button("Continue offline (debug)") {
+                establishedUsername = OfflineFASession.default.username
+                status = "Offline session."
                 onSession(OfflineFASession.default)
             }
             .padding(.bottom, 8)
-            #endif
 
             WebView(
                 configuration: config,

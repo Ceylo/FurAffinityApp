@@ -12,7 +12,8 @@
 //    isn't ported, so the sheets are no-ops and their sessions are never set. (The
 //    `ObservableObject` that used to block sharing the machinery is gone — iOS moved
 //    `ReplyStorage` to `@Observable` — so only the editors themselves are left.)
-//  - `share` / `exportToFiles` land in step 4 (FAMediaBridge).
+//  - `share` / `exportToFiles` go through FAMediaBridge. This is also the only
+//    `share(_:)` on Android, so Settings' log export uses it too.
 //
 
 import Foundation

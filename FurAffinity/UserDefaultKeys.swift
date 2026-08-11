@@ -126,9 +126,15 @@ extension Defaults {
     /// install from a real one.
     private static func startingSchemaVersion() -> Int {
 #if os(Android)
-        // SkipFoundation marks `persistentDomain(forName:)` unavailable, and there are no
-        // legacy Android installs to migrate: every install is a fresh one.
-        return currentSettingsSchemaVersion
+        // SkipFoundation marks `persistentDomain(forName:)` unavailable, so a fresh
+        // install is detected by value instead: no pre-versioning Android install exists,
+        // so an unstamped store (0) is always a fresh one and any other value is a real
+        // version to resume from. Don't reach for `object(forKey:)` here — SkipFoundation's
+        // `register(defaults:)` *replaces* its registration dictionary instead of merging,
+        // and `object(forKey:)` falls back to it, so which keys it answers for depends on
+        // `Defaults.Key` construction order.
+        let persisted = Defaults[.settingsSchemaVersion]
+        return persisted == 0 ? currentSettingsSchemaVersion : persisted
 #else
         guard let bundleID = Bundle.main.bundleIdentifier,
               let persisted = UserDefaults.standard.persistentDomain(forName: bundleID)

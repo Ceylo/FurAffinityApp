@@ -2,10 +2,11 @@
 //  AndroidRootView.swift
 //  FurAffinityUI (Android)
 //
-//  Root of the Android app: the login flow until a session exists, then the shared
-//  Followed feed driven by the shared `Model`, inside a `NavigationStack` fed by the
-//  shared `NavigationStream` (same as iOS's LoggedInView). Pushed destinations come
-//  from `view(for:)` in AndroidNavigationDestination.swift.
+//  Root of the Android app: the login flow until a session exists, then the ported
+//  tabs driven by the shared `Model`, mirroring `LoggedInView` on iOS. Tabs are added
+//  as screens are ported. The Submissions tab is a `NavigationStack` fed by the shared
+//  `NavigationStream`; pushed destinations come from `view(for:)` in
+//  AndroidNavigationDestination.swift.
 //
 
 import SwiftUI
@@ -16,31 +17,55 @@ struct AndroidRootView: View {
     @State var model = Model()
     @State var navigationStream = NavigationStream()
     @State var path = [FATarget]()
+    @State var selectedTab: Tab = .submissions
+
+    enum Tab {
+        case submissions
+        case settings
+    }
 
     var body: some View {
         Group {
             if session != nil {
-                NavigationStack(path: $path) {
-                    AndroidSubmissionsFeedView()
-                        .navigationTitle("Submissions")
-                        .navigationDestination(for: FATarget.self) { target in
-                            view(for: target)
+                TabView(selection: $selectedTab) {
+                    NavigationStack(path: $path) {
+                        AndroidSubmissionsFeedView()
+                            .navigationTitle("Submissions")
+                            .navigationDestination(for: FATarget.self) { target in
+                                view(for: target)
+                            }
+                    }
+                    // SkipUI maps a fixed set of SF Symbols onto Material icons and
+                    // draws a warning triangle for the rest, so these two don't match
+                    // LoggedInView's `rectangle.grid.2x2` / `slider.horizontal.3`.
+                    .tabItem {
+                        Label("Submissions", systemImage: "list.bullet")
+                    }
+                    .tag(Tab.submissions)
+
+                    // SettingsView brings its own NavigationStack, same as on iOS,
+                    // and has no FATarget destinations.
+                    SettingsView()
+                        .tabItem {
+                            Label("Settings", systemImage: "gearshape")
                         }
-                }
-                .autorefreshingOnForeground {
-                    await model.autorefreshIfNeeded()
+                        .tag(Tab.settings)
                 }
             } else {
                 AndroidLoginView(onSession: { session = $0 })
             }
         }
-        // Above the NavigationStack so it also covers pushed screens.
+        // Above the TabView so it also covers pushed screens.
         .overlay(alignment: .top) {
             errorBanner
         }
         .environment(model)
         .environment(model.errorStorage)
         .environment(\.navigationStream, navigationStream)
+        // Gap: an event raised from the Settings tab pushes onto the Submissions
+        // stack without selecting that tab, so the push isn't visible until the
+        // user switches. iOS's LoggedInView picks a stack per tab; nothing in
+        // Settings sends navigation events yet.
         .onChange(of: navigationStream.latest) { _, event in
             guard let event else { return }
             path.append(event.target)
@@ -62,6 +87,17 @@ struct AndroidRootView: View {
         })
         .task(id: session?.username) {
             await connect()
+        }
+        // Logging out clears the model's session; drop ours too so the login screen
+        // comes back. Only fires on a change, so the nil `model.session` this view
+        // starts with — before `connect()` has run — doesn't bounce it.
+        .onChange(of: model.session == nil) { _, hasNoSession in
+            if hasNoSession {
+                session = nil
+            }
+        }
+        .autorefreshingOnForeground {
+            await model.autorefreshIfNeeded()
         }
     }
 
