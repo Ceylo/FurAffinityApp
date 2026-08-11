@@ -33,6 +33,7 @@ import SwiftUI
 
     /* SKIP @bridge */public func onInit() {
         logger.debug("onInit")
+        installDefaultsSuite()
     }
 
     /* SKIP @bridge */public func onLaunch() {

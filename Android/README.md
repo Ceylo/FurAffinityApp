@@ -191,11 +191,38 @@ The iOS build must stay green at every step:
 xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
+## Defaults
+
+`UserDefaults.standard` means two different things on Android. In a module Skip's
+transpiler processes, skipstone emits `typealias UserDefaults = AndroidUserDefaults`,
+so `.standard` is the app's `SharedPreferences` (`shared_prefs/defaults.xml`) — where
+`@AppStorage` and raw `UserDefaults` writes land. `Defaults` is a plain SwiftPM
+dependency compiled untouched, so *its* `.standard` is Foundation's own instance: a
+separate store nothing else reads, and one that never reaches disk here.
+
+That is why `Defaults[key] = value` used to vanish silently while reads returned the
+new value — both ends were talking to the orphan store. The fork exposes
+`Defaults.defaultSuite` for it, and `FurAffinityUI/AndroidDefaultsSuite.swift` assigns
+the shared-preferences-backed one from `onInit()` (`Application.onCreate`), which has
+to happen before the first key is created: a key captures its suite and registers its
+default value into it right away.
+
+Serialization is *not* a problem: `set(_:Any?, forKey:)` carries `Bool`, `Int` and
+`String` across JNI to shared_prefs unchanged (measured), so no typed-setter routing
+is needed.
+
+To check what actually persisted — never trust a read-back of `Defaults[…]`, that is
+what hid this:
+
+```
+adb shell run-as com.example.id1234 cat shared_prefs/defaults.xml
+```
+
 ## Forks
 
 | Fork | Why |
 |---|---|
-| `Ceylo/Defaults` | Android port |
+| `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](#defaults)) |
 | `Ceylo/Kingfisher` | Android port |
 | `Ceylo/skip-ui` | `listRowInsets`; `Text(bridgedMarkdown:)`; `FlowRow`; SF Symbol mappings |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(AttributedString)`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
