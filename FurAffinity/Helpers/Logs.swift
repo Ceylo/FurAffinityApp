@@ -51,10 +51,8 @@ enum DefaultsChangeLog {
         return snapshot
     }
 
-    /// Compared through `AnyHashable` rather than `NSObject.isEqual`: off Darwin, Swift
-    /// scalars don't bridge to `NSObject`, so that cast fails and every key reads as
-    /// changed on every event. On Darwin the boxed `NSNumber`/`NSString` are `Hashable`
-    /// and still compare by `isEqual`.
+    /// `AnyHashable`, not `NSObject.isEqual`: off Darwin Swift scalars don't bridge to
+    /// `NSObject`, so that cast fails and every key reads as changed.
     static func valuesEqual(_ lhs: Any?, _ rhs: Any?) -> Bool {
         switch (lhs, rhs) {
         case (nil, nil): return true

@@ -2,27 +2,11 @@
 //  AndroidDefaultsUpdates.swift
 //  FurAffinityUI (Android)
 //
-//  `Defaults.updates` for Android. The fork guards the upstream implementation out
-//  because it is ObjC KVO on the suite (`DefaultsObservation` calls
-//  `addObserver(_:forKeyPath:options:context:)`) and Android's Swift has no ObjC
-//  runtime — so the name is free here, and the app module, which links CJNI, declares
-//  it. Reaching Android APIs from the fork itself is the shape that fails with
-//  "missing required module CJNI"; the same reasoning as AndroidDefault.swift.
-//
-//  The mechanism is an `OnSharedPreferenceChangeListener` on `shared_prefs/defaults.xml`
-//  (FADefaultsBridge.kt), which is the faithful analog of KVO on the suite: every
-//  writer lands in that one file — `Defaults[…]` (see AndroidDefaultsSuite.swift),
-//  `@Default`/`@AppStorage`, raw `UserDefaults`.
-//
-//  Two differences from KVO worth knowing:
-//  - SharedPreferences fires only when a value actually *changes*, while KVO fires on
-//    every set. Benign for every current observer, arguably better.
-//  - The callback arrives on whichever thread committed the edit, which is fine for
-//    yielding to a continuation.
-//
-//  `#if os(Android)` is correct here, unlike the substitution files: the module's
-//  Darwin bridge compile resolves the real `Defaults.updates`, and defining ours there
-//  would collide.
+//  `Defaults.updates` for Android, over FADefaultsBridge.kt's SharedPreferences
+//  listener. The fork's own implementation is ObjC KVO, which Android has no runtime
+//  for, so it leaves the name free for the app module to declare — like
+//  AndroidDefault.swift. Unlike KVO, the listener fires only on an actual value change,
+//  and from whichever thread committed the edit.
 //
 
 #if os(Android)
@@ -31,8 +15,7 @@ import Foundation
 import SkipBridge
 import Defaults
 
-/// Sink for the Kotlin listener. Bridged so `FADefaultsBridge` can call it by name,
-/// the way `Main.kt` calls `FurAffinityUIAppDelegate`.
+/// Sink for the Kotlin listener, bridged so it can be called by name.
 /* SKIP @bridge */public final class FADefaultsObserver: Sendable {
     /* SKIP @bridge */public static let shared = FADefaultsObserver()
 
@@ -46,8 +29,7 @@ import Defaults
 extension Defaults {
     /// Observe updates to multiple stored values, without receiving the values.
     ///
-    /// Only this overload is implemented — it is the only one shared code calls. The
-    /// single-key and variadic forms stay unavailable rather than speculative.
+    /// The only overload shared code calls, so the only one implemented.
     public static func updates(
         _ keys: [Defaults._AnyKey],
         initial: Bool = true
@@ -67,10 +49,8 @@ extension Defaults {
     }
 }
 
-/// Fans a changed key name out to every stream watching it.
-///
-/// `nonisolated(unsafe)` behind an `NSLock`, as the other JNI-backed globals in this
-/// module do: the Kotlin callback can arrive on any thread.
+/// Fans a changed key name out to every stream watching it. Locked, since the Kotlin
+/// callback can arrive on any thread.
 private enum DefaultsUpdateRegistry {
     private struct Registration {
         let keyNames: Set<String>
@@ -80,8 +60,7 @@ private enum DefaultsUpdateRegistry {
     private static let lock = NSLock()
     nonisolated(unsafe) private static var registrations = [Int: Registration]()
     nonisolated(unsafe) private static var lastID = 0
-    /// Handle on the Kotlin listener's owner, created on the first observation so
-    /// nothing is registered in an app that never observes.
+    /// Created on the first observation, so an app that never observes registers nothing.
     nonisolated(unsafe) private static var bridge: AnyDynamicObject?
 
     static func add(keyNames: Set<String>, continuation: AsyncStream<Void>.Continuation) -> Int {

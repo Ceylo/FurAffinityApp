@@ -176,8 +176,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
     /// Re-checks stale data when the app returns to the foreground, driven by
     /// `ForegroundAutorefresh` on each platform's logged-in root.
     func autorefreshIfNeeded() async {
-        // The fetches below all need a session; without this guard a foreground event
-        // while logged out would surface an error banner.
+        // Without this, a foreground event while logged out raises an error banner.
         guard session != nil else { return }
 
         // Note how submission previews are not checked here. This is for two reasons:

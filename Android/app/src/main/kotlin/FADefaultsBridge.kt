@@ -2,15 +2,11 @@
 //  FADefaultsBridge.kt
 //  FurAffinity (Android)
 //
-//  Kotlin half of `Defaults.updates` on Android. Same shape and rationale as
-//  FACoilBridge/FAMediaBridge: FurAffinityUI is a *native* Skip module and cannot touch
-//  Android framework classes directly, so it reaches this one by class name through
-//  SkipBridge's AnyDynamicObject — see AndroidDefaultsUpdates.swift.
+//  Kotlin half of `Defaults.updates` on Android, reached by class name through
+//  AnyDynamicObject like FACoilBridge/FAMediaBridge — see AndroidDefaultsUpdates.swift.
 //
-//  Defaults' own observation layer is ObjC KVO on the suite, which Android's Swift has
-//  no runtime for. An OnSharedPreferenceChangeListener on the same preferences file is
-//  the faithful analog: it sees *every* writer — `Defaults[…]`, `@AppStorage`, raw
-//  `UserDefaults` — because they all land in `shared_prefs/defaults.xml`.
+//  A listener on the preferences file is the faithful analog of KVO on the suite: every
+//  writer lands in `shared_prefs/defaults.xml`, `@AppStorage` included.
 //
 
 package fur.affinity.ui
