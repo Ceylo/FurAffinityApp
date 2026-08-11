@@ -86,9 +86,6 @@ class Model: NotificationsNuker, NotificationsDeleter {
     @ObservationIgnored private var lastLoggedDefaults: [String: Any] = [:]
     init() {
         lastLoggedDefaults = DefaultsChangeLog.snapshot()
-        // `Defaults.updates` is KVO-backed and Darwin-only (the fork's whole observation
-        // file is `#if !os(Android)`), so Android skips these observers.
-#if !os(Android)
         // Defaults yields from whichever thread mutates a key (KVO is synchronous, e.g.
         // background refresh writing latestNotificationIDs off the main actor), but these
         // loop bodies run in the enclosing @MainActor context, so the hop is structural.
@@ -108,7 +105,6 @@ class Model: NotificationsNuker, NotificationsDeleter {
                 updateDisplayedNotificationCount()
             }
         })
-#endif
     }
 
     deinit {
