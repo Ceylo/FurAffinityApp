@@ -59,13 +59,40 @@ struct FAUserAgentRequestModifier: AsyncImageDownloadRequestModifier {
     }
 }
 
+/// Coalesces concurrent work for the same key: callers arriving while an operation is
+/// in flight await that one instead of starting their own.
+actor InFlightCoalescer<Key: Hashable & Sendable> {
+    private var inFlight = [Key: Task<Void, any Error>]()
+
+    func run(_ key: Key, operation: @escaping @Sendable () async throws -> Void) async throws {
+        if let existing = inFlight[key] {
+            return try await existing.value
+        }
+
+        // Unstructured on purpose: one caller cancelling must not cancel the shared
+        // work out from under the others.
+        let task = Task { try await operation() }
+        inFlight[key] = task
+        // Only the caller that started the task clears it; late joiners already hold
+        // the task reference, so clearing here is harmless for them.
+        defer { inFlight[key] = nil }
+        try await task.value
+    }
+}
+
+/// Guards the disk-cache-dependent helpers below: Kingfisher fires its completion once
+/// per joined callback, so N callers for one URL run N `ImageCache.store` writes, and
+/// `DiskStorage.store` writes non-atomically. A store landing while another caller
+/// copies the cache file yields a truncated copy.
+private let imageFetches = InFlightCoalescer<URL>()
+
 extension KingfisherManager {
     func retrieveFAImage(with url: URL) async throws -> KFCrossPlatformImage {
         try await retrieveFAImageResult(with: url).image
     }
 
     @MainActor
-    private func retrieveFAImageResult(with url: URL, waitForCache: Bool = false) async throws -> RetrieveImageResult {
+    fileprivate func retrieveFAImageResult(with url: URL, waitForCache: Bool = false) async throws -> RetrieveImageResult {
         var options: KingfisherOptionsInfo = .defaultsForFA
         if waitForCache {
             options.append(.waitForCache)
@@ -81,7 +108,9 @@ extension KingfisherManager {
     /// Reuses Kingfisher's cache: a cache hit skips download entirely, and a cache miss
     /// downloads through `downloaderWithUserAgent` and populates the cache for later use.
     func retrieveFAImageData(with url: URL) async throws -> (data: Data, mimeType: String) {
-        _ = try await retrieveFAImageResult(with: url, waitForCache: true)
+        try await imageFetches.run(url) {
+            _ = try await KingfisherManager.shared.retrieveFAImageResult(with: url, waitForCache: true)
+        }
         // Original bytes live in the disk cache; the memory cache holds the decoded image.
         let cache = ImageCache.default
         let data = try cache.diskStorage.value(forKey: url.cacheKey)
@@ -95,7 +124,11 @@ extension KingfisherManager {
     }
     
     func retrieveFAImageFile(with url: URL) async throws -> URL {
-        _ = try await retrieveFAImageResult(with: url, waitForCache: true)
+        // Only the retrieve-and-cache step is shared; the copy stays per-caller because
+        // `UNNotificationAttachment` takes ownership of the file it is handed.
+        try await imageFetches.run(url) {
+            _ = try await KingfisherManager.shared.retrieveFAImageResult(with: url, waitForCache: true)
+        }
         return try cachedImageFileURL(for: url)
     }
 }

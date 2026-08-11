@@ -7,13 +7,12 @@
 
 import SwiftUI
 import FAKit
-import Combine
 
 struct LoggedInView: View {
     @Environment(Model.self) private var model
     @Environment(NotificationCoordinator.self) private var notificationCoordinator
     @State private var selectedTab: Tab = .submissions
-    @State private var navigationStream = PassthroughSubject<FATarget, Never>()
+    @State private var navigationStream = NavigationStream()
     @State private var submissionsNavigationStack = NavigationPath()
     @State private var notesNavigationStack = NavigationPath()
     @State private var notificationsNavigationStack = NavigationPath()
@@ -127,8 +126,9 @@ struct LoggedInView: View {
             FATarget(with: url).map(handleTarget)
         }
         .environment(\.navigationStream, navigationStream)
-        .onReceive(navigationStream) { target in
-            handleTarget(target)
+        .onChange(of: navigationStream.latest) { _, event in
+            guard let event else { return }
+            handleTarget(event.target)
         }
         // Drain a notification deep link. `initial: true` covers a tap that
         // cold-launched the app (value already set when this view mounts); the
@@ -140,6 +140,9 @@ struct LoggedInView: View {
             let tabBarAppearance = UITabBarAppearance()
             tabBarAppearance.configureWithDefaultBackground()
             UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
+        }
+        .autorefreshingOnForeground {
+            await model.autorefreshIfNeeded()
         }
         .backgroundRefreshLifecycle()
     }

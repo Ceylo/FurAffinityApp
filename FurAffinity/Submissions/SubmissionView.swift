@@ -9,7 +9,8 @@ import SwiftUI
 import FAKit
 
 struct SubmissionView: View {
-    @Environment(ErrorStorage.self) private var errorStorage
+    // Skip bridges these views: bridged @State/@Environment must not be private.
+    @Environment(ErrorStorage.self) var errorStorage
     
     var submission: FASubmission
     var avatarUrl: URL?
@@ -23,11 +24,11 @@ struct SubmissionView: View {
     struct ReplySession {
         let parentCid: Int?
     }
-    @State private var replySession: CommentReplySession?
-    @State private var fullResolutionMediaFileUrl: URL?
-    @State private var documentFileUrl: URL?
-    @State private var noteReplySession: NoteReplySession?
-    @State private var audioController: AudioPlaybackController?
+    @State var replySession: CommentReplySession?
+    @State var fullResolutionMediaFileUrl: URL?
+    @State var documentFileUrl: URL?
+    @State var noteReplySession: NoteReplySession?
+    @State var audioController: AudioPlaybackController?
 
     /// True for content kinds saved as a document (to Files) rather than an
     /// image (to Photos): text and audio.
@@ -216,6 +217,7 @@ struct SubmissionView: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview("Image submission") {
     @Previewable
     @State var errorStorage = ErrorStorage()
@@ -234,3 +236,4 @@ struct SubmissionView: View {
     }
     .environment(errorStorage)
 }
+#endif

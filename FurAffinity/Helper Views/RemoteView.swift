@@ -50,7 +50,7 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
         _ updateHandler: any UpdateHandler<Data>
     ) -> ContentsView
     
-    private enum DataState: Equatable {
+    enum DataState: Equatable {
         case notLoadingYet
         case loading
         case loaded(Data)
@@ -67,10 +67,11 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
             }
         }
     }
-    @State private var dataState: DataState = .notLoadingYet
-    @State private var showUpdateLoadingView = false
-    @State private var activity: NSUserActivity?
-    @Environment(ErrorStorage.self) private var errorStorage
+    // Skip bridges these views: bridged @State/@Environment must not be private.
+    @State var dataState: DataState = .notLoadingYet
+    @State var showUpdateLoadingView = false
+    @State var activity: NSUserActivity?
+    @Environment(ErrorStorage.self) var errorStorage
     
     var loadingView: some View {
         VStack(spacing: 20) {
@@ -220,6 +221,7 @@ func RemoteView<Data: Sendable & Equatable, ContentsView: View>(
     )
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     @Previewable @State var url = URL(string: "https://www.furaffinity.net/")!
     @Previewable @State var errorStorage = ErrorStorage()
@@ -240,3 +242,4 @@ func RemoteView<Data: Sendable & Equatable, ContentsView: View>(
         .environment(errorStorage)
     }
 }
+#endif

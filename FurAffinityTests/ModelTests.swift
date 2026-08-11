@@ -144,10 +144,10 @@ struct ModelTests {
     }
 
     @Test func defaultsWriteFromBackgroundDoesNotCrashModelObservers() async {
-        // Model.init registers two @MainActor Defaults.publisher sinks (the Defaults
+        // Model.init runs two @MainActor loops over Defaults.updates (the Defaults
         // library observes the standard suite via KVO). Writing an observed key off the
         // main actor synchronously flushes CFPrefs KVO on that thread; before the fix
-        // this entered the main-actor sink off-main and aborted the process via the
+        // this entered the main-actor observer off-main and aborted the process via the
         // executor-isolation assertion.
         //
         // The key is written through raw UserDefaults (rather than the Defaults API) so
@@ -167,7 +167,7 @@ struct ModelTests {
         }.value
 
         // Keep observers alive across the write. Reaching here without aborting
-        // means the sink was delivered safely on the main actor.
+        // means the event was delivered safely on the main actor.
         withExtendedLifetime(model) {}
     }
 }

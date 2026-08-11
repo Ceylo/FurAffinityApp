@@ -15,7 +15,8 @@ struct CommentView: View {
     @Environment(\.colorScheme) var colorScheme
     private let avatarSize = 42.0
     private let contentVerticalPadding = 5.0
-    @State private var rowBackgroundAnimated = false
+    // Skip bridges these views: bridged @State/@Environment must not be private.
+    @State var rowBackgroundAnimated = false
     
     var overlayStyle: some ShapeStyle {
         switch colorScheme {
@@ -146,6 +147,7 @@ struct CommentView: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview("Visible comment") {
     withAsync({ await FAComment.demo[0] }) { comment in
         NavigationStack {
@@ -167,3 +169,4 @@ struct CommentView: View {
         }
     }
 }
+#endif

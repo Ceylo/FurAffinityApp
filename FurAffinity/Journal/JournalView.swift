@@ -7,7 +7,6 @@
 
 import SwiftUI
 import FAKit
-import Combine
 
 struct JournalView: View {
     var journal: FAJournal

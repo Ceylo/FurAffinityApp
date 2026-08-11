@@ -31,16 +31,17 @@ func deepHighlightFocus(in comments: [FAComment], targetCid: Int?, cutoff: Int) 
     return CommentFocusTarget(threadRoot: path[0], focusedCid: path[path.count - 2].cid)
 }
 
-private struct DeepHighlightAutoFocusModifier: ViewModifier {
+// Skip bridges views: a bridged view and its @State must not be private.
+struct DeepHighlightAutoFocusModifier: ViewModifier {
     let comments: [FAComment]
     let targetCid: Int?
     let acceptsNewReplies: Bool
     let replyAction: ((_ cid: Int) -> Void)?
 
-    @State private var commentsWidth: CGFloat = 0
-    @State private var autoFocus: CommentFocusTarget?
-    @State private var didAutoFocus = false
-    @ScaledMetric private var minContentWidth: CGFloat = 220
+    @State var commentsWidth: CGFloat = 0
+    @State var autoFocus: CommentFocusTarget?
+    @State var didAutoFocus = false
+    @ScaledMetric var minContentWidth: CGFloat = 220
 
     func body(content: Content) -> some View {
         content
@@ -155,8 +156,18 @@ struct FocusedCommentsView: View {
 struct HiddenParentsRow: View {
     var count: Int
 
-    var body: some View {
+    /// SkipUI has no automatic grammar agreement — it renders `^[…](inflect: true)`
+    /// literally — so Android pluralises by hand.
+    private var caption: Text {
+        #if os(Android)
+        Text(count == 1 ? "1 parent comment hidden" : "\(count) parent comments hidden")
+        #else
         Text("^[\(count) parent comment](inflect: true) hidden")
+        #endif
+    }
+
+    var body: some View {
+        caption
             .font(.caption)
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .center)

@@ -9,11 +9,6 @@ import SwiftUI
 import FAKit
 import Defaults
 import OrderedCollections
-// Combine is Darwin-only; the Android build skips the subscription-driven refresh
-// paths below (the Defaults fork's publisher bridge is likewise `#if !os(Android)`).
-#if !os(Android)
-import Combine
-#endif
 
 enum ModelError: LocalizedError {
     case disconnected
@@ -85,59 +80,34 @@ class Model: NotificationsNuker, NotificationsDeleter {
     /// This is then displayed to the user in a unified way, through ErrorDisplay.
     var errorStorage = ErrorStorage()
     
-#if !os(Android)
-    private var subscriptions = Set<AnyCancellable>()
-    private var autorefreshSubscription: AnyCancellable?
-#endif
+    @ObservationIgnored private var observationTasks: [Task<Void, Never>] = []
     /// Last logged UserDefaults snapshot, so state-update logs show only the diff.
     @ObservationIgnored private var lastLoggedDefaults: [String: Any] = [:]
     init() {
         lastLoggedDefaults = DefaultsChangeLog.snapshot()
-        observeDefaultsChanges()
-    }
-
-    private func observeDefaultsChanges() {
-#if !os(Android)
-        Defaults.publisher(keys: Defaults.Keys.all, options: [])
-            // Defaults delivers KVO synchronously on whichever thread mutates a key
-            // (e.g. background refresh writing latestNotificationIDs off the main actor).
-            // These sinks are @MainActor-isolated, so hop to main before entering them to
-            // avoid an executor-isolation crash. See defaultsWriteFromBackground… test.
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
+        // Defaults yields from whichever thread mutates a key (KVO is synchronous, e.g.
+        // background refresh writing latestNotificationIDs off the main actor), but these
+        // loop bodies run in the enclosing @MainActor context, so the hop is structural.
+        // See defaultsWriteFromBackground… test.
+        observationTasks.append(Task { [weak self] in
+            for await _ in Defaults.updates(Defaults.Keys.all, initial: false) {
+                guard let self else { return }
                 let current = DefaultsChangeLog.snapshot()
                 DefaultsChangeLog.logChanges(from: lastLoggedDefaults, to: current)
                 lastLoggedDefaults = current
             }
-            .store(in: &subscriptions)
+        })
 
-        Defaults.publisher(keys: Defaults.Keys.badges)
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
+        observationTasks.append(Task { [weak self] in
+            for await _ in Defaults.updates(Defaults.Keys.badges) {
+                guard let self else { return }
                 updateDisplayedNotificationCount()
             }
-            .store(in: &subscriptions)
-#endif
+        })
     }
 
-    /// Re-checks stale data when the app returns to the foreground. Darwin-only: neither
-    /// Combine nor UIApplication exists on Android.
-    private func subscribeToForegroundAutorefresh() {
-#if !os(Android)
-        autorefreshSubscription = NotificationCenter.default
-            .publisher(for: UIApplication.willEnterForegroundNotification)
-            .sink { [unowned self] _ in
-                Task {
-                    await autorefreshIfNeeded()
-                }
-            }
-#endif
-    }
-
-    private func unsubscribeFromForegroundAutorefresh() {
-#if !os(Android)
-        autorefreshSubscription = nil
-#endif
+    deinit {
+        observationTasks.forEach { $0.cancel() }
     }
 
     func setSession(_ session: (any FASession)?) async throws {
@@ -178,7 +148,6 @@ class Model: NotificationsNuker, NotificationsDeleter {
             notificationPreviews = nil
             lastNotificationPreviewsFetchDate = nil
             displayedNotificationCount = 0
-            unsubscribeFromForegroundAutorefresh()
             shouldCheckForNewerSubmissionsAfterRestore = false
             searchResults = nil
             searchCanLoadMore = false
@@ -192,8 +161,6 @@ class Model: NotificationsNuker, NotificationsDeleter {
         _ = try await fetchNotePreviews(from: .inbox)
         try await fetchNotificationPreviews()
         await updateAppInfo()
-
-        subscribeToForegroundAutorefresh()
     }
     
     static func shouldAutoRefresh(with lastRefreshDate: Date?) -> Bool {
@@ -206,13 +173,18 @@ class Model: NotificationsNuker, NotificationsDeleter {
         return true
     }
     
-    private func autorefreshIfNeeded() async {
+    /// Re-checks stale data when the app returns to the foreground, driven by
+    /// `ForegroundAutorefresh` on each platform's logged-in root.
+    func autorefreshIfNeeded() async {
+        // Without this, a foreground event while logged out raises an error banner.
+        guard session != nil else { return }
+
         // Note how submission previews are not checked here. This is for two reasons:
         // - SubmissionsFeedView has special scroll handling and needs to control
         // when refresh happens
         // - SubmissionsFeedView is always loaded first, so there's no risk that it
         // cannot subscribe to willEnterForegroundNotification
-        
+
         if Self.shouldAutoRefresh(with: lastInboxNotePreviewsFetchDate) {
             await storeLocalizedError(in: errorStorage, action: "Notes Auto-Refresh", webBrowserURL: FAURLs.notesInboxUrl) {
                 _ = try await fetchNotePreviews(from: .inbox)

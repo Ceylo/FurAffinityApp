@@ -51,11 +51,16 @@ enum DefaultsChangeLog {
         return snapshot
     }
 
-    /// UserDefaults values are property-list objects (NSObject subclasses), so compare via isEqual.
+    /// `AnyHashable`, not `NSObject.isEqual`: off Darwin Swift scalars don't bridge to
+    /// `NSObject`, so that cast fails and every key reads as changed.
     static func valuesEqual(_ lhs: Any?, _ rhs: Any?) -> Bool {
         switch (lhs, rhs) {
         case (nil, nil): return true
-        case let (lhs?, rhs?): return (lhs as? NSObject)?.isEqual(rhs) ?? false
+        case let (lhs?, rhs?):
+            guard let lhs = lhs as? AnyHashable, let rhs = rhs as? AnyHashable else {
+                return false
+            }
+            return lhs == rhs
         default: return false
         }
     }

@@ -160,6 +160,59 @@ actor FAImageStore {
         _ = await path(for: url, priority: priority)
     }
 
+    /// The bytes behind `url` on disk, under `url`'s own filename, downloading them if
+    /// needed. Backs Save/Share of the full-resolution media.
+    ///
+    /// The copy is the point: the coil cache names entries by content hash and gives
+    /// them no extension, so saving or sharing one straight out of the cache produces a
+    /// nameless file the receiving app can't even assign a MIME type to. Shares
+    /// `path(for:)`'s in-flight entry, so this costs no second download.
+    func namedFileUrl(for url: URL, priority: FAImagePriority = .high) async -> URL? {
+        guard let path = await path(for: url, priority: priority) else { return nil }
+        let cached = URL(fileURLWithPath: path)
+
+        let name = url.lastPathComponent
+        guard !name.isEmpty else { return cached }
+
+        // Off the actor and onto a real queue: this copies a multi-megabyte file, and
+        // every other load would otherwise serialize behind it.
+        return await gated(priority) { Self.staged(cached, as: name, for: url) ?? cached }
+    }
+
+    /// Copies `source` to a stable location named `name`, or nil if that fails.
+    ///
+    /// One directory per source URL, so two submissions whose media share a filename
+    /// don't collide. The copy goes to a unique temporary name and is then moved into
+    /// place, so a copy interrupted midway can't leave a truncated file that later calls
+    /// would hand out as if it were complete.
+    private nonisolated static func staged(_ source: URL, as name: String, for url: URL) -> URL? {
+        let fileManager = FileManager.default
+        guard let caches = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+            logger.error("No caches directory to stage \(name) in")
+            return nil
+        }
+
+        let directory = caches
+            .appendingPathComponent("fa-media", isDirectory: true)
+            .appendingPathComponent(String(url.absoluteString.hashValue, radix: 16), isDirectory: true)
+        let destination = directory.appendingPathComponent(name)
+        if fileManager.fileExists(atPath: destination.path) {
+            return destination
+        }
+
+        let partial = directory.appendingPathComponent("." + UUID().uuidString)
+        do {
+            try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+            try fileManager.copyItem(at: source, to: partial)
+            try fileManager.moveItem(at: partial, to: destination)
+            return destination
+        } catch {
+            try? fileManager.removeItem(at: partial)
+            logger.error("Could not stage \(name) for save/share: \(error)")
+            return nil
+        }
+    }
+
     /// Drop decoded images; the disk cache is untouched. Called from
     /// `FurAffinityUIAppDelegate.onLowMemory()`.
     nonisolated func clearMemoryCache() {

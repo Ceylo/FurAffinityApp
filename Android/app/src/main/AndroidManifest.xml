@@ -9,6 +9,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> -->
 
+    <!-- Saving to Pictures/FurAffinity needs no permission under scoped storage (API 29+);
+         the same MediaStore insert on API ≤28 does. See FAMediaBridge.kt. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
     <application
         android:label="${PRODUCT_NAME}"
         android:name=".AndroidAppMain"
@@ -27,8 +32,8 @@
             </intent-filter>
         </activity>
 
-        <!-- Lets FAShareBridge hand a receiving app a readable URI for a file in
-             private storage. See res/xml/file_paths.xml. -->
+        <!-- Shared files live in the app cache, which no other app may read directly;
+             FAMediaBridge stages them here and shares a content:// URI. -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

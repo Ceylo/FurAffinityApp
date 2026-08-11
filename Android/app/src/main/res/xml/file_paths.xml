@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Roots FAShareBridge may hand out URIs for. `generateLogFile` writes to
-  FileManager.default.temporaryDirectory, which SkipFoundation maps into the app's
-  private storage; both roots are declared so the mapping can change without
-  breaking the share.
--->
+<!-- Directories FAMediaBridge may hand out as content:// URIs when sharing — the log
+     file from Settings as well as a submission. The staging directory sits inside the
+     app cache, next to the coil disk cache. -->
 <paths>
-    <cache-path name="cache" path="." />
-    <files-path name="files" path="." />
+    <cache-path name="shared" path="shared/" />
 </paths>

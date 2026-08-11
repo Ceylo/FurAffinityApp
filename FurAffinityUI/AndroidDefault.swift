@@ -32,9 +32,6 @@
 //
 //  Bool-only: every settings key the ported screens read is a Bool.
 //
-//  NOTE: writing through `Defaults[key] = value` does *not* persist on Android — see
-//  Android/README.md §Defaults. This wrapper writes via `AppStorage`, which does.
-//
 
 #if os(Android)
 

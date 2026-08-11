@@ -8,19 +8,26 @@
 
 import SwiftUI
 import FAKit
-#if !os(Android)
-import Combine
-#endif
 
-#if os(Android)
-/// Combine is unavailable on Android. This keeps `FALink`'s `send(_:)` call site
-/// identical until in-app navigation is ported; taps are dropped for now.
-final class NavigationStream: Sendable {
-    func send(_ target: FATarget) {}
+/// One-way channel from tappable links to the navigation host.
+///
+/// Events carry a monotonic ID because `FATarget` is `Hashable`: without it, an
+/// `.onChange` observer would silently drop two identical consecutive navigations.
+@Observable
+final class NavigationStream {
+    struct Event: Equatable {
+        let target: FATarget
+        let id: Int
+    }
+
+    private(set) var latest: Event?
+    private var nextID = 0
+
+    func send(_ target: FATarget) {
+        nextID += 1
+        latest = .init(target: target, id: nextID)
+    }
 }
-#else
-typealias NavigationStream = PassthroughSubject<FATarget, Never>
-#endif
 
 // A hand-written EnvironmentKey rather than @Entry: SkipUI doesn't provide that macro.
 private struct NavigationStreamKey: EnvironmentKey {
