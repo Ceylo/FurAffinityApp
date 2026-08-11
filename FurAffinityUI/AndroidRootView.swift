@@ -25,7 +25,7 @@ struct AndroidRootView: View {
     }
 
     var body: some View {
-        Group {
+        ZStack {
             if session != nil {
                 TabView(selection: $selectedTab) {
                     NavigationStack(path: $path) {
@@ -54,6 +54,12 @@ struct AndroidRootView: View {
             } else {
                 AndroidLoginView(onSession: { session = $0 })
             }
+
+            // The app's long-lived WebView, mirroring RootView's hidden
+            // FAChallengeView on iOS: it holds the User-Agent `cf_clearance` is
+            // bound to and serves FAHTTPDataSource's challenge fallback, so it has
+            // to stay mounted for the whole session — see FAWebSession.
+            FAWebSessionView()
         }
         // Above the TabView so it also covers pushed screens.
         .overlay(alignment: .top) {

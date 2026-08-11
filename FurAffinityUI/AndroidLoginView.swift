@@ -62,47 +62,19 @@ struct AndroidLoginView: View {
         }
     }
 
-    /// After each navigation, if we're on a real (non-interstitial) logged-in page,
-    /// capture the WebView's cookies + UA and build an OnlineFASession.
+    /// After each navigation, try to turn the cookie jar into a session. The work
+    /// itself belongs to `FAWebSession`: the resulting data source has to hold the
+    /// *shared* navigator, which outlives this screen.
     @MainActor
     private func tryEstablishSession() async {
         guard establishedUsername == nil, !establishing else { return }
 
-        let webCookies = await navigator.cookies(for: FAURLs.homeUrl)
-        // The "a" auth cookie is only present once logged in.
-        guard webCookies.contains(where: { $0.name == "a" }) else {
-            status = "Waiting for login…"
-            return
-        }
-
         establishing = true
         defer { establishing = false }
 
-        guard let userAgent = await navigator.liveUserAgent() else {
-            status = "Could not read WebView User-Agent."
-            return
-        }
-        let cookieHeader = await navigator.cookieHeader(for: FAURLs.homeUrl) ?? ""
-
-        // Seed the Coil image layer with FA's UA + Cloudflare cookie header so avatar
-        // and thumbnail loads replay the clearance the WebView just obtained.
-        CoilImageLoader.configure(userAgent: userAgent, cookie: cookieHeader)
-
-        let httpCookies = webCookies.map { $0.asHTTPCookie }.compactMap { $0 }
-        let authCookies = httpCookies.filter { $0.name != "cf_clearance" && $0.name != "__cf_bm" }
-
-        let dataSource = FAHTTPDataSource(
-            userAgent: userAgent,
-            cookieHeader: cookieHeader,
-            webViewFetch: { url in
-                let html = try await navigator.fetchPageHTML(url)
-                return Data(html.utf8)
-            }
-        )
-
         do {
-            guard let session = try await OnlineFASession(cookies: authCookies, dataSource: dataSource) else {
-                status = "Login cookies were not accepted."
+            guard let session = try await FAWebSession.shared.establishSession() else {
+                status = "Waiting for login…"
                 return
             }
             establishedUsername = session.username
@@ -113,20 +85,5 @@ struct AndroidLoginView: View {
             logger.error("Android login failed to establish session: \(error)")
             status = "Login failed: \(error.localizedDescription)"
         }
-    }
-}
-
-extension WebCookie {
-    /// Convert to a Foundation cookie for OnlineFASession / FAHTTPDataSource.
-    var asHTTPCookie: HTTPCookie? {
-        var properties: [HTTPCookiePropertyKey: Any] = [
-            .name: name,
-            .value: value,
-            .domain: domain ?? ".furaffinity.net",
-            .path: path ?? "/",
-        ]
-        if let expires { properties[.expires] = expires }
-        if isSecure { properties[.secure] = true }
-        return HTTPCookie(properties: properties)
     }
 }
