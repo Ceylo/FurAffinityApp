@@ -451,20 +451,62 @@ no browser sends a pair twice.
 | Mac curl, no cookies / default UA / desktop Chrome UA | `403` in all three |
 | **Emulator Chrome, same IP** | **full page, no interstitial** |
 
-The discriminator is browser-engine vs bare client, not the address — so a
-borrowed physical device would not help, and neither would more header tuning
-(a bare client is refused with *any* UA, cookies or not; Cloudflare decides at
-the edge in ~60 ms). Nor is it a stale token: a later run in which the hidden
-WebView did earn a fresh `cf_clearance` (alongside `cf_chl_rc_ni`) still had
-every URLSession attempt refused with it.
+It is not the address, then. The conclusion drawn at the time — "the
+discriminator is browser engine vs bare client" — **was over-claimed**, and what
+actually settled it is below.
 
 **The hidden WebView cannot solve a challenge, which is the real defect.**
 Emulator Chrome cleared the interstitial unattended in under 15 s; the 1×1,
 `opacity(0.001)`, hit-testing-disabled WebView sat on `Un instant…` through
-three navigations and ~60 s. A managed challenge appears to need a real
-viewport — the same reason `adb shell input tap` never cleared one. Until that
-is addressed, a stale `cf_clearance` cannot be renewed without the visible login
-sheet.
+three navigations and ~60 s.
+
+### Why the hidden WebView never cleared it (measured 2026-08-12, later)
+
+Dumping what the engine was actually looking at answered it. The interstitial
+declares `cType: 'managed'` — the *passive* kind, no click required — and loads
+Turnstile with `render=explicit`. `window.turnstile` was present, no JS errors,
+every challenge resource fetched 200. Two things were wrong:
+
+**The widget had no room.** Inside the 1×1 frame the WebView's viewport is 4 CSS
+pixels wide, and Turnstile's container measured **0 × 69**. Widening the frame
+made the same container measure 358 × 69. A widget that cannot lay out cannot
+report, so the managed challenge never completed and the page stayed on
+`Un instant…` forever. (The widget's own iframe lives in a *closed* shadow root,
+so `document.querySelector('iframe[src*="challenges.cloudflare.com"]')` — what
+`FAChallengeView`'s DOM probe looks for — can never find it. Measure the
+container instead.)
+
+**We kept handing Cloudflare its own escalation counter.** The jar held
+`cf_chl_rc_ni`, Cloudflare's *re-challenge non-interactive* count, and it had
+climbed to **33**. Every navigation re-presented it, i.e. announced 33 prior
+passive failures. iOS never does this: `FAChallengeView` builds its WebView with
+`clearCookies: true` and seeds auth cookies only.
+
+Fixing both — a full-size WebView occluded by the opaque app background
+(`AndroidRootView`), and expiring the Cloudflare cookie names before each
+challenge navigation (`FAWebSession.clearCloudflareCookies`) — took autologin
+from never completing to completing on every cold launch tried, feed included.
+
+The two fixes do different jobs, and the counterfactual separates them:
+
+| Viewport | Cookie hygiene | Hidden WebView's own page | Autologin |
+|---|---|---|---|
+| 1×1 | no | `Un instant…` forever | never |
+| full | no | `Un instant…` forever | only via the fallback, slowly |
+| 1×1 | yes | `Un instant…` forever | **succeeds** |
+| full | yes | real FA index, cleared in place | **succeeds** |
+
+So the cookie hygiene is what makes the app work; the viewport is what lets the
+WebView solve a challenge *in place* rather than leaning on the fallback. Note
+Cloudflare still decides per request — one of the runs above was challenged on
+first contact and recovered through the fallback — so neither fix makes
+challenges go away, they make them survivable.
+
+Not settled: whether a `cf_clearance` earned by a *rendering* WebView is honored
+by a bare `URLSession`. Every attempt is still refused with a clearance that
+`drifted=false` against the live jar, which is why the WebView fallback carries
+most page loads. That control needs a clearance known to have rendered a real FA
+page, and has not been run.
 
 So `fetchPageHTML` no longer hands the interstitial to the parser (which
 reported it as a missing element at `FAHomePage.swift:28`, naming a parser line
@@ -473,9 +515,9 @@ restarts it — retries the navigation, and throws `CloudflareChallengeRequired`
 when exhausted. `FAHTTPDataSource` likewise retries `cf-mitigated: challenge`
 before paying for a WebView navigation, since the decision is per-request. The
 cost when everything is challenged is ~60 s of retries before the error lands
-(5 URLSession attempts, then 3 navigations of 8 s polling); worth revisiting if
-the WebView is ever made able to solve a challenge, which would make the long
-tail useful rather than just slow.
+(5 URLSession attempts, then 3 navigations of 8 s polling). That tail is now
+useful rather than just slow — the navigations it pays for do clear challenges —
+but it is still worth retuning.
 
 One more thing that run turned up: repeated cold launches ANR the app
 (`Input dispatching timed out`, main thread blocked ≥15 s) — roughly two thirds

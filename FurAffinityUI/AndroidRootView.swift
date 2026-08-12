@@ -29,6 +29,20 @@ struct AndroidRootView: View {
 
     var body: some View {
         ZStack {
+            // The app's long-lived WebView, mirroring RootView's hidden
+            // FAChallengeView on iOS: it holds the User-Agent `cf_clearance` is
+            // bound to and serves FAHTTPDataSource's challenge fallback, so it has
+            // to stay mounted for the whole session — see FAWebSession.
+            //
+            // It sits at the *bottom* of the stack at full size, hidden by the
+            // opaque background above rather than by being shrunk or faded: it has
+            // to keep rendering to clear a Cloudflare challenge (see
+            // FAWebSessionView).
+            FAWebSessionView()
+
+            Color(.systemBackground)
+                .ignoresSafeArea()
+
             if model.session == nil {
                 HomeView()
                     // Entry point for driving ported screens on the emulator without
@@ -73,12 +87,6 @@ struct AndroidRootView: View {
                         .tag(Tab.settings)
                 }
             }
-
-            // The app's long-lived WebView, mirroring RootView's hidden
-            // FAChallengeView on iOS: it holds the User-Agent `cf_clearance` is
-            // bound to and serves FAHTTPDataSource's challenge fallback, so it has
-            // to stay mounted for the whole session — see FAWebSession.
-            FAWebSessionView()
         }
         // Above the TabView so it also covers pushed screens.
         .overlay(alignment: .top) {

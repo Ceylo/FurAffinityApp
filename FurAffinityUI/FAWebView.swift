@@ -109,6 +109,9 @@ extension WebViewNavigator {
     @MainActor
     func fetchPageHTML(_ url: URL, attempts: Int = 3) async throws -> String {
         for attempt in 1...attempts {
+            // Never re-present Cloudflare's own cookies to a challenge: the
+            // re-challenge counter among them is what the edge escalates on.
+            await FAWebSession.shared.clearCloudflareCookies()
             try await loadOrThrow(url: url)
             let deadline = ContinuousClock.now + .seconds(8)
             repeat {

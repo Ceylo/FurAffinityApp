@@ -78,6 +78,38 @@ final class FAWebSession {
         continuation.resume(returning: ready)
     }
 
+    private static let cloudflareCookieNames = ["cf_clearance", "__cf_bm", "cf_chl_rc_ni", "cf_chl_rc_i"]
+
+    /// `cf_clearance` is set on the apex, `cf_chl_rc_ni` host-only, and a deletion
+    /// has to name the domain exactly.
+    private static let cloudflareCookieDomains = [".furaffinity.net", "www.furaffinity.net"]
+
+    /// Drop Cloudflare's own cookies before a challenge navigation.
+    ///
+    /// `cf_chl_rc_ni` is its *re-challenge non-interactive* counter: presenting one
+    /// tells the edge how many passive challenges this client has already failed,
+    /// and ours had climbed to 33. iOS never sends it — its challenge WebView
+    /// starts from a cleared jar seeded with auth cookies only (`FAChallengeView`).
+    /// Android has one process-global jar and can't copy that: a cookie read here
+    /// comes from the request `Cookie:` header, so it carries no domain, path or
+    /// expiry, and re-seeding what we wiped would downgrade the user's persistent
+    /// login to session cookies. Expire the Cloudflare names in place instead.
+    func clearCloudflareCookies() async {
+        for name in Self.cloudflareCookieNames {
+            for domain in Self.cloudflareCookieDomains {
+                let expired = WebCookie(
+                    name: name,
+                    value: "",
+                    domain: domain,
+                    path: "/",
+                    expires: Date(timeIntervalSince1970: 0),
+                    isSecure: true
+                )
+                try? await navigator.setCookie(expired, requestURL: FAURLs.homeUrl)
+            }
+        }
+    }
+
     /// Builds a session from whatever the shared cookie jar currently holds.
     ///
     /// Returns nil when there is nothing to build one from — no FA auth cookie
@@ -140,10 +172,11 @@ struct FAWebSessionView: View {
                 FAWebSession.shared.markReady()
             }
         )
-        // Present but invisible and inert, like iOS's hidden FAChallengeView. Not
-        // zero-sized: a WebView with no area may never lay out or run its scripts.
-        .frame(width: 1, height: 1)
-        .opacity(0.001)
+        // Full size on purpose: the 1×1, opacity-0.001 version this replaces laid
+        // Turnstile's widget out 0 px wide, so a managed challenge could never
+        // finish and the engine sat on "Un instant…" indefinitely. AndroidRootView
+        // hides it under the opaque app background instead — occlusion the engine
+        // doesn't know about, so it keeps laying out normally.
         .allowsHitTesting(false)
     }
 }
