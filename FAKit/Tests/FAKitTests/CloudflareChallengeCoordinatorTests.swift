@@ -5,10 +5,11 @@
 //  Created by Ceylo on 31/05/2026.
 //
 
-#if !os(Android)
-
 import Testing
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 @testable import FAKit
 
 /// Drives the coordinator's two-stage state machine deterministically: the parked
@@ -137,5 +138,3 @@ struct CloudflareChallengeCoordinatorTests {
         #expect(coordinator.pending == false)
     }
 }
-
-#endif

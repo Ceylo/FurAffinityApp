@@ -5,11 +5,14 @@
 //  Created by Ceylo on 29/05/2026.
 //
 
-#if !os(Android)
-
 import Foundation
+#if canImport(UIKit)
 import UIKit
-import Observation
+#endif
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 import FAPages
 
 /// Coordinates the in-app CloudFlare challenge flow:
@@ -32,7 +35,7 @@ import FAPages
 ///   so background tasks fail fast instead of hanging on a sheet that can't
 ///   be presented.
 @MainActor
-@Observable
+
 public final class CloudflareChallengeCoordinator {
     public static let shared = CloudflareChallengeCoordinator()
 
@@ -48,9 +51,46 @@ public final class CloudflareChallengeCoordinator {
     private var backgroundTimeoutTask: Task<Void, Never>?
 
     // Injected dependencies (defaulted to production behavior on `shared`).
-    private let isInBackground: @Sendable @MainActor () -> Bool
-    private let backgroundResolve: @Sendable @MainActor () async -> Bool
-    private let cookieProvider: @Sendable @MainActor () -> [HTTPCookie]
+    private var isInBackground: @Sendable @MainActor () -> Bool
+    private var backgroundResolve: @Sendable @MainActor () async -> Bool
+    private var cookieProvider: @Sendable @MainActor () -> [HTTPCookie]
+
+    // Only the *defaults* are platform-specific; the state machine below is not,
+    // so it stays shared rather than being duplicated for Android.
+    //
+    // Android has no UIApplication, no WKWebView to resolve headlessly in, and
+    // keeps its cookies in the WebView's own process-global jar rather than
+    // HTTPCookieStorage — which FAKit can't reach, because it can't depend on
+    // skip-web (see FAHTTPDataSource). So the defaults there are inert and the
+    // app installs the real ones through `configure(…)` at startup.
+    #if os(Android)
+    private static let defaultIsInBackground: @Sendable @MainActor () -> Bool = { false }
+    private static let defaultBackgroundResolve: @Sendable @MainActor () async -> Bool = { false }
+    private static let defaultCookieProvider: @Sendable @MainActor () -> [HTTPCookie] = { [] }
+    #else
+    private static let defaultIsInBackground: @Sendable @MainActor () -> Bool = {
+        UIApplication.shared.applicationState == .background
+    }
+    private static let defaultBackgroundResolve: @Sendable @MainActor () async -> Bool = {
+        await BackgroundCFChallengeResolver().resolve()
+    }
+    private static let defaultCookieProvider: @Sendable @MainActor () -> [HTTPCookie] = {
+        HTTPCookieStorage.shared.cookies ?? []
+    }
+    #endif
+
+    /// Installs platform wiring on an already-built coordinator — the only way to
+    /// reach `shared`, whose dependencies are otherwise fixed at first access.
+    /// Each argument left nil keeps whatever is already installed.
+    public func configure(
+        isInBackground: (@Sendable @MainActor () -> Bool)? = nil,
+        backgroundResolve: (@Sendable @MainActor () async -> Bool)? = nil,
+        cookieProvider: (@Sendable @MainActor () -> [HTTPCookie])? = nil
+    ) {
+        if let isInBackground { self.isInBackground = isInBackground }
+        if let backgroundResolve { self.backgroundResolve = backgroundResolve }
+        if let cookieProvider { self.cookieProvider = cookieProvider }
+    }
 
     private enum Outcome { case resolved, failed, cancelled }
     private struct Waiter {
@@ -65,12 +105,9 @@ public final class CloudflareChallengeCoordinator {
     /// instances with overridden closures and a short timeout, never touching
     /// `UIApplication` or `HTTPCookieStorage`.
     init(
-        isInBackground: @escaping @Sendable @MainActor () -> Bool =
-            { UIApplication.shared.applicationState == .background },
-        backgroundResolve: @escaping @Sendable @MainActor () async -> Bool =
-            { await BackgroundCFChallengeResolver().resolve() },
-        cookieProvider: @escaping @Sendable @MainActor () -> [HTTPCookie] =
-            { HTTPCookieStorage.shared.cookies ?? [] },
+        isInBackground: @escaping @Sendable @MainActor () -> Bool = defaultIsInBackground,
+        backgroundResolve: @escaping @Sendable @MainActor () async -> Bool = defaultBackgroundResolve,
+        cookieProvider: @escaping @Sendable @MainActor () -> [HTTPCookie] = defaultCookieProvider,
         safetyTimeout: Duration = .seconds(8)
     ) {
         self.isInBackground = isInBackground
@@ -208,5 +245,3 @@ public final class CloudflareChallengeCoordinator {
         waiter.continuation.resume(returning: .cancelled)
     }
 }
-
-#endif
