@@ -28,6 +28,13 @@ public extension View {
     ///   - frameUpdated: A closure called each time an item position changes due to scrolling in the List.
     ///   If the item goes out of List's frame, the given CGRect is nil
     func onItemFrameChanged(listGeometry: GeometryProxy, _ frameUpdated: @escaping (CGRect?) -> Void) -> some View {
+        #if FA_SKIP_MODULE
+        // SkipUI has no `coordinateSpace(.named:)`, so `trackListFrame()` below can't
+        // name the space these frames would be measured in. `onGeometryChange` does
+        // exist, but a frame in an unnameable space means nothing — a no-op is the
+        // honest substitute. Consequence: no scroll-position tracking on Android.
+        return self
+        #else
         // Snapshot the list frame outside the @Sendable transform closure so it
         // doesn't capture the non-Sendable GeometryProxy. The enclosing
         // GeometryReader re-applies this modifier when the list frame changes.
@@ -44,10 +51,15 @@ public extension View {
         } action: { frame in
             frameUpdated(frame)
         }
+        #endif
     }
 
     /// Makes a List view ready for use along with ``onItemFrameChanged(listGeometry:_:)``.
     func trackListFrame() -> some View {
-        coordinateSpace(.named("ListFrame.Scroll"))
+        #if FA_SKIP_MODULE
+        return self
+        #else
+        return coordinateSpace(.named("ListFrame.Scroll"))
+        #endif
     }
 }

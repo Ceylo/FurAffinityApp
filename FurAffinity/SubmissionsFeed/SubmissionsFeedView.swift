@@ -7,20 +7,31 @@
 
 import SwiftUI
 import FAKit
-@_spi(Advanced) import SwiftUIIntrospect
-import UIKit
 import Defaults
-import Collections
+import OrderedCollections
+#if canImport(UIKit)
+import UIKit
+#endif
+// SwiftUIIntrospect isn't a dependency of the Skip module, and `@Weak` is its
+// `@_spi(Advanced)` wrapper. `FA_SKIP_MODULE` rather than `os(Android)`: the module's
+// Darwin bridge compile doesn't have the package either.
+#if !FA_SKIP_MODULE
+@_spi(Advanced) import SwiftUIIntrospect
+#endif
 
+// State and environment are internal, not private: skipstone rejects private on
+// bridged state. Non-state members below stay private.
 struct SubmissionsFeedView: View {
-    @Environment(Model.self) private var model
-    @Environment(ErrorStorage.self) private var errorStorage
-    @State private var newSubmissionsCount: Int?
-    @Weak private var scrollView: UIScrollView?
-    @State private var targetScrollItem: FASubmissionPreview?
-    @State private var currentViewIsDisplayed = false
-    @State private var refreshTask: Task<Void, Never>?
-    @State private var pendingAutorefresh = false
+    @Environment(Model.self) var model
+    @Environment(ErrorStorage.self) var errorStorage
+    @State var newSubmissionsCount: Int?
+    @State var targetScrollItem: FASubmissionPreview?
+    @State var currentViewIsDisplayed = false
+    @State var refreshTask: Task<Void, Never>?
+    @State var pendingAutorefresh = false
+    #if !FA_SKIP_MODULE
+    @Weak var scrollView: UIScrollView?
+    #endif
     
     var noPreview: some View {
         ScrollView {
@@ -140,8 +151,14 @@ struct SubmissionsFeedView: View {
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
                 }
-                .introspect(.scrollView, on: .iOS(.v16...)) { scrollView in
-                    self.scrollView = scrollView
+                .applying { list in
+                    #if FA_SKIP_MODULE
+                    list
+                    #else
+                    list.introspect(.scrollView, on: .iOS(.v16...)) { scrollView in
+                        self.scrollView = scrollView
+                    }
+                    #endif
                 }
                 .trackListFrame()
                 .listStyle(.plain)
@@ -156,7 +173,7 @@ struct SubmissionsFeedView: View {
                 .swap(when: items.isEmpty) {
                     noPreview
                 }
-                .prefetchingPreviews(model.submissionPreviews, availableWidth: geometry.size.width)
+                .prefetchingPreviews(model.submissionPreviews, availableWidth: geometry.faSize.width)
             }
         }
     }
@@ -171,12 +188,8 @@ struct SubmissionsFeedView: View {
             NotificationOverlay(itemCount: $newSubmissionsCount)
                 .offset(y: 40)
         }
-        .task {
-            let events = NotificationCenter.default
-                .notifications(named: UIApplication.willEnterForegroundNotification)
-            for await _ in events {
-                autorefreshIfNeeded()
-            }
+        .autorefreshingOnForeground {
+            autorefreshIfNeeded()
         }
         // One-shot newer-submissions check after a cold-launch restore, reusing the
         // foreground autorefresh's scroll-preserving choreography. `initial: true`
@@ -221,20 +234,42 @@ struct SubmissionsFeedView: View {
 
 // MARK: - Refresh
 extension SubmissionsFeedView {
+    /// Waits for the pull-to-refresh control to retract, so inserting items doesn't
+    /// interrupt its animation.
+    func waitForPullToSettle() async throws {
+        #if FA_SKIP_MODULE
+        // Compose retracts its own indicator and there is no scroll view to observe.
+        // Deliberately not a blind sleep: a dead second before the fetch would be
+        // worse than today's Android behavior.
+        #else
+        if let scrollView {
+            while !scrollView.reachedTop {
+                try await Task.sleep(for: .milliseconds(50))
+            }
+        } else {
+            try await Task.sleep(for: .seconds(1))
+        }
+        #endif
+    }
+
+    /// Whether the feed is scrolled to the top. Always `true` on Skip, which gives no
+    /// access to the scroll position — matching today's Android always-refresh behavior.
+    var scrollViewIsAtTop: Bool {
+        #if FA_SKIP_MODULE
+        true
+        #else
+        scrollView?.reachedTop ?? true
+        #endif
+    }
+
     func refresh(pulled: Bool) {
         Task {
             // The delay gives time for the pull-to-refresh to go back
             // to its position and prevents interrupting animation
             if pulled {
-                if let scrollView {
-                    while !scrollView.reachedTop {
-                        try await Task.sleep(for: .milliseconds(50))
-                    }
-                } else {
-                    try await Task.sleep(for: .seconds(1))
-                }
+                try await waitForPullToSettle()
             }
-            
+
             if let item = model.submissionPreviews?.first {
                 // This will cause an Item.fetchTrigger to appear in the list,
                 // which will effectively cause the refresh
@@ -254,7 +289,7 @@ extension SubmissionsFeedView {
     ///   from a refresh already in flight, which only starts from the top — so
     ///   this can never yank a scrolled-down user.
     func autorefreshIfNeeded(ignoreScrollPosition: Bool = false) {
-        guard ignoreScrollPosition || scrollView?.reachedTop ?? true else {
+        guard ignoreScrollPosition || scrollViewIsAtTop else {
             return
         }
 
@@ -292,6 +327,7 @@ extension SubmissionsFeedView {
 }
 
 // MARK: - Previews
+#if !FA_SKIP_MODULE
 #Preview {
     withAsync({ try await Model.demo }) {
         NavigationStack {
@@ -312,4 +348,5 @@ extension SubmissionsFeedView {
         .preferredColorScheme(.dark)
     }
 }
+#endif
 
