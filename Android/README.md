@@ -186,6 +186,21 @@ skip app launch --android    # builds the bridge, installs, and launches on the 
 
 Boot an emulator first (see [Emulator](#emulator)) — this does not start one.
 
+**Wipe `.build/Darwin` before every `skip app launch` that follows a source
+change.** Otherwise the bridge build fails with `missing required module
+'AndroidNDK'` while emitting some unrelated dependency (`Defaults`, say), which
+reads like a broken dependency pin and isn't — the same edit builds clean under
+`skip android build` and passes `skip android test`. Only the incremental bridge
+build is wrong:
+
+```
+rm -rf .build/Darwin && skip app launch --android
+```
+
+Note the corollary: `skip android build` and `skip android test` being green does
+**not** mean the app still builds. Only `skip app launch` compiles the Darwin
+bridge, so a change that breaks it can otherwise sit unnoticed through a commit.
+
 `ANDROID_PACKAGE_NAME` in `Skip.env` **must** equal the Swift module name lowered
 to a dotted namespace (`FurAffinityUI` → `fur.affinity.ui`); the generated app
 resolves the transpiled module under that group, so a mismatch fails Gradle with
@@ -507,6 +522,44 @@ by a bare `URLSession`. Every attempt is still refused with a clearance that
 `drifted=false` against the live jar, which is why the WebView fallback carries
 most page loads. That control needs a clearance known to have rendered a real FA
 page, and has not been run.
+
+### The challenge escalation path
+
+`CloudflareChallengeCoordinator` is shared with iOS — only its defaults are
+per-platform (see the class comment). Android installs its own through
+`configure(…)` from `AndroidRootView`, because there is no `UIApplication` and
+the cookies live in the WebView's jar rather than `HTTPCookieStorage`.
+
+When `FAHTTPDataSource` exhausts its URLSession retries it now calls
+`awaitResolution()` *before* the WebView fetch, because resolution mints a
+clearance that fixes every subsequent request, while the fallback only rescues
+the one in hand. Then the two stages run:
+
+1. **Passive** — `FAChallengeView` mounts under the opaque background and clears
+   the challenge with no visible UI. Measured 1.5–3 s per challenge on the
+   emulator, and it is what actually happens: forcing a challenge by deleting
+   `cf_clearance` from the jar produced four challenges in one launch, all four
+   resolved this way, feed included.
+2. **Interactive** — a sheet, entered only when `_cf_chl_opt.cType` reads
+   `interactive` or the safety timeout expires. The timeout is 25 s here against
+   iOS's 8 s: a managed challenge on the emulator can take 15–20 s, and
+   escalating sooner puts a sheet in front of a user it was about to spare.
+
+Two things differ from FAKit's iOS view and are worth knowing:
+
+- **Interaction is detected from `_cf_chl_opt.cType`, not the checkbox's size.**
+  FAKit's probe measures `iframe[src*="challenges.cloudflare.com"]`, which can
+  never match: Turnstile puts that iframe in a *closed* shadow root. It also
+  tests `window.__cf_chl_opt`, two underscores, where Cloudflare uses one — so
+  `onChallenge` there is always false and `interactionRequired` is dead code.
+  iOS therefore only ever escalates via its safety timeout.
+- **The stage flags are mirrored into the view's own `@State`.** Skip's Compose
+  bridge does not observe an `@Observable` declared in another module, so reading
+  `coordinator.pending` directly recomposes nothing and neither stage ever
+  mounts. `CloudflareChallengeCoordinator.onStateChange` exists for this.
+
+Still unexercised: the interactive sheet. Cloudflare served only managed
+challenges throughout, so stage 2 has never actually drawn.
 
 So `fetchPageHTML` no longer hands the interstitial to the parser (which
 reported it as a missing element at `FAHomePage.swift:28`, naming a parser line

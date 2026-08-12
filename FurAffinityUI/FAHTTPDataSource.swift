@@ -82,6 +82,21 @@ struct FAHTTPDataSource: HTTPDataSource {
         method: HTTPMethod,
         parameters: [URLQueryItem]
     ) async throws -> Data {
+        try await httpData(
+            from: url, cookies: cookies, method: method,
+            parameters: parameters, hasAwaitedResolution: false
+        )
+    }
+
+    /// - Parameter hasAwaitedResolution: set on the one retry that follows a
+    ///   resolved challenge, so a still-challenged retry can't ask again and loop.
+    private func httpData(
+        from url: URL,
+        cookies: [HTTPCookie]?,
+        method: HTTPMethod,
+        parameters: [URLQueryItem],
+        hasAwaitedResolution: Bool
+    ) async throws -> Data {
         var request: URLRequest
         switch method {
         case .GET:
@@ -104,7 +119,14 @@ struct FAHTTPDataSource: HTTPDataSource {
         for (field, value) in Self.browserHeaders {
             request.setValue(value, forHTTPHeaderField: field)
         }
-        let header = cookieHeader(merging: cookies)
+        // The base header is frozen at session creation, which is fine until a
+        // challenge is resolved — that mints a new clearance, and replaying the
+        // old one would just be challenged again. Re-read the jar on that retry.
+        var base = baseCookieHeader
+        if hasAwaitedResolution, let liveCookieHeader, let live = await liveCookieHeader(), !live.isEmpty {
+            base = live
+        }
+        let header = cookieHeader(merging: cookies, base: base)
         if !header.isEmpty {
             request.setValue(header, forHTTPHeaderField: "Cookie")
         }
@@ -137,7 +159,26 @@ struct FAHTTPDataSource: HTTPDataSource {
                 continue
             }
 
-            logger.warning("\(url): still challenged after \(Self.challengeRetries) attempts; trying WebView fallback")
+            // Ask the UI to clear the challenge before falling back to reading a
+            // page out of the WebView: resolution puts a fresh clearance in the
+            // shared jar, which fixes every *subsequent* request too, whereas the
+            // fallback only rescues this one. Mirrors the single-retry loop in
+            // FAKit's URLSession+HTTPDataSource.
+            if !hasAwaitedResolution {
+                logger.warning("\(url): still challenged after \(Self.challengeRetries) attempts; asking for resolution")
+                do {
+                    try await CloudflareChallengeCoordinator.shared.awaitResolution()
+                    return try await httpData(
+                        from: url, cookies: cookies, method: method,
+                        parameters: parameters, hasAwaitedResolution: true
+                    )
+                } catch is CloudflareChallengeRequired {
+                    // Fall through to the WebView fetch below — it can still
+                    // rescue this one request.
+                }
+            }
+
+            logger.warning("\(url): still challenged; trying WebView fallback")
             if let webViewFetch, method == .GET {
                 return try await webViewFetch(request.url ?? url)
             }
@@ -200,12 +241,12 @@ struct FAHTTPDataSource: HTTPDataSource {
     /// sent every pair twice, which no browser does. The base header wins and
     /// keeps its order, so the wire header stays byte-identical to what the
     /// WebView itself would send; that is what Cloudflare compares against.
-    private func cookieHeader(merging cookies: [HTTPCookie]?) -> String {
-        guard let cookies, !cookies.isEmpty else { return baseCookieHeader }
+    private func cookieHeader(merging cookies: [HTTPCookie]?, base: String) -> String {
+        guard let cookies, !cookies.isEmpty else { return base }
 
         var parts = [String]()
         var names = Set<String>()
-        for pair in baseCookieHeader.split(separator: ";") {
+        for pair in base.split(separator: ";") {
             let trimmed = pair.trimmingCharacters(in: .whitespaces)
             guard let separator = trimmed.firstIndex(of: "=") else { continue }
             names.insert(String(trimmed[trimmed.startIndex..<separator]))

@@ -33,6 +33,11 @@ final class FAWebSession {
     /// challenge fallback, so it must outlive every screen.
     let navigator = WebViewNavigator()
 
+    /// The FA auth cookies as of the last `establishSession()`. Reading the
+    /// WebView jar is async, and `CloudflareChallengeCoordinator`'s logged-in
+    /// check is synchronous, so it reads this instead.
+    private(set) var lastKnownAuthCookies = [HTTPCookie]()
+
     private var isReady = false
     private var nextWaiterID = 0
     private var readyWaiters = [Int: CheckedContinuation<Bool, Never>]()
@@ -135,6 +140,7 @@ final class FAWebSession {
 
         let httpCookies = webCookies.map { $0.asHTTPCookie }.compactMap { $0 }
         let authCookies = httpCookies.filter { $0.name != "cf_clearance" && $0.name != "__cf_bm" }
+        lastKnownAuthCookies = authCookies
 
         // Captures the *shared* navigator, not a screen's: the fallback has to keep
         // working after the login view is gone.

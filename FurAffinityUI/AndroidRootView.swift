@@ -21,6 +21,12 @@ struct AndroidRootView: View {
     @State var navigationStream = NavigationStream()
     @State var path = [FATarget]()
     @State var selectedTab: Tab = .submissions
+    // Mirrors of the coordinator's two stage flags. iOS's RootView observes the
+    // coordinator itself, but Skip's Compose bridge doesn't see changes to an
+    // @Observable declared in another module, so the stages are driven from
+    // local state fed by `onStateChange` below.
+    @State var challengePending = false
+    @State var challengeBackgroundPending = false
 
     enum Tab {
         case submissions
@@ -39,6 +45,21 @@ struct AndroidRootView: View {
             // to keep rendering to clear a Cloudflare challenge (see
             // FAWebSessionView).
             FAWebSessionView()
+
+            // Stage 1 of the two-stage flow: a challenge view for the passive
+            // resolution most managed challenges do without a human. Kept below
+            // the opaque background for the same reason as FAWebSessionView — it
+            // has to lay out and render at full size to solve anything — and it
+            // escalates to the sheet only when Cloudflare says the challenge is
+            // interactive, or when the coordinator's safety timeout expires.
+            if challengeBackgroundPending {
+                FAChallengeView(
+                    onResolved: { CloudflareChallengeCoordinator.shared.markResolved() },
+                    onInteractionRequired: { CloudflareChallengeCoordinator.shared.markInteractionRequired() }
+                )
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+            }
 
             Color(.systemBackground)
                 .ignoresSafeArea()
@@ -91,6 +112,39 @@ struct AndroidRootView: View {
         // Above the TabView so it also covers pushed screens.
         .overlay(alignment: .top) {
             errorBanner
+        }
+        // Stage 2: the challenge needs a human. Dismissing without solving it
+        // fails the parked request rather than leaving it hanging.
+        .sheet(
+            isPresented: Binding(
+                get: { challengePending },
+                set: { isPresented in
+                    if !isPresented && challengePending {
+                        CloudflareChallengeCoordinator.shared.markFailed()
+                    }
+                }
+            )
+        ) {
+            FAChallengeView(
+                onResolved: { CloudflareChallengeCoordinator.shared.markResolved() }
+            )
+        }
+        .task {
+            // FAKit's defaults can't reach either of these on Android: there is
+            // no UIApplication, and the cookies live in the WebView's own jar.
+            CloudflareChallengeCoordinator.shared.configure(
+                isInBackground: { false },
+                cookieProvider: { FAWebSession.shared.lastKnownAuthCookies },
+                // Generous next to iOS's 8 s: a managed challenge on the emulator
+                // takes 15-20 s to clear itself, and escalating sooner would put a
+                // sheet in front of the user that was about to go away by itself.
+                safetyTimeout: .seconds(25)
+            )
+            CloudflareChallengeCoordinator.shared.onStateChange = {
+                let coordinator = CloudflareChallengeCoordinator.shared
+                challengePending = coordinator.pending
+                challengeBackgroundPending = coordinator.backgroundResolutionPending
+            }
         }
         .environment(model)
         .environment(model.errorStorage)

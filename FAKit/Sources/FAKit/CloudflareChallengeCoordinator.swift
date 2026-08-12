@@ -12,7 +12,7 @@ import UIKit
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
-
+import Observation
 import FAPages
 
 /// Coordinates the in-app CloudFlare challenge flow:
@@ -35,7 +35,7 @@ import FAPages
 ///   so background tasks fail fast instead of hanging on a sheet that can't
 ///   be presented.
 @MainActor
-
+@Observable
 public final class CloudflareChallengeCoordinator {
     public static let shared = CloudflareChallengeCoordinator()
 
@@ -45,9 +45,27 @@ public final class CloudflareChallengeCoordinator {
     /// attempt a passive (no-UI) resolution before falling back to the sheet.
     public private(set) var backgroundResolutionPending: Bool = false
 
+    /// Called whenever either stage flag changes.
+    ///
+    /// iOS observes the two properties directly through Observation. Skip's
+    /// Compose bridge doesn't see changes to an `@Observable` declared in another
+    /// module, so Android mirrors them into the view's own `@State` from here —
+    /// without it, neither stage ever mounts.
+    @ObservationIgnored
+    public var onStateChange: (@Sendable @MainActor () -> Void)?
+
+    private func setStages(pending: Bool, backgroundResolution: Bool) {
+        guard pending != self.pending || backgroundResolution != backgroundResolutionPending else {
+            return
+        }
+        self.pending = pending
+        self.backgroundResolutionPending = backgroundResolution
+        onStateChange?()
+    }
+
     /// Safety-net backstop: if neither passive resolution nor checkbox detection
     /// fires within this window, we still escalate to the visible sheet.
-    private let backgroundResolutionSafetyTimeout: Duration
+    private var backgroundResolutionSafetyTimeout: Duration
     private var backgroundTimeoutTask: Task<Void, Never>?
 
     // Injected dependencies (defaulted to production behavior on `shared`).
@@ -85,11 +103,13 @@ public final class CloudflareChallengeCoordinator {
     public func configure(
         isInBackground: (@Sendable @MainActor () -> Bool)? = nil,
         backgroundResolve: (@Sendable @MainActor () async -> Bool)? = nil,
-        cookieProvider: (@Sendable @MainActor () -> [HTTPCookie])? = nil
+        cookieProvider: (@Sendable @MainActor () -> [HTTPCookie])? = nil,
+        safetyTimeout: Duration? = nil
     ) {
         if let isInBackground { self.isInBackground = isInBackground }
         if let backgroundResolve { self.backgroundResolve = backgroundResolve }
         if let cookieProvider { self.cookieProvider = cookieProvider }
+        if let safetyTimeout { self.backgroundResolutionSafetyTimeout = safetyTimeout }
     }
 
     private enum Outcome { case resolved, failed, cancelled }
@@ -175,7 +195,7 @@ public final class CloudflareChallengeCoordinator {
         }
 
         logger.info("CloudFlare challenge: starting background resolution (safety timeout \(self.backgroundResolutionSafetyTimeout))")
-        backgroundResolutionPending = true
+        setStages(pending: false, backgroundResolution: true)
         let timeout = backgroundResolutionSafetyTimeout
         backgroundTimeoutTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: timeout)
@@ -198,8 +218,7 @@ public final class CloudflareChallengeCoordinator {
         guard backgroundResolutionPending else { return }
         backgroundTimeoutTask?.cancel()
         backgroundTimeoutTask = nil
-        backgroundResolutionPending = false
-        pending = true
+        setStages(pending: true, backgroundResolution: false)
     }
 
     /// Whether `HTTPCookieStorage.shared` holds FA auth cookies (anything for the
@@ -224,8 +243,7 @@ public final class CloudflareChallengeCoordinator {
         guard !waiters.isEmpty || pending || backgroundResolutionPending else { return }
         backgroundTimeoutTask?.cancel()
         backgroundTimeoutTask = nil
-        pending = false
-        backgroundResolutionPending = false
+        setStages(pending: false, backgroundResolution: false)
         let toResume = waiters
         waiters.removeAll()
         for waiter in toResume {
@@ -239,8 +257,7 @@ public final class CloudflareChallengeCoordinator {
         if waiters.isEmpty {
             backgroundTimeoutTask?.cancel()
             backgroundTimeoutTask = nil
-            pending = false
-            backgroundResolutionPending = false
+            setStages(pending: false, backgroundResolution: false)
         }
         waiter.continuation.resume(returning: .cancelled)
     }
