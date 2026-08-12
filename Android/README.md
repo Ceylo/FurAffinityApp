@@ -186,20 +186,24 @@ skip app launch --android    # builds the bridge, installs, and launches on the 
 
 Boot an emulator first (see [Emulator](#emulator)) — this does not start one.
 
-**Wipe `.build/Darwin` before every `skip app launch` that follows a source
-change.** Otherwise the bridge build fails with `missing required module
-'AndroidNDK'` while emitting some unrelated dependency (`Defaults`, say), which
-reads like a broken dependency pin and isn't — the same edit builds clean under
-`skip android build` and passes `skip android test`. Only the incremental bridge
-build is wrong:
+**The bridge build fails intermittently, and it is not your change.** It reports
+`missing required module 'AndroidNDK'` while emitting some unrelated dependency
+(`Defaults`, say), which reads like a broken pin and isn't — the same tree builds
+clean under `skip android build` and passes `skip android test`. Wipe
+`.build/Darwin` and **retry until it passes**; measured 2 failures then a success
+on byte-identical sources, so a single failure proves nothing:
 
 ```
-rm -rf .build/Darwin && skip app launch --android
+for i in 1 2 3; do rm -rf .build/Darwin; skip app launch --android && break; done
 ```
 
-Note the corollary: `skip android build` and `skip android test` being green does
-**not** mean the app still builds. Only `skip app launch` compiles the Darwin
-bridge, so a change that breaks it can otherwise sit unnoticed through a commit.
+Do **not** bisect your sources against it. A single build is not a signal here,
+and one run each way will happily "prove" that an innocent edit broke the build.
+If you need to know whether a change is at fault, run each side several times.
+
+Corollary: `skip android build` and `skip android test` being green does **not**
+mean the app still builds. Only `skip app launch` compiles the Darwin bridge, so
+a change that genuinely breaks it can sit unnoticed through a commit.
 
 `ANDROID_PACKAGE_NAME` in `Skip.env` **must** equal the Swift module name lowered
 to a dotted namespace (`FurAffinityUI` → `fur.affinity.ui`); the generated app
@@ -211,7 +215,14 @@ resolves the transpiled module under that group, so a mismatch fails Gradle with
 ```
 adb logcat | grep -i fur.affinity           # app logs (tagged fur.affinity.ui.FurAffinityUI)
 adb logcat -s FurAffinityUI                  # or filter by tag
+adb logcat -d | grep CFFALLBACK              # how often the WebView fetch is used
 ```
+
+`[CFFALLBACK]` tags every use of the WebView-fetch fallback — the slow path, up
+to three navigations of 8 s polling. One line on entry, one on rescue, so a
+fallback with no matching `rescued by WebView` line is one that failed. Since the
+challenge coordinator landed, a healthy session shows **none at all**: challenges
+are resolved by `FAChallengeView` and the retry goes through `URLSession`.
 
 The **installed app id is `com.example.id1234`**, not `net.furaffinity.spike` — so
 `adb shell run-as com.example.id1234 …` is how you reach its data directory (the

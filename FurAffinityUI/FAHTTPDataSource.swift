@@ -178,9 +178,16 @@ struct FAHTTPDataSource: HTTPDataSource {
                 }
             }
 
-            logger.warning("\(url): still challenged; trying WebView fallback")
+            // Entry and rescue both carry [CFFALLBACK], so how often the expensive
+            // path is taken — and whether it pays off — is one grep. A fallback
+            // with no matching "rescued" line failed; fetchPageHTML logs each of
+            // its own navigations just above that.
+            logger.warning("[CFFALLBACK] \(url): still challenged; trying WebView fallback")
             if let webViewFetch, method == .GET {
-                return try await webViewFetch(request.url ?? url)
+                let startedAt = ContinuousClock.now
+                let html = try await webViewFetch(request.url ?? url)
+                logger.warning("[CFFALLBACK] \(url): rescued by WebView after \(ContinuousClock.now - startedAt)")
+                return html
             }
             throw CloudflareChallengeRequired()
         }

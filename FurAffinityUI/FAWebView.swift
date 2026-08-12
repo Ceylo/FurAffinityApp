@@ -120,7 +120,7 @@ extension WebViewNavigator {
             } while ContinuousClock.now < deadline
 
             let where_ = await landing()
-            logger.warning("[CFDIAG] WebView fallback for \(url.absoluteString): still challenged after attempt \(attempt)/\(attempts) — \(where_)")
+            logger.warning("[CFFALLBACK] \(url.absoluteString): still challenged after navigation \(attempt)/\(attempts) — \(where_)")
             if attempt < attempts {
                 try? await Task.sleep(for: .seconds(attempt))
             }
