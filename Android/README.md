@@ -548,11 +548,12 @@ the one in hand. Then the two stages run:
 Two things differ from FAKit's iOS view and are worth knowing:
 
 - **Interaction is detected from `_cf_chl_opt.cType`, not the checkbox's size.**
-  FAKit's probe measures `iframe[src*="challenges.cloudflare.com"]`, which can
-  never match: Turnstile puts that iframe in a *closed* shadow root. It also
-  tests `window.__cf_chl_opt`, two underscores, where Cloudflare uses one — so
-  `onChallenge` there is always false and `interactionRequired` is dead code.
-  iOS therefore only ever escalates via its safety timeout.
+  FAKit's probe used to measure `iframe[src*="challenges.cloudflare.com"]`, which
+  can never match — Turnstile puts that iframe in a *closed* shadow root — and to
+  test `window.__cf_chl_opt`, two underscores, where Cloudflare uses one. Both
+  platforms now read `cType`. The captured interstitial is a fixture
+  (`www.furaffinity.net:cloudflare-managed-challenge.html`) and
+  `FAChallengeViewDOMTests` holds the probe's global against it.
 - **The stage flags are mirrored into the view's own `@State`.** Skip's Compose
   bridge does not observe an `@Observable` declared in another module, so reading
   `coordinator.pending` directly recomposes nothing and neither stage ever

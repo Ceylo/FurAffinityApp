@@ -52,21 +52,32 @@ public struct FAChallengeView: View {
 
     struct CFDOMSnapshot: Decodable {
         var onChallenge: Bool
-        var tsW: Int
-        var tsH: Int
-        var spinner: String
-        var success: String
+        /// Cloudflare's own name for the kind of challenge it served.
+        var cType: String
         var title: String
         var href: String
     }
 
-    /// Whether the background WebView shows an interactive Turnstile checkbox that
-    /// won't clear passively, so the flow should escalate to the visible sheet.
-    /// A rendered checkbox is a sized challenges.cloudflare.com iframe still on the
-    /// challenge page; the elapsed gate avoids escalating during the brief window
-    /// before a managed challenge resolves itself.
+    /// The global Cloudflare's interstitial declares its challenge on. Named once
+    /// so `FAChallengeViewDOMTests` can hold it against a captured interstitial —
+    /// this used to read `__cf_chl_opt`, with two underscores, which matches
+    /// nothing and made `interactionRequired` below dead code.
+    nonisolated static let challengeOptionsGlobal = "_cf_chl_opt"
+
+    /// Whether the challenge is one a human has to click through, so the flow
+    /// should escalate to the visible sheet.
+    ///
+    /// Reads the challenge's own declaration: `managed` and `non-interactive`
+    /// clear themselves, `interactive` does not. The elapsed gate avoids
+    /// escalating in the window before the interstitial's script has populated
+    /// the global.
+    ///
+    /// Deliberately *not* measured from the Turnstile checkbox's size, which is
+    /// what this did before: that widget lives in a **closed** shadow root, so
+    /// `document.querySelector('iframe[src*="challenges.cloudflare.com"]')` can
+    /// never reach it and always measures 0.
     nonisolated static func interactionRequired(snapshot: CFDOMSnapshot, elapsed: TimeInterval) -> Bool {
-        snapshot.onChallenge && snapshot.tsW >= 50 && snapshot.tsH >= 30 && elapsed >= 2.0
+        snapshot.onChallenge && snapshot.cType == "interactive" && elapsed >= 2.0
     }
 
     private func periodicDOMCheck(in webView: WKWebView) async {
@@ -74,16 +85,10 @@ public struct FAChallengeView: View {
 
         let js = """
         (function() {
-            var iframe = document.querySelector('iframe[src*="challenges.cloudflare.com"]');
-            var r = iframe ? iframe.getBoundingClientRect() : {width:0,height:0};
-            var spin = document.getElementById('ROlTq4');
-            var succ = document.getElementById('TQpKs1');
+            var o = window.\(Self.challengeOptionsGlobal);
             return JSON.stringify({
-                onChallenge: typeof window.__cf_chl_opt !== 'undefined',
-                tsW: Math.round(r.width),
-                tsH: Math.round(r.height),
-                spinner: spin ? window.getComputedStyle(spin).visibility : 'absent',
-                success: succ ? window.getComputedStyle(succ).display : 'absent',
+                onChallenge: !!o,
+                cType: (o && o.cType) ? String(o.cType) : '',
                 title: document.title,
                 href: location.href
             });
@@ -99,11 +104,10 @@ public struct FAChallengeView: View {
         let elapsed = pageLoadedAt.map { Date().timeIntervalSince($0) } ?? 0
         let interactionRequired = Self.interactionRequired(snapshot: snap, elapsed: elapsed)
         let msg = String(format:
-            "CF bg t=%.1fs title='%@' onChallenge=%@ ts=%dx%d spinner=%@ success=%@%@",
+            "CF bg t=%.1fs title='%@' onChallenge=%@ cType=%@%@",
             elapsed, snap.title,
             snap.onChallenge ? "true" : "false",
-            snap.tsW, snap.tsH,
-            snap.spinner, snap.success,
+            snap.cType.isEmpty ? "<none>" : snap.cType,
             interactionRequired ? " -> interaction required" : ""
         )
         logger.debug("\(msg)")
