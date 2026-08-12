@@ -14,7 +14,8 @@ An in-progress **Android port** builds the same SwiftUI source with [Skip](https
 Fuse (root `Package.swift` + `FurAffinityUI/` target + `Android/`/`Darwin/` scaffolding). The
 iOS Xcode target is unaffected — shared files stay in place and are pulled into the Android
 build as symlinks under `FurAffinityUI/Shared/`. Ported so far: the login screen (shared
-`HomeView` + autologin, over an Android `FALoginView`), the Followed feed, the
+`HomeView` + autologin, over an Android `FALoginView`), the Followed feed (on the shared
+`SubmissionsFeedView` container, badge and refresh choreography included), the
 submission detail screen (image, zoomable viewer, favorite, Save/Share, description with
 in-app links, read-only comments, metadata) and the Settings tab (shared `SettingsView` /
 `NotificationSettingsView`, image-cache control, log sharing, logout).

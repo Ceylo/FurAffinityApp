@@ -606,6 +606,41 @@ of forced relaunches produced no HTTP request at all and no log past
 skip-web JNI calls on a WebView that is busy running challenge script. Not
 investigated further.
 
+## Followed feed
+
+The feed container is **shared**: `FurAffinity/SubmissionsFeed/SubmissionsFeedView.swift`
+is symlinked in, and the old `AndroidSubmissionsFeedView` is gone. Android therefore gets
+the refresh badge ("3 new submissions" / "No new submission"), swipe-to-delete, the
+cold-launch restore check and foreground autorefresh from the same source as iOS.
+
+The scroll-preserving refresh choreography — a zero-height `fetchTrigger` row whose
+`onAppear` performs the fetch, wrapped in a `ScrollViewReader` — **runs on Android too**,
+and was measured working on the emulator: the pull fires the trigger, the fetch happens,
+the badge shows and fades, and the list holds its position. `ScrollViewReader` inside a
+real `body` is fine; the JNI abort under
+[§A `ViewModifier` must not defer its `content`](#a-viewmodifier-must-not-defer-its-content)
+is specific to a modifier deferring `Content`, which this is not.
+
+What Android gives up, and why:
+
+| Piece | Status on Android |
+|---|---|
+| `ListItemTracking` (`trackListFrame` / `onItemFrameChanged`) | **No-op.** SkipUI has no `coordinateSpace(.named:)`, and a frame measured in a space that can't be named means nothing. `onGeometryChange` does exist — the named space is the blocker. Consequence: `Defaults[.lastViewedSubmissionID]` does not follow scrolling, so there is no scroll-position persistence. It is still written by `fetchTriggerView.onDisappear`, and Android had no cold-launch scroll restoration before this either, so nothing regressed. |
+| `@Weak var scrollView: UIScrollView?` + `.introspect(.scrollView…)` | Fenced `#if !FA_SKIP_MODULE` — SwiftUIIntrospect isn't a dependency of this module, and the Darwin bridge lacks it too, so `os(Android)` would be the wrong flag. The two reads of it sit behind `waitForPullToSettle()` and `scrollViewIsAtTop` so no `#if` reaches the refresh logic. |
+| `waitForPullToSettle()` | Returns immediately. Compose retracts its own indicator, and a blind 1 s sleep would just be a dead second before the fetch. The visible consequence: the pull spinner retracts *before* the fetch finishes (iOS's `refresh(pulled:)` is fire-and-forget) — the badge is the completion feedback. |
+| `scrollViewIsAtTop` | Always `true`, so foreground autorefresh never skips on scroll position — which is what Android did before the share anyway. |
+
+`.onDelete` **works** on SkipUI, with one difference worth knowing: iOS reveals a Delete
+button that must then be tapped, whereas Compose commits the delete at the end of the
+swipe with no confirming affordance. A full left-swipe on a card removes that submission
+from the FA inbox immediately (`POST /msg/submissions/new~<sid>@<n>`). Be careful
+demoing this against a real account.
+
+Not verified, for want of the state to verify it against: the empty feed (unreachable
+through the offline session), and holding scroll position while items are actually
+*prepended* — no new submissions arrived during the emulator run, so the refresh was
+always a no-change fetch.
+
 ## Submission screen
 
 Tapping a feed card pushes the same `RemoteSubmissionView` → `SubmissionView` the iOS app
