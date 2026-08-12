@@ -53,17 +53,61 @@ ln -s ../../../../FurAffinity/Assets.xcassets/Foo.colorset/Contents.json Foo.col
 Skip's resource copy does not follow a symlinked *directory* — it silently copies
 nothing, and the entry never reaches the APK. The failure is quiet: `Color(_:bundle:)`
 falls back to an opaque default, so a 10%-alpha border renders as a solid grey one
-instead of erroring. After changing a catalog, confirm the file actually landed:
+instead of erroring. After changing a catalog, confirm the entry actually landed
+(the mirrored tree is itself made of symlinks, so `find -type f` won't list them):
 
 ```
-find .build/plugins/outputs/android/FurAffinityUI/destination/skipstone/FurAffinityUI/src/main/assets -type f
+ls -R .build/plugins/outputs/*/FurAffinityUI/destination/skipstone/FurAffinityUI/src/main/assets
 ```
+
+The path segment after `outputs/` is the **checkout directory's name**, not the word
+`android` — it differs per worktree, hence the glob.
+
+### Generated art
+
+An entry big enough that a second copy in git would hurt is generated from the iOS
+art instead, and git-ignored. `Scripts/generate-android-assets.sh` writes two sets:
+
+- the in-app `AppIcon`, a 512×512 light/dark pair downscaled from two 1024×1024 PNGs
+  (the view draws it at 100 pt);
+- the launcher icon — `mipmap-*/ic_launcher_foreground.png` at the adaptive layer's
+  108 dp and `mipmap-*/ic_launcher.png` at the legacy 48 dp, both from the light art
+  (an adaptive icon has no dark variant).
+
+`mipmap-anydpi/ic_launcher.xml` and `values/ic_launcher_background.xml` are
+hand-written and committed. The art is a full-bleed rounded square whose subject
+touches every edge, so the XML insets the foreground by 16.7% into the 72 dp safe
+zone rather than letting a circular launcher mask clip the ears; the background is a
+solid colour sampled from the art's yellow field, visible only in the parallax band.
+Skip's template `<monochrome>` layer is gone — keeping it would leave Skip's sun as
+the themed-icon variant.
+
+`Android/settings.gradle.kts` runs the script at configuration time (first statement
+in `pluginManagement`, same `providers.exec` mechanism as `skip plugin --prebuild`),
+so a Gradle build or an Android Studio sync regenerates everything. That is the one
+place that orders correctly for *both* consumers — the app module's resource merge
+and the skipstone included build's resource copy — since an `app:preBuild` task
+dependency cannot order against a separate included build. The script is therefore
+written to be a true no-op when up to date, content-compared rather than rewritten.
+
+`skip android build` goes through SwiftPM only and never runs Gradle, so it stays a
+documented prerequisite; skipping it there costs a blank in-app icon. It is
+idempotent and takes under a second:
+
+```
+Scripts/generate-android-assets.sh
+```
+
+A SwiftPM prebuild plugin would be nicer, but it cannot work: `Image(_:bundle:)`
+resolves through this module's catalog **in the source tree**, and the plugin
+sandbox forbids writing there.
 
 ## Prerequisites
 
 ```
-skip checkup                 # verifies toolchain (Xcode, Android SDK, Gradle, JDK)
-skip android sdk install     # if the Android SDK/NDK is missing
+skip checkup                     # verifies toolchain (Xcode, Android SDK, Gradle, JDK)
+skip android sdk install         # if the Android SDK/NDK is missing
+Scripts/generate-android-assets.sh   # derived art (see Generated art above)
 ```
 
 ## Emulator
@@ -142,6 +186,25 @@ skip app launch --android    # builds the bridge, installs, and launches on the 
 
 Boot an emulator first (see [Emulator](#emulator)) — this does not start one.
 
+**The bridge build fails intermittently, and it is not your change.** It reports
+`missing required module 'AndroidNDK'` while emitting some unrelated dependency
+(`Defaults`, say), which reads like a broken pin and isn't — the same tree builds
+clean under `skip android build` and passes `skip android test`. Wipe
+`.build/Darwin` and **retry until it passes**; measured 2 failures then a success
+on byte-identical sources, so a single failure proves nothing:
+
+```
+for i in 1 2 3; do rm -rf .build/Darwin; skip app launch --android && break; done
+```
+
+Do **not** bisect your sources against it. A single build is not a signal here,
+and one run each way will happily "prove" that an innocent edit broke the build.
+If you need to know whether a change is at fault, run each side several times.
+
+Corollary: `skip android build` and `skip android test` being green does **not**
+mean the app still builds. Only `skip app launch` compiles the Darwin bridge, so
+a change that genuinely breaks it can sit unnoticed through a commit.
+
 `ANDROID_PACKAGE_NAME` in `Skip.env` **must** equal the Swift module name lowered
 to a dotted namespace (`FurAffinityUI` → `fur.affinity.ui`); the generated app
 resolves the transpiled module under that group, so a mismatch fails Gradle with
@@ -152,7 +215,14 @@ resolves the transpiled module under that group, so a mismatch fails Gradle with
 ```
 adb logcat | grep -i fur.affinity           # app logs (tagged fur.affinity.ui.FurAffinityUI)
 adb logcat -s FurAffinityUI                  # or filter by tag
+adb logcat -d | grep CFFALLBACK              # how often the WebView fetch is used
 ```
+
+`[CFFALLBACK]` tags every use of the WebView-fetch fallback — the slow path, up
+to three navigations of 8 s polling. One line on entry, one on rescue, so a
+fallback with no matching `rescued by WebView` line is one that failed. Since the
+challenge coordinator landed, a healthy session shows **none at all**: challenges
+are resolved by `FAChallengeView` and the retry goes through `URLSession`.
 
 The **installed app id is `com.example.id1234`**, not `net.furaffinity.spike` — so
 `adb shell run-as com.example.id1234 …` is how you reach its data directory (the
@@ -331,6 +401,210 @@ first visible thumbnail to appear:
 
 The network was never the problem: the visible rows were queued behind ~144 unbounded
 prefetches. Scrolling 72 items and back now serves 93 images from memory vs 38 re-decodes.
+
+## Login and the long-lived WebView
+
+The logged-out screen is the shared `HomeView` — same icon, buttons and footer as
+iOS, from the same file. Four things in it needed handling, all of them the general
+rules in [Rules for shared sources](#rules-for-shared-sources) applied once each:
+
+| In HomeView | Guard |
+|---|---|
+| the Liquid Glass button branch | `#if FA_SKIP_MODULE` takes the pre-iOS-26 capsules instead. `#available(iOS 26, *)` is vacuously true off-Apple, and `GlassButtonStyle` is unavailable / `.glassProminent` absent. The capsule pair lives in `legacyButtons` so the `#if` holds balanced braces |
+| `ErrorDisplay`, `NotificationCoordinator` | `#if !FA_SKIP_MODULE`; errors reach the user through `AndroidRootView`'s banner, and nothing delivers notifications here |
+| the six `@State`/`@Environment` wrappers | internal, not private |
+| `UIApplication.shared.applicationState` | dropped from a log line that already carries `scenePhase` |
+
+`FurAffinityUI/FALoginView.swift` is the Android substitute for FAKit's WebKit one,
+matching its public surface (`session` binding, `onError`, `makeSession()`) so the
+shared caller compiles unchanged. It cannot live in FAKit — it needs skip-web (see
+`FAHTTPDataSource` for the CJNI rationale) — and it is unguarded, so the Darwin
+bridge compile finds it too; this module's declaration shadows FAKit's.
+
+### Why a hidden WebView is mounted for the whole session
+
+`FAWebSessionView` (in `FAWebSession.swift`) keeps a 1×1, `opacity(0.001)`,
+hit-testing-disabled WebView at the root of `AndroidRootView` for the life of the
+app, the way `RootView` does with `FAChallengeView` on iOS. Two things need a live
+WebView long after any login screen is gone:
+
+- `cf_clearance` is bound to the byte-exact WebView User-Agent, which is read out of
+  a real WebView via JS (a 1 dp one runs scripts fine — verified).
+- `FAHTTPDataSource`'s fallback for a challenged request is to navigate a cleared
+  WebView and read the DOM.
+
+So `FAWebSession.shared` owns the navigator, and `establishSession()` — cookies →
+`OnlineFASession` — always runs against *it*, never against a screen's own WebView.
+Cookies are process-global on Android (`CookieManager`), so the hidden WebView sees
+whatever clearance and auth the visible login sheet just earned.
+
+`makeSession()` (autologin) first `awaitReady()`s that view's first
+`onNavigationFinished`: a `WebViewNavigator` with no attached engine returns an
+*empty cookie list* rather than an error, so a cold-launch autologin that skipped
+the wait would silently look logged out.
+
+Costs worth knowing: while the login sheet is up there are two WebView instances,
+and the hidden one loads FA's home page — ads and all — once per launch.
+
+### What actually draws the Cloudflare challenge (measured 2026-08-12)
+
+Two candidate causes were tested and both are settled.
+
+**The duplicated `Cookie` header was real, and was not the cause.** Every request
+used to send every pair twice (`FAWebSession` derives the base header and
+`OnlineFASession`'s auth cookies from the same jar, and the merge concatenated
+them). Fixed by merging on name. Measured A/B inside one session — a marker file
+in the cache dir flipped the behaviour per launch, arms alternating, so the
+bursts described below could not favour one arm:
+
+| Arm | Challenged requests | Wilson 95% |
+|---|---|---|
+| A — deduped | 8/9 (88.9%) | [56.5%, 98.0%] |
+| B — duplicated | 6/7 (85.7%) | [48.7%, 97.4%] |
+
+Null, per the rule fixed before the run. Read it with the caveat that both arms
+sat near the ceiling: the window was a saturated one, so the test had little
+power to detect a smaller effect. It rules out "duplication is what breaks
+autologin"; it does not prove duplication is free. The fix stands on its own —
+no browser sends a pair twice.
+
+**It is not the emulator either.** Same minute, same egress IPv4:
+
+| Client | Result |
+|---|---|
+| App URLSession (WebView UA + full cookie header) | `403 cf-mitigated: challenge` |
+| Mac `curl --http1.1 -4`, same UA + same cookies *(bad clearance — see below)* | `403 cf-mitigated: challenge` |
+| Mac curl, no cookies / default UA / desktop Chrome UA | `403` in all three |
+| **Emulator Chrome, same IP** | **full page, no interstitial** |
+
+It is not the address, then. The conclusion drawn at the time — "the
+discriminator is browser engine vs bare client" — **was over-claimed**, and what
+actually settled it is below.
+
+**The hidden WebView cannot solve a challenge, which is the real defect.**
+Emulator Chrome cleared the interstitial unattended in under 15 s; the 1×1,
+`opacity(0.001)`, hit-testing-disabled WebView sat on `Un instant…` through
+three navigations and ~60 s.
+
+### Why the hidden WebView never cleared it (measured 2026-08-12, later)
+
+Dumping what the engine was actually looking at answered it. The interstitial
+declares `cType: 'managed'` — the *passive* kind, no click required — and loads
+Turnstile with `render=explicit`. `window.turnstile` was present, no JS errors,
+every challenge resource fetched 200. Two things were wrong:
+
+**The widget had no room.** Inside the 1×1 frame the WebView's viewport is 4 CSS
+pixels wide, and Turnstile's container measured **0 × 69**. Widening the frame
+made the same container measure 358 × 69. A widget that cannot lay out cannot
+report, so the managed challenge never completed and the page stayed on
+`Un instant…` forever. (The widget's own iframe lives in a *closed* shadow root,
+so `document.querySelector('iframe[src*="challenges.cloudflare.com"]')` — what
+`FAChallengeView`'s DOM probe looks for — can never find it. Measure the
+container instead.)
+
+**We kept handing Cloudflare its own escalation counter.** The jar held
+`cf_chl_rc_ni`, Cloudflare's *re-challenge non-interactive* count, and it had
+climbed to **33**. Every navigation re-presented it, i.e. announced 33 prior
+passive failures. iOS never does this: `FAChallengeView` builds its WebView with
+`clearCookies: true` and seeds auth cookies only.
+
+Fixing both — a full-size WebView occluded by the opaque app background
+(`AndroidRootView`), and expiring the Cloudflare cookie names before each
+challenge navigation (`FAWebSession.clearCloudflareCookies`) — took autologin
+from never completing to completing on every cold launch tried, feed included.
+
+The two fixes do different jobs, and the counterfactual separates them:
+
+| Viewport | Cookie hygiene | Hidden WebView's own page | Autologin |
+|---|---|---|---|
+| 1×1 | no | `Un instant…` forever | never |
+| full | no | `Un instant…` forever | only via the fallback, slowly |
+| 1×1 | yes | `Un instant…` forever | **succeeds** |
+| full | yes | real FA index, cleared in place | **succeeds** |
+
+So the cookie hygiene is what makes the app work; the viewport is what lets the
+WebView solve a challenge *in place* rather than leaning on the fallback. Note
+Cloudflare still decides per request — one of the runs above was challenged on
+first contact and recovered through the fallback — so neither fix makes
+challenges go away, they make them survivable.
+
+### The control that settles "browser engine vs bare client" (2026-08-12)
+
+The missing control finally ran: take a clearance the WebView earned *after* the
+fixes above — one that demonstrably loaded real FA pages — and replay it from the
+Mac through plain `curl`, the barest client there is.
+
+| Client | Clearance | Result |
+|---|---|---|
+| `curl --http1.1 -4`, WebView UA + full cookie header | known-good | **200, 6/6**, ~135 KB, logged in |
+| `curl --http1.1 -4`, WebView UA, no cookies | none | 403 `cf-mitigated: challenge` |
+
+**So the bare client was never the problem.** The earlier run in this document —
+"Mac curl with identical UA and cookies is refused 403" — is not reproducible with
+a *valid* clearance; what it was replaying was a token from a WebView that had
+never actually solved a challenge, carried alongside a climbing `cf_chl_rc_ni`.
+The discriminator is the token, not the engine. Nothing here argues for a
+physical device, a different HTTP stack, or more header tuning.
+
+That also means the WebView-fetch fallback is a backstop rather than the main
+road: with a good clearance, `URLSession` is expected to carry page loads.
+
+### The challenge escalation path
+
+`CloudflareChallengeCoordinator` is shared with iOS — only its defaults are
+per-platform (see the class comment). Android installs its own through
+`configure(…)` from `AndroidRootView`, because there is no `UIApplication` and
+the cookies live in the WebView's jar rather than `HTTPCookieStorage`.
+
+When `FAHTTPDataSource` exhausts its URLSession retries it now calls
+`awaitResolution()` *before* the WebView fetch, because resolution mints a
+clearance that fixes every subsequent request, while the fallback only rescues
+the one in hand. Then the two stages run:
+
+1. **Passive** — `FAChallengeView` mounts under the opaque background and clears
+   the challenge with no visible UI. Measured 1.5–3 s per challenge on the
+   emulator, and it is what actually happens: forcing a challenge by deleting
+   `cf_clearance` from the jar produced four challenges in one launch, all four
+   resolved this way, feed included.
+2. **Interactive** — a sheet, entered only when `_cf_chl_opt.cType` reads
+   `interactive` or the safety timeout expires. The timeout is 25 s here against
+   iOS's 8 s: a managed challenge on the emulator can take 15–20 s, and
+   escalating sooner puts a sheet in front of a user it was about to spare.
+
+Two things differ from FAKit's iOS view and are worth knowing:
+
+- **Interaction is detected from `_cf_chl_opt.cType`, not the checkbox's size.**
+  FAKit's probe used to measure `iframe[src*="challenges.cloudflare.com"]`, which
+  can never match — Turnstile puts that iframe in a *closed* shadow root — and to
+  test `window.__cf_chl_opt`, two underscores, where Cloudflare uses one. Both
+  platforms now read `cType`. The captured interstitial is a fixture
+  (`www.furaffinity.net:cloudflare-managed-challenge.html`) and
+  `FAChallengeViewDOMTests` holds the probe's global against it.
+- **The stage flags are mirrored into the view's own `@State`.** Skip's Compose
+  bridge does not observe an `@Observable` declared in another module, so reading
+  `coordinator.pending` directly recomposes nothing and neither stage ever
+  mounts. `CloudflareChallengeCoordinator.onStateChange` exists for this.
+
+Still unexercised: the interactive sheet. Cloudflare served only managed
+challenges throughout, so stage 2 has never actually drawn.
+
+So `fetchPageHTML` no longer hands the interstitial to the parser (which
+reported it as a missing element at `FAHomePage.swift:28`, naming a parser line
+for a Cloudflare problem). It waits the challenge out in place — reloading
+restarts it — retries the navigation, and throws `CloudflareChallengeRequired`
+when exhausted. `FAHTTPDataSource` likewise retries `cf-mitigated: challenge`
+before paying for a WebView navigation, since the decision is per-request. The
+cost when everything is challenged is ~60 s of retries before the error lands
+(5 URLSession attempts, then 3 navigations of 8 s polling). That tail is now
+useful rather than just slow — the navigations it pays for do clear challenges —
+but it is still worth retuning.
+
+One more thing that run turned up: repeated cold launches ANR the app
+(`Input dispatching timed out`, main thread blocked ≥15 s) — roughly two thirds
+of forced relaunches produced no HTTP request at all and no log past
+`updateSession() start`. `establishSession()` is `@MainActor` and awaits
+skip-web JNI calls on a WebView that is busy running challenge script. Not
+investigated further.
 
 ## Submission screen
 

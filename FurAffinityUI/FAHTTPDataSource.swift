@@ -30,12 +30,19 @@ import FoundationNetworking
 struct FAHTTPDataSource: HTTPDataSource {
     /// Navigates the cleared WebView to `url` and returns the page's decoded HTML.
     typealias WebViewFetch = @Sendable (URL) async throws -> Data
+    /// Reads the WebView's `Cookie:` header *now*, to compare against the one
+    /// frozen at session creation.
+    typealias CookieHeaderProbe = @Sendable () async -> String?
 
     private let session: URLSession
     private let userAgent: String
     /// The WebView's `Cookie:` header for FA (cf_clearance + __cf_bm + auth).
     private let baseCookieHeader: String
     private let webViewFetch: WebViewFetch?
+    private let liveCookieHeader: CookieHeaderProbe?
+
+    /// URLSession attempts before falling back to a WebView navigation.
+    private static let challengeRetries = 5
 
     // A top-level-navigation header set consistent with a Chrome-on-Android UA.
     // Deliberately no `sec-ch-ua*` Client Hints: they must agree with the UA's
@@ -54,7 +61,8 @@ struct FAHTTPDataSource: HTTPDataSource {
     init(
         userAgent: String,
         cookieHeader: String,
-        webViewFetch: WebViewFetch? = nil
+        webViewFetch: WebViewFetch? = nil,
+        liveCookieHeader: CookieHeaderProbe? = nil
     ) {
         let config = URLSessionConfiguration.default
         // Per-request Cookie header rather than a cookie store: HTTPCookieStorage's
@@ -65,11 +73,7 @@ struct FAHTTPDataSource: HTTPDataSource {
         self.userAgent = userAgent
         self.baseCookieHeader = cookieHeader
         self.webViewFetch = webViewFetch
-    }
-
-    /// A copy with refreshed clearance/auth cookies (after a re-login or CF re-solve).
-    func withCookieHeader(_ header: String) -> FAHTTPDataSource {
-        FAHTTPDataSource(userAgent: userAgent, cookieHeader: header, webViewFetch: webViewFetch)
+        self.liveCookieHeader = liveCookieHeader
     }
 
     func httpData(
@@ -77,6 +81,21 @@ struct FAHTTPDataSource: HTTPDataSource {
         cookies: [HTTPCookie]?,
         method: HTTPMethod,
         parameters: [URLQueryItem]
+    ) async throws -> Data {
+        try await httpData(
+            from: url, cookies: cookies, method: method,
+            parameters: parameters, hasAwaitedResolution: false
+        )
+    }
+
+    /// - Parameter hasAwaitedResolution: set on the one retry that follows a
+    ///   resolved challenge, so a still-challenged retry can't ask again and loop.
+    private func httpData(
+        from url: URL,
+        cookies: [HTTPCookie]?,
+        method: HTTPMethod,
+        parameters: [URLQueryItem],
+        hasAwaitedResolution: Bool
     ) async throws -> Data {
         var request: URLRequest
         switch method {
@@ -100,25 +119,79 @@ struct FAHTTPDataSource: HTTPDataSource {
         for (field, value) in Self.browserHeaders {
             request.setValue(value, forHTTPHeaderField: field)
         }
-        let header = cookieHeader(merging: cookies)
+        // The base header is frozen at session creation, which is fine until a
+        // challenge is resolved — that mints a new clearance, and replaying the
+        // old one would just be challenged again. Re-read the jar on that retry.
+        var base = baseCookieHeader
+        if hasAwaitedResolution, let liveCookieHeader, let live = await liveCookieHeader(), !live.isEmpty {
+            base = live
+        }
+        let header = cookieHeader(merging: cookies, base: base)
         if !header.isEmpty {
             request.setValue(header, forHTTPHeaderField: "Cookie")
         }
 
         logger.info("\(method) request on \(request.url?.absoluteString ?? "\(url)")")
-        let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw FAHTTPError.nonHTTPResponse(url)
-        }
 
-        let isChallenge = http.value(forHTTPHeaderField: "cf-mitigated") == "challenge"
-        if isChallenge {
-            logger.warning("\(url): Cloudflare challenge on URLSession fetch; trying WebView fallback")
+        // Cloudflare's decision is per-request, not per-session: the same cookies
+        // and UA can be challenged and then let through seconds later. So retry
+        // the cheap path a few times before paying for a WebView navigation.
+        // Only `cf-mitigated: challenge` is retried — unlike FACoilBridge's image
+        // loop, which retries any non-2xx and so cannot tell a challenge from a
+        // 404 or a socket error.
+        var data = Data()
+        var http: HTTPURLResponse?
+        for attempt in 1...Self.challengeRetries {
+            let (body, response) = try await session.data(for: request)
+            guard let received = response as? HTTPURLResponse else {
+                throw FAHTTPError.nonHTTPResponse(url)
+            }
+            data = body
+            http = received
+            guard received.value(forHTTPHeaderField: "cf-mitigated") == "challenge" else { break }
+
+            logger.warning("\(url): Cloudflare challenge on URLSession fetch (HTTP \(received.statusCode)), attempt \(attempt)/\(Self.challengeRetries)")
+            if attempt == 1 {
+                await logClearanceDiagnostics(sent: header)
+            }
+            if attempt < Self.challengeRetries {
+                try? await Task.sleep(for: .milliseconds(250 * attempt))
+                continue
+            }
+
+            // Ask the UI to clear the challenge before falling back to reading a
+            // page out of the WebView: resolution puts a fresh clearance in the
+            // shared jar, which fixes every *subsequent* request too, whereas the
+            // fallback only rescues this one. Mirrors the single-retry loop in
+            // FAKit's URLSession+HTTPDataSource.
+            if !hasAwaitedResolution {
+                logger.warning("\(url): still challenged after \(Self.challengeRetries) attempts; asking for resolution")
+                do {
+                    try await CloudflareChallengeCoordinator.shared.awaitResolution()
+                    return try await httpData(
+                        from: url, cookies: cookies, method: method,
+                        parameters: parameters, hasAwaitedResolution: true
+                    )
+                } catch is CloudflareChallengeRequired {
+                    // Fall through to the WebView fetch below — it can still
+                    // rescue this one request.
+                }
+            }
+
+            // Entry and rescue both carry [CFFALLBACK], so how often the expensive
+            // path is taken — and whether it pays off — is one grep. A fallback
+            // with no matching "rescued" line failed; fetchPageHTML logs each of
+            // its own navigations just above that.
+            logger.warning("[CFFALLBACK] \(url): still challenged; trying WebView fallback")
             if let webViewFetch, method == .GET {
-                return try await webViewFetch(request.url ?? url)
+                let startedAt = ContinuousClock.now
+                let html = try await webViewFetch(request.url ?? url)
+                logger.warning("[CFFALLBACK] \(url): rescued by WebView after \(ContinuousClock.now - startedAt)")
+                return html
             }
             throw CloudflareChallengeRequired()
         }
+        guard let http else { throw FAHTTPError.nonHTTPResponse(url) }
 
         guard (200...299).contains(http.statusCode) || (http.statusCode == 400 && !data.isEmpty) else {
             let body = String(data: data, encoding: .utf8) ?? "<non-UTF8>"
@@ -128,13 +201,69 @@ struct FAHTTPDataSource: HTTPDataSource {
         return data
     }
 
-    /// Merge the base WebView cookie header with any per-request auth cookies.
-    private func cookieHeader(merging cookies: [HTTPCookie]?) -> String {
-        guard let cookies, !cookies.isEmpty else { return baseCookieHeader }
-        let extra = HTTPCookie.requestHeaderFields(with: cookies)["Cookie"] ?? ""
-        if baseCookieHeader.isEmpty { return extra }
-        if extra.isEmpty { return baseCookieHeader }
-        return baseCookieHeader + "; " + extra
+    /// Tests the "the header frozen at session creation went stale" hypothesis: the
+    /// cookies actually sent, against what the WebView would send right now.
+    private func logClearanceDiagnostics(sent: String) async {
+        logger.warning("[CFDIAG] sent cookies: \(Self.cookieFingerprint(sent))")
+        guard let liveCookieHeader else {
+            logger.warning("[CFDIAG] no live cookie probe wired up")
+            return
+        }
+        let live = await liveCookieHeader() ?? ""
+        logger.warning("[CFDIAG] live cookies: \(Self.cookieFingerprint(live))")
+        let sentClearance = Self.cookieValue("cf_clearance", in: sent)
+        let liveClearance = Self.cookieValue("cf_clearance", in: live)
+        logger.warning("[CFDIAG] cf_clearance drifted=\(sentClearance != liveClearance) sentPresent=\(sentClearance != nil) livePresent=\(liveClearance != nil)")
+    }
+
+    /// Cookie names with the first 8 characters of each value — enough to tell
+    /// "same clearance as before" from "it rotated", without logging the token.
+    private static func cookieFingerprint(_ header: String) -> String {
+        var parts = [String]()
+        for pair in header.split(separator: ";") {
+            let trimmed = pair.trimmingCharacters(in: .whitespaces)
+            guard let separator = trimmed.firstIndex(of: "=") else { continue }
+            let name = String(trimmed[trimmed.startIndex..<separator])
+            let value = String(trimmed[trimmed.index(after: separator)...])
+            parts.append("\(name)=\(String(value.prefix(8)))…")
+        }
+        return parts.isEmpty ? "<none>" : parts.joined(separator: " ")
+    }
+
+    private static func cookieValue(_ name: String, in header: String) -> String? {
+        for pair in header.split(separator: ";") {
+            let trimmed = pair.trimmingCharacters(in: .whitespaces)
+            guard let separator = trimmed.firstIndex(of: "=") else { continue }
+            guard String(trimmed[trimmed.startIndex..<separator]) == name else { continue }
+            return String(trimmed[trimmed.index(after: separator)...])
+        }
+        return nil
+    }
+
+    /// Merge the base WebView cookie header with any per-request auth cookies,
+    /// keyed by name so nothing is sent twice.
+    ///
+    /// `OnlineFASession` hands the same auth cookies to every request, and those
+    /// are a subset of the WebView jar the base header came from — concatenating
+    /// sent every pair twice, which no browser does. The base header wins and
+    /// keeps its order, so the wire header stays byte-identical to what the
+    /// WebView itself would send; that is what Cloudflare compares against.
+    private func cookieHeader(merging cookies: [HTTPCookie]?, base: String) -> String {
+        guard let cookies, !cookies.isEmpty else { return base }
+
+        var parts = [String]()
+        var names = Set<String>()
+        for pair in base.split(separator: ";") {
+            let trimmed = pair.trimmingCharacters(in: .whitespaces)
+            guard let separator = trimmed.firstIndex(of: "=") else { continue }
+            names.insert(String(trimmed[trimmed.startIndex..<separator]))
+            parts.append(trimmed)
+        }
+        for cookie in cookies where !names.contains(cookie.name) {
+            names.insert(cookie.name)
+            parts.append("\(cookie.name)=\(cookie.value)")
+        }
+        return parts.joined(separator: "; ")
     }
 }
 

@@ -1,0 +1,17 @@
+//
+//  Colors.swift
+//  FurAffinityUI (Android)
+//
+//  The colorsets shared views reach for by name. Each single-sources the iOS entry
+//  through a symlinked `Contents.json` (see Android/README.md §Sharing asset-catalog
+//  entries) — only `bundle: .module` differs from the iOS declarations.
+//
+
+import SwiftUI
+
+extension Color {
+    /// The shared `BorderOverlay` colorset (black @0.1 light / white @0.2 dark).
+    static let borderOverlay = Color("BorderOverlay", bundle: .module)
+    /// The shared `ButtonBorderOverlay` colorset (opaque black light / white dark).
+    static let buttonBorderOverlay = Color("ButtonBorderOverlay", bundle: .module)
+}

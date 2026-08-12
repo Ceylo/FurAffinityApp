@@ -5,10 +5,13 @@
 //  Created by Ceylo on 29/05/2026.
 //
 
-#if !os(Android)
-
 import Foundation
+#if canImport(UIKit)
 import UIKit
+#endif
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 import Observation
 import FAPages
 
@@ -42,15 +45,72 @@ public final class CloudflareChallengeCoordinator {
     /// attempt a passive (no-UI) resolution before falling back to the sheet.
     public private(set) var backgroundResolutionPending: Bool = false
 
+    /// Called whenever either stage flag changes.
+    ///
+    /// iOS observes the two properties directly through Observation. Skip's
+    /// Compose bridge doesn't see changes to an `@Observable` declared in another
+    /// module, so Android mirrors them into the view's own `@State` from here —
+    /// without it, neither stage ever mounts.
+    @ObservationIgnored
+    public var onStateChange: (@Sendable @MainActor () -> Void)?
+
+    private func setStages(pending: Bool, backgroundResolution: Bool) {
+        guard pending != self.pending || backgroundResolution != backgroundResolutionPending else {
+            return
+        }
+        self.pending = pending
+        self.backgroundResolutionPending = backgroundResolution
+        onStateChange?()
+    }
+
     /// Safety-net backstop: if neither passive resolution nor checkbox detection
     /// fires within this window, we still escalate to the visible sheet.
-    private let backgroundResolutionSafetyTimeout: Duration
+    private var backgroundResolutionSafetyTimeout: Duration
     private var backgroundTimeoutTask: Task<Void, Never>?
 
     // Injected dependencies (defaulted to production behavior on `shared`).
-    private let isInBackground: @Sendable @MainActor () -> Bool
-    private let backgroundResolve: @Sendable @MainActor () async -> Bool
-    private let cookieProvider: @Sendable @MainActor () -> [HTTPCookie]
+    private var isInBackground: @Sendable @MainActor () -> Bool
+    private var backgroundResolve: @Sendable @MainActor () async -> Bool
+    private var cookieProvider: @Sendable @MainActor () -> [HTTPCookie]
+
+    // Only the *defaults* are platform-specific; the state machine below is not,
+    // so it stays shared rather than being duplicated for Android.
+    //
+    // Android has no UIApplication, no WKWebView to resolve headlessly in, and
+    // keeps its cookies in the WebView's own process-global jar rather than
+    // HTTPCookieStorage — which FAKit can't reach, because it can't depend on
+    // skip-web (see FAHTTPDataSource). So the defaults there are inert and the
+    // app installs the real ones through `configure(…)` at startup.
+    #if os(Android)
+    private static let defaultIsInBackground: @Sendable @MainActor () -> Bool = { false }
+    private static let defaultBackgroundResolve: @Sendable @MainActor () async -> Bool = { false }
+    private static let defaultCookieProvider: @Sendable @MainActor () -> [HTTPCookie] = { [] }
+    #else
+    private static let defaultIsInBackground: @Sendable @MainActor () -> Bool = {
+        UIApplication.shared.applicationState == .background
+    }
+    private static let defaultBackgroundResolve: @Sendable @MainActor () async -> Bool = {
+        await BackgroundCFChallengeResolver().resolve()
+    }
+    private static let defaultCookieProvider: @Sendable @MainActor () -> [HTTPCookie] = {
+        HTTPCookieStorage.shared.cookies ?? []
+    }
+    #endif
+
+    /// Installs platform wiring on an already-built coordinator — the only way to
+    /// reach `shared`, whose dependencies are otherwise fixed at first access.
+    /// Each argument left nil keeps whatever is already installed.
+    public func configure(
+        isInBackground: (@Sendable @MainActor () -> Bool)? = nil,
+        backgroundResolve: (@Sendable @MainActor () async -> Bool)? = nil,
+        cookieProvider: (@Sendable @MainActor () -> [HTTPCookie])? = nil,
+        safetyTimeout: Duration? = nil
+    ) {
+        if let isInBackground { self.isInBackground = isInBackground }
+        if let backgroundResolve { self.backgroundResolve = backgroundResolve }
+        if let cookieProvider { self.cookieProvider = cookieProvider }
+        if let safetyTimeout { self.backgroundResolutionSafetyTimeout = safetyTimeout }
+    }
 
     private enum Outcome { case resolved, failed, cancelled }
     private struct Waiter {
@@ -65,12 +125,9 @@ public final class CloudflareChallengeCoordinator {
     /// instances with overridden closures and a short timeout, never touching
     /// `UIApplication` or `HTTPCookieStorage`.
     init(
-        isInBackground: @escaping @Sendable @MainActor () -> Bool =
-            { UIApplication.shared.applicationState == .background },
-        backgroundResolve: @escaping @Sendable @MainActor () async -> Bool =
-            { await BackgroundCFChallengeResolver().resolve() },
-        cookieProvider: @escaping @Sendable @MainActor () -> [HTTPCookie] =
-            { HTTPCookieStorage.shared.cookies ?? [] },
+        isInBackground: @escaping @Sendable @MainActor () -> Bool = defaultIsInBackground,
+        backgroundResolve: @escaping @Sendable @MainActor () async -> Bool = defaultBackgroundResolve,
+        cookieProvider: @escaping @Sendable @MainActor () -> [HTTPCookie] = defaultCookieProvider,
         safetyTimeout: Duration = .seconds(8)
     ) {
         self.isInBackground = isInBackground
@@ -138,7 +195,7 @@ public final class CloudflareChallengeCoordinator {
         }
 
         logger.info("CloudFlare challenge: starting background resolution (safety timeout \(self.backgroundResolutionSafetyTimeout))")
-        backgroundResolutionPending = true
+        setStages(pending: false, backgroundResolution: true)
         let timeout = backgroundResolutionSafetyTimeout
         backgroundTimeoutTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: timeout)
@@ -161,8 +218,7 @@ public final class CloudflareChallengeCoordinator {
         guard backgroundResolutionPending else { return }
         backgroundTimeoutTask?.cancel()
         backgroundTimeoutTask = nil
-        backgroundResolutionPending = false
-        pending = true
+        setStages(pending: true, backgroundResolution: false)
     }
 
     /// Whether `HTTPCookieStorage.shared` holds FA auth cookies (anything for the
@@ -187,8 +243,7 @@ public final class CloudflareChallengeCoordinator {
         guard !waiters.isEmpty || pending || backgroundResolutionPending else { return }
         backgroundTimeoutTask?.cancel()
         backgroundTimeoutTask = nil
-        pending = false
-        backgroundResolutionPending = false
+        setStages(pending: false, backgroundResolution: false)
         let toResume = waiters
         waiters.removeAll()
         for waiter in toResume {
@@ -202,11 +257,8 @@ public final class CloudflareChallengeCoordinator {
         if waiters.isEmpty {
             backgroundTimeoutTask?.cancel()
             backgroundTimeoutTask = nil
-            pending = false
-            backgroundResolutionPending = false
+            setStages(pending: false, backgroundResolution: false)
         }
         waiter.continuation.resume(returning: .cancelled)
     }
 }
-
-#endif

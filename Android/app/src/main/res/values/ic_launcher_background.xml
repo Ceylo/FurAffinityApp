@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sampled from the middle of the yellow gradient in
+         FurAffinity/Assets.xcassets/AppIcon.imageset/AppIconLG-iOS-Default-1024x1024@1x.png
+         (it runs #F9DB00 at the top-left to #EFAB00 at the bottom). Only ever visible in
+         the parallax band around the inset foreground — a solid colour beats reusing the
+         art there, which would show a zoomed fragment of the face. -->
+    <color name="ic_launcher_background">#F7C700</color>
+</resources>

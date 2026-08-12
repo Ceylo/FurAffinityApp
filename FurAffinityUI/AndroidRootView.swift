@@ -2,22 +2,31 @@
 //  AndroidRootView.swift
 //  FurAffinityUI (Android)
 //
-//  Root of the Android app: the login flow until a session exists, then the ported
-//  tabs driven by the shared `Model`, mirroring `LoggedInView` on iOS. Tabs are added
-//  as screens are ported. The Submissions tab is a `NavigationStack` fed by the shared
-//  `NavigationStream`; pushed destinations come from `view(for:)` in
+//  Root of the Android app, mirroring iOS's `RootView`: the shared `HomeView` until
+//  a session exists, then the ported tabs — which stand in for `LoggedInView` and
+//  grow as screens are ported. The Submissions tab is a `NavigationStack` fed by the
+//  shared `NavigationStream`; pushed destinations come from `view(for:)` in
 //  AndroidNavigationDestination.swift.
+//
+//  HomeView owns the session on both platforms (it calls `model.setSession`), so
+//  this view only reads `model.session` — including for logout, which SettingsView
+//  performs by setting it back to nil.
 //
 
 import SwiftUI
 import FAKit
 
 struct AndroidRootView: View {
-    @State var session: (any FASession)?
     @State var model = Model()
     @State var navigationStream = NavigationStream()
     @State var path = [FATarget]()
     @State var selectedTab: Tab = .submissions
+    // Mirrors of the coordinator's two stage flags. iOS's RootView observes the
+    // coordinator itself, but Skip's Compose bridge doesn't see changes to an
+    // @Observable declared in another module, so the stages are driven from
+    // local state fed by `onStateChange` below.
+    @State var challengePending = false
+    @State var challengeBackgroundPending = false
 
     enum Tab {
         case submissions
@@ -25,8 +34,55 @@ struct AndroidRootView: View {
     }
 
     var body: some View {
-        Group {
-            if session != nil {
+        ZStack {
+            // The app's long-lived WebView, mirroring RootView's hidden
+            // FAChallengeView on iOS: it holds the User-Agent `cf_clearance` is
+            // bound to and serves FAHTTPDataSource's challenge fallback, so it has
+            // to stay mounted for the whole session — see FAWebSession.
+            //
+            // It sits at the *bottom* of the stack at full size, hidden by the
+            // opaque background above rather than by being shrunk or faded: it has
+            // to keep rendering to clear a Cloudflare challenge (see
+            // FAWebSessionView).
+            FAWebSessionView()
+
+            // Stage 1 of the two-stage flow: a challenge view for the passive
+            // resolution most managed challenges do without a human. Kept below
+            // the opaque background for the same reason as FAWebSessionView — it
+            // has to lay out and render at full size to solve anything — and it
+            // escalates to the sheet only when Cloudflare says the challenge is
+            // interactive, or when the coordinator's safety timeout expires.
+            if challengeBackgroundPending {
+                FAChallengeView(
+                    onResolved: { CloudflareChallengeCoordinator.shared.markResolved() },
+                    onInteractionRequired: { CloudflareChallengeCoordinator.shared.markInteractionRequired() }
+                )
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+            }
+
+            Color(.systemBackground)
+                .ignoresSafeArea()
+
+            if model.session == nil {
+                HomeView()
+                    // Entry point for driving ported screens on the emulator without
+                    // solving a Cloudflare challenge, which needs a real click in the
+                    // emulator window. Deliberately not behind `#if DEBUG`: skipstone
+                    // skips those blocks when it generates the view bridge. FA image
+                    // URLs still need the WebView's clearance, so images show
+                    // placeholders in this mode.
+                    .overlay(alignment: .top) {
+                        Button("Continue offline (debug)") {
+                            Task {
+                                await storeLocalizedError(in: model.errorStorage, action: "Sign In", webBrowserURL: nil) {
+                                    try await model.setSession(OfflineFASession.default)
+                                }
+                            }
+                        }
+                        .font(.footnote)
+                    }
+            } else {
                 TabView(selection: $selectedTab) {
                     NavigationStack(path: $path) {
                         AndroidSubmissionsFeedView()
@@ -51,13 +107,44 @@ struct AndroidRootView: View {
                         }
                         .tag(Tab.settings)
                 }
-            } else {
-                AndroidLoginView(onSession: { session = $0 })
             }
         }
         // Above the TabView so it also covers pushed screens.
         .overlay(alignment: .top) {
             errorBanner
+        }
+        // Stage 2: the challenge needs a human. Dismissing without solving it
+        // fails the parked request rather than leaving it hanging.
+        .sheet(
+            isPresented: Binding(
+                get: { challengePending },
+                set: { isPresented in
+                    if !isPresented && challengePending {
+                        CloudflareChallengeCoordinator.shared.markFailed()
+                    }
+                }
+            )
+        ) {
+            FAChallengeView(
+                onResolved: { CloudflareChallengeCoordinator.shared.markResolved() }
+            )
+        }
+        .task {
+            // FAKit's defaults can't reach either of these on Android: there is
+            // no UIApplication, and the cookies live in the WebView's own jar.
+            CloudflareChallengeCoordinator.shared.configure(
+                isInBackground: { false },
+                cookieProvider: { FAWebSession.shared.lastKnownAuthCookies },
+                // Generous next to iOS's 8 s: a managed challenge on the emulator
+                // takes 15-20 s to clear itself, and escalating sooner would put a
+                // sheet in front of the user that was about to go away by itself.
+                safetyTimeout: .seconds(25)
+            )
+            CloudflareChallengeCoordinator.shared.onStateChange = {
+                let coordinator = CloudflareChallengeCoordinator.shared
+                challengePending = coordinator.pending
+                challengeBackgroundPending = coordinator.backgroundResolutionPending
+            }
         }
         .environment(model)
         .environment(model.errorStorage)
@@ -85,17 +172,6 @@ struct AndroidRootView: View {
             navigationStream.send(target)
             return .handled
         })
-        .task(id: session?.username) {
-            await connect()
-        }
-        // Logging out clears the model's session; drop ours too so the login screen
-        // comes back. Only fires on a change, so the nil `model.session` this view
-        // starts with — before `connect()` has run — doesn't bounce it.
-        .onChange(of: model.session == nil) { _, hasNoSession in
-            if hasNoSession {
-                session = nil
-            }
-        }
         .autorefreshingOnForeground {
             await model.autorefreshIfNeeded()
         }
@@ -115,14 +191,6 @@ struct AndroidRootView: View {
             .padding()
             .frame(maxWidth: .infinity)
             .background(.thinMaterial)
-        }
-    }
-
-    private func connect() async {
-        guard let session, model.session == nil else { return }
-        logger.info("Connecting model to session for \(session.username)")
-        await storeLocalizedError(in: model.errorStorage, action: "Sign In", webBrowserURL: nil) {
-            try await model.setSession(session)
         }
     }
 }

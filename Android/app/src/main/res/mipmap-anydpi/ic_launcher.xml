@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The art is a full-bleed rounded square whose subject (ears, hair) touches every
+     edge, so it cannot be masked directly. The inset puts the whole square inside the
+     72 dp safe zone of the 108 dp layer, leaving the background colour to fill the
+     parallax band. `<inset>` takes fractions from API 26; minSdk here is 28. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-<background android:drawable="@mipmap/ic_launcher_background" />
-<foreground android:drawable="@mipmap/ic_launcher_foreground" />
-<monochrome android:drawable="@mipmap/ic_launcher_monochrome" />
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground>
+        <inset android:drawable="@mipmap/ic_launcher_foreground" android:inset="16.7%" />
+    </foreground>
 </adaptive-icon>
