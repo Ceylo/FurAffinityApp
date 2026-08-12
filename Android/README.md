@@ -420,6 +420,70 @@ the wait would silently look logged out.
 Costs worth knowing: while the login sheet is up there are two WebView instances,
 and the hidden one loads FA's home page — ads and all — once per launch.
 
+### What actually draws the Cloudflare challenge (measured 2026-08-12)
+
+Two candidate causes were tested and both are settled.
+
+**The duplicated `Cookie` header was real, and was not the cause.** Every request
+used to send every pair twice (`FAWebSession` derives the base header and
+`OnlineFASession`'s auth cookies from the same jar, and the merge concatenated
+them). Fixed by merging on name. Measured A/B inside one session — a marker file
+in the cache dir flipped the behaviour per launch, arms alternating, so the
+bursts described below could not favour one arm:
+
+| Arm | Challenged requests | Wilson 95% |
+|---|---|---|
+| A — deduped | 8/9 (88.9%) | [56.5%, 98.0%] |
+| B — duplicated | 6/7 (85.7%) | [48.7%, 97.4%] |
+
+Null, per the rule fixed before the run. Read it with the caveat that both arms
+sat near the ceiling: the window was a saturated one, so the test had little
+power to detect a smaller effect. It rules out "duplication is what breaks
+autologin"; it does not prove duplication is free. The fix stands on its own —
+no browser sends a pair twice.
+
+**It is not the emulator either.** Same minute, same egress IPv4:
+
+| Client | Result |
+|---|---|
+| App URLSession (WebView UA + full cookie header) | `403 cf-mitigated: challenge` |
+| Mac `curl --http1.1 -4`, same UA + same cookies | `403 cf-mitigated: challenge` |
+| Mac curl, no cookies / default UA / desktop Chrome UA | `403` in all three |
+| **Emulator Chrome, same IP** | **full page, no interstitial** |
+
+The discriminator is browser-engine vs bare client, not the address — so a
+borrowed physical device would not help, and neither would more header tuning
+(a bare client is refused with *any* UA, cookies or not; Cloudflare decides at
+the edge in ~60 ms). Nor is it a stale token: a later run in which the hidden
+WebView did earn a fresh `cf_clearance` (alongside `cf_chl_rc_ni`) still had
+every URLSession attempt refused with it.
+
+**The hidden WebView cannot solve a challenge, which is the real defect.**
+Emulator Chrome cleared the interstitial unattended in under 15 s; the 1×1,
+`opacity(0.001)`, hit-testing-disabled WebView sat on `Un instant…` through
+three navigations and ~60 s. A managed challenge appears to need a real
+viewport — the same reason `adb shell input tap` never cleared one. Until that
+is addressed, a stale `cf_clearance` cannot be renewed without the visible login
+sheet.
+
+So `fetchPageHTML` no longer hands the interstitial to the parser (which
+reported it as a missing element at `FAHomePage.swift:28`, naming a parser line
+for a Cloudflare problem). It waits the challenge out in place — reloading
+restarts it — retries the navigation, and throws `CloudflareChallengeRequired`
+when exhausted. `FAHTTPDataSource` likewise retries `cf-mitigated: challenge`
+before paying for a WebView navigation, since the decision is per-request. The
+cost when everything is challenged is ~60 s of retries before the error lands
+(5 URLSession attempts, then 3 navigations of 8 s polling); worth revisiting if
+the WebView is ever made able to solve a challenge, which would make the long
+tail useful rather than just slow.
+
+One more thing that run turned up: repeated cold launches ANR the app
+(`Input dispatching timed out`, main thread blocked ≥15 s) — roughly two thirds
+of forced relaunches produced no HTTP request at all and no log past
+`updateSession() start`. `establishSession()` is `@MainActor` and awaits
+skip-web JNI calls on a WebView that is busy running challenge script. Not
+investigated further.
+
 ## Submission screen
 
 Tapping a feed card pushes the same `RemoteSubmissionView` → `SubmissionView` the iOS app

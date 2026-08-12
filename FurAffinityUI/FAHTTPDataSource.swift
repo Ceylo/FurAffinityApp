@@ -41,6 +41,9 @@ struct FAHTTPDataSource: HTTPDataSource {
     private let webViewFetch: WebViewFetch?
     private let liveCookieHeader: CookieHeaderProbe?
 
+    /// URLSession attempts before falling back to a WebView navigation.
+    private static let challengeRetries = 5
+
     // A top-level-navigation header set consistent with a Chrome-on-Android UA.
     // Deliberately no `sec-ch-ua*` Client Hints: they must agree with the UA's
     // platform/mobile/version or Cloudflare reads the contradiction as a bot
@@ -107,20 +110,40 @@ struct FAHTTPDataSource: HTTPDataSource {
         }
 
         logger.info("\(method) request on \(request.url?.absoluteString ?? "\(url)")")
-        let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw FAHTTPError.nonHTTPResponse(url)
-        }
 
-        let isChallenge = http.value(forHTTPHeaderField: "cf-mitigated") == "challenge"
-        if isChallenge {
-            logger.warning("\(url): Cloudflare challenge on URLSession fetch (HTTP \(http.statusCode)); trying WebView fallback")
-            await logClearanceDiagnostics(sent: header)
+        // Cloudflare's decision is per-request, not per-session: the same cookies
+        // and UA can be challenged and then let through seconds later. So retry
+        // the cheap path a few times before paying for a WebView navigation.
+        // Only `cf-mitigated: challenge` is retried — unlike FACoilBridge's image
+        // loop, which retries any non-2xx and so cannot tell a challenge from a
+        // 404 or a socket error.
+        var data = Data()
+        var http: HTTPURLResponse?
+        for attempt in 1...Self.challengeRetries {
+            let (body, response) = try await session.data(for: request)
+            guard let received = response as? HTTPURLResponse else {
+                throw FAHTTPError.nonHTTPResponse(url)
+            }
+            data = body
+            http = received
+            guard received.value(forHTTPHeaderField: "cf-mitigated") == "challenge" else { break }
+
+            logger.warning("\(url): Cloudflare challenge on URLSession fetch (HTTP \(received.statusCode)), attempt \(attempt)/\(Self.challengeRetries)")
+            if attempt == 1 {
+                await logClearanceDiagnostics(sent: header)
+            }
+            if attempt < Self.challengeRetries {
+                try? await Task.sleep(for: .milliseconds(250 * attempt))
+                continue
+            }
+
+            logger.warning("\(url): still challenged after \(Self.challengeRetries) attempts; trying WebView fallback")
             if let webViewFetch, method == .GET {
                 return try await webViewFetch(request.url ?? url)
             }
             throw CloudflareChallengeRequired()
         }
+        guard let http else { throw FAHTTPError.nonHTTPResponse(url) }
 
         guard (200...299).contains(http.statusCode) || (http.statusCode == 400 && !data.isEmpty) else {
             let body = String(data: data, encoding: .utf8) ?? "<non-UTF8>"
