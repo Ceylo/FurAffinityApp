@@ -73,16 +73,6 @@ struct FAHTTPDataSource: HTTPDataSource {
         self.liveCookieHeader = liveCookieHeader
     }
 
-    /// A copy with refreshed clearance/auth cookies (after a re-login or CF re-solve).
-    func withCookieHeader(_ header: String) -> FAHTTPDataSource {
-        FAHTTPDataSource(
-            userAgent: userAgent,
-            cookieHeader: header,
-            webViewFetch: webViewFetch,
-            liveCookieHeader: liveCookieHeader
-        )
-    }
-
     func httpData(
         from url: URL,
         cookies: [HTTPCookie]?,
@@ -179,13 +169,30 @@ struct FAHTTPDataSource: HTTPDataSource {
         return nil
     }
 
-    /// Merge the base WebView cookie header with any per-request auth cookies.
+    /// Merge the base WebView cookie header with any per-request auth cookies,
+    /// keyed by name so nothing is sent twice.
+    ///
+    /// `OnlineFASession` hands the same auth cookies to every request, and those
+    /// are a subset of the WebView jar the base header came from — concatenating
+    /// sent every pair twice, which no browser does. The base header wins and
+    /// keeps its order, so the wire header stays byte-identical to what the
+    /// WebView itself would send; that is what Cloudflare compares against.
     private func cookieHeader(merging cookies: [HTTPCookie]?) -> String {
         guard let cookies, !cookies.isEmpty else { return baseCookieHeader }
-        let extra = HTTPCookie.requestHeaderFields(with: cookies)["Cookie"] ?? ""
-        if baseCookieHeader.isEmpty { return extra }
-        if extra.isEmpty { return baseCookieHeader }
-        return baseCookieHeader + "; " + extra
+
+        var parts = [String]()
+        var names = Set<String>()
+        for pair in baseCookieHeader.split(separator: ";") {
+            let trimmed = pair.trimmingCharacters(in: .whitespaces)
+            guard let separator = trimmed.firstIndex(of: "=") else { continue }
+            names.insert(String(trimmed[trimmed.startIndex..<separator]))
+            parts.append(trimmed)
+        }
+        for cookie in cookies where !names.contains(cookie.name) {
+            names.insert(cookie.name)
+            parts.append("\(cookie.name)=\(cookie.value)")
+        }
+        return parts.joined(separator: "; ")
     }
 }
 
