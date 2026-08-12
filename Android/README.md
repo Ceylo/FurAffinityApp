@@ -462,7 +462,7 @@ no browser sends a pair twice.
 | Client | Result |
 |---|---|
 | App URLSession (WebView UA + full cookie header) | `403 cf-mitigated: challenge` |
-| Mac `curl --http1.1 -4`, same UA + same cookies | `403 cf-mitigated: challenge` |
+| Mac `curl --http1.1 -4`, same UA + same cookies *(bad clearance — see below)* | `403 cf-mitigated: challenge` |
 | Mac curl, no cookies / default UA / desktop Chrome UA | `403` in all three |
 | **Emulator Chrome, same IP** | **full page, no interstitial** |
 
@@ -517,11 +517,26 @@ Cloudflare still decides per request — one of the runs above was challenged on
 first contact and recovered through the fallback — so neither fix makes
 challenges go away, they make them survivable.
 
-Not settled: whether a `cf_clearance` earned by a *rendering* WebView is honored
-by a bare `URLSession`. Every attempt is still refused with a clearance that
-`drifted=false` against the live jar, which is why the WebView fallback carries
-most page loads. That control needs a clearance known to have rendered a real FA
-page, and has not been run.
+### The control that settles "browser engine vs bare client" (2026-08-12)
+
+The missing control finally ran: take a clearance the WebView earned *after* the
+fixes above — one that demonstrably loaded real FA pages — and replay it from the
+Mac through plain `curl`, the barest client there is.
+
+| Client | Clearance | Result |
+|---|---|---|
+| `curl --http1.1 -4`, WebView UA + full cookie header | known-good | **200, 6/6**, ~135 KB, logged in |
+| `curl --http1.1 -4`, WebView UA, no cookies | none | 403 `cf-mitigated: challenge` |
+
+**So the bare client was never the problem.** The earlier run in this document —
+"Mac curl with identical UA and cookies is refused 403" — is not reproducible with
+a *valid* clearance; what it was replaying was a token from a WebView that had
+never actually solved a challenge, carried alongside a climbing `cf_chl_rc_ni`.
+The discriminator is the token, not the engine. Nothing here argues for a
+physical device, a different HTTP stack, or more header tuning.
+
+That also means the WebView-fetch fallback is a backstop rather than the main
+road: with a good clearance, `URLSession` is expected to carry page loads.
 
 ### The challenge escalation path
 
