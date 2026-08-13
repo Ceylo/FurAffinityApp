@@ -30,7 +30,7 @@ struct HTMLView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             ForEach(text.faBlocks, id: \.block.index) { entry in
-                block(entry.block, text: entry.text.styledForDisplay)
+                block(entry.block, styled: entry.text.styledForDisplay)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -39,7 +39,7 @@ struct HTMLView: View {
     }
 
     @ViewBuilder
-    private func block(_ block: FABlock, text: AttributedString) -> some View {
+    private func block(_ block: FABlock, styled: StyledText) -> some View {
         switch block.kind {
         case .rule:
             Divider()
@@ -48,27 +48,46 @@ struct HTMLView: View {
                 Rectangle()
                     .fill(Color.secondary)
                     .frame(width: 3)
-                paragraph(text, alignment: block.alignment)
+                paragraph(styled, alignment: block.alignment)
             }
         case .listItem(let depth, let ordinal):
             HStack(alignment: .top, spacing: 6) {
                 Text(ordinal.map { "\($0)." } ?? "•")
-                paragraph(text, alignment: block.alignment)
+                paragraph(styled, alignment: block.alignment)
             }
             .padding(.leading, Double(depth - 1) * 16)
         case .heading(let level):
-            paragraph(text, alignment: block.alignment)
+            paragraph(styled, alignment: block.alignment)
                 .font(.system(size: Self.headingPointSize(level)))
                 .foregroundStyle(headingColor)
         case .paragraph:
-            paragraph(text, alignment: block.alignment)
+            paragraph(styled, alignment: block.alignment)
         }
     }
 
-    private func paragraph(_ text: AttributedString, alignment: FABlock.Alignment) -> some View {
-        Text(text)
+    private func paragraph(_ styled: StyledText, alignment: FABlock.Alignment) -> some View {
+        text(styled)
             .multilineTextAlignment(alignment.textAlignment)
             .frame(maxWidth: .infinity, alignment: alignment.frameAlignment)
+    }
+
+    private func text(_ styled: StyledText) -> Text {
+        #if canImport(Android)
+        Text(styled.text, inlineViews: styled.images.map { image in
+            TextInlineView(
+                FAImage(image.url)
+                    .resizable()
+                    .frame(width: image.displayWidth, height: image.displayHeight),
+                width: image.displayWidth,
+                height: image.displayHeight
+            )
+        })
+        #else
+        // The module's Darwin bridge compiles against real SwiftUI, which splices views
+        // into text by `Text + Text` concatenation instead; this branch only has to
+        // typecheck. The file itself stays unguarded so shared callers still find it.
+        Text(styled.text)
+        #endif
     }
 
     /// FA's `.bbcode_h1`–`h5`, which are absolute pixel sizes rather than text styles.
@@ -112,18 +131,23 @@ private extension FABlock.Alignment {
     }
 }
 
+/// A block's text with the images its placeholder runs stand in for, in the same order.
+struct StyledText {
+    var text = AttributedString()
+    var images: [FAInlineImage] = []
+}
+
 extension AttributedString {
     /// FA's parser attributes restated as the SwiftUI ones the Compose bridge reads.
-    var styledForDisplay: AttributedString {
-        var result = AttributedString()
+    var styledForDisplay: StyledText {
+        var result = StyledText()
         for run in runs {
-            // Inline images are carried on a U+FFFC placeholder, which draws as a tofu
-            // box until there is a renderer for them.
-            guard run.faImage == nil else { continue }
-
             var styled = AttributedString(self[run.range])
             styled.applyFAInlineStyle(run.faInline ?? .default, isLink: run.link != nil)
-            result += styled
+            result.text += styled
+            if let image = run.faImage {
+                result.images.append(image)
+            }
         }
         return result
     }
@@ -167,6 +191,18 @@ extension AttributedString {
 
     /// FA's body text is 16px, which is what `FAInlineStyle.sizeScale` is relative to.
     private static let faBodyPointSize: Double = 16
+}
+
+private extension FAInlineImage {
+    /// Compose reserves an inline placeholder's space before composing anything into
+    /// it, so every image needs a size up front — from the markup where it states one,
+    /// and otherwise from what FA's stylesheet would have given it.
+    var displayWidth: Double { width ?? fallbackExtent }
+    var displayHeight: Double { height ?? fallbackExtent }
+
+    /// `.iconusername` avatars are capped at 50×50; everything else left unsized is a
+    /// smilie, which sits on one line of text.
+    private var fallbackExtent: Double { isAvatar ? 50 : 19 }
 }
 
 extension Color {
