@@ -7,8 +7,9 @@
 //
 //  It can't be shared because the compact styles concatenate `Text + Text` to get one
 //  wrapping paragraph with two styles, and `Text.+` is `@available(*, unavailable)` in
-//  SkipSwiftUI. An `HStack(spacing: 0)` gives the same appearance for these short,
-//  single-line labels; it just can't wrap between the two runs.
+//  SkipSwiftUI. One `AttributedString` with two differently styled runs says the same
+//  thing, and — unlike the `HStack(spacing: 0)` this used to be — still wraps between
+//  the display name and the handle.
 //
 
 import SwiftUI
@@ -61,29 +62,26 @@ struct UserNameView: View {
         }
     }
 
+    /// The display name and the handle as one paragraph, so a long pair wraps between
+    /// them rather than being forced onto one line.
+    private var compactText: AttributedString {
+        var text = AttributedString(displayName)
+        if _displayStyle == .compactHighlightedDisplayName {
+            // Names the size too, so the run doesn't fall back to the body font.
+            text.font = .subheadline.bold()
+        }
+        var handle = AttributedString(usernameText)
+        handle.foregroundColor = .secondary
+        return text + handle
+    }
+
     var body: some View {
         switch _displayStyle {
         case .compactRegularSize:
-            HStack(spacing: 0) {
-                Text(displayName)
-                Text(usernameText)
-                    .foregroundStyle(.secondary)
-            }
-        case .compact:
-            HStack(spacing: 0) {
-                Text(displayName)
-                Text(usernameText)
-                    .foregroundStyle(.secondary)
-            }
-            .font(.subheadline)
-        case .compactHighlightedDisplayName:
-            HStack(spacing: 0) {
-                Text(displayName)
-                    .bold()
-                Text(usernameText)
-                    .foregroundStyle(.secondary)
-            }
-            .font(.subheadline)
+            Text(compactText)
+        case .compact, .compactHighlightedDisplayName:
+            Text(compactText)
+                .font(.subheadline)
         case .multiline:
             VStack(alignment: .leading) {
                 Text(displayName)

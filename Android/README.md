@@ -305,8 +305,8 @@ adb shell run-as com.example.id1234 cat shared_prefs/defaults.xml
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](#defaults)) |
 | `Ceylo/Kingfisher` | Android port |
-| `Ceylo/skip-ui` | `listRowInsets`; `Text(bridgedMarkdown:)`; `FlowRow`; SF Symbol mappings |
-| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(AttributedString)`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
+| `Ceylo/skip-ui` | `listRowInsets`; `Text(bridgedRichText:bridgedInlineViews:)`; `FlowRow`; SF Symbol mappings |
+| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(AttributedString)` / `Text(_:inlineViews:)`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
 
 All on an `android` branch, referenced by URL + branch from `Package.swift` (and,
 for Defaults/Kingfisher, the Xcode project too). While iterating, re-point the root
@@ -337,15 +337,30 @@ entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
 ### The other fork patches
 
 - **`Text(AttributedString)`** is `@available(*, unavailable)` upstream, which blocks all
-  rich text. SkipUI's rich-text model *is* markdown (an `AttributedString` renders
-  through its `MarkdownNode`), so the Fuse side re-emits attributed content as escaped
-  markdown — `[text](<url>)` for links, `**`/`*`/`~` for inline presentation intents —
-  and `SkipUI.Text(bridgedMarkdown:)` parses it. That init deliberately bypasses
-  `LocalizedStringKey`: the content is user data and must not be bundle-looked-up or
-  `String.format`ed. `markdownRepresentation` returns nil when nothing needs markdown and
-  `Text` then falls back to `verbatim`, because SkipUI only builds a `MarkdownNode` when
-  the string actually contains a link or emphasis construct and renders the source
-  verbatim otherwise — which would expose the escapes.
+  rich text. The first cut bridged it as markdown, since SkipUI's own rich-text model is
+  markdown — but markdown cannot express colour, font size, underline or baseline at all,
+  and FA's markup is built from exactly those. So runs now cross as records:
+  `SkipUI.Text(bridgedRichText:bridgedInlineViews:)` takes one record per run (RS-separated,
+  fields US-separated) and builds the `AnnotatedString` with a `SpanStyle` each. That init
+  deliberately bypasses `LocalizedStringKey`: the content is user data and must not be
+  bundle-looked-up or `String.format`ed. The encoder reads a subset of
+  `AttributeScopes.SwiftUIAttributes` — `\.font`, `\.foregroundColor`, `\.underlineStyle`,
+  `\.strikethroughStyle`, `\.baselineOffset` — which SkipSwiftUI declares itself, but
+  **only where SwiftUI's own is absent**: declaring it on Darwin makes
+  `AttributeScopes.SwiftUIAttributes` ambiguous and the build fails. It returns nil when
+  the string carries no styling at all, and `Text` then falls back to `verbatim`.
+  - Colours cross as **decimal** ARGB, or as a `primary`/`secondary`/`accent` token the
+    composition resolves: SkipLib's `Int64(_ string:)` has no radix parameter.
+  - The separators are spelled `\u{001E}`/`\u{001F}` with all four hex digits. Skip's
+    transpiler emits `\u{1E}` as the Kotlin `"\u1E"`, which is not a valid escape.
+  - **`Text(_:inlineViews:)`** splices views in at the object-replacement characters, in
+    order — SwiftUI's spelling is `Text(Image(…)) + Text(…)` concatenation, and `Text + Text`
+    is unavailable here. `TextInlineView` carries an explicit size because Compose reserves
+    the placeholder's space before it ever composes the view. Use
+    `PlaceholderVerticalAlign.Center`, not `TextCenter` — the `Text*` alignments fit the
+    placeholder into the text's own vertical bounds, so a 50 pt avatar spills onto the line
+    below. Even then it overlaps until the text's style drops its fixed `lineHeight`, which
+    Material's typography always sets.
 - **`FlowRow`** replaces SwiftUI's `Layout` protocol, which SkipUI doesn't implement and
   which can't be emulated: a `Layout` enumerates and places its subviews, and an opaque
   `Content` gives a Fuse module no access to them. Compose wraps natively, so it is a
@@ -631,6 +646,18 @@ Each keeps the iOS name and signature so symlinked callers compile unchanged:
 `HTMLView`, `Zoomable`, `UserNameView`, `FlowLayout`, `MediaSaveHandler`,
 `RemoteContentToolbarItem`, `SubmissionTextContent`/`SubmissionAudioContent`, and the
 no-ops in `SubmissionShims.swift`.
+
+`HTMLView` is the one that does real work rather than standing in. iOS renders FA's
+rich text through WebKit's HTML importer into a `UITextView`; here `FAKit`'s
+`FARichTextParser` tags runs with `\.faInline` / `\.faBlock` / `\.faImage` and this view
+restates them as SwiftUI attributes and lays the blocks out in a `VStack`. Blocks can't
+collapse into one `Text`: Compose applies `textAlign` per text node, so a `[center]`
+block and the text around it have to be separate views. The one iOS feature not
+reachable is animated GIF avatars, which stay on their first frame.
+
+`UserNameView` builds its compact styles as a single two-run `AttributedString` rather
+than the `Text + Text` iOS concatenates (`Text.+` is unavailable here), so a long
+display-name/handle pair still wraps between the two.
 
 `InAppLinkConversion.swift` duplicates ~20 lines of `InAppNavigation.swift` — the
 link-rewriting half. Splitting the iOS file instead would mean an `.xcodeproj` edit, so
