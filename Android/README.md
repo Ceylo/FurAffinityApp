@@ -695,10 +695,46 @@ swipe with no confirming affordance. A full left-swipe on a card removes that su
 from the FA inbox immediately (`POST /msg/submissions/new~<sid>@<n>`). Be careful
 demoing this against a real account.
 
-Not verified, for want of the state to verify it against: the empty feed (unreachable
-through the offline session), and holding scroll position while items are actually
-*prepended* — no new submissions arrived during the emulator run, so the refresh was
-always a no-change fetch.
+Holding scroll position across a real *prepend* is now measured too (2026-08-15). The
+repro needs no waiting for FA: scroll down a few cards, `am force-stop`, relaunch — the
+cold-launch restore fetches `new~<sid>@72`, then the restore check fetches `new@72`, whose
+newer items are prepended. Logging every `onItemFrameChanged` callback, the anchor row's
+`minY` used to leave the top and take **~5 s** walking back to it (66033206 → 65975822 →
+65949461 → 65940282), which is the "moves and then settles" the feed showed. After
+[§`withAnimation` marks the whole frame](#withanimation-marks-the-whole-frame-process-wide)
+it is one transient frame: the prepended head shows for **30–50 ms**, then the anchor is
+back at `minY≈10` and stays. On screen that is a single frame of placeholder rows before
+the list is where it was, with the new rows above it and the badge showing.
+
+Still not verified, for want of the state to verify it against: the empty feed, which is
+unreachable through the offline session.
+
+### `withAnimation` marks the whole frame, process-wide
+
+On iOS a `withAnimation` transaction reaches only the state written inside it. On SkipUI it
+sets a **static** marker (`Animation.recentWithAnimationAnimation`) cleared only on the next
+Compose frame, and `Animation.current` / `Animation.isInWithAnimation` fall back to it. So
+*any* state write animates *every* view that recomposes in that frame. For a `List` that
+means two things (`skip-ui/…/List.swift`): rows compose with `Modifier.animateItem()`, so a
+prepend animates row placement, and `ScrollToIDAction` uses `animateScrollToItem` instead of
+`scrollToItem`, so a `ScrollViewProxy.scrollTo` becomes an animated scroll.
+
+That is what made the feed slide: `fetchSubmissionPreviews()` ended with
+`withAnimation { newSubmissionsCount = … }` in the same main-thread turn as the prepend and
+the choreography's `scrollTo`. **Prefer `.animation(_:value:)`**, which sets
+`EnvironmentValues._animation` for one subtree and never touches the marker.
+
+Two callers had to change, and the second one is the lesson: `FAImage` faded a freshly
+loaded image in with `withAnimation`, so *every thumbnail arrival* marked a frame. Removing
+only the feed's call cut the excursion from ~5 s to ~460 ms; the rest went away only when
+the image fade became scoped too. Anything on a hot path — image loads, list rows, badges —
+must not use the global form.
+
+The cost on Android: SkipUI honours `.transition(…)` only for a globally marked frame, so
+the refresh badge now appears and disappears without animating there (verified with a
+deliberately slow 2 s animation: still a hard cut, whether the modifier sits on the overlay
+or inside it). iOS keeps the fall-and-fade — confirmed mid-flight on the simulator, the
+badge partly offset and partly faded on the way in, partly faded on the way out.
 
 ## Submission screen
 
@@ -851,6 +887,11 @@ grep Java_initState_ .build/plugins/outputs/*/FurAffinityUI/destination/skipston
   - `import SkipSwiftUI` (needed to *name* the façade type in that bridge initializer)
     makes `GeometryProxy` ambiguous, so keep it in its own file that names no other
     SwiftUI type.
+- **Don't call `withAnimation` from shared code.** On SkipUI it marks the entire next
+  Compose frame process-wide, so an unrelated `List` recomposing in that frame animates
+  its rows and turns its `scrollTo` into an animated scroll. Use `.animation(_:value:)`,
+  which is scoped to a subtree. See
+  [§`withAnimation` marks the whole frame](#withanimation-marks-the-whole-frame-process-wide).
 
 If a build fails with `missing required module 'CJNI'` across unrelated packages, the
 incremental state is stale (typically after a `Package.swift` or FAKit change). Wipe it:

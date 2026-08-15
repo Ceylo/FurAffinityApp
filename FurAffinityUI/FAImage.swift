@@ -80,6 +80,13 @@ struct FAImageView: View {
                 Color.clear
             }
         }
+        // Scoped, not `withAnimation` around the assignment: on SkipUI a
+        // `withAnimation` transaction marks the whole next Compose frame
+        // process-wide, so a thumbnail finishing its load animated any List change
+        // sharing that frame — including the feed's prepend and its `scrollTo`.
+        // The fade is worth no more than a subtree-scoped modifier costs.
+        .animation(fadeDuration > 0 ? .easeInOut(duration: fadeDuration) : nil,
+                   value: image != nil)
         .task(id: url) { await load() }
     }
 
@@ -107,11 +114,7 @@ struct FAImageView: View {
         let elapsedMs = Int(Date().timeIntervalSince(start) * 1000)
         logger.debug("render \(elapsedMs)ms url=\(url.absoluteString)")
         if let loaded {
-            if fadeDuration > 0 {
-                withAnimation(.easeInOut(duration: fadeDuration)) { image = loaded }
-            } else {
-                image = loaded
-            }
+            image = loaded
         } else {
             failed = true
             onFailureHandler?(FAImageError.loadFailed(url))

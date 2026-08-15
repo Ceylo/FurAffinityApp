@@ -188,6 +188,7 @@ struct SubmissionsFeedView: View {
         .overlay(alignment: .top) {
             NotificationOverlay(itemCount: $newSubmissionsCount)
                 .offset(y: 40)
+                .animation(.default, value: newSubmissionsCount)
         }
         .autorefreshingOnForeground {
             autorefreshIfNeeded()
@@ -321,9 +322,12 @@ extension SubmissionsFeedView {
         let newSubmissionCount = try await model
             .fetchSubmissionPreviews()
         
-        withAnimation {
-            newSubmissionsCount = newSubmissionCount
-        }
+        // A plain write, not `withAnimation`: on SkipUI a `withAnimation`
+        // transaction marks the whole next Compose frame process-wide, which makes
+        // the List animate the freshly prepended rows and turns the choreography's
+        // `scrollTo` into an animated scroll. The overlay below carries its own
+        // scoped `.animation(_:value:)` instead.
+        newSubmissionsCount = newSubmissionCount
     }
 }
 
