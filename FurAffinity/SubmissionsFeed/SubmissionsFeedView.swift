@@ -111,6 +111,8 @@ struct SubmissionsFeedView: View {
     private func followItem(_ preview: FASubmissionPreview, frame: CGRect?, geometry: GeometryProxy) {
         guard let frame else { return }
         let listFrame = geometry.frame(in: .global)
+        // A zero-height frame would make both ratios NaN, and `ClosedRange` traps on those.
+        guard listFrame.height > 0 else { return }
         let itemTop = frame.minY / listFrame.height
         let itemBottom = frame.maxY / listFrame.height
         let isActive = (itemTop...itemBottom).contains(0.3)
@@ -160,7 +162,6 @@ struct SubmissionsFeedView: View {
                     }
                     #endif
                 }
-                .trackListFrame()
                 .listStyle(.plain)
                 // The nav bar chrome (inline title, mode menu, trailing action)
                 // is owned by the enclosing SubmissionsTabView so both feed modes
