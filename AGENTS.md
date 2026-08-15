@@ -103,9 +103,13 @@ Scheme `FurAffinity` covers `FAKitTests`, `FAPagesTests`, `FurAffinityTests`. Pa
 HTML fixtures must **never** be generated or fabricated. Always capture real page source from furaffinity.net in a browser (logged-in, specific account as needed), then save the raw HTML as the fixture file.
 
 ```
-xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17'
+xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,OS=26.5,name=iPhone 17'
 xcrun simctl list devices available | grep -E "iPhone|iPad"   # list available destinations
 ```
+
+Pin `OS=26.5`: the bare name resolves to `OS:latest`, which is the locally-installed
+iOS 27.0 beta runtime — and that one has only an "iPhone 17 **Pro**", so the destination
+fails to match.
 
 ## Dependencies
 
