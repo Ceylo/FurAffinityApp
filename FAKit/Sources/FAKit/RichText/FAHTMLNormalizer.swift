@@ -58,6 +58,7 @@ public enum FAHTMLNormalizer {
     public static func normalized(_ html: String) throws -> FANormalizedHTML {
         let document = try SwiftSoup.parse(html)
         let root = document.body() ?? document
+        try dropUnrenderableImages(in: root)
         try rewriteAlignment(in: root)
         try hoistRules(in: root)
         return FANormalizedHTML(
@@ -202,6 +203,16 @@ public enum FAHTMLNormalizer {
     /// appear in, since it emits exactly one per image and drops nothing else.
     private static func images(in root: Element) throws -> [FAInlineImage] {
         try root.getElementsByTag("img").compactMap(image(from:))
+    }
+
+    /// Drops every `<img>` there is nothing to splice in for. `android.text.Html` emits a
+    /// U+FFFC per image whatever its `src` says, and the renderer pairs the i-th
+    /// placeholder with the i-th image — so one unusable source would shift every later
+    /// image in the fragment onto the wrong picture.
+    private static func dropUnrenderableImages(in root: Element) throws {
+        for element in try root.getElementsByTag("img") where try image(from: element) == nil {
+            try element.remove()
+        }
     }
 
     private static func image(from element: Element) throws -> FAInlineImage? {

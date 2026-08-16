@@ -255,10 +255,22 @@ struct FAHTMLNormalizerImageTests {
     }
 
     @Test
-    func aSourcelessImageIsSkippedRatherThanCountedAsAPlaceholder() throws {
-        // fromHtml emits no U+FFFC for one of these, so counting it would shift every
-        // later image onto the wrong placeholder.
-        #expect(try normalize("<img alt=\"broken\">").images.isEmpty)
+    func aSourcelessImageLeavesNoPlaceholderBehind() throws {
+        // fromHtml emits a U+FFFC for one of these too, so leaving it in the markup would
+        // shift every later image onto the wrong placeholder.
+        let normalized = try normalize("<img alt=\"broken\">")
+        #expect(normalized.images.isEmpty)
+        #expect(!normalized.html.contains("<img"))
+    }
+
+    @Test
+    func thePlaceholderCountMatchesTheImageCount() throws {
+        let normalized = try normalize("""
+        <img alt="broken"><img src="//a.furaffinity.net/1.gif"><img src="">
+        """)
+        let root = try #require(try SwiftSoup.parse(normalized.html).body())
+        #expect(try root.getElementsByTag("img").count == normalized.images.count)
+        #expect(normalized.images.count == 1)
     }
 }
 
