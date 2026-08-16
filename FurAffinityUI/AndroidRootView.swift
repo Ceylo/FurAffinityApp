@@ -68,19 +68,22 @@ struct AndroidRootView: View {
                 HomeView()
                     // Entry point for driving ported screens on the emulator without
                     // solving a Cloudflare challenge, which needs a real click in the
-                    // emulator window. Deliberately not behind `#if DEBUG`: skipstone
-                    // skips those blocks when it generates the view bridge. FA image
-                    // URLs still need the WebView's clearance, so images show
+                    // emulator window. Gated on `android:debuggable` rather than
+                    // `#if DEBUG`: skipstone skips those blocks when it generates the
+                    // view bridge, so a compile-time fence here would be inert. FA
+                    // image URLs still need the WebView's clearance, so images show
                     // placeholders in this mode.
                     .overlay(alignment: .top) {
-                        Button("Continue offline (debug)") {
-                            Task {
-                                await storeLocalizedError(in: model.errorStorage, action: "Sign In", webBrowserURL: nil) {
-                                    try await model.setSession(OfflineFASession.default)
+                        if AndroidAppInfo.isDebuggable {
+                            Button("Continue offline (debug)") {
+                                Task {
+                                    await storeLocalizedError(in: model.errorStorage, action: "Sign In", webBrowserURL: nil) {
+                                        try await model.setSession(OfflineFASession.default)
+                                    }
                                 }
                             }
+                            .font(.footnote)
                         }
-                        .font(.footnote)
                     }
             } else {
                 TabView(selection: $selectedTab) {

@@ -233,6 +233,21 @@ next run shows FA's "Verify you are human" checkbox. It needs a **real click in 
 emulator window**: synthetic `adb shell input tap` events do not clear it (that was
 the cause of the old "CF loop").
 
+The logged-out screen's **"Continue offline (debug)"** button (`AndroidRootView`)
+drives ported screens without solving a Cloudflare challenge. It is gated on
+`android:debuggable` at *runtime* via `AndroidAppInfo.isDebuggable`, not `#if DEBUG`
+— skipstone drops `#if DEBUG` blocks when it generates the view bridge, so a
+compile-time fence there is silently inert. `OfflineFASession` and its demo data
+therefore still ship in the release APK; that is the price of keeping the
+affordance. The launch line reports which side of the gate a build is on:
+
+```
+Launched FurAffinity 1.19 on Android 17, debug build debuggable=true
+```
+
+That line comes from the shared `LaunchLog.swift`, so it matches iOS's word for
+word; only the OS name and the trailing detail differ per platform.
+
 Open `Android/` in Android Studio to attach a debugger to the Kotlin/JNI side (its
 `.idea/` is git-ignored; `gradle.xml` there caches paths under `.build/` and is
 regenerated on sync — as is `.gradle/config.properties`, whose loss is what makes
