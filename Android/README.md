@@ -446,6 +446,43 @@ the wait would silently look logged out.
 Costs worth knowing: while the login sheet is up there are two WebView instances,
 and the hidden one loads FA's home page — ads and all — once per launch.
 
+### The WebView User-Agent carries the app identifier (measured 2026-08-16)
+
+FA staff identify this app's traffic by a `ceylo.FurAffinityApp/<version>` suffix on
+the User-Agent; iOS appends it via `WKWebViewConfiguration.applicationNameForUserAgent`.
+Android now does the same through skip-web's `customUserAgent`, computed once in
+`FAWebViewUserAgent` (`FAWebView.swift`) as the platform default plus
+`FAUserAgent.applicationName`, so the suffix can't drift from iOS's.
+
+**All three `WebEngineConfiguration` sites must carry it** — `FALoginView`,
+`FAChallengeView`, `FAWebSession` — because `cf_clearance` is bound to the byte-exact
+UA while the cookie jar is process-global: a clearance minted by any one of them is
+replayed by all. Leaving one un-overridden mints under the bare UA and 403s everything
+after. skip-web applies it at engine construction, so no navigation can precede it.
+
+Everything downstream still reads the UA *live* out of the WebView
+(`FAWebSession.swift` → `liveUserAgent()` → `FAHTTPDataSource` and
+`CoilImageLoader.configure`). The computed string is an input to the WebView only; the
+WebView stays the single source of truth. `[CFDIAG] User-Agent drifted=` in the
+challenge diagnostics compares the two.
+
+Three earlier comments claimed setting `customUserAgent` "empties
+`navigator.userAgentData`, which Cloudflare reads as a bot signal". **Measured false**:
+with the override in place the emulator reports
+`{"mobile":true,"platform":"Android","brands":[…Android WebView 151, Chromium 151]}`,
+and a cold launch clears the challenge and loads the feed with thumbnails. No
+`WebSettingsCompat.setUserAgentMetadata` and no fourth skip-web fork are needed.
+
+One expected consequence: the suffix embeds the app version, so **an app update changes
+the UA and invalidates any persisted `cf_clearance`**. It is re-minted on the next
+challenge; the first launch after an update showing `[CFDIAG] cf_clearance drifted=true`
+and a round of 403s is that, not a regression.
+
+`Bundle.main.infoDictionary` is *empty* in a Skip Fuse native module (corelibs
+Foundation, no Info.plist), so the version behind that suffix comes from
+`FAAppInfoBridge.versionName()` — the package manager — and is installed into
+`FAUserAgent.appVersionOverride` from `onInit()`, before any WebView exists.
+
 ### What actually draws the Cloudflare challenge (measured 2026-08-12)
 
 Two candidate causes were tested and both are settled.

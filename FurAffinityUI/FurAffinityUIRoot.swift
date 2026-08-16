@@ -10,6 +10,7 @@
 
 import Foundation
 import Defaults
+import FAKit
 import SkipFuse
 import SwiftUI
 
@@ -34,6 +35,10 @@ import SwiftUI
 
     /* SKIP @bridge */public func onInit() {
         logger.debug("onInit")
+        // Before anything can build a WebView: the FA User-Agent embeds the app
+        // version, and `Bundle.main` has no Info.plist behind it in a native Skip
+        // module, so without this the suffix reads "unknown".
+        FAUserAgent.appVersionOverride = AndroidAppInfo.versionName
         // Must come first: a `Defaults.Key` captures its suite and registers its
         // default value when it's created, so anything that touches a key before this
         // lands in the orphan store.

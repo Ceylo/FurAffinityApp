@@ -33,6 +33,8 @@ struct FAHTTPDataSource: HTTPDataSource {
     /// Reads the WebView's `Cookie:` header *now*, to compare against the one
     /// frozen at session creation.
     typealias CookieHeaderProbe = @Sendable () async -> String?
+    /// Reads the WebView's `navigator.userAgent` *now*, same idea.
+    typealias UserAgentProbe = @Sendable () async -> String?
 
     private let session: URLSession
     private let userAgent: String
@@ -40,6 +42,7 @@ struct FAHTTPDataSource: HTTPDataSource {
     private let baseCookieHeader: String
     private let webViewFetch: WebViewFetch?
     private let liveCookieHeader: CookieHeaderProbe?
+    private let liveUserAgent: UserAgentProbe?
 
     /// URLSession attempts before falling back to a WebView navigation.
     private static let challengeRetries = 5
@@ -62,7 +65,8 @@ struct FAHTTPDataSource: HTTPDataSource {
         userAgent: String,
         cookieHeader: String,
         webViewFetch: WebViewFetch? = nil,
-        liveCookieHeader: CookieHeaderProbe? = nil
+        liveCookieHeader: CookieHeaderProbe? = nil,
+        liveUserAgent: UserAgentProbe? = nil
     ) {
         let config = URLSessionConfiguration.default
         // Per-request Cookie header rather than a cookie store: HTTPCookieStorage's
@@ -74,6 +78,7 @@ struct FAHTTPDataSource: HTTPDataSource {
         self.baseCookieHeader = cookieHeader
         self.webViewFetch = webViewFetch
         self.liveCookieHeader = liveCookieHeader
+        self.liveUserAgent = liveUserAgent
     }
 
     func httpData(
@@ -201,10 +206,18 @@ struct FAHTTPDataSource: HTTPDataSource {
         return data
     }
 
-    /// Tests the "the header frozen at session creation went stale" hypothesis: the
-    /// cookies actually sent, against what the WebView would send right now.
+    /// Tests the "what was frozen at session creation went stale" hypothesis: the
+    /// cookies and User-Agent actually sent, against what the WebView would send
+    /// right now. `cf_clearance` is bound to both, so either drifting explains a
+    /// challenge that nothing else does.
     private func logClearanceDiagnostics(sent: String) async {
         logger.warning("[CFDIAG] sent cookies: \(Self.cookieFingerprint(sent))")
+        if let liveUserAgent {
+            let live = await liveUserAgent() ?? "<none>"
+            logger.warning("[CFDIAG] User-Agent drifted=\(live != userAgent) sent=\(userAgent) live=\(live)")
+        } else {
+            logger.warning("[CFDIAG] no live User-Agent probe wired up")
+        }
         guard let liveCookieHeader else {
             logger.warning("[CFDIAG] no live cookie probe wired up")
             return

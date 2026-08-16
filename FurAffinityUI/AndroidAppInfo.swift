@@ -1,0 +1,86 @@
+//
+//  AndroidAppInfo.swift
+//  FurAffinityUI (Android)
+//
+//  Native-Swift driver for the Kotlin `FAAppInfoBridge`: the app version, whether
+//  this build is debuggable, and the stock WebView User-Agent. Same
+//  `AnyDynamicObject` reflection as `CoilImageLoader` — FurAffinityUI is a native
+//  Skip module and can't `import android.*`.
+//
+//  Not `#if os(Android)`-guarded: this module is compiled for its Darwin bridge
+//  too, where the JNI machinery is absent and every value reads as its "unknown"
+//  default.
+//
+
+import Foundation
+import FAKit
+#if canImport(Android)
+import SkipBridge
+#endif
+
+enum AndroidAppInfo {
+    #if canImport(Android)
+    // `nonisolated(unsafe)`: AnyDynamicObject isn't Sendable but wraps a JNI global
+    // ref that is safe to read from any thread.
+    nonisolated(unsafe) private static let bridge: AnyDynamicObject? = {
+        do {
+            return try AnyDynamicObject(className: "fur.affinity.ui.FAAppInfoBridge")
+        } catch {
+            logger.error("AndroidAppInfo: could not create FAAppInfoBridge: \(error)")
+            return nil
+        }
+    }()
+    #endif
+
+    /// The installed app's `versionName` (Skip.env's MARKETING_VERSION), or nil off
+    /// Android. `Bundle.main.infoDictionary` is empty in a native Skip module, so
+    /// this is the only version source the app has.
+    static let versionName: String? = {
+        #if canImport(Android)
+        guard let bridge else { return nil }
+        do {
+            let name: String? = try bridge.versionName()
+            return (name?.isEmpty ?? true) ? nil : name
+        } catch {
+            logger.error("AndroidAppInfo.versionName threw: \(error)")
+            return nil
+        }
+        #else
+        return nil
+        #endif
+    }()
+
+    /// Whether this build carries `android:debuggable`. False off Android and
+    /// whenever the bridge is unreachable, so a development-only affordance stays
+    /// hidden rather than leaking into a release.
+    static let isDebuggable: Bool = {
+        #if canImport(Android)
+        guard let bridge else { return false }
+        do {
+            let debuggable: Bool? = try bridge.isDebuggable()
+            return debuggable ?? false
+        } catch {
+            logger.error("AndroidAppInfo.isDebuggable threw: \(error)")
+            return false
+        }
+        #else
+        return false
+        #endif
+    }()
+
+    /// The WebView's stock User-Agent, before any override.
+    static let webViewDefaultUserAgent: String? = {
+        #if canImport(Android)
+        guard let bridge else { return nil }
+        do {
+            let userAgent: String? = try bridge.defaultUserAgent()
+            return (userAgent?.isEmpty ?? true) ? nil : userAgent
+        } catch {
+            logger.error("AndroidAppInfo.defaultUserAgent threw: \(error)")
+            return nil
+        }
+        #else
+        return nil
+        #endif
+    }()
+}

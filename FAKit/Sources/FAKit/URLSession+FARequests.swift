@@ -15,14 +15,32 @@ import WebKit
 
 @MainActor
 public enum FAUserAgent {
+    /// The version reported in `applicationName`. Android has no Info.plist behind
+    /// `Bundle.main` for a natively-compiled module, so the app layer installs it
+    /// from the package manager before anything reads the User-Agent.
+    nonisolated(unsafe) public static var appVersionOverride: String?
+
     // Stable across bundle identifier changes; FA staff identify app traffic by this suffix.
-    public static let applicationName: String = {
-        let version = Bundle.main.infoDictionary!["CFBundleShortVersionString"]!
-        return "ceylo.FurAffinityApp/\(version)"
-    }()
+    // Non-isolated: WebView configurations are built in SwiftUI property initializers,
+    // which are not main-actor isolated.
+    nonisolated public static var applicationName: String {
+        let version = appVersionOverride
+            ?? Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
+        if version == nil {
+            logger.error("FAUserAgent: no app version available; FA traffic will be unidentifiable")
+        }
+        return "ceylo.FurAffinityApp/\(version ?? "unknown")"
+    }
 
     private static var cached: String?
     private static var pendingTask: Task<String, Never>?
+
+    /// Reads `navigator.userAgent` from the system WebView. Installed by the app
+    /// layer on platforms without WebKit — where it is the only way to learn the
+    /// string `cf_clearance` was minted against — and unused where `current()`
+    /// builds its own WKWebView. Declared unconditionally so the app module needs
+    /// no platform fence to install it.
+    public static var webViewUserAgentProvider: (@Sendable () async -> String)?
 
     #if canImport(WebKit)
     /// The exact User-Agent a WKWebView produces when configured with
@@ -76,10 +94,6 @@ public enum FAUserAgent {
         pendingTask = nil
         return ua
     }
-
-    /// Installed by the app layer with a closure that reads `navigator.userAgent`
-    /// from the system WebView.
-    public static var webViewUserAgentProvider: (@Sendable () async -> String)?
     #endif
 }
 
