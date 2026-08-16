@@ -18,17 +18,19 @@ import SwiftUI
 import FAKit
 
 struct HTMLView: View {
-    var text: AttributedString
     // Not private: skipstone can't bridge a private state property.
+    // Read out of the carrier once — `body` runs on every recomposition of every row,
+    // and each pass rebuilds every fragment's markup into a fresh String.
+    var fragments: [FAHTMLFragment.Carried]
     @Environment(\.openURL) var openURL
 
     init(text: AttributedString, initialHeight: CGFloat = 0) {
-        self.text = text
+        self.fragments = text.faHTMLFragments
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            ForEach(text.faHTMLFragments, id: \.fragment.index) { carried in
+            ForEach(fragments, id: \.fragment.index) { carried in
                 if carried.fragment.index > 0 {
                     Divider()
                 }

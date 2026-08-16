@@ -158,9 +158,9 @@ struct AndroidRootView: View {
             path.append(event.target)
         }
         .environment(\.openURL, OpenURLAction { url in
-            // Only the app scheme is ours. Rich text runs its links through
-            // `convertingLinksForInAppNavigation()`, which rewrites the navigable ones
-            // to that scheme; `FATarget` maps them back.
+            // Only the app scheme is ours. Rich text carries no links of its own here —
+            // Compose hands a tap to `HTMLView`'s `onLinkTap`, which rewrites the
+            // navigable ones to that scheme; `FATarget` maps them back.
             //
             // Matching on `FATarget(with:)` alone would be wrong: it normalises the
             // scheme to https before matching, so a *plain* FA URL matches too — and
