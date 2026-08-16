@@ -29,6 +29,10 @@ struct SubmissionsFeedView: View {
     @State var currentViewIsDisplayed = false
     @State var refreshTask: Task<Void, Never>?
     @State var pendingAutorefresh = false
+    /// Last list-relative `minY` reported for the first row, or a large negative
+    /// sentinel once that row left the list. `nil` until the first report. Only
+    /// tracked and read on Skip, which has no scroll view to ask.
+    @State var firstItemTopOffset: CGFloat?
     #if !FA_SKIP_MODULE
     @Weak var scrollView: UIScrollView?
     #endif
@@ -103,10 +107,22 @@ struct SubmissionsFeedView: View {
         }
     }
     
-    private func itemView(for preview: FASubmissionPreview, geometry: GeometryProxy, scrollProxy: ScrollViewProxy) -> some View {
+    /// Only Skip reads `firstItemTopOffset`; on iOS this write would invalidate the
+    /// feed on every scroll tick for nothing.
+    private func trackFirstItemTop(frame: CGRect?) {
+        #if FA_SKIP_MODULE
+        // A nil frame means the row left the list, which is decidedly not "at top".
+        firstItemTopOffset = frame?.minY ?? -.greatestFiniteMagnitude
+        #endif
+    }
+
+    private func itemView(for preview: FASubmissionPreview, isFirstItem: Bool, geometry: GeometryProxy, scrollProxy: ScrollViewProxy) -> some View {
         SubmissionPreviewRow(preview: preview)
             .onItemFrameChanged(listGeometry: geometry) { frame in
                 followItem(preview, frame: frame, geometry: geometry)
+                if isFirstItem {
+                    trackFirstItemTop(frame: frame)
+                }
             }
             .overlay {
                 if preview == targetScrollItem {
@@ -120,7 +136,8 @@ struct SubmissionsFeedView: View {
             GeometryReader { geometry in
                 List {
                     ForEach(items) { preview in
-                        itemView(for: preview, geometry: geometry, scrollProxy: scrollProxy)
+                        itemView(for: preview, isFirstItem: preview.id == items.first?.id,
+                                 geometry: geometry, scrollProxy: scrollProxy)
                     }
                     .onDelete { offsets in
                         model.deleteSubmissionPreviews(offsets.map { items[$0] })
@@ -228,11 +245,13 @@ extension SubmissionsFeedView {
         #endif
     }
 
-    /// Whether the feed is scrolled to the top. Always `true` on Skip, which gives no
-    /// access to the scroll position — matching today's Android always-refresh behavior.
+    /// Whether the feed is scrolled to the top. Skip has no scroll view to ask, so it
+    /// infers it from the first row's last reported position — `true` until the row
+    /// reports, then `false` once it has been scrolled past. The 1 pt tolerance is
+    /// slack: at rest the first row's list-relative `minY` is ≥ 0 by construction.
     var scrollViewIsAtTop: Bool {
         #if FA_SKIP_MODULE
-        true
+        (firstItemTopOffset ?? .greatestFiniteMagnitude) > -1
         #else
         scrollView?.reachedTop ?? true
         #endif
