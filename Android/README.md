@@ -364,6 +364,8 @@ apksigner verify --print-certs <apk>      # must NOT say CN=Android Debug
 ## Handing a build to testers
 
 ```
+git stash apply stash@{0}          # pbxproj id + Amplitude key + Skip.env id
+rm -rf .build/plugins/outputs .build/Darwin .build/Android    # applicationId changed
 skip export -d out --release --android --no-ios --no-export-project
 ```
 
