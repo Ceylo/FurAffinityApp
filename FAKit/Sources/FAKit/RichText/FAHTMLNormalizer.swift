@@ -234,6 +234,15 @@ public enum FAHTMLNormalizer {
     private static let trailingClasses: Set<String> = ["bbcode_right", "alignright"]
 }
 
+extension String {
+    /// Absolute URL for an `href`/`src`, resolving FA's site-relative links.
+    var faURL: URL? {
+        if hasPrefix("//") { return URL(string: "https:" + self) }
+        if hasPrefix("/") { return URL(string: "https://www.furaffinity.net" + self) }
+        return URL(string: self)
+    }
+}
+
 private extension Element {
     var faClassNames: Set<String> {
         guard let value = try? attr("class"), !value.isEmpty else { return [] }
