@@ -140,6 +140,76 @@ struct FAHTMLNormalizerRuleTests {
     }
 }
 
+// MARK: - Fragments and the carrier that gets them to the renderer
+
+struct FAHTMLNormalizerFragmentTests {
+    @Test
+    func theMarkupIsCutAtItsRules() throws {
+        let fragments = try normalize("<div class=\"bbcode_center\">a<hr>b<hr>c</div>").fragments
+        #expect(fragments.count == 3)
+        #expect(fragments.allSatisfy { $0.html.contains("text-align:center") })
+    }
+
+    @Test
+    func markupWithNoRuleIsOneFragment() throws {
+        #expect(try normalize("<p>only</p>").fragments.count == 1)
+    }
+
+    @Test
+    func aRuleAtAnEdgeOrDoubledDoesNotLeaveAnEmptyFragment() throws {
+        // Each empty fragment would otherwise draw a divider with nothing between it
+        // and the next one.
+        #expect(try normalize("<hr>a").fragments.count == 1)
+        #expect(try normalize("a<hr>").fragments.count == 1)
+        #expect(try normalize("a<hr><hr>b").fragments.count == 2)
+        #expect(try normalize("<hr>").fragments.isEmpty)
+    }
+
+    @Test
+    func eachFragmentCarriesOnlyItsOwnImages() throws {
+        let fragments = try normalize("""
+        <img src="//a.furaffinity.net/1.gif"><hr>
+        <img src="//a.furaffinity.net/2.gif"><img src="//a.furaffinity.net/3.gif">
+        """).fragments
+
+        #expect(fragments.count == 2)
+        #expect(fragments[0].images.map(\.url.lastPathComponent) == ["1.gif"])
+        #expect(fragments[1].images.map(\.url.lastPathComponent) == ["2.gif", "3.gif"])
+    }
+
+    @Test
+    func theRealCorpusSplitsAtItsThreeRules() throws {
+        let normalized = try normalize(try terrinissDescription())
+        #expect(normalized.fragments.count == 4)
+        // Every image lands in exactly one fragment, and none is lost on the way.
+        #expect(normalized.fragments.flatMap(\.images) == normalized.images)
+    }
+
+    @Test
+    func theCarrierRoundTripsThroughAnAttributedString() throws {
+        // `HTMLView` takes an `AttributedString` on both platforms, so the fragments
+        // have to survive inside one.
+        let fragments = try normalize(try terrinissDescription()).fragments
+        let carried = AttributedString(faHTMLFragments: fragments).faHTMLFragments
+
+        #expect(carried.count == fragments.count)
+        #expect(carried.map(\.html) == fragments.map(\.html))
+        #expect(carried.map(\.fragment.images) == fragments.map(\.images))
+        #expect(carried.map(\.fragment.index) == Array(0..<fragments.count))
+    }
+
+    @Test
+    func adjacentFragmentsStayApartInTheCarrier() throws {
+        // Without the index two identical fragments would merge into one run, and the
+        // divider between them would vanish.
+        let fragments = [
+            FANormalizedHTML.Fragment(html: "<p>same</p>", images: []),
+            FANormalizedHTML.Fragment(html: "<p>same</p>", images: []),
+        ]
+        #expect(AttributedString(faHTMLFragments: fragments).faHTMLFragments.count == 2)
+    }
+}
+
 // MARK: - Images
 
 struct FAHTMLNormalizerImageTests {
