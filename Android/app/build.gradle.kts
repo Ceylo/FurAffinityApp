@@ -78,7 +78,11 @@ android {
                 storeFile = file(keystoreProperties.getProperty("storeFile"))
                 storePassword = keystoreProperties.getProperty("storePassword")
             } else {
-                // when there is no keystore.properties file, fall back to signing with debug config
+                // Skip's template falls back to the debug key here. That fallback is
+                // kept only so the project still configures without a keystore — the
+                // taskGraph check below fails any release build that would actually
+                // use it. Shipping a debug-signed APK is unrecoverable: every user who
+                // installed it has to uninstall before they can take a real update.
                 keyAlias = signingConfigs.getByName("debug").keyAlias
                 keyPassword = signingConfigs.getByName("debug").keyPassword
                 storeFile = signingConfigs.getByName("debug").storeFile
@@ -94,6 +98,25 @@ android {
             isShrinkResources = true
             isDebuggable = false // can be set to true for debugging release build, but needs to be false when uploading to store
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+}
+
+// Turn the silent debug-key fallback above into a build failure, so a release build
+// can never quietly produce a debug-signed APK and exit 0. `preReleaseBuild` fails
+// fast; the `package*Release` tasks are the ones that actually sign, and are the
+// backstop for any path that skips it. The debug variant is untouched, and merely
+// configuring the project without a keystore stays fine.
+tasks.configureEach {
+    val signsRelease = name == "preReleaseBuild" ||
+        (name.startsWith("package") && name.endsWith("Release"))
+    if (!signsRelease) return@configureEach
+    doFirst {
+        if (!file("keystore.properties").isFile) {
+            throw GradleException(
+                "$path would sign with the DEBUG key: Android/app/keystore.properties is missing. " +
+                    "See Android/README.md § Release signing."
+            )
         }
     }
 }

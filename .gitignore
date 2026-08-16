@@ -16,3 +16,7 @@ Android/app/src/main/res/mipmap-*/ic_launcher.png
 Android/app/src/main/res/mipmap-*/ic_launcher_foreground.png
 local.properties
 *.moved-aside
+# Release signing. Losing keystore.jks permanently ends the upgrade path for
+# every installed user, so keep an off-machine backup — it is not in git.
+Android/app/keystore.jks
+Android/app/keystore.properties

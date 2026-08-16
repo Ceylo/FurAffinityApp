@@ -261,6 +261,45 @@ The iOS build must stay green at every step:
 xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
+## Release signing
+
+The release `signingConfig` in `Android/app/build.gradle.kts` falls back to the
+**debug** key when `keystore.properties` is absent, so out of the box
+`assembleRelease` emits a debug-signed APK and exits 0. That is unrecoverable
+once shipped: everyone who installed it must uninstall before they can take a
+properly signed update. A `gradle.taskGraph.whenReady` check now fails any
+`assemble/bundle/package/installRelease` task while the file is missing. The debug
+variant is unaffected, and configuring the project without a keystore still works.
+
+Both files live beside the module (`storeFile` resolves relative to
+`Android/app/`) and are git-ignored:
+
+```
+keytool -genkeypair -v \
+  -keystore Android/app/keystore.jks -alias furaffinity \
+  -keyalg RSA -keysize 4096 -validity 10000 \
+  -dname "CN=Ceylo, O=Ceylo, C=FR"
+```
+
+```properties
+# Android/app/keystore.properties
+storeFile=keystore.jks
+storePassword=…
+keyAlias=furaffinity
+keyPassword=…
+```
+
+**Back `keystore.jks` up off-machine before building anything with it.** Losing it
+permanently ends the upgrade path for every installed user, and Google's developer
+verification (sideloading included, from late 2026) registers a package name bound
+to this certificate — neither can be changed afterwards.
+
+Check what a build actually got signed with:
+
+```
+apksigner verify --print-certs <apk>      # must NOT say CN=Android Debug
+```
+
 ## Defaults
 
 `UserDefaults.standard` means two different things on Android. In a module Skip's
