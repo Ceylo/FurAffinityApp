@@ -265,13 +265,21 @@ extension SubmissionsFeedView {
                 try await waitForPullToSettle()
             }
 
-            if let item = model.submissionPreviews?.first {
+            // Invariant: refreshTask != nil ⟺ the trigger fired for the current
+            // arming. So a scroll-managed refresh is really in flight only when both
+            // hold, and an arming without a task is one whose row never composed.
+            guard targetScrollItem == nil || refreshTask == nil else { return }
+
+            if targetScrollItem == nil, let item = model.submissionPreviews?.first {
                 // This mounts the fetch trigger on that row, which effectively
                 // causes the refresh
+                refreshTask = nil
                 targetScrollItem = item
             } else {
-                // List has no item, so there's no scroll to preserve. Perform
-                // a direct fetch
+                // Empty list, or an arming that never fired: either way there's no
+                // scroll left to preserve, so drop it and fetch directly. This is
+                // what keeps a single missed geometry report from wedging the feed.
+                targetScrollItem = nil
                 await storeLocalizedError(in: errorStorage, action: "Submissions Refresh", webBrowserURL: FAURLs.submissionsUrl) {
                     try await fetchSubmissionPreviews()
                 }
