@@ -364,8 +364,15 @@ apksigner verify --print-certs <apk>      # must NOT say CN=Android Debug
 ## Handing a build to testers
 
 ```
-skip export -d out --release --android --no-ios     # --no-ios: the Skip iOS shell is not the iOS release path
+skip export -d out --release --android --no-ios --no-export-project
 ```
+
+`--no-ios` because the Skip-generated iOS shell is not this app's iOS release path.
+**`--no-export-project` is not optional**: the source-archive step walks the project
+directory, and with `-d out` inside it that includes its own output — it recurses
+until the zip is 1.37 GB and then fails. You do not want the archive anyway; the
+Android source is private. Output is `out/FurAffinityUI-release.apk` (send this) plus
+an `.aab`, which nothing here uses since Play is out.
 
 `assembleRelease` puts the same APK at
 `.build/Android/app/outputs/apk/release/app-release.apk` — note `.build/`, not
