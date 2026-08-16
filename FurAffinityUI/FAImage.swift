@@ -37,6 +37,10 @@ struct FAImageView: View {
 
     init(_ url: URL?) {
         self.url = url
+        // Seeded synchronously (the store's LRU is nonisolated): `.task` cannot run
+        // before the first composition, so a re-composed row would otherwise paint
+        // its placeholder for a frame even on a guaranteed cache hit.
+        _image = State(initialValue: url.flatMap { FAImageStore.shared.cachedImage(for: $0) })
     }
 
     func placeholder<P: View>(@ViewBuilder _ content: () -> P) -> Self {
