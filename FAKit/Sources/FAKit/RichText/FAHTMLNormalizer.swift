@@ -105,10 +105,15 @@ public enum FAHTMLNormalizer {
     private static func rewriteAlignment(in root: Element) throws {
         for element in try root.getAllElements() {
             guard let alignment = try alignment(of: element) else { continue }
+            let tag = element.tagName().lowercased()
             // `<code class="bbcode_center">` is the common case: unrecognised, so it has
             // to become a block tag. A tag that already is one keeps its own meaning —
             // renaming `<h4 class="bbcode_center">` would cost the heading.
-            if !blockTags.contains(element.tagName().lowercased()) {
+            if !blockTags.contains(tag) {
+                // Anything else is left as it stands: `fromHtml` would ignore alignment on
+                // an inline element anyway, and making a block of a `<td>` or a `<span>`
+                // destroys the table row or paragraph it sits in.
+                guard renameableTags.contains(tag) else { continue }
                 _ = try element.tagName("div")
             }
             try setTextAlign(alignment, on: element)
@@ -236,6 +241,9 @@ public enum FAHTMLNormalizer {
         "div", "p", "blockquote", "li", "ul", "ol",
         "h1", "h2", "h3", "h4", "h5", "h6",
     ]
+    /// The only tags worth turning into a block: FA's `[center]` carrier and the element
+    /// that means nothing but alignment in the first place.
+    private static let renameableTags: Set<String> = ["code", "center"]
     /// Elements that hold no content, so nothing about them is text alignment.
     private static let voidTags: Set<String> = [
         "img", "br", "hr", "input", "area", "col", "embed", "source", "track", "wbr",

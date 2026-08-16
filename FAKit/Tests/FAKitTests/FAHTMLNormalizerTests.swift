@@ -75,6 +75,25 @@ struct FAHTMLNormalizerAlignmentTests {
     }
 
     @Test
+    func aTableCellKeepsItsTag() throws {
+        // Turning a <td> into a <div> takes the cell out of its row, and the row with it.
+        let html = try normalize("<table><tr><td align=\"center\">x</td></tr></table>").html
+        #expect(html.contains("<td"))
+        #expect(!html.contains("<div"))
+    }
+
+    @Test
+    func anAlignedSpanDoesNotSplitTheParagraphAroundIt() throws {
+        let html = try normalize("""
+        <p>before <span style="text-align:center">mid</span> after</p>
+        """).html
+        let root = try #require(try SwiftSoup.parse(html).body())
+        let paragraphs = try root.getElementsByTag("p")
+        #expect(paragraphs.count == 1)
+        #expect(try paragraphs.first?.text() == "before mid after")
+    }
+
+    @Test
     func unalignedMarkupIsLeftAlone() throws {
         let html = try normalize("<p>plain</p>").html
         #expect(!html.contains("text-align"))
