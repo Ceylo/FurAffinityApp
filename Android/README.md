@@ -730,11 +730,27 @@ only the feed's call cut the excursion from ~5 s to ~460 ms; the rest went away 
 the image fade became scoped too. Anything on a hot path — image loads, list rows, badges —
 must not use the global form.
 
-The cost on Android: SkipUI honours `.transition(…)` only for a globally marked frame, so
-the refresh badge now appears and disappears without animating there (verified with a
-deliberately slow 2 s animation: still a hard cut, whether the modifier sits on the overlay
-or inside it). iOS keeps the fall-and-fade — confirmed mid-flight on the simulator, the
-badge partly offset and partly faded on the way in, partly faded on the way out.
+`.transition(…)` is not a substitute: SkipUI resolves transitions in the *container*
+(`VStack.swift`, via `Animation.current(isAnimating:)`, evaluated before it recurses into the
+child's own modifiers), so it only ever sees an ambient animation set above the container or
+the global mark. A scoped `.animation(_:value:)` on the transitioning view cannot reach it —
+which is why the refresh badge briefly lost its animation on Android.
+
+**State-driven properties do animate from a scoped animation**, because `.opacity`,
+`.offset` and `.scaleEffect` each read `EnvironmentValues._animation` themselves
+(`AdditionalViewModifiers.swift` → `Animatable.asAnimatable`). `NotificationOverlay` is the
+worked example: it stays mounted and moves through a `hidden → shown → fading → hidden`
+phase with `.opacity`/`.offset` and `.animation(_:value:)`, which reproduces `fallAndFade` —
+including its asymmetry, since fading holds the offset at 0 — on both platforms.
+
+**Key `.animation(_:value:)` on a value Kotlin can compare.** SkipUI installs the animation
+only on the composition where `value` differs from the remembered one
+(`Animation.swift`, `isValueChange`); everywhere else the property snaps. Keying it on a
+**Swift enum** (`value: phase`) silently never fires — the pill jumped from absent to fully
+placed within one 33 ms frame, measured on a 30 fps capture — while `value: phase == .shown`
+animates. Keep such keys to bridged primitives (`Bool`, `Int`, `String`), and prove any new
+animation on the emulator with a deliberately slow duration first: at 0.35 s the difference
+between "animating" and "snapping" is 10 frames, and easy to miss.
 
 ## Submission screen
 

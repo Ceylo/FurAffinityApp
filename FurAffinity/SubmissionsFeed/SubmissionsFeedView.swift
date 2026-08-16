@@ -163,7 +163,6 @@ struct SubmissionsFeedView: View {
         .overlay(alignment: .top) {
             NotificationOverlay(itemCount: $newSubmissionsCount)
                 .offset(y: 40)
-                .animation(.default, value: newSubmissionsCount)
         }
         .autorefreshingOnForeground {
             autorefreshIfNeeded()
