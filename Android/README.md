@@ -276,6 +276,26 @@ The iOS build must stay green at every step:
 xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
+## Update check
+
+Settings shows the current and latest versions and a "Get …" link, from
+`AppInformation.fetch()` against `api.github.com/.../releases/latest` — plain
+`URLSession` on both platforms, since that endpoint wants no cookies and sits
+behind no Cloudflare. One release feed serves both: tag `1.19` carries the IPA and
+the APK, and draft releases are invisible to `releases/latest`, so publishing
+stays manual.
+
+`Bundle.main.version` reads 0.0.0 on Android, which would silently invert the
+comparison; `FAAppVersion` is what makes it right (see the User-Agent section).
+
+The tab badge goes through `Model.isUpdateAvailable`, **not**
+`model.appInfo.isUpToDate`. Skip's Compose bridge doesn't see changes to a nested
+`@Observable`, so the tab bar never recomposes when `appInfo` changes — measured:
+an unconditional `.badge("9")` draws immediately, the same badge read through
+`appInfo` never appears. Mirroring the flag onto the `Model` the view already
+observes fixes it, and iOS uses the same expression. Same class of problem as the
+Cloudflare stage flags at the top of `AndroidRootView`.
+
 ## Release signing
 
 The release `signingConfig` in `Android/app/build.gradle.kts` falls back to the

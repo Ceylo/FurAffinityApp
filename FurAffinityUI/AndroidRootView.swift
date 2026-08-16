@@ -105,6 +105,8 @@ struct AndroidRootView: View {
                     // SettingsView brings its own NavigationStack, same as on iOS,
                     // and has no FATarget destinations.
                     SettingsView()
+                        // Same "an update is available" dot as LoggedInView's.
+                        .badge(model.isUpdateAvailable ? " " : nil)
                         .tabItem {
                             Label("Settings", systemImage: "gearshape")
                         }
