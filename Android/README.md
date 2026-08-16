@@ -186,24 +186,50 @@ skip app launch --android    # builds the bridge, installs, and launches on the 
 
 Boot an emulator first (see [Emulator](#emulator)) — this does not start one.
 
-**The bridge build fails intermittently, and it is not your change.** It reports
-`missing required module 'AndroidNDK'` while emitting some unrelated dependency
-(`Defaults`, say), which reads like a broken pin and isn't — the same tree builds
-clean under `skip android build` and passes `skip android test`. Wipe
-`.build/Darwin` and **retry until it passes**; measured 2 failures then a success
-on byte-identical sources, so a single failure proves nothing:
+**The bridge build can fail for reasons that are not your change**, reporting
+`missing required module 'AndroidNDK'`/`'CJNI'` or `no such module 'OSLog'` while
+emitting some unrelated dependency. Wipe `.build/Darwin` and retry; a single
+failure proves nothing, so do **not** bisect your sources against one run:
 
 ```
 for i in 1 2 3; do rm -rf .build/Darwin; skip app launch --android && break; done
 ```
 
-Do **not** bisect your sources against it. A single build is not a signal here,
-and one run each way will happily "prove" that an innocent edit broke the build.
-If you need to know whether a change is at fault, run each side several times.
+See [Module-name poisoning](#module-name-poisoning) for what causes this class of
+error and which two instances of it have been fixed.
 
 Corollary: `skip android build` and `skip android test` being green does **not**
 mean the app still builds. Only `skip app launch` compiles the Darwin bridge, so
 a change that genuinely breaks it can sit unnoticed through a commit.
+
+### Module-name poisoning
+
+Every target in an Android build shares one Modules directory, so **any** module
+present in it answers `canImport(<name>)` for **every** target — including targets
+that never declared a dependency on it. Whether it is present when a given target
+compiles depends on build ordering, which is why this shows up as an intermittent
+failure in a dependency you did not touch, and why the victim rotates.
+
+Two instances have bitten this port. Both are fixed; recognise the shape if a
+third appears.
+
+1. **A module named `os`.** FAKit's compatibility target used to be called `os` so
+   shared code could `import os` unconditionally. Once `os.swiftmodule` existed,
+   `canImport(os)` was true on Android and whatever compiled next took its Apple
+   branch: `Defaults` → `missing required module 'AndroidNDK'`,
+   swift-android-native's `AndroidLogging` → `no such module 'OSLog'`, its
+   `AndroidSystem` → `cannot find type 'os_unfair_lock'`. The target is now
+   `OSCompat` and the three call sites choose with `#if canImport(os)`.
+
+2. **`canImport(SwiftUI)` in FAKit.** On Android `SwiftUI` is SkipSwiftUI's façade,
+   which requires CJNI through SkipAndroidBridge → SwiftJNI — modules a plain
+   SwiftPM package like FAKit cannot see. `DynamicThumbnail` gated a `GeometryProxy`
+   overload on `canImport(SwiftUI)`, so it compiled fine in debug (FAKit happened to
+   go first) and failed the **release** build outright with
+   `missing required module 'CJNI'`. It gates on `#if !os(Android)` now.
+
+The rule: in a plain package, never gate on `canImport` for a module that Skip also
+vends under that name. Gate on the platform.
 
 `ANDROID_PACKAGE_NAME` in `Skip.env` **must** equal the Swift module name lowered
 to a dotted namespace (`FurAffinityUI` → `fur.affinity.ui`); the generated app
@@ -334,6 +360,38 @@ Check what a build actually got signed with:
 ```
 apksigner verify --print-certs <apk>      # must NOT say CN=Android Debug
 ```
+
+## Handing a build to testers
+
+```
+skip export -d out --release --android --no-ios     # --no-ios: the Skip iOS shell is not the iOS release path
+```
+
+`assembleRelease` puts the same APK at
+`.build/Android/app/outputs/apk/release/app-release.apk` — note `.build/`, not
+`Android/app/build/`; Skip redirects `buildDir`.
+
+Measured 2026-08-16, release, `arm64-v8a`: **94 MB**. A universal APK with debug
+symbols was 436 MB; stripping took it to 249 MB and the ABI filter to 94 MB. The
+stripping only works with the NDK installed (`sdkmanager "ndk;28.2.13676358"`) —
+without it AGP's `stripReleaseDebugSymbols` silently copies the libraries through.
+`lib_FoundationICU.so` stays ~40 MB of the total; that is ICU data, not symbols.
+
+R8 and resource shrinking run clean. The existing `-keep class fur.affinity.ui.**`
+already covers every Kotlin bridge reached by name through `AnyDynamicObject`
+(`FAAppInfoBridge`, `FACoilBridge`, `FACookieBridge`, `FADefaultsBridge`,
+`FAMediaBridge`, `FADefaultsObserver`) — verified present in the release DEX.
+
+What to tell a tester:
+
+- **Android 9 or newer** (minSdk 28), **arm64 only** — a 32-bit-ARM phone will refuse
+  to install it. 18+, and it needs a furaffinity.net account.
+- Not ported yet: Notes, Notifications, the Profile tab, Explore/search, story (text)
+  and audio submissions, and posting comments. Tapping an author or an avatar shows
+  "This screen isn't ported to Android yet."
+- First launch shows Cloudflare's "Verify you are human" and needs a real tap.
+- There is **no crash or ANR reporting on either platform**, so a hang has to be
+  reported by hand — Settings → Export Application Logs is what to ask for.
 
 ## Defaults
 

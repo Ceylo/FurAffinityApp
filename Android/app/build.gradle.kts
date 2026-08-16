@@ -33,7 +33,9 @@ android {
     }
     packaging {
         jniLibs {
-            keepDebugSymbols.add("**/*.so")
+            // Skip's template kept debug symbols in every .so. They are ~4x the payload
+            // — a release APK measured 436 MB with them — and the unstripped libraries
+            // stay under .build for symbolication either way.
             pickFirsts.add("**/*.so")
             // this option would compress JNI .so files and reduce overall size for Skip Fuse apps, but cost more at install time
             //useLegacyPackaging = true
@@ -93,6 +95,11 @@ android {
 
     buildTypes {
         release {
+            // A universal APK is 249 MB, and three ABIs of the Swift runtime are all
+            // but ~18 MB of it. arm64-v8a covers every Android 9+ phone worth sending
+            // this to (and the Apple-silicon emulator); debug keeps every ABI so any
+            // emulator still works.
+            ndk { abiFilters += "arm64-v8a" }
             signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
