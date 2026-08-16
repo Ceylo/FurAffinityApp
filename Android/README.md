@@ -380,6 +380,22 @@ an `.aab`, which nothing here uses since Play is out.
 `.build/Android/app/outputs/apk/release/app-release.apk` — note `.build/`, not
 `Android/app/build/`; Skip redirects `buildDir`.
 
+`skip export` never touches adb — it only writes artifacts. To try the exported APK
+on a running emulator or device, install it by hand and launch it from the icon:
+
+```
+adb install -r -d out/FurAffinityUI-release.apk
+```
+
+`-d` (allow downgrade) because this worktree's versionCode 11900 is ahead of the
+other worktrees'. `-r` alone still fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`
+if a *debug*-signed build of the same applicationId is installed — that one needs
+`adb uninstall ceylo.FurAffinity` first, which wipes the FA session cookies.
+The applicationId is `PRODUCT_BUNDLE_IDENTIFIER` (`ceylo.FurAffinity` with the stash
+applied), **not** `ANDROID_PACKAGE_NAME` (`fur.affinity.ui`, the module package). To
+launch from the shell rather than the icon:
+`adb shell monkey -p ceylo.FurAffinity -c android.intent.category.LAUNCHER 1`.
+
 Measured 2026-08-16, release, `arm64-v8a`: **94 MB**. A universal APK with debug
 symbols was 436 MB; stripping took it to 249 MB and the ABI filter to 94 MB. The
 stripping only works with the NDK installed (`sdkmanager "ndk;28.2.13676358"`) —
