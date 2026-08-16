@@ -18,15 +18,17 @@ build as symlinks under `FurAffinityUI/Shared/`. Ported so far: the login screen
 submission detail screen (image, zoomable viewer, favorite, Save/Share, rich-text
 description with in-app links, read-only comments, metadata) and the Settings tab (shared
 `SettingsView` / `NotificationSettingsView`, image-cache control, log sharing, logout).
-FA's rich text is parsed by `FAKit/Sources/FAKit/RichText/` (corelibs Foundation has no
-`InlinePresentationIntent`, so styling rides custom `AttributedStringKey`s) and drawn by
-`FurAffinityUI/HTMLView.swift`.
+FA's rich text is rendered by Compose's own HTML parser: `FAKit/Sources/FAKit/RichText/`
+normalises the markup into the subset `AnnotatedString.fromHtml` understands (and cuts it
+at its `<hr>`s, which that parser drops), and `FurAffinityUI/HTMLView.swift` hands each
+fragment to `Text(html:)`.
 `import os` works on both platforms:
 FAKit ships an Android-only compatibility target named `os` (`FAKit/Sources/OSCompat/`)
 vending `Logger` (→ logcat) and a no-op `OSSignposter`. Four dependencies are forked on
 `Ceylo/<repo>` `android` branches — `Defaults`, `Kingfisher`, and `skip-ui`/`skip-fuse-ui`
-(the latter two for `listRowInsets`, `Text(AttributedString)` / `Text(_:inlineViews:)` and
-`FlowRow`, all unavailable or absent upstream). Images go through an Android-only pipeline
+(the latter two for `listRowInsets`, `Text(html:)`, `Text(AttributedString)` /
+`Text(_:inlineViews:)`, `Text + Text` and `FlowRow`, all unavailable or absent
+upstream). Images go through an Android-only pipeline
 (`FAImageStore` + `FACoilBridge`) rather than Kingfisher, and Save/Share through
 `FAMediaBridge`. See `Android/README.md` for build/run/test, the symlink-farm rationale,
 the fork list, what the submission screen defers and why, and the image-pipeline rules.
@@ -105,7 +107,9 @@ Scheme `FurAffinity` covers `FAKitTests`, `FAPagesTests`, `FurAffinityTests`. Pa
 HTML fixtures must **never** be generated or fabricated. Always capture real page source from furaffinity.net in a browser (logged-in, specific account as needed), then save the raw HTML as the fixture file.
 
 ```
-xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17'
+# Pin the OS: with iOS 27 simulators installed, a bare `name=iPhone 17` resolves
+# OS:latest = 27.0, which no iPhone 17 runtime matches, and xcodebuild errors out.
+xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5'
 xcrun simctl list devices available | grep -E "iPhone|iPad"   # list available destinations
 ```
 

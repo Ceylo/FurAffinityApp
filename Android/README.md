@@ -197,6 +197,34 @@ on byte-identical sources, so a single failure proves nothing:
 for i in 1 2 3; do rm -rf .build/Darwin; skip app launch --android && break; done
 ```
 
+**When retrying stops working, it is the `os` module.** FAKit's compatibility target
+is literally named `os`, so once `os.swiftmodule` exists in the Android scratch dir every
+target compiled *after* it sees `#if canImport(os)` as true and takes its Apple branch —
+`Defaults` (`missing required module 'AndroidNDK'`), swift-android-native's
+`AndroidLogging` (same) and `AndroidSystem` (`os_unfair_lock`). The victim rotates,
+because it is a scheduling race. Deleting `os.swiftmodule` and rebuilding one victim only
+moves the failure to the next one; what works is building all three **before `os` exists
+at all**, in a scratch dir that has just been wiped:
+
+```
+BASE=.build/Darwin/DerivedData/Build/Intermediates.noindex/BuildToolPluginIntermediates/\
+text-layout.output/FurAffinityUI/skipstone/FurAffinityUI
+TC=~/Library/Developer/Toolchains/swift-6.3.3-RELEASE.xctoolchain/usr/bin/swift
+rm -rf "$BASE/build/swift/aarch64-unknown-linux-android28"
+for t in AndroidSystem AndroidLogging Defaults; do
+  $TC build --swift-sdk aarch64-unknown-linux-android28 \
+    --package-path "$BASE/src/main/swift" --scratch-path "$BASE/build/swift" \
+    --configuration debug -Xswiftc -DSKIP_BRIDGE -Xswiftc -DTARGET_OS_ANDROID \
+    -Xcc -fPIC --target $t
+done
+skip app launch --android
+```
+
+A related trap with the same signature: `Package.resolved` is git-ignored, so a `from:`
+pin on `skip` drifts past the installed CLI and the build fails *inside a dependency*
+(`AndroidUserDefaults` … "must use a 'required' initializer"). The pin is `exact:` for
+that reason — keep it equal to `skip version`.
+
 Do **not** bisect your sources against it. A single build is not a signal here,
 and one run each way will happily "prove" that an innocent edit broke the build.
 If you need to know whether a change is at fault, run each side several times.
@@ -305,8 +333,8 @@ adb shell run-as com.example.id1234 cat shared_prefs/defaults.xml
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](#defaults)) |
 | `Ceylo/Kingfisher` | Android port |
-| `Ceylo/skip-ui` | `listRowInsets`; `Text(bridgedRichText:bridgedInlineViews:)`; `FlowRow`; SF Symbol mappings |
-| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(AttributedString)` / `Text(_:inlineViews:)`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
+| `Ceylo/skip-ui` | `listRowInsets`; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; SF Symbol mappings |
+| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)`, `Text.+`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
 
 All on an `android` branch, referenced by URL + branch from `Package.swift` (and,
 for Defaults/Kingfisher, the Xcode project too). While iterating, re-point the root
@@ -336,6 +364,48 @@ entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
 
 ### The other fork patches
 
+- **`Text(html:)`** hands markup to Compose's own parser,
+  `AnnotatedString.fromHtml`, which is how FA's rich text is rendered. It is worth
+  preferring over anything built on styled runs for one reason above all: it applies
+  **`ParagraphStyle(textAlign)`**, so a `[center]` block and the text around it live in
+  one `Text`. Compose applies `textAlign` per text node, so styled runs cannot express
+  that at all — the previous design had to break every block into its own view.
+  It also handles weight, emphasis, decoration, baseline, `font color`,
+  `span style="color:…"`, `h1`–`h6`, `br`/`p`/`div`, `ul`/`li` and `a href` unaided.
+  Three things it does not do, and what covers each:
+  - `<code>` is unrecognised, and alignment is read only from `style="text-align:…"` on a
+    *block* element and only as `start`/`center`/`end` — never `left`/`right`, never
+    `align="…"`. FA compiles `[center]` to a class on `<code>`, so `FAHTMLNormalizer`
+    rewrites it. That pass is also where FA's other markup quirks are absorbed; it is
+    unit-tested on iOS against the same fixtures the parser suites use.
+  - `<hr>` is dropped without even a line break, so the normaliser hoists every rule to a
+    direct child of the root — splitting whatever it sits inside, or the markup after it
+    loses its opening tag — and `HTMLView` draws a `Divider()` between the pieces.
+  - `<img>` is dropped but **leaves a U+FFFC behind**, which is exactly the marker inline
+    content splices at. `RichText.splicingInlineContent` rebuilds the parsed string with
+    `AnnotatedString.Builder.append(text:start:end:)`, which carries each range's spans
+    with it. Transpiled, its loop iterates UTF-16 code units — the unit Compose counts
+    offsets in — so an emoji earlier in the text cannot shift a placeholder.
+
+  A tapped link must not reach Compose's own `UriHandler`: it would open the browser
+  before the app saw the URL. A `LinkInteractionListener` hands it to `onLinkTap`
+  instead, and `HTMLView` marks it with the app scheme so `AndroidRootView`'s existing
+  handler still tells an in-app FA link from an "Open in Web Browser".
+  Parsing is `remember`ed on the markup and the link colour — `Render` runs on every
+  recomposition, and the styles bake the colour in.
+- **`Text.+`** is `@available(*, unavailable)` upstream. The obstacle is that a `Text`'s
+  modifiers are stored as closures applying *environment-based view* modifiers, and
+  Compose needs one `AnnotatedString` with a `SpanStyle` per segment — so each modifier
+  also records into a `TextRunStyle`, purely additively, leaving a standalone `Text`
+  untouched. Operands cross as fully-formed `SkipUI.Text`s (so keys, tables, bundles and
+  locale resolve at compose time as usual) alongside one `RichText` record each with an
+  empty text field. Reading a `ShapeStyle` as a colour needs the `RichTextColorStyle`
+  protocol rather than casts — `AnyShapeStyle` erases its base and `OpacityShapeStyle` is
+  generic over it — and `HierarchicalShapeStyle`'s conformance has to sit in that type's
+  own file, since its `level` is `private`. Anything that cannot cross as a `SpanStyle`
+  (`tracking`, a non-monospaced `fontDesign`, `font(.custom)`, a gradient or material
+  `foregroundStyle`, an operand with inline views) raises a `preconditionFailure` naming
+  the modifier: silent dropping is the failure mode this port keeps hitting.
 - **`Text(AttributedString)`** is `@available(*, unavailable)` upstream, which blocks all
   rich text. The first cut bridged it as markdown, since SkipUI's own rich-text model is
   markdown — but markdown cannot express colour, font size, underline or baseline at all,
@@ -354,8 +424,8 @@ entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
   - The separators are spelled `\u{001E}`/`\u{001F}` with all four hex digits. Skip's
     transpiler emits `\u{1E}` as the Kotlin `"\u1E"`, which is not a valid escape.
   - **`Text(_:inlineViews:)`** splices views in at the object-replacement characters, in
-    order — SwiftUI's spelling is `Text(Image(…)) + Text(…)` concatenation, and `Text + Text`
-    is unavailable here. `TextInlineView` carries an explicit size because Compose reserves
+    order — SwiftUI's spelling is `Text(Image(…)) + Text(…)` concatenation, and it is
+    `Text(Image:)` that is unavailable here, not the concatenation. `TextInlineView` carries an explicit size because Compose reserves
     the placeholder's space before it ever composes the view. Use
     `PlaceholderVerticalAlign.Center`, not `TextCenter` — the `Text*` alignments fit the
     placeholder into the text's own vertical bounds, so a 50 pt avatar spills onto the line
@@ -643,21 +713,21 @@ Deferred, with the reason:
 
 Each keeps the iOS name and signature so symlinked callers compile unchanged:
 `SubmissionMainImage` (the iOS one is written against Kingfisher's `KFImageProtocol`),
-`HTMLView`, `Zoomable`, `UserNameView`, `FlowLayout`, `MediaSaveHandler`,
+`HTMLView`, `Zoomable`, `FlowLayout`, `MediaSaveHandler`,
 `RemoteContentToolbarItem`, `SubmissionTextContent`/`SubmissionAudioContent`, and the
 no-ops in `SubmissionShims.swift`.
 
-`HTMLView` is the one that does real work rather than standing in. iOS renders FA's
-rich text through WebKit's HTML importer into a `UITextView`; here `FAKit`'s
-`FARichTextParser` tags runs with `\.faInline` / `\.faBlock` / `\.faImage` and this view
-restates them as SwiftUI attributes and lays the blocks out in a `VStack`. Blocks can't
-collapse into one `Text`: Compose applies `textAlign` per text node, so a `[center]`
-block and the text around it have to be separate views. The one iOS feature not
-reachable is animated GIF avatars, which stay on their first frame.
-
-`UserNameView` builds its compact styles as a single two-run `AttributedString` rather
-than the `Text + Text` iOS concatenates (`Text.+` is unavailable here), so a long
-display-name/handle pair still wraps between the two.
+`HTMLView` is the one that does real work rather than standing in. iOS renders FA's rich
+text through WebKit's HTML importer into a `UITextView`; here `FAKit` normalises the
+markup (`FAHTMLNormalizer`) and Compose parses it — see `Text(html:)` under
+[the other fork patches](#the-other-fork-patches). The view itself only puts back what
+that parser drops: a `Divider()` where each `<hr>` was, and an inline view at each
+`<img>`'s U+FFFC. Accepted losses, none of which FA's corpus exercises: `<ol>` numbering
+degrades to bullets, `<blockquote>` loses its indent and bar, `<code>`/`<pre>` lose
+monospace, absolute px font sizes are ignored, and `<sub>` gets a baseline shift without
+the size reduction. Headings come out at Compose's `RelativeSizeSpan` steps rather than
+FA's exact pixel sizes. The one iOS feature not reachable is animated GIF avatars, which
+stay on their first frame.
 
 `InAppLinkConversion.swift` duplicates ~20 lines of `InAppNavigation.swift` — the
 link-rewriting half. Splitting the iOS file instead would mean an `.xcodeproj` edit, so
