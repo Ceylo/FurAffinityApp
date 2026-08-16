@@ -166,7 +166,7 @@ public enum FAHTMLNormalizer {
         // Deepest first: splitting an ancestor invalidates nothing below it, and each
         // pass lifts a rule exactly one level, so this terminates at the root.
         while let rule = try root.getElementsByTag("hr").first(where: { $0.parent() !== root }) {
-            guard let parent = rule.parent() as? Element else { break }
+            guard let parent = rule.parent() else { break }
             try split(parent, at: rule)
         }
     }
@@ -268,14 +268,16 @@ private extension Element {
         return Set(value.split(whereSeparator: \.isWhitespace).map(String.init))
     }
 
-    /// The element's `style` attribute as lowercased declarations.
+    /// The element's `style` attribute as declarations, keyed by lowercased property.
+    /// Values are kept verbatim — `setTextAlign` writes the whole attribute back, and a
+    /// lowercased `url(…/AbC.png)` is a 404 on the CDN.
     var faStyle: [String: String] {
         guard let style = try? attr("style"), !style.isEmpty else { return [:] }
         return style.split(separator: ";").reduce(into: [:]) { result, declaration in
             let parts = declaration.split(separator: ":", maxSplits: 1)
             guard parts.count == 2 else { return }
             result[parts[0].trimmingCharacters(in: .whitespaces).lowercased()] =
-                parts[1].trimmingCharacters(in: .whitespaces).lowercased()
+                parts[1].trimmingCharacters(in: .whitespaces)
         }
     }
 }

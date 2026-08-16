@@ -70,8 +70,17 @@ struct FAHTMLNormalizerAlignmentTests {
     @Test
     func anExistingStyleSurvivesAlongsideTheAlignment() throws {
         let html = try normalize("<code class=\"bbcode_center\" style=\"color: #C92A2A\">x</code>").html
-        #expect(html.contains("color:#c92a2a"))
+        #expect(html.contains("color:#C92A2A"))
         #expect(html.contains("text-align:center"))
+    }
+
+    @Test
+    func rewritingTheStyleDoesNotChangeTheCaseOfWhatItAlreadyHeld() throws {
+        // FA's CDN is case-sensitive, so a lowercased URL in the style we rewrite is a 404.
+        let html = try normalize("""
+        <code class="bbcode_center" style="background-image: url(https://a.furaffinity.net/AbC.png)">x</code>
+        """).html
+        #expect(html.contains("a.furaffinity.net/AbC.png"))
     }
 
     @Test
