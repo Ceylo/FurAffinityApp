@@ -186,24 +186,50 @@ skip app launch --android    # builds the bridge, installs, and launches on the 
 
 Boot an emulator first (see [Emulator](#emulator)) — this does not start one.
 
-**The bridge build fails intermittently, and it is not your change.** It reports
-`missing required module 'AndroidNDK'` while emitting some unrelated dependency
-(`Defaults`, say), which reads like a broken pin and isn't — the same tree builds
-clean under `skip android build` and passes `skip android test`. Wipe
-`.build/Darwin` and **retry until it passes**; measured 2 failures then a success
-on byte-identical sources, so a single failure proves nothing:
+**The bridge build can fail for reasons that are not your change**, reporting
+`missing required module 'AndroidNDK'`/`'CJNI'` or `no such module 'OSLog'` while
+emitting some unrelated dependency. Wipe `.build/Darwin` and retry; a single
+failure proves nothing, so do **not** bisect your sources against one run:
 
 ```
 for i in 1 2 3; do rm -rf .build/Darwin; skip app launch --android && break; done
 ```
 
-Do **not** bisect your sources against it. A single build is not a signal here,
-and one run each way will happily "prove" that an innocent edit broke the build.
-If you need to know whether a change is at fault, run each side several times.
+See [Module-name poisoning](#module-name-poisoning) for what causes this class of
+error and which two instances of it have been fixed.
 
 Corollary: `skip android build` and `skip android test` being green does **not**
 mean the app still builds. Only `skip app launch` compiles the Darwin bridge, so
 a change that genuinely breaks it can sit unnoticed through a commit.
+
+### Module-name poisoning
+
+Every target in an Android build shares one Modules directory, so **any** module
+present in it answers `canImport(<name>)` for **every** target — including targets
+that never declared a dependency on it. Whether it is present when a given target
+compiles depends on build ordering, which is why this shows up as an intermittent
+failure in a dependency you did not touch, and why the victim rotates.
+
+Two instances have bitten this port. Both are fixed; recognise the shape if a
+third appears.
+
+1. **A module named `os`.** FAKit's compatibility target used to be called `os` so
+   shared code could `import os` unconditionally. Once `os.swiftmodule` existed,
+   `canImport(os)` was true on Android and whatever compiled next took its Apple
+   branch: `Defaults` → `missing required module 'AndroidNDK'`,
+   swift-android-native's `AndroidLogging` → `no such module 'OSLog'`, its
+   `AndroidSystem` → `cannot find type 'os_unfair_lock'`. The target is now
+   `OSCompat` and the three call sites choose with `#if canImport(os)`.
+
+2. **`canImport(SwiftUI)` in FAKit.** On Android `SwiftUI` is SkipSwiftUI's façade,
+   which requires CJNI through SkipAndroidBridge → SwiftJNI — modules a plain
+   SwiftPM package like FAKit cannot see. `DynamicThumbnail` gated a `GeometryProxy`
+   overload on `canImport(SwiftUI)`, so it compiled fine in debug (FAKit happened to
+   go first) and failed the **release** build outright with
+   `missing required module 'CJNI'`. It gates on `#if !os(Android)` now.
+
+The rule: in a plain package, never gate on `canImport` for a module that Skip also
+vends under that name. Gate on the platform.
 
 `ANDROID_PACKAGE_NAME` in `Skip.env` **must** equal the Swift module name lowered
 to a dotted namespace (`FurAffinityUI` → `fur.affinity.ui`); the generated app
@@ -233,6 +259,21 @@ next run shows FA's "Verify you are human" checkbox. It needs a **real click in 
 emulator window**: synthetic `adb shell input tap` events do not clear it (that was
 the cause of the old "CF loop").
 
+The logged-out screen's **"Continue offline (debug)"** button (`AndroidRootView`)
+drives ported screens without solving a Cloudflare challenge. It is gated on
+`android:debuggable` at *runtime* via `AndroidAppInfo.isDebuggable`, not `#if DEBUG`
+— skipstone drops `#if DEBUG` blocks when it generates the view bridge, so a
+compile-time fence there is silently inert. `OfflineFASession` and its demo data
+therefore still ship in the release APK; that is the price of keeping the
+affordance. The launch line reports which side of the gate a build is on:
+
+```
+Launched FurAffinity 1.19 on Android 17, debug build debuggable=true
+```
+
+That line comes from the shared `LaunchLog.swift`, so it matches iOS's word for
+word; only the OS name and the trailing detail differ per platform.
+
 Open `Android/` in Android Studio to attach a debugger to the Kotlin/JNI side (its
 `.idea/` is git-ignored; `gradle.xml` there caches paths under `.build/` and is
 regenerated on sync — as is `.gradle/config.properties`, whose loss is what makes
@@ -260,6 +301,122 @@ The iOS build must stay green at every step:
 ```
 xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
+
+## Update check
+
+Settings shows the current and latest versions and a "Get …" link, from
+`AppInformation.fetch()` against `api.github.com/.../releases/latest` — plain
+`URLSession` on both platforms, since that endpoint wants no cookies and sits
+behind no Cloudflare. One release feed serves both: tag `1.19` carries the IPA and
+the APK, and draft releases are invisible to `releases/latest`, so publishing
+stays manual.
+
+`Bundle.main.version` reads 0.0.0 on Android, which would silently invert the
+comparison; `FAAppVersion` is what makes it right (see the User-Agent section).
+
+The tab badge goes through `Model.isUpdateAvailable`, **not**
+`model.appInfo.isUpToDate`. Skip's Compose bridge doesn't see changes to a nested
+`@Observable`, so the tab bar never recomposes when `appInfo` changes — measured:
+an unconditional `.badge("9")` draws immediately, the same badge read through
+`appInfo` never appears. Mirroring the flag onto the `Model` the view already
+observes fixes it, and iOS uses the same expression. Same class of problem as the
+Cloudflare stage flags at the top of `AndroidRootView`.
+
+## Release signing
+
+The release `signingConfig` in `Android/app/build.gradle.kts` falls back to the
+**debug** key when `keystore.properties` is absent, so out of the box
+`assembleRelease` emits a debug-signed APK and exits 0. That is unrecoverable
+once shipped: everyone who installed it must uninstall before they can take a
+properly signed update. A `gradle.taskGraph.whenReady` check now fails any
+`assemble/bundle/package/installRelease` task while the file is missing. The debug
+variant is unaffected, and configuring the project without a keystore still works.
+
+Both files live beside the module (`storeFile` resolves relative to
+`Android/app/`) and are git-ignored:
+
+```
+keytool -genkeypair -v \
+  -keystore Android/app/keystore.jks -alias furaffinity \
+  -keyalg RSA -keysize 4096 -validity 10000 \
+  -dname "CN=Ceylo, O=Ceylo, C=FR"
+```
+
+```properties
+# Android/app/keystore.properties
+storeFile=keystore.jks
+storePassword=…
+keyAlias=furaffinity
+keyPassword=…
+```
+
+**Back `keystore.jks` up off-machine before building anything with it.** Losing it
+permanently ends the upgrade path for every installed user, and Google's developer
+verification (sideloading included, from late 2026) registers a package name bound
+to this certificate — neither can be changed afterwards.
+
+Check what a build actually got signed with:
+
+```
+apksigner verify --print-certs <apk>      # must NOT say CN=Android Debug
+```
+
+## Handing a build to testers
+
+```
+git stash apply stash@{0}          # pbxproj id + Amplitude key + Skip.env id
+rm -rf .build/plugins/outputs .build/Darwin .build/Android    # applicationId changed
+skip export -d out --release --android --no-ios --no-export-project
+```
+
+`--no-ios` because the Skip-generated iOS shell is not this app's iOS release path.
+**`--no-export-project` is not optional**: the source-archive step walks the project
+directory, and with `-d out` inside it that includes its own output — it recurses
+until the zip is 1.37 GB and then fails. You do not want the archive anyway; the
+Android source is private. Output is `out/FurAffinityUI-release.apk` (send this) plus
+an `.aab`, which nothing here uses since Play is out.
+
+`assembleRelease` puts the same APK at
+`.build/Android/app/outputs/apk/release/app-release.apk` — note `.build/`, not
+`Android/app/build/`; Skip redirects `buildDir`.
+
+`skip export` never touches adb — it only writes artifacts. To try the exported APK
+on a running emulator or device, install it by hand and launch it from the icon:
+
+```
+adb install -r -d out/FurAffinityUI-release.apk
+```
+
+`-d` (allow downgrade) because this worktree's versionCode 11900 is ahead of the
+other worktrees'. `-r` alone still fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`
+if a *debug*-signed build of the same applicationId is installed — that one needs
+`adb uninstall ceylo.FurAffinity` first, which wipes the FA session cookies.
+The applicationId is `PRODUCT_BUNDLE_IDENTIFIER` (`ceylo.FurAffinity` with the stash
+applied), **not** `ANDROID_PACKAGE_NAME` (`fur.affinity.ui`, the module package). To
+launch from the shell rather than the icon:
+`adb shell monkey -p ceylo.FurAffinity -c android.intent.category.LAUNCHER 1`.
+
+Measured 2026-08-16, release, `arm64-v8a`: **94 MB**. A universal APK with debug
+symbols was 436 MB; stripping took it to 249 MB and the ABI filter to 94 MB. The
+stripping only works with the NDK installed (`sdkmanager "ndk;28.2.13676358"`) —
+without it AGP's `stripReleaseDebugSymbols` silently copies the libraries through.
+`lib_FoundationICU.so` stays ~40 MB of the total; that is ICU data, not symbols.
+
+R8 and resource shrinking run clean. The existing `-keep class fur.affinity.ui.**`
+already covers every Kotlin bridge reached by name through `AnyDynamicObject`
+(`FAAppInfoBridge`, `FACoilBridge`, `FACookieBridge`, `FADefaultsBridge`,
+`FAMediaBridge`, `FADefaultsObserver`) — verified present in the release DEX.
+
+What to tell a tester:
+
+- **Android 9 or newer** (minSdk 28), **arm64 only** — a 32-bit-ARM phone will refuse
+  to install it. 18+, and it needs a furaffinity.net account.
+- Not ported yet: Notes, Notifications, the Profile tab, Explore/search, story (text)
+  and audio submissions, and posting comments. Tapping an author or an avatar shows
+  "This screen isn't ported to Android yet."
+- First launch shows Cloudflare's "Verify you are human" and needs a real tap.
+- There is **no crash or ANR reporting on either platform**, so a hang has to be
+  reported by hand — Settings → Export Application Logs is what to ask for.
 
 ## Defaults
 
@@ -445,6 +602,43 @@ the wait would silently look logged out.
 
 Costs worth knowing: while the login sheet is up there are two WebView instances,
 and the hidden one loads FA's home page — ads and all — once per launch.
+
+### The WebView User-Agent carries the app identifier (measured 2026-08-16)
+
+FA staff identify this app's traffic by a `ceylo.FurAffinityApp/<version>` suffix on
+the User-Agent; iOS appends it via `WKWebViewConfiguration.applicationNameForUserAgent`.
+Android now does the same through skip-web's `customUserAgent`, computed once in
+`FAWebViewUserAgent` (`FAWebView.swift`) as the platform default plus
+`FAUserAgent.applicationName`, so the suffix can't drift from iOS's.
+
+**All three `WebEngineConfiguration` sites must carry it** — `FALoginView`,
+`FAChallengeView`, `FAWebSession` — because `cf_clearance` is bound to the byte-exact
+UA while the cookie jar is process-global: a clearance minted by any one of them is
+replayed by all. Leaving one un-overridden mints under the bare UA and 403s everything
+after. skip-web applies it at engine construction, so no navigation can precede it.
+
+Everything downstream still reads the UA *live* out of the WebView
+(`FAWebSession.swift` → `liveUserAgent()` → `FAHTTPDataSource` and
+`CoilImageLoader.configure`). The computed string is an input to the WebView only; the
+WebView stays the single source of truth. `[CFDIAG] User-Agent drifted=` in the
+challenge diagnostics compares the two.
+
+Three earlier comments claimed setting `customUserAgent` "empties
+`navigator.userAgentData`, which Cloudflare reads as a bot signal". **Measured false**:
+with the override in place the emulator reports
+`{"mobile":true,"platform":"Android","brands":[…Android WebView 151, Chromium 151]}`,
+and a cold launch clears the challenge and loads the feed with thumbnails. No
+`WebSettingsCompat.setUserAgentMetadata` and no fourth skip-web fork are needed.
+
+One expected consequence: the suffix embeds the app version, so **an app update changes
+the UA and invalidates any persisted `cf_clearance`**. It is re-minted on the next
+challenge; the first launch after an update showing `[CFDIAG] cf_clearance drifted=true`
+and a round of 403s is that, not a regression.
+
+`Bundle.main.infoDictionary` is *empty* in a Skip Fuse native module (corelibs
+Foundation, no Info.plist), so the version behind that suffix comes from
+`FAAppInfoBridge.versionName()` — the package manager — and is installed into
+`FAUserAgent.appVersionOverride` from `onInit()`, before any WebView exists.
 
 ### What actually draws the Cloudflare challenge (measured 2026-08-12)
 

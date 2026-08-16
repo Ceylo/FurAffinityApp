@@ -28,11 +28,17 @@ let package = Package(
         .package(url: "https://source.skip.tools/swift-android-native.git", from: "1.4.1"),
     ],
     targets: [
-        // Compatibility module: Android has no `os`. Named `os` so shared code can
-        // `import os` unconditionally. Only ever depended on `.when(.android)`,
-        // so Darwin keeps resolving the system module.
+        // Compatibility module: Android has no `os`, so this vends the Logger /
+        // OSSignposter surface shared code uses, behind `#if canImport(os)`.
+        //
+        // It must NOT be named `os`. A module by that name lands in the shared Modules
+        // directory and makes `canImport(os)` true for *every* target in the Android
+        // build, so whichever target compiles after it takes its Apple branch and
+        // fails — Defaults on `AndroidNDK`, swift-android-native's AndroidLogging on
+        // `OSLog`, its AndroidSystem on `os_unfair_lock`. Which target breaks is a
+        // scheduling race: intermittent in debug, and a hard block in release.
         .target(
-            name: "os",
+            name: "OSCompat",
             dependencies: [
                 .product(name: "AndroidLogging", package: "swift-android-native",
                          condition: .when(platforms: [.android])),
@@ -42,7 +48,7 @@ let package = Package(
         .target(
             name: "FALogging",
             dependencies: [
-                .target(name: "os", condition: .when(platforms: [.android])),
+                .target(name: "OSCompat", condition: .when(platforms: [.android])),
             ]
         ),
         .testTarget(
@@ -55,7 +61,7 @@ let package = Package(
                 "SwiftSoup",
                 "FALogging",
                 .product(name: "OrderedCollections", package: "swift-collections"),
-                .target(name: "os", condition: .when(platforms: [.android])),
+                .target(name: "OSCompat", condition: .when(platforms: [.android])),
             ]
         ),
         .testTarget(
@@ -77,7 +83,7 @@ let package = Package(
                 // DOCX reader — both out of scope on Android.
                 .product(name: "Cache", package: "Cache", condition: .when(platforms: [.iOS, .macOS])),
                 .product(name: "ZIPFoundation", package: "ZIPFoundation", condition: .when(platforms: [.iOS, .macOS])),
-                .target(name: "os", condition: .when(platforms: [.android])),
+                .target(name: "OSCompat", condition: .when(platforms: [.android])),
             ],
             resources: [.process("Resources")]
         ),
