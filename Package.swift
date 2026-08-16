@@ -20,7 +20,11 @@ let package = Package(
         .library(name: "FurAffinityUI", type: .dynamic, targets: ["FurAffinityUI"]),
     ],
     dependencies: [
-        .package(url: "https://source.skip.tools/skip.git", from: "1.9.4"),
+        // Exact, not `from:`: `Package.resolved` is git-ignored, so a floating pin
+        // silently drifts past the installed `skip` CLI and the build fails inside a
+        // dependency (`AndroidUserDefaults` … "must use a 'required' initializer").
+        // Keep this equal to `skip version`.
+        .package(url: "https://source.skip.tools/skip.git", exact: "1.9.4"),
         // Forked for `listRowInsets`, `Text(AttributedString)`, `FlowRow` and a few
         // unavailable-to-passthrough fixes — see Android/README.md §Forks. skip-ui comes
         // in transitively via skip-fuse-ui, so it must be overridden here too.

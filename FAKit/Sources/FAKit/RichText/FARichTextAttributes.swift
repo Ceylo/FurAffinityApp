@@ -86,7 +86,28 @@ public struct FAInlineImage: Hashable, Sendable, Codable {
     }
 }
 
+/// A fragment of normalised markup carried inside an `AttributedString`.
+///
+/// `HTMLView` takes an `AttributedString` on both platforms — iOS renders one for real —
+/// so on Android the string carries the markup as its characters and this on the runs,
+/// naming which fragment they belong to and which images its placeholders stand for.
+public struct FAHTMLFragment: Hashable, Sendable, Codable {
+    /// Monotonic per-document. Consecutive fragments were separated by an `<hr>`.
+    public var index: Int
+    public var images: [FAInlineImage]
+
+    public init(index: Int, images: [FAInlineImage]) {
+        self.index = index
+        self.images = images
+    }
+}
+
 public enum FAAttributes {
+    public enum HTMLFragmentAttribute: AttributedStringKey {
+        public typealias Value = FAHTMLFragment
+        public static let name = "FAHTMLFragment"
+    }
+
     public enum InlineStyleAttribute: AttributedStringKey {
         public typealias Value = FAInlineStyle
         public static let name = "FAInlineStyle"
@@ -105,6 +126,7 @@ public enum FAAttributes {
 
 extension AttributeScopes {
     public struct FAAttributeScope: AttributeScope {
+        public let faHTMLFragment: FAAttributes.HTMLFragmentAttribute
         public let faInline: FAAttributes.InlineStyleAttribute
         public let faBlock: FAAttributes.BlockAttribute
         public let faImage: FAAttributes.ImageAttribute

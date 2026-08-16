@@ -3,10 +3,10 @@
 //  FAKit
 //
 //  Android build of `AttributedString(FAHTML:)`. WebKit's HTML importer
-//  (`NSAttributedString(data:.html)`) doesn't exist here, so FA's markup is walked
-//  with SwiftSoup instead and its styling carried in the custom `FAAttributes`
-//  keys — see `FARichTextParser`. The signature matches the Apple version so FAKit
-//  domain code is unchanged.
+//  (`NSAttributedString(data:.html)`) doesn't exist here — and nothing needs to
+//  replace it, because Compose parses HTML itself. So the markup is normalised into
+//  the subset it understands and carried, verbatim, to `HTMLView`. The signature
+//  matches the Apple version so FAKit domain code is unchanged.
 //
 
 #if os(Android)
@@ -19,7 +19,7 @@ extension AttributedString {
         let token = signposter.beginInterval("AttributedString.init(FAHTML:)")
         defer { signposter.endInterval("AttributedString.init(FAHTML:)", token) }
 
-        self = try FARichTextParser.attributedString(fromFAHTML: FAHTML)
+        self = AttributedString(faHTMLFragments: try FAHTMLNormalizer.normalized(FAHTML).fragments)
     }
 }
 

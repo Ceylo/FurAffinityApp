@@ -32,10 +32,25 @@ public struct FANormalizedHTML: Hashable, Sendable {
     public var html: String
     /// Every `<img>` of the document, in the order their U+FFFC placeholders appear.
     public var images: [FAInlineImage]
+    /// The markup cut at its rules, which `fromHtml` renders as nothing at all. Each
+    /// fragment is rendered on its own, with a divider drawn between consecutive ones.
+    public var fragments: [Fragment]
 
-    public init(html: String, images: [FAInlineImage]) {
+    /// A run of markup between two rules, and the images its placeholders stand for.
+    public struct Fragment: Hashable, Sendable {
+        public var html: String
+        public var images: [FAInlineImage]
+
+        public init(html: String, images: [FAInlineImage]) {
+            self.html = html
+            self.images = images
+        }
+    }
+
+    public init(html: String, images: [FAInlineImage], fragments: [Fragment]) {
         self.html = html
         self.images = images
+        self.fragments = fragments
     }
 }
 
@@ -45,7 +60,41 @@ public enum FAHTMLNormalizer {
         let root = document.body() ?? document
         try rewriteAlignment(in: root)
         try hoistRules(in: root)
-        return FANormalizedHTML(html: try root.html(), images: try images(in: root))
+        return FANormalizedHTML(
+            html: try root.html(),
+            images: try images(in: root),
+            fragments: try fragments(of: root)
+        )
+    }
+
+    // MARK: Fragments
+
+    /// Cuts the document at its (now top-level) rules, so the renderer can draw its own
+    /// divider between the pieces — `fromHtml` renders an `<hr>` as nothing whatsoever.
+    private static func fragments(of root: Element) throws -> [FANormalizedHTML.Fragment] {
+        var result: [FANormalizedHTML.Fragment] = []
+        var nodes: [Node] = []
+
+        func flush() throws {
+            defer { nodes = [] }
+            let html = try nodes.map { try $0.outerHtml() }.joined()
+            // A rule at the very start or end, or two in a row, would otherwise leave an
+            // empty fragment behind — and with it a doubled divider.
+            guard !html.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+            let images = try nodes.compactMap { $0 as? Element }
+                .flatMap { try $0.getElementsByTag("img").compactMap(image(from:)) }
+            result.append(FANormalizedHTML.Fragment(html: html, images: images))
+        }
+
+        for node in root.getChildNodes() {
+            if (node as? Element)?.tagName().lowercased() == "hr" {
+                try flush()
+            } else {
+                nodes.append(node)
+            }
+        }
+        try flush()
+        return result
     }
 
     // MARK: Alignment
@@ -152,19 +201,21 @@ public enum FAHTMLNormalizer {
     /// Every `<img>` in document order — the order `fromHtml`'s U+FFFC placeholders
     /// appear in, since it emits exactly one per image and drops nothing else.
     private static func images(in root: Element) throws -> [FAInlineImage] {
-        try root.getElementsByTag("img").compactMap { element in
-            guard let url = try element.attr("src").faURL else { return nil }
-            let alt = try element.attr("alt")
-            return FAInlineImage(
-                url: url,
-                width: Double(try element.attr("width")),
-                height: Double(try element.attr("height")),
-                alt: alt.isEmpty ? nil : alt,
-                // FA marks an inline avatar on the *link*, never on the image itself.
-                isAvatar: element.faClassNames.contains("iconusername")
-                    || element.parents().contains { $0.faClassNames.contains("iconusername") }
-            )
-        }
+        try root.getElementsByTag("img").compactMap(image(from:))
+    }
+
+    private static func image(from element: Element) throws -> FAInlineImage? {
+        guard let url = try element.attr("src").faURL else { return nil }
+        let alt = try element.attr("alt")
+        return FAInlineImage(
+            url: url,
+            width: Double(try element.attr("width")),
+            height: Double(try element.attr("height")),
+            alt: alt.isEmpty ? nil : alt,
+            // FA marks an inline avatar on the *link*, never on the image itself.
+            isAvatar: element.faClassNames.contains("iconusername")
+                || element.parents().contains { $0.faClassNames.contains("iconusername") }
+        )
     }
 
     // MARK: Vocabulary
