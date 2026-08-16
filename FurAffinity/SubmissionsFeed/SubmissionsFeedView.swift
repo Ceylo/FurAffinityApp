@@ -322,11 +322,7 @@ extension SubmissionsFeedView {
         let newSubmissionCount = try await model
             .fetchSubmissionPreviews()
         
-        // A plain write, not `withAnimation`: on SkipUI a `withAnimation`
-        // transaction marks the whole next Compose frame process-wide, which makes
-        // the List animate the freshly prepended rows and turns the choreography's
-        // `scrollTo` into an animated scroll. The overlay below carries its own
-        // scoped `.animation(_:value:)` instead.
+        // Not `withAnimation`: it marks the whole Compose frame on SkipUI.
         newSubmissionsCount = newSubmissionCount
     }
 }

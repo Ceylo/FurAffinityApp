@@ -59,11 +59,8 @@ struct NotificationOverlay: View {
             .shadow(color: .black.opacity(0.33) , radius: 5, x: 0, y: 0)
     }
     
-    /// The caller supplies the transaction with `.animation(_:value:)` on this view.
-    /// Not `withAnimation` around the writes: on SkipUI that marks the whole next
-    /// Compose frame process-wide (see `SubmissionsFeedView.fetchSubmissionPreviews`).
-    /// The trade-off is that SkipUI honours the transition only for such a global
-    /// mark, so on Android the badge appears and disappears without animating.
+    /// The caller supplies the transaction with `.animation(_:value:)`; SkipUI honours
+    /// `.transition` only for a globally marked frame, so Android doesn't animate.
     var body: some View {
         if let itemCount = itemCount {
             badge(itemCount)

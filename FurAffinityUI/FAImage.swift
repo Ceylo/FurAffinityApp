@@ -80,11 +80,7 @@ struct FAImageView: View {
                 Color.clear
             }
         }
-        // Scoped, not `withAnimation` around the assignment: on SkipUI a
-        // `withAnimation` transaction marks the whole next Compose frame
-        // process-wide, so a thumbnail finishing its load animated any List change
-        // sharing that frame — including the feed's prepend and its `scrollTo`.
-        // The fade is worth no more than a subtree-scoped modifier costs.
+        // Not `withAnimation`: it marks the whole Compose frame on SkipUI.
         .animation(fadeDuration > 0 ? .easeInOut(duration: fadeDuration) : nil,
                    value: image != nil)
         .task(id: url) { await load() }
