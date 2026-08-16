@@ -51,41 +51,23 @@ struct SubmissionsFeedView: View {
         }
     }
     
-    private enum Item: Hashable, Identifiable {
-        case fetchTrigger(targetScrollItem: FASubmissionPreview)
-        case submissionPreview(FASubmissionPreview)
-        
-        var id: Self { self }
+    private var listItems: [FASubmissionPreview]? {
+        model.submissionPreviews.map { Array($0) }
     }
-    
-    private var listItems: [Item]? {
-        guard let modelPreviews = model.submissionPreviews else {
-            return nil
-        }
-        
-        guard let targetScrollItem else {
-            return modelPreviews.map { .submissionPreview($0) }
-        }
-        
-        var items = [Item]()
-        for preview in modelPreviews {
-            if preview == targetScrollItem {
-                items.append(.fetchTrigger(targetScrollItem: targetScrollItem))
-            }
-            items.append(.submissionPreview(preview))
-        }
-        return items
-    }
-    
+
     /// This implements the most reliable way known to be able to update the list
     /// with new items at the beginning, while preventing the list from scrolling away
     /// of `targetScrollItem`.
+    ///
+    /// Mounted as a zero-size overlay on the target row rather than as a list row of
+    /// its own: SkipUI floors every row at 32 dp, so a row here left a visible gap at
+    /// the top of the feed and, being the first visible item, took over Compose's
+    /// scroll anchor — only to be destroyed in the very turn the new rows land.
     private func fetchTriggerView(with targetPreview: FASubmissionPreview, scrollProxy: ScrollViewProxy) -> some View {
-        Rectangle()
-            .foregroundStyle(.clear)
-            .frame(height: 1)
+        Color.clear
+            .frame(width: 0, height: 0)
             .onAppear {
-                scrollProxy.scrollTo(Item.submissionPreview(targetPreview), anchor: .top)
+                scrollProxy.scrollTo(targetPreview.id, anchor: .top)
 
                 refreshTask = Task {
                     do {
@@ -103,7 +85,7 @@ struct SubmissionsFeedView: View {
                 }
             }
             .onDisappear {
-                scrollProxy.scrollTo(Item.submissionPreview(targetPreview), anchor: .top)
+                scrollProxy.scrollTo(targetPreview.id, anchor: .top)
                 Defaults[.lastViewedSubmissionID] = targetPreview.sid
             }
     }
@@ -121,34 +103,27 @@ struct SubmissionsFeedView: View {
         }
     }
     
-    @ViewBuilder
-    private func itemView(for item: Item, geometry: GeometryProxy, scrollProxy: ScrollViewProxy) -> some View {
-        switch item {
-        case let .fetchTrigger(targetScrollItem):
-            fetchTriggerView(with: targetScrollItem, scrollProxy: scrollProxy)
-        case let .submissionPreview(preview):
-            SubmissionPreviewRow(preview: preview)
-                .onItemFrameChanged(listGeometry: geometry) { frame in
-                    followItem(preview, frame: frame, geometry: geometry)
+    private func itemView(for preview: FASubmissionPreview, geometry: GeometryProxy, scrollProxy: ScrollViewProxy) -> some View {
+        SubmissionPreviewRow(preview: preview)
+            .onItemFrameChanged(listGeometry: geometry) { frame in
+                followItem(preview, frame: frame, geometry: geometry)
+            }
+            .overlay {
+                if preview == targetScrollItem {
+                    fetchTriggerView(with: preview, scrollProxy: scrollProxy)
                 }
-        }
+            }
     }
-    
-    private func list(with items: [Item]) -> some View {
+
+    private func list(with items: [FASubmissionPreview]) -> some View {
         ScrollViewReader { scrollProxy in
             GeometryReader { geometry in
                 List {
-                    ForEach(items) { item in
-                        itemView(for: item, geometry: geometry, scrollProxy: scrollProxy)
+                    ForEach(items) { preview in
+                        itemView(for: preview, geometry: geometry, scrollProxy: scrollProxy)
                     }
                     .onDelete { offsets in
-                        let previewsToRemove = offsets
-                            .map { items[$0] }
-                            .compactMap { item -> FASubmissionPreview? in
-                                guard case let .submissionPreview(preview) = item else { return nil }
-                                return preview
-                            }
-                        model.deleteSubmissionPreviews(previewsToRemove)
+                        model.deleteSubmissionPreviews(offsets.map { items[$0] })
                     }
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
@@ -273,8 +248,8 @@ extension SubmissionsFeedView {
             }
 
             if let item = model.submissionPreviews?.first {
-                // This will cause an Item.fetchTrigger to appear in the list,
-                // which will effectively cause the refresh
+                // This mounts the fetch trigger on that row, which effectively
+                // causes the refresh
                 targetScrollItem = item
             } else {
                 // List has no item, so there's no scroll to preserve. Perform
