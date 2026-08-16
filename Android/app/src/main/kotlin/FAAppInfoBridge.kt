@@ -34,6 +34,10 @@ class FAAppInfoBridge {
     fun isDebuggable(): Boolean =
         (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
+    /// The Android release version, e.g. "17". `ProcessInfo` can't answer this: it
+    /// reports the Linux kernel, not the Android release.
+    fun osRelease(): String = android.os.Build.VERSION.RELEASE ?: ""
+
     /// The stock WebView User-Agent, before any customUserAgent override. Reading
     /// it needs no WebView instance, so it is safe at any point in startup.
     fun defaultUserAgent(): String = try {

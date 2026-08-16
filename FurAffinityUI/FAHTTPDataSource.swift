@@ -136,7 +136,16 @@ struct FAHTTPDataSource: HTTPDataSource {
             request.setValue(header, forHTTPHeaderField: "Cookie")
         }
 
-        logger.info("\(method) request on \(request.url?.absoluteString ?? "\(url)")")
+        // Same shape as iOS's line in URLSession+HTTPDataSource: the POST body and the
+        // clearance being sent are what answer "are we spamming FA?" and "which
+        // clearance did that request carry?" from an exported log alone.
+        let target = request.url?.absoluteString ?? "\(url)"
+        let bodyDesc = request.httpBody
+            .flatMap { String(data: $0, encoding: .utf8) }
+            .map { " with body \"\($0)\"" } ?? ""
+        let clearanceDesc = Self.cookieValue("cf_clearance", in: header)
+            .map { " with cf_clearance=\($0.prefix(8))…" } ?? ""
+        logger.info("\(method) request on \(target)\(bodyDesc)\(hasAwaitedResolution ? " (retry post-challenge)" : "")\(clearanceDesc)")
 
         // Cloudflare's decision is per-request, not per-session: the same cookies
         // and UA can be challenged and then let through seconds later. So retry

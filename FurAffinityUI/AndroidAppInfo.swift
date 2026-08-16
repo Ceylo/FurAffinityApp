@@ -68,6 +68,22 @@ enum AndroidAppInfo {
         #endif
     }()
 
+    /// The OS as the launch log names it, e.g. "Android 17".
+    static let operatingSystem: String = {
+        #if canImport(Android)
+        guard let bridge else { return "Android" }
+        do {
+            let release: String? = try bridge.osRelease()
+            return (release?.isEmpty ?? true) ? "Android" : "Android \(release!)"
+        } catch {
+            logger.error("AndroidAppInfo.osRelease threw: \(error)")
+            return "Android"
+        }
+        #else
+        return "Android"
+        #endif
+    }()
+
     /// The WebView's stock User-Agent, before any override.
     static let webViewDefaultUserAgent: String? = {
         #if canImport(Android)

@@ -15,21 +15,15 @@ import WebKit
 
 @MainActor
 public enum FAUserAgent {
-    /// The version reported in `applicationName`. Android has no Info.plist behind
-    /// `Bundle.main` for a natively-compiled module, so the app layer installs it
-    /// from the package manager before anything reads the User-Agent.
-    nonisolated(unsafe) public static var appVersionOverride: String?
-
     // Stable across bundle identifier changes; FA staff identify app traffic by this suffix.
     // Non-isolated: WebView configurations are built in SwiftUI property initializers,
     // which are not main-actor isolated.
     nonisolated public static var applicationName: String {
-        let version = appVersionOverride
-            ?? Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
-        if version == nil {
+        guard let version = FAAppVersion.string else {
             logger.error("FAUserAgent: no app version available; FA traffic will be unidentifiable")
+            return "ceylo.FurAffinityApp/unknown"
         }
-        return "ceylo.FurAffinityApp/\(version ?? "unknown")"
+        return "ceylo.FurAffinityApp/\(version)"
     }
 
     private static var cached: String?
