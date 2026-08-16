@@ -19,7 +19,7 @@ extension AttributedString {
         let token = signposter.beginInterval("AttributedString.init(FAHTML:)")
         defer { signposter.endInterval("AttributedString.init(FAHTML:)", token) }
 
-        self = AttributedString(faHTMLFragments: try FAHTMLNormalizer.normalized(FAHTML).fragments)
+        self = AttributedString(faHTMLFragments: try FAHTMLNormalizer.fragments(of: FAHTML))
     }
 }
 

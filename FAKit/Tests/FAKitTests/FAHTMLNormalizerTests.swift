@@ -214,6 +214,14 @@ struct FAHTMLNormalizerFragmentTests {
     }
 
     @Test
+    func theShortcutTheRendererTakesSeesTheSameFragments() throws {
+        // `AttributedString(FAHTML:)` reads nothing but the fragments, so it skips
+        // re-serialising the document — it must still get exactly them.
+        let source = try terrinissDescription()
+        #expect(try FAHTMLNormalizer.fragments(of: source) == normalize(source).fragments)
+    }
+
+    @Test
     func theCarrierRoundTripsThroughAnAttributedString() throws {
         // `HTMLView` takes an `AttributedString` on both platforms, so the fragments
         // have to survive inside one.

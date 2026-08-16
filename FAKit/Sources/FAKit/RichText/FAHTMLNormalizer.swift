@@ -55,17 +55,30 @@ public struct FANormalizedHTML: Hashable, Sendable {
 }
 
 public enum FAHTMLNormalizer {
-    public static func normalized(_ html: String) throws -> FANormalizedHTML {
-        let document = try SwiftSoup.parse(html)
-        let root = document.body() ?? document
-        try dropUnrenderableImages(in: root)
-        try rewriteAlignment(in: root)
-        try hoistRules(in: root)
+    /// What the renderer actually needs: the markup already cut at its rules. The
+    /// whole-document view below re-serialises the tree and walks it again for nothing.
+    public static func fragments(of html: String) throws -> [FANormalizedHTML.Fragment] {
+        try fragments(of: try normalizedRoot(html))
+    }
+
+    /// The whole normalised document. Only the tests read it — production goes through
+    /// `fragments(of:)`.
+    static func normalized(_ html: String) throws -> FANormalizedHTML {
+        let root = try normalizedRoot(html)
         return FANormalizedHTML(
             html: try root.html(),
             images: try images(in: root),
             fragments: try fragments(of: root)
         )
+    }
+
+    private static func normalizedRoot(_ html: String) throws -> Element {
+        let document = try SwiftSoup.parse(html)
+        let root = document.body() ?? document
+        try dropUnrenderableImages(in: root)
+        try rewriteAlignment(in: root)
+        try hoistRules(in: root)
+        return root
     }
 
     // MARK: Fragments
