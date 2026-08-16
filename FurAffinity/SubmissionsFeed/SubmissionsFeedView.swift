@@ -29,10 +29,9 @@ struct SubmissionsFeedView: View {
     @State var currentViewIsDisplayed = false
     @State var refreshTask: Task<Void, Never>?
     @State var pendingAutorefresh = false
-    /// Last list-relative `minY` reported for the first row, or a large negative
-    /// sentinel once that row left the list. `nil` until the first report. Only
-    /// tracked and read on Skip, which has no scroll view to ask.
-    @State var firstItemTopOffset: CGFloat?
+    /// Whether the first row's top edge is still visible. Only tracked and read on
+    /// Skip, which has no scroll view to ask. See `trackFirstItemTop`.
+    @State var firstItemIsAtTop = true
     #if !FA_SKIP_MODULE
     @Weak var scrollView: UIScrollView?
     #endif
@@ -107,22 +106,33 @@ struct SubmissionsFeedView: View {
         }
     }
     
-    /// Only Skip reads `firstItemTopOffset`; on iOS this write would invalidate the
-    /// feed on every scroll tick for nothing.
-    private func trackFirstItemTop(frame: CGRect?) {
+    /// Skip's stand-in for the scroll position, from the frame reports `followItem`
+    /// already receives. SkipUI reports an item's *clipped* frame, so the first row's
+    /// `minY` is the 10 pt `listRowInsets` gap at rest and pins to exactly 0 as soon
+    /// as the row's top goes under the list — never negative, and no report at all
+    /// once the row is recycled, which is why the last value must stay meaningful.
+    /// Hence "at top" is `minY > 0`, with 10 pt of harmless slack. Only Skip reads it;
+    /// on iOS the write would invalidate the feed on every scroll tick for nothing.
+    ///
+    /// The first row is resolved live rather than captured per row: a refresh moves
+    /// rows without rebuilding them, so a captured flag can end up on the wrong one.
+    private func trackFirstItemTop(_ preview: FASubmissionPreview, frame: CGRect?) {
         #if FA_SKIP_MODULE
+        guard preview.id == model.submissionPreviews?.first?.id else { return }
         // A nil frame means the row left the list, which is decidedly not "at top".
-        firstItemTopOffset = frame?.minY ?? -.greatestFiniteMagnitude
+        let isAtTop = (frame?.minY ?? -1) > 0
+        // Only on change: this runs for every scroll frame the first row is visible.
+        if isAtTop != firstItemIsAtTop {
+            firstItemIsAtTop = isAtTop
+        }
         #endif
     }
 
-    private func itemView(for preview: FASubmissionPreview, isFirstItem: Bool, geometry: GeometryProxy, scrollProxy: ScrollViewProxy) -> some View {
+    private func itemView(for preview: FASubmissionPreview, geometry: GeometryProxy, scrollProxy: ScrollViewProxy) -> some View {
         SubmissionPreviewRow(preview: preview)
             .onItemFrameChanged(listGeometry: geometry) { frame in
                 followItem(preview, frame: frame, geometry: geometry)
-                if isFirstItem {
-                    trackFirstItemTop(frame: frame)
-                }
+                trackFirstItemTop(preview, frame: frame)
             }
             .overlay {
                 if preview == targetScrollItem {
@@ -136,8 +146,7 @@ struct SubmissionsFeedView: View {
             GeometryReader { geometry in
                 List {
                     ForEach(items) { preview in
-                        itemView(for: preview, isFirstItem: preview.id == items.first?.id,
-                                 geometry: geometry, scrollProxy: scrollProxy)
+                        itemView(for: preview, geometry: geometry, scrollProxy: scrollProxy)
                     }
                     .onDelete { offsets in
                         model.deleteSubmissionPreviews(offsets.map { items[$0] })
@@ -246,12 +255,10 @@ extension SubmissionsFeedView {
     }
 
     /// Whether the feed is scrolled to the top. Skip has no scroll view to ask, so it
-    /// infers it from the first row's last reported position — `true` until the row
-    /// reports, then `false` once it has been scrolled past. The 1 pt tolerance is
-    /// slack: at rest the first row's list-relative `minY` is ≥ 0 by construction.
+    /// goes by whether the first row's top edge is still visible (`trackFirstItemTop`).
     var scrollViewIsAtTop: Bool {
         #if FA_SKIP_MODULE
-        (firstItemTopOffset ?? .greatestFiniteMagnitude) > -1
+        firstItemIsAtTop
         #else
         scrollView?.reachedTop ?? true
         #endif
