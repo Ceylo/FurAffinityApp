@@ -5,9 +5,14 @@
 //  Created by Ceylo on 15/01/2023.
 //
 
+import FAKit
 import Foundation
 import Observation
 import Version
+#if canImport(FoundationNetworking)
+// URLSession/URLRequest live here in corelibs Foundation (Android).
+import FoundationNetworking
+#endif
 
 struct Release: Decodable {
     let html_url: String
@@ -36,32 +41,43 @@ extension Version {
 @MainActor
 @Observable
 class AppInformation {
-    let currentVersion = Bundle.main.version
+    /// `Bundle.main` can't answer on Android, so this goes through FAAppVersion.
+    let currentVersion = FAAppVersion.string.flatMap(Version.init(tolerant:)) ?? Version(0, 0, 0)
     var latestRelease: Release?
     var isUpToDate: Bool?
 
-    /// Whether `fetch()` can ever produce a `latestRelease`, so a UI can hide the
-    /// update rows instead of leaving them at their placeholder forever.
-#if os(Android)
-    let tracksLatestRelease = false
-#else
-    let tracksLatestRelease = true
-#endif
-
+    /// One release feed serves both platforms: the tag carries the IPA and the APK.
+    ///
+    /// Plain `URLSession` on purpose, on both platforms. FAKit's `httpData(from:cookies:)`
+    /// is Darwin-only because Android needs a cookie-replaying, Cloudflare-aware
+    /// implementation — none of which api.github.com wants.
     func fetch() async throws {
-#if os(Android)
-        // The update check reads the iOS release feed and relies on the Darwin
-        // URLSession extension; nothing to check on Android.
-#else
         let url = URL(string: "https://api.github.com/repos/Ceylo/FurAffinityApp/releases/latest")!
-        if let data = try? await URLSession.shared.httpData(from: url, cookies: nil) {
-            let release = try JSONDecoder().decode(Release.self, from: data)
-            isUpToDate = release.version <= currentVersion
-            latestRelease = release
-        } else {
-            latestRelease = nil
-            isUpToDate = nil
+        var request = URLRequest(url: url)
+        // GitHub rejects requests without one.
+        request.setValue(FAUserAgent.applicationName, forHTTPHeaderField: "User-Agent")
+
+        latestRelease = nil
+        isUpToDate = nil
+
+        let data: Data
+        do {
+            let (body, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+                logger.error("Update check: \(url) answered \(response)")
+                return
+            }
+            data = body
+        } catch {
+            // Silent until now, which made "is the check even running?" unanswerable
+            // from a log — the question Android's first release turns on.
+            logger.error("Update check: \(url) failed: \(error)")
+            return
         }
-#endif
+
+        let release = try JSONDecoder().decode(Release.self, from: data)
+        isUpToDate = release.version <= currentVersion
+        latestRelease = release
+        logger.info("Update check: latest \(release.version.shortDescription), running \(currentVersion.shortDescription)")
     }
 }

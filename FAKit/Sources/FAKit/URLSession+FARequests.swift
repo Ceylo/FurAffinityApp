@@ -16,13 +16,25 @@ import WebKit
 @MainActor
 public enum FAUserAgent {
     // Stable across bundle identifier changes; FA staff identify app traffic by this suffix.
-    public static let applicationName: String = {
-        let version = Bundle.main.infoDictionary!["CFBundleShortVersionString"]!
+    // Non-isolated: WebView configurations are built in SwiftUI property initializers,
+    // which are not main-actor isolated.
+    nonisolated public static var applicationName: String {
+        guard let version = FAAppVersion.string else {
+            logger.error("FAUserAgent: no app version available; FA traffic will be unidentifiable")
+            return "ceylo.FurAffinityApp/unknown"
+        }
         return "ceylo.FurAffinityApp/\(version)"
-    }()
+    }
 
     private static var cached: String?
     private static var pendingTask: Task<String, Never>?
+
+    /// Reads `navigator.userAgent` from the system WebView. Installed by the app
+    /// layer on platforms without WebKit — where it is the only way to learn the
+    /// string `cf_clearance` was minted against — and unused where `current()`
+    /// builds its own WKWebView. Declared unconditionally so the app module needs
+    /// no platform fence to install it.
+    public static var webViewUserAgentProvider: (@Sendable () async -> String)?
 
     #if canImport(WebKit)
     /// The exact User-Agent a WKWebView produces when configured with
@@ -76,10 +88,6 @@ public enum FAUserAgent {
         pendingTask = nil
         return ua
     }
-
-    /// Installed by the app layer with a closure that reads `navigator.userAgent`
-    /// from the system WebView.
-    public static var webViewUserAgentProvider: (@Sendable () async -> String)?
     #endif
 }
 

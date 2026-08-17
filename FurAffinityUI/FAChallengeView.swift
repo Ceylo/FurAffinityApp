@@ -34,9 +34,9 @@ struct FAChallengeView: View {
     @State var navigator = WebViewNavigator()
     @State var webState = WebViewState()
 
-    // Never override the UA: setting customUserAgent on the Android WebView empties
-    // navigator.userAgentData, which Cloudflare reads as a bot signal.
-    let config = WebEngineConfiguration()
+    // Stock UA plus the FA app identifier, and byte-identical to the other two
+    // WebViews' — see FAWebViewUserAgent.
+    let config = WebEngineConfiguration(customUserAgent: FAWebViewUserAgent.string)
 
     init(
         onResolved: @escaping () -> Void,

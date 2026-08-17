@@ -10,6 +10,7 @@
 
 import Foundation
 import Defaults
+import FAKit
 import SkipFuse
 import SwiftUI
 
@@ -33,7 +34,15 @@ import SwiftUI
     }
 
     /* SKIP @bridge */public func onInit() {
-        logger.debug("onInit")
+        // Before anything reads a version: `Bundle.main` has no Info.plist behind it
+        // in a native Skip module, so without this both the FA User-Agent suffix and
+        // the update check read "unknown".
+        FAAppVersion.override = AndroidAppInfo.versionName
+        // The counterpart of FurAffinityApp.init()'s line, same shared format.
+        logAppLaunch(
+            operatingSystem: AndroidAppInfo.operatingSystem,
+            details: "debuggable=\(AndroidAppInfo.isDebuggable)"
+        )
         // Must come first: a `Defaults.Key` captures its suite and registers its
         // default value when it's created, so anything that touches a key before this
         // lands in the orphan store.

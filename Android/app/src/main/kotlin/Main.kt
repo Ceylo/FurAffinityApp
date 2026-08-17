@@ -5,7 +5,6 @@ import skip.model.*
 import skip.foundation.*
 import skip.ui.*
 
-import android.Manifest
 import android.app.Application
 import android.graphics.Color as AndroidColor
 import androidx.activity.compose.setContent
@@ -25,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.MaterialTheme
-import androidx.core.app.ActivityCompat
 
 internal val logger: SkipLogger = SkipLogger(subsystem = "fur.affinity.ui", category = "FurAffinityUI")
 
@@ -68,17 +66,6 @@ open class MainActivity: AppCompatActivity {
         }
 
         AppDelegate.shared.onLaunch()
-
-        // Example of requesting permissions on startup.
-        // These must match the permissions in the AndroidManifest.xml file.
-        //let permissions = listOf(
-        //    Manifest.permission.ACCESS_COARSE_LOCATION,
-        //    Manifest.permission.ACCESS_FINE_LOCATION
-        //    Manifest.permission.CAMERA,
-        //    Manifest.permission.WRITE_EXTERNAL_STORAGE,
-        //)
-        //let requestTag = 1
-        //ActivityCompat.requestPermissions(self, permissions.toTypedArray(), requestTag)
     }
 
     override fun onStart() {

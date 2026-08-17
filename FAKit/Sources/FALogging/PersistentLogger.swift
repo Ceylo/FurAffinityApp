@@ -15,7 +15,15 @@
 //
 
 import Foundation
+#if canImport(os)
 import os
+#else
+// Android has no `os`; OSCompat vends the same Logger/OSSignposter surface.
+// It must NOT be named `os`: a module by that name makes canImport(os) true for
+// every target in the build, and whatever compiles after it takes its Apple
+// branch and fails (see Android/README.md § The `os` compatibility module).
+import OSCompat
+#endif
 
 public struct PersistentLogger: Sendable {
     private let osLogger: Logger
