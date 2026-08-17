@@ -1,11 +1,15 @@
 //
 //  OSCompat.swift
-//  os
+//  OSCompat
 //
-//  Android has no `os` module. This target is named `os` so shared code can
-//  `import os` and use `Logger`/`OSSignposter` unconditionally on both
-//  platforms. It is only ever a dependency `.when(platforms: [.android])`,
-//  so Darwin always resolves the real system module instead.
+//  Android has no `os` module, so this vends the `Logger`/`OSSignposter` surface
+//  shared code uses. Call sites pick between the two with `#if canImport(os)`;
+//  this target is only ever a dependency `.when(platforms: [.android])`, so
+//  Darwin always resolves the real system module.
+//
+//  Deliberately *not* named `os` — see the note in FAKit/Package.swift. A module
+//  by that name makes `canImport(os)` true across the whole Android build and
+//  breaks whichever target happens to compile after it.
 //
 
 #if os(Android)

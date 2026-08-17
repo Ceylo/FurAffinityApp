@@ -12,26 +12,6 @@ import Kingfisher
 import SwiftUI
 import UserNotifications
 
-enum BuildConfiguration: CustomStringConvertible {
-    case debug
-    case release
-
-    var description: String {
-        switch self {
-        case .debug:
-            "debug"
-        case .release:
-            "release"
-        }
-    }
-}
-
-#if DEBUG
-    let buildConfiguration = BuildConfiguration.debug
-#else
-    let buildConfiguration = BuildConfiguration.release
-#endif
-
 @MainActor
 private let amplitude: Amplitude? = {
     guard Secrets.amplitudeApiKey != Secrets.placeholderApiKey else {
@@ -122,8 +102,9 @@ struct FurAffinityApp: App {
     init() {
         let device = UIDevice.current
         let appState = UIApplication.shared.applicationState
-        logger.info(
-            "Launched FurAffinity \(Bundle.main.version.shortDescription) on \(device.systemName) \(device.systemVersion), \(buildConfiguration) build [CFDIAG] applicationState=\(appState.rawValue)"
+        logAppLaunch(
+            operatingSystem: "\(device.systemName) \(device.systemVersion)",
+            details: "[CFDIAG] applicationState=\(appState.rawValue)"
         )
         _ = amplitude
         logger.info("Amplitude is \(amplitude == nil ? "left uninitialized" : "initialized")")

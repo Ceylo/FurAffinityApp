@@ -50,6 +50,31 @@ enum FAInterstitial {
     }
 }
 
+/// The one User-Agent every WebView in this app is configured with.
+///
+/// FA staff identify app traffic by the `ceylo.FurAffinityApp/<version>` suffix, so
+/// Android has to carry it the way iOS does through `applicationNameForUserAgent`.
+/// The constraint is that `cf_clearance` is bound to the byte-exact UA while
+/// Android's cookie jar is process-global — a clearance minted by any of the three
+/// WebViews (login sheet, challenge view, hidden session view) is replayed by all
+/// of them — so they must be configured with one identical string. Hence: computed
+/// once here, never re-spelled, and the suffix always read from
+/// `FAUserAgent.applicationName` so the two platforms cannot drift.
+///
+/// Nil if the platform default can't be read, which leaves the WebViews on their
+/// stock UA: unidentified traffic, but nothing broken.
+enum FAWebViewUserAgent {
+    static let string: String? = {
+        guard let base = AndroidAppInfo.webViewDefaultUserAgent else {
+            logger.error("FAWebViewUserAgent: no platform WebView User-Agent; leaving it unset")
+            return nil
+        }
+        let userAgent = "\(base) \(FAUserAgent.applicationName)"
+        logger.info("Configured WebView User-Agent: \(userAgent)")
+        return userAgent
+    }()
+}
+
 extension WebViewNavigator {
     /// Read the live WebView User-Agent. `cf_clearance` is bound to it, so the
     /// HTTP client must send this byte-for-byte.

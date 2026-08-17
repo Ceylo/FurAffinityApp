@@ -33,7 +33,9 @@ android {
     }
     packaging {
         jniLibs {
-            keepDebugSymbols.add("**/*.so")
+            // Skip's template kept debug symbols in every .so. They are ~4x the payload
+            // — a release APK measured 436 MB with them — and the unstripped libraries
+            // stay under .build for symbolication either way.
             pickFirsts.add("**/*.so")
             // this option would compress JNI .so files and reduce overall size for Skip Fuse apps, but cost more at install time
             //useLegacyPackaging = true
@@ -78,7 +80,11 @@ android {
                 storeFile = file(keystoreProperties.getProperty("storeFile"))
                 storePassword = keystoreProperties.getProperty("storePassword")
             } else {
-                // when there is no keystore.properties file, fall back to signing with debug config
+                // Skip's template falls back to the debug key here. That fallback is
+                // kept only so the project still configures without a keystore — the
+                // taskGraph check below fails any release build that would actually
+                // use it. Shipping a debug-signed APK is unrecoverable: every user who
+                // installed it has to uninstall before they can take a real update.
                 keyAlias = signingConfigs.getByName("debug").keyAlias
                 keyPassword = signingConfigs.getByName("debug").keyPassword
                 storeFile = signingConfigs.getByName("debug").storeFile
@@ -89,11 +95,35 @@ android {
 
     buildTypes {
         release {
+            // A universal APK is 249 MB, and three ABIs of the Swift runtime are all
+            // but ~18 MB of it. arm64-v8a covers every Android 9+ phone worth sending
+            // this to (and the Apple-silicon emulator); debug keeps every ABI so any
+            // emulator still works.
+            ndk { abiFilters += "arm64-v8a" }
             signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             isDebuggable = false // can be set to true for debugging release build, but needs to be false when uploading to store
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+}
+
+// Turn the silent debug-key fallback above into a build failure, so a release build
+// can never quietly produce a debug-signed APK and exit 0. `preReleaseBuild` fails
+// fast; the `package*Release` tasks are the ones that actually sign, and are the
+// backstop for any path that skips it. The debug variant is untouched, and merely
+// configuring the project without a keystore stays fine.
+tasks.configureEach {
+    val signsRelease = name == "preReleaseBuild" ||
+        (name.startsWith("package") && name.endsWith("Release"))
+    if (!signsRelease) return@configureEach
+    doFirst {
+        if (!file("keystore.properties").isFile) {
+            throw GradleException(
+                "$path would sign with the DEBUG key: Android/app/keystore.properties is missing. " +
+                    "See Android/README.md § Release signing."
+            )
         }
     }
 }

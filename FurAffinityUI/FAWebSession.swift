@@ -42,7 +42,23 @@ final class FAWebSession {
     private var nextWaiterID = 0
     private var readyWaiters = [Int: CheckedContinuation<Bool, Never>]()
 
-    private init() {}
+    private var hasLoggedUserAgent = false
+
+    private init() {
+        // Shared FAKit code resolves the UA through `FAUserAgent.current()`, which
+        // without a provider answers with the bare application name — a fourth
+        // string, bound to no clearance.
+        FAUserAgent.webViewUserAgentProvider = {
+            await FAWebSession.shared.resolvedUserAgent()
+        }
+    }
+
+    /// The WebView's own User-Agent, or the string it was configured with if the
+    /// engine can't be reached. Never the bare application name.
+    func resolvedUserAgent() async -> String {
+        if let live = await navigator.liveUserAgent() { return live }
+        return FAWebViewUserAgent.string ?? FAUserAgent.applicationName
+    }
 
     /// Called by the hidden view on every `onNavigationFinished`.
     func markReady() {
@@ -52,7 +68,31 @@ final class FAWebSession {
         for (_, continuation) in waiters {
             continuation.resume(returning: true)
         }
+        logUserAgentOnce()
     }
+
+    /// One-shot proof that the `customUserAgent` override took and that Chromium's
+    /// UA client hints survived it. Cloudflare mints `cf_clearance` against both,
+    /// so a change in either is what a sudden 403 loop would be about.
+    private func logUserAgentOnce() {
+        guard !hasLoggedUserAgent else { return }
+        hasLoggedUserAgent = true
+        Task { @MainActor in
+            let live = await navigator.liveUserAgent() ?? "<none>"
+            let hints = await navigator.evaluatedString(Self.userAgentDataJS) ?? "<none>"
+            logger.info("[UADIAG] configured=\(FAWebViewUserAgent.string ?? "<none>")")
+            logger.info("[UADIAG] navigator.userAgent=\(live)")
+            logger.info("[UADIAG] navigator.userAgentData=\(hints)")
+        }
+    }
+
+    private static let userAgentDataJS = """
+    (function() {
+        var d = navigator.userAgentData;
+        if (!d) { return 'undefined'; }
+        return JSON.stringify({ mobile: d.mobile, platform: d.platform, brands: d.brands });
+    })()
+    """
 
     /// Waits for the hidden WebView to finish its first navigation, so a caller
     /// racing app startup doesn't read cookies out of an engine that isn't
@@ -152,7 +192,8 @@ final class FAWebSession {
                 let html = try await navigator.fetchPageHTML(url)
                 return Data(html.utf8)
             },
-            liveCookieHeader: { await navigator.cookieHeader(for: FAURLs.homeUrl) }
+            liveCookieHeader: { await navigator.cookieHeader(for: FAURLs.homeUrl) },
+            liveUserAgent: { await navigator.liveUserAgent() }
         )
 
         return try await OnlineFASession(cookies: authCookies, dataSource: dataSource)
@@ -161,9 +202,9 @@ final class FAWebSession {
 
 /// The hidden WebView itself. Mounted once, at the root, for the life of the app.
 struct FAWebSessionView: View {
-    // Never override the UA: setting customUserAgent on the Android WebView empties
-    // navigator.userAgentData, which Cloudflare reads as a bot signal.
-    let config = WebEngineConfiguration()
+    // Stock UA plus the FA app identifier, and byte-identical to the other two
+    // WebViews' — see FAWebViewUserAgent.
+    let config = WebEngineConfiguration(customUserAgent: FAWebViewUserAgent.string)
 
     // @State embedding skip-web must be internal, not private (Skip inventory #5).
     @State var webState = WebViewState()

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The launcher label. Skip's template used ${PRODUCT_NAME}, which has to stay
+         equal to the Swift module name (FurAffinityUI) and so can't be the app's
+         name. -->
+    <string name="app_name">Fur Affinity</string>
+</resources>

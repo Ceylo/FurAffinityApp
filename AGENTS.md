@@ -22,9 +22,12 @@ FA's rich text is rendered by Compose's own HTML parser: `FAKit/Sources/FAKit/Ri
 normalises the markup into the subset `AnnotatedString.fromHtml` understands (and cuts it
 at its `<hr>`s, which that parser drops), and `FurAffinityUI/HTMLView.swift` hands each
 fragment to `Text(html:)`.
-`import os` works on both platforms:
-FAKit ships an Android-only compatibility target named `os` (`FAKit/Sources/OSCompat/`)
-vending `Logger` (→ logcat) and a no-op `OSSignposter`. Four dependencies are forked on
+Logging works on both platforms via `#if canImport(os) import os #else import OSCompat`:
+FAKit ships an Android-only `OSCompat` target (`FAKit/Sources/OSCompat/`) vending
+`Logger` (→ logcat) and a no-op `OSSignposter`. It must **not** be named `os` — a
+module by that name makes `canImport(os)` true for the whole Android build; see
+`Android/README.md` § Module-name poisoning, which is also why FAKit gates SwiftUI on
+`#if !os(Android)` rather than `canImport`. Four dependencies are forked on
 `Ceylo/<repo>` `android` branches — `Defaults`, `Kingfisher`, and `skip-ui`/`skip-fuse-ui`
 (the latter two for `listRowInsets`, `Text(html:)`, `Text(AttributedString)` /
 `Text(_:inlineViews:)`, `Text + Text` and `FlowRow`, all unavailable or absent
