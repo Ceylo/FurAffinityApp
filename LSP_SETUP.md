@@ -18,8 +18,11 @@ xcode-build-server config -project FurAffinity.xcodeproj -scheme FurAffinity
 Then rebuild:
 
 ```
-xcodebuildmcp simulator build --project-path FurAffinity.xcodeproj --scheme FurAffinity --simulator-name "iPhone 17"
+xcodebuildmcp simulator build --project-path FurAffinity.xcodeproj --scheme FurAffinity --simulator-name "iPhone 17" --use-latest-os false
 ```
+
+`--use-latest-os false` keeps this off the locally-installed iOS 27.0 beta runtime, which
+has no plain "iPhone 17" — the same reason the `xcodebuild` destination pins `OS=26.5`.
 
 ## LSP operation coverage
 

@@ -7,20 +7,34 @@
 
 import SwiftUI
 import FAKit
-@_spi(Advanced) import SwiftUIIntrospect
-import UIKit
 import Defaults
-import Collections
+import OrderedCollections
+#if canImport(UIKit)
+import UIKit
+#endif
+// SwiftUIIntrospect isn't a dependency of the Skip module, and `@Weak` is its
+// `@_spi(Advanced)` wrapper. `FA_SKIP_MODULE` rather than `os(Android)`: the module's
+// Darwin bridge compile doesn't have the package either.
+#if !FA_SKIP_MODULE
+@_spi(Advanced) import SwiftUIIntrospect
+#endif
 
+// State and environment are internal, not private: skipstone rejects private on
+// bridged state. Non-state members below stay private.
 struct SubmissionsFeedView: View {
-    @Environment(Model.self) private var model
-    @Environment(ErrorStorage.self) private var errorStorage
-    @State private var newSubmissionsCount: Int?
-    @Weak private var scrollView: UIScrollView?
-    @State private var targetScrollItem: FASubmissionPreview?
-    @State private var currentViewIsDisplayed = false
-    @State private var refreshTask: Task<Void, Never>?
-    @State private var pendingAutorefresh = false
+    @Environment(Model.self) var model
+    @Environment(ErrorStorage.self) var errorStorage
+    @State var newSubmissionsCount: Int?
+    @State var targetScrollItem: FASubmissionPreview?
+    @State var currentViewIsDisplayed = false
+    @State var refreshTask: Task<Void, Never>?
+    @State var pendingAutorefresh = false
+    /// Whether the first row's top edge is still visible. Only tracked and read on
+    /// Skip, which has no scroll view to ask. See `trackFirstItemTop`.
+    @State var firstItemIsAtTop = true
+    #if !FA_SKIP_MODULE
+    @Weak var scrollView: UIScrollView?
+    #endif
     
     var noPreview: some View {
         ScrollView {
@@ -40,41 +54,23 @@ struct SubmissionsFeedView: View {
         }
     }
     
-    private enum Item: Hashable, Identifiable {
-        case fetchTrigger(targetScrollItem: FASubmissionPreview)
-        case submissionPreview(FASubmissionPreview)
-        
-        var id: Self { self }
+    private var listItems: [FASubmissionPreview]? {
+        model.submissionPreviews.map { Array($0) }
     }
-    
-    private var listItems: [Item]? {
-        guard let modelPreviews = model.submissionPreviews else {
-            return nil
-        }
-        
-        guard let targetScrollItem else {
-            return modelPreviews.map { .submissionPreview($0) }
-        }
-        
-        var items = [Item]()
-        for preview in modelPreviews {
-            if preview == targetScrollItem {
-                items.append(.fetchTrigger(targetScrollItem: targetScrollItem))
-            }
-            items.append(.submissionPreview(preview))
-        }
-        return items
-    }
-    
+
     /// This implements the most reliable way known to be able to update the list
     /// with new items at the beginning, while preventing the list from scrolling away
     /// of `targetScrollItem`.
+    ///
+    /// Mounted as a zero-size overlay on the target row rather than as a list row of
+    /// its own: SkipUI floors every row at 32 dp, so a row here left a visible gap at
+    /// the top of the feed and, being the first visible item, took over Compose's
+    /// scroll anchor — only to be destroyed in the very turn the new rows land.
     private func fetchTriggerView(with targetPreview: FASubmissionPreview, scrollProxy: ScrollViewProxy) -> some View {
-        Rectangle()
-            .foregroundStyle(.clear)
-            .frame(height: 1)
+        Color.clear
+            .frame(width: 0, height: 0)
             .onAppear {
-                scrollProxy.scrollTo(Item.submissionPreview(targetPreview), anchor: .top)
+                scrollProxy.scrollTo(targetPreview.id, anchor: .top)
 
                 refreshTask = Task {
                     do {
@@ -92,7 +88,7 @@ struct SubmissionsFeedView: View {
                 }
             }
             .onDisappear {
-                scrollProxy.scrollTo(Item.submissionPreview(targetPreview), anchor: .top)
+                scrollProxy.scrollTo(targetPreview.id, anchor: .top)
                 Defaults[.lastViewedSubmissionID] = targetPreview.sid
             }
     }
@@ -100,6 +96,8 @@ struct SubmissionsFeedView: View {
     private func followItem(_ preview: FASubmissionPreview, frame: CGRect?, geometry: GeometryProxy) {
         guard let frame else { return }
         let listFrame = geometry.frame(in: .global)
+        // A zero-height frame would make both ratios NaN, and `ClosedRange` traps on those.
+        guard listFrame.height > 0 else { return }
         let itemTop = frame.minY / listFrame.height
         let itemBottom = frame.maxY / listFrame.height
         let isActive = (itemTop...itemBottom).contains(0.3)
@@ -108,42 +106,63 @@ struct SubmissionsFeedView: View {
         }
     }
     
-    @ViewBuilder
-    private func itemView(for item: Item, geometry: GeometryProxy, scrollProxy: ScrollViewProxy) -> some View {
-        switch item {
-        case let .fetchTrigger(targetScrollItem):
-            fetchTriggerView(with: targetScrollItem, scrollProxy: scrollProxy)
-        case let .submissionPreview(preview):
-            SubmissionPreviewRow(preview: preview)
-                .onItemFrameChanged(listGeometry: geometry) { frame in
-                    followItem(preview, frame: frame, geometry: geometry)
-                }
+    /// Skip's stand-in for the scroll position, from the frame reports `followItem`
+    /// already receives. SkipUI reports an item's *clipped* frame, so the first row's
+    /// `minY` is the 10 pt `listRowInsets` gap at rest and pins to exactly 0 as soon
+    /// as the row's top goes under the list — never negative, and no report at all
+    /// once the row is recycled, which is why the last value must stay meaningful.
+    /// Hence "at top" is `minY > 0`, with 10 pt of harmless slack. Only Skip reads it;
+    /// on iOS the write would invalidate the feed on every scroll tick for nothing.
+    ///
+    /// The first row is resolved live rather than captured per row: a refresh moves
+    /// rows without rebuilding them, so a captured flag can end up on the wrong one.
+    private func trackFirstItemTop(_ preview: FASubmissionPreview, frame: CGRect?) {
+        #if FA_SKIP_MODULE
+        guard preview.id == model.submissionPreviews?.first?.id else { return }
+        // A nil frame means the row left the list, which is decidedly not "at top".
+        let isAtTop = (frame?.minY ?? -1) > 0
+        // Only on change: this runs for every scroll frame the first row is visible.
+        if isAtTop != firstItemIsAtTop {
+            firstItemIsAtTop = isAtTop
         }
+        #endif
     }
-    
-    private func list(with items: [Item]) -> some View {
+
+    private func itemView(for preview: FASubmissionPreview, geometry: GeometryProxy, scrollProxy: ScrollViewProxy) -> some View {
+        SubmissionPreviewRow(preview: preview)
+            .onItemFrameChanged(listGeometry: geometry) { frame in
+                followItem(preview, frame: frame, geometry: geometry)
+                trackFirstItemTop(preview, frame: frame)
+            }
+            .overlay {
+                if preview == targetScrollItem {
+                    fetchTriggerView(with: preview, scrollProxy: scrollProxy)
+                }
+            }
+    }
+
+    private func list(with items: [FASubmissionPreview]) -> some View {
         ScrollViewReader { scrollProxy in
             GeometryReader { geometry in
                 List {
-                    ForEach(items) { item in
-                        itemView(for: item, geometry: geometry, scrollProxy: scrollProxy)
+                    ForEach(items) { preview in
+                        itemView(for: preview, geometry: geometry, scrollProxy: scrollProxy)
                     }
                     .onDelete { offsets in
-                        let previewsToRemove = offsets
-                            .map { items[$0] }
-                            .compactMap { item -> FASubmissionPreview? in
-                                guard case let .submissionPreview(preview) = item else { return nil }
-                                return preview
-                            }
-                        model.deleteSubmissionPreviews(previewsToRemove)
+                        model.deleteSubmissionPreviews(offsets.map { items[$0] })
                     }
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
                 }
-                .introspect(.scrollView, on: .iOS(.v16...)) { scrollView in
-                    self.scrollView = scrollView
+                .applying { list in
+                    #if FA_SKIP_MODULE
+                    list
+                    #else
+                    list.introspect(.scrollView, on: .iOS(.v16...)) { scrollView in
+                        self.scrollView = scrollView
+                    }
+                    #endif
                 }
-                .trackListFrame()
                 .listStyle(.plain)
                 // The nav bar chrome (inline title, mode menu, trailing action)
                 // is owned by the enclosing SubmissionsTabView so both feed modes
@@ -156,7 +175,7 @@ struct SubmissionsFeedView: View {
                 .swap(when: items.isEmpty) {
                     noPreview
                 }
-                .prefetchingPreviews(model.submissionPreviews, availableWidth: geometry.size.width)
+                .prefetchingPreviews(model.submissionPreviews, availableWidth: geometry.faSize.width)
             }
         }
     }
@@ -169,14 +188,11 @@ struct SubmissionsFeedView: View {
         }
         .overlay(alignment: .top) {
             NotificationOverlay(itemCount: $newSubmissionsCount)
-                .offset(y: 40)
+                // 35, not 40: the badge now carries 5pt of transparent shadow inset.
+                .offset(y: 35)
         }
-        .task {
-            let events = NotificationCenter.default
-                .notifications(named: UIApplication.willEnterForegroundNotification)
-            for await _ in events {
-                autorefreshIfNeeded()
-            }
+        .autorefreshingOnForeground {
+            autorefreshIfNeeded()
         }
         // One-shot newer-submissions check after a cold-launch restore, reusing the
         // foreground autorefresh's scroll-preserving choreography. `initial: true`
@@ -221,27 +237,57 @@ struct SubmissionsFeedView: View {
 
 // MARK: - Refresh
 extension SubmissionsFeedView {
+    /// Waits for the pull-to-refresh control to retract, so inserting items doesn't
+    /// interrupt its animation.
+    func waitForPullToSettle() async throws {
+        #if FA_SKIP_MODULE
+        // Compose retracts its own indicator and there is no scroll view to observe.
+        // Deliberately not a blind sleep: a dead second before the fetch would be
+        // worse than today's Android behavior.
+        #else
+        if let scrollView {
+            while !scrollView.reachedTop {
+                try await Task.sleep(for: .milliseconds(50))
+            }
+        } else {
+            try await Task.sleep(for: .seconds(1))
+        }
+        #endif
+    }
+
+    /// Whether the feed is scrolled to the top. Skip has no scroll view to ask, so it
+    /// goes by whether the first row's top edge is still visible (`trackFirstItemTop`).
+    var scrollViewIsAtTop: Bool {
+        #if FA_SKIP_MODULE
+        firstItemIsAtTop
+        #else
+        scrollView?.reachedTop ?? true
+        #endif
+    }
+
     func refresh(pulled: Bool) {
         Task {
             // The delay gives time for the pull-to-refresh to go back
             // to its position and prevents interrupting animation
             if pulled {
-                if let scrollView {
-                    while !scrollView.reachedTop {
-                        try await Task.sleep(for: .milliseconds(50))
-                    }
-                } else {
-                    try await Task.sleep(for: .seconds(1))
-                }
+                try await waitForPullToSettle()
             }
-            
-            if let item = model.submissionPreviews?.first {
-                // This will cause an Item.fetchTrigger to appear in the list,
-                // which will effectively cause the refresh
+
+            // Invariant: refreshTask != nil ⟺ the trigger fired for the current
+            // arming. So a scroll-managed refresh is really in flight only when both
+            // hold, and an arming without a task is one whose row never composed.
+            guard targetScrollItem == nil || refreshTask == nil else { return }
+
+            if targetScrollItem == nil, let item = model.submissionPreviews?.first {
+                // This mounts the fetch trigger on that row, which effectively
+                // causes the refresh
+                refreshTask = nil
                 targetScrollItem = item
             } else {
-                // List has no item, so there's no scroll to preserve. Perform
-                // a direct fetch
+                // Empty list, or an arming that never fired: either way there's no
+                // scroll left to preserve, so drop it and fetch directly. This is
+                // what keeps a single missed geometry report from wedging the feed.
+                targetScrollItem = nil
                 await storeLocalizedError(in: errorStorage, action: "Submissions Refresh", webBrowserURL: FAURLs.submissionsUrl) {
                     try await fetchSubmissionPreviews()
                 }
@@ -254,7 +300,7 @@ extension SubmissionsFeedView {
     ///   from a refresh already in flight, which only starts from the top — so
     ///   this can never yank a scrolled-down user.
     func autorefreshIfNeeded(ignoreScrollPosition: Bool = false) {
-        guard ignoreScrollPosition || scrollView?.reachedTop ?? true else {
+        guard ignoreScrollPosition || scrollViewIsAtTop else {
             return
         }
 
@@ -285,13 +331,13 @@ extension SubmissionsFeedView {
         let newSubmissionCount = try await model
             .fetchSubmissionPreviews()
         
-        withAnimation {
-            newSubmissionsCount = newSubmissionCount
-        }
+        // Not `withAnimation`: it marks the whole Compose frame on SkipUI.
+        newSubmissionsCount = newSubmissionCount
     }
 }
 
 // MARK: - Previews
+#if !FA_SKIP_MODULE
 #Preview {
     withAsync({ try await Model.demo }) {
         NavigationStack {
@@ -312,4 +358,5 @@ extension SubmissionsFeedView {
         .preferredColorScheme(.dark)
     }
 }
+#endif
 

@@ -14,7 +14,8 @@ An in-progress **Android port** builds the same SwiftUI source with [Skip](https
 Fuse (root `Package.swift` + `FurAffinityUI/` target + `Android/`/`Darwin/` scaffolding). The
 iOS Xcode target is unaffected — shared files stay in place and are pulled into the Android
 build as symlinks under `FurAffinityUI/Shared/`. Ported so far: the login screen (shared
-`HomeView` + autologin, over an Android `FALoginView`), the Followed feed, the
+`HomeView` + autologin, over an Android `FALoginView`), the Followed feed (on the shared
+`SubmissionsFeedView` container, badge and refresh choreography included), the
 submission detail screen (image, zoomable viewer, favorite, Save/Share, rich-text
 description with in-app links, read-only comments, metadata) and the Settings tab (shared
 `SettingsView` / `NotificationSettingsView`, image-cache control, log sharing, logout).
@@ -110,11 +111,13 @@ Scheme `FurAffinity` covers `FAKitTests`, `FAPagesTests`, `FurAffinityTests`. Pa
 HTML fixtures must **never** be generated or fabricated. Always capture real page source from furaffinity.net in a browser (logged-in, specific account as needed), then save the raw HTML as the fixture file.
 
 ```
-# Pin the OS: with iOS 27 simulators installed, a bare `name=iPhone 17` resolves
-# OS:latest = 27.0, which no iPhone 17 runtime matches, and xcodebuild errors out.
 xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5'
 xcrun simctl list devices available | grep -E "iPhone|iPad"   # list available destinations
 ```
+
+Pin `OS=26.5`: the bare name resolves to `OS:latest`, which is the locally-installed
+iOS 27.0 beta runtime — and that one has only an "iPhone 17 **Pro**", so the destination
+fails to match.
 
 ## Dependencies
 

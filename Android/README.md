@@ -158,6 +158,41 @@ Transpiled Kotlin lands under `.build/` (e.g.
 `.build/plugins/outputs`, `.build/Darwin`, and `.build/Android` after changing
 `Skip.env` — the generated Gradle module namespace is cached there.
 
+### Our `os` module poisons whatever compiles after it
+
+The compatibility target FAKit ships for `import os` ([Layout](#layout)) is *named* `os`,
+so once `os.swiftmodule` exists in a scratch directory, every later target in that build
+sees `#if canImport(os)` come out **true on Android** and takes its Apple branch. Three
+known victims, none of which name the cause:
+
+- `Defaults` (`Utilities.swift`) then does `import os` and fails with
+  `missing required module 'AndroidNDK'` — it never declared that dependency, so
+  AndroidNDK's modulemap isn't on its search path. AndroidNDK is a red herring.
+- swift-android-native's `AndroidLogging` then does `@_exported import OSLog` →
+  `no such module 'OSLog'`.
+- swift-android-native's `AndroidSystem` then reaches for `os_unfair_lock` →
+  `cannot find type 'os_unfair_lock' in scope`.
+
+Nothing orders those targets after `os` (`AndroidSystem` isn't even a product, so we
+can't depend on it), so this is a scheduling race: it stays invisible while they happen
+to compile first, and a version bump that reshuffles the build — a bare
+`swift package update <fork>` floating `skip` (`from: "1.9.4"`) past the installed CLI
+(`skip version`) is one — is enough to lose it. Keep the `skip` pin equal to the CLI.
+
+`rm -rf .build` does **not** fix it; this is not the stale-build phantom it imitates.
+Recover by rebuilding each victim while `os` is absent:
+
+```
+M=.build/aarch64-unknown-linux-android28/debug/Modules      # Gradle's copy lives under
+rm -f $M/os.swiftmodule $M/os.swiftdoc $M/os.swiftsourceinfo  # .build/Darwin/…/build/swift
+swift build --swift-sdk aarch64-unknown-linux-android28 \
+  -Xswiftc -DSKIP_BRIDGE -Xswiftc -DTARGET_OS_ANDROID --target Defaults
+skip android build
+```
+
+(`--target AndroidLogging` / `--target AndroidSystem` the same way if those are what
+failed.) A real fix means not owning a module called `os`.
+
 ### Two sources of the Gradle version
 
 `skip gradle` (and the Xcode `Run skip gradle` phase) shells out to the `gradle` on
@@ -304,8 +339,10 @@ cd FAKit && skip android test --testing-library testing
 The iOS build must stay green at every step:
 
 ```
-xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17'
+xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,OS=26.5,name=iPhone 17'
 ```
+
+(`OS=26.5` is not optional locally — see the note in `AGENTS.md` §Tests.)
 
 ## Update check
 
@@ -897,6 +934,115 @@ of forced relaunches produced no HTTP request at all and no log past
 skip-web JNI calls on a WebView that is busy running challenge script. Not
 investigated further.
 
+## Followed feed
+
+The feed container is **shared**: `FurAffinity/SubmissionsFeed/SubmissionsFeedView.swift`
+is symlinked in, and the old `AndroidSubmissionsFeedView` is gone. Android therefore gets
+the refresh badge ("3 new submissions" / "No new submission"), swipe-to-delete, the
+cold-launch restore check and foreground autorefresh from the same source as iOS.
+
+The scroll-preserving refresh choreography — a zero-height `fetchTrigger` row whose
+`onAppear` performs the fetch, wrapped in a `ScrollViewReader` — **runs on Android too**,
+and was measured working on the emulator: the pull fires the trigger, the fetch happens,
+the badge shows and fades, and the list holds its position. `ScrollViewReader` inside a
+real `body` is fine; the JNI abort under
+[§A `ViewModifier` must not defer its `content`](#a-viewmodifier-must-not-defer-its-content)
+is specific to a modifier deferring `Content`, which this is not.
+
+`ListItemTracking` **runs on Android too**, from one implementation with no `#if`. It
+writes `Defaults[.lastViewedSubmissionID]` as the row crossing 30% from the top scrolls
+by — and that value is not a scroll offset: `Model.fetchSubmissionPreviews()` reads it on
+the first fetch after launch to build `msg/submissions/new~<sid>@72`, so it is the
+server-side pagination anchor. Read depth is restored by *choosing what to fetch*; the
+list then renders from its natural top.
+
+It briefly was a no-op here, fenced because `onItemFrameChanged` measured the item in
+`coordinateSpace(.named:)`, which SkipUI does not have. The named space was never
+needed: the item rect is immediately made list-relative by subtracting a `.global` list
+origin, so measuring the item in `.global` too gives the same rect from two APIs Skip
+fully implements (`onGeometryChange` → `onGloballyPositionedInRoot`, `frame(in: .global)`
+→ `boundsInRoot()`). Measured on the emulator: `boundsInRoot()` is stable for recycled
+`LazyColumn` rows, the tracked title follows the 30% line with the same ratios iOS
+reports, and after a force-stop the next cold launch fetched `new~<the tracked sid>@72`.
+
+Keep the named coordinate space in mind as its own gotcha: `View.coordinateSpace(.named:)`
+is **absent from the SkipSwiftUI façade**, so it fails to compile, while
+`GeometryProxy.frame(in: .named(…))` compiles and is **silently wrong** — the name is
+bridged across JNI and then discarded, and the call falls into the same branch as
+`.local`, returning `CGRect(origin: .zero, size: size)`. Only `.local` and `.global` are
+real.
+
+What Android gives up, and why:
+
+| Piece | Status on Android |
+|---|---|
+| `@Weak var scrollView: UIScrollView?` + `.introspect(.scrollView…)` | Fenced `#if !FA_SKIP_MODULE` — SwiftUIIntrospect isn't a dependency of this module, and the Darwin bridge lacks it too, so `os(Android)` would be the wrong flag. The two reads of it sit behind `waitForPullToSettle()` and `scrollViewIsAtTop` so no `#if` reaches the refresh logic. |
+| `waitForPullToSettle()` | Returns immediately. Compose retracts its own indicator, and a blind 1 s sleep would just be a dead second before the fetch. The visible consequence: the pull spinner retracts *before* the fetch finishes (iOS's `refresh(pulled:)` is fire-and-forget) — the badge is the completion feedback. |
+| `scrollViewIsAtTop` | Always `true`, so foreground autorefresh never skips on scroll position — which is what Android did before the share anyway. |
+
+`.onDelete` **works** on SkipUI, with one difference worth knowing: iOS reveals a Delete
+button that must then be tapped, whereas Compose commits the delete at the end of the
+swipe with no confirming affordance. A full left-swipe on a card removes that submission
+from the FA inbox immediately (`POST /msg/submissions/new~<sid>@<n>`). Be careful
+demoing this against a real account.
+
+Holding scroll position across a real *prepend* is now measured too (2026-08-15). The
+repro needs no waiting for FA: scroll down a few cards, `am force-stop`, relaunch — the
+cold-launch restore fetches `new~<sid>@72`, then the restore check fetches `new@72`, whose
+newer items are prepended. Logging every `onItemFrameChanged` callback, the anchor row's
+`minY` used to leave the top and take **~5 s** walking back to it (66033206 → 65975822 →
+65949461 → 65940282), which is the "moves and then settles" the feed showed. After
+[§`withAnimation` marks the whole frame](#withanimation-marks-the-whole-frame-process-wide)
+it is one transient frame: the prepended head shows for **30–50 ms**, then the anchor is
+back at `minY≈10` and stays. On screen that is a single frame of placeholder rows before
+the list is where it was, with the new rows above it and the badge showing.
+
+Still not verified, for want of the state to verify it against: the empty feed, which is
+unreachable through the offline session.
+
+### `withAnimation` marks the whole frame, process-wide
+
+On iOS a `withAnimation` transaction reaches only the state written inside it. On SkipUI it
+sets a **static** marker (`Animation.recentWithAnimationAnimation`) cleared only on the next
+Compose frame, and `Animation.current` / `Animation.isInWithAnimation` fall back to it. So
+*any* state write animates *every* view that recomposes in that frame. For a `List` that
+means two things (`skip-ui/…/List.swift`): rows compose with `Modifier.animateItem()`, so a
+prepend animates row placement, and `ScrollToIDAction` uses `animateScrollToItem` instead of
+`scrollToItem`, so a `ScrollViewProxy.scrollTo` becomes an animated scroll.
+
+That is what made the feed slide: `fetchSubmissionPreviews()` ended with
+`withAnimation { newSubmissionsCount = … }` in the same main-thread turn as the prepend and
+the choreography's `scrollTo`. **Prefer `.animation(_:value:)`**, which sets
+`EnvironmentValues._animation` for one subtree and never touches the marker.
+
+Two callers had to change, and the second one is the lesson: `FAImage` faded a freshly
+loaded image in with `withAnimation`, so *every thumbnail arrival* marked a frame. Removing
+only the feed's call cut the excursion from ~5 s to ~460 ms; the rest went away only when
+the image fade became scoped too. Anything on a hot path — image loads, list rows, badges —
+must not use the global form.
+
+`.transition(…)` is not a substitute: SkipUI resolves transitions in the *container*
+(`VStack.swift`, via `Animation.current(isAnimating:)`, evaluated before it recurses into the
+child's own modifiers), so it only ever sees an ambient animation set above the container or
+the global mark. A scoped `.animation(_:value:)` on the transitioning view cannot reach it —
+which is why the refresh badge briefly lost its animation on Android.
+
+**State-driven properties do animate from a scoped animation**, because `.opacity`,
+`.offset` and `.scaleEffect` each read `EnvironmentValues._animation` themselves
+(`AdditionalViewModifiers.swift` → `Animatable.asAnimatable`). `NotificationOverlay` is the
+worked example: it stays mounted and moves through a `hidden → shown → fading → hidden`
+phase with `.opacity`/`.offset` and `.animation(_:value:)`, which reproduces `fallAndFade` —
+including its asymmetry, since fading holds the offset at 0 — on both platforms.
+
+**Key `.animation(_:value:)` on a value Kotlin can compare.** SkipUI installs the animation
+only on the composition where `value` differs from the remembered one
+(`Animation.swift`, `isValueChange`); everywhere else the property snaps. Keying it on a
+**Swift enum** (`value: phase`) silently never fires — the pill jumped from absent to fully
+placed within one 33 ms frame, measured on a 30 fps capture — while `value: phase == .shown`
+animates. Keep such keys to bridged primitives (`Bool`, `Int`, `String`), and prove any new
+animation on the emulator with a deliberately slow duration first: at 0.35 s the difference
+between "animating" and "snapping" is 10 frames, and easy to miss.
+
 ## Submission screen
 
 Tapping a feed card pushes the same `RemoteSubmissionView` → `SubmissionView` the iOS app
@@ -1068,6 +1214,11 @@ grep Java_initState_ .build/plugins/outputs/*/FurAffinityUI/destination/skipston
   - `import SkipSwiftUI` (needed to *name* the façade type in that bridge initializer)
     makes `GeometryProxy` ambiguous, so keep it in its own file that names no other
     SwiftUI type.
+- **Don't call `withAnimation` from shared code.** On SkipUI it marks the entire next
+  Compose frame process-wide, so an unrelated `List` recomposing in that frame animates
+  its rows and turns its `scrollTo` into an animated scroll. Use `.animation(_:value:)`,
+  which is scoped to a subtree. See
+  [§`withAnimation` marks the whole frame](#withanimation-marks-the-whole-frame-process-wide).
 
 If a build fails with `missing required module 'CJNI'` across unrelated packages, the
 incremental state is stale (typically after a `Package.swift` or FAKit change). Wipe it:

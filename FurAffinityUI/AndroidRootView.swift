@@ -88,7 +88,7 @@ struct AndroidRootView: View {
             } else {
                 TabView(selection: $selectedTab) {
                     NavigationStack(path: $path) {
-                        AndroidSubmissionsFeedView()
+                        SubmissionsFeedView()
                             .navigationTitle("Submissions")
                             .navigationDestination(for: FATarget.self) { target in
                                 view(for: target)
