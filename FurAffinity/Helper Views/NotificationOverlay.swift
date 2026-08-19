@@ -37,8 +37,11 @@ struct NotificationOverlay: View {
     @State var phase = NotificationOverlayPhase.hidden
 
     private static let animationDuration = 0.35
-    /// The pill's own height, so it falls in from exactly out of place.
-    private static let badgeHeight = 44.0
+    /// Transparent room around the pill so its shadow stays inside the animated
+    /// view's own bounds — Android clips to those bounds while opacity < 1.
+    private static let shadowRadius = 5.0
+    /// The padded pill's height, so it falls in from exactly out of place.
+    private static let badgeHeight = 44.0 + 2 * shadowRadius
 
     private func text(count: Int) -> String {
         switch count {
@@ -73,23 +76,32 @@ struct NotificationOverlay: View {
             .foregroundColor(Color.primary)
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            // Regular, not thin: Android has no blur, our skip-fuse-ui fork renders a
-            // material as a flat scrim (thin 0.45, regular 0.6), and 0.45 left the pill
-            // unreadable over a light list gap.
-            .background(.regularMaterial)
+            // Android has no blur — our skip-fuse-ui fork renders a material as a flat
+            // scrim, so thickness is literally opacity and 0.6 (regular) is still too
+            // sheer over bright artwork. On iOS the material is a real blur, so thin reads.
+#if os(Android)
+            .background(.ultraThickMaterial)
+#else
+            .background(.thinMaterial)
+#endif
             .cornerRadius(16)
-            .shadow(color: .black.opacity(0.33) , radius: 5, x: 0, y: 0)
+            .shadow(color: .black.opacity(0.33), radius: Self.shadowRadius, x: 0, y: 0)
     }
     
     /// The badge stays mounted and drives itself, so it must not eat taps meant for
     /// what it floats over.
     var body: some View {
         badge(lastCount)
+            // Before `.opacity`, and here rather than in `materialBadge`, so all three
+            // badge branches get the same geometry.
+            .padding(Self.shadowRadius)
             .opacity(phase == .shown ? 1 : 0)
             .offset(y: phase == .hidden ? -Self.badgeHeight : 0)
             // Keyed on the visibility, not on `phase`: `fading → hidden` then carries no
             // animation, which is exactly what should snap — both phases are transparent,
             // so the offset going back up must not be animated.
+            // Same curve on both platforms: Skip maps `.easeInOut` to Compose's
+            // CubicBezierEasing(0.42, 0, 0.58, 1), which is SwiftUI's own.
             .animation(.easeInOut(duration: Self.animationDuration), value: phase == .shown)
             .allowsHitTesting(false)
             .task(id: itemCount) {

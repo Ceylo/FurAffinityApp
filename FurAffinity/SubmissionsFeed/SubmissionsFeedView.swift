@@ -188,7 +188,8 @@ struct SubmissionsFeedView: View {
         }
         .overlay(alignment: .top) {
             NotificationOverlay(itemCount: $newSubmissionsCount)
-                .offset(y: 40)
+                // 35, not 40: the badge now carries 5pt of transparent shadow inset.
+                .offset(y: 35)
         }
         .autorefreshingOnForeground {
             autorefreshIfNeeded()
