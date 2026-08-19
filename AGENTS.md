@@ -15,9 +15,13 @@ Fuse (root `Package.swift` + `FurAffinityUI/` target + `Android/`/`Darwin/` scaf
 iOS Xcode target is unaffected — shared files stay in place and are pulled into the Android
 build as symlinks under `FurAffinityUI/Shared/`. Ported so far: the login screen (shared
 `HomeView` + autologin, over an Android `FALoginView`), the Followed feed, the
-submission detail screen (image, zoomable viewer, favorite, Save/Share, description with
-in-app links, read-only comments, metadata) and the Settings tab (shared `SettingsView` /
-`NotificationSettingsView`, image-cache control, log sharing, logout).
+submission detail screen (image, zoomable viewer, favorite, Save/Share, rich-text
+description with in-app links, read-only comments, metadata) and the Settings tab (shared
+`SettingsView` / `NotificationSettingsView`, image-cache control, log sharing, logout).
+FA's rich text is rendered by Compose's own HTML parser: `FAKit/Sources/FAKit/RichText/`
+normalises the markup into the subset `AnnotatedString.fromHtml` understands (and cuts it
+at its `<hr>`s, which that parser drops), and `FurAffinityUI/HTMLView.swift` hands each
+fragment to `Text(html:)`.
 Logging works on both platforms via `#if canImport(os) import os #else import OSCompat`:
 FAKit ships an Android-only `OSCompat` target (`FAKit/Sources/OSCompat/`) vending
 `Logger` (→ logcat) and a no-op `OSSignposter`. It must **not** be named `os` — a
@@ -25,8 +29,9 @@ module by that name makes `canImport(os)` true for the whole Android build; see
 `Android/README.md` § Module-name poisoning, which is also why FAKit gates SwiftUI on
 `#if !os(Android)` rather than `canImport`. Four dependencies are forked on
 `Ceylo/<repo>` `android` branches — `Defaults`, `Kingfisher`, and `skip-ui`/`skip-fuse-ui`
-(the latter two for `listRowInsets`, `Text(AttributedString)` and `FlowRow`, all
-unavailable or absent upstream). Images go through an Android-only pipeline
+(the latter two for `listRowInsets`, `Text(html:)`, `Text(AttributedString)` /
+`Text(_:inlineViews:)`, `Text + Text` and `FlowRow`, all unavailable or absent
+upstream). Images go through an Android-only pipeline
 (`FAImageStore` + `FACoilBridge`) rather than Kingfisher, and Save/Share through
 `FAMediaBridge`. See `Android/README.md` for build/run/test, the symlink-farm rationale,
 the fork list, what the submission screen defers and why, and the image-pipeline rules.
@@ -105,7 +110,9 @@ Scheme `FurAffinity` covers `FAKitTests`, `FAPagesTests`, `FurAffinityTests`. Pa
 HTML fixtures must **never** be generated or fabricated. Always capture real page source from furaffinity.net in a browser (logged-in, specific account as needed), then save the raw HTML as the fixture file.
 
 ```
-xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17'
+# Pin the OS: with iOS 27 simulators installed, a bare `name=iPhone 17` resolves
+# OS:latest = 27.0, which no iPhone 17 runtime matches, and xcodebuild errors out.
+xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5'
 xcrun simctl list devices available | grep -E "iPhone|iPad"   # list available destinations
 ```
 

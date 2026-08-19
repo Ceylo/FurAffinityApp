@@ -112,6 +112,7 @@ struct UserNameView: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     List {
         ForEach(UserNameView.DisplayStyle.allCases, id: \.hashValue) { displayStyle in
@@ -134,3 +135,4 @@ struct UserNameView: View {
     }
     .listStyle(.plain)
 }
+#endif

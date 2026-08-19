@@ -198,6 +198,11 @@ for i in 1 2 3; do rm -rf .build/Darwin; skip app launch --android && break; don
 See [Module-name poisoning](#module-name-poisoning) for what causes this class of
 error and which two instances of it have been fixed.
 
+A related trap with the same signature: `Package.resolved` is git-ignored, so a `from:`
+pin on `skip` drifts past the installed CLI and the build fails *inside a dependency*
+(`AndroidUserDefaults` … "must use a 'required' initializer"). The pin is `exact:` for
+that reason — keep it equal to `skip version`.
+
 Corollary: `skip android build` and `skip android test` being green does **not**
 mean the app still builds. Only `skip app launch` compiles the Darwin bridge, so
 a change that genuinely breaks it can sit unnoticed through a commit.
@@ -462,8 +467,8 @@ adb shell run-as com.example.id1234 cat shared_prefs/defaults.xml
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](#defaults)) |
 | `Ceylo/Kingfisher` | Android port |
-| `Ceylo/skip-ui` | `listRowInsets`; `Text(bridgedMarkdown:)`; `FlowRow`; SF Symbol mappings |
-| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(AttributedString)`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
+| `Ceylo/skip-ui` | `listRowInsets`; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
+| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)`, `Text.+`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
 
 All on an `android` branch, referenced by URL + branch from `Package.swift` (and,
 for Defaults/Kingfisher, the Xcode project too). While iterating, re-point the root
@@ -493,16 +498,73 @@ entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
 
 ### The other fork patches
 
+- **`Text(html:)`** hands markup to Compose's own parser,
+  `AnnotatedString.fromHtml`, which is how FA's rich text is rendered. It is worth
+  preferring over anything built on styled runs for one reason above all: it applies
+  **`ParagraphStyle(textAlign)`**, so a `[center]` block and the text around it live in
+  one `Text`. Compose applies `textAlign` per text node, so styled runs cannot express
+  that at all — the previous design had to break every block into its own view.
+  It also handles weight, emphasis, decoration, baseline, `font color`,
+  `span style="color:…"`, `h1`–`h6`, `br`/`p`/`div`, `ul`/`li` and `a href` unaided.
+  Three things it does not do, and what covers each:
+  - `<code>` is unrecognised, and alignment is read only from `style="text-align:…"` on a
+    *block* element and only as `start`/`center`/`end` — never `left`/`right`, never
+    `align="…"`. FA compiles `[center]` to a class on `<code>`, so `FAHTMLNormalizer`
+    rewrites it. That pass is also where FA's other markup quirks are absorbed; it is
+    unit-tested on iOS against the same fixtures the parser suites use.
+  - `<hr>` is dropped without even a line break, so the normaliser hoists every rule to a
+    direct child of the root — splitting whatever it sits inside, or the markup after it
+    loses its opening tag — and `HTMLView` draws a `Divider()` between the pieces.
+  - `<img>` is dropped but **leaves a U+FFFC behind**, which is exactly the marker inline
+    content splices at. `RichText.splicingInlineContent` rebuilds the parsed string with
+    `AnnotatedString.Builder.append(text:start:end:)`, which carries each range's spans
+    with it. Transpiled, its loop iterates UTF-16 code units — the unit Compose counts
+    offsets in — so an emoji earlier in the text cannot shift a placeholder.
+
+  A tapped link must not reach Compose's own `UriHandler`: it would open the browser
+  before the app saw the URL. A `LinkInteractionListener` hands it to `onLinkTap`
+  instead, and `HTMLView` marks it with the app scheme so `AndroidRootView`'s existing
+  handler still tells an in-app FA link from an "Open in Web Browser".
+  Parsing is `remember`ed on the markup and the link colour — `Render` runs on every
+  recomposition, and the styles bake the colour in.
+- **`Text.+`** is `@available(*, unavailable)` upstream. The obstacle is that a `Text`'s
+  modifiers are stored as closures applying *environment-based view* modifiers, and
+  Compose needs one `AnnotatedString` with a `SpanStyle` per segment — so each modifier
+  also records into a `TextRunStyle`, purely additively, leaving a standalone `Text`
+  untouched. Operands cross as fully-formed `SkipUI.Text`s (so keys, tables, bundles and
+  locale resolve at compose time as usual) alongside one `RichText` record each with an
+  empty text field. Reading a `ShapeStyle` as a colour needs the `RichTextColorStyle`
+  protocol rather than casts — `AnyShapeStyle` erases its base and `OpacityShapeStyle` is
+  generic over it — and `HierarchicalShapeStyle`'s conformance has to sit in that type's
+  own file, since its `level` is `private`. Anything that cannot cross as a `SpanStyle`
+  (`tracking`, a non-monospaced `fontDesign`, `font(.custom)`, a gradient or material
+  `foregroundStyle`, an operand with inline views) raises a `preconditionFailure` naming
+  the modifier: silent dropping is the failure mode this port keeps hitting.
 - **`Text(AttributedString)`** is `@available(*, unavailable)` upstream, which blocks all
-  rich text. SkipUI's rich-text model *is* markdown (an `AttributedString` renders
-  through its `MarkdownNode`), so the Fuse side re-emits attributed content as escaped
-  markdown — `[text](<url>)` for links, `**`/`*`/`~` for inline presentation intents —
-  and `SkipUI.Text(bridgedMarkdown:)` parses it. That init deliberately bypasses
-  `LocalizedStringKey`: the content is user data and must not be bundle-looked-up or
-  `String.format`ed. `markdownRepresentation` returns nil when nothing needs markdown and
-  `Text` then falls back to `verbatim`, because SkipUI only builds a `MarkdownNode` when
-  the string actually contains a link or emphasis construct and renders the source
-  verbatim otherwise — which would expose the escapes.
+  rich text. The first cut bridged it as markdown, since SkipUI's own rich-text model is
+  markdown — but markdown cannot express colour, font size, underline or baseline at all,
+  and FA's markup is built from exactly those. So runs now cross as records:
+  `SkipUI.Text(bridgedRichText:bridgedInlineViews:)` takes one record per run (RS-separated,
+  fields US-separated) and builds the `AnnotatedString` with a `SpanStyle` each. That init
+  deliberately bypasses `LocalizedStringKey`: the content is user data and must not be
+  bundle-looked-up or `String.format`ed. The encoder reads a subset of
+  `AttributeScopes.SwiftUIAttributes` — `\.font`, `\.foregroundColor`, `\.underlineStyle`,
+  `\.strikethroughStyle`, `\.baselineOffset` — which SkipSwiftUI declares itself, but
+  **only where SwiftUI's own is absent**: declaring it on Darwin makes
+  `AttributeScopes.SwiftUIAttributes` ambiguous and the build fails. It returns nil when
+  the string carries no styling at all, and `Text` then falls back to `verbatim`.
+  - Colours cross as **decimal** ARGB, or as a `primary`/`secondary`/`accent` token the
+    composition resolves: SkipLib's `Int64(_ string:)` has no radix parameter.
+  - The separators are spelled `\u{001E}`/`\u{001F}` with all four hex digits. Skip's
+    transpiler emits `\u{1E}` as the Kotlin `"\u1E"`, which is not a valid escape.
+  - **`Text(_:inlineViews:)`** splices views in at the object-replacement characters, in
+    order — SwiftUI's spelling is `Text(Image(…)) + Text(…)` concatenation, and it is
+    `Text(Image:)` that is unavailable here, not the concatenation. `TextInlineView` carries an explicit size because Compose reserves
+    the placeholder's space before it ever composes the view. Use
+    `PlaceholderVerticalAlign.Center`, not `TextCenter` — the `Text*` alignments fit the
+    placeholder into the text's own vertical bounds, so a 50 pt avatar spills onto the line
+    below. Even then it overlaps until the text's style drops its fixed `lineHeight`, which
+    Material's typography always sets.
 - **`FlowRow`** replaces SwiftUI's `Layout` protocol, which SkipUI doesn't implement and
   which can't be emulated: a `Layout` enumerates and places its subviews, and an opaque
   `Content` gives a Fuse module no access to them. Compose wraps natively, so it is a
@@ -514,6 +576,41 @@ entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
 - **SF Symbol mappings** for the symbols this app uses (`safari`,
   `square.and.arrow.down`, `bubble`, `exclamationmark.bubble`, `ellipsis.bubble`,
   `message`, `text.badge.star`). Unmapped names render as a warning triangle.
+- **Text layout parity with iOS.** Four Material defaults that each read as a bug next
+  to the iOS build, all measured off screenshots rather than eyeballed:
+  - Material's typography **fixes a line height** (`bodyLarge` is 24sp on a 16sp face,
+    1.5x) where SwiftUI leaves multi-line text at font metrics — so an HTML body ran
+    24 dp per line against iOS's ~17.9 pt. The HTML branch now clears `lineHeight` and
+    falls back to font metrics (18.7 dp measured). The inline-content path already did
+    this for a different reason — a placeholder taller than the fixed height overlaps
+    its neighbours — which also meant a description *with* an avatar in it rendered at
+    a different density than one without. `richText`, `segments` and markdown keep M3's
+    line height.
+  - **`.subheadline` mapped to `titleSmall`**, which is Medium 500. iOS's subheadline is
+    regular-weight secondary body text, so every username, byline and timestamp read
+    heavier than its counterpart. `bodyMedium` has identical metrics (14sp/20sp, so the
+    size assertions in `TextTests` are untouched) at weight 400 — 19% less ink for the
+    same bounding box. Note the *size* gap (14sp vs 15pt) is deliberate; see the manual
+    offsets in `Text/Font.swift`.
+  - **`DropdownMenuItem` supplies `labelLarge`** (14sp Medium), far under what a SwiftUI
+    menu item renders at. Setting the environment font to `.body` around the items
+    restores `bodyLarge`; because `Image.RenderScaledImageVector` sizes menu icons to the
+    current text style, the icons follow from the same change (14 → 16 dp). It goes in
+    `RenderDropdownMenuItems`, which `ContextMenu` shares, and a `.font()` on an
+    individual `Label` still wins. The environment setter must be spelled
+    `$0.setfont(…)`: skipstone emits a Swift `var` with a custom getter as a Kotlin `val`
+    plus a `setX` function, so `$0.font = …` transpiles to code that will not compile.
+  - **A `Divider` inside a menu is invisible.** `Color.separator` resolves to
+    `surfaceColorAtElevation(3.dp)` and a `DropdownMenu`'s own container sits at
+    elevation 3 — so the rule is drawn in exactly the menu's background colour. Menus now
+    draw theirs with `outlineVariant`. Two places needed it: the `Section` branch, and a
+    new `stripped is Divider` branch, without which an explicit `Divider()` in the menu
+    content fell through to a plain `Render` and vanished. The global `Color.separator` is
+    left alone — outside a menu it sits on a non-elevated background and shows fine.
+
+  Not changed, as intended Material behaviour: the type-scale **sizes**, M3 letter
+  tracking, the 48 dp menu row height, and trailing menu-icon placement (the `leadingIcon`
+  slot carries the `Picker` selection checkmark).
 
 ## Images
 
@@ -822,9 +919,29 @@ Deferred, with the reason:
 
 Each keeps the iOS name and signature so symlinked callers compile unchanged:
 `SubmissionMainImage` (the iOS one is written against Kingfisher's `KFImageProtocol`),
-`HTMLView`, `Zoomable`, `UserNameView`, `FlowLayout`, `MediaSaveHandler`,
+`HTMLView`, `Zoomable`, `FlowLayout`, `MediaSaveHandler`,
 `RemoteContentToolbarItem`, `SubmissionTextContent`/`SubmissionAudioContent`, and the
 no-ops in `SubmissionShims.swift`.
+
+`HTMLView` is the one that does real work rather than standing in. iOS renders FA's rich
+text through WebKit's HTML importer into a `UITextView`; here `FAKit` normalises the
+markup (`FAHTMLNormalizer`) and Compose parses it — see `Text(html:)` under
+[the other fork patches](#the-other-fork-patches). The view itself only puts back what
+that parser drops: a `Divider()` where each `<hr>` was, and an inline view at each
+`<img>`'s U+FFFC. Accepted losses, none of which FA's corpus exercises: `<ol>` numbering
+degrades to bullets, `<blockquote>` loses its indent and bar, `<code>`/`<pre>` lose
+monospace, absolute px font sizes are ignored, and `<sub>` gets a baseline shift without
+the size reduction. Headings come out at Compose's `RelativeSizeSpan` steps rather than
+FA's exact pixel sizes. The one iOS feature not reachable is animated GIF avatars, which
+stay on their first frame.
+
+Its padding is 3 dp vertical but **8 dp horizontal**, which looks asymmetric and is not.
+The iOS view sets `textContainerInset = 3` on all edges, but a `UITextView` also keeps
+its default `textContainer.lineFragmentPadding = 5` on the leading and trailing edges,
+and `makeUIView` never zeroes it — so iOS insets text by 8 pt horizontally and 3 pt
+vertically. Copying only the inset left Android's text half as far from the edge. One
+fix covers two places: the submission description and every comment bubble
+(`CommentView`'s `textBubble`) go through this view.
 
 `InAppLinkConversion.swift` duplicates ~20 lines of `InAppNavigation.swift` — the
 link-rewriting half. Splitting the iOS file instead would mean an `.xcodeproj` edit, so
