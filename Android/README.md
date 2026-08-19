@@ -467,7 +467,7 @@ adb shell run-as com.example.id1234 cat shared_prefs/defaults.xml
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](#defaults)) |
 | `Ceylo/Kingfisher` | Android port |
-| `Ceylo/skip-ui` | `listRowInsets`; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; SF Symbol mappings |
+| `Ceylo/skip-ui` | `listRowInsets`; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)`, `Text.+`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
 
 All on an `android` branch, referenced by URL + branch from `Package.swift` (and,
@@ -576,6 +576,41 @@ entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
 - **SF Symbol mappings** for the symbols this app uses (`safari`,
   `square.and.arrow.down`, `bubble`, `exclamationmark.bubble`, `ellipsis.bubble`,
   `message`, `text.badge.star`). Unmapped names render as a warning triangle.
+- **Text layout parity with iOS.** Four Material defaults that each read as a bug next
+  to the iOS build, all measured off screenshots rather than eyeballed:
+  - Material's typography **fixes a line height** (`bodyLarge` is 24sp on a 16sp face,
+    1.5x) where SwiftUI leaves multi-line text at font metrics — so an HTML body ran
+    24 dp per line against iOS's ~17.9 pt. The HTML branch now clears `lineHeight` and
+    falls back to font metrics (18.7 dp measured). The inline-content path already did
+    this for a different reason — a placeholder taller than the fixed height overlaps
+    its neighbours — which also meant a description *with* an avatar in it rendered at
+    a different density than one without. `richText`, `segments` and markdown keep M3's
+    line height.
+  - **`.subheadline` mapped to `titleSmall`**, which is Medium 500. iOS's subheadline is
+    regular-weight secondary body text, so every username, byline and timestamp read
+    heavier than its counterpart. `bodyMedium` has identical metrics (14sp/20sp, so the
+    size assertions in `TextTests` are untouched) at weight 400 — 19% less ink for the
+    same bounding box. Note the *size* gap (14sp vs 15pt) is deliberate; see the manual
+    offsets in `Text/Font.swift`.
+  - **`DropdownMenuItem` supplies `labelLarge`** (14sp Medium), far under what a SwiftUI
+    menu item renders at. Setting the environment font to `.body` around the items
+    restores `bodyLarge`; because `Image.RenderScaledImageVector` sizes menu icons to the
+    current text style, the icons follow from the same change (14 → 16 dp). It goes in
+    `RenderDropdownMenuItems`, which `ContextMenu` shares, and a `.font()` on an
+    individual `Label` still wins. The environment setter must be spelled
+    `$0.setfont(…)`: skipstone emits a Swift `var` with a custom getter as a Kotlin `val`
+    plus a `setX` function, so `$0.font = …` transpiles to code that will not compile.
+  - **A `Divider` inside a menu is invisible.** `Color.separator` resolves to
+    `surfaceColorAtElevation(3.dp)` and a `DropdownMenu`'s own container sits at
+    elevation 3 — so the rule is drawn in exactly the menu's background colour. Menus now
+    draw theirs with `outlineVariant`. Two places needed it: the `Section` branch, and a
+    new `stripped is Divider` branch, without which an explicit `Divider()` in the menu
+    content fell through to a plain `Render` and vanished. The global `Color.separator` is
+    left alone — outside a menu it sits on a non-elevated background and shows fine.
+
+  Not changed, as intended Material behaviour: the type-scale **sizes**, M3 letter
+  tracking, the 48 dp menu row height, and trailing menu-icon placement (the `leadingIcon`
+  slot carries the `Picker` selection checkmark).
 
 ## Images
 
@@ -899,6 +934,14 @@ monospace, absolute px font sizes are ignored, and `<sub>` gets a baseline shift
 the size reduction. Headings come out at Compose's `RelativeSizeSpan` steps rather than
 FA's exact pixel sizes. The one iOS feature not reachable is animated GIF avatars, which
 stay on their first frame.
+
+Its padding is 3 dp vertical but **8 dp horizontal**, which looks asymmetric and is not.
+The iOS view sets `textContainerInset = 3` on all edges, but a `UITextView` also keeps
+its default `textContainer.lineFragmentPadding = 5` on the leading and trailing edges,
+and `makeUIView` never zeroes it — so iOS insets text by 8 pt horizontally and 3 pt
+vertically. Copying only the inset left Android's text half as far from the edge. One
+fix covers two places: the submission description and every comment bubble
+(`CommentView`'s `textBubble`) go through this view.
 
 `InAppLinkConversion.swift` duplicates ~20 lines of `InAppNavigation.swift` — the
 link-rewriting half. Splitting the iOS file instead would mean an `.xcodeproj` edit, so
