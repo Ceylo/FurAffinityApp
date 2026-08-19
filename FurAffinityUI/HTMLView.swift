@@ -39,8 +39,11 @@ struct HTMLView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        // Matches the iOS view's `textContainerInset = 3` on all edges.
-        .padding(3)
+        // Matches what the iOS view insets text by: `textContainerInset = 3` on all
+        // edges, plus the 5 pt `lineFragmentPadding` a `UITextView` keeps on its
+        // leading/trailing edges by default (never zeroed in `makeUIView`).
+        .padding(.vertical, 3)
+        .padding(.horizontal, 8)
     }
 
     private func fragment(_ carried: FAHTMLFragment.Carried) -> Text {
