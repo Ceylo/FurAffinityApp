@@ -5,6 +5,8 @@
 //  Created by Ceylo on 09/04/2022.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -78,3 +80,5 @@ struct RemoteNotesView: View {
         .environment($0.errorStorage)
     }
 }
+
+#endif

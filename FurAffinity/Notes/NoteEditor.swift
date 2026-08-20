@@ -5,6 +5,8 @@
 //  Created by Ceylo on 22/01/2023.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -164,3 +166,5 @@ struct NoteEditor: View {
         print(action as Any)
     }
 }
+
+#endif

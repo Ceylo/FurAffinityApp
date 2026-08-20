@@ -5,6 +5,8 @@
 //  Created by Ceylo on 17/11/2021.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 
 struct Tracker: View {
@@ -33,3 +35,4 @@ extension View {
     }
 }
 
+#endif

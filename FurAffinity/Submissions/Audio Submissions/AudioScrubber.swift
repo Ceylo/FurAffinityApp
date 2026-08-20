@@ -5,6 +5,8 @@
 //  Created by Ceylo on 23/06/2026.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 
 /// A tap- and drag-seekable timeline. SwiftUI's `Slider` only seeks by dragging
@@ -57,4 +59,6 @@ struct AudioScrubber: View {
         scrubValue: .constant(70)
     )
 }
+#endif
+
 #endif

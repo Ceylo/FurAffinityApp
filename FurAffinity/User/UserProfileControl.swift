@@ -5,6 +5,8 @@
 //  Created by Ceylo on 04/09/2024.
 //
 
+#if !FA_SKIP_MODULE
+
 import Foundation
 import FAKit
 
@@ -49,3 +51,5 @@ extension UserProfileControl {
         }
     }
 }
+
+#endif

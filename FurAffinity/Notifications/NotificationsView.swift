@@ -5,6 +5,8 @@
 //  Created by Ceylo on 15/04/2023.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -183,3 +185,5 @@ private struct DummyActions: NotificationsNuker, NotificationsDeleter {
         .environment($0.errorStorage)
     }
 }
+
+#endif

@@ -5,6 +5,8 @@
 //  Created by Ceylo on 03/11/2024.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 
 struct ListCounter<T>: View {
@@ -43,3 +45,5 @@ struct ListCounter<T>: View {
     ListCounter(name: "user", fullList: [3], filteredList: [])
     ListCounter(name: "user", fullList: [3], filteredList: [3])
 }
+
+#endif

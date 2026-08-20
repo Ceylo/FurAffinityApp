@@ -5,6 +5,8 @@
 //  Created by Ceylo on 13/11/2021.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -165,3 +167,5 @@ extension LoggedInView.Tab {
             .environment(NotificationCoordinator.shared)
     }
 }
+
+#endif

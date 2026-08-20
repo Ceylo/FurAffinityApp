@@ -5,6 +5,8 @@
 //  Created by Ceylo on 29/11/2025.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 
 struct ErrorDisplay: View {
@@ -110,3 +112,5 @@ private extension RichLocalizedError {
     ErrorDisplay()
         .environment(errorStorage)
 }
+
+#endif

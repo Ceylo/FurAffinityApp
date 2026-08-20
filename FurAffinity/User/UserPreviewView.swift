@@ -5,6 +5,8 @@
 //  Created by Ceylo on 30/03/2023.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -67,3 +69,5 @@ struct UserPreviewView: View {
         }
     }
 }
+
+#endif

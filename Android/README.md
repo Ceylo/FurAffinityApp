@@ -12,42 +12,74 @@ Skip.env                 shared app identity (name, version, package)
 Android/                 generated Android app shell + Gradle project
 Darwin/                  generated iOS bridge project used by `skip` tooling
 Project.xcworkspace      workspace `skip` drives
-FurAffinityUI/           the Skip target's source directory
-  FurAffinityUIRoot.swift  bridged root view + app delegate (Android entry)
-  AndroidRootView.swift    placeholder root, replaced screen-by-screen
-  Shared/                  SYMLINKS into ../FurAffinity for each ported file
+FurAffinity/             ALL app sources — and the Skip target's directory
+  Android/                 FurAffinityUIRoot.swift (bridged root view + app
+                           delegate), AndroidRootView.swift
+  Helper Views/Android/    Compose builds of the shared views, next to their
+  Helpers/Android/         iOS/ counterparts — see AGENTS.md §Working Notes
+  iOS/                     iOS-only sources + Info.plist, entitlements, icons
+  Resources/               the Android asset catalog Skip mirrors
   Skip/skip.yml            marks this a native Skip module
+Scripts/Android/         emulator, derived art
 FAKit/                   shared Swift package (cross-compiles, see AGENTS.md)
 ```
 
-### Why the symlink farm
+### Why everything unported is guarded
 
-Skip's transpiler (`skipstone`) walks the **entire** target-directory tree via
-its `--project` flag; it honors neither SwiftPM `sources:` nor `exclude:`. So a
-target pointed straight at `FurAffinity/` would try to bridge every iOS file and
-fail. Instead the Skip target's directory is `FurAffinityUI/`, and each shared
-iOS source is pulled in as a **symlink** under `FurAffinityUI/Shared/` as it is
-ported. The real files never move (iOS keeps compiling them in place), and the
-set of symlinks *is* the allowlist that grows one step at a time.
-
-To add a shared file to the Android build:
+Skip's transpiler (`skipstone`) walks the **entire** target-directory tree via its
+`--project` flag; it honors neither SwiftPM `sources:` nor `exclude:`. Since the
+target's `path:` is `FurAffinity`, that means every `.swift` in the app — 165 of
+them — is offered to skipstone. Anything the Android build must not compile is
+therefore wrapped, whole-file, in:
 
 ```
-ln -s ../../FurAffinity/<subpath>/<File>.swift FurAffinityUI/Shared/<File>.swift
+#if !FA_SKIP_MODULE
+…
+#endif
 ```
 
-Keep the link's basename equal to the target's, and preserve subfolders only if
-two files share a name.
+That covers the iOS-only files *and* the plain-SwiftUI screens that are simply not
+ported yet. **Porting a screen is deleting its guard.**
+
+`FA_SKIP_MODULE` is defined by `Package.swift` for this target. It has to be that
+flag rather than `os(Android)`, because the module gets compiled **twice** for
+Skip: the Android cross-compile, and a host build (`libFurAffinityUI.dylib`) where
+`os(Android)` is *false*. An `os(Android)`-guarded file is therefore included in
+the host build and its iOS-only imports have nothing to resolve against:
+
+```
+FurAffinity/Helpers/iOS/ImageBlur.swift:11:8: error: no such module 'Kingfisher'
+```
+
+Note which commands catch that: `./gradlew :app:assembleDebug` and
+`skip app launch` both do. **`skip android build` does not** — it only
+cross-compiles for Android and never runs the host build.
+
+### Basenames must be unique across the tree
+
+SwiftPM derives one object file per source *basename*, and skipstone one
+`<Name>_Bridge.swift`, both flattened into a single directory. Two files with the
+same name anywhere in the target fail the build:
+
+```
+error: couldn't build …/SkipBridgeGenerated/Zoomable_Bridge.swift
+       because of multiple producers: Skip FurAffinityUI, Skip FurAffinityUI
+```
+
+This bites the `iOS/`+`Android/` substitution pairs, and a guard does not help —
+the guarded file still *emits* a same-named (empty) bridge. Hence the eleven
+`…+Android.swift` files; the directory still carries the platform meaning, the
+suffix only keeps the name unique.
 
 ### Sharing asset-catalog entries
 
-`FurAffinityUI/Resources/Assets.xcassets` is this module's own catalog, which Skip
+`FurAffinity/Resources/Assets.xcassets` is this module's own catalog, which Skip
 mirrors into Android resources. To single-source an entry with the iOS catalog,
 symlink the **`Contents.json`**, not the `.colorset`/`.imageset` directory:
 
 ```
 mkdir Foo.colorset
-ln -s ../../../../FurAffinity/Assets.xcassets/Foo.colorset/Contents.json Foo.colorset/Contents.json
+ln -s ../../../Assets.xcassets/Foo.colorset/Contents.json Foo.colorset/Contents.json
 ```
 
 Skip's resource copy does not follow a symlinked *directory* — it silently copies
@@ -66,7 +98,7 @@ The path segment after `outputs/` is the **checkout directory's name**, not the 
 ### Generated art
 
 An entry big enough that a second copy in git would hurt is generated from the iOS
-art instead, and git-ignored. `Scripts/generate-android-assets.sh` writes two sets:
+art instead, and git-ignored. `Scripts/Android/generate-android-assets.sh` writes two sets:
 
 - the in-app `AppIcon`, a 512×512 light/dark pair downscaled from two 1024×1024 PNGs
   (the view draws it at 100 pt);
@@ -95,7 +127,7 @@ documented prerequisite; skipping it there costs a blank in-app icon. It is
 idempotent and takes under a second:
 
 ```
-Scripts/generate-android-assets.sh
+Scripts/Android/generate-android-assets.sh
 ```
 
 A SwiftPM prebuild plugin would be nicer, but it cannot work: `Image(_:bundle:)`
@@ -107,7 +139,7 @@ sandbox forbids writing there.
 ```
 skip checkup                     # verifies toolchain (Xcode, Android SDK, Gradle, JDK)
 skip android sdk install         # if the Android SDK/NDK is missing
-Scripts/generate-android-assets.sh   # derived art (see Generated art above)
+Scripts/Android/generate-android-assets.sh   # derived art (see Generated art above)
 ```
 
 ## Emulator
@@ -117,14 +149,14 @@ fails with the emulator reported as **offline** both when no emulator is running
 *and* while one is still booting, so boot one first and wait for it:
 
 ```
-Scripts/start-android-emulator.sh            # boots, waits, never touches the app
+Scripts/Android/start-android-emulator.sh            # boots, waits, never touches the app
 skip app launch --android
 ```
 
 The script is idempotent (a second run just confirms the running device), picks
 the only installed AVD unless given a name or `$ANDROID_AVD`, and leaves the
 emulator detached so it survives the script exiting or being interrupted. It
-takes optional emulator flags: `Scripts/start-android-emulator.sh <avd> -no-window`.
+takes optional emulator flags: `Scripts/Android/start-android-emulator.sh <avd> -no-window`.
 
 Doing it by hand needs the same two non-obvious parts — detaching the process,
 and waiting for `sys.boot_completed` rather than just for adb to see the device:
@@ -477,7 +509,7 @@ separate store nothing else reads, and one that never reaches disk here.
 
 That is why `Defaults[key] = value` used to vanish silently while reads returned the
 new value — both ends were talking to the orphan store. The fork exposes
-`Defaults.defaultSuite` for it, and `FurAffinityUI/AndroidDefaultsSuite.swift` assigns
+`Defaults.defaultSuite` for it, and `FurAffinity/Helpers/Android/AndroidDefaultsSuite.swift` assigns
 the shared-preferences-backed one from `onInit()` (`Application.onCreate`), which has
 to happen before the first key is created: a key captures its suite and registers its
 default value into it right away. `Defaults.runSettingsMigrations()` touches keys, so
@@ -490,7 +522,7 @@ is needed.
 `@Default(.someKey)` works on Android too, and shared screens spell it exactly as on
 iOS. `Ceylo/Defaults@android` guards the package's SwiftUI support out (importing
 SwiftUI → SkipUI → CJNI from a plain SwiftPM package breaks the build), so the app
-module re-declares the wrapper over `@AppStorage` in `FurAffinityUI/AndroidDefault.swift`.
+module re-declares the wrapper over `@AppStorage` in `FurAffinity/Helpers/Android/AndroidDefault.swift`.
 Correct storage isn't enough to drop that re-declaration: skipstone matches state
 property wrappers by *attribute name* when it generates a view's bridge, so a wrapper
 it doesn't know about gets no `initState` entry and never triggers recomposition. The
@@ -611,7 +643,7 @@ entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
 - **`FlowRow`** replaces SwiftUI's `Layout` protocol, which SkipUI doesn't implement and
   which can't be emulated: a `Layout` enumerates and places its subviews, and an opaque
   `Content` gives a Fuse module no access to them. Compose wraps natively, so it is a
-  container instead, with `FurAffinityUI/FlowLayout.swift` keeping the iOS call signature.
+  container instead, with `FurAffinity/Helper Views/Android/FlowLayout+Android.swift` keeping the iOS call signature.
 - **`glassEffect`** and **`AnyTransition.animation`** become pass-throughs rather than
   `unavailable`. `#available(iOS 26, *)` is vacuously true off-Apple, so a shared source
   takes its Liquid Glass branch on Android; making the call unbuildable is worse than
@@ -712,7 +744,7 @@ rules in [Rules for shared sources](#rules-for-shared-sources) applied once each
 | the six `@State`/`@Environment` wrappers | internal, not private |
 | `UIApplication.shared.applicationState` | dropped from a log line that already carries `scenePhase` |
 
-`FurAffinityUI/FALoginView.swift` is the Android substitute for FAKit's WebKit one,
+`FurAffinity/Helper Views/Android/FALoginView.swift` is the Android substitute for FAKit's WebKit one,
 matching its public surface (`session` binding, `onError`, `makeSession()`) so the
 shared caller compiles unchanged. It cannot live in FAKit — it needs skip-web (see
 `FAHTTPDataSource` for the CJNI rationale) — and it is unguarded, so the Darwin
@@ -1141,7 +1173,7 @@ exposes — no `/tmp` involved.
 
 ## Rules for shared sources
 
-A file under `FurAffinityUI/Shared/` is compiled **twice more** than the iOS target
+An *unguarded* file under `FurAffinity/` is compiled **twice more** than the iOS target
 compiles it: once for Android (`os(Android)` true) and once for the module's Darwin
 bridge (`os(Android)` **false**, UIKit importable). Both compiles see only this module —
 never the iOS app target — so:
@@ -1159,14 +1191,14 @@ never the iOS app target — so:
   lifecycle.
 - **An Android substitution file must not be `#if os(Android)`-guarded.** When a
   shared file calls one name that resolves per platform (`ImageCacheControl`,
-  `clearLoginCookies`, `share`), the Android declaration lives in `FurAffinityUI/`
-  while the iOS one stays out of this module. `os(Android)` is false for the Darwin
+  `clearLoginCookies`, `share`), the Android declaration lives in an `Android/`
+  directory while its `iOS/` twin is guarded out. `os(Android)` is false for the Darwin
   bridge compile, so a file-level guard there leaves shared callers with *no*
   declaration at all. Leave the file unguarded and put `#if canImport(Android)`
   around the JNI inside, with a Darwin no-op — the way `CoilImageLoader` does. This
   fails quietly: `skip android build` and the APK are both green, and only
   `skip app launch --android` (which builds the bridge) reports it.
-  The exception is a name a *package* already declares on Darwin: `AndroidDefault.swift`
+  The exception is a name a *package* already declares on Darwin: `Helpers/Android/AndroidDefault.swift`
   is `#if os(Android)`-guarded precisely because the bridge compile resolves `Default`
   from the real Defaults package, and an unguarded declaration would collide.
 - **`import os` needs no guard.** Android's Swift SDK has no `os` module, so FAKit
@@ -1195,7 +1227,7 @@ grep Java_initState_ .build/plugins/outputs/*/FurAffinityUI/destination/skipston
 ```
 
   A custom wrapper can still work if it **owns its own box** instead of relying on
-  that codegen — see `FurAffinityUI/AndroidDefault.swift`, which backs `@Default` on
+  that codegen — see `FurAffinity/Helpers/Android/AndroidDefault.swift`, which backs `@Default` on
   Android. `BridgedAppStorageBox`, `Java_initStateSupport()` and
   `Binding(appStorageBox:)` are public skip-fuse-ui API, and the generated
   `rememberSaveable` only supplies *lifetime*: one support object kept alive across

@@ -5,6 +5,8 @@
 //  Created by Ceylo on 14/06/2025.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -83,3 +85,5 @@ extension View {
         ))
     }
 }
+
+#endif

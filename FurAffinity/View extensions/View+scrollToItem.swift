@@ -5,6 +5,8 @@
 //  Created by Ceylo on 25/01/2025.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 
 private struct ScrollToItemModifier<ID: Hashable>: ViewModifier {
@@ -31,3 +33,4 @@ extension View {
     }
 }
 
+#endif

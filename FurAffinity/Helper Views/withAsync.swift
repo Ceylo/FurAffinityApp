@@ -5,6 +5,7 @@
 //  Created by Ceylo on 10/09/2024.
 //
 
+#if !FA_SKIP_MODULE
 
 import SwiftUI
 
@@ -32,3 +33,5 @@ struct withAsync<DataType: Sendable, SomeView: View>: View {
         }
     }
 }
+
+#endif

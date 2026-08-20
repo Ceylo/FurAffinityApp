@@ -403,12 +403,37 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0FB7F410E91233EE592898CD /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				FA0000000000000000000009 /* AudioPlaybackController.swift */,
+			);
+			path = iOS;
+			sourceTree = "<group>";
+		};
 		5FDB948C8E97350572B76CB9 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
 				7311AE39DCFA90D16A020EBA /* Foundation.framework */,
 			);
 			name = iOS;
+			sourceTree = "<group>";
+		};
+		7E2A87014435C67D37A3E6A0 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				5984ACB60D47CABBFCF22AD3 /* AppDelegate.swift */,
+				8716E7EB271C659C00C0BC4A /* FurAffinityApp.swift */,
+				87CCD2F12FC3441600768FDB /* BackgroundRefreshManager.swift */,
+				87CCD2F52FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift */,
+				871C66DE29B8C36700A2B2C2 /* Info.plist */,
+				87874B802FD0A3E90027CE46 /* FurAffinity.entitlements */,
+				878B0B902970B18C00A08685 /* Secrets.swift */,
+				87546E622EAE70430098BAA1 /* AppIconLG.icon */,
+				87546E632EAE70430098BAA1 /* AppIconLG-debug.icon */,
+				8716E7F1271C659D00C0BC4A /* Preview Content */,
+			);
+			path = iOS;
 			sourceTree = "<group>";
 		};
 		8716E7DF271C659C00C0BC4A = {
@@ -438,17 +463,11 @@
 		8716E7EA271C659C00C0BC4A /* FurAffinity */ = {
 			isa = PBXGroup;
 			children = (
-				87874B802FD0A3E90027CE46 /* FurAffinity.entitlements */,
-				871C66DE29B8C36700A2B2C2 /* Info.plist */,
 				8725335E274A70BB007FEF3B /* Model.swift */,
 				87C2ADEB2F017D230061F837 /* ErrorStorage.swift */,
-				8716E7EB271C659C00C0BC4A /* FurAffinityApp.swift */,
-				878B0B902970B18C00A08685 /* Secrets.swift */,
 				8716E7ED271C659C00C0BC4A /* HomeView.swift */,
 				877226B227402F9300245DF0 /* LoggedInView.swift */,
 				87098D392CB2BEF000E7BD94 /* UserDefaultKeys.swift */,
-				87CCD2F12FC3441600768FDB /* BackgroundRefreshManager.swift */,
-				87CCD2F52FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift */,
 				875DD46E2843D1C300F3E5D9 /* Helpers */,
 				878EBC9A2EDB8E11006A68D3 /* View extensions */,
 				87A4CA8B2756D17C009AA219 /* Helper Views */,
@@ -461,10 +480,7 @@
 				87A9C33F29C788230001D1D6 /* User */,
 				875DD46D2843D15D00F3E5D9 /* Settings */,
 				8716E7EF271C659D00C0BC4A /* Assets.xcassets */,
-				87546E622EAE70430098BAA1 /* AppIconLG.icon */,
-				87546E632EAE70430098BAA1 /* AppIconLG-debug.icon */,
-				8716E7F1271C659D00C0BC4A /* Preview Content */,
-				5984ACB60D47CABBFCF22AD3 /* AppDelegate.swift */,
+				7E2A87014435C67D37A3E6A0 /* iOS */,
 			);
 			path = FurAffinity;
 			sourceTree = "<group>";
@@ -509,11 +525,11 @@
 				87F074A72C91AF0C00218D0E /* RemoteSubmissionView.swift */,
 				8773058229D5FB8E004F8019 /* SubmissionView.swift */,
 				875EF2C62C1CABDC000D4BFB /* SubmissionPreviewView.swift */,
-				87566B83297DD02300FD3199 /* SubmissionMainImage.swift */,
 				873E65EF27528FC6009C8767 /* SubmissionControlsView.swift */,
 				8708DA252D74CF19000B419C /* SubmissionMetadataView.swift */,
 				877D54812FF036E100BA9802 /* Text Submissions */,
 				877D547C2FF0351C00BA9802 /* Audio Submissions */,
+				FCCE6AD51AE9E40D4BF0BCD8 /* iOS */,
 			);
 			path = Submissions;
 			sourceTree = "<group>";
@@ -547,27 +563,20 @@
 				87A1859F2745A83B00B10D2A /* Debugging.swift */,
 				87F8FA3527613DD900CDD985 /* Extensions.swift */,
 				877929CF2744386E003AE828 /* FASession+CanvasPreview.swift */,
-				873E66102752AAB2009C8767 /* MediaSaveHandler.swift */,
-				8733DDFC28F75C1200CD8BCF /* Sharing.swift */,
 				8733DDFA28F75B1A00CD8BCF /* Logs.swift */,
 				87FE0DA829747C0C005713DB /* AppInformation.swift */,
 				8791D5FA29C4CBBA003FDBBE /* FATarget.swift */,
 				87B0933D2AED7C47008DFDE7 /* URL.swift */,
-				8791D60C29C4DCE6003FDBBE /* InAppNavigation.swift */,
-				87FACE0100000000000DEECF /* NotificationDeepLink.swift */,
 				87B0933B2AED6D53008DFDE7 /* DatetimePair.swift */,
 				878892DA2B8B905A00F332EE /* Text+Markdown.swift */,
 				875EF2E72C1E1FF7000D4BFB /* Comparable.swift */,
 				87BF3EE22C9329C8000A837E /* ListItemTracking.swift */,
-				87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */,
-				87AB10E22CB19E4D00E7BD94 /* ImageBlur.swift */,
 				875FDC7D2D21D2D300CF8AE5 /* DelayedToggle.swift */,
 				8774EE732DFB78B90074E015 /* Replying.swift */,
 				58119C7E67EC670409E1D1CC /* GeometryProxy+FASize.swift */,
-				E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */,
-				3DAE7CF11945226ED5F47626 /* LoginCookies.swift */,
 				3A24D8C3751477ACBD19CBA9 /* LaunchLog.swift */,
 				DE0FE3ECD383602E8F75046C /* InAppLinkConversion.swift */,
+				C97C529B7292DB5FD30EAAB9 /* iOS */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -593,7 +602,7 @@
 				FA0000000000000000000007 /* SubmissionAudioContent.swift */,
 				878AB7152FEB2D4800E78CFB /* AudioScrubber.swift */,
 				878AB7132FEB2D3E00E78CFB /* AudioPlayerControls.swift */,
-				FA0000000000000000000009 /* AudioPlaybackController.swift */,
+				0FB7F410E91233EE592898CD /* iOS */,
 			);
 			path = "Audio Submissions";
 			sourceTree = "<group>";
@@ -601,9 +610,9 @@
 		877D54812FF036E100BA9802 /* Text Submissions */ = {
 			isa = PBXGroup;
 			children = (
-				877D547E2FF036E100BA9802 /* QuickLookPreview.swift */,
 				877D547F2FF036E100BA9802 /* StoryReaderView.swift */,
 				877D54802FF036E100BA9802 /* SubmissionTextContent.swift */,
+				C234CCE81EF8D3751004229E /* iOS */,
 			);
 			path = "Text Submissions";
 			sourceTree = "<group>";
@@ -666,14 +675,9 @@
 		87A4CA8B2756D17C009AA219 /* Helper Views */ = {
 			isa = PBXGroup;
 			children = (
-				87307E1E2FC78C790069E7F2 /* CloudflareChallengeSheet.swift */,
-				FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */,
-				871B05EE2C84BAD400302500 /* AppIcon.swift */,
 				87A185A12745A8A100B10D2A /* CenteredView.swift */,
 				875EF2E52C1E1705000D4BFB /* LinearProgress.swift */,
-				879233D1278216DF0019AC44 /* HTMLView.swift */,
 				87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */,
-				87F960CA2801EFF3000B30A3 /* AvatarView.swift */,
 				873E65F127529866009C8767 /* SaveButton.swift */,
 				8733DDFE28FAD58D00CD8BCF /* SwapView.swift */,
 				87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */,
@@ -684,18 +688,16 @@
 				87A4DA612A097D9000704857 /* NukeAlert.swift */,
 				87A4DA632A097ECB00704857 /* ActionControl.swift */,
 				87346B362B0A658F000407C7 /* RemoteView.swift */,
-				875180572DB553FC00331762 /* RemoteContentToolbarItem.swift */,
 				879536D82BE29CE1004A50B0 /* SectionHeader.swift */,
 				87C4435B2C73F29600200991 /* AlignedLabel.swift */,
 				87D64FC42C886F0200AB6F44 /* ProgressiveLoadItem.swift */,
 				87D252052C906AB700E07AE1 /* withAsync.swift */,
-				87E528362CE8D3D800CAFDC0 /* Zoomable.swift */,
 				87E58C632DBCE9E00022F731 /* UserNameView.swift */,
 				8758895B2DCD150F00CB7793 /* WatchingPill.swift */,
 				878EBC982EDB8CF6006A68D3 /* ErrorDisplay.swift */,
-				3033B05A545010E29F30F1FD /* FlowLayout.swift */,
 				5D2364BADB5ED5A6F51CD91C /* UsernameField.swift */,
 				035B5AEBEA2399F8715F2744 /* ForegroundAutorefresh.swift */,
+				B8C7A5B318A7D623236CA39B /* iOS */,
 			);
 			path = "Helper Views";
 			sourceTree = "<group>";
@@ -723,6 +725,44 @@
 			path = User;
 			sourceTree = "<group>";
 		};
+		B8C7A5B318A7D623236CA39B /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				871B05EE2C84BAD400302500 /* AppIcon.swift */,
+				87F960CA2801EFF3000B30A3 /* AvatarView.swift */,
+				3033B05A545010E29F30F1FD /* FlowLayout.swift */,
+				879233D1278216DF0019AC44 /* HTMLView.swift */,
+				875180572DB553FC00331762 /* RemoteContentToolbarItem.swift */,
+				87E528362CE8D3D800CAFDC0 /* Zoomable.swift */,
+				87307E1E2FC78C790069E7F2 /* CloudflareChallengeSheet.swift */,
+				FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */,
+			);
+			path = iOS;
+			sourceTree = "<group>";
+		};
+		C234CCE81EF8D3751004229E /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				877D547E2FF036E100BA9802 /* QuickLookPreview.swift */,
+			);
+			path = iOS;
+			sourceTree = "<group>";
+		};
+		C97C529B7292DB5FD30EAAB9 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */,
+				87AB10E22CB19E4D00E7BD94 /* ImageBlur.swift */,
+				E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */,
+				8733DDFC28F75C1200CD8BCF /* Sharing.swift */,
+				873E66102752AAB2009C8767 /* MediaSaveHandler.swift */,
+				87FACE0100000000000DEECF /* NotificationDeepLink.swift */,
+				3DAE7CF11945226ED5F47626 /* LoginCookies.swift */,
+				8791D60C29C4DCE6003FDBBE /* InAppNavigation.swift */,
+			);
+			path = iOS;
+			sourceTree = "<group>";
+		};
 		E86C1B07F87D331FB97F3F15 /* NotificationContent */ = {
 			isa = PBXGroup;
 			children = (
@@ -730,6 +770,14 @@
 				702AF02EF9EF07FD91BDCD6C /* Info.plist */,
 			);
 			path = NotificationContent;
+			sourceTree = "<group>";
+		};
+		FCCE6AD51AE9E40D4BF0BCD8 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				87566B83297DD02300FD3199 /* SubmissionMainImage.swift */,
+			);
+			path = iOS;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1236,11 +1284,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIconLG-debug";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = FurAffinity/FurAffinity.entitlements;
-				DEVELOPMENT_ASSET_PATHS = "\"FurAffinity/Preview Content\"";
+				CODE_SIGN_ENTITLEMENTS = FurAffinity/iOS/FurAffinity.entitlements;
+				DEVELOPMENT_ASSET_PATHS = "\"FurAffinity/iOS/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = FurAffinity/Info.plist;
+				INFOPLIST_FILE = FurAffinity/iOS/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Chosen images will be saved to the Photo Library.";
@@ -1267,11 +1315,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconLG;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = FurAffinity/FurAffinity.entitlements;
-				DEVELOPMENT_ASSET_PATHS = "\"FurAffinity/Preview Content\"";
+				CODE_SIGN_ENTITLEMENTS = FurAffinity/iOS/FurAffinity.entitlements;
+				DEVELOPMENT_ASSET_PATHS = "\"FurAffinity/iOS/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = FurAffinity/Info.plist;
+				INFOPLIST_FILE = FurAffinity/iOS/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Chosen images will be saved to the Photo Library.";

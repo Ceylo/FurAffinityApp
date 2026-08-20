@@ -5,6 +5,8 @@
 //  Created by Ceylo on 06/09/2023.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -184,3 +186,5 @@ struct UserGalleryLikeView: View {
         .environment($0)
     }
 }
+
+#endif

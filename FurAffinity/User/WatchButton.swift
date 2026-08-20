@@ -5,6 +5,8 @@
 //  Created by Ceylo on 01/05/2025.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -39,3 +41,5 @@ struct WatchButton: View {
         
     }
 }
+
+#endif
