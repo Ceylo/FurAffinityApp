@@ -9,6 +9,17 @@ import Foundation
 
 public enum FAURLs {
     public static let domain = "furaffinity.net"
+
+    /// True for `furaffinity.net` and its subdomains only.
+    ///
+    /// `hasSuffix(domain)` is *not* this test: it also matches
+    /// `evilfuraffinity.net`, so anything gating credentials on it hands them to
+    /// whoever registers that name.
+    public static func isFAHost(_ host: String?) -> Bool {
+        guard let host = host?.lowercased() else { return false }
+        return host == domain || host.hasSuffix(".\(domain)")
+    }
+
     public static let homeUrl = URL(string: "https://www.furaffinity.net")!
     public static let signupUrl = URL(string: "https://www.furaffinity.net/register")!
     

@@ -177,6 +177,10 @@ class FACoilBridge {
             }
         }
 
+        // Mirrors FAURLs.isFAHost. `HttpUrl` has already lowercased the host.
+        private fun isFAHost(host: String) =
+            host == "furaffinity.net" || host.endsWith(".furaffinity.net")
+
         private fun sharedClient(): OkHttpClient {
             sharedClient?.let { return it }
             synchronized(FACoilBridge::class.java) {
@@ -189,7 +193,13 @@ class FACoilBridge {
                     // so header refreshes (CF re-solve / re-login) need no rebuild.
                     .addInterceptor { chain ->
                         val request = chain.request()
-                        if (request.url.host.endsWith("furaffinity.net")) {
+                        // Image URLs reaching this loader are attacker-authored:
+                        // FAHTMLNormalizer takes <img src> verbatim out of a user's
+                        // description. An `endsWith` gate also matches
+                        // evilfuraffinity.net, so one such <img> would hand that host
+                        // the viewer's FA auth cookies and Cloudflare clearance.
+                        // Third-party images still load — just unauthenticated.
+                        if (request.isHttps && isFAHost(request.url.host)) {
                             val builder = request.newBuilder()
                             if (userAgent.isNotEmpty()) builder.header("User-Agent", userAgent)
                             if (cookie.isNotEmpty()) builder.header("Cookie", cookie)
