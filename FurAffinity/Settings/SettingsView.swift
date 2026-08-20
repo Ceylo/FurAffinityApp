@@ -36,7 +36,7 @@ struct SettingsView: View {
                 Link("Website", destination: URL(string: "https://furaffinity.app")!)
                 Link("Privacy policy", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/blob/main/Privacy%20Policy.md")!)
                 Link("Feature request & bug report", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/issues")!)
-                LabeledContent("Current version", value: model.appInfo.currentVersion.shortDescription)
+                LabeledContent("Current version", value: model.appInfo.currentVersion?.shortDescription ?? "Unknown")
 
                 LabeledContent("Latest available version", value:  (model.appInfo.latestRelease?.version.shortDescription ?? "…"))
 

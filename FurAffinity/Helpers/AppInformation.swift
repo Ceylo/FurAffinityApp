@@ -41,8 +41,11 @@ extension Version {
 @MainActor
 @Observable
 class AppInformation {
-    /// `Bundle.main` can't answer on Android, so this goes through FAAppVersion.
-    let currentVersion = FAAppVersion.string.flatMap(Version.init(tolerant:)) ?? Version(0, 0, 0)
+    /// `Bundle.main` can't answer on Android, so this goes through FAAppVersion — which
+    /// can itself come back empty when the bridge is unreachable. Nil rather than a
+    /// stand-in: `Version(0, 0, 0)` compares below every release, so the app would badge
+    /// "update available" forever and offer the build already running.
+    let currentVersion = FAAppVersion.string.flatMap(Version.init(tolerant:))
     var latestRelease: Release?
     var isUpToDate: Bool?
 
@@ -76,8 +79,13 @@ class AppInformation {
         }
 
         let release = try JSONDecoder().decode(Release.self, from: data)
-        isUpToDate = release.version <= currentVersion
         latestRelease = release
+        guard let currentVersion else {
+            // `isUpToDate` stays nil, which reads as "up to date" at both consumers.
+            logger.error("Update check: latest \(release.version.shortDescription), but the running version is unknown")
+            return
+        }
+        isUpToDate = release.version <= currentVersion
         logger.info("Update check: latest \(release.version.shortDescription), running \(currentVersion.shortDescription)")
     }
 }
