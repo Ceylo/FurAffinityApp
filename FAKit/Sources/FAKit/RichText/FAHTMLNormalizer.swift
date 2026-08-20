@@ -300,15 +300,47 @@ private extension Element {
     }
 
     /// The element's `style` attribute as declarations, keyed by lowercased property.
-    /// Values are kept verbatim — `setTextAlign` writes the whole attribute back, and a
-    /// lowercased `url(…/AbC.png)` is a 404 on the CDN.
+    /// Values keep their original case — a lowercased `url(…/AbC.png)` is a 404 on the
+    /// CDN — but a duplicated property keeps only its last declaration, since
+    /// `setTextAlign` writes the whole attribute back.
     var faStyle: [String: String] {
         guard let style = try? attr("style"), !style.isEmpty else { return [:] }
-        return style.split(separator: ";").reduce(into: [:]) { result, declaration in
+        return style.faTopLevelDeclarations.reduce(into: [:]) { result, declaration in
             let parts = declaration.split(separator: ":", maxSplits: 1)
             guard parts.count == 2 else { return }
             result[parts[0].trimmingCharacters(in: .whitespaces).lowercased()] =
                 parts[1].trimmingCharacters(in: .whitespaces)
         }
+    }
+}
+
+private extension String {
+    /// The `;`-separated declarations of a `style` attribute, splitting only at top
+    /// level: a `;` inside `( … )` or a quoted string belongs to the value it sits in
+    /// (`url(data:image/png;base64,…)` is one declaration, not two).
+    var faTopLevelDeclarations: [Substring] {
+        var declarations: [Substring] = []
+        var start = startIndex
+        var depth = 0
+        var quote: Character?
+
+        for index in indices {
+            let character = self[index]
+            if let open = quote {
+                if character == open { quote = nil }
+                continue
+            }
+            switch character {
+            case "'", "\"": quote = character
+            case "(": depth += 1
+            case ")": depth = max(0, depth - 1)
+            case ";" where depth == 0:
+                declarations.append(self[start..<index])
+                start = self.index(after: index)
+            default: break
+            }
+        }
+        declarations.append(self[start...])
+        return declarations.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
     }
 }

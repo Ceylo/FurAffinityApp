@@ -84,6 +84,25 @@ struct FAHTMLNormalizerAlignmentTests {
     }
 
     @Test
+    func aSemicolonInsideADeclarationDoesNotSplitIt() throws {
+        // Splitting on every `;` tears a data URI in half and drops the remainder.
+        let html = try normalize("""
+        <code class="bbcode_center" style="background-image:url(data:image/png;base64,AAA)">x</code>
+        """).html
+        #expect(html.contains("url(data:image/png;base64,AAA)"))
+        #expect(html.contains("text-align:center"))
+    }
+
+    @Test
+    func theClassWinsOverAStyleAlignmentAndLeavesOnlyOne() throws {
+        let html = try normalize("<code class=\"bbcode_center\" style=\"text-align:left\">x</code>").html
+        #expect(html.contains("text-align:center"))
+        #expect(!html.contains("text-align:left"))
+        // One declaration, not a `text-align` for each source.
+        #expect(html.components(separatedBy: "text-align").count == 2)
+    }
+
+    @Test
     func aTableCellKeepsItsTag() throws {
         // Turning a <td> into a <div> takes the cell out of its row, and the row with it.
         let html = try normalize("<table><tr><td align=\"center\">x</td></tr></table>").html
