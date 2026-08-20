@@ -23,9 +23,40 @@
 
 import Foundation
 import FAKit
+import FAPages
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
+
+/// Drops the FA credentials when a redirect leaves FA.
+///
+/// URLSession copies `allHTTPHeaderFields` onto the redirect request, so a 302 off
+/// furaffinity.net would carry the auth cookies and the clearance to the target.
+/// URLSession's own cookie store would have re-scoped them by domain; a manual
+/// header — which this data source uses, since HTTPCookieStorage's no-arg init
+/// isn't public on Android — has to be re-scoped by hand.
+///
+/// Stateless, so it can be a shared per-task delegate: no session delegate means no
+/// retain cycle and no invalidate lifecycle to manage.
+private final class FARedirectPolicy: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    static let shared = FARedirectPolicy()
+
+    func urlSession(
+        _ session: URLSession, task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest,
+        completionHandler: @escaping (URLRequest?) -> Void
+    ) {
+        var redirected = request
+        if !FAURLs.isFAHost(request.url?.host) {
+            logger.warning("Dropping FA cookies on redirect to \(request.url?.host ?? "?")")
+            redirected.setValue(nil, forHTTPHeaderField: "Cookie")
+        } else {
+            logger.info("willPerformHTTPRedirection to \(request.url?.host ?? "?"), keeping cookies")
+        }
+        completionHandler(redirected)
+    }
+}
 
 struct FAHTTPDataSource: HTTPDataSource {
     /// Navigates the cleared WebView to `url` and returns the page's decoded HTML.
@@ -122,22 +153,32 @@ struct FAHTTPDataSource: HTTPDataSource {
             }
         }
 
-        request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
-        for (field, value) in Self.browserHeaders {
-            request.setValue(value, forHTTPHeaderField: field)
-        }
-        // Always the live jar, not the header frozen at session creation:
-        // `cf_clearance` rotates on every re-solve, and a stale one is challenged
-        // again — so a request starting from the frozen header burns all five
-        // attempts plus their backoff before it can even ask for resolution. The
-        // frozen header only covers the engine not being attached to answer yet.
-        var base = baseCookieHeader
-        if let liveCookieHeader, let live = await liveCookieHeader(), !live.isEmpty {
-            base = live
-        }
-        let header = cookieHeader(merging: cookies, base: base)
-        if !header.isEmpty {
-            request.setValue(header, forHTTPHeaderField: "Cookie")
+        // Only FA gets the credentials. On iOS these go in `httpCookieStorage`, which
+        // scopes them by domain for free; a manual header would go to whatever URL
+        // this is handed, so scope it here.
+        var header = ""
+        if FAURLs.isFAHost(request.url?.host) {
+            request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+            for (field, value) in Self.browserHeaders {
+                request.setValue(value, forHTTPHeaderField: field)
+            }
+            // Always the live jar, not the header frozen at session creation:
+            // `cf_clearance` rotates on every re-solve, and a stale one is challenged
+            // again — so a request starting from the frozen header burns all five
+            // attempts plus their backoff before it can even ask for resolution. The
+            // frozen header only covers the engine not being attached to answer yet.
+            var base = baseCookieHeader
+            if let liveCookieHeader, let live = await liveCookieHeader(), !live.isEmpty {
+                base = live
+            }
+            header = cookieHeader(merging: cookies, base: base)
+            if !header.isEmpty {
+                request.setValue(header, forHTTPHeaderField: "Cookie")
+            }
+        } else {
+            // Nothing should route a non-FA URL through this data source; log rather
+            // than silently sending an anonymous request nobody expected.
+            logger.warning("\(url): non-FA host, sending without FA credentials")
         }
 
         // Same shape as iOS's line in URLSession+HTTPDataSource: the POST body and the
@@ -160,7 +201,7 @@ struct FAHTTPDataSource: HTTPDataSource {
         var data = Data()
         var http: HTTPURLResponse?
         for attempt in 1...Self.challengeRetries {
-            let (body, response) = try await session.data(for: request)
+            let (body, response) = try await session.data(for: request, delegate: FARedirectPolicy.shared)
             guard let received = response as? HTTPURLResponse else {
                 throw FAHTTPError.nonHTTPResponse(url)
             }
