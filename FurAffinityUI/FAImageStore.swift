@@ -26,6 +26,7 @@
 import Foundation
 import Dispatch
 import SwiftUI
+import FAKit
 
 /// Visible content outranks prefetching for both the concurrency gate and the
 /// `Task` priority, mirroring the iOS prefetcher's high/low split.
@@ -171,8 +172,10 @@ actor FAImageStore {
         guard let path = await path(for: url, priority: priority) else { return nil }
         let cached = URL(fileURLWithPath: path)
 
-        let name = url.lastPathComponent
-        guard !name.isEmpty else { return cached }
+        // `lastPathComponent` percent-decodes an attacker-controlled remote filename,
+        // so it can carry path separators. Rejecting falls back to the un-named cache
+        // entry, which is what an empty name already did.
+        guard let name = FAFileStaging.safeFileName(url.lastPathComponent) else { return cached }
 
         // Off the actor and onto a real queue: this copies a multi-megabyte file, and
         // every other load would otherwise serialize behind it.
