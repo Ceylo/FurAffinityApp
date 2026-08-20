@@ -1,12 +1,11 @@
 //
 //  InAppLinkConversion.swift
-//  FurAffinityUI (Android)
+//  FurAffinity
 //
-//  The link-rewriting half of the iOS `InAppNavigation.swift`. That file can't be
-//  symlinked: its other half is `view(for:)`, which names eight `Remote*View`s that
-//  don't exist on Android yet (see AndroidNavigationDestination.swift). Splitting the
-//  iOS file in two would mean an .xcodeproj edit, so these ~20 lines are knowingly
-//  duplicated instead — keep them in sync with InAppNavigation.swift.
+//  The link-rewriting half of in-app navigation, kept apart from `InAppNavigation.swift`
+//  so it can be symlinked into the Android target: that file's other half is
+//  `view(for:)`, which names eight `Remote*View`s Android doesn't have yet. Foundation
+//  and FAKit only — no SwiftUI — is what makes this side portable.
 //
 
 import Foundation
@@ -19,7 +18,7 @@ extension URL {
         guard FATarget(with: self) != nil else {
             return self
         }
-
+        
         return self.replacingScheme(with: appNavigationScheme) ?? self
     }
 }

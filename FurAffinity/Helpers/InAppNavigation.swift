@@ -8,28 +8,6 @@
 import SwiftUI
 import FAKit
 
-let appNavigationScheme = "furaffinity-app-navigation"
-
-extension URL {
-    var convertedForInAppNavigation: URL {
-        guard FATarget(with: self) != nil else {
-            return self
-        }
-        
-        return self.replacingScheme(with: appNavigationScheme) ?? self
-    }
-}
-
-extension AttributedString {
-    func convertingLinksForInAppNavigation() -> AttributedString {
-        self.transformingAttributes(\.link) { link in
-            if let url = link.value {
-                link.value = url.convertedForInAppNavigation
-            }
-        }
-    }
-}
-
 @MainActor @ViewBuilder
 func view(for target: FATarget) -> some View {
     switch target {

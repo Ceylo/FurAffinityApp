@@ -51,6 +51,7 @@ the fork list, what the submission screen defers and why, and the image-pipeline
 - `Model.swift`: `@Observable @MainActor` — session, feeds, search results/query, notes, notifications, autorefresh, error storage.
 - `Helpers/FATarget.swift`: FA URL → navigation target.
 - `Helpers/InAppNavigation.swift`: `FATarget` → destination view.
+- `Helpers/InAppLinkConversion.swift`: `appNavigationScheme` + the URL/`AttributedString` link rewriting. Kept apart from `InAppNavigation.swift` (no SwiftUI) so Android shares it.
 - `Helper Views/RemoteView.swift`: loading/refresh wrapper for remote content.
 - `Helpers/Kingfisher+FA.swift`: image loading/prefetching with FA headers.
 
