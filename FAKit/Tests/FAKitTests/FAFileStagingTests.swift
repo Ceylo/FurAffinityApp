@@ -43,4 +43,20 @@ struct FAFileStagingTests {
     func aNulByteIsDropped() {
         #expect(FAFileStaging.safeFileName("pic\0.png") == "pic.png")
     }
+
+    @Test
+    func theStagingKeyIsTheSameForTheSameURL() throws {
+        let url = try #require(URL(string: "https://d.furaffinity.net/art/x/1234/1234.pic.png"))
+        // Deterministic, unlike `String.hashValue`, whose seed changes per process —
+        // which re-staged the same media into a fresh directory on every relaunch.
+        #expect(FAFileStaging.stagingKey(for: url) == FAFileStaging.stagingKey(for: url))
+        #expect(FAFileStaging.stagingKey(for: url) == "abb5198ff1a9569c")
+    }
+
+    @Test
+    func differentURLsGetDifferentStagingKeys() throws {
+        let a = try #require(URL(string: "https://d.furaffinity.net/art/x/1/1.pic.png"))
+        let b = try #require(URL(string: "https://d.furaffinity.net/art/x/2/2.pic.png"))
+        #expect(FAFileStaging.stagingKey(for: a) != FAFileStaging.stagingKey(for: b))
+    }
 }

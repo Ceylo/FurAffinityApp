@@ -67,6 +67,9 @@ import SwiftUI
 
     /* SKIP @bridge */public func onStop() {
         logger.debug("onStop")
+        // Android's "entered the background", the same moment Kingfisher sweeps its
+        // disk cache on iOS — and off the launch path, which is why not onLaunch.
+        Task { await FAImageStore.shared.pruneStagedMedia() }
     }
 
     /* SKIP @bridge */public func onDestroy() {

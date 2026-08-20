@@ -25,4 +25,19 @@ public enum FAFileStaging {
         guard !flat.isEmpty, flat != ".", flat != ".." else { return nil }
         return String(flat.prefix(120))  // well inside ext4's 255-byte cap
     }
+
+    /// A stable per-URL directory name for staged media.
+    ///
+    /// `String.hashValue` is seeded per process, so a key built from it changes on
+    /// every relaunch and re-stages media that is already on disk into a directory
+    /// nothing will ever find again. FNV-1a is deterministic and needs no
+    /// dependency.
+    public static func stagingKey(for url: URL) -> String {
+        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
+        for byte in url.absoluteString.utf8 {
+            hash ^= UInt64(byte)
+            hash &*= 0x0000_0100_0000_01B3
+        }
+        return String(hash, radix: 16)
+    }
 }

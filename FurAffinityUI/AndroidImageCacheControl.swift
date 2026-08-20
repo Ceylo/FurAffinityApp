@@ -18,7 +18,9 @@ import Foundation
 enum ImageCacheControl {
     static func formattedDiskSize() -> String? {
         guard let bytes = CoilImageLoader.diskCacheSizeBytes() else { return nil }
-        return formattedByteCount(bytes)
+        // `fa-media` too: `clear()` empties it, so under-reporting it here would make
+        // the row's number disagree with what clearing actually reclaims.
+        return formattedByteCount(bytes + FAImageStore.stagedBytes())
     }
 
     static func clear() async {

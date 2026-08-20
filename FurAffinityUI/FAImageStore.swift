@@ -190,16 +190,16 @@ actor FAImageStore {
     /// would hand out as if it were complete.
     private nonisolated static func staged(_ source: URL, as name: String, for url: URL) -> URL? {
         let fileManager = FileManager.default
-        guard let caches = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+        guard let directory = stagingDirectory(for: url) else {
             logger.error("No caches directory to stage \(name) in")
             return nil
         }
 
-        let directory = caches
-            .appendingPathComponent("fa-media", isDirectory: true)
-            .appendingPathComponent(String(url.absoluteString.hashValue, radix: 16), isDirectory: true)
         let destination = directory.appendingPathComponent(name)
         if fileManager.fileExists(atPath: destination.path) {
+            // Kingfisher's extend-on-access, which iOS gets for free from its default
+            // disk config: a file that is still being used doesn't age out.
+            touch(destination)
             return destination
         }
 
@@ -208,12 +208,89 @@ actor FAImageStore {
             try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
             try fileManager.copyItem(at: source, to: partial)
             try fileManager.moveItem(at: partial, to: destination)
+            touch(destination)
             return destination
         } catch {
             try? fileManager.removeItem(at: partial)
             logger.error("Could not stage \(name) for save/share: \(error)")
             return nil
         }
+    }
+
+    /// `caches/fa-media`, the stand-in for Kingfisher's disk cache on this platform.
+    private nonisolated static var stagedRoot: URL? {
+        FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("fa-media", isDirectory: true)
+    }
+
+    /// One directory per source URL, keyed deterministically — `String.hashValue` is
+    /// seeded per process, so it re-staged the same media into a fresh directory on
+    /// every relaunch and left the old one behind forever.
+    private nonisolated static func stagingDirectory(for url: URL) -> URL? {
+        stagedRoot?.appendingPathComponent(FAFileStaging.stagingKey(for: url), isDirectory: true)
+    }
+
+    private nonisolated static func touch(_ file: URL) {
+        try? FileManager.default.setAttributes([.modificationDate: Date()], ofItemAtPath: file.path)
+    }
+
+    /// Kingfisher's default disk expiration on iOS is `.days(7)`, extended on access
+    /// and swept when the app enters the background. `fa-media` is this port's
+    /// stand-in for that cache, so it gets the same lifetime and the same trigger.
+    private static let stagedLifetime: TimeInterval = 7 * 24 * 60 * 60
+
+    /// Drop staged media nothing has touched within `stagedLifetime`. Blocking file
+    /// I/O, so it goes through the gate like every other blocking call here rather
+    /// than onto a `Task.detached`, which would pin a cooperative-pool thread.
+    func pruneStagedMedia() async {
+        await gated(.low) { Self.pruneStagedMediaNow() }
+    }
+
+    private nonisolated static func pruneStagedMediaNow() {
+        let fileManager = FileManager.default
+        guard let root = stagedRoot,
+              let entries = try? fileManager.contentsOfDirectory(
+                  at: root, includingPropertiesForKeys: nil
+              ) else { return }
+
+        let cutoff = Date().addingTimeInterval(-stagedLifetime)
+        var removed = 0
+        for directory in entries {
+            let files = (try? fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
+            // An empty directory is a staging that failed partway; it costs nothing
+            // to keep, and nothing to drop either.
+            let newest = files.compactMap {
+                (try? fileManager.attributesOfItem(atPath: $0.path)[.modificationDate]) as? Date
+            }.max()
+            guard let newest, newest < cutoff else { continue }
+            try? fileManager.removeItem(at: directory)
+            removed += 1
+        }
+        if removed > 0 {
+            logger.info("Pruned \(removed) staged media directories older than 7 days")
+        }
+    }
+
+    /// Bytes held by `caches/fa-media`. Settings reports the coil disk cache plus
+    /// this, since both are what "clear" empties.
+    nonisolated static func stagedBytes() -> Int64 {
+        let fileManager = FileManager.default
+        guard let root = stagedRoot,
+              let entries = try? fileManager.contentsOfDirectory(
+                  at: root, includingPropertiesForKeys: nil
+              ) else { return 0 }
+
+        var total: Int64 = 0
+        for directory in entries {
+            let files = (try? fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
+            for file in files {
+                // The real size, not `cost(of:)`'s 64 kB stand-in for an unreadable
+                // one: this number is shown to the user.
+                let size = (try? fileManager.attributesOfItem(atPath: file.path)[.size]) as? Int64
+                total += size ?? 0
+            }
+        }
+        return total
     }
 
     /// Drop decoded images; the disk cache is untouched. Called from
@@ -228,7 +305,13 @@ actor FAImageStore {
     /// memory cache goes too — otherwise visible rows would keep rendering from a
     /// cache the user just emptied.
     func clearAllCaches() async {
-        await gated(.high) { CoilImageLoader.clearDiskCache() }
+        await gated(.high) {
+            CoilImageLoader.clearDiskCache()
+            // Nothing else ever deleted this one, so it only grew.
+            if let root = Self.stagedRoot {
+                try? FileManager.default.removeItem(at: root)
+            }
+        }
         memory.removeAll()
     }
 
