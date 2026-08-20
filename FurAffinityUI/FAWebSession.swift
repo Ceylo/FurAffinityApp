@@ -193,6 +193,15 @@ final class FAWebSession {
         pushedCookieHeader = nil
     }
 
+    /// Logging out invalidates these. Leaving them behind tells
+    /// `CloudflareChallengeCoordinator` there is still a session to resolve a
+    /// challenge for, so a challenge from the logged-out home screen would sit
+    /// through the full 25 s background resolution and then pop the interactive
+    /// sheet instead of failing fast.
+    func forgetAuthCookies() {
+        lastKnownAuthCookies = []
+    }
+
     /// Builds a session from whatever the shared cookie jar currently holds.
     ///
     /// Returns nil when there is nothing to build one from — no FA auth cookie

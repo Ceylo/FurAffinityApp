@@ -27,9 +27,11 @@ func clearLoginCookies() async {
     // The image layer replays the same clearance; leaving it seeded would keep
     // authenticating requests after the cookies are gone. De-seeding it behind
     // FAWebSession's back would also make the next real push look like a no-op, so
-    // clear what it remembers pushing too.
+    // clear what it remembers pushing — and the auth cookies it cached for the
+    // challenge coordinator's synchronous logged-in check, which are just as invalid.
     CoilImageLoader.configure(userAgent: "", cookie: "")
     await FAWebSession.shared.forgetPushedCredentials()
+    await FAWebSession.shared.forgetAuthCookies()
 }
 
 #if canImport(Android)
