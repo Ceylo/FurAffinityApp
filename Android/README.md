@@ -978,7 +978,7 @@ What Android gives up, and why:
 |---|---|
 | `@Weak var scrollView: UIScrollView?` + `.introspect(.scrollView…)` | Fenced `#if !FA_SKIP_MODULE` — SwiftUIIntrospect isn't a dependency of this module, and the Darwin bridge lacks it too, so `os(Android)` would be the wrong flag. The two reads of it sit behind `waitForPullToSettle()` and `scrollViewIsAtTop` so no `#if` reaches the refresh logic. |
 | `waitForPullToSettle()` | Returns immediately. Compose retracts its own indicator, and a blind 1 s sleep would just be a dead second before the fetch. The visible consequence: the pull spinner retracts *before* the fetch finishes (iOS's `refresh(pulled:)` is fire-and-forget) — the badge is the completion feedback. |
-| `scrollViewIsAtTop` | Always `true`, so foreground autorefresh never skips on scroll position — which is what Android did before the share anyway. |
+| `scrollViewIsAtTop` | Backed by `firstItemIsAtTop`, which `trackFirstItemTop` derives from the first row's clipped `minY` in the `onItemFrameChanged` reports the feed already receives — `> 0` while its top edge is visible, pinned to `0` once it goes under the list. So foreground autorefresh *does* skip on scroll position, as on iOS. |
 
 `.onDelete` **works** on SkipUI, with one difference worth knowing: iOS reveals a Delete
 button that must then be tapped, whereas Compose commits the delete at the end of the

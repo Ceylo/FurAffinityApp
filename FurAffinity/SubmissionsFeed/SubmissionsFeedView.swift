@@ -76,14 +76,20 @@ struct SubmissionsFeedView: View {
                     do {
                         try await fetchSubmissionPreviews()
                         self.targetScrollItem = nil
+                        self.refreshTask = nil
                     } catch {
-                        // A fetch cancelled because the feed got covered by a
-                        // navigation push must abort silently: don't surface an
-                        // error and don't commit the refresh (leave the scroll
-                        // choreography untouched so it can re-run on return).
-                        if Self.isCancellation(error) { return }
-                        storeError(error, in: errorStorage, action: "Submissions Refresh", webBrowserURL: FAURLs.submissionsUrl)
+                        // Ours: the feed got covered by a navigation push.
+                        // `onDisappear` owns the cleanup and re-arms through
+                        // `pendingAutorefresh`, so leave the choreography
+                        // untouched for the return.
+                        if Task.isCancelled { return }
+                        // Not ours — the feed is still on screen. Clear the arming,
+                        // or every later refresh waits on one that never finishes.
+                        if !isCancellationError(error) {
+                            storeError(error, in: errorStorage, action: "Submissions Refresh", webBrowserURL: FAURLs.submissionsUrl)
+                        }
                         self.targetScrollItem = nil
+                        self.refreshTask = nil
                     }
                 }
             }
@@ -273,25 +279,49 @@ extension SubmissionsFeedView {
                 try await waitForPullToSettle()
             }
 
-            // Invariant: refreshTask != nil ⟺ the trigger fired for the current
-            // arming. So a scroll-managed refresh is really in flight only when both
-            // hold, and an arming without a task is one whose row never composed.
-            guard targetScrollItem == nil || refreshTask == nil else { return }
+            // A refresh is already armed. Wait for it rather than starting a second
+            // fetch or throwing away its scroll choreography.
+            if targetScrollItem != nil {
+                if await waitForArmedRefresh() { return }
+                // It never completed: its trigger row never composed, so there is no
+                // scroll left to preserve. Drop it and fetch directly — a missed
+                // geometry report must not be able to wedge the feed.
+                refreshTask?.cancel()
+                refreshTask = nil
+                targetScrollItem = nil
+                await fetchDirectly()
+                return
+            }
 
-            if targetScrollItem == nil, let item = model.submissionPreviews?.first {
+            if let item = model.submissionPreviews?.first {
                 // This mounts the fetch trigger on that row, which effectively
                 // causes the refresh
                 refreshTask = nil
                 targetScrollItem = item
             } else {
-                // Empty list, or an arming that never fired: either way there's no
-                // scroll left to preserve, so drop it and fetch directly. This is
-                // what keeps a single missed geometry report from wedging the feed.
-                targetScrollItem = nil
-                await storeLocalizedError(in: errorStorage, action: "Submissions Refresh", webBrowserURL: FAURLs.submissionsUrl) {
-                    try await fetchSubmissionPreviews()
-                }
+                // Nothing on screen to hold in place, so no choreography to run.
+                await fetchDirectly()
             }
+        }
+    }
+
+    /// Waits for an armed refresh to finish, by polling the arming its trigger clears
+    /// rather than the task: `refreshTask` is set by the trigger's `onAppear`, so it is
+    /// still nil in the window between arming and SwiftUI rendering.
+    ///
+    /// - Returns: `false` if the arming outlived the wait — nothing is coming.
+    private func waitForArmedRefresh(attempts: Int = 100) async -> Bool {
+        for _ in 0..<attempts {
+            if targetScrollItem == nil { return true }
+            // Cancellation means teardown, not a stale arming.
+            do { try await Task.sleep(for: .milliseconds(50)) } catch { return true }
+        }
+        return targetScrollItem == nil
+    }
+
+    private func fetchDirectly() async {
+        await storeLocalizedError(in: errorStorage, action: "Submissions Refresh", webBrowserURL: FAURLs.submissionsUrl) {
+            try await fetchSubmissionPreviews()
         }
     }
     
@@ -319,14 +349,6 @@ extension SubmissionsFeedView {
         }
     }
     
-    /// Whether `error` represents the in-flight refresh being cancelled by
-    /// navigation rather than a genuine failure. The underlying URLSession call
-    /// surfaces cancellation as `URLError(.cancelled)`, so check that too.
-    static func isCancellation(_ error: Error) -> Bool {
-        if Task.isCancelled { return true }
-        return isCancellationError(error)
-    }
-
     func fetchSubmissionPreviews() async throws {
         let newSubmissionCount = try await model
             .fetchSubmissionPreviews()
