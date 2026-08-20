@@ -20,7 +20,7 @@
 
 set -euo pipefail
 
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 src_catalog="$root/FurAffinity/Assets.xcassets"
 dst_catalog="$root/FurAffinityUI/Resources/Assets.xcassets"
 android_res="$root/Android/app/src/main/res"

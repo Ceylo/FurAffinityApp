@@ -66,7 +66,7 @@ The path segment after `outputs/` is the **checkout directory's name**, not the 
 ### Generated art
 
 An entry big enough that a second copy in git would hurt is generated from the iOS
-art instead, and git-ignored. `Scripts/generate-android-assets.sh` writes two sets:
+art instead, and git-ignored. `Scripts/Android/generate-android-assets.sh` writes two sets:
 
 - the in-app `AppIcon`, a 512×512 light/dark pair downscaled from two 1024×1024 PNGs
   (the view draws it at 100 pt);
@@ -95,7 +95,7 @@ documented prerequisite; skipping it there costs a blank in-app icon. It is
 idempotent and takes under a second:
 
 ```
-Scripts/generate-android-assets.sh
+Scripts/Android/generate-android-assets.sh
 ```
 
 A SwiftPM prebuild plugin would be nicer, but it cannot work: `Image(_:bundle:)`
@@ -107,7 +107,7 @@ sandbox forbids writing there.
 ```
 skip checkup                     # verifies toolchain (Xcode, Android SDK, Gradle, JDK)
 skip android sdk install         # if the Android SDK/NDK is missing
-Scripts/generate-android-assets.sh   # derived art (see Generated art above)
+Scripts/Android/generate-android-assets.sh   # derived art (see Generated art above)
 ```
 
 ## Emulator
@@ -117,14 +117,14 @@ fails with the emulator reported as **offline** both when no emulator is running
 *and* while one is still booting, so boot one first and wait for it:
 
 ```
-Scripts/start-android-emulator.sh            # boots, waits, never touches the app
+Scripts/Android/start-android-emulator.sh            # boots, waits, never touches the app
 skip app launch --android
 ```
 
 The script is idempotent (a second run just confirms the running device), picks
 the only installed AVD unless given a name or `$ANDROID_AVD`, and leaves the
 emulator detached so it survives the script exiting or being interrupted. It
-takes optional emulator flags: `Scripts/start-android-emulator.sh <avd> -no-window`.
+takes optional emulator flags: `Scripts/Android/start-android-emulator.sh <avd> -no-window`.
 
 Doing it by hand needs the same two non-obvious parts — detaching the process,
 and waiting for `sys.boot_completed` rather than just for adb to see the device:

@@ -5,7 +5,7 @@ pluginManagement {
     // this module's resource merge and the skipstone included build's resource copy —
     // since an app:preBuild dependency cannot order against a separate included build.
     val assetsResult = providers.exec {
-        commandLine("/bin/sh", "-c", "'${settings.rootDir.parent}/Scripts/generate-android-assets.sh'")
+        commandLine("/bin/sh", "-c", "'${settings.rootDir.parent}/Scripts/Android/generate-android-assets.sh'")
         environment("PATH", "${System.getenv("PATH")}:/opt/homebrew/bin")
     }
     print(assetsResult.standardOutput.asText.get())

@@ -1,5 +1,5 @@
 xcuserdata
-Distribution/raw assets/*
+Distribution/iOS/raw assets/*
 buildServer.json
 
 # Skip / Android
