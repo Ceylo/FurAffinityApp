@@ -13,43 +13,6 @@ import SwiftUI
 import SkipWeb
 import FAKit
 
-/// A CF interstitial is small and carries challenge markers; a real FA page is
-/// large. Used to tell "still on the challenge" from "page loaded".
-enum FAInterstitial {
-    static let realPageMinBytes = 60_000
-
-    static func isInterstitial(html: String?, length: Int) -> Bool {
-        if length < realPageMinBytes { return true }
-        guard let html else { return false }
-        return html.contains("challenge-platform")
-            || html.contains("cf-turnstile")
-            || html.contains("_cf_chl_opt")
-            || html.contains("Just a moment")
-    }
-
-    /// Decode a value returned by `evaluateJavaScript`. Android's WebView JSON-
-    /// encodes the result (quoted, `\uXXXX`/`\"`/`\n` escaped) and skip-web hands
-    /// it back un-decoded; feeding that straight to SwiftSoup parses 0 elements.
-    /// Unescape the structural characters first. On iOS the value is already raw.
-    static func decodeEvaluatedString(_ s: String) -> String {
-        var t = s
-        if t.hasPrefix("\"") && t.hasSuffix("\"") && t.count >= 2 {
-            t = String(t.dropFirst().dropLast())
-        } else if !t.contains("\\u003C") && !t.contains("\\\"") {
-            return s
-        }
-        let replacements: [(String, String)] = [
-            ("\\u003C", "<"), ("\\u003E", ">"), ("\\u0026", "&"),
-            ("\\\"", "\""), ("\\n", "\n"), ("\\r", "\r"),
-            ("\\t", "\t"), ("\\/", "/"), ("\\\\", "\\"),
-        ]
-        for (from, to) in replacements {
-            t = t.replacingOccurrences(of: from, with: to)
-        }
-        return t
-    }
-}
-
 /// The one User-Agent every WebView in this app is configured with.
 ///
 /// FA staff identify app traffic by the `ceylo.FurAffinityApp/<version>` suffix, so
