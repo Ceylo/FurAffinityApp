@@ -5,6 +5,8 @@
 //  Created by Ceylo on 04/09/2024.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 
 struct UserProfileControlView: View {
@@ -46,3 +48,5 @@ struct UserProfileControlView: View {
 #Preview {
     UserProfileControlView(username: "foo")
 }
+
+#endif

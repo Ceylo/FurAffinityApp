@@ -5,6 +5,8 @@
 //  Created by Ceylo on 11/12/2021.
 //
 
+#if !FA_SKIP_MODULE
+
 import UIKit
 import SwiftUI
 
@@ -203,3 +205,5 @@ extension CGSize {
     .secondaryZoomLevel(.fill)
     .ignoresSafeArea()
 }
+
+#endif

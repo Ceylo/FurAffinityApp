@@ -8,9 +8,13 @@
 //  why this file is not symlinked into the Skip module).
 //
 
+#if !FA_SKIP_MODULE
+
 import Foundation
 import FAKit
 
 func clearLoginCookies() async {
     await FALoginView.logout()
 }
+
+#endif

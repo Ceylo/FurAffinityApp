@@ -5,6 +5,8 @@
 //  Created by Ceylo on 23/06/2026.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 
 /// Always-visible transport controls for an audio submission. `VideoPlayer` /
@@ -74,4 +76,6 @@ struct AudioPlayerControls: View {
 #Preview {
     AudioPlayerControls(controller: .preview(currentTime: 70, duration: 100))
 }
+#endif
+
 #endif

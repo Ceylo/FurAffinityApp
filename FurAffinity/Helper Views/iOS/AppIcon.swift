@@ -5,6 +5,8 @@
 //  Created by Ceylo on 01/09/2024.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 
 struct AppIcon: View {
@@ -20,3 +22,5 @@ struct AppIcon: View {
 #Preview {
     AppIcon()
 }
+
+#endif

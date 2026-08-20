@@ -5,6 +5,8 @@
 //  Created by Ceylo on 02/01/2022.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import UIKit
 import Kingfisher
@@ -289,3 +291,5 @@ final class GIFOverlayTextView: UITextView {
     .border(.blue)
     .preferredColorScheme(.dark)
 }
+
+#endif

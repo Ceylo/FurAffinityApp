@@ -5,6 +5,8 @@
 //  Created by Ceylo on 21/06/2026.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 import Collections
@@ -137,3 +139,5 @@ struct ExplorationView: View {
         .environment($0.errorStorage)
     }
 }
+
+#endif

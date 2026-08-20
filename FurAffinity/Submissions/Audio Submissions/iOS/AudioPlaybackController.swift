@@ -5,6 +5,8 @@
 //  Created by Ceylo on 22/06/2026.
 //
 
+#if !FA_SKIP_MODULE
+
 import AVFoundation
 import FAKit
 import Kingfisher
@@ -428,3 +430,5 @@ private enum AudioPlaybackError: LocalizedError {
         "The audio could not be played."
     }
 }
+
+#endif

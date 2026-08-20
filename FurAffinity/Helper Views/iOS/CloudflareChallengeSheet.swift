@@ -5,6 +5,7 @@
 //  Created by Ceylo on 27/05/2026.
 //
 
+#if !FA_SKIP_MODULE
 
 import SwiftUI
 import FAKit
@@ -32,3 +33,5 @@ struct CloudflareChallengeSheet: View {
 #Preview {
     CloudflareChallengeSheet()
 }
+
+#endif

@@ -5,6 +5,8 @@
 //  Created by Ceylo on 01/05/2023.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 
 struct NotificationsActionView: View {
@@ -103,3 +105,5 @@ private struct DummyNuker: NotificationsNuker {
     )
     .environment(errorStorage)
 }
+
+#endif

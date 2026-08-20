@@ -5,6 +5,8 @@
 //  Created by Ceylo on 22/01/2023.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 import Kingfisher
@@ -126,3 +128,5 @@ struct SubmissionMainImage: View {
         fullResolutionMediaFileUrl: .constant(nil)
     )
 }
+
+#endif

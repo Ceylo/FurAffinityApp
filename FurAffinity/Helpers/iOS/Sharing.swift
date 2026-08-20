@@ -5,6 +5,8 @@
 //  Created by Ceylo on 12/10/2022.
 //
 
+#if !FA_SKIP_MODULE
+
 import UIKit
 
 @MainActor
@@ -31,3 +33,5 @@ func exportToFiles(_ urls: [URL]) {
     foregroundWindow?.rootViewController?
         .present(picker, animated: true)
 }
+
+#endif

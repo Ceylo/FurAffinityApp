@@ -5,6 +5,8 @@
 //  Created by Ceylo on 25/06/2026.
 //
 
+#if !FA_SKIP_MODULE
+
 import UIKit
 
 /// Holds the currently-allowed orientation mask. The Info.plist widens the
@@ -68,3 +70,5 @@ enum DeviceOrientationControl {
             .setNeedsUpdateOfSupportedInterfaceOrientations()
     }
 }
+
+#endif

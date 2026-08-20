@@ -5,6 +5,8 @@
 //  Created by Ceylo on 27/11/2021.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -77,3 +79,5 @@ struct JournalControlsView: View {
         }
     }
 }
+
+#endif

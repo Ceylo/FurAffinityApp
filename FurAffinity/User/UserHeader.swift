@@ -5,6 +5,8 @@
 //  Created by Ceylo on 26/04/2025.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 
 struct UserHeader: View {
@@ -59,3 +61,5 @@ struct UserHeader: View {
         WatchingPill()
     }
 }
+
+#endif

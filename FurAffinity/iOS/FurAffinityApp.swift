@@ -5,6 +5,8 @@
 //  Created by Ceylo on 17/10/2021.
 //
 
+#if !FA_SKIP_MODULE
+
 import AmplitudeSwift
 import Defaults
 import FAKit
@@ -126,3 +128,5 @@ struct FurAffinityApp: App {
         }
     }
 }
+
+#endif

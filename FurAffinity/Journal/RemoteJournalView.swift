@@ -5,6 +5,8 @@
 //  Created by Ceylo on 19/03/2023.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -51,3 +53,5 @@ struct RemoteJournalView: View {
             .environment($0.errorStorage)
     }
 }
+
+#endif

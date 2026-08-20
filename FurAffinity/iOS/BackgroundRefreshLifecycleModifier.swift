@@ -5,6 +5,8 @@
 //  Created by Ceylo on 24/05/2026.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 
 private struct BackgroundRefreshLifecycleModifier: ViewModifier {
@@ -74,3 +76,5 @@ extension View {
         modifier(BackgroundRefreshLifecycleModifier())
     }
 }
+
+#endif

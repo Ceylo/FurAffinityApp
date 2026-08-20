@@ -5,6 +5,8 @@
 //  Created by Ceylo on 17/03/2023.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -31,3 +33,5 @@ func view(for target: FATarget) -> some View {
         SubmissionMetadataView(metadata: metadata, resolution: resolution)
     }
 }
+
+#endif

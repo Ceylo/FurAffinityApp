@@ -5,6 +5,8 @@
 //  Created by Ceylo on 21/06/2026.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import QuickLook
 
@@ -41,3 +43,5 @@ struct QuickLookPreview: UIViewControllerRepresentable {
         }
     }
 }
+
+#endif

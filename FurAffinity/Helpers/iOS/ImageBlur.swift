@@ -5,6 +5,8 @@
 //  Created by Ceylo on 04/06/2026.
 //
 
+#if !FA_SKIP_MODULE
+
 import Foundation
 import Kingfisher
 import UIKit
@@ -44,3 +46,5 @@ enum ImageBlur {
         }
     }
 }
+
+#endif

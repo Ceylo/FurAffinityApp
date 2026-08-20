@@ -5,6 +5,8 @@
 //  Created by Ceylo on 02/06/2026.
 //
 
+#if !FA_SKIP_MODULE
+
 import Foundation
 import Observation
 import UserNotifications
@@ -76,3 +78,5 @@ final class NotificationCoordinator: NSObject, UNUserNotificationCenterDelegate 
         pendingDeepLink = target
     }
 }
+
+#endif

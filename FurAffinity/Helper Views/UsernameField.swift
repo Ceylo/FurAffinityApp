@@ -5,6 +5,8 @@
 //  Created by Ceylo on 04/07/2026.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -60,3 +62,5 @@ struct UsernameField: View {
         }
     }
 }
+
+#endif

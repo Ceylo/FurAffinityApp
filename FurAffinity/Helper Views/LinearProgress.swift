@@ -5,6 +5,8 @@
 //  Created by Ceylo on 15/06/2024.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 
 struct LinearProgress: View {
@@ -41,3 +43,5 @@ struct LinearProgress: View {
             } catch {}
         }
 }
+
+#endif

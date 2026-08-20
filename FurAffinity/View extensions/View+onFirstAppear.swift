@@ -6,6 +6,8 @@
 //  From https://holyswift.app/triggering-an-action-only-first-time-a-view-appears-in-swiftui/
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 
 private struct OnFirstAppearModifier: ViewModifier {
@@ -32,3 +34,5 @@ extension View {
         modifier(OnFirstAppearModifier(onFirstAppearAction))
     }
 }
+
+#endif

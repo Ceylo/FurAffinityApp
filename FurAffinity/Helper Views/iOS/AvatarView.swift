@@ -5,6 +5,8 @@
 //  Created by Ceylo on 09/04/2022.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 import Kingfisher
@@ -74,3 +76,5 @@ struct AvatarView: View {
         .padding()
         .preferredColorScheme(.dark)
 }
+
+#endif

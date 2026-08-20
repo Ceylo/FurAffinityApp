@@ -5,6 +5,8 @@
 //  Created by Ceylo on 21/06/2026.
 //
 
+#if !FA_SKIP_MODULE
+
 import FAKit
 import SwiftUI
 
@@ -97,3 +99,5 @@ struct SubmissionAudioContent: View {
         .environment(errorStorage)
     }
 }
+
+#endif

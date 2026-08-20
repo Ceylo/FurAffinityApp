@@ -5,6 +5,8 @@
 //  Created by Ceylo on 20/04/2025.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import Defaults
 
@@ -45,3 +47,5 @@ struct RemoteContentToolbarItem<ContentsView: View>: ToolbarContent {
         }
     }
 }
+
+#endif

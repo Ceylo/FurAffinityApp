@@ -5,6 +5,8 @@
 //  Created by Ceylo on 31/05/2026.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -79,3 +81,5 @@ struct CloudflareResolutionOverlay: View {
     CloudflareResolutionOverlay()
         .padding()
 }
+
+#endif

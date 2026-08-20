@@ -5,6 +5,8 @@
 //  Created by Ceylo on 02/07/2026.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 
 /// Leading-aligned flow layout: lays subviews left→right, wrapping lines. Unlike
@@ -47,3 +49,5 @@ struct FlowLayout: Layout {
         }
     }
 }
+
+#endif

@@ -5,6 +5,8 @@
 //  Created by Ceylo on 04/09/2024.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -73,3 +75,5 @@ extension [Int]: ProgressiveData {
     }
     .listStyle(.plain)
 }
+
+#endif

@@ -8,6 +8,8 @@
 //  file is not symlinked into the Skip module).
 //
 
+#if !FA_SKIP_MODULE
+
 import Foundation
 import Kingfisher
 
@@ -24,3 +26,5 @@ enum ImageCacheControl {
         await ImageCache.default.clearCache()
     }
 }
+
+#endif

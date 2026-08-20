@@ -5,6 +5,8 @@
 //  Created by Ceylo on 28/10/2024.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 
 // Presents fullscreen by crossfading a .sheet rather than using
@@ -96,3 +98,5 @@ extension View {
         .ignoresSafeArea()
     }
 }
+
+#endif

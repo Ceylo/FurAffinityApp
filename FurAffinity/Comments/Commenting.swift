@@ -5,6 +5,8 @@
 //  Created by Ceylo on 20/04/2023.
 //
 
+#if !FA_SKIP_MODULE
+
 import Foundation
 import SwiftUI
 import FAKit
@@ -70,3 +72,5 @@ extension View {
         ))
     }
 }
+
+#endif
