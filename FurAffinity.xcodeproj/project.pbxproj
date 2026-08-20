@@ -426,6 +426,12 @@
 				8716E7EB271C659C00C0BC4A /* FurAffinityApp.swift */,
 				87CCD2F12FC3441600768FDB /* BackgroundRefreshManager.swift */,
 				87CCD2F52FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift */,
+				871C66DE29B8C36700A2B2C2 /* Info.plist */,
+				87874B802FD0A3E90027CE46 /* FurAffinity.entitlements */,
+				878B0B902970B18C00A08685 /* Secrets.swift */,
+				87546E622EAE70430098BAA1 /* AppIconLG.icon */,
+				87546E632EAE70430098BAA1 /* AppIconLG-debug.icon */,
+				8716E7F1271C659D00C0BC4A /* Preview Content */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -457,11 +463,8 @@
 		8716E7EA271C659C00C0BC4A /* FurAffinity */ = {
 			isa = PBXGroup;
 			children = (
-				87874B802FD0A3E90027CE46 /* FurAffinity.entitlements */,
-				871C66DE29B8C36700A2B2C2 /* Info.plist */,
 				8725335E274A70BB007FEF3B /* Model.swift */,
 				87C2ADEB2F017D230061F837 /* ErrorStorage.swift */,
-				878B0B902970B18C00A08685 /* Secrets.swift */,
 				8716E7ED271C659C00C0BC4A /* HomeView.swift */,
 				877226B227402F9300245DF0 /* LoggedInView.swift */,
 				87098D392CB2BEF000E7BD94 /* UserDefaultKeys.swift */,
@@ -477,9 +480,6 @@
 				87A9C33F29C788230001D1D6 /* User */,
 				875DD46D2843D15D00F3E5D9 /* Settings */,
 				8716E7EF271C659D00C0BC4A /* Assets.xcassets */,
-				87546E622EAE70430098BAA1 /* AppIconLG.icon */,
-				87546E632EAE70430098BAA1 /* AppIconLG-debug.icon */,
-				8716E7F1271C659D00C0BC4A /* Preview Content */,
 				7E2A87014435C67D37A3E6A0 /* iOS */,
 			);
 			path = FurAffinity;
@@ -1284,11 +1284,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIconLG-debug";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = FurAffinity/FurAffinity.entitlements;
-				DEVELOPMENT_ASSET_PATHS = "\"FurAffinity/Preview Content\"";
+				CODE_SIGN_ENTITLEMENTS = FurAffinity/iOS/FurAffinity.entitlements;
+				DEVELOPMENT_ASSET_PATHS = "\"FurAffinity/iOS/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = FurAffinity/Info.plist;
+				INFOPLIST_FILE = FurAffinity/iOS/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Chosen images will be saved to the Photo Library.";
@@ -1315,11 +1315,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconLG;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = FurAffinity/FurAffinity.entitlements;
-				DEVELOPMENT_ASSET_PATHS = "\"FurAffinity/Preview Content\"";
+				CODE_SIGN_ENTITLEMENTS = FurAffinity/iOS/FurAffinity.entitlements;
+				DEVELOPMENT_ASSET_PATHS = "\"FurAffinity/iOS/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = FurAffinity/Info.plist;
+				INFOPLIST_FILE = FurAffinity/iOS/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Chosen images will be saved to the Photo Library.";
