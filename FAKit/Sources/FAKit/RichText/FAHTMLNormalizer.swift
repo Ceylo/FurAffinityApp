@@ -176,19 +176,24 @@ public enum FAHTMLNormalizer {
     /// splitting the serialised HTML on `<hr>` without this would leave the second half
     /// with no opening tag — and no alignment.
     private static func hoistRules(in root: Element) throws {
-        // Deepest first: splitting an ancestor invalidates nothing below it, and each
-        // pass lifts a rule exactly one level, so this terminates at the root.
+        // `getElementsByTag` hands them back in document order, not deepest-first —
+        // termination comes from each pass lifting one rule exactly one level.
         while let rule = try root.getElementsByTag("hr").first(where: { $0.parent() !== root }) {
             guard let parent = rule.parent() else { break }
-            try split(parent, at: rule)
+            // A rule its parent doesn't list as a child would be re-selected forever.
+            guard try split(parent, at: rule) else { break }
         }
     }
 
     /// Splits `element` around `rule`: what preceded the rule stays, what followed it
     /// moves into a copy, and the rule itself ends up between them one level up.
-    private static func split(_ element: Element, at rule: Element) throws {
+    ///
+    /// - Returns: `false` when `rule` isn't among `element`'s children, so there was
+    ///   nothing to split.
+    @discardableResult
+    private static func split(_ element: Element, at rule: Element) throws -> Bool {
         let children = element.getChildNodes()
-        guard let position = children.firstIndex(where: { $0 === rule }) else { return }
+        guard let position = children.firstIndex(where: { $0 === rule }) else { return false }
 
         let successor = try shallowCopy(of: element)
         for child in children[(position + 1)...] {
@@ -205,6 +210,7 @@ public enum FAHTMLNormalizer {
         if element.getChildNodes().isEmpty {
             try element.remove()
         }
+        return true
     }
 
     private static func shallowCopy(of element: Element) throws -> Element {
@@ -238,13 +244,22 @@ public enum FAHTMLNormalizer {
         let alt = try element.attr("alt")
         return FAInlineImage(
             url: url,
-            width: Double(try element.attr("width")),
-            height: Double(try element.attr("height")),
+            width: dimension(try element.attr("width")),
+            height: dimension(try element.attr("height")),
             alt: alt.isEmpty ? nil : alt,
             // FA marks an inline avatar on the *link*, never on the image itself.
             isAvatar: element.faClassNames.contains("iconusername")
                 || element.parents().contains { $0.faClassNames.contains("iconusername") }
         )
+    }
+
+    /// The pixel size a dimension attribute states, if it states one at all.
+    /// `"300"` and `"300px"` are 300; `"100%"`, `""` and `"0"` are no size.
+    private static func dimension(_ value: String) -> Double? {
+        let trimmed = value.trimmingCharacters(in: .whitespaces).lowercased()
+        let number = trimmed.hasSuffix("px") ? String(trimmed.dropLast(2)) : trimmed
+        guard let size = Double(number), size > 0 else { return nil }
+        return size
     }
 
     // MARK: Vocabulary
@@ -271,7 +286,10 @@ extension String {
     var faURL: URL? {
         if hasPrefix("//") { return URL(string: "https:" + self) }
         if hasPrefix("/") { return URL(string: "https://www.furaffinity.net" + self) }
-        return URL(string: self)
+        // A path-relative `src` parses fine but can never be loaded: the document's real
+        // base isn't known here, so there is nothing to resolve it against.
+        guard let url = URL(string: self), url.scheme != nil else { return nil }
+        return url
     }
 }
 

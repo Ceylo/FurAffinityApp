@@ -162,9 +162,17 @@ struct FAHTMLNormalizerRuleTests {
 
     @Test
     func aRuleNestedTwoDeepIsLiftedAllTheWay() throws {
-        let html = try normalize("<div class=\"bbcode_center\"><p>a<hr>b</p></div>").html
+        // <code>, not <p>: the HTML5 tree builder auto-closes a paragraph at an <hr>, so
+        // the rule would start one level deep and never exercise the multi-pass path.
+        let html = try normalize("<div class=\"bbcode_center\"><code>a<hr>b</code></div>").html
+        #expect(try topLevelTags(html) == ["div", "hr", "div"])
+
         let root = try #require(try SwiftSoup.parse(html).body())
-        #expect(try root.getElementsByTag("hr").allSatisfy { $0.parent() === root })
+        let blocks = root.children().array().filter { $0.tagName().lowercased() == "div" }
+        // Both halves keep the wrapper's alignment across two lifts.
+        #expect(try blocks.allSatisfy { try $0.attr("style").contains("center") })
+        #expect(try blocks.first?.text() == "a")
+        #expect(try blocks.last?.text() == "b")
     }
 }
 
@@ -297,6 +305,45 @@ struct FAHTMLNormalizerImageTests {
         let normalized = try normalize("<img alt=\"broken\">")
         #expect(normalized.images.isEmpty)
         #expect(!normalized.html.contains("<img"))
+    }
+
+    @Test
+    func pixelSuffixedDimensionsAreRead() throws {
+        let images = try normalize("""
+        <img src="//a.furaffinity.net/x.gif" width="300px" height="200px">
+        """).images
+
+        #expect(images.first?.width == 300)
+        #expect(images.first?.height == 200)
+    }
+
+    @Test
+    func aDimensionThatStatesNoPixelSizeIsNoSize() throws {
+        // A percentage or a zero can't reserve a slot, and neither can a lone width:
+        // 300×nothing is a worse guess than no stated size at all.
+        let images = try normalize("""
+        <img src="//a.furaffinity.net/1.gif" width="100%" height="0">
+        <img src="//a.furaffinity.net/2.gif" width="300">
+        """).images
+
+        #expect(images.count == 2)
+        #expect(images[0].width == nil)
+        #expect(images[0].height == nil)
+        #expect(images[1].width == 300)
+        #expect(images[1].height == nil)
+    }
+
+    @Test
+    func aPathRelativeSourceLeavesNoPlaceholderBehind() throws {
+        // It parses as a URL but has no base to resolve against, so it would only ever
+        // be a permanently blank slot — and would shift every later image along.
+        let normalized = try normalize("""
+        <img src="themes/beta/img/x.gif"><img src="//a.furaffinity.net/1.gif">
+        """)
+        let root = try #require(try SwiftSoup.parse(normalized.html).body())
+
+        #expect(normalized.images.map(\.url.lastPathComponent) == ["1.gif"])
+        #expect(try root.getElementsByTag("img").count == normalized.images.count)
     }
 
     @Test
