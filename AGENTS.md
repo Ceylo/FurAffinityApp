@@ -12,10 +12,10 @@ Two main code areas:
 
 An in-progress **Android port** builds the same SwiftUI source with [Skip](https://skip.dev)
 Fuse (root `Package.swift` + `FurAffinityUI/` target + `Android/`/`Darwin/` scaffolding).
-Both platforms' sources live in `FurAffinity/`, split by the `iOS/`/`Android/` convention
-below; `FurAffinityUI/` holds no hand-written Swift, only Skip scaffolding and a flat
-symlink farm (`FurAffinityUI/Sources/`) that is the Android build's source list. The iOS
-Xcode target is unaffected. Ported so far: the login screen (shared
+Both platforms build the *same* directory — `FurAffinity/` — split by the `iOS/`/`Android/`
+convention below. The Skip target's `path:` is `FurAffinity`, so skipstone walks the whole
+tree and every source it must not build carries `#if !FA_SKIP_MODULE`. The iOS Xcode target
+is unaffected. Ported so far: the login screen (shared
 `HomeView` + autologin, over an Android `FALoginView`), the Followed feed (on the shared
 `SubmissionsFeedView` container, badge and refresh choreography included), the
 submission detail screen (image, zoomable viewer, favorite, Save/Share, rich-text
@@ -23,7 +23,7 @@ description with in-app links, read-only comments, metadata) and the Settings ta
 `SettingsView` / `NotificationSettingsView`, image-cache control, log sharing, logout).
 FA's rich text is rendered by Compose's own HTML parser: `FAKit/Sources/FAKit/RichText/`
 normalises the markup into the subset `AnnotatedString.fromHtml` understands (and cuts it
-at its `<hr>`s, which that parser drops), and `Helper Views/Android/HTMLView.swift`
+at its `<hr>`s, which that parser drops), and `Helper Views/Android/HTMLView+Android.swift`
 hands each fragment to `Text(html:)`.
 Logging works on both platforms via `#if canImport(os) import os #else import OSCompat`:
 FAKit ships an Android-only `OSCompat` target (`FAKit/Sources/OSCompat/`) vending
@@ -52,7 +52,7 @@ the fork list, what the submission screen defers and why, and the image-pipeline
 - `iOS/AppDelegate.swift`: `OrientationGate`/`DeviceOrientationControl` — app is portrait everywhere except the landscape-capable story reader (iPhone only; iPad rotates freely).
 - `Model.swift`: `@Observable @MainActor` — session, feeds, search results/query, notes, notifications, autorefresh, error storage.
 - `Helpers/FATarget.swift`: FA URL → navigation target.
-- `Helpers/iOS/InAppNavigation.swift` · `Helpers/Android/InAppNavigation.swift`: `FATarget` → destination view.
+- `Helpers/iOS/InAppNavigation.swift` · `Helpers/Android/InAppNavigation+Android.swift`: `FATarget` → destination view.
 - `Helpers/InAppLinkConversion.swift`: `appNavigationScheme` + the URL/`AttributedString` link rewriting. Kept apart from `InAppNavigation.swift` (no SwiftUI) so both platforms share it — which is why it stays in the base while its sibling has an `iOS/` and an `Android/` build.
 - `Helper Views/RemoteView.swift`: loading/refresh wrapper for remote content.
 - `Helpers/iOS/Kingfisher+FA.swift`: image loading/prefetching with FA headers.
@@ -133,16 +133,23 @@ FAKit: SwiftSoup, Cache, SwiftGraph, swift-collections, ZIPFoundation (DOCX unzi
 - Platform split, applied recursively in every directory: a file that only one platform
   compiles goes in an `iOS/` or `Android/` subdirectory **of its own parent**, so the two
   builds of one screen sit side by side (`Helper Views/iOS/Zoomable.swift` next to
-  `Helper Views/Android/Zoomable.swift`). Everything else stays in the common base —
+  `Helper Views/Android/Zoomable+Android.swift`). Everything else stays in the common base —
   including plain-SwiftUI files that simply are not ported yet. Those subdirectories hold
   source files, not further trees. `Scripts/`, `Distribution/` and FAKit follow the same
-  rule. Two exceptions: `Assets.xcassets` stays in the base (single source of truth, read
-  by the Android asset script), and inside one SwiftPM target basenames must stay unique
-  (see `FAKit/Sources/FAKit/RichText/Android/AttributedString+FA+Android.swift`).
-- Making a file part of the Android build is one `ln -s` into `FurAffinityUI/Sources/`,
-  with no file move. Android-only files are linked for you by
-  `Scripts/Android/sync-skip-sources.sh`; shared ones stay a deliberate step, which is
-  what makes the farm the port allowlist.
+  rule. `Assets.xcassets` stays in the base — it is the single source of truth the Android
+  asset script reads, and `Package.swift` excludes it from the Skip target.
+- **`#if !FA_SKIP_MODULE` is what keeps a file out of the Android build.** skipstone walks
+  the whole target directory and honors neither SwiftPM `sources:` nor `exclude:`, so
+  anything it sees must either build for Android or be guarded. Porting a screen means
+  deleting its guard. It must be `FA_SKIP_MODULE`, never `os(Android)`: the module is
+  compiled twice for Skip — the Android cross-compile and a host build where `os(Android)`
+  is **false** — so an `os(Android)` guard leaves UIKit/Kingfisher/Photos imports to
+  resolve in a target that does not depend on them.
+- **Basenames must be unique across the whole `FurAffinity/` tree.** SwiftPM derives one
+  object file per basename and skipstone one `<Name>_Bridge.swift`, both flattened, so a
+  matching `iOS/`+`Android/` pair collides with "multiple producers" — even when the iOS
+  half is guarded down to nothing. Hence the `+Android` suffix on the eleven substitution
+  files; the directory still carries the meaning.
 - Only remote-loading wrappers that own `@Environment(Model.self)` (e.g. `RemoteSubmissionView`) may depend on `Model`. Leaf/content views must receive what they need via inputs or injected closures — never reach into `Model`.
 - Prefer existing helpers before adding new wrappers.
 - Tests: use fixture HTML, no live FA requests.

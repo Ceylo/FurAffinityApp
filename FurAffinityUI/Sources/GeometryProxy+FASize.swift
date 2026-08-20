@@ -1,1 +1,0 @@
-../../FurAffinity/Helpers/GeometryProxy+FASize.swift

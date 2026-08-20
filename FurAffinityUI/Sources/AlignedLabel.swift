@@ -1,1 +1,0 @@
-../../FurAffinity/Helper Views/AlignedLabel.swift

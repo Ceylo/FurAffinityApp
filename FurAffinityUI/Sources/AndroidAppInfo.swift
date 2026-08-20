@@ -1,1 +1,0 @@
-../../FurAffinity/Helpers/Android/AndroidAppInfo.swift

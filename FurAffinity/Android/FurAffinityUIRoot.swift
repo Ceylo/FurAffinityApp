@@ -4,8 +4,8 @@
 //
 //  Entry point of the Skip Fuse app. Android-only: an `Android/` directory is
 //  not part of the iOS Xcode target, so nothing here affects the iOS build.
-//  This file and every shared source reach the Android build as symlinks under
-//  FurAffinityUI/Sources/.
+//  The Skip target compiles FurAffinity/ directly; anything it must not build
+//  carries `#if !FA_SKIP_MODULE`.
 //
 
 import Foundation

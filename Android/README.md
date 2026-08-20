@@ -12,65 +12,74 @@ Skip.env                 shared app identity (name, version, package)
 Android/                 generated Android app shell + Gradle project
 Darwin/                  generated iOS bridge project used by `skip` tooling
 Project.xcworkspace      workspace `skip` drives
-FurAffinity/             ALL app sources, both platforms
+FurAffinity/             ALL app sources — and the Skip target's directory
   Android/                 FurAffinityUIRoot.swift (bridged root view + app
                            delegate), AndroidRootView.swift
   Helper Views/Android/    Compose builds of the shared views, next to their
   Helpers/Android/         iOS/ counterparts — see AGENTS.md §Working Notes
-  …
-FurAffinityUI/           the Skip target's directory — build scaffolding only
-  Sources/                 the FARM: symlinks into ../../FurAffinity, one per
-                           file the Android build compiles
-  Resources/               this module's asset catalog (must stay physical)
+  iOS/                     iOS-only sources + Info.plist, entitlements, icons
+  Resources/               the Android asset catalog Skip mirrors
   Skip/skip.yml            marks this a native Skip module
-Scripts/Android/         emulator, derived art, farm sync
+Scripts/Android/         emulator, derived art
 FAKit/                   shared Swift package (cross-compiles, see AGENTS.md)
 ```
 
-### Why the symlink farm
+### Why everything unported is guarded
 
-Skip's transpiler (`skipstone`) walks the **entire** target-directory tree via
-its `--project` flag; it honors neither SwiftPM `sources:` nor `exclude:`. So a
-target pointed straight at `FurAffinity/` would try to bridge every iOS file and
-fail. Instead the Skip target's directory is `FurAffinityUI/`, which holds no
-hand-written Swift at all: every file the Android build compiles reaches it as a
-**symlink** under `FurAffinityUI/Sources/`. The real files never move (iOS keeps
-compiling the shared ones in place), and the set of symlinks *is* the allowlist.
-
-That is also why a plain-SwiftUI file that is merely unported stays in
-`FurAffinity/`'s common base rather than moving anywhere: porting it is one
-`ln -s`, with no file move and no pbxproj edit.
+Skip's transpiler (`skipstone`) walks the **entire** target-directory tree via its
+`--project` flag; it honors neither SwiftPM `sources:` nor `exclude:`. Since the
+target's `path:` is `FurAffinity`, that means every `.swift` in the app — 165 of
+them — is offered to skipstone. Anything the Android build must not compile is
+therefore wrapped, whole-file, in:
 
 ```
-ln -s ../../FurAffinity/<subpath>/<File>.swift FurAffinityUI/Sources/<File>.swift
+#if !FA_SKIP_MODULE
+…
+#endif
 ```
 
-The farm is **flat** — mirroring `FurAffinity/`'s subdirectories would push names
-containing spaces (`Helper Views`) into skipstone's Kotlin output paths and the
-Gradle included builds. So keep the link's basename equal to the target's, and
-expect `Scripts/Android/sync-skip-sources.sh` to reject a collision.
+That covers the iOS-only files *and* the plain-SwiftUI screens that are simply not
+ported yet. **Porting a screen is deleting its guard.**
 
-Android-only files need no `ln -s`: anything under a `FurAffinity/**/Android/`
-directory is Android-only by construction, so the sync script links them all.
+`FA_SKIP_MODULE` is defined by `Package.swift` for this target. It has to be that
+flag rather than `os(Android)`, because the module gets compiled **twice** for
+Skip: the Android cross-compile, and a host build (`libFurAffinityUI.dylib`) where
+`os(Android)` is *false*. An `os(Android)`-guarded file is therefore included in
+the host build and its iOS-only imports have nothing to resolve against:
 
 ```
-Scripts/Android/sync-skip-sources.sh            # prune dangling, add missing
-Scripts/Android/sync-skip-sources.sh --check    # report only, exit 1 if stale
+FurAffinity/Helpers/iOS/ImageBlur.swift:11:8: error: no such module 'Kingfisher'
 ```
 
-It also fails loudly on a basename collision, a real file in the farm, or a link
-resolving into an `iOS/` directory — that last one would mean iOS-only code had
-leaked into the Android build.
+Note which commands catch that: `./gradlew :app:assembleDebug` and
+`skip app launch` both do. **`skip android build` does not** — it only
+cross-compiles for Android and never runs the host build.
+
+### Basenames must be unique across the tree
+
+SwiftPM derives one object file per source *basename*, and skipstone one
+`<Name>_Bridge.swift`, both flattened into a single directory. Two files with the
+same name anywhere in the target fail the build:
+
+```
+error: couldn't build …/SkipBridgeGenerated/Zoomable_Bridge.swift
+       because of multiple producers: Skip FurAffinityUI, Skip FurAffinityUI
+```
+
+This bites the `iOS/`+`Android/` substitution pairs, and a guard does not help —
+the guarded file still *emits* a same-named (empty) bridge. Hence the eleven
+`…+Android.swift` files; the directory still carries the platform meaning, the
+suffix only keeps the name unique.
 
 ### Sharing asset-catalog entries
 
-`FurAffinityUI/Resources/Assets.xcassets` is this module's own catalog, which Skip
+`FurAffinity/Resources/Assets.xcassets` is this module's own catalog, which Skip
 mirrors into Android resources. To single-source an entry with the iOS catalog,
 symlink the **`Contents.json`**, not the `.colorset`/`.imageset` directory:
 
 ```
 mkdir Foo.colorset
-ln -s ../../../../FurAffinity/Assets.xcassets/Foo.colorset/Contents.json Foo.colorset/Contents.json
+ln -s ../../../Assets.xcassets/Foo.colorset/Contents.json Foo.colorset/Contents.json
 ```
 
 Skip's resource copy does not follow a symlinked *directory* — it silently copies
@@ -634,7 +643,7 @@ entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
 - **`FlowRow`** replaces SwiftUI's `Layout` protocol, which SkipUI doesn't implement and
   which can't be emulated: a `Layout` enumerates and places its subviews, and an opaque
   `Content` gives a Fuse module no access to them. Compose wraps natively, so it is a
-  container instead, with `FurAffinity/Helper Views/Android/FlowLayout.swift` keeping the iOS call signature.
+  container instead, with `FurAffinity/Helper Views/Android/FlowLayout+Android.swift` keeping the iOS call signature.
 - **`glassEffect`** and **`AnyTransition.animation`** become pass-throughs rather than
   `unavailable`. `#available(iOS 26, *)` is vacuously true off-Apple, so a shared source
   takes its Liquid Glass branch on Android; making the call unbuildable is worse than
@@ -1164,7 +1173,7 @@ exposes — no `/tmp` involved.
 
 ## Rules for shared sources
 
-A file linked into `FurAffinityUI/Sources/` is compiled **twice more** than the iOS target
+An *unguarded* file under `FurAffinity/` is compiled **twice more** than the iOS target
 compiles it: once for Android (`os(Android)` true) and once for the module's Darwin
 bridge (`os(Android)` **false**, UIKit importable). Both compiles see only this module —
 never the iOS app target — so:
@@ -1183,7 +1192,7 @@ never the iOS app target — so:
 - **An Android substitution file must not be `#if os(Android)`-guarded.** When a
   shared file calls one name that resolves per platform (`ImageCacheControl`,
   `clearLoginCookies`, `share`), the Android declaration lives in an `Android/`
-  directory, linked into the farm, while its `iOS/` twin stays out of it. `os(Android)` is false for the Darwin
+  directory while its `iOS/` twin is guarded out. `os(Android)` is false for the Darwin
   bridge compile, so a file-level guard there leaves shared callers with *no*
   declaration at all. Leave the file unguarded and put `#if canImport(Android)`
   around the JNI inside, with a Darwin no-op — the way `CoilImageLoader` does. This

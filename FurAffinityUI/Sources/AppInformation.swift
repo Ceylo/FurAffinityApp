@@ -1,1 +1,0 @@
-../../FurAffinity/Helpers/AppInformation.swift

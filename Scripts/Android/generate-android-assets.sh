@@ -3,7 +3,7 @@
 # Generates the Android-only derived art from the iOS asset catalog, which stays the
 # single source of truth:
 #
-#   - FurAffinityUI/Resources/Assets.xcassets/AppIcon.imageset — the in-app icon
+#   - FurAffinity/Resources/Assets.xcassets/AppIcon.imageset — the in-app icon
 #   - Android/app/src/main/res/mipmap-* — the launcher icon
 #
 # Nothing this script writes is committed — the outputs are git-ignored.
@@ -15,14 +15,14 @@
 #
 # Why a script rather than a SwiftPM prebuild plugin: `Image(_:bundle:)` resolves
 # through this module's asset catalog, so a generated PNG has to land *inside*
-# FurAffinityUI/Resources/Assets.xcassets — and the plugin sandbox forbids writing
+# FurAffinity/Resources/Assets.xcassets — and the plugin sandbox forbids writing
 # back into the source tree.
 
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 src_catalog="$root/FurAffinity/Assets.xcassets"
-dst_catalog="$root/FurAffinityUI/Resources/Assets.xcassets"
+dst_catalog="$root/FurAffinity/Resources/Assets.xcassets"
 android_res="$root/Android/app/src/main/res"
 
 src_iconset="$src_catalog/AppIcon.imageset"
