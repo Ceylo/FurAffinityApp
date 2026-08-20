@@ -4,8 +4,10 @@
 //
 //  The Android counterpart of the iOS `view(for:)` in InAppNavigation.swift. That
 //  one can't be shared: it names eight `Remote*View`s that aren't ported yet. This
-//  fan-out returns the ported screens and a placeholder for everything else, and
-//  grows a case at a time as screens land.
+//  fan-out returns the ported screens and sends the rest to a placeholder, and grows
+//  a case at a time as screens land. Every case is listed on purpose — a `default:`
+//  would take a newly added `FATarget` silently, so Android would lose a screen iOS
+//  had gained without the build saying so.
 //
 
 import SwiftUI
@@ -18,7 +20,7 @@ func view(for target: FATarget) -> some View {
         RemoteSubmissionView(url: url, previewData: previewData)
     case let .submissionMetadata(metadata, resolution):
         SubmissionMetadataView(metadata: metadata, resolution: resolution)
-    default:
+    case .note, .journal, .user, .gallery, .favorites, .journals, .watchlist:
         notPortedYet
     }
 }
