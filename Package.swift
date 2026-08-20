@@ -4,12 +4,13 @@
 // The iOS app is built by FurAffinity.xcodeproj and is unaffected by this
 // manifest.
 //
-// The FurAffinityUI target's directory holds the Android-only entry point plus a
-// `Shared/` folder of *symlinks* into ../FurAffinity for each shared source as it
-// is ported. Skip's transpiler walks the whole target directory (it honors
-// neither SwiftPM `sources:` nor `exclude:`), so the allowlist has to be the set
-// of files physically present under this directory — the symlinks are that
-// allowlist. The real files never move and the iOS Xcode target is untouched.
+// This target's directory holds no hand-written Swift: every source it compiles
+// lives in ../FurAffinity and reaches it as a *symlink* under `Sources/` —
+// Android-only files from a `FurAffinity/**/Android/` directory, shared files
+// from the common base. Skip's transpiler walks the whole target directory (it
+// honors neither SwiftPM `sources:` nor `exclude:`), so the allowlist has to be
+// the set of files physically present under this directory — the symlinks are
+// that allowlist. Scripts/Android/sync-skip-sources.sh maintains them.
 import PackageDescription
 
 let package = Package(

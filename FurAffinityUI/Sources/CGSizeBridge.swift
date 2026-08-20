@@ -1,0 +1,1 @@
+../../FurAffinity/Helpers/Android/CGSizeBridge.swift

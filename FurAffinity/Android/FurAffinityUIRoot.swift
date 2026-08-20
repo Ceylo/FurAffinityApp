@@ -2,10 +2,10 @@
 //  FurAffinityUIRoot.swift
 //  FurAffinityUI (Android)
 //
-//  Entry point of the Skip Fuse app. Android-only: this directory is not part of
-//  the iOS Xcode target, so nothing here affects the iOS build. Shared iOS
-//  sources are pulled in as symlinks under FurAffinityUI/Shared/ as they're
-//  ported.
+//  Entry point of the Skip Fuse app. Android-only: an `Android/` directory is
+//  not part of the iOS Xcode target, so nothing here affects the iOS build.
+//  This file and every shared source reach the Android build as symlinks under
+//  FurAffinityUI/Sources/.
 //
 
 import Foundation
@@ -14,7 +14,7 @@ import FAKit
 import SkipFuse
 import SwiftUI
 
-// `logger` now comes from the shared Shared/Logs.swift.
+// `logger` now comes from the shared Helpers/Logs.swift.
 
 /// The shared top-level view, loaded from the platform-specific app delegates below.
 /* SKIP @bridge */public struct FurAffinityUIRootView: View {
