@@ -30,15 +30,17 @@ import FoundationNetworking
 struct FAHTTPDataSource: HTTPDataSource {
     /// Navigates the cleared WebView to `url` and returns the page's decoded HTML.
     typealias WebViewFetch = @Sendable (URL) async throws -> Data
-    /// Reads the WebView's `Cookie:` header *now*, to compare against the one
-    /// frozen at session creation.
+    /// Reads the WebView's `Cookie:` header *now*. Every request prefers this over
+    /// the header frozen at session creation, since `cf_clearance` rotates.
     typealias CookieHeaderProbe = @Sendable () async -> String?
     /// Reads the WebView's `navigator.userAgent` *now*, same idea.
     typealias UserAgentProbe = @Sendable () async -> String?
 
     private let session: URLSession
     private let userAgent: String
-    /// The WebView's `Cookie:` header for FA (cf_clearance + __cf_bm + auth).
+    /// The WebView's `Cookie:` header for FA (cf_clearance + __cf_bm + auth) as of
+    /// session creation. Only a fallback: `liveCookieHeader` is what requests use,
+    /// and this covers the window where the engine isn't attached to answer.
     private let baseCookieHeader: String
     private let webViewFetch: WebViewFetch?
     private let liveCookieHeader: CookieHeaderProbe?
@@ -124,11 +126,13 @@ struct FAHTTPDataSource: HTTPDataSource {
         for (field, value) in Self.browserHeaders {
             request.setValue(value, forHTTPHeaderField: field)
         }
-        // The base header is frozen at session creation, which is fine until a
-        // challenge is resolved — that mints a new clearance, and replaying the
-        // old one would just be challenged again. Re-read the jar on that retry.
+        // Always the live jar, not the header frozen at session creation:
+        // `cf_clearance` rotates on every re-solve, and a stale one is challenged
+        // again — so a request starting from the frozen header burns all five
+        // attempts plus their backoff before it can even ask for resolution. The
+        // frozen header only covers the engine not being attached to answer yet.
         var base = baseCookieHeader
-        if hasAwaitedResolution, let liveCookieHeader, let live = await liveCookieHeader(), !live.isEmpty {
+        if let liveCookieHeader, let live = await liveCookieHeader(), !live.isEmpty {
             base = live
         }
         let header = cookieHeader(merging: cookies, base: base)
@@ -215,10 +219,14 @@ struct FAHTTPDataSource: HTTPDataSource {
         return data
     }
 
-    /// Tests the "what was frozen at session creation went stale" hypothesis: the
-    /// cookies and User-Agent actually sent, against what the WebView would send
+    /// The cookies and User-Agent actually sent, against what the WebView would send
     /// right now. `cf_clearance` is bound to both, so either drifting explains a
     /// challenge that nothing else does.
+    ///
+    /// The cookie line now reads `drifted=false` by construction — the request took
+    /// its header from the same live probe this compares against — so it is only
+    /// worth reading for *which* clearance went out. The User-Agent line keeps its
+    /// full diagnostic value: nothing re-reads that per request.
     private func logClearanceDiagnostics(sent: String) async {
         logger.warning("[CFDIAG] sent cookies: \(Self.cookieFingerprint(sent))")
         if let liveUserAgent {

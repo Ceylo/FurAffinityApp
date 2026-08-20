@@ -54,7 +54,11 @@ struct AndroidRootView: View {
             // interactive, or when the coordinator's safety timeout expires.
             if challengeBackgroundPending {
                 FAChallengeView(
-                    onResolved: { CloudflareChallengeCoordinator.shared.markResolved() },
+                    // Push the fresh clearance into the image layer *before* the
+                    // parked callers are released. Nothing else pushes it, so
+                    // without this every image replays a dead clearance until some
+                    // later page fetch happens to refresh it.
+                    onResolved: { refreshCredentialsThenRelease() },
                     onInteractionRequired: { CloudflareChallengeCoordinator.shared.markInteractionRequired() }
                 )
                 .allowsHitTesting(false)
@@ -131,7 +135,7 @@ struct AndroidRootView: View {
             )
         ) {
             FAChallengeView(
-                onResolved: { CloudflareChallengeCoordinator.shared.markResolved() }
+                onResolved: { refreshCredentialsThenRelease() }
             )
         }
         .task {
@@ -179,6 +183,20 @@ struct AndroidRootView: View {
         })
         .autorefreshingOnForeground {
             await model.autorefreshIfNeeded()
+        }
+    }
+
+    /// Hand the freshly minted clearance to the image layer, then release whoever
+    /// was parked on the challenge.
+    ///
+    /// Ordinary page traffic refreshes the image layer on its own (`FAWebSession`
+    /// wires `liveCookieHeader` through `refreshedCookieHeader()`), but a re-solve
+    /// isn't always followed by a page fetch — and images alone would then keep
+    /// replaying the clearance the WebView no longer has.
+    private func refreshCredentialsThenRelease() {
+        Task { @MainActor in
+            await FAWebSession.shared.refreshedCookieHeader()
+            CloudflareChallengeCoordinator.shared.markResolved()
         }
     }
 

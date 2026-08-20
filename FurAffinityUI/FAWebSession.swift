@@ -38,6 +38,13 @@ final class FAWebSession {
     /// check is synchronous, so it reads this instead.
     private(set) var lastKnownAuthCookies = [HTTPCookie]()
 
+    /// What was last pushed into the Coil image layer. That layer holds a *copy* on
+    /// the Kotlin side, so it can't pull a rotated clearance the way the HTTP layer
+    /// can — it has to be pushed to, and these two are how `refreshedCookieHeader()`
+    /// tells a rotation from a no-op.
+    private var pushedUserAgent: String?
+    private var pushedCookieHeader: String?
+
     private var isReady = false
     private var nextWaiterID = 0
     private var readyWaiters = [Int: CheckedContinuation<Bool, Never>]()
@@ -155,6 +162,37 @@ final class FAWebSession {
         }
     }
 
+    /// Reads the WebView's current UA and `Cookie:` header, pushing them into the
+    /// image layer when either has rotated since the last push.
+    ///
+    /// `cf_clearance` rotates — a re-solve mints a new one, and so does an ordinary
+    /// WebView navigation that trips a challenge. The HTTP layer can pull the fresh
+    /// header on every request; Coil can't, so this is the one place that keeps the
+    /// two in step.
+    @discardableResult
+    func refreshedCookieHeader() async -> String? {
+        let header = await navigator.cookieHeader(for: FAURLs.homeUrl)
+        let userAgent = await navigator.liveUserAgent()
+        guard userAgent != pushedUserAgent || header != pushedCookieHeader else { return header }
+
+        // Not while the engine is detached: it answers with nil/empty rather than an
+        // error, and pushing that would de-seed a perfectly good image layer.
+        guard let userAgent, let header, !header.isEmpty else { return header }
+
+        logger.info("FAWebSession: pushing rotated credentials to the image layer")
+        CoilImageLoader.configure(userAgent: userAgent, cookie: header)
+        pushedUserAgent = userAgent
+        pushedCookieHeader = header
+        return header
+    }
+
+    /// Drops what `refreshedCookieHeader()` remembers pushing, so the next real push
+    /// isn't skipped as a no-op. Logging out de-seeds the image layer behind our back.
+    func forgetPushedCredentials() {
+        pushedUserAgent = nil
+        pushedCookieHeader = nil
+    }
+
     /// Builds a session from whatever the shared cookie jar currently holds.
     ///
     /// Returns nil when there is nothing to build one from — no FA auth cookie
@@ -175,8 +213,11 @@ final class FAWebSession {
         let cookieHeader = await navigator.cookieHeader(for: FAURLs.homeUrl) ?? ""
 
         // Seed the Coil image layer with FA's UA + Cloudflare cookie header so avatar
-        // and thumbnail loads replay the clearance the WebView obtained.
+        // and thumbnail loads replay the clearance the WebView obtained. Recorded so
+        // the first `refreshedCookieHeader()` doesn't push the same pair again.
         CoilImageLoader.configure(userAgent: userAgent, cookie: cookieHeader)
+        pushedUserAgent = userAgent
+        pushedCookieHeader = cookieHeader
 
         let httpCookies = webCookies.map { $0.asHTTPCookie }.compactMap { $0 }
         let authCookies = httpCookies.filter { $0.name != "cf_clearance" && $0.name != "__cf_bm" }
@@ -192,7 +233,10 @@ final class FAWebSession {
                 let html = try await navigator.fetchPageHTML(url)
                 return Data(html.utf8)
             },
-            liveCookieHeader: { await navigator.cookieHeader(for: FAURLs.homeUrl) },
+            // Through the refresh, not the bare navigator read: ordinary page traffic
+            // is what most often notices a rotation first, and it should carry the
+            // image layer along rather than leave it replaying a dead clearance.
+            liveCookieHeader: { await FAWebSession.shared.refreshedCookieHeader() },
             liveUserAgent: { await navigator.liveUserAgent() }
         )
 

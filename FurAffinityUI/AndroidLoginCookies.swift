@@ -25,8 +25,11 @@ func clearLoginCookies() async {
     #endif
 
     // The image layer replays the same clearance; leaving it seeded would keep
-    // authenticating requests after the cookies are gone.
+    // authenticating requests after the cookies are gone. De-seeding it behind
+    // FAWebSession's back would also make the next real push look like a no-op, so
+    // clear what it remembers pushing too.
     CoilImageLoader.configure(userAgent: "", cookie: "")
+    await FAWebSession.shared.forgetPushedCredentials()
 }
 
 #if canImport(Android)
