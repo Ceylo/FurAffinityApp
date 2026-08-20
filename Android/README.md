@@ -233,10 +233,16 @@ for i in 1 2 3; do rm -rf .build/Darwin; skip app launch --android && break; don
 See [Module-name poisoning](#module-name-poisoning) for what causes this class of
 error and which two instances of it have been fixed.
 
-A related trap with the same signature: `Package.resolved` is git-ignored, so a `from:`
-pin on `skip` drifts past the installed CLI and the build fails *inside a dependency*
-(`AndroidUserDefaults` … "must use a 'required' initializer"). The pin is `exact:` for
-that reason — keep it equal to `skip version`.
+A related trap with the same signature: a `from:` pin on `skip` drifts past the
+installed CLI and the build fails *inside a dependency* (`AndroidUserDefaults` …
+"must use a 'required' initializer"). The pin is `exact:` for that reason — keep it
+equal to `skip version`.
+
+The root `Package.resolved` **is** committed (`.gitignore` carries a `!/Package.resolved`
+negation; `FAKit/Package.resolved` and the Xcode workspace's copy stay ignored). Three
+deps resolve from mutable `branch: "android"` refs, so without the recorded revisions a
+release APK isn't reproducible. Refreshing a fork is still
+`swift package update <dep>` — now followed by committing the resulting diff.
 
 Corollary: `skip android build` and `skip android test` being green does **not**
 mean the app still builds. Only `skip app launch` compiles the Darwin bridge, so
