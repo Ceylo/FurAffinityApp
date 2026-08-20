@@ -6,9 +6,9 @@
 //
 //  `HTMLView` takes an `AttributedString` on both platforms — on iOS a real one, built by
 //  WebKit's HTML importer. On Android nothing parses HTML into an attributed string, and
-//  nothing needs to: Compose parses the markup itself. So the string carries the markup
-//  verbatim as its characters, tagged run by run with the fragment it belongs to, and the
-//  view hands each fragment's markup straight to `Text(html:)`.
+//  nothing needs to: Compose parses the markup itself. So each fragment's markup rides in
+//  an attribute on runs whose characters are that same markup — the characters are what
+//  keep the runs apart — and the view hands it straight to `Text(html:)`.
 //
 //  Cross-platform on purpose: only Android builds one, but it is unit-tested on iOS.
 //
@@ -22,38 +22,21 @@ extension AttributedString {
         self.init()
         for (index, fragment) in fragments.enumerated() {
             var attributed = AttributedString(fragment.html)
-            attributed.faHTMLFragment = FAHTMLFragment(index: index, images: fragment.images)
+            attributed.faHTMLFragment = FAHTMLFragment(
+                index: index, html: fragment.html, images: fragment.images
+            )
             self += attributed
         }
     }
 
-    /// The carried fragments, in document order.
-    public var faHTMLFragments: [FAHTMLFragment.Carried] {
-        var result: [FAHTMLFragment.Carried] = []
+    /// The carried fragments, in document order. The markup rides in the attribute
+    /// value, so this only has to walk the runs and skip the repeats.
+    public var faHTMLFragments: [FAHTMLFragment] {
+        var result: [FAHTMLFragment] = []
         for run in runs {
             guard let fragment = run.faHTMLFragment else { continue }
-            if result.last?.fragment.index == fragment.index {
-                result[result.count - 1].html += String(self[run.range].characters)
-            } else {
-                result.append(FAHTMLFragment.Carried(
-                    fragment: fragment,
-                    html: String(self[run.range].characters)
-                ))
-            }
+            if result.last?.index != fragment.index { result.append(fragment) }
         }
         return result
-    }
-}
-
-extension FAHTMLFragment {
-    /// One fragment with the markup its runs carried.
-    public struct Carried: Hashable, Sendable {
-        public var fragment: FAHTMLFragment
-        public var html: String
-
-        public init(fragment: FAHTMLFragment, html: String) {
-            self.fragment = fragment
-            self.html = html
-        }
     }
 }

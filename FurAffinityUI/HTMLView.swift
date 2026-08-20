@@ -19,9 +19,9 @@ import FAKit
 
 struct HTMLView: View {
     // Not private: skipstone can't bridge a private state property.
-    // Read out of the carrier once — `body` runs on every recomposition of every row,
-    // and each pass rebuilds every fragment's markup into a fresh String.
-    var fragments: [FAHTMLFragment.Carried]
+    // Read out of the carrier here rather than in `body`: `init` still runs on every
+    // evaluation of the parent's body, but the walk is O(runs) with nothing built.
+    var fragments: [FAHTMLFragment]
     @Environment(\.openURL) var openURL
 
     init(text: AttributedString, initialHeight: CGFloat = 0) {
@@ -30,11 +30,11 @@ struct HTMLView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            ForEach(fragments, id: \.fragment.index) { carried in
-                if carried.fragment.index > 0 {
+            ForEach(fragments, id: \.index) { fragment in
+                if fragment.index > 0 {
                     Divider()
                 }
-                fragment(carried)
+                render(fragment)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
@@ -46,11 +46,11 @@ struct HTMLView: View {
         .padding(.horizontal, 8)
     }
 
-    private func fragment(_ carried: FAHTMLFragment.Carried) -> Text {
+    private func render(_ fragment: FAHTMLFragment) -> Text {
         #if canImport(Android)
         Text(
-            html: carried.html,
-            inlineViews: carried.fragment.images.map { image in
+            html: fragment.html,
+            inlineViews: fragment.images.map { image in
                 TextInlineView(
                     FAImage(image.url)
                         .resizable()
@@ -70,7 +70,7 @@ struct HTMLView: View {
         // The module's Darwin bridge compiles against real SwiftUI, which has no
         // HTML-parsing `Text`; this branch only has to typecheck. The file itself stays
         // unguarded so shared callers still find it.
-        Text(verbatim: carried.html)
+        Text(verbatim: fragment.html)
         #endif
     }
 }
@@ -79,8 +79,15 @@ private extension FAInlineImage {
     /// Compose reserves an inline placeholder's space before composing anything into
     /// it, so every image needs a size up front — from the markup where it states one,
     /// and otherwise from what FA's stylesheet would have given it.
-    var displayWidth: Double { width ?? fallbackExtent }
-    var displayHeight: Double { height ?? fallbackExtent }
+    var displayWidth: Double { statedSize?.width ?? fallbackExtent }
+    var displayHeight: Double { statedSize?.height ?? fallbackExtent }
+
+    /// Both or neither: a 300×19 slot squashes the image for good, which is worse than
+    /// the 19×19 one a fallback gives it.
+    private var statedSize: (width: Double, height: Double)? {
+        guard let width, let height else { return nil }
+        return (width, height)
+    }
 
     /// `.iconusername` avatars are capped at 50×50; everything else left unsized is a
     /// smilie, which sits on one line of text.

@@ -238,8 +238,8 @@ struct FAHTMLNormalizerFragmentTests {
 
         #expect(carried.count == fragments.count)
         #expect(carried.map(\.html) == fragments.map(\.html))
-        #expect(carried.map(\.fragment.images) == fragments.map(\.images))
-        #expect(carried.map(\.fragment.index) == Array(0..<fragments.count))
+        #expect(carried.map(\.images) == fragments.map(\.images))
+        #expect(carried.map(\.index) == Array(0..<fragments.count))
     }
 
     @Test

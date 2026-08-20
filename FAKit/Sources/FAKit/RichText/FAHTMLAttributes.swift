@@ -38,15 +38,19 @@ public struct FAInlineImage: Hashable, Sendable, Codable {
 /// A fragment of normalised markup carried inside an `AttributedString`.
 ///
 /// `HTMLView` takes an `AttributedString` on both platforms — iOS renders one for real —
-/// so on Android the string carries the markup as its characters and this on the runs,
-/// naming which fragment they belong to and which images its placeholders stand for.
+/// so on Android the markup rides here instead, on runs whose characters are that same
+/// markup: an attribute only survives on characters that exist.
 public struct FAHTMLFragment: Hashable, Sendable, Codable {
     /// Monotonic per-document. Consecutive fragments were separated by an `<hr>`.
     public var index: Int
+    /// The fragment's markup. Carried in the value rather than reassembled from the
+    /// characters, so reading the fragments back costs no string building.
+    public var html: String
     public var images: [FAInlineImage]
 
-    public init(index: Int, images: [FAInlineImage]) {
+    public init(index: Int, html: String, images: [FAInlineImage]) {
         self.index = index
+        self.html = html
         self.images = images
     }
 }
