@@ -104,6 +104,9 @@ struct NotificationOverlay: View {
             // CubicBezierEasing(0.42, 0, 0.58, 1), which is SwiftUI's own.
             .animation(.easeInOut(duration: Self.animationDuration), value: phase == .shown)
             .allowsHitTesting(false)
+            // `.opacity(0)`, unlike `.hidden()`, leaves the badge in the accessibility
+            // tree — so VoiceOver found a stale count floating over the feed at all times.
+            .accessibilityHidden(phase != .shown)
             .task(id: itemCount) {
                 guard let itemCount else { return }
                 lastCount = itemCount
