@@ -33,10 +33,12 @@ android {
     }
     packaging {
         jniLibs {
-            // Skip's template kept debug symbols in every .so. They are ~4x the payload
-            // — a release APK measured 436 MB with them — and the unstripped libraries
-            // stay under .build for symbolication either way.
-            pickFirsts.add("**/*.so")
+            // Stripping debug symbols out of the .so payload (436 -> 249 MB) is AGP's
+            // own stripReleaseDebugSymbols, and it needs the NDK installed — nothing
+            // is configured for it here. A `pickFirsts` blanket used to sit in this
+            // spot claiming credit for it; all it really did was silence duplicate-.so
+            // merge conflicts by picking one arbitrarily, which should fail the build.
+
             // this option would compress JNI .so files and reduce overall size for Skip Fuse apps, but cost more at install time
             //useLegacyPackaging = true
         }
