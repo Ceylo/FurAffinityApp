@@ -542,7 +542,7 @@ adb shell run-as com.example.id1234 cat shared_prefs/defaults.xml
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](#defaults)) |
 | `Ceylo/Kingfisher` | Android port |
-| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
+| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)`, `Text.+`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
 
 All on an `android` branch, referenced by URL + branch from `Package.swift` (and,
@@ -578,6 +578,32 @@ pad the Compose `Box` *wrapping* the row content: dead space outside the SwiftUI
 `CommentThreadConnector` overlays, which can only paint inside its own row. The thread
 lines therefore stopped at each row's edge with a visible gap. The fix is to overwrite
 on every non-nil visit instead, so the last (innermost) value wins.
+
+A third patch, to `Animation/Animation.swift`, is about the *recycling boundary*. A `List`
+row is a `LazyColumn` item, so scrolling it out of the composed window disposes its
+composition; Compose's `SaveableStateProvider` restores `rememberSaveable` slots on the way
+back but not plain `remember` ones. A value animation straddles that line:
+
+| slot | primitive | survives recycling? |
+|---|---|---|
+| the `@State` powering the animation | `rememberSaveable` | **yes**, already at its target |
+| `rememberedValue` / `hasChangedValue` in `View.animation(_:value:)` | `rememberSaveable` | **yes** → `isValueChange` is false, so `_animation` is never republished |
+| the `Animatable` in `toAnimatable` | `remember` | **no** → recreated *at the target value* |
+| `onAppear`'s `hasAppeared` | `remember` | no → it fires again, but writing `true` over `true` is a no-op |
+
+Everything that would restart the animation is gone and everything that would let it finish
+says it already has, so from the second composition on the row paints the end state
+statically and permanently — however much of the animation was still to run. `toAnimatable`
+already had the machinery in the saveable `resetValue`, but reserved it for restarting
+*infinite* animations. The patch generalises it to a record of the animation, its start
+value, its target and the uptime it started at, and resumes from that record: the
+`Animatable` is recreated at the start value and the spec re-run carrying a
+`StartOffset(elapsed, FastForward)`, so the animation picks up where disposal interrupted
+it. Past its end it snaps to the target, as it would have anyway; only duration-based specs
+get a record, since a spring has no play time to offset into.
+
+That is what the deep-linked comment's highlight pulse needed: it was only ever visible when
+the row's very first composition happened to land on screen.
 
 **Note:** skip-ui arrives transitively via skip-fuse-ui, so overriding it needs its own
 entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
@@ -1078,8 +1104,12 @@ which is why the refresh badge briefly lost its animation on Android.
 
 **State-driven properties do animate from a scoped animation**, because `.opacity`,
 `.offset` and `.scaleEffect` each read `EnvironmentValues._animation` themselves
-(`AdditionalViewModifiers.swift` → `Animatable.asAnimatable`). `NotificationOverlay` is the
-worked example: it stays mounted and moves through a `hidden → shown → fading → hidden`
+(`AdditionalViewModifiers.swift` → `Animatable.asAnimatable`). Since the animation-resume
+patch (see [Why skip-ui / skip-fuse-ui are forked](#why-skip-ui--skip-fuse-ui-are-forked))
+that also holds across recycling: an animation interrupted by a `List` row leaving the
+composed window resumes at the right point instead of dying at its end state.
+`NotificationOverlay` is the worked example: it stays mounted and moves through a
+`hidden → shown → fading → hidden`
 phase with `.opacity`/`.offset` and `.animation(_:value:)`, which reproduces `fallAndFade` —
 including its asymmetry, since fading holds the offset at 0 — on both platforms.
 
@@ -1100,7 +1130,8 @@ draws. Those, and `RemoteView`, `SubmissionPreviewView`, `SubmissionControlsView
 
 Ported: the image, the zoomable full-screen viewer, favorite (with the optimistic
 `UpdateHandler` rollback), Save to gallery, Share, the description with in-app link
-routing, read-only threaded comments, and the metadata screen.
+routing, read-only threaded comments including the deep-linked one's highlight pulse,
+and the metadata screen.
 
 Deferred, with the reason:
 
@@ -1109,7 +1140,6 @@ Deferred, with the reason:
 | Comment posting, note sending | The `CommentEditor`/`NoteEditor` UI isn't ported. Android passes `replyAction: nil` / `acceptsNewReplies: false`, so the swipe/context reply paths are inert. (`Replying`'s storage is now `@Observable`, not `ObservableObject`, so the machinery around the editors is no longer the blocker.) |
 | Story (`.text`) and music (`.audio`) submissions | `StoryDocument` (PDFKit reflow, DOCX, QuickLook) and AVPlayer + `MPNowPlayingInfoCenter` are Apple-only stacks. Both render a placeholder with a link to the file. |
 | `scrollToItem` (scroll a deep-linked comment into view) | see below |
-| The deep-linked comment's highlight **pulse** | The row background itself is correct since the `listRow*` precedence fix (before it, `SubmissionView`'s `.listRowBackground(Color.clear)` overrode `CommentView`'s). The *animation* is a separate SkipUI gap: a `listRowBackground` colour is not one of the state-driven properties that read `EnvironmentValues._animation` (see [`withAnimation` marks the whole frame](#withanimation-marks-the-whole-frame-process-wide)), so the row snaps straight to the transparent end state — with the implicit `.animation(_:)` *and* with a scoped `.animation(_:value:)` keyed on the `Bool`. Measured by slowing the fade to ~17 s: the tint never appears at all. |
 
 ### Android-only substitutes
 
