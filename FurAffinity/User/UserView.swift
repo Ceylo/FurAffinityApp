@@ -9,6 +9,7 @@
 
 import SwiftUI
 import FAKit
+import Kingfisher
 
 struct UserView: View {
     var user: FAUser
