@@ -555,6 +555,17 @@ for Defaults/Kingfisher, the Xcode project too). While iterating, re-point the r
 
 then push to the `android` branch before the step's gate.
 
+**Do not run `skip android build` / `skip android test` inside a fork checkout.**
+A framework package has no `.xcodeproj`, so both build modes share one `.build/`, and the
+Android/bridge pass strips the transpiled Kotlin out of
+`.build/plugins/outputs/skip-{lib,foundation,model,unit}/…/src/main/kotlin` without
+invalidating the `.Skip<Module>.sourcehash` files that llbuild tracks. skipstone is
+therefore never re-invoked for them, and the next `swift test --filter XCSkipTests` fails
+with thousands of `Unresolved reference 'sref' / 'MutableStruct' / …` that look like source
+errors but are just empty dependency jars. Recovery: `rm -rf .build/plugins/outputs`. The
+app worktree is immune — there `skip android build` writes to `.build/Darwin/DerivedData/`
+instead.
+
 ### Why skip-ui / skip-fuse-ui are forked
 
 SkipUI's `List` hardcodes a 16 dp horizontal + 8 dp vertical inset on every row
