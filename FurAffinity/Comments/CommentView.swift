@@ -95,7 +95,12 @@ struct CommentView: View {
                 .animation(
                     .easeInOut
                         .speed(0.333)
-                        .repeatCount(5, autoreverses: true)
+                        .repeatCount(5, autoreverses: true),
+                    // Keyed on the flag rather than left to the value-less overload: SkipSwiftUI
+                    // has no unconditional `animation(_:)`, so on Android that form resolves to
+                    // the `Self: Equatable` one and keys on the `Color` itself, compared over JNI
+                    // once per composition.
+                    value: rowBackgroundAnimated
                 )
         }
     }
