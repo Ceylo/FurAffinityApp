@@ -4,8 +4,7 @@
 //
 //  Dropping the credentials the login web view established, so SettingsView doesn't
 //  name a particular web stack. iOS is FALoginView (WebKit); Android re-declares this
-//  function over its own WebView in FurAffinityUI/AndroidLoginCookies.swift (which is
-//  why this file is not symlinked into the Skip module).
+//  function over its own WebView in Helpers/Android/LoginCookies+Android.swift.
 //
 
 #if !FA_SKIP_MODULE

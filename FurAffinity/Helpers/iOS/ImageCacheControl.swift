@@ -4,8 +4,7 @@
 //
 //  The image cache's Settings-facing surface, so SettingsView doesn't name a
 //  particular image stack. iOS is Kingfisher; Android re-declares this enum over its
-//  own pipeline in FurAffinityUI/AndroidImageCacheControl.swift (which is why this
-//  file is not symlinked into the Skip module).
+//  own pipeline in Helpers/Android/ImageCacheControl+Android.swift.
 //
 
 #if !FA_SKIP_MODULE

@@ -36,7 +36,7 @@ module by that name makes `canImport(os)` true for the whole Android build; see
 `Text(_:inlineViews:)`, `Text + Text` and `FlowRow`, all unavailable or absent
 upstream). Images go through an Android-only pipeline
 (`FAImageStore` + `FACoilBridge`) rather than Kingfisher, and Save/Share through
-`FAMediaBridge`. See `Android/README.md` for build/run/test, the symlink-farm rationale,
+`FAMediaBridge`. See `Android/README.md` for build/run/test, why everything unported is guarded,
 the fork list, what the submission screen defers and why, and the image-pipeline rules.
 
 ## Architecture
