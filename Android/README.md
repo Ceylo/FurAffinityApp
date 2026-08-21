@@ -542,7 +542,7 @@ adb shell run-as com.example.id1234 cat shared_prefs/defaults.xml
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](#defaults)) |
 | `Ceylo/Kingfisher` | Android port |
-| `Ceylo/skip-ui` | `listRowInsets`; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
+| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)`, `Text.+`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
 
 All on an `android` branch, referenced by URL + branch from `Package.swift` (and,
@@ -567,6 +567,17 @@ The patch threads an optional `EdgeInsets` through `ListItemModifier` into
 `contentModifier`, each edge defaulting to the existing constant, and un-`unavailable`s
 `View.listRowInsets` in both repos (skip-ui alone is unreachable from a native Fuse
 module). See `SkipSpike/UPSTREAM_INVENTORY.md` §B item 5b for the upstream context.
+
+A second patch to the same file fixes how *nested* `listRow*` modifiers resolve.
+`ListItemModifier.combined(for:)` kept the first non-nil value it saw and
+`Renderable.forEachModifier` walks outermost → innermost, so an ancestor's
+`listRowInsets` / `listRowBackground` / `listRowSeparator` overrode the row's own —
+the opposite of SwiftUI, which resolves them innermost-wins. That silently gave
+`SubmissionView`'s comment rows the ancestor's 5 dp/5 dp vertical insets, and those
+pad the Compose `Box` *wrapping* the row content: dead space outside the SwiftUI view
+`CommentThreadConnector` overlays, which can only paint inside its own row. The thread
+lines therefore stopped at each row's edge with a visible gap. The fix is to overwrite
+on every non-nil visit instead, so the last (innermost) value wins.
 
 **Note:** skip-ui arrives transitively via skip-fuse-ui, so overriding it needs its own
 entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
@@ -1098,6 +1109,7 @@ Deferred, with the reason:
 | Comment posting, note sending | The `CommentEditor`/`NoteEditor` UI isn't ported. Android passes `replyAction: nil` / `acceptsNewReplies: false`, so the swipe/context reply paths are inert. (`Replying`'s storage is now `@Observable`, not `ObservableObject`, so the machinery around the editors is no longer the blocker.) |
 | Story (`.text`) and music (`.audio`) submissions | `StoryDocument` (PDFKit reflow, DOCX, QuickLook) and AVPlayer + `MPNowPlayingInfoCenter` are Apple-only stacks. Both render a placeholder with a link to the file. |
 | `scrollToItem` (scroll a deep-linked comment into view) | see below |
+| The deep-linked comment's highlight **pulse** | The row background itself is correct since the `listRow*` precedence fix (before it, `SubmissionView`'s `.listRowBackground(Color.clear)` overrode `CommentView`'s). The *animation* is a separate SkipUI gap: a `listRowBackground` colour is not one of the state-driven properties that read `EnvironmentValues._animation` (see [`withAnimation` marks the whole frame](#withanimation-marks-the-whole-frame-process-wide)), so the row snaps straight to the transparent end state — with the implicit `.animation(_:)` *and* with a scoped `.animation(_:value:)` keyed on the `Bool`. Measured by slowing the fade to ~17 s: the tint never appears at all. |
 
 ### Android-only substitutes
 
