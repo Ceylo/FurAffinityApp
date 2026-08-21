@@ -8,6 +8,11 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
+    <!-- .sensoryFeedback(…) reaches android.os.Vibrator through SkipUI, which calls it
+         unguarded; without this the first haptic throws SecurityException and takes the
+         process down. Normal (install-time) permission — never requested at runtime. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <!-- allowBackup is off deliberately: there are no backup rules, so the WebView's
          cookie jar — the FA auth cookies and cf_clearance — would otherwise be eligible
          for Google cloud backup, and restoring it onto another device would hand over a
