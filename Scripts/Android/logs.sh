@@ -122,8 +122,22 @@ if (( ALL )); then
     [[ -n "$APP_ID" ]] || APP_ID="$(skip_env PRODUCT_BUNDLE_IDENTIFIER)"
     [[ -n "$APP_ID" ]] || die "no app id in $ROOT/Skip.env"
 
-    PID="$("$ADB" shell pidof "$APP_ID" 2>/dev/null | tr -d '\r' | awk '{print $1}')"
-    [[ -n "$PID" ]] || die "$APP_ID is not running — launch it with \`skip app launch --android\`"
+    app_pid() {
+        "$ADB" shell pidof "$1" 2>/dev/null | tr -d '\r' | awk '{print $1}'
+    }
+
+    # The debug build carries a per-worktree suffix (Android/app/build.gradle.kts);
+    # a release or distribution install does not, so fall back to the bare id.
+    WORKTREE="$(basename "$ROOT")"
+    SUFFIXED="$APP_ID.${WORKTREE//[^A-Za-z0-9_]/_}"
+
+    PID="$(app_pid "$SUFFIXED")"
+    if [[ -n "$PID" ]]; then
+        APP_ID="$SUFFIXED"
+    else
+        PID="$(app_pid "$APP_ID")"
+    fi
+    [[ -n "$PID" ]] || die "neither $SUFFIXED nor $APP_ID is running — launch it with \`Scripts/Android/run-android.sh\`"
 
     logcat "${ARGS[@]}" --pid="$PID" "${EXTRA_TAGS[@]}"
     exit
