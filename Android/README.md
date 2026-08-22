@@ -20,7 +20,7 @@ FurAffinity/             ALL app sources — and the Skip target's directory
   iOS/                     iOS-only sources + Info.plist, entitlements, icons
   Resources/               the Android asset catalog Skip mirrors
   Skip/skip.yml            marks this a native Skip module
-Scripts/Android/         emulator, derived art
+Scripts/Android/         emulator, logs, derived art
 FAKit/                   shared Swift package (cross-compiles, see AGENTS.md)
 ```
 
@@ -317,10 +317,26 @@ resolves the transpiled module under that group, so a mismatch fails Gradle with
 ## Debug
 
 ```
-adb logcat | grep -i fur.affinity           # app logs (tagged fur.affinity.ui.FurAffinityUI)
-adb logcat -s FurAffinityUI                  # or filter by tag
-adb logcat -d | grep CFFALLBACK              # how often the WebView fetch is used
+Scripts/Android/logs.sh                      # our tags only, live
+Scripts/Android/logs.sh -a                   # every line from the app process
+Scripts/Android/logs.sh -d | grep CFFALLBACK # how often the WebView fetch is used
 ```
+
+The app logs far less than it emits: a typical minute is dominated by
+`SkipWeb.WebView` resource lines and `chromium`. `logs.sh` filters by tag rather
+than by pid, so it also keeps streaming across an app restart, where `--pid=`
+goes silent. The tags it passes to `adb logcat -s` are `fur.affinity.ui/FA`,
+`FurAffinity/FAKit`, `FurAffinity/FAPages` and each Kotlin bridge's `TAG` — the
+first is derived from `ANDROID_PACKAGE_NAME` and the last are read out of
+`Android/app/src/main/kotlin/`, so neither drifts. Requires `adb` only at
+`$ANDROID_HOME/platform-tools`, not on `PATH`.
+
+`logcat -v color` paints the whole line, message included, which makes long URLs
+hard to read. `--color` picks how much gets painted instead: `prefix` (the
+default on a terminal) colors `<time> <level>/<tag>(<pid>):` in the level's color
+and leaves the message on the terminal's own foreground, `level` colors only the
+level letter, `full` is logcat's own whole-line color, and `none` — the default
+when the output is piped — disables it.
 
 `[CFFALLBACK]` tags every use of the WebView-fetch fallback — the slow path, up
 to three navigations of 8 s polling. One line on entry, one on rescue, so a
