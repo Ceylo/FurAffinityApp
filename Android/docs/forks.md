@@ -3,12 +3,11 @@
 | Fork | Why |
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
-| `Ceylo/Kingfisher` | Android port |
 | `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)`, `Text.+`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
 
 All on an `android` branch, referenced by URL + branch from `Package.swift` (and,
-for Defaults/Kingfisher, the Xcode project too). While iterating, re-point the root
+for Defaults, the Xcode project too). While iterating, re-point the root
 `Package.swift` at a local clone:
 
 ```
@@ -16,6 +15,12 @@ for Defaults/Kingfisher, the Xcode project too). While iterating, re-point the r
 ```
 
 then push to the `android` branch before the step's gate.
+
+The root `Package.resolved` **is** committed (`.gitignore` carries a `!/Package.resolved`
+negation; `FAKit/Package.resolved` and the Xcode workspace's copy stay ignored). Three
+deps resolve from mutable `branch: "android"` refs, so without the recorded revisions a
+release APK isn't reproducible. Refreshing a fork is still
+`swift package update <dep>` — now followed by committing the resulting diff.
 
 **Do not run `skip android build` / `skip android test` inside a fork checkout.**
 A framework package has no `.xcodeproj`, so both build modes share one `.build/`, and the

@@ -92,7 +92,10 @@ other worktrees'. `-r` alone still fails with `INSTALL_FAILED_UPDATE_INCOMPATIBL
 if a *debug*-signed build of the same applicationId is installed — that one needs
 `adb uninstall ceylo.FurAffinity` first, which wipes the FA session cookies.
 The applicationId is `PRODUCT_BUNDLE_IDENTIFIER` (`ceylo.FurAffinity` with the stash
-applied), **not** `ANDROID_PACKAGE_NAME` (`fur.affinity.ui`, the module package). To
+applied), **not** `ANDROID_PACKAGE_NAME` (`fur.affinity.ui`, the module package).
+Without the stash it is `Skip.env`'s committed default, `com.example.id1234` — which
+is why a plain `skip app launch` build answers to *that* id (see
+[Debug](build-and-run.md#debug)) and a stashed release build to `ceylo.FurAffinity`. To
 launch from the shell rather than the icon:
 `adb shell monkey -p ceylo.FurAffinity -c android.intent.category.LAUNCHER 1`.
 

@@ -117,12 +117,24 @@ never the iOS app target — so:
   The exception is a name a *package* already declares on Darwin: `Helpers/Android/AndroidDefault.swift`
   is `#if os(Android)`-guarded precisely because the bridge compile resolves `Default`
   from the real Defaults package, and an unguarded declaration would collide.
-- **`import os` needs no guard.** Android's Swift SDK has no `os` module, so FAKit
-  ships one: a target literally named `os` (`FAKit/Sources/OSCompat/`) that re-exports
-  `AndroidLogging`'s `Logger` and vends a no-op `OSSignposter`. It is only ever a
-  dependency `.when(platforms: [.android])`, so Darwin still resolves the system
-  module. Only `Logger` + the `OSSignposter` subset FAKit/FAPages use are covered —
-  anything else from `os` (e.g. `OSAllocatedUnfairLock`) still needs a guard, or an
+- **`import os` needs `#if canImport(os)`.** Android's Swift SDK has no `os`
+  module, so FAKit ships `OSCompat` (`FAKit/Sources/OSCompat/`), which re-exports
+  `AndroidLogging`'s `Logger` and vends a no-op `OSSignposter`. It is a dependency
+  only `.when(platforms: [.android])`, so Darwin still resolves the system module,
+  and the three call sites pick between them:
+
+  ```swift
+  #if canImport(os)
+  import os
+  #else
+  import OSCompat
+  #endif
+  ```
+
+  It must **not** be named `os` — see
+  [Module-name poisoning](build-and-run.md#module-name-poisoning) item 1. Only
+  `Logger` + the `OSSignposter` subset FAKit/FAPages use are covered — anything
+  else from `os` (e.g. `OSAllocatedUnfairLock`) still needs a guard, or an
   addition to the shim.
 - **Every `@Observable` compiled for Android must have `SkipAndroidBridge` in
   scope in its own file** — in practice `import SwiftUI`, never `import

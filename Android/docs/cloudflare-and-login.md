@@ -86,33 +86,13 @@ Two candidate causes were tested and both are settled.
 **The duplicated `Cookie` header was real, and was not the cause.** Every request
 used to send every pair twice (`FAWebSession` derives the base header and
 `OnlineFASession`'s auth cookies from the same jar, and the merge concatenated
-them). Fixed by merging on name. Measured A/B inside one session — a marker file
-in the cache dir flipped the behaviour per launch, arms alternating, so the
-bursts described below could not favour one arm:
+them). Fixed by merging on name. An A/B inside one session measured **null** by
+the rule fixed before the run; the fix stands on principle, not on that
+measurement — no browser sends a pair twice.
 
-| Arm | Challenged requests | Wilson 95% |
-|---|---|---|
-| A — deduped | 8/9 (88.9%) | [56.5%, 98.0%] |
-| B — duplicated | 6/7 (85.7%) | [48.7%, 97.4%] |
-
-Null, per the rule fixed before the run. Read it with the caveat that both arms
-sat near the ceiling: the window was a saturated one, so the test had little
-power to detect a smaller effect. It rules out "duplication is what breaks
-autologin"; it does not prove duplication is free. The fix stands on its own —
-no browser sends a pair twice.
-
-**It is not the emulator either.** Same minute, same egress IPv4:
-
-| Client | Result |
-|---|---|
-| App URLSession (WebView UA + full cookie header) | `403 cf-mitigated: challenge` |
-| Mac `curl --http1.1 -4`, same UA + same cookies *(bad clearance — see below)* | `403 cf-mitigated: challenge` |
-| Mac curl, no cookies / default UA / desktop Chrome UA | `403` in all three |
-| **Emulator Chrome, same IP** | **full page, no interstitial** |
-
-It is not the address, then. The conclusion drawn at the time — "the
-discriminator is browser engine vs bare client" — **was over-claimed**, and what
-actually settled it is below.
+**It is not the emulator either.** Same minute, same egress IPv4, emulator Chrome
+loaded the full page while the app was refused `403 cf-mitigated: challenge`. It
+is not the address, then.
 
 **The hidden WebView cannot solve a challenge, which is the real defect.**
 Emulator Chrome cleared the interstitial unattended in under 15 s; the 1×1,
@@ -172,12 +152,13 @@ Mac through plain `curl`, the barest client there is.
 | `curl --http1.1 -4`, WebView UA + full cookie header | known-good | **200, 6/6**, ~135 KB, logged in |
 | `curl --http1.1 -4`, WebView UA, no cookies | none | 403 `cf-mitigated: challenge` |
 
-**So the bare client was never the problem.** The earlier run in this document —
-"Mac curl with identical UA and cookies is refused 403" — is not reproducible with
-a *valid* clearance; what it was replaying was a token from a WebView that had
-never actually solved a challenge, carried alongside a climbing `cf_chl_rc_ni`.
-The discriminator is the token, not the engine. Nothing here argues for a
-physical device, a different HTTP stack, or more header tuning.
+**So the bare client was never the problem.** Engine-vs-bare-client was tested
+directly and is *not* the discriminator: an earlier Mac-curl run refused 403 under
+the app's exact UA and cookies is not reproducible with a *valid* clearance — what
+it replayed was a token from a WebView that had never actually solved a challenge,
+carried alongside a climbing `cf_chl_rc_ni`. The discriminator is the token, not
+the engine. Nothing here argues for a physical device, a different HTTP stack, or
+more header tuning.
 
 That also means the WebView-fetch fallback is a backstop rather than the main
 road: with a good clearance, `URLSession` is expected to carry page loads.

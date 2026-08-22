@@ -48,41 +48,6 @@ Transpiled Kotlin lands under `.build/` (e.g.
 `.build/plugins/outputs`, `.build/Darwin`, and `.build/Android` after changing
 `Skip.env` — the generated Gradle module namespace is cached there.
 
-### Our `os` module poisons whatever compiles after it
-
-The compatibility target FAKit ships for `import os` ([Layout](#layout)) is *named* `os`,
-so once `os.swiftmodule` exists in a scratch directory, every later target in that build
-sees `#if canImport(os)` come out **true on Android** and takes its Apple branch. Three
-known victims, none of which name the cause:
-
-- `Defaults` (`Utilities.swift`) then does `import os` and fails with
-  `missing required module 'AndroidNDK'` — it never declared that dependency, so
-  AndroidNDK's modulemap isn't on its search path. AndroidNDK is a red herring.
-- swift-android-native's `AndroidLogging` then does `@_exported import OSLog` →
-  `no such module 'OSLog'`.
-- swift-android-native's `AndroidSystem` then reaches for `os_unfair_lock` →
-  `cannot find type 'os_unfair_lock' in scope`.
-
-Nothing orders those targets after `os` (`AndroidSystem` isn't even a product, so we
-can't depend on it), so this is a scheduling race: it stays invisible while they happen
-to compile first, and a version bump that reshuffles the build — a bare
-`swift package update <fork>` floating `skip` (`from: "1.9.4"`) past the installed CLI
-(`skip version`) is one — is enough to lose it. Keep the `skip` pin equal to the CLI.
-
-`rm -rf .build` does **not** fix it; this is not the stale-build phantom it imitates.
-Recover by rebuilding each victim while `os` is absent:
-
-```
-M=.build/aarch64-unknown-linux-android28/debug/Modules      # Gradle's copy lives under
-rm -f $M/os.swiftmodule $M/os.swiftdoc $M/os.swiftsourceinfo  # .build/Darwin/…/build/swift
-swift build --swift-sdk aarch64-unknown-linux-android28 \
-  -Xswiftc -DSKIP_BRIDGE -Xswiftc -DTARGET_OS_ANDROID --target Defaults
-skip android build
-```
-
-(`--target AndroidLogging` / `--target AndroidSystem` the same way if those are what
-failed.) A real fix means not owning a module called `os`.
-
 ### Two sources of the Gradle version
 
 `skip gradle` (and the Xcode `Run skip gradle` phase) shells out to the `gradle` on
@@ -128,11 +93,8 @@ installed CLI and the build fails *inside a dependency* (`AndroidUserDefaults` �
 "must use a 'required' initializer"). The pin is `exact:` for that reason — keep it
 equal to `skip version`.
 
-The root `Package.resolved` **is** committed (`.gitignore` carries a `!/Package.resolved`
-negation; `FAKit/Package.resolved` and the Xcode workspace's copy stay ignored). Three
-deps resolve from mutable `branch: "android"` refs, so without the recorded revisions a
-release APK isn't reproducible. Refreshing a fork is still
-`swift package update <dep>` — now followed by committing the resulting diff.
+The root `Package.resolved` **is** committed, so a branch-pinned fork needs its
+refresh committed too — see [Forks](forks.md).
 
 Corollary: `skip android build` and `skip android test` being green does **not**
 mean the app still builds. Only `skip app launch` compiles the Darwin bridge, so
