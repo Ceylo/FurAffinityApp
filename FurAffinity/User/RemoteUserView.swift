@@ -19,7 +19,6 @@ struct RemoteUserView: View {
         let session = try model.session.unwrap()
         let user = try await session.user(for: url)
         description = try await AttributedString(FAHTML: user.htmlDescription)
-            .convertingLinksForInAppNavigation()
         return user
     }
     

@@ -32,16 +32,6 @@ extension LinkActivation {
     }
 }
 
-extension AttributedString {
-    func convertingLinksForInAppNavigation() -> AttributedString {
-        self.transformingAttributes(\.link) { link in
-            if let url = link.value {
-                link.value = url.convertedForInAppNavigation
-            }
-        }
-    }
-}
-
 @MainActor @ViewBuilder
 func view(for target: FATarget) -> some View {
     switch target {

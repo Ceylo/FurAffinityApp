@@ -28,7 +28,7 @@ struct JournalView: View {
     
     var journalContents: some View {
         HTMLView(
-            text: journal.description.convertingLinksForInAppNavigation(),
+            text: journal.description,
             initialHeight: 300
         )
     }
