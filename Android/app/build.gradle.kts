@@ -24,6 +24,12 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.4.0")
 }
 
+// One installable per git worktree, so every branch can sit on the same emulator
+// instead of overwriting the previous one. `rootDir` is Android/, so its parent is
+// the worktree root; applicationId segments allow only [A-Za-z0-9_].
+val worktree = rootDir.parentFile.name
+val worktreeId = worktree.replace(Regex("[^A-Za-z0-9_]"), "_")
+
 android {
     namespace = group as String
     compileSdk = libs.versions.android.sdk.compile.get().toInt()
@@ -51,10 +57,16 @@ android {
         // applicationId = ANDROID_APPLICATION_ID ?? PRODUCT_BUNDLE_IDENTIFIER
         // versionCode = CURRENT_PROJECT_VERSION
         // versionName = MARKETING_VERSION
+
+        // The launcher label. Skip's template used ${PRODUCT_NAME}, which has to stay
+        // equal to the Swift module name (FurAffinityUI) and so can't be the app's name.
+        resValue("string", "app_name", "Fur Affinity")
     }
 
     buildFeatures {
         buildConfig = true
+        // AGP 9 defaults this off, and resValue(…) without it is a configuration error.
+        resValues = true
     }
 
     lint {
@@ -96,6 +108,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Distinct id, launcher label and data dir per worktree; release untouched.
+            applicationIdSuffix = ".$worktreeId"
+            resValue("string", "app_name", worktree)
+        }
+
         release {
             // A universal APK is 249 MB, and three ABIs of the Swift runtime are all
             // but ~18 MB of it. arm64-v8a covers every Android 9+ phone worth sending
