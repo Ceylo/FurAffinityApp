@@ -8,6 +8,11 @@
 import SwiftUI
 import FAKit
 
+/// External entry point only — saved URLs in Reminders, Shortcuts and the like,
+/// delivered through `.onOpenURL`. In-app links never use it: they route
+/// in-process through `NavigationStream`.
+///
+/// - Important: must stay in sync with `CFBundleURLSchemes` in `FurAffinity/Info.plist`.
 let appNavigationScheme = "furaffinity-app-navigation"
 
 extension URL {
