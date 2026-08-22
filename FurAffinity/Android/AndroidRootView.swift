@@ -110,7 +110,7 @@ struct AndroidRootView: View {
                     // and has no FATarget destinations.
                     SettingsView()
                         // Same "an update is available" dot as LoggedInView's.
-                        .badge(model.isUpdateAvailable ? " " : nil)
+                        .badge(model.appInfo.isUpToDate == false ? " " : nil)
                         .tabItem {
                             Label("Settings", systemImage: "gearshape")
                         }

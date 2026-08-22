@@ -128,16 +128,9 @@ class Model: NotificationsNuker, NotificationsDeleter {
         return session
     }
     
-    /// Mirrors `appInfo.isUpToDate` so the badge survives a refetch: `fetch()` nils
-    /// `isUpToDate` before its request, so a view reading through `appInfo` would drop
-    /// the badge for the length of every autorefresh. Written only on success, so the
-    /// last known answer stands.
-    private(set) var isUpdateAvailable = false
-
     func updateAppInfo() async {
         do {
             try await appInfo.fetch()
-            isUpdateAvailable = !(appInfo.isUpToDate ?? true)
             lastAppInfoUpdate = Date()
         } catch {
             // not a big deal if the above failed, no need to notify
