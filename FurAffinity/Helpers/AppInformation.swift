@@ -7,7 +7,11 @@
 
 import FAKit
 import Foundation
-import Observation
+// Not `import Observation`: on Android the @Observable macro expands to
+// `Observation.ObservationRegistrar`, and only SwiftUI's re-exported
+// SkipAndroidBridge shadows that name with the registrar Compose actually
+// tracks. Importing the real module instead leaves this object silently inert.
+import SwiftUI
 import Version
 #if canImport(FoundationNetworking)
 // URLSession/URLRequest live here in corelibs Foundation (Android).

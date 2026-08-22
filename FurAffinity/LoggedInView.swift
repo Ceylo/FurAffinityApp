@@ -116,7 +116,7 @@ struct LoggedInView: View {
                 }
                 
                 SettingsView()
-                    .badge(model.isUpdateAvailable ? " " : nil)
+                    .badge(model.appInfo.isUpToDate == false ? " " : nil)
                     .tabItem {
                         Label("Settings", systemImage: "slider.horizontal.3")
                     }

@@ -9,7 +9,9 @@
 
 import Foundation
 import Dispatch
-import Observation
+// SwiftUI, not Observation: it is what pulls in SkipAndroidBridge's shadowed
+// ObservationRegistrar. See AppInformation.swift.
+import SwiftUI
 
 enum ActionState: Identifiable, CaseIterable {
     case idle
