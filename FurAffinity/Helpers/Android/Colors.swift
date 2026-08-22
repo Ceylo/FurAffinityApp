@@ -3,7 +3,7 @@
 //  FurAffinityUI (Android)
 //
 //  The colorsets shared views reach for by name. Each single-sources the iOS entry
-//  through a symlinked `Contents.json` (see Android/README.md §Sharing asset-catalog
+//  through a symlinked `Contents.json` (see Android/docs/assets-and-resources.md §Sharing asset-catalog
 //  entries) — only `bundle: .module` differs from the iOS declarations.
 //
 

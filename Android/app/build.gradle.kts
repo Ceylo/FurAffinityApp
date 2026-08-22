@@ -124,7 +124,7 @@ tasks.configureEach {
         if (!file("keystore.properties").isFile) {
             throw GradleException(
                 "$path would sign with the DEBUG key: Android/app/keystore.properties is missing. " +
-                    "See Android/README.md § Release signing."
+                    "See Android/docs/releasing.md § Release signing."
             )
         }
     }

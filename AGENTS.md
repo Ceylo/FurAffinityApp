@@ -29,15 +29,15 @@ Logging works on both platforms via `#if canImport(os) import os #else import OS
 FAKit ships an Android-only `OSCompat` target (`FAKit/Sources/OSCompat/`) vending
 `Logger` (→ logcat) and a no-op `OSSignposter`. It must **not** be named `os` — a
 module by that name makes `canImport(os)` true for the whole Android build; see
-`Android/README.md` § Module-name poisoning, which is also why FAKit gates SwiftUI on
-`#if !os(Android)` rather than `canImport`. Four dependencies are forked on
-`Ceylo/<repo>` `android` branches — `Defaults`, `Kingfisher`, and `skip-ui`/`skip-fuse-ui`
+`Android/docs/build-and-run.md` § Module-name poisoning, which is also why FAKit gates
+SwiftUI on `#if !os(Android)` rather than `canImport`. Three dependencies are forked on
+`Ceylo/<repo>` `android` branches — `Defaults` and `skip-ui`/`skip-fuse-ui`
 (the latter two for `listRowInsets`, `Text(html:)`, `Text(AttributedString)` /
 `Text(_:inlineViews:)`, `Text + Text` and `FlowRow`, all unavailable or absent
 upstream). Images go through an Android-only pipeline
 (`FAImageStore` + `FACoilBridge`) rather than Kingfisher, and Save/Share through
-`FAMediaBridge`. See `Android/README.md` for build/run/test, why everything unported is guarded,
-the fork list, what the submission screen defers and why, and the image-pipeline rules.
+`FAMediaBridge`. `Android/README.md` orients and indexes the topic docs under
+`Android/docs/`.
 
 ## Architecture
 

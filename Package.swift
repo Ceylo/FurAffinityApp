@@ -26,7 +26,7 @@ let package = Package(
         // Keep this equal to `skip version`.
         .package(url: "https://source.skip.tools/skip.git", exact: "1.9.4"),
         // Forked for `listRowInsets`, `Text(AttributedString)`, `FlowRow` and a few
-        // unavailable-to-passthrough fixes — see Android/README.md §Forks. skip-ui comes
+        // unavailable-to-passthrough fixes — see Android/docs/forks.md. skip-ui comes
         // in transitively via skip-fuse-ui, so it must be overridden here too.
         .package(url: "https://github.com/Ceylo/skip-fuse-ui.git", branch: "android"),
         .package(url: "https://github.com/Ceylo/skip-ui.git", branch: "android"),

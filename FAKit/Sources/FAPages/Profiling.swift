@@ -13,7 +13,7 @@ import os
 // Android has no `os`; OSCompat vends the same Logger/OSSignposter surface.
 // It must NOT be named `os`: a module by that name makes canImport(os) true for
 // every target in the build, and whatever compiles after it takes its Apple
-// branch and fails (see Android/README.md § The `os` compatibility module).
+// branch and fails (see Android/docs/shared-sources.md § Rules for shared sources).
 import OSCompat
 #endif
 

@@ -3,7 +3,7 @@
 //  FurAffinityUI (Android)
 //
 //  Points `Defaults` at the store the rest of the app uses. `UserDefaults.standard`
-//  means two different things on Android — see Android/README.md §Defaults.
+//  means two different things on Android — see Android/docs/shared-sources.md §Defaults.
 //
 
 import Foundation
