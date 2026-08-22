@@ -29,23 +29,18 @@ extension UserProfileControl {
         }
     }
     
-    func destinationUrl(for user: String) -> URL {
+    func target(for user: String) -> FATarget {
         switch self {
         case .gallery:
-            FAURLs.galleryUrl(for: user)
-                .convertedForInAppNavigation
+            .gallery(url: FAURLs.galleryUrl(for: user))
         case .favorites:
-            FAURLs.favoritesUrl(for: user)
-                .convertedForInAppNavigation
+            .favorites(url: FAURLs.favoritesUrl(for: user))
         case .journals:
-            FAURLs.journalsUrl(for: user)
-                .convertedForInAppNavigation
+            .journals(url: FAURLs.journalsUrl(for: user))
         case .watching:
-            FAURLs.watchlistUrl(for: user, page: 1, direction: .watching)
-                .convertedForInAppNavigation
+            .watchlist(url: FAURLs.watchlistUrl(for: user, page: 1, direction: .watching))
         case .watchedBy:
-            FAURLs.watchlistUrl(for: user, page: 1, direction: .watchedBy)
-                .convertedForInAppNavigation
+            .watchlist(url: FAURLs.watchlistUrl(for: user, page: 1, direction: .watchedBy))
         }
     }
 }
