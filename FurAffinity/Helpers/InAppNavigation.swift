@@ -20,6 +20,18 @@ extension URL {
     }
 }
 
+/// What a tap on a link in rendered rich text should do.
+enum LinkActivation: Equatable {
+    case navigate(FATarget)
+    case openExternally
+}
+
+extension LinkActivation {
+    init(for url: URL) {
+        self = FATarget(with: url).map(Self.navigate) ?? .openExternally
+    }
+}
+
 extension AttributedString {
     func convertingLinksForInAppNavigation() -> AttributedString {
         self.transformingAttributes(\.link) { link in
