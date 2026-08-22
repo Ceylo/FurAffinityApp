@@ -194,6 +194,30 @@ final class FAWebSession {
         return header
     }
 
+    private var navigatorQueue: Task<Void, Never> = Task {}
+
+    /// The only way in to the shared navigator's WebView fallback.
+    ///
+    /// `WebViewNavigator.fetchPageHTML` navigates the one engine and then reads the
+    /// DOM back out of it, so two at once interleave loads and one fetch returns the
+    /// other's page — a *wrong parse*, not merely a slow one. `@MainActor` is no
+    /// defence: every `await` inside is a suspension point the other fetch runs at.
+    func fetchPageHTML(_ url: URL) async throws -> String {
+        let previous = navigatorQueue
+        let fetch = Task { @MainActor in
+            await previous.value
+            return try await navigator.fetchPageHTML(url)
+        }
+        // Unstructured on purpose: a caller cancelling must advance the queue, not
+        // wedge it.
+        navigatorQueue = Task { _ = try? await fetch.value }
+        let html = try await fetch.value
+        // The navigation that rescued this page may have minted a clearance; carry
+        // the image layer along rather than leave it replaying the old one.
+        await refreshedCookieHeader()
+        return html
+    }
+
     /// Drops what `refreshedCookieHeader()` remembers pushing, so the next real push
     /// isn't skipped as a no-op. Logging out de-seeds the image layer behind our back.
     func forgetPushedCredentials() {
@@ -240,15 +264,15 @@ final class FAWebSession {
         let authCookies = httpCookies.filter { $0.name != "cf_clearance" && $0.name != "__cf_bm" }
         lastKnownAuthCookies = authCookies
 
-        // Captures the *shared* navigator, not a screen's: the fallback has to keep
-        // working after the login view is gone.
+        // Captures the *shared* navigator, not a screen's: the UA read has to keep
+        // working after the login view is gone. The fallback fetch goes through
+        // `fetchPageHTML` instead, which serializes access to that same engine.
         let navigator = self.navigator
         let dataSource = FAHTTPDataSource(
             userAgent: userAgent,
             cookieHeader: cookieHeader,
             webViewFetch: { url in
-                let html = try await navigator.fetchPageHTML(url)
-                return Data(html.utf8)
+                Data(try await FAWebSession.shared.fetchPageHTML(url).utf8)
             },
             // Through the refresh, not the bare navigator read: ordinary page traffic
             // is what most often notices a rotation first, and it should carry the
