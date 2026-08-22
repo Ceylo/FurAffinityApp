@@ -128,10 +128,10 @@ class Model: NotificationsNuker, NotificationsDeleter {
         return session
     }
     
-    /// Mirrors `appInfo.isUpToDate` onto `Model` itself so a view can badge on it.
-    /// Skip's Compose bridge doesn't see changes to a *nested* @Observable, so
-    /// `model.appInfo.isUpToDate` never recomposes the Android tab bar — measured:
-    /// an unconditional badge draws, one reading through `appInfo` never appears.
+    /// Mirrors `appInfo.isUpToDate` so the badge survives a refetch: `fetch()` nils
+    /// `isUpToDate` before its request, so a view reading through `appInfo` would drop
+    /// the badge for the length of every autorefresh. Written only on success, so the
+    /// last known answer stands.
     private(set) var isUpdateAvailable = false
 
     func updateAppInfo() async {
