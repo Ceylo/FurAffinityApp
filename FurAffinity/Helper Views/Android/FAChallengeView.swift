@@ -68,24 +68,40 @@ struct FAChallengeView: View {
         await FAWebSession.shared.clearCloudflareCookies()
         try? await navigator.loadOrThrow(url: FAURLs.homeUrl)
 
-        let startedAt = ContinuousClock.now
+        // Only stage 1 has anywhere to escalate *to*: the sheet is the escalation,
+        // and AndroidRootView passes it no handler. So it never probes, and it
+        // never stops polling — the poll is the only thing that can report the
+        // user solving it.
+        let canEscalate = onInteractionRequired != nil
+        var hasEscalated = false
+        // Date rather than ContinuousClock so elapsed feeds the shared predicate
+        // with no conversion; a 2 s grace doesn't need a monotonic clock.
+        let startedAt = Date()
+
         while !Task.isCancelled {
             try? await Task.sleep(for: .milliseconds(500))
 
-            if await hasReachedRealHomePage() {
+            let snapshot = (canEscalate && !hasEscalated)
+                ? FAInterstitial.challengeSnapshot(
+                    fromEvaluated: await navigator.evaluatedString(FAInterstitial.challengeSnapshotJS))
+                : nil
+
+            switch FAInterstitial.challengeStep(
+                reachedRealPage: await hasReachedRealHomePage(),
+                snapshot: snapshot,
+                elapsed: Date().timeIntervalSince(startedAt),
+                hasEscalated: hasEscalated
+            ) {
+            case .resolved:
                 logger.info("Cloudflare challenge resolved in FAChallengeView")
                 onResolved()
                 return
-            }
-
-            let elapsed = ContinuousClock.now - startedAt
-            // A managed challenge briefly looks unsolved before it resolves
-            // itself; don't escalate inside that window.
-            guard elapsed >= Self.escalationGrace else { continue }
-            if await isInteractive() {
+            case .escalate:
                 logger.info("Cloudflare served an interactive challenge; escalating")
+                hasEscalated = true
                 onInteractionRequired?()
-                return
+            case .keepPolling:
+                break
             }
         }
     }
@@ -99,27 +115,4 @@ struct FAChallengeView: View {
         }
         return (try? FAHomePage(html: html, url: FAURLs.homeUrl)) != nil
     }
-
-    /// Whether the challenge is one a human has to click through.
-    ///
-    /// Reads the challenge's own declaration — `_cf_chl_opt.cType`, where
-    /// `managed` and `non-interactive` clear themselves and `interactive` does
-    /// not — rather than measuring the Turnstile checkbox the way FAKit's version
-    /// tries to. That widget lives in a *closed* shadow root, so
-    /// `document.querySelector('iframe[src*=…]')` can never reach it and always
-    /// measures 0.
-    @MainActor
-    private func isInteractive() async -> Bool {
-        let cType = await navigator.evaluatedString(Self.challengeTypeJS)
-        return cType == "interactive"
-    }
-
-    private static let escalationGrace: Duration = .seconds(2)
-
-    static let challengeTypeJS = """
-    (function() {
-        var o = window._cf_chl_opt;
-        return (o && o.cType) ? String(o.cType) : 'none';
-    })()
-    """
 }
