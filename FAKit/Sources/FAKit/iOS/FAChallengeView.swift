@@ -50,59 +50,17 @@ public struct FAChallengeView: View {
             })
     }
 
-    struct CFDOMSnapshot: Decodable {
-        var onChallenge: Bool
-        /// Cloudflare's own name for the kind of challenge it served.
-        var cType: String
-        var title: String
-        var href: String
-    }
-
-    /// The global Cloudflare's interstitial declares its challenge on. Named once
-    /// so `FAChallengeViewDOMTests` can hold it against a captured interstitial —
-    /// this used to read `__cf_chl_opt`, with two underscores, which matches
-    /// nothing and made `interactionRequired` below dead code.
-    nonisolated static let challengeOptionsGlobal = "_cf_chl_opt"
-
-    /// Whether the challenge is one a human has to click through, so the flow
-    /// should escalate to the visible sheet.
-    ///
-    /// Reads the challenge's own declaration: `managed` and `non-interactive`
-    /// clear themselves, `interactive` does not. The elapsed gate avoids
-    /// escalating in the window before the interstitial's script has populated
-    /// the global.
-    ///
-    /// Deliberately *not* measured from the Turnstile checkbox's size, which is
-    /// what this did before: that widget lives in a **closed** shadow root, so
-    /// `document.querySelector('iframe[src*="challenges.cloudflare.com"]')` can
-    /// never reach it and always measures 0.
-    nonisolated static func interactionRequired(snapshot: CFDOMSnapshot, elapsed: TimeInterval) -> Bool {
-        snapshot.onChallenge && snapshot.cType == "interactive" && elapsed >= 2.0
-    }
-
     private func periodicDOMCheck(in webView: WKWebView) async {
         guard !hasResolved, !hasEscalated else { return }
 
-        let js = """
-        (function() {
-            var o = window.\(Self.challengeOptionsGlobal);
-            return JSON.stringify({
-                onChallenge: !!o,
-                cType: (o && o.cType) ? String(o.cType) : '',
-                title: document.title,
-                href: location.href
-            });
-        })()
-        """
-
         guard
-            let jsonStr = try? await webView.evaluateJavaScript(js) as? String,
-            let data = jsonStr.data(using: .utf8),
-            let snap = try? JSONDecoder().decode(CFDOMSnapshot.self, from: data)
+            let raw = try? await webView.evaluateJavaScript(
+                FAInterstitial.challengeSnapshotJS) as? String,
+            let snap = FAInterstitial.challengeSnapshot(fromEvaluated: raw)
         else { return }
 
         let elapsed = pageLoadedAt.map { Date().timeIntervalSince($0) } ?? 0
-        let interactionRequired = Self.interactionRequired(snapshot: snap, elapsed: elapsed)
+        let interactionRequired = FAInterstitial.interactionRequired(snapshot: snap, elapsed: elapsed)
         let msg = String(format:
             "CF bg t=%.1fs title='%@' onChallenge=%@ cType=%@%@",
             elapsed, snap.title,

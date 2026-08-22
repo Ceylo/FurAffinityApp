@@ -410,13 +410,15 @@ stays manual.
 `Bundle.main.version` reads 0.0.0 on Android, which would silently invert the
 comparison; `FAAppVersion` is what makes it right (see the User-Agent section).
 
-The tab badge goes through `Model.isUpdateAvailable`, **not**
-`model.appInfo.isUpToDate`. Skip's Compose bridge doesn't see changes to a nested
-`@Observable`, so the tab bar never recomposes when `appInfo` changes — measured:
-an unconditional `.badge("9")` draws immediately, the same badge read through
-`appInfo` never appears. Mirroring the flag onto the `Model` the view already
-observes fixes it, and iOS uses the same expression. Same class of problem as the
-Cloudflare stage flags at the top of `AndroidRootView`.
+The tab badge reads `model.appInfo.isUpToDate == false` directly, same expression
+as iOS. It used to go through a `Model.isUpdateAvailable` mirror, justified by
+"Skip's bridge doesn't see changes to a *nested* `@Observable`" — that diagnosis
+was wrong. Nesting has nothing to do with it: `AppInformation.swift` imported
+`Observation` rather than `SwiftUI`, so the object got the stdlib registrar and
+was inert. See [Every `@Observable` needs `SkipAndroidBridge` in
+scope](#every-observable-needs-skipandroidbridge-in-scope). One import fixed the
+badge and Settings' "Latest available version" row together, and the mirror is
+gone.
 
 ## Release signing
 
@@ -766,6 +768,18 @@ FAImage.swift          KFImage-shaped view + the prefetch API shared views call.
 
 Rules that are easy to get wrong here:
 
+- **Never push a `Cookie:` header that lost its `cf_clearance`.** Coil cannot pull
+  a fresh header per request the way the HTTP layer can, so
+  `FAWebSession.refreshedCookieHeader()` is the one place that keeps the two in
+  step — and a header read *mid-wipe* has no clearance at all. Pushing that
+  de-seeds the image layer and every subsequent request's `Cookie:` line, turning
+  one challenged fetch into a stampede. The guard is timing-free: if the incoming
+  header carries no clearance and the last pushed one did, hand the last-good one
+  back. Expiring the cookie locally does not invalidate it at the edge, so
+  replaying it is correct, and `pushedCookieHeader` already *is* the last-good
+  header — no new state. `String.carriesCloudflareClearance` (in FAKit, so
+  `StringFATests` covers it under the iOS gate) matches the cookie *name*: a plain
+  `contains("cf_clearance=")` would also accept `xcf_clearance`.
 - **Nothing decodes on the main actor.** `.task` on a SwiftUI view is MainActor-isolated,
   so anything after an `await` in it resumes on the main thread. Decoding belongs on
   `FAImageStore`'s queue.
@@ -979,6 +993,45 @@ physical device, a different HTTP stack, or more header tuning.
 That also means the WebView-fetch fallback is a backstop rather than the main
 road: with a good clearance, `URLSession` is expected to carry page loads.
 
+### One navigation at a time, and when to wipe
+
+Two rules govern the shared engine `FAWebSession` owns.
+
+**All fallback fetches go through `FAWebSession.fetchPageHTML(_:)`.**
+`WebViewNavigator.fetchPageHTML` navigates that one engine and then reads the DOM
+back out of it, so two at once interleave loads and one fetch returns the other's
+page — a *wrong parse*, not merely a slow one. `@MainActor` is no defence: every
+`await` inside is a suspension point the other fetch runs at. The gate chains each
+fetch behind the previous one, unstructured on purpose so a cancelling caller
+advances the queue rather than wedging it, and refreshes the cookie header on the
+way out (the navigation that rescued this page may have minted a clearance the
+image layer should carry). N concurrent fallbacks become a queue; if that ever
+bites, the next lever is per-URL coalescing, not de-serializing.
+
+**`clearCloudflareCookies()` runs before a *retry*, not before the first
+navigation.** We reach the fallback because *URLSession* was challenged, which says
+nothing about the WebView's own clearance — and dropping it costs every other
+request and every image the clearance they were about to replay. Once a navigation
+comes back still challenged, the `cf_chl_rc_ni` counter among those cookies is what
+the edge escalates on, so the wipe is right from `attempt > 1` on.
+
+Measured over paired cold launches with `cf_clearance` deleted and an uncommitted
+`challengeRetries = 1` (so any challenge drops straight to the fallback), same
+scroll both times:
+
+| | before | after |
+|---|---|---|
+| 403 challenge lines | 8 | 1 |
+| `asking for resolution` | 5 | 1 |
+| `[CFFALLBACK]` lines | 6 | 0 |
+| credential pushes | 2 | 1 |
+
+The remaining challenge is the deliberate cold-start deletion. Cloudflare's gate is
+probabilistic per request, so one pair carries noise, but 6 → 0 fallbacks is well
+outside it. The interleaving the queue prevents was *not* reproducible: across four
+forced-challenge runs the emulator never had two fallbacks in flight at once, so
+that half lands as a correctness guard rather than a measured fix.
+
 ### The challenge escalation path
 
 `CloudflareChallengeCoordinator` is shared with iOS — only its defaults are
@@ -1010,13 +1063,43 @@ Two things differ from FAKit's iOS view and are worth knowing:
   platforms now read `cType`. The captured interstitial is a fixture
   (`www.furaffinity.net:cloudflare-managed-challenge.html`) and
   `FAChallengeViewDOMTests` holds the probe's global against it.
-- **The stage flags are mirrored into the view's own `@State`.** Skip's Compose
-  bridge does not observe an `@Observable` declared in another module, so reading
-  `coordinator.pending` directly recomposes nothing and neither stage ever
-  mounts. `CloudflareChallengeCoordinator.onStateChange` exists for this.
+- **The stage flags are mirrored into the view's own `@State`.** Reading
+  `coordinator.pending` directly recomposes nothing, so `AndroidRootView` keeps
+  local `@State` fed by `CloudflareChallengeCoordinator.onStateChange`. The cause
+  is import visibility, not cross-module nesting: `CloudflareChallengeCoordinator`
+  lives in FAKit, a plain SwiftPM package, so its `@Observable` gets the stdlib
+  registrar (see [Every `@Observable` needs `SkipAndroidBridge` in
+  scope](#every-observable-needs-skipandroidbridge-in-scope)). Unlike the
+  app-module cases, **this one cannot be fixed with an import.** Adding
+  `skip-android-bridge` to `FAKit/Package.swift` was tried and reverted: the iOS
+  build survives it fine, but the Android compile fails with `missing required
+  module 'CJNI'` — `CJNI` is generated by skipstone, which never processes a
+  plain SwiftPM package. The mirror stays until FAKit itself is skipstone-built.
+
+#### Escalation must latch, not return
+
+`FAChallengeView.solveChallenge()` polls; it does **not** stop when it escalates.
+It used to `return` right after calling `onInteractionRequired()`, which killed
+the only thing that could observe the user solving the challenge it had just
+escalated to — stage 1 went inert the moment stage 2 appeared, and nothing ever
+reported the resolution.
+
+The decision is `FAInterstitial.challengeStep(reachedRealPage:snapshot:elapsed:hasEscalated:)`,
+in FAKit so it is testable — the Android app module has no test target. Its
+resolution branch sits **above** the `hasEscalated` latch: the latch silences
+repeat escalation only, never detection.
+
+Stage 2 passes no `onInteractionRequired` — the sheet *is* the escalation — so it
+never probes at all, which also keeps a `_cf_chl_opt` eval every 500 ms off the
+sheet's hot path.
+
+Two `FAChallengeView`s are briefly alive while stage 1 unmounts. Both can only
+reach `markResolved()` → `complete()`, which is idempotent. Benign.
 
 Still unexercised: the interactive sheet. Cloudflare served only managed
-challenges throughout, so stage 2 has never actually drawn.
+challenges throughout, so stage 2 has never actually drawn, and the
+escalate → stay-alive → human-click → resolve sequence is covered by
+`FAChallengeViewDOMTests` rather than on-device.
 
 So `fetchPageHTML` no longer hands the interstitial to the parser (which
 reported it as a missing element at `FAHomePage.swift:28`, naming a parser line
@@ -1242,6 +1325,8 @@ exposes — no `/tmp` involved.
 
 ## Rules for shared sources
 
+<a name="every-observable-needs-skipandroidbridge-in-scope"></a>
+
 An *unguarded* file under `FurAffinity/` is compiled **twice more** than the iOS target
 compiles it: once for Android (`os(Android)` true) and once for the module's Darwin
 bridge (`os(Android)` **false**, UIKit importable). Both compiles see only this module —
@@ -1277,26 +1362,52 @@ never the iOS app target — so:
   module. Only `Logger` + the `OSSignposter` subset FAKit/FAPages use are covered —
   anything else from `os` (e.g. `OSAllocatedUnfairLock`) still needs a guard, or an
   addition to the shim.
-- **An `@Observable` needs `SkipAndroidBridge` in scope — in practice `import SwiftUI`,
-  never `import Observation` alone.** The macro expands to
-  `Observation.ObservationRegistrar`, and that name has two resolutions on Android:
-  SkipAndroidBridge's `public struct Observation`, whose nested registrar calls
-  `skip/model/MutableStateBacking` (`Java_access`/`Java_update`) and so registers the
-  Compose read, or the real `Observation` **module**, whose stdlib registrar knows
-  nothing about Compose. The struct shadows the module, but only where it is imported;
-  `SkipSwiftUI/Fuse/Observation.swift` re-exports both, which is why `import SwiftUI` is
-  enough and why almost every `@Observable` here works by accident of that import.
-  Get it wrong and the class compiles, runs and mutates correctly while **no view ever
-  redraws** — no error, no warning. `MediaSaveHandler+Android.swift` imported
-  `Observation`, so `SubmissionControlsView` never saw `saveHandler.state` change: the
-  `SaveButton` checkmark never appeared and its `.sensoryFeedback` never fired, while
-  the handler logged `.inProgress → .succeeded → .idle` on time (measured 2026-08-22 —
-  one import swap restored checkmark, `onChange` and haptic together). This is also why
-  FAKit's `@Observable`s never drive the UI: a plain SwiftPM package cannot import the
-  bridge at all, so mirror their state into the view's own `@State` (see
-  `CloudflareChallengeCoordinator`). Same name-resolution family as
-  [Module-name poisoning](#module-name-poisoning), inverted: there a module shadowed
-  what a target wanted, here a type must shadow a module and fails to when unimported.
+- **Every `@Observable` compiled for Android must have `SkipAndroidBridge` in
+  scope in its own file** — in practice `import SwiftUI`, never `import
+  Observation` on its own.
+
+  The macro expands to `Observation.ObservationRegistrar`, and that name resolves
+  two ways. `SkipAndroidBridge` vends a `public struct Observation` whose nested
+  registrar hops through JNI to Compose's `MutableStateBacking`; the real
+  `Observation` *module* vends the stdlib one, which knows nothing about Compose.
+  The struct shadows the module, but only where `SkipAndroidBridge` is imported —
+  and `SkipSwiftUI/Fuse/Observation.swift` does `@_exported import
+  SkipAndroidBridge`, which is why a plain `import SwiftUI` suffices and why most
+  `@Observable`s here work by accident of that import.
+
+  The symptom is the nastiest kind: compiles clean, mutates correctly, and the
+  view simply never re-renders. No error, no warning. `AppInformation` (the update
+  badge and Settings' version row) and `MediaSaveHandler+Android` (the Save
+  checkmark and its haptic) were both silently inert this way.
+  `SubmissionControlsView` never saw `saveHandler.state` change, so the checkmark,
+  its `onChange` and its `.sensoryFeedback` all stayed silent while the handler
+  logged `.inProgress → .succeeded → .idle` on time (measured 2026-08-22 — one
+  import swap restored all three together).
+
+  To check which registrar a file got, demangle its undefined symbols:
+
+```
+nm -u .build/Darwin/DerivedData/Build/Intermediates.noindex/BuildToolPluginIntermediates/\
+<worktree>.output/FurAffinityUI/skipstone/FurAffinityUI/build/swift/\
+aarch64-unknown-linux-android28/debug/FurAffinityUI.build/<File>.swift.o \
+  | swift demangle | grep ObservationRegistrar
+```
+
+  `SkipAndroidBridge.Observation.ObservationRegistrar` is bridged;
+  a bare `Observation.ObservationRegistrar` is inert. Grep the Android-built tree
+  for `^import Observation` — each hit is a silent non-recomposition waiting to
+  happen.
+
+  This does **not** reach FAKit. A plain SwiftPM package cannot depend on
+  `SkipAndroidBridge`: it drags in `skip-bridge`, whose `CJNI` module is generated
+  by skipstone and unresolvable outside it. FAKit's `@Observable`s therefore still
+  need mirroring into a view's `@State` — see the Cloudflare stage flags in
+  `AndroidRootView`.
+
+  Same name-resolution family as [Module-name poisoning](#module-name-poisoning),
+  inverted: there a module shadowed what a target wanted, here a type must shadow
+  a module and fails to when unimported.
+
 - `#if` blocks must contain balanced braces — split an `if/else` into two whole
   branches rather than fencing one arm.
 - `@State`/`@Environment` on a bridged view must be **internal**, not `private`, and so

@@ -97,9 +97,15 @@ extension WebViewNavigator {
     @MainActor
     func fetchPageHTML(_ url: URL, attempts: Int = 3) async throws -> String {
         for attempt in 1...attempts {
-            // Never re-present Cloudflare's own cookies to a challenge: the
-            // re-challenge counter among them is what the edge escalates on.
-            await FAWebSession.shared.clearCloudflareCookies()
+            // Not on the first navigation: we get here because *URLSession* was
+            // challenged, which says nothing about the WebView's own clearance — and
+            // dropping it costs every other request and every image the clearance they
+            // were about to replay. Once a navigation comes back still challenged, the
+            // counter among those cookies is what the edge escalates on, so wipe
+            // before retrying.
+            if attempt > 1 {
+                await FAWebSession.shared.clearCloudflareCookies()
+            }
             try await loadOrThrow(url: url)
             let deadline = ContinuousClock.now + .seconds(8)
             repeat {

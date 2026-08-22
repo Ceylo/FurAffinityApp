@@ -13,6 +13,16 @@ extension String {
     static private let imageInliner = ImageInliner()
     #endif
 
+    /// Whether this `Cookie:` header carries a Cloudflare clearance.
+    ///
+    /// Splits on `;` and matches the cookie *name* exactly — a plain
+    /// `contains("cf_clearance=")` would also accept `xcf_clearance=`.
+    public var carriesCloudflareClearance: Bool {
+        split(separator: ";").contains { pair in
+            pair.drop(while: { $0 == " " }).hasPrefix("cf_clearance=")
+        }
+    }
+
     private var fixingLinks: String {
         self.replacingOccurrences(of: "href=\"/", with: "href=\"https://www.furaffinity.net/")
             .replacingOccurrences(of: "src=\"//", with: "src=\"https://")

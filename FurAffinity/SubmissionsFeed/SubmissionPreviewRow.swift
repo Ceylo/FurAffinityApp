@@ -22,7 +22,6 @@ struct SubmissionPreviewRow: View {
         // of the row reacts. FALink's button covers the whole row instead.
         FALink(destination: .submission(url: preview.url, previewData: preview)) {
             SubmissionFeedItemView<TitleAuthorHeader>(submission: preview)
-                .id(preview.sid)
         }
         .withFullWidthTapArea()
         #else
@@ -37,7 +36,6 @@ struct SubmissionPreviewRow: View {
             .opacity(0)
 
             SubmissionFeedItemView<TitleAuthorHeader>(submission: preview)
-                .id(preview.sid)
         }
         #endif
     }
