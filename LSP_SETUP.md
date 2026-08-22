@@ -18,11 +18,13 @@ xcode-build-server config -project FurAffinity.xcodeproj -scheme FurAffinity
 Then rebuild:
 
 ```
-xcodebuildmcp simulator build --project-path FurAffinity.xcodeproj --scheme FurAffinity --simulator-name "iPhone 17" --use-latest-os false
+xcodebuildmcp simulator build --project-path FurAffinity.xcodeproj --scheme FurAffinity --simulator-id "$(Scripts/iOS/simulator.sh --udid)"
 ```
 
-`--use-latest-os false` keeps this off the locally-installed iOS 27.0 beta runtime, which
-has no plain "iPhone 17" — the same reason the `xcodebuild` destination pins `OS=26.5`.
+Building by simulator *id* targets this worktree's own device (see `AGENTS.md` §Tests)
+and sidesteps the name trap: a bare `--simulator-name "iPhone 17"` resolves against the
+locally-installed iOS 27.0 beta runtime, which has only an "iPhone 17 **Pro**". With
+`--simulator-name` you need `--use-latest-os false` to avoid that.
 
 ## LSP operation coverage
 

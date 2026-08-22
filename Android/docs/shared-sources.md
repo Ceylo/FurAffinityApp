@@ -82,8 +82,11 @@ To check what actually persisted — never trust a read-back of `Defaults[…]`,
 what hid this:
 
 ```
-adb shell run-as com.example.id1234 cat shared_prefs/defaults.xml
+adb shell run-as com.example.id1234.<worktree> cat shared_prefs/defaults.xml
 ```
+
+(a debug build's applicationId carries the worktree suffix — see
+[Run](build-and-run.md#run))
 
 ## Rules for shared sources
 

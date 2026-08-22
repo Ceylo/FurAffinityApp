@@ -87,10 +87,13 @@ on a running emulator or device, install it by hand and launch it from the icon:
 adb install -r -d out/FurAffinityUI-release.apk
 ```
 
-`-d` (allow downgrade) because this worktree's versionCode 11900 is ahead of the
-other worktrees'. `-r` alone still fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`
-if a *debug*-signed build of the same applicationId is installed — that one needs
-`adb uninstall ceylo.FurAffinity` first, which wipes the FA session cookies.
+`-d` (allow downgrade) in case an install with a higher versionCode is already
+there. A debug build no longer gets in the way: it carries a per-worktree
+`applicationIdSuffix` (see [Run](build-and-run.md#run)), so it is a different
+package and cannot raise `INSTALL_FAILED_UPDATE_INCOMPATIBLE` against the
+release id. Only another *release*-signed install of the same id can, and that
+one needs `adb uninstall ceylo.FurAffinity` first, which wipes the FA session
+cookies.
 The applicationId is `PRODUCT_BUNDLE_IDENTIFIER` (`ceylo.FurAffinity` with the stash
 applied), **not** `ANDROID_PACKAGE_NAME` (`fur.affinity.ui`, the module package).
 Without the stash it is `Skip.env`'s committed default, `com.example.id1234` — which

@@ -33,7 +33,8 @@ FurAffinity/             ALL app sources — and the Skip target's directory
   iOS/                     iOS-only sources + Info.plist, entitlements, icons
   Resources/               the Android asset catalog Skip mirrors
   Skip/skip.yml            marks this a native Skip module
-Scripts/Android/         emulator, logs, derived art
+Scripts/Android/         emulator, run, logs, derived art
+Scripts/iOS/             this worktree's simulator device
 FAKit/                   shared Swift package (cross-compiles, see AGENTS.md)
 ```
 
@@ -60,8 +61,14 @@ run and test. Each command is explained in
 
 ```
 Scripts/Android/start-android-emulator.sh    # boots, waits, never touches the app
-skip app launch --android                    # builds the bridge, installs, launches
+Scripts/Android/run-android.sh               # builds, installs, starts this worktree's app
 ```
+
+Each worktree installs its **own** debug app (its directory name becomes the
+`applicationIdSuffix` and the launcher label), which is why running it goes
+through that script: `skip app launch --android` installs the same APK and then
+starts the *unsuffixed* id. It still has its own use — it is the only command
+that compiles the Darwin bridge.
 
 ```
 skip android build           # transpile + compile via SwiftPM (fast inner loop)
@@ -71,7 +78,7 @@ skip export                  # release artifacts
 ```
 Scripts/Android/logs.sh                      # our tags only, live
 cd FAKit && skip android test --testing-library testing
-xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,OS=26.5,name=iPhone 17'
+xcodebuild test -scheme FurAffinity -destination "id=$(Scripts/iOS/simulator.sh --udid)"
 ```
 
 The iOS build must stay green at every step; `skip android build` being green

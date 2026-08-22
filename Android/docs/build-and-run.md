@@ -71,10 +71,27 @@ the end of `Android/settings.gradle.kts` mirrors `sdk.dir` into every included b
 ## Run
 
 ```
-skip app launch --android    # builds the bridge, installs, and launches on the emulator
+Scripts/Android/run-android.sh   # builds, installs, and starts this worktree's app
 ```
 
 Boot an emulator first (see [Emulator](#emulator)) — this does not start one.
+
+Every worktree installs its **own** debug app: `Android/app/build.gradle.kts`
+derives an `applicationIdSuffix` and the launcher label from the worktree
+directory name, so branches sit side by side on the single shared AVD instead of
+overwriting one another (which is also what used to force `adb install -r -d`
+past `INSTALL_FAILED_VERSION_DOWNGRADE`). Release is untouched.
+
+That is why running goes through the script rather than
+`skip app launch --android`: `skip` reads the app id from `Skip.env`, so it
+installs the suffixed APK correctly and then starts an id that is not there.
+`run-android.sh` builds with `./gradlew :app:installDebug` (the full pipeline —
+see [shared sources](shared-sources.md#why-everything-unported-is-guarded) for
+why that matters), reads the activity's package from `Skip.env`, and holds the
+emulator lock while it runs.
+
+`skip app launch --android` keeps its own job: it is the only command that
+compiles the Darwin bridge, so it is how you prove that still builds.
 
 **The bridge build can fail for reasons that are not your change**, reporting
 `missing required module 'AndroidNDK'`/`'CJNI'` or `no such module 'OSLog'` while
@@ -99,6 +116,22 @@ refresh committed too — see [Forks](forks.md).
 Corollary: `skip android build` and `skip android test` being green does **not**
 mean the app still builds. Only `skip app launch` compiles the Darwin bridge, so
 a change that genuinely breaks it can sit unnoticed through a commit.
+
+### The shared emulator
+
+There is one ~2 GB AVD for every worktree, and two of them installing or testing
+on it at once fight over it while doubling the Gradle daemon's heap. Anything
+that drives the emulator from a second worktree goes through the lock:
+
+```
+Scripts/Android/with-emulator-lock.sh skip android test --testing-library testing
+Scripts/Android/with-emulator-lock.sh ./gradlew :app:connectedDebugAndroidTest
+```
+
+It waits (`--timeout`, default 1800 s), names the holder if the wait is real, and
+exits with the wrapped command's status. The lock records the holder's pid, so
+one left behind by a crashed run clears itself rather than deadlocking the next.
+`run-android.sh` takes it itself — do not wrap that one.
 
 ### Module-name poisoning
 
@@ -164,11 +197,13 @@ fallback with no matching `rescued by WebView` line is one that failed. Since th
 challenge coordinator landed, a healthy session shows **none at all**: challenges
 are resolved by `FAChallengeView` and the retry goes through `URLSession`.
 
-The **installed app id is `com.example.id1234`**, not `net.furaffinity.spike` — so
-`adb shell run-as com.example.id1234 …` is how you reach its data directory (the
-image cache lives at `cache/fa_coil_cache`).
+The **installed app id is `com.example.id1234`**, not `net.furaffinity.spike` —
+plus, for a debug build, this worktree's suffix. So reaching the data directory
+(the image cache lives at `cache/fa_coil_cache`) is
+`adb shell run-as com.example.id1234.<worktree> …`; `run-android.sh` prints the
+id it starts, and `adb shell pm list packages | grep example` lists them all.
 
-Every `skip app launch --android` drops the WebView's Cloudflare clearance, so the
+Every install drops the WebView's Cloudflare clearance, so the
 next run shows FA's "Verify you are human" checkbox. It needs a **real click in the
 emulator window**: synthetic `adb shell input tap` events do not clear it (that was
 the cause of the old "CF loop").
@@ -210,13 +245,19 @@ The parser + logic layer is tested on the emulator via FAKit:
 cd FAKit && skip android test --testing-library testing
 ```
 
+From a second worktree, wrap that in
+`Scripts/Android/with-emulator-lock.sh` (see [the shared
+emulator](#the-shared-emulator)).
+
 The iOS build must stay green at every step:
 
 ```
-xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,OS=26.5,name=iPhone 17'
+xcodebuild test -scheme FurAffinity -destination "id=$(Scripts/iOS/simulator.sh --udid)"
 ```
 
-(`OS=26.5` is not optional locally — see the note in `AGENTS.md` §Tests.)
+That device is this worktree's own — see the note in `AGENTS.md` §Tests, which is
+also where the `OS=26.5` pinning trap a bare `name=` destination falls into is
+explained.
 
 ## Wiping the build state
 

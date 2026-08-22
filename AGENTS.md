@@ -114,13 +114,17 @@ Scheme `FurAffinity` covers `FAKitTests`, `FAPagesTests`, `FurAffinityTests`. Pa
 HTML fixtures must **never** be generated or fabricated. Always capture real page source from furaffinity.net in a browser (logged-in, specific account as needed), then save the raw HTML as the fixture file.
 
 ```
-xcodebuild test -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5'
-xcrun simctl list devices available | grep -E "iPhone|iPad"   # list available destinations
+xcodebuild test -scheme FurAffinity -destination "id=$(Scripts/iOS/simulator.sh --udid)"
 ```
 
-Pin `OS=26.5`: the bare name resolves to `OS:latest`, which is the locally-installed
-iOS 27.0 beta runtime — and that one has only an "iPhone 17 **Pro**", so the destination
-fails to match.
+`Scripts/iOS/simulator.sh` manages this worktree's *own* device — `FA <worktree
+directory>`, an `iPhone 17 / iOS 26.5` created on first use (`--help` for another
+device type, `--shutdown` to stop one). Each worktree gets its own so branches
+don't overwrite each other's app container; shut down the ones you aren't using.
+
+Destination-by-id also retires the `OS=26.5` pinning trap: a bare
+`name=iPhone 17` resolves to `OS:latest`, the locally-installed iOS 27.0 beta
+runtime, which has only an "iPhone 17 **Pro**" and so matches nothing.
 
 ## Dependencies
 
@@ -151,6 +155,24 @@ FAKit: SwiftSoup, Cache, SwiftGraph, swift-collections, ZIPFoundation (DOCX unzi
   half is guarded down to nothing. Hence the `+Android` suffix on the eleven substitution
   files; the directory still carries the meaning.
 - Only remote-loading wrappers that own `@Environment(Model.self)` (e.g. `RemoteSubmissionView`) may depend on `Model`. Leaf/content views must receive what they need via inputs or injected closures — never reach into `Model`.
+- **Several worktrees at once.** iOS gets a simulator device per worktree
+  (`Scripts/iOS/simulator.sh`, above); Android keeps sharing the one emulator, and
+  instead gives each worktree its own **debug** app — `applicationIdSuffix` and
+  launcher label derived from the worktree directory name in
+  `Android/app/build.gradle.kts`. Run it with `Scripts/Android/run-android.sh`
+  rather than `skip app launch --android`, which starts the unsuffixed id; wrap
+  anything else that drives the emulator from a second worktree in
+  `Scripts/Android/with-emulator-lock.sh`. Release is untouched on both platforms.
+  The cost of all this: each worktree's app has its **own container**, so a separate
+  FA login, cookie jar and (on Android) Cloudflare clearance.
+  DerivedData keeps one directory per worktree path *ever* used, so it grows with
+  worktrees that no longer exist. To list the orphans (then delete what it prints):
+  ```
+  for d in ~/Library/Developer/Xcode/DerivedData/*/; do
+    p=$(plutil -extract WorkspacePath raw -o - "$d/info.plist" 2>/dev/null)
+    [ -n "$p" ] && [ ! -e "$p" ] && echo "$d"
+  done
+  ```
 - Prefer existing helpers before adding new wrappers.
 - Tests: use fixture HTML, no live FA requests.
 - Login: cookie-based; never handle the user's FA password directly.
