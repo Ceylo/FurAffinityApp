@@ -175,6 +175,14 @@ final class FAWebSession {
         let userAgent = await navigator.liveUserAgent()
         guard userAgent != pushedUserAgent || header != pushedCookieHeader else { return header }
 
+        // A header that *lost* its clearance is a wipe in flight, not a rotation. Hand
+        // back the last-good one: expiring the cookie locally doesn't invalidate it at
+        // the edge, so replaying it is right — whereas laundering a clearance-less
+        // header into Coil and into every in-flight request's Cookie: line is what
+        // turns one challenged fetch into a stampede.
+        if let header, !header.carriesCloudflareClearance,
+           pushedCookieHeader?.carriesCloudflareClearance == true { return pushedCookieHeader }
+
         // Not while the engine is detached: it answers with nil/empty rather than an
         // error, and pushing that would de-seed a perfectly good image layer.
         guard let userAgent, let header, !header.isEmpty else { return header }
