@@ -8,6 +8,10 @@
 import FAKit
 import Foundation
 import Observation
+// Android: SkipSwiftUI re-exports SkipAndroidBridge, whose `Observation` struct shadows
+// the module so `@Observable` picks up the Compose-aware registrar. Without it the
+// property changes below never recompose. See Android/README.md § Rules for shared sources.
+import SwiftUI
 import Version
 #if canImport(FoundationNetworking)
 // URLSession/URLRequest live here in corelibs Foundation (Android).

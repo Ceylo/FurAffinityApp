@@ -1277,6 +1277,26 @@ never the iOS app target — so:
   module. Only `Logger` + the `OSSignposter` subset FAKit/FAPages use are covered —
   anything else from `os` (e.g. `OSAllocatedUnfairLock`) still needs a guard, or an
   addition to the shim.
+- **An `@Observable` needs `SkipAndroidBridge` in scope — in practice `import SwiftUI`,
+  never `import Observation` alone.** The macro expands to
+  `Observation.ObservationRegistrar`, and that name has two resolutions on Android:
+  SkipAndroidBridge's `public struct Observation`, whose nested registrar calls
+  `skip/model/MutableStateBacking` (`Java_access`/`Java_update`) and so registers the
+  Compose read, or the real `Observation` **module**, whose stdlib registrar knows
+  nothing about Compose. The struct shadows the module, but only where it is imported;
+  `SkipSwiftUI/Fuse/Observation.swift` re-exports both, which is why `import SwiftUI` is
+  enough and why almost every `@Observable` here works by accident of that import.
+  Get it wrong and the class compiles, runs and mutates correctly while **no view ever
+  redraws** — no error, no warning. `MediaSaveHandler+Android.swift` imported
+  `Observation`, so `SubmissionControlsView` never saw `saveHandler.state` change: the
+  `SaveButton` checkmark never appeared and its `.sensoryFeedback` never fired, while
+  the handler logged `.inProgress → .succeeded → .idle` on time (measured 2026-08-22 —
+  one import swap restored checkmark, `onChange` and haptic together). This is also why
+  FAKit's `@Observable`s never drive the UI: a plain SwiftPM package cannot import the
+  bridge at all, so mirror their state into the view's own `@State` (see
+  `CloudflareChallengeCoordinator`). Same name-resolution family as
+  [Module-name poisoning](#module-name-poisoning), inverted: there a module shadowed
+  what a target wanted, here a type must shadow a module and fails to when unimported.
 - `#if` blocks must contain balanced braces — split an `if/else` into two whole
   branches rather than fencing one arm.
 - `@State`/`@Environment` on a bridged view must be **internal**, not `private`, and so

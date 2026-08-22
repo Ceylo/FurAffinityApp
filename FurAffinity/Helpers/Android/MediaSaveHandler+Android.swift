@@ -9,7 +9,11 @@
 
 import Foundation
 import Dispatch
-import Observation
+// Not `import Observation`: `@Observable` expands to `Observation.ObservationRegistrar`,
+// and only SkipAndroidBridge's shadowing `Observation` struct — re-exported by SkipSwiftUI
+// — registers the Compose read. With the module's own registrar the state machine below
+// runs correctly and no view ever redraws. See Android/README.md § Rules for shared sources.
+import SwiftUI
 
 enum ActionState: Identifiable, CaseIterable {
     case idle
