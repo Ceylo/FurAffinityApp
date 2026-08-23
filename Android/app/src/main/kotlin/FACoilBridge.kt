@@ -21,11 +21,12 @@
 //
 //  Retry: Cloudflare judges the *connection*, not the request — a challenged response
 //  is a 403 with `cf-mitigated=challenge` and `Connection: close`, while a connection
-//  that once answered 200 keeps answering 200 for everything put on it. So a retry is
-//  really a fresh draw on a fresh connection, and `fetchResult` takes a few of them
-//  with backoff. HTTP/1.1 is pinned because HTTP/2 drew more challenges (spike
-//  finding) — worth re-measuring, since h1 forces one connection per concurrent
-//  request and it is warm connections that pass. See Android/docs/images.md.
+//  that once answered 200 keeps answering 200 for everything put on it (measured: 0 of
+//  ~600 responses on a reused connection was a 403). So a retry is really a fresh draw
+//  on a fresh connection, and `fetchResult` takes a few of them with backoff — but only
+//  where a fresh draw could answer differently, see `worthRedrawing`. HTTP/1.1 stays
+//  pinned: h2 has been measured and rejected twice, most recently *with* the launch
+//  ramp that was supposed to fix it. See Android/docs/images.md.
 //  It *reports* that retry story back to Swift as JSON rather than logging it:
 //  android.util.Log never reaches the log file Settings exports, so anything worth
 //  keeping has to be logged on the Swift side.
@@ -44,7 +45,6 @@ import java.net.Proxy
 import okhttp3.Call
 import okhttp3.Connection
 import okhttp3.EventListener
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
@@ -67,8 +67,6 @@ class FACoilBridge {
 
     fun fetchResult(url: String): String = Companion.fetchResult(url)
 
-    fun probeHeaders(urlsJson: String): String = Companion.probeHeaders(urlsJson)
-
     fun cacheSizeBytes(): Long = Companion.cacheSizeBytes()
 
     fun clearCache(): Boolean = Companion.clearCache()
@@ -83,6 +81,19 @@ class FACoilBridge {
         // — the challenge itself — not the ~35 ms a warm-connection fetch does.
         private const val MAX_ATTEMPTS = 5
         private const val MAX_CONCURRENT_PER_HOST = 6
+
+        /// Whether a failed response could plausibly come back different on a fresh
+        /// connection. A 4xx is the origin's own answer and a retry just re-asks it —
+        /// most of the point being FA's missing avatars, which it answers **404** while
+        /// serving its default image, so `FAImage` substitutes ours and the five
+        /// attempts were pure waste: five requests plus ~2.5 s of backoff, all of it
+        /// holding one of `FAImageStore`'s six permits.
+        ///
+        /// The three exceptions are the ones that mean "ask again": 403 is Cloudflare's
+        /// per-connection verdict and the whole reason this loop exists, 408 and 429 say
+        /// so by definition. 5xx and anything else keeps the retry it always had.
+        private fun worthRedrawing(code: Int) =
+            code !in 400..499 || code == 403 || code == 408 || code == 429
 
         // MARK: Connection instrument
         //
@@ -140,7 +151,6 @@ class FACoilBridge {
         @Volatile private var cookie = ""
         @Volatile private var sharedCache: DiskCache? = null
         @Volatile private var sharedClient: OkHttpClient? = null
-        @Volatile private var probeClient: OkHttpClient? = null
 
         fun configure(userAgent: String, cookie: String): Boolean {
             this.userAgent = userAgent
@@ -180,9 +190,14 @@ class FACoilBridge {
             var attempt = 0
             var proto = ""
             val conn = draw.get()
+            // Not every failure is worth a fresh draw; see `worthRedrawing`. Anything
+            // that is not an HTTP status — a socket error, a cache-editor race — keeps
+            // the retry it always had.
+            var redraw = true
             while (true) {
                 attempt++
                 conn.reset()
+                redraw = true
                 val failure = try {
                     sharedClient().newCall(request).execute().use { response ->
                         proto = response.protocol.toString()
@@ -194,6 +209,7 @@ class FACoilBridge {
                             val mitigated = response.header("cf-mitigated")
                                 ?.let { " cf-mitigated=$it" } ?: ""
                             val ray = response.header("cf-ray")?.let { " ray=$it" } ?: ""
+                            redraw = worthRedrawing(response.code)
                             "HTTP ${response.code}$mitigated$ray${conn.suffix()}"
                         } else {
                             val editor = cache.openEditor(url)
@@ -230,128 +246,13 @@ class FACoilBridge {
                 }
 
                 failures.put(failure)
-                if (attempt >= MAX_ATTEMPTS) {
+                if (attempt >= MAX_ATTEMPTS || !redraw) {
                     return json.put("attempts", attempt)
                         .put("proto", proto)
                         .put("ms", ms(start))
                         .toString()
                 }
                 Thread.sleep(250L * attempt)
-            }
-        }
-
-        // MARK: Header A/B probe
-        //
-        // Whether a.furaffinity.net's 403s are a Cloudflare *challenge* or a plain
-        // WAF/hotlink block decides the fix — and so does whether the image request's
-        // thin header set (User-Agent + Cookie) is what draws them, next to the seven
-        // browser-consistent headers FAHTTPDataSource sends for a page.
-        //
-        // Run-to-run CF drift makes four separate app *runs* uninterpretable, so the
-        // four variants are compared inside one run: a 4x4 Latin square over four URLs,
-        // sequential and spaced out, each variant meeting each URL exactly once.
-        // Debug-only — nothing in a release build calls it (see CoilImageLoader).
-
-        /// The subresource analogue of `FAHTTPDataSource.browserHeaders`: what a browser
-        /// sends for an `<img>` on a furaffinity.net page rather than for a top-level
-        /// navigation. Kept here next to the interceptor — this is the transport layer,
-        /// and pushing six static strings across JNI buys nothing.
-        private val imageBrowserHeaders = listOf(
-            "Accept" to "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-            "Accept-Language" to "en-US,en;q=0.9",
-            "Referer" to "https://www.furaffinity.net/",
-            "sec-fetch-dest" to "image",
-            "sec-fetch-mode" to "no-cors",
-            "sec-fetch-site" to "same-site",
-        )
-
-        /// `cookie` minus its `__cf_bm` pair. FAWebSession reads the Cookie header for
-        /// **www**.furaffinity.net and pushes it here verbatim; if `__cf_bm` is scoped to
-        /// that host, replaying a mismatched one to `a.`/`t.` is itself a bot signal.
-        private fun withoutCfBm(cookie: String) = cookie
-            .split(";")
-            .filterNot { it.trim().startsWith("__cf_bm=") }
-            .joinToString("; ") { it.trim() }
-
-        /// Runs the square over the FA-host URLs in `urlsJson` and returns a JSON array
-        /// of `{variant, url, code, cfMitigated, cfRay, ms}`. Blocking, ~6 s for four
-        /// URLs; Swift logs the rows, as with `fetchResult`.
-        fun probeHeaders(urlsJson: String): String {
-            val array = JSONArray(urlsJson)
-            val urls = (0 until array.length())
-                .mapNotNull { array.getString(it).toHttpUrlOrNull() }
-                // Same gate as the interceptor: a Referer and the viewer's FA cookies
-                // must never reach an attacker-authored third-party <img src>.
-                .filter { it.isHttps && isFAHost(it.host) }
-                .map { it.toString() }
-            val rows = JSONArray()
-            if (urls.isEmpty()) return rows.toString()
-
-            val variants = listOf("S", "A", "B", "C", "D")
-            // Round r pairs url j with variant (r + j) % 5: over five rounds every
-            // variant meets every URL exactly once, and no two consecutive requests
-            // repeat a variant — firing the same one twice in a row at the same host is
-            // what inflated the second request's challenge rate in the earlier spike.
-            for (round in variants.indices) {
-                for ((j, url) in urls.withIndex()) {
-                    rows.put(probeOnce(variants[(round + j) % variants.size], url))
-                    Thread.sleep(300L)
-                }
-            }
-            return rows.toString()
-        }
-
-        /// One probe request. Variants: **S** the production request itself, through the
-        /// shared client and its interceptor; A the same headers but on the probe's own
-        /// client; B adds the image browser headers; C strips `__cf_bm`; D does both.
-        ///
-        /// S is the control. Without it "every variant 403'd" cannot be read — it could
-        /// mean the headers make no difference, or that the whole window was being
-        /// challenged and the probe measured nothing.
-        private fun probeOnce(variant: String, url: String): JSONObject {
-            val row = JSONObject().put("variant", variant).put("url", url)
-            val start = System.nanoTime()
-            val builder = Request.Builder().url(url)
-            if (variant != "S") {
-                if (userAgent.isNotEmpty()) builder.header("User-Agent", userAgent)
-                val jar = if (variant == "C" || variant == "D") withoutCfBm(cookie) else cookie
-                if (jar.isNotEmpty()) builder.header("Cookie", jar)
-                if (variant == "B" || variant == "D") {
-                    for ((name, value) in imageBrowserHeaders) builder.header(name, value)
-                }
-            }
-            val client = if (variant == "S") sharedClient() else probeClient()
-            try {
-                // The body is never read: this measures the verdict, not the bytes, and
-                // must not populate the disk cache the real path is being judged on.
-                client.newCall(builder.build()).execute().use { response ->
-                    row.put("code", response.code)
-                        .put("proto", response.protocol.toString())
-                        .put("cfMitigated", response.header("cf-mitigated") ?: "")
-                        .put("cfRay", response.header("cf-ray") ?: "")
-                        // `Connection: close` on a 403 is what makes the verdict stick:
-                        // the pooled connection dies with it, so the retry opens a fresh
-                        // one and draws a fresh verdict.
-                        .put("connection", response.header("Connection") ?: "")
-                }
-            } catch (e: Exception) {
-                row.put("code", -1).put("error", e.toString())
-            }
-            return row.put("ms", ms(start))
-        }
-
-        /// The probe's own client. `sharedClient`'s interceptor forces `User-Agent` and
-        /// `Cookie` onto every FA request, which would overwrite the very headers being
-        /// compared — so this one carries no interceptor and each variant is explicit.
-        private fun probeClient(): OkHttpClient {
-            probeClient?.let { return it }
-            synchronized(FACoilBridge::class.java) {
-                probeClient?.let { return it }
-                val client = OkHttpClient.Builder()
-                    .protocols(listOf(Protocol.HTTP_1_1))
-                    .build()
-                probeClient = client
-                return client
             }
         }
 

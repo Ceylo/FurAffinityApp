@@ -44,22 +44,9 @@ enum CoilImageLoader {
         let ok: Bool? = try? bridge.configure(userAgent, cookie)
         if ok != true {
             logger.error("CoilImageLoader.configure did not confirm")
-            return
         }
-        #if DEBUG
-        if armHeaderProbe { probe.arm() }
-        #endif
         #endif
     }
-
-    #if DEBUG
-    /// The header probe's question is answered — it is neither the headers nor
-    /// `__cf_bm`, it is the connection — but it is the instrument that answered it, so
-    /// it stays. Off by default: it fires 20 blocking requests ~12 s into a launch,
-    /// variant S through the *shared* client, which would pollute the connection
-    /// counter every measurement run reads. Flip it to re-run the square by hand.
-    private static let armHeaderProbe = false
-    #endif
 
     /// True when `url`'s encoded bytes are already in the disk cache (no network).
     static func isCached(_ url: URL) -> Bool {
@@ -132,9 +119,6 @@ enum CoilImageLoader {
         #if canImport(Android)
         guard let bridge else { return nil }
         logger.info("[Coil] GET request on \(url)")
-        #if DEBUG
-        if armHeaderProbe { probe.record(url) }
-        #endif
         do {
             let json: String? = try bridge.fetchResult(url.absoluteString)
             guard let data = json?.data(using: .utf8),
@@ -159,7 +143,8 @@ enum CoilImageLoader {
                 logger.info("[Coil] \(url): 200\(conn) \(result.ms ?? -1)ms")
                 return path
             }
-            logger.error("[Coil] \(url): failed after \(result.attempts) attempts (\(reasons))")
+            let plural = result.attempts == 1 ? "attempt" : "attempts"
+            logger.error("[Coil] \(url): failed after \(result.attempts) \(plural) (\(reasons))")
             return nil
         } catch {
             logger.error("[Coil] \(url): fetch threw: \(error)")
@@ -185,99 +170,6 @@ enum CoilImageLoader {
         return nil
         #endif
     }
-
-    // MARK: - Header A/B probe (debug)
-
-    #if canImport(Android) && DEBUG
-    /// Picks the URLs for the Kotlin bridge's header square — the first four distinct
-    /// ones each FA host really asks for, so `a.` avatars and `t.` thumbnails are both
-    /// measured on live feed traffic instead of on a hardcoded guess.
-    private final class HeaderProbe: @unchecked Sendable {
-        private static let queue = DispatchQueue(label: "FAHeaderProbe", qos: .utility)
-        private let lock = NSLock()
-        private var collected = [String: [URL]]()
-        private var probed = Set<String>()
-
-        /// Re-arm on a fresh push of credentials, so a re-login or a Cloudflare
-        /// re-solve is measured rather than reported on from the previous session.
-        func arm() {
-            lock.lock()
-            collected.removeAll()
-            probed.removeAll()
-            lock.unlock()
-        }
-
-        /// Note one real fetch; a host's square is dispatched once it has four
-        /// distinct URLs, and only once per arming.
-        func record(_ url: URL) {
-            guard let host = url.host else { return }
-            var ready: [URL]?
-            lock.lock()
-            if !probed.contains(host) {
-                var urls = collected[host, default: []]
-                if !urls.contains(url) { urls.append(url) }
-                collected[host] = urls
-                if urls.count == 4 {
-                    probed.insert(host)
-                    ready = urls
-                }
-            }
-            lock.unlock()
-            guard let ready else { return }
-
-            // Off the cooperative pool (20 blocking JNI requests, ~8 s) and off
-            // FAImageStore's gate. Delayed so the launch burst and its retries drain
-            // first: the probe is meant to measure the header shape, not the queue it
-            // happened to be issued into. Serial, so `a.`'s square and `t.`'s don't
-            // overlap and halve each other's spacing.
-            Self.queue.asyncAfter(deadline: .now() + 12) {
-                CoilImageLoader.runHeaderProbe(host: host, urls: ready)
-            }
-        }
-    }
-
-    nonisolated(unsafe) private static let probe = HeaderProbe()
-
-    /// One row of the square, as the bridge reports it.
-    private struct ProbeRow: Decodable {
-        var variant: String
-        var url: String
-        var code: Int
-        var proto: String?
-        var cfMitigated: String?
-        var cfRay: String?
-        var connection: String?
-        var ms: Int
-        var error: String?
-    }
-
-    /// Runs the bridge's 4x4 header square over `urls` and logs one line per row.
-    /// **Blocking** — callers are already on a global queue.
-    private static func runHeaderProbe(host: String, urls: [URL]) {
-        guard let bridge else { return }
-        guard let payload = try? JSONEncoder().encode(urls.map(\.absoluteString)),
-              let json = String(data: payload, encoding: .utf8) else { return }
-        logger.info("[Probe] \(host): 4 URLs x 5 header variants")
-        do {
-            let out: String? = try bridge.probeHeaders(json)
-            guard let data = out?.data(using: .utf8),
-                  let rows = try? JSONDecoder().decode([ProbeRow].self, from: data) else {
-                logger.error("[Probe] \(host): unreadable result \(out ?? "<nil>")")
-                return
-            }
-            for row in rows {
-                let mitigated = (row.cfMitigated?.isEmpty == false) ? " cf-mitigated=\(row.cfMitigated!)" : ""
-                let ray = (row.cfRay?.isEmpty == false) ? " ray=\(row.cfRay!)" : ""
-                let proto = (row.proto?.isEmpty == false) ? " \(row.proto!)" : ""
-                let connection = (row.connection?.isEmpty == false) ? " connection=\(row.connection!)" : ""
-                let failure = row.error.map { " \($0)" } ?? ""
-                logger.info("[Probe] \(row.variant) \(row.url) ->\(proto) \(row.code)\(mitigated)\(ray)\(connection)\(failure) \(row.ms)ms")
-            }
-        } catch {
-            logger.error("[Probe] \(host): threw: \(error)")
-        }
-    }
-    #endif
 
     /// Empties the disk cache. Blocking (file I/O over JNI) — call off the main actor.
     static func clearDiskCache() {

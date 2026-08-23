@@ -35,12 +35,21 @@ Rules that are easy to get wrong here:
 - **`UIImage(contentsOfFile:)` needs a `file://` URI**, despite the name — SkipUI
   implements it with `Uri.parse` + `ContentResolver.openInputStream`, and a bare
   filesystem path yields nil with no error.
+- **Retry only what a fresh connection could answer differently** (`worthRedrawing`).
+  The loop exists for Cloudflare's per-connection verdict, so a 4xx that is the origin's
+  own answer gets one attempt, not five. FA answers a **404** for a user with no custom
+  avatar — while still serving its default image — so those five attempts were five
+  requests plus ~2.5 s of backoff per missing avatar, each of them holding one of
+  `FAImageStore`'s six permits. 403 (the verdict itself), 408 and 429 keep their
+  retries, as does anything that is not an HTTP status.
 - **The width passed to `prefetchingPreviews` must be the width the row renders at.**
   `bestThumbnailUrl(for:)` snaps to discrete buckets, so a few dp of difference changes
   the URL and silently voids every prefetch. This is what the `listRowInsets` fork is for.
 - **Cloudflare's verdict on an image request is per *connection*, not per request and
-  not per header set.** Measured on the emulator with `FACoilBridge.probeHeaders`, a
-  4 URL x 5 variant Latin square run inside one launch (`[Probe]` lines):
+  not per header set.** Measured on the emulator with a debug-only header probe in
+  `FACoilBridge` — a 4 URL x 5 variant Latin square run inside one launch, so that
+  run-to-run drift could not be mistaken for an effect (removed once the connection
+  instrument below superseded it; `git log -- Android/app/src/main/kotlin` has it):
 
   | | result |
   |---|---|
@@ -179,9 +188,10 @@ Rules that are easy to get wrong here:
   rules that were learnt the expensive way: a run is discarded only when the **feed
   page** never loaded (`prefetchThumbnails count=`), never on a low image-GET count —
   a collapsed image layer issues few requests too, and that rule would have thrown away
-  the four worst runs of the h2 arm. And do not arm the header probe during a
-  measurement run (`CoilImageLoader.armHeaderProbe`): it fires 20 blocking requests
-  through the *shared* client ~12 s in, which pollutes the connection counter.
+  the four worst runs of the h2 arm. And nothing else may issue image requests during
+  a run — the header probe had to be disarmed for exactly this reason before it was
+  removed, since its 20 blocking requests went through the *shared* client and landed
+  in the connection counter.
 - **A scroll test measures nothing on the Followed feed.** Its whole 72-item page is
   prefetched during the cold burst, so scrolling through it serves every thumbnail from
   disk: the feed position advances and the `[Coil]` GET count does not move. Anything
