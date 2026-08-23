@@ -64,7 +64,26 @@ apksigner verify --print-certs <apk>      # must NOT say CN=Android Debug
 ## Handing a build to testers
 
 ```
-git stash apply stash@{0}          # pbxproj id + Amplitude key + Skip.env id
+Scripts/Android/build-release-apk.sh
+```
+
+That is the whole thing: it applies the distribution stash, drops the build dirs
+the changed applicationId invalidates, exports, checks the signing certificate,
+and reverts the working tree on the way out (`--keep-stash` leaves it applied,
+`--install` pushes the APK to the running device). It refuses to start on a dirty
+tree — reverting is `git checkout -- .`, which is only the exact inverse from a
+clean one — and finds the stash by *message*, since the stack is shared with
+every other worktree. A missing `keystore.jks` is symlinked from whichever
+worktree has one.
+
+Two guards it adds over doing it by hand: `CURRENT_PROJECT_VERSION` must be the
+value `MARKETING_VERSION` derives, and `project.pbxproj`'s `MARKETING_VERSION`
+must agree with `Skip.env`'s. Both are silent-wrong-artifact bugs otherwise.
+
+What it runs:
+
+```
+git stash apply <the distribution stash>   # pbxproj id + Amplitude key + Skip.env id
 rm -rf .build/plugins/outputs .build/Darwin .build/Android    # applicationId changed
 skip export -d out --release --android --no-ios --no-export-project
 ```
@@ -84,7 +103,7 @@ an `.aab`, which nothing here uses since Play is out.
 on a running emulator or device, install it by hand and launch it from the icon:
 
 ```
-adb install -r -d out/FurAffinityUI-release.apk
+adb install -r -d out/FurAffinityUI-release.apk     # or: build-release-apk.sh --install
 ```
 
 `-d` (allow downgrade) in case an install with a higher versionCode is already
@@ -102,7 +121,7 @@ is why a plain `skip app launch` build answers to *that* id (see
 launch from the shell rather than the icon:
 `adb shell monkey -p ceylo.FurAffinity -c android.intent.category.LAUNCHER 1`.
 
-Measured 2026-08-16, release, `arm64-v8a`: **94 MB**. A universal APK with debug
+Measured 2026-08-16, release, `arm64-v8a`: **94 MB** (95 MB at 1.19). A universal APK with debug
 symbols was 436 MB; stripping took it to 249 MB and the ABI filter to 94 MB. The
 stripping only works with the NDK installed (`sdkmanager "ndk;28.2.13676358"`) —
 without it AGP's `stripReleaseDebugSymbols` silently copies the libraries through.

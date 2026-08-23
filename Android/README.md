@@ -33,7 +33,7 @@ FurAffinity/             ALL app sources — and the Skip target's directory
   iOS/                     iOS-only sources + Info.plist, entitlements, icons
   Resources/               the Android asset catalog Skip mirrors
   Skip/skip.yml            marks this a native Skip module
-Scripts/Android/         emulator, run, logs, derived art
+Scripts/Android/         emulator, run, logs, derived art, release APK
 Scripts/iOS/             this worktree's simulator device
 FAKit/                   shared Swift package (cross-compiles, see AGENTS.md)
 ```
@@ -71,8 +71,8 @@ starts the *unsuffixed* id. It still has its own use — it is the only command
 that compiles the Darwin bridge.
 
 ```
-skip android build           # transpile + compile via SwiftPM (fast inner loop)
-skip export                  # release artifacts
+skip android build                           # transpile + compile via SwiftPM (fast inner loop)
+Scripts/Android/build-release-apk.sh         # the signed release APK (docs/releasing.md)
 ```
 
 ```
