@@ -36,6 +36,7 @@ package fur.affinity.ui
 
 import android.util.Log
 import coil3.disk.DiskCache
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
@@ -58,6 +59,8 @@ class FACoilBridge {
 
     fun fetchResult(url: String): String = Companion.fetchResult(url)
 
+    fun probeHeaders(urlsJson: String): String = Companion.probeHeaders(urlsJson)
+
     fun cacheSizeBytes(): Long = Companion.cacheSizeBytes()
 
     fun clearCache(): Boolean = Companion.clearCache()
@@ -75,6 +78,7 @@ class FACoilBridge {
         @Volatile private var cookie = ""
         @Volatile private var sharedCache: DiskCache? = null
         @Volatile private var sharedClient: OkHttpClient? = null
+        @Volatile private var probeClient: OkHttpClient? = null
 
         fun configure(userAgent: String, cookie: String): Boolean {
             this.userAgent = userAgent
@@ -159,6 +163,108 @@ class FACoilBridge {
                     return json.put("attempts", attempt).put("ms", ms(start)).toString()
                 }
                 Thread.sleep(250L * attempt)
+            }
+        }
+
+        // MARK: Header A/B probe
+        //
+        // Whether a.furaffinity.net's 403s are a Cloudflare *challenge* or a plain
+        // WAF/hotlink block decides the fix — and so does whether the image request's
+        // thin header set (User-Agent + Cookie) is what draws them, next to the seven
+        // browser-consistent headers FAHTTPDataSource sends for a page.
+        //
+        // Run-to-run CF drift makes four separate app *runs* uninterpretable, so the
+        // four variants are compared inside one run: a 4x4 Latin square over four URLs,
+        // sequential and spaced out, each variant meeting each URL exactly once.
+        // Debug-only — nothing in a release build calls it (see CoilImageLoader).
+
+        /// The subresource analogue of `FAHTTPDataSource.browserHeaders`: what a browser
+        /// sends for an `<img>` on a furaffinity.net page rather than for a top-level
+        /// navigation. Kept here next to the interceptor — this is the transport layer,
+        /// and pushing six static strings across JNI buys nothing.
+        private val imageBrowserHeaders = listOf(
+            "Accept" to "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+            "Accept-Language" to "en-US,en;q=0.9",
+            "Referer" to "https://www.furaffinity.net/",
+            "sec-fetch-dest" to "image",
+            "sec-fetch-mode" to "no-cors",
+            "sec-fetch-site" to "same-site",
+        )
+
+        /// `cookie` minus its `__cf_bm` pair. FAWebSession reads the Cookie header for
+        /// **www**.furaffinity.net and pushes it here verbatim; if `__cf_bm` is scoped to
+        /// that host, replaying a mismatched one to `a.`/`t.` is itself a bot signal.
+        private fun withoutCfBm(cookie: String) = cookie
+            .split(";")
+            .filterNot { it.trim().startsWith("__cf_bm=") }
+            .joinToString("; ") { it.trim() }
+
+        /// Runs the square over the FA-host URLs in `urlsJson` and returns a JSON array
+        /// of `{variant, url, code, cfMitigated, cfRay, ms}`. Blocking, ~6 s for four
+        /// URLs; Swift logs the rows, as with `fetchResult`.
+        fun probeHeaders(urlsJson: String): String {
+            val array = JSONArray(urlsJson)
+            val urls = (0 until array.length())
+                .mapNotNull { array.getString(it).toHttpUrlOrNull() }
+                // Same gate as the interceptor: a Referer and the viewer's FA cookies
+                // must never reach an attacker-authored third-party <img src>.
+                .filter { it.isHttps && isFAHost(it.host) }
+                .map { it.toString() }
+            val rows = JSONArray()
+            if (urls.isEmpty()) return rows.toString()
+
+            val variants = listOf("A", "B", "C", "D")
+            // Round r pairs url j with variant (r + j) % 4: over four rounds every
+            // variant meets every URL once, and no two consecutive requests repeat a
+            // variant — firing the same one twice in a row at the same host is what
+            // inflated the second request's challenge rate in the earlier spike.
+            for (round in variants.indices) {
+                for ((j, url) in urls.withIndex()) {
+                    rows.put(probeOnce(variants[(round + j) % variants.size], url))
+                    Thread.sleep(300L)
+                }
+            }
+            return rows.toString()
+        }
+
+        /// One probe request. Variants: A today's `User-Agent` + `Cookie`; B adds the
+        /// image browser headers; C strips `__cf_bm`; D does both.
+        private fun probeOnce(variant: String, url: String): JSONObject {
+            val row = JSONObject().put("variant", variant).put("url", url)
+            val start = System.nanoTime()
+            val builder = Request.Builder().url(url)
+            if (userAgent.isNotEmpty()) builder.header("User-Agent", userAgent)
+            val jar = if (variant == "C" || variant == "D") withoutCfBm(cookie) else cookie
+            if (jar.isNotEmpty()) builder.header("Cookie", jar)
+            if (variant == "B" || variant == "D") {
+                for ((name, value) in imageBrowserHeaders) builder.header(name, value)
+            }
+            try {
+                // The body is never read: this measures the verdict, not the bytes, and
+                // must not populate the disk cache the real path is being judged on.
+                probeClient().newCall(builder.build()).execute().use { response ->
+                    row.put("code", response.code)
+                        .put("cfMitigated", response.header("cf-mitigated") ?: "")
+                        .put("cfRay", response.header("cf-ray") ?: "")
+                }
+            } catch (e: Exception) {
+                row.put("code", -1).put("error", e.toString())
+            }
+            return row.put("ms", ms(start))
+        }
+
+        /// The probe's own client. `sharedClient`'s interceptor forces `User-Agent` and
+        /// `Cookie` onto every FA request, which would overwrite the very headers being
+        /// compared — so this one carries no interceptor and each variant is explicit.
+        private fun probeClient(): OkHttpClient {
+            probeClient?.let { return it }
+            synchronized(FACoilBridge::class.java) {
+                probeClient?.let { return it }
+                val client = OkHttpClient.Builder()
+                    .protocols(listOf(Protocol.HTTP_1_1))
+                    .build()
+                probeClient = client
+                return client
             }
         }
 
