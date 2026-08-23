@@ -39,6 +39,11 @@ package fur.affinity.ui
 
 import android.util.Log
 import coil3.disk.DiskCache
+import java.net.InetSocketAddress
+import java.net.Proxy
+import okhttp3.Call
+import okhttp3.Connection
+import okhttp3.EventListener
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -79,6 +84,58 @@ class FACoilBridge {
         private const val MAX_ATTEMPTS = 5
         private const val MAX_CONCURRENT_PER_HOST = 6
 
+        // MARK: Connection instrument
+        //
+        // Cloudflare judges the connection, so the causal variable is how many *cold*
+        // connections a burst opens and which requests ride them. Everything above was
+        // inferred from 403 patterns; this measures it.
+        //
+        // `fetchResult` calls `execute()` synchronously, so a ThreadLocal holds the
+        // per-attempt state with no map and no locking — but only the *reads* are on
+        // that thread. OkHttp 5 opens connections on its own fast-fallback threads, so
+        // a listener that resolved the ThreadLocal inside the callback saw an unrelated
+        // Draw and reported `new=false` for every request of a cold launch. Hence the
+        // factory: `create` runs in `RealCall.<init>`, i.e. on the calling thread, so
+        // the per-call listener captures the right Draw and the callbacks can arrive
+        // from anywhere. Reset per *attempt*, not per call: each is its own draw.
+
+        private class Draw {
+            @Volatile var id: Int? = null
+            @Volatile var isNew = false
+
+            fun reset() {
+                id = null
+                isNew = false
+            }
+
+            /// Appended to each failure string, so the JSON keeps its shape instead of
+            /// growing a per-attempt array.
+            fun suffix() = id?.let { " conn=$it new=$isNew" } ?: ""
+        }
+
+        private val draw = ThreadLocal.withInitial { Draw() }
+
+        private val connectionTracer = object : EventListener.Factory {
+            override fun create(call: Call): EventListener {
+                val attempt = draw.get()
+                return object : EventListener() {
+                    /// Fires only when no pooled connection was available: this request
+                    /// is paying for a handshake, and drawing a fresh CF verdict.
+                    override fun connectStart(
+                        call: Call,
+                        inetSocketAddress: InetSocketAddress,
+                        proxy: Proxy,
+                    ) {
+                        attempt.isNew = true
+                    }
+
+                    override fun connectionAcquired(call: Call, connection: Connection) {
+                        attempt.id = System.identityHashCode(connection)
+                    }
+                }
+            }
+        }
+
         @Volatile private var userAgent = ""
         @Volatile private var cookie = ""
         @Volatile private var sharedCache: DiskCache? = null
@@ -103,9 +160,11 @@ class FACoilBridge {
             diskCache().openSnapshot(url)?.use { it.data.toString() }
 
         /// Path of `url`'s bytes plus what it took to get them, as JSON:
-        ///   {"path":"…","attempts":2,"bytes":98304,"ms":611,"failures":["HTTP 403"]}
-        /// `path` is absent when every attempt failed. Swift does the logging —
-        /// android.util.Log never reaches the exported application log.
+        ///   {"path":"…","attempts":2,"bytes":98304,"conn":1234,"newConn":true,
+        ///    "ms":611,"failures":["HTTP 403 … conn=5678 new=true"]}
+        /// `conn`/`newConn` describe the winning attempt; every failed attempt carries
+        /// its own draw in its string. `path` is absent when every attempt failed.
+        /// Swift does the logging — android.util.Log never reaches the exported log.
         fun fetchResult(url: String): String {
             val start = System.nanoTime()
             val failures = JSONArray()
@@ -120,8 +179,10 @@ class FACoilBridge {
 
             var attempt = 0
             var proto = ""
+            val conn = draw.get()
             while (true) {
                 attempt++
+                conn.reset()
                 val failure = try {
                     sharedClient().newCall(request).execute().use { response ->
                         proto = response.protocol.toString()
@@ -133,12 +194,12 @@ class FACoilBridge {
                             val mitigated = response.header("cf-mitigated")
                                 ?.let { " cf-mitigated=$it" } ?: ""
                             val ray = response.header("cf-ray")?.let { " ray=$it" } ?: ""
-                            "HTTP ${response.code}$mitigated$ray"
+                            "HTTP ${response.code}$mitigated$ray${conn.suffix()}"
                         } else {
                             val editor = cache.openEditor(url)
                             if (editor == null) {
                                 // Another thread is writing the same key; it will win.
-                                "editor busy"
+                                "editor busy${conn.suffix()}"
                             } else {
                                 try {
                                     val bytes = cache.fileSystem.write(editor.data) {
@@ -147,14 +208,16 @@ class FACoilBridge {
                                     val path = editor.commitAndOpenSnapshot()
                                         ?.use { it.data.toString() }
                                     if (path != null) {
+                                        conn.id?.let { json.put("conn", it) }
                                         return json.put("path", path)
                                             .put("attempts", attempt)
                                             .put("bytes", bytes)
                                             .put("proto", proto)
+                                            .put("newConn", conn.isNew)
                                             .put("ms", ms(start))
                                             .toString()
                                     }
-                                    "no snapshot after commit"
+                                    "no snapshot after commit${conn.suffix()}"
                                 } catch (e: Exception) {
                                     editor.abort()
                                     throw e
@@ -163,7 +226,7 @@ class FACoilBridge {
                         }
                     }
                 } catch (e: Exception) {
-                    e.toString()
+                    "$e${conn.suffix()}"
                 }
 
                 failures.put(failure)
@@ -350,6 +413,7 @@ class FACoilBridge {
                     // at once (one run lost 7 of 8) where h1's six draws decorrelate
                     // and its retries recover. No reliable win, so keep h1.
                     .protocols(listOf(Protocol.HTTP_1_1))
+                    .eventListenerFactory(connectionTracer)
                     // The interceptor reads the volatile companion fields each request,
                     // so header refreshes (CF re-solve / re-login) need no rebuild.
                     .addInterceptor { chain ->

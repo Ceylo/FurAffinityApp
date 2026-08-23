@@ -47,10 +47,19 @@ enum CoilImageLoader {
             return
         }
         #if DEBUG
-        probe.arm()
+        if armHeaderProbe { probe.arm() }
         #endif
         #endif
     }
+
+    #if DEBUG
+    /// The header probe's question is answered — it is neither the headers nor
+    /// `__cf_bm`, it is the connection — but it is the instrument that answered it, so
+    /// it stays. Off by default: it fires 20 blocking requests ~12 s into a launch,
+    /// variant S through the *shared* client, which would pollute the connection
+    /// counter every measurement run reads. Flip it to re-run the square by hand.
+    private static let armHeaderProbe = false
+    #endif
 
     /// True when `url`'s encoded bytes are already in the disk cache (no network).
     static func isCached(_ url: URL) -> Bool {
@@ -83,6 +92,11 @@ enum CoilImageLoader {
         var bytes: Int?
         var ms: Int?
         var proto: String?
+        /// Identity of the connection the winning attempt rode, and whether that
+        /// attempt is what opened it. Cloudflare's verdict is per connection, so this
+        /// is the causal variable — see Android/docs/images.md.
+        var conn: Int?
+        var newConn: Bool?
         var failures: [String]
     }
 
@@ -119,7 +133,7 @@ enum CoilImageLoader {
         guard let bridge else { return nil }
         logger.info("[Coil] GET request on \(url)")
         #if DEBUG
-        probe.record(url)
+        if armHeaderProbe { probe.record(url) }
         #endif
         do {
             let json: String? = try bridge.fetchResult(url.absoluteString)
@@ -131,10 +145,18 @@ enum CoilImageLoader {
             logProtocolOnce(result.proto, for: url)
             let reasons = result.failures.joined(separator: ", ")
             if let path = result.path {
-                // Silent on the common case — one line per request, as on iOS.
+                // One outcome line per *completed* fetch, not just per retried one.
+                // This drops the "silent on the common case" convention iOS keeps, and
+                // costs ~160 log lines on a cold run instead of ~85 — the price of
+                // counting connections. It also makes the summarizer's completion span
+                // exact: without it only retried and failed fetches are dated.
+                // The retry line first, so a URL's draws appear in attempt order:
+                // the failed attempts are inside `reasons`, the winning one is next.
                 if result.attempts > 1 {
                     logger.warning("[Coil] \(url): succeeded on attempt \(result.attempts) (\(reasons))")
                 }
+                let conn = result.conn.map { " conn=\($0) new=\(result.newConn ?? false)" } ?? ""
+                logger.info("[Coil] \(url): 200\(conn) \(result.ms ?? -1)ms")
                 return path
             }
             logger.error("[Coil] \(url): failed after \(result.attempts) attempts (\(reasons))")
