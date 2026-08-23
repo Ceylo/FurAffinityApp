@@ -19,10 +19,13 @@
 //  back an on-disk **path** — no full-size image ever crosses JNI, and nothing is
 //  decoded here.
 //
-//  Retry: FA's avatar host (a.furaffinity.net) issues probabilistic Cloudflare
-//  challenges to any bare client (proven: URLSession and OkHttp both flip 200/403
-//  run-to-run), so `fetchResult` retries a challenged download a few times with
-//  backoff. HTTP/1.1 is pinned because HTTP/2 draws more challenges (spike finding).
+//  Retry: Cloudflare judges the *connection*, not the request — a challenged response
+//  is a 403 with `cf-mitigated=challenge` and `Connection: close`, while a connection
+//  that once answered 200 keeps answering 200 for everything put on it. So a retry is
+//  really a fresh draw on a fresh connection, and `fetchResult` takes a few of them
+//  with backoff. HTTP/1.1 is pinned because HTTP/2 drew more challenges (spike
+//  finding) — worth re-measuring, since h1 forces one connection per concurrent
+//  request and it is warm connections that pass. See Android/docs/images.md.
 //  It *reports* that retry story back to Swift as JSON rather than logging it:
 //  android.util.Log never reaches the log file Settings exports, so anything worth
 //  keeping has to be logged on the Swift side.
@@ -67,10 +70,12 @@ class FACoilBridge {
 
     companion object {
         private const val TAG = "FACoilBridge"
-        // FA challenges roughly half of all bare requests (measured: ~13% of URLs still
-        // failed after 3 attempts, on both the Coil and the direct-OkHttp path). Each
-        // attempt is independent, so a couple more take that tail from ~13% to ~3%, and
-        // a retry now costs ~35 ms rather than a full Coil decode.
+        // Each attempt is an independent draw because the challenge closes the
+        // connection, so the next one necessarily opens a fresh one. On a cold launch
+        // that tail is long: measured over 111 fetches, a.furaffinity.net (four
+        // avatars, never warming a connection) went 20/20 x 403 and exhausted every
+        // one, against t.furaffinity.net's 30 of 135 responses. A retry costs ~740 ms
+        // — the challenge itself — not the ~35 ms a warm-connection fetch does.
         private const val MAX_ATTEMPTS = 5
         private const val MAX_CONCURRENT_PER_HOST = 6
 

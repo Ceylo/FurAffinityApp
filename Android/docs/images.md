@@ -38,8 +38,31 @@ Rules that are easy to get wrong here:
 - **The width passed to `prefetchingPreviews` must be the width the row renders at.**
   `bestThumbnailUrl(for:)` snaps to discrete buckets, so a few dp of difference changes
   the URL and silently voids every prefetch. This is what the `listRowInsets` fork is for.
-- FA challenges roughly half of all bare image requests (probabilistic, per request), so
-  the bridge's retry loop is load-bearing, not defensive padding.
+- **Cloudflare's verdict on an image request is per *connection*, not per request and
+  not per header set.** Measured on the emulator with `FACoilBridge.probeHeaders`, a
+  4 URL x 5 variant Latin square run inside one launch (`[Probe]` lines):
+
+  | | result |
+  |---|---|
+  | on a connection whose first request was challenged | 16/16 x 403, ~740 ms each |
+  | on a connection that once returned 200 | 24/24 x 200, 28-116 ms, *any* variant |
+
+  Every 403 carries `cf-mitigated=challenge` **and `Connection: close`** — the challenge
+  kills the connection, so the retry necessarily opens a fresh one and draws a fresh
+  verdict. Every 200 carries `keep-alive`, and that connection then serves everything
+  put on it. Adding browser-shaped image headers (`Accept`, `Referer`, `sec-fetch-*`)
+  or dropping the cross-host `__cf_bm` changed *nothing*: variants A-D were
+  indistinguishable on both sides of that table. The retry loop is load-bearing, but
+  what it is really sampling is connections.
+
+  This is what makes the failures front-loaded rather than load-accumulated. On a cold
+  launch the pool is empty and six workers each open a cold connection; on the 13:21
+  baseline the first five requests all 403'd while the sustained middle stretch at full
+  rate was clean, and `a.furaffinity.net` — only four avatars, so it never got a warm
+  connection — went 20/20 x 403 against `t.furaffinity.net`'s 30 of 135 responses.
+  Getting more requests onto warm connections is therefore the lever; HTTP/1.1 is pinned
+  (`FACoilBridge.sharedClient`) which forces one connection per concurrent request, and
+  that decision is worth re-measuring under this model.
 - **The Kotlin bridges' `android.util.Log` output never reaches the log file Settings
   exports**, which only carries what went through the Swift `logger`
   (`PersistentLogger`). So anything worth keeping has to be *returned* to Swift and
