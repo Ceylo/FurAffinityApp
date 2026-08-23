@@ -129,7 +129,7 @@ struct UserView: View {
                 FAUser.demo,
                 try! AttributedString(
                     FAHTML: FAUser.demo.htmlDescription
-                ).convertingLinksForInAppNavigation()
+                )
             )
         }) { user, description in
             UserView(

@@ -111,6 +111,8 @@ struct SubmissionsTabView: View {
 
     var body: some View {
         content
+            .navigationTitle("Submissions")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .overlay(alignment: .topTrailing) {
                 floatingControls

@@ -30,8 +30,7 @@ struct NoteContentsView: View {
     }
     
     private var message: AttributedString {
-        (showWarning ? note.message : note.messageWithoutWarning)
-            .convertingLinksForInAppNavigation()
+        showWarning ? note.message : note.messageWithoutWarning
     }
     
     var body: some View {

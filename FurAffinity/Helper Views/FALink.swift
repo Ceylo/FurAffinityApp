@@ -13,7 +13,7 @@ import FAKit
 ///
 /// Events carry a monotonic ID because `FATarget` is `Hashable`: without it, an
 /// `.onChange` observer would silently drop two identical consecutive navigations.
-@Observable
+@Observable @MainActor
 final class NavigationStream {
     struct Event: Equatable {
         let target: FATarget
@@ -22,6 +22,9 @@ final class NavigationStream {
 
     private(set) var latest: Event?
     private var nextID = 0
+
+    /// Nonisolated so `EnvironmentValues`' nonisolated `defaultValue` can build one.
+    nonisolated init() {}
 
     func send(_ target: FATarget) {
         nextID += 1

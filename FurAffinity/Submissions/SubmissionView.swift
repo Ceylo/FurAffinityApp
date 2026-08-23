@@ -114,7 +114,7 @@ struct SubmissionView: View {
     
     var submissionDescription: some View {
         HTMLView(
-            text: submission.description.convertingLinksForInAppNavigation(),
+            text: submission.description,
             initialHeight: 300
         )
     }

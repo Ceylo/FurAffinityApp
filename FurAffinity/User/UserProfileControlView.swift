@@ -11,13 +11,19 @@ import SwiftUI
 
 struct UserProfileControlView: View {
     var username: String
+    // Non-private: skipstone can't bridge a private state property.
+    @Environment(\.navigationStream) var navigationStream
     
     var body: some View {
         if #available(iOS 26, *) {
             ScrollView(.horizontal) {
                 HStack {
                     ForEach(UserProfileControl.allCases) { control in
-                        Link(destination: control.destinationUrl(for: username)) {
+                        // Not FALink: it applies .buttonStyle(.borderless) in its
+                        // own body, which would override the .glass style below.
+                        Button {
+                            navigationStream.send(control.target(for: username))
+                        } label: {
                             Text(control.title)
                                 .font(.headline)
                                 .padding(5)
@@ -32,7 +38,9 @@ struct UserProfileControlView: View {
             ScrollView(.horizontal) {
                 HStack(spacing: 0) {
                     ForEach(UserProfileControl.allCases) { control in
-                        Link(destination: control.destinationUrl(for: username)) {
+                        Button {
+                            navigationStream.send(control.target(for: username))
+                        } label: {
                             Text(control.title)
                                 .font(.headline)
                                 .padding(15)

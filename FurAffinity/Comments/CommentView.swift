@@ -31,7 +31,7 @@ struct CommentView: View {
     
     var textBubble: some View {
         HTMLView(
-            text: comment.message.convertingLinksForInAppNavigation(),
+            text: comment.message,
             initialHeight: 32
         )
         .padding(.horizontal, 1)

@@ -10,6 +10,18 @@
 import SwiftUI
 import FAKit
 
+/// What a tap on a link in rendered rich text should do.
+enum LinkActivation: Equatable {
+    case navigate(FATarget)
+    case openExternally
+}
+
+extension LinkActivation {
+    init(for url: URL) {
+        self = FATarget(with: url).map(Self.navigate) ?? .openExternally
+    }
+}
+
 @MainActor @ViewBuilder
 func view(for target: FATarget) -> some View {
     switch target {

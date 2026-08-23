@@ -54,6 +54,8 @@ struct HTMLView: View {
         var animateGIFs: Bool
         var viewWidth: CGFloat
         @Binding var neededHeight: CGFloat
+        // Non-private: skipstone can't bridge a private state property.
+        @Environment(\.navigationStream) var navigationStream
 
         func makeUIView(context: Context) -> GIFOverlayTextView {
             let view = GIFOverlayTextView()
@@ -68,12 +70,15 @@ struct HTMLView: View {
             ]
             view.backgroundColor = nil
             view.textContainerInset = .init(top: 3, left: 3, bottom: 3, right: 3)
+            // UITextView holds `delegate` weakly; SwiftUI retains the coordinator.
+            view.delegate = context.coordinator
 
             return view
         }
 
         func updateUIView(_ view: GIFOverlayTextView, context: Context) {
             let coordinator = context.coordinator
+            coordinator.navigationStream = navigationStream
             if coordinator.appliedText != text {
                 view.setContent(NSAttributedString(text))
                 coordinator.appliedText = text
@@ -89,10 +94,34 @@ struct HTMLView: View {
             }
         }
 
-        func makeCoordinator() -> Coordinator { Coordinator() }
+        func makeCoordinator() -> Coordinator {
+            Coordinator(navigationStream: navigationStream)
+        }
 
-        final class Coordinator {
+        /// Routes taps on FA links into `NavigationStream` instead of letting UIKit's
+        /// default action hand them to `UIApplication.open` — going out through
+        /// LaunchServices and back fails outright when the app is hidden behind Face ID,
+        /// and can surface a different install sharing the same URL scheme.
+        @MainActor
+        final class Coordinator: NSObject, UITextViewDelegate {
             var appliedText: AttributedString?
+            var navigationStream: NavigationStream
+
+            init(navigationStream: NavigationStream) {
+                self.navigationStream = navigationStream
+            }
+
+            func textView(_ textView: UITextView,
+                          primaryActionFor textItem: UITextItem,
+                          defaultAction: UIAction) -> UIAction? {
+                guard case let .link(url) = textItem.content,
+                      case let .navigate(target) = LinkActivation(for: url) else {
+                    return defaultAction // non-FA links keep opening in Safari
+                }
+
+                let stream = navigationStream
+                return UIAction { _ in stream.send(target) }
+            }
         }
     }
 }
