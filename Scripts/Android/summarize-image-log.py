@@ -3,7 +3,8 @@
 
 Answers, per host, "how many image requests did we fire, how many came back
 403, and were they challenges or blocks?" — plus the issuance cadence, which is
-what tells a rate limit apart from a per-host verdict.
+what tells a rate limit apart from a per-host verdict, and the completion span,
+which is how long the burst took to drain.
 
     Scripts/Android/summarize-image-log.py run.log
     adb logcat -d -s fur.affinity.ui/FA | Scripts/Android/summarize-image-log.py
@@ -28,6 +29,7 @@ def host(url):
 
 def main(lines):
     issued = []                      # (datetime|None, url) in log order
+    outcomes = []                    # (datetime|None, url) in log order
     attempts = defaultdict(int)      # url -> total responses
     failures = defaultdict(list)     # url -> failure strings
     unresolved = set()               # urls that never succeeded
@@ -39,6 +41,7 @@ def main(lines):
             issued.append((when, m.group(1)))
         elif m := OUTCOME.search(line):
             url, kind, n, reasons = m.group(1), m.group(2), int(m.group(3)), m.group(4)
+            outcomes.append((when, url))
             attempts[url] = n
             failures[url] = [r.strip() for r in reasons.split(",") if r.strip()]
             if kind.startswith("failed"):
@@ -79,6 +82,21 @@ def main(lines):
         span = (stamped[-1] - stamped[0]).total_seconds()
         print(f"\nissuance: {span:.1f} s span, gaps median {statistics.median(gaps):.0f} ms, "
               f"max {max(gaps):.0f} ms")
+
+    # How long the burst took to drain, not just to be handed out. Only a retried or
+    # failed fetch logs an outcome — a first-try success is silent — so this is the
+    # first GET to the last *retry* landing, which is exactly the tail the gate
+    # lengthens when a sleeping attempt holds a permit.
+    done = [w for w, _ in outcomes if w]
+    if stamped and done:
+        drain = (max(done) - stamped[0]).total_seconds()
+        overhang = (max(done) - stamped[-1]).total_seconds()
+        note = (f", {overhang:.1f} s past the last GET" if overhang > 0
+                else ", drained before issuance ended")
+        print(f"completion: {drain:.1f} s to the last outcome "
+              f"({len(outcomes)} retried/failed{note})")
+    elif stamped:
+        print("completion: no outcome lines — every fetch succeeded on its first attempt")
 
     ranks = [i for i, (_, u) in enumerate(issued) if u in unresolved or failures.get(u)]
     if ranks:
