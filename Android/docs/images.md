@@ -40,6 +40,13 @@ Rules that are easy to get wrong here:
   the URL and silently voids every prefetch. This is what the `listRowInsets` fork is for.
 - FA challenges roughly half of all bare image requests (probabilistic, per request), so
   the bridge's retry loop is load-bearing, not defensive padding.
+- **The Kotlin bridges' `android.util.Log` output never reaches the log file Settings
+  exports**, which only carries what went through the Swift `logger`
+  (`PersistentLogger`). So anything worth keeping has to be *returned* to Swift and
+  logged there — the reason `FACoilBridge.fetch` became `fetchResult`, handing back
+  `{path, attempts, bytes, ms, failures}` as JSON so `CoilImageLoader.fetchPath` can
+  emit the one `[Coil] GET request on <url>` line per network fetch (the analog of
+  iOS's `[KF]` line) plus a retry/failure line. The same applies to the other bridges.
 
 Measured on the emulator before/after this work — cold, disk cache wiped, time for the
 first visible thumbnail to appear:

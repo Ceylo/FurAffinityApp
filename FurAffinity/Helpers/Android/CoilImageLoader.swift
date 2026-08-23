@@ -70,19 +70,48 @@ enum CoilImageLoader {
         #endif
     }
 
+    /// What `FACoilBridge.fetchResult` reports back about one download. The bridge
+    /// returns it as JSON because its own `android.util.Log` output never reaches the
+    /// log file Settings exports — the logging has to happen here.
+    private struct FetchResult: Decodable {
+        var path: String?
+        var attempts: Int
+        var bytes: Int?
+        var ms: Int?
+        var failures: [String]
+    }
+
     /// On-disk path of `url`'s bytes, downloading them into the cache if needed.
     ///
     /// **Blocking** — the JNI call runs the HTTP request and its Cloudflare retries
     /// synchronously. Callers must already be off the main actor and off the Swift
     /// cooperative pool; `FAImageStore` owns that (a bounded `DispatchQueue` gate).
+    ///
+    /// The analog of iOS's `willDownloadImageForURL`: `FAImageStore` only gets here
+    /// after `cachedPath` missed, so the `GET request` line is one per real fetch.
     static func fetchPath(_ url: URL) -> String? {
         #if canImport(Android)
         guard let bridge else { return nil }
+        logger.info("[Coil] GET request on \(url)")
         do {
-            let path: String? = try bridge.fetch(url.absoluteString)
-            return path
+            let json: String? = try bridge.fetchResult(url.absoluteString)
+            guard let data = json?.data(using: .utf8),
+                  let result = try? JSONDecoder().decode(FetchResult.self, from: data) else {
+                logger.error("[Coil] \(url): unreadable fetch result \(json ?? "<nil>")")
+                return nil
+            }
+            let reasons = result.failures.joined(separator: ", ")
+            if let path = result.path {
+                // Silent on the common case — one line per request, as on iOS.
+                if result.attempts > 1 {
+                    logger.warning("[Coil] \(url): succeeded on attempt \(result.attempts) (\(reasons))")
+                }
+                return path
+            }
+            logger.error("[Coil] \(url): failed after \(result.attempts) attempts (\(reasons))")
+            return nil
         } catch {
-            logger.error("CoilImageLoader.fetch threw for \(url): \(error)")
+            logger.error("[Coil] \(url): fetch threw: \(error)")
             return nil
         }
         #else

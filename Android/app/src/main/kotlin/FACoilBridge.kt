@@ -21,8 +21,11 @@
 //
 //  Retry: FA's avatar host (a.furaffinity.net) issues probabilistic Cloudflare
 //  challenges to any bare client (proven: URLSession and OkHttp both flip 200/403
-//  run-to-run), so `fetch` retries a challenged download a few times with backoff.
-//  HTTP/1.1 is pinned because HTTP/2 draws more challenges (spike finding).
+//  run-to-run), so `fetchResult` retries a challenged download a few times with
+//  backoff. HTTP/1.1 is pinned because HTTP/2 draws more challenges (spike finding).
+//  It *reports* that retry story back to Swift as JSON rather than logging it:
+//  android.util.Log never reaches the log file Settings exports, so anything worth
+//  keeping has to be logged on the Swift side.
 //
 //  Lives in the app Gradle module (not the FurAffinityUI module) so it compiles
 //  against coil3/okhttp declared in Android/app/build.gradle.kts; reflection loads it
@@ -37,6 +40,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okio.Path.Companion.toOkioPath
+import org.json.JSONArray
+import org.json.JSONObject
 import skip.foundation.ProcessInfo
 
 /// Instantiated once from Swift (`AnyDynamicObject(className:)`) and retained for the
@@ -51,7 +56,7 @@ class FACoilBridge {
 
     fun cachedPath(url: String): String? = Companion.cachedPath(url)
 
-    fun fetch(url: String): String? = Companion.fetch(url)
+    fun fetchResult(url: String): String = Companion.fetchResult(url)
 
     fun cacheSizeBytes(): Long = Companion.cacheSizeBytes()
 
@@ -85,18 +90,22 @@ class FACoilBridge {
         /// concurrent eviction in that window would leave Swift with a stale path; it
         /// just decodes to nil and takes the existing failure path. With a 256 MB cache
         /// and ~100 KB thumbnails this is not worth holding a lock across JNI for.
-        fun cachedPath(url: String): String? {
-            val start = System.nanoTime()
-            val path = diskCache().openSnapshot(url)?.use { it.data.toString() } ?: return null
-            Log.d(TAG, "diskHit ${ms(start)}ms $url")
-            return path
-        }
+        fun cachedPath(url: String): String? =
+            diskCache().openSnapshot(url)?.use { it.data.toString() }
 
-        /// Path of `url`'s bytes, downloading them into the disk cache if needed.
-        fun fetch(url: String): String? {
-            cachedPath(url)?.let { return it }
-
+        /// Path of `url`'s bytes plus what it took to get them, as JSON:
+        ///   {"path":"…","attempts":2,"bytes":98304,"ms":611,"failures":["HTTP 403"]}
+        /// `path` is absent when every attempt failed. Swift does the logging —
+        /// android.util.Log never reaches the exported application log.
+        fun fetchResult(url: String): String {
             val start = System.nanoTime()
+            val failures = JSONArray()
+            val json = JSONObject().put("failures", failures)
+
+            cachedPath(url)?.let {
+                return json.put("path", it).put("attempts", 0).put("ms", ms(start)).toString()
+            }
+
             val cache = diskCache()
             val request = Request.Builder().url(url).build()
 
@@ -120,8 +129,11 @@ class FACoilBridge {
                                     val path = editor.commitAndOpenSnapshot()
                                         ?.use { it.data.toString() }
                                     if (path != null) {
-                                        Log.d(TAG, "network ${ms(start)}ms ${bytes}B attempts=$attempt $url")
-                                        return path
+                                        return json.put("path", path)
+                                            .put("attempts", attempt)
+                                            .put("bytes", bytes)
+                                            .put("ms", ms(start))
+                                            .toString()
                                     }
                                     "no snapshot after commit"
                                 } catch (e: Exception) {
@@ -135,11 +147,10 @@ class FACoilBridge {
                     e.toString()
                 }
 
+                failures.put(failure)
                 if (attempt >= MAX_ATTEMPTS) {
-                    Log.e(TAG, "fetch FAILED $url after $attempt attempts: $failure")
-                    return null
+                    return json.put("attempts", attempt).put("ms", ms(start)).toString()
                 }
-                Log.i(TAG, "retry $attempt for $url ($failure)")
                 Thread.sleep(250L * attempt)
             }
         }
