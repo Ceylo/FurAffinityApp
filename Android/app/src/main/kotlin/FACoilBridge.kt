@@ -119,10 +119,12 @@ class FACoilBridge {
             val request = Request.Builder().url(url).build()
 
             var attempt = 0
+            var proto = ""
             while (true) {
                 attempt++
                 val failure = try {
                     sharedClient().newCall(request).execute().use { response ->
+                        proto = response.protocol.toString()
                         if (!response.isSuccessful) {
                             // Name Cloudflare's verdict: `cf-mitigated=challenge` is a
                             // bot-score challenge, its absence on a 403 a WAF/hotlink
@@ -148,6 +150,7 @@ class FACoilBridge {
                                         return json.put("path", path)
                                             .put("attempts", attempt)
                                             .put("bytes", bytes)
+                                            .put("proto", proto)
                                             .put("ms", ms(start))
                                             .toString()
                                     }
@@ -165,7 +168,10 @@ class FACoilBridge {
 
                 failures.put(failure)
                 if (attempt >= MAX_ATTEMPTS) {
-                    return json.put("attempts", attempt).put("ms", ms(start)).toString()
+                    return json.put("attempts", attempt)
+                        .put("proto", proto)
+                        .put("ms", ms(start))
+                        .toString()
                 }
                 Thread.sleep(250L * attempt)
             }
@@ -257,6 +263,7 @@ class FACoilBridge {
                 // must not populate the disk cache the real path is being judged on.
                 client.newCall(builder.build()).execute().use { response ->
                     row.put("code", response.code)
+                        .put("proto", response.protocol.toString())
                         .put("cfMitigated", response.header("cf-mitigated") ?: "")
                         .put("cfRay", response.header("cf-ray") ?: "")
                         // `Connection: close` on a 403 is what makes the verdict stick:
@@ -327,8 +334,21 @@ class FACoilBridge {
             synchronized(FACoilBridge::class.java) {
                 sharedClient?.let { return it }
                 val client = OkHttpClient.Builder()
-                    // HTTP/2 draws more Cloudflare challenges than HTTP/1.1 (spike +
-                    // Phase A), so pin h1 to match the URLSession path that clears CF.
+                    // h1 is pinned, and h2 was measured rather than assumed. Since
+                    // Cloudflare judges the connection, h2 looked like the fix — FA's
+                    // CDN offers it, and it multiplexes a whole burst onto one
+                    // connection instead of h1's one per concurrent request. It is
+                    // also what iOS gets for free (URLSession always negotiates h2 and
+                    // cannot be told not to). Ten cold-launch runs on one emulator
+                    // session, five each, say it is a wash:
+                    //
+                    //     h2  444 responses, 12% 403, 7 images lost, 3/5 clean runs
+                    //     h1  463 responses, 15% 403, 6 images lost, 1/5 clean runs
+                    //
+                    // h2 has the better median and the worse tail: its one connection
+                    // is a single point of failure, so a bad draw loses every avatar
+                    // at once (one run lost 7 of 8) where h1's six draws decorrelate
+                    // and its retries recover. No reliable win, so keep h1.
                     .protocols(listOf(Protocol.HTTP_1_1))
                     // The interceptor reads the volatile companion fields each request,
                     // so header refreshes (CF re-solve / re-login) need no rebuild.

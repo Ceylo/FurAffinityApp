@@ -82,7 +82,28 @@ enum CoilImageLoader {
         var attempts: Int
         var bytes: Int?
         var ms: Int?
+        var proto: String?
         var failures: [String]
+    }
+
+    /// Reports the HTTP protocol each FA host settled on, once per host per launch.
+    ///
+    /// Worth a line in the exported log: Cloudflare's verdict is per connection, so
+    /// whether the burst rides one multiplexed h2 connection or six h1 ones is the
+    /// single biggest input to the 403 rate — and a silent ALPN fallback to http/1.1
+    /// would otherwise look like the change simply not working.
+    nonisolated(unsafe) private static var loggedProtocols = Set<String>()
+    private static let protocolLock = NSLock()
+
+    private static func logProtocolOnce(_ proto: String?, for url: URL) {
+        guard let proto, !proto.isEmpty, let host = url.host else { return }
+        let key = "\(host) \(proto)"
+        protocolLock.lock()
+        let isNew = loggedProtocols.insert(key).inserted
+        protocolLock.unlock()
+        if isNew {
+            logger.info("[Coil] \(host) negotiated \(proto)")
+        }
     }
 
     /// On-disk path of `url`'s bytes, downloading them into the cache if needed.
@@ -107,6 +128,7 @@ enum CoilImageLoader {
                 logger.error("[Coil] \(url): unreadable fetch result \(json ?? "<nil>")")
                 return nil
             }
+            logProtocolOnce(result.proto, for: url)
             let reasons = result.failures.joined(separator: ", ")
             if let path = result.path {
                 // Silent on the common case — one line per request, as on iOS.
@@ -199,6 +221,7 @@ enum CoilImageLoader {
         var variant: String
         var url: String
         var code: Int
+        var proto: String?
         var cfMitigated: String?
         var cfRay: String?
         var connection: String?
@@ -223,9 +246,10 @@ enum CoilImageLoader {
             for row in rows {
                 let mitigated = (row.cfMitigated?.isEmpty == false) ? " cf-mitigated=\(row.cfMitigated!)" : ""
                 let ray = (row.cfRay?.isEmpty == false) ? " ray=\(row.cfRay!)" : ""
+                let proto = (row.proto?.isEmpty == false) ? " \(row.proto!)" : ""
                 let connection = (row.connection?.isEmpty == false) ? " connection=\(row.connection!)" : ""
                 let failure = row.error.map { " \($0)" } ?? ""
-                logger.info("[Probe] \(row.variant) \(row.url) -> \(row.code)\(mitigated)\(ray)\(connection)\(failure) \(row.ms)ms")
+                logger.info("[Probe] \(row.variant) \(row.url) ->\(proto) \(row.code)\(mitigated)\(ray)\(connection)\(failure) \(row.ms)ms")
             }
         } catch {
             logger.error("[Probe] \(host): threw: \(error)")

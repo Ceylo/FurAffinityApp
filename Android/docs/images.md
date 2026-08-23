@@ -60,9 +60,24 @@ Rules that are easy to get wrong here:
   baseline the first five requests all 403'd while the sustained middle stretch at full
   rate was clean, and `a.furaffinity.net` — only four avatars, so it never got a warm
   connection — went 20/20 x 403 against `t.furaffinity.net`'s 30 of 135 responses.
-  Getting more requests onto warm connections is therefore the lever; HTTP/1.1 is pinned
-  (`FACoilBridge.sharedClient`) which forces one connection per concurrent request, and
-  that decision is worth re-measuring under this model.
+  Getting more requests onto warm connections is therefore the lever — but the obvious
+  way to pull it does not work. **HTTP/2 was measured and rejected.** It looked ideal
+  (FA's CDN offers it; it multiplexes a burst onto one connection instead of h1's one
+  per concurrent request; it is what iOS gets for free, since URLSession always
+  negotiates h2 and cannot be told not to — verified with `URLSessionTaskMetrics`:
+  `proto=h2`, one connection per host, everything after the first reusing it). Ten
+  cold-launch runs on one emulator session, five per protocol:
+
+  | | responses | 403 rate | images never loaded | fully clean runs |
+  |---|---|---|---|---|
+  | h2 | 444 | 12% | 7 | 3 / 5 |
+  | h1 | 463 | 15% | 6 | 1 / 5 |
+
+  A wash on the numbers, and worse where it counts: h2's single connection is a single
+  point of failure, so one bad draw loses *every* avatar at once (one run lost 7 of 8),
+  where h1's six draws decorrelate and the retries recover. Note also how wide the
+  run-to-run spread is even within one session — 0% to 97% on the same host — so never
+  judge a change here on one run.
 - **The Kotlin bridges' `android.util.Log` output never reaches the log file Settings
   exports**, which only carries what went through the Swift `logger`
   (`PersistentLogger`). So anything worth keeping has to be *returned* to Swift and
