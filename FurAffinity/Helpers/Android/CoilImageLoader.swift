@@ -86,10 +86,7 @@ enum CoilImageLoader {
     /// What `FACoilBridge.fetchResult` reports back about one download. The bridge
     /// returns it as JSON because its own `android.util.Log` output never reaches the
     /// log file Settings exports — the logging has to happen here.
-    ///
-    /// Handed back to `FAImageStore` rather than just the path: the launch ramp widens
-    /// a host only on a real network download, and `bytes` is what says it was one.
-    struct FetchResult: Decodable {
+    private struct FetchResult: Decodable {
         var path: String?
         var attempts: Int
         var bytes: Int?
@@ -123,7 +120,7 @@ enum CoilImageLoader {
         }
     }
 
-    /// Downloads `url` into the cache if needed and reports what that took.
+    /// On-disk path of `url`'s bytes, downloading them into the cache if needed.
     ///
     /// **Blocking** — the JNI call runs the HTTP request and its Cloudflare retries
     /// synchronously. Callers must already be off the main actor and off the Swift
@@ -131,7 +128,7 @@ enum CoilImageLoader {
     ///
     /// The analog of iOS's `willDownloadImageForURL`: `FAImageStore` only gets here
     /// after `cachedPath` missed, so the `GET request` line is one per real fetch.
-    static func fetch(_ url: URL) -> FetchResult? {
+    static func fetchPath(_ url: URL) -> String? {
         #if canImport(Android)
         guard let bridge else { return nil }
         logger.info("[Coil] GET request on \(url)")
@@ -147,22 +144,23 @@ enum CoilImageLoader {
             }
             logProtocolOnce(result.proto, for: url)
             let reasons = result.failures.joined(separator: ", ")
-            if result.path != nil {
-                // The retry line first, so a URL's draws read in attempt order: the
-                // failed ones are inside `reasons`, the winning one on the next line.
+            if let path = result.path {
+                // One outcome line per *completed* fetch, not just per retried one.
+                // This drops the "silent on the common case" convention iOS keeps, and
+                // costs ~160 log lines on a cold run instead of ~85 — the price of
+                // counting connections. It also makes the summarizer's completion span
+                // exact: without it only retried and failed fetches are dated.
+                // The retry line first, so a URL's draws appear in attempt order:
+                // the failed attempts are inside `reasons`, the winning one is next.
                 if result.attempts > 1 {
                     logger.warning("[Coil] \(url): succeeded on attempt \(result.attempts) (\(reasons))")
                 }
-                // One line per *completed* fetch, not just per retried one. That drops
-                // the "silent on the common case" convention iOS keeps and costs ~160
-                // lines on a cold run instead of ~85 — the price of counting
-                // connections — and it makes the summarizer's completion span exact.
                 let conn = result.conn.map { " conn=\($0) new=\(result.newConn ?? false)" } ?? ""
                 logger.info("[Coil] \(url): 200\(conn) \(result.ms ?? -1)ms")
-                return result
+                return path
             }
             logger.error("[Coil] \(url): failed after \(result.attempts) attempts (\(reasons))")
-            return result
+            return nil
         } catch {
             logger.error("[Coil] \(url): fetch threw: \(error)")
             return nil

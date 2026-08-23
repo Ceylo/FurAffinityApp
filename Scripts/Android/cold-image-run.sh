@@ -19,8 +19,11 @@
 # It flags two things on the way out:
 #   - a page-path Cloudflare challenge (`Cloudflare challenge on URLSession fetch`),
 #     which is context, not automatically a discard;
-#   - fewer than 20 image GETs, which means the feed page itself never loaded and
-#     the run has nothing comparable in it. That is the discard rule.
+#   - a feed page that never loaded, which is the one discard rule. That is read off
+#     `prefetchThumbnails count=`, NOT off the image GET count: a run where the image
+#     layer collapses issues very few GETs too, and discarding those would throw away
+#     the worst outcome there is. One h2 arm produced four runs that loaded all 72
+#     feed items and then lost every single image.
 #
 # Environment: ANDROID_HOME / ANDROID_SDK_ROOT, ANDROID_SERIAL, as run-android.sh.
 
@@ -94,13 +97,19 @@ sleep "$WAIT"
 # --- verdict ---------------------------------------------------------------
 
 gets=$(grep -c '\[Coil\] GET request on' "$OUT" || true)
-echo "=== $(basename "$OUT"): $gets image GETs ==="
+loaded=$(sed -nE 's/.*prefetchThumbnails count=([0-9]+).*/\1/p' "$OUT" | head -1)
+echo "=== $(basename "$OUT"): ${loaded:-0} feed items, $gets image GETs ==="
 
 if grep -q 'Cloudflare challenge on URLSession fetch' "$OUT"; then
     echo "note: the page path was challenged this run — context, not a discard"
 fi
 
-if (( gets < 20 )); then
+if (( ${loaded:-0} < 20 )); then
     echo "DISCARD: the feed page never loaded, so there is no image burst to compare"
     exit 1
+fi
+
+if (( gets < loaded )); then
+    echo "note: only $gets of $loaded items reached the network — if few of those"
+    echo "      succeeded the image layer stalled, which is a result, not a discard"
 fi

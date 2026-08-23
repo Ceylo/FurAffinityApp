@@ -16,8 +16,6 @@
 //  - `gate` admits at most `concurrencyLimit` operations, so at most that many
 //    `queue` blocks — and therefore threads — exist at once. Waiters are two FIFOs so a
 //    visible row is never queued behind a batch of prefetches.
-//  - `hostGates` ramps a *cold* host up to that limit one connection at a time, which
-//    is what the launch burst's Cloudflare 403s are really about. See `MARK: - Gates`.
 //  - `inFlightFetch` coalesces downloads; a row's own load and its prefetch become one.
 //    `inFlightImage` coalesces decodes, which matters for avatars: one author can appear
 //    a dozen times in a single feed page.
@@ -108,75 +106,11 @@ final class FAImageMemoryCache: @unchecked Sendable {
     }
 }
 
-/// Counting gate with a high/low waiter split, so a visible row jumps the queue of
-/// prefetches instead of joining its tail — the iOS prefetcher's split, by hand.
-///
-/// A value type: `FAImageStore` holds one global and one per image host, and keeping
-/// them as actor-isolated properties is what makes every mutation here safe without a
-/// lock of its own.
-private struct PriorityGate {
-    /// How many holders are admitted at once. `widen(upTo:)` raises it; nothing ever
-    /// lowers it.
-    private(set) var limit: Int
-    /// Holders, not waiters: `release` hands its permit straight on rather than
-    /// decrementing, so this only falls when nobody is queued.
-    private var active = 0
-    private var highPriorityWaiters = [CheckedContinuation<Void, Never>]()
-    private var lowPriorityWaiters = [CheckedContinuation<Void, Never>]()
-
-    init(limit: Int) {
-        self.limit = limit
-    }
-
-    /// True when the caller took a permit; false when it must `enqueue` and suspend.
-    mutating func tryAcquire() -> Bool {
-        guard active < limit else { return false }
-        active += 1
-        return true
-    }
-
-    mutating func enqueue(_ continuation: CheckedContinuation<Void, Never>, _ priority: FAImagePriority) {
-        switch priority {
-        case .high: highPriorityWaiters.append(continuation)
-        case .low: lowPriorityWaiters.append(continuation)
-        }
-    }
-
-    /// Hands the permit straight to the next waiter — high priority first — so a
-    /// visible row jumps the queue of prefetches instead of joining its tail.
-    mutating func release() {
-        if !resumeNextWaiter() {
-            active -= 1
-        }
-    }
-
-    /// One more permit, if `cap` allows. Wakes a waiter into it directly, since
-    /// `release` gives its own permit away and would never let the new slot be used.
-    mutating func widen(upTo cap: Int) {
-        guard limit < cap else { return }
-        limit += 1
-        if active < limit, resumeNextWaiter() {
-            active += 1
-        }
-    }
-
-    private mutating func resumeNextWaiter() -> Bool {
-        if !highPriorityWaiters.isEmpty {
-            highPriorityWaiters.removeFirst().resume()
-        } else if !lowPriorityWaiters.isEmpty {
-            lowPriorityWaiters.removeFirst().resume()
-        } else {
-            return false
-        }
-        return true
-    }
-}
-
 actor FAImageStore {
     static let shared = FAImageStore()
 
     /// Matches `FACoilBridge`'s per-host dispatcher limit and URLSession's default.
-    private static let concurrencyLimit = 6
+    private let concurrencyLimit = 6
 
     /// The blocking JNI fetch and the decode both run here rather than on a
     /// `Task.detached`: FurAffinityUI is a *native* Skip module, so blocking a
@@ -184,9 +118,9 @@ actor FAImageStore {
     /// only ever `concurrencyLimit` blocks are submitted, so the thread count is bounded.
     private let queue = DispatchQueue(label: "FAImageStore", attributes: .concurrent)
 
-    private var gate = PriorityGate(limit: concurrencyLimit)
-    /// One per image host, created at limit 1 and widened by `MARK: - Gates`.
-    private var hostGates = [String: PriorityGate]()
+    private var active = 0
+    private var highPriorityWaiters = [CheckedContinuation<Void, Never>]()
+    private var lowPriorityWaiters = [CheckedContinuation<Void, Never>]()
 
     private var inFlightFetch = [URL: Task<String?, Never>]()
     private var inFlightImage = [URL: Task<UIImage?, Never>]()
@@ -413,7 +347,7 @@ actor FAImageStore {
             return await existing.value
         }
         let task = Task(priority: priority.taskPriority) { [self] in
-            let path = await ramped(url, priority: priority)
+            let path = await gated(priority) { CoilImageLoader.fetchPath(url) }
             inFlightFetch[url] = nil
             return path
         }
@@ -437,7 +371,7 @@ actor FAImageStore {
         return size ?? 64 * 1024
     }
 
-    // MARK: - Gates
+    // MARK: - Concurrency gate
 
     /// Runs `work` on `queue` under a permit, so at most `concurrencyLimit` blocking
     /// operations are outstanding. Suspends rather than blocking while waiting.
@@ -445,10 +379,8 @@ actor FAImageStore {
         _ priority: FAImagePriority,
         _ work: @escaping @Sendable () -> T
     ) async -> T {
-        if !gate.tryAcquire() {
-            await withCheckedContinuation { gate.enqueue($0, priority) }
-        }
-        defer { gate.release() }
+        await acquire(priority)
+        defer { release() }
         return await withCheckedContinuation { continuation in
             queue.async {
                 continuation.resume(returning: work())
@@ -456,45 +388,28 @@ actor FAImageStore {
         }
     }
 
-    /// The launch ramp: downloads `url`, admitting one cold connection per host at a
-    /// time and widening only once one has come back with bytes.
-    ///
-    /// Cloudflare judges the *connection*, not the request — and measured over eight
-    /// cold runs, **not one of ~600 responses on a reused connection was a 403**, while
-    /// 21-96% of the ones that opened their own connection were. Six workers starting
-    /// together therefore take six independent bad-verdict draws at t=0, each poisoning
-    /// everything sent on it. `a.furaffinity.net` is the consistent loser because with
-    /// only 4-8 avatars it never accumulates the traffic to warm a connection and just
-    /// keeps re-rolling.
-    ///
-    /// So draw serially and widen on proof. Under HTTP/1.1 widening still opens cold
-    /// connections — one warm connection serves one request at a time — but each of
-    /// those draws now happens with a warm connection already pooled to retry onto,
-    /// instead of all six landing at once on an empty pool.
-    ///
-    /// Per host, not global: `a.` and `t.` are separate addresses drawing separate
-    /// verdicts, so `t.` succeeding must not unlock 6-wide for `a.`, which has proven
-    /// nothing. Monotone for the process lifetime — a credential push does not
-    /// invalidate a pooled connection, so `configure` must not reset it.
-    private func ramped(_ url: URL, priority: FAImagePriority) async -> String? {
-        let host = url.host ?? ""
-        // Host slot outer, global permit inner, always in that order: one lock order,
-        // so the two gates cannot deadlock against each other.
-        if !hostGates[host, default: PriorityGate(limit: 1)].tryAcquire() {
-            await withCheckedContinuation {
-                hostGates[host, default: PriorityGate(limit: 1)].enqueue($0, priority)
+    private func acquire(_ priority: FAImagePriority) async {
+        if active < concurrencyLimit {
+            active += 1
+            return
+        }
+        await withCheckedContinuation { continuation in
+            switch priority {
+            case .high: highPriorityWaiters.append(continuation)
+            case .low: lowPriorityWaiters.append(continuation)
             }
         }
-        defer { hostGates[host]?.release() }
+    }
 
-        let result = await gated(priority) { CoilImageLoader.fetch(url) }
-
-        // A real network download, not a disk-cache hit: `path(for:)` checks the cache
-        // before getting here, but the Kotlin side re-checks for a race, and only
-        // `bytes` says the connection actually carried something.
-        if result?.bytes != nil {
-            hostGates[host]?.widen(upTo: Self.concurrencyLimit)
+    /// Hands the permit straight to the next waiter — high priority first — so a
+    /// visible row jumps the queue of prefetches instead of joining its tail.
+    private func release() {
+        if !highPriorityWaiters.isEmpty {
+            highPriorityWaiters.removeFirst().resume()
+        } else if !lowPriorityWaiters.isEmpty {
+            lowPriorityWaiters.removeFirst().resume()
+        } else {
+            active -= 1
         }
-        return result?.path
     }
 }
