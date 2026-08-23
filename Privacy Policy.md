@@ -6,8 +6,8 @@ Please read the following carefully to understand our views and practices regard
 
 ```
 Lucas Soltic
-4 place de la Roche Quantin
-16000 Angoulême
+20 rue des Vignes
+16600 Magnac-sur-Touvre
 France
 ```
 
@@ -61,8 +61,8 @@ We would appreciate the opportunity to directly address any GDPR issues you may 
 
 ```
 Lucas Soltic
-4 place de la Roche Quantin
-16000 Angoulême
+20 rue des Vignes
+16600 Magnac-sur-Touvre
 France
 
 contact@furaffinity.app
