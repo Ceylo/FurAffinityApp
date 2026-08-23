@@ -115,7 +115,7 @@ struct HTMLView: View {
                           primaryActionFor textItem: UITextItem,
                           defaultAction: UIAction) -> UIAction? {
                 guard case let .link(url) = textItem.content,
-                      case let .navigate(target) = LinkActivation(for: url) else {
+                      let target = FATarget(with: url) else {
                     return defaultAction // non-FA links keep opening in Safari
                 }
 

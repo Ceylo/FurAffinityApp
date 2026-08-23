@@ -166,21 +166,6 @@ struct AndroidRootView: View {
             guard let event else { return }
             path.append(event.target)
         }
-        .environment(\.openURL, OpenURLAction { url in
-            // Only the app scheme is ours. Rich text carries no links of its own here —
-            // Compose hands a tap to `HTMLView`'s `onLinkTap`, which rewrites the
-            // navigable ones to that scheme; `FATarget` maps them back.
-            //
-            // Matching on `FATarget(with:)` alone would be wrong: it normalises the
-            // scheme to https before matching, so a *plain* FA URL matches too — and
-            // SkipUI routes every `Link` through this action, so "Open in Web Browser"
-            // would push another copy of the page it is trying to leave.
-            guard url.scheme == appNavigationScheme, let target = FATarget(with: url) else {
-                return .systemAction
-            }
-            navigationStream.send(target)
-            return .handled
-        })
         .autorefreshingOnForeground {
             await model.autorefreshIfNeeded()
         }

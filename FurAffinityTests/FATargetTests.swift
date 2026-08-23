@@ -82,4 +82,17 @@ struct FATargetTests {
         let httpsUrl = URL(string: "https://www.furaffinity.net/view/123/")!
         #expect(FATarget(with: httpUrl) == .submission(url: httpsUrl, previewData: nil))
     }
+
+    @Test
+    func appNavigationSchemeIsNormalized() {
+        // External entry points (Reminders, Shortcuts) still carry this scheme.
+        let appUrl = URL(string: "\(appNavigationScheme)://www.furaffinity.net/view/123/")!
+        let httpsUrl = URL(string: "https://www.furaffinity.net/view/123/")!
+        #expect(FATarget(with: appUrl) == .submission(url: httpsUrl, previewData: nil))
+    }
+
+    @Test
+    func notMatchingUnroutableFAPath() {
+        #expect(FATarget(with: URL(string: "https://www.furaffinity.net/settings/")!) == nil)
+    }
 }

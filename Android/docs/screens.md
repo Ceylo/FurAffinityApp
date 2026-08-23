@@ -160,11 +160,16 @@ vertically. Copying only the inset left Android's text half as far from the edge
 fix covers two places: the submission description and every comment bubble
 (`CommentView`'s `textBubble`) go through this view.
 
-`InAppLinkConversion.swift` duplicates ~20 lines of `InAppNavigation.swift` — the
-link-rewriting half. Splitting the iOS file instead would mean an `.xcodeproj` edit, so
-this is a knowing duplication: **keep the two in sync.** The other half, `view(for:)`,
-can't be shared at all (it names screens that don't exist here) and lives in
-`AndroidNavigationDestination.swift`.
+Link taps inside rich text never reach `openURL`: Compose hands them to this view's
+`onLinkTap`, which pushes anything `FATarget(with:)` matches into `NavigationStream` and
+sends the rest to the browser. The listener fires on the Compose UI thread, so it reaches
+the (main-actor) stream through `MainActor.assumeIsolated` — a `Task` hop would defer the
+push by a frame. Nothing rewrites URL schemes on either platform any more; Android
+registers no scheme at all, and `appNavigationScheme` (`InAppLinkConversion.swift`)
+survives only as iOS's external entry point.
+
+`view(for:)`, the half of `InAppNavigation.swift` that can't be shared at all (it names
+screens that don't exist here), lives in `AndroidNavigationDestination.swift`.
 
 ### A `ViewModifier` must not defer its `content`
 

@@ -23,6 +23,7 @@ struct HTMLView: View {
     // evaluation of the parent's body, but the walk is O(runs) with nothing built.
     var fragments: [FAHTMLFragment]
     @Environment(\.openURL) var openURL
+    @Environment(\.navigationStream) var navigationStream
 
     init(text: AttributedString, initialHeight: CGFloat = 0) {
         self.fragments = text.faHTMLFragments
@@ -61,9 +62,20 @@ struct HTMLView: View {
             },
             onLinkTap: { url in
                 // Compose hands the tap here instead of opening the browser itself, so
-                // this is the app's chance to keep a navigable FA URL in-app. The scheme
-                // rewrite is what tells `AndroidRootView`'s handler the two apart.
-                openURL(url.convertedForInAppNavigation)
+                // this is the app's chance to keep a navigable FA URL in-app. Only links
+                // *inside rich text* land here, so matching plainly on `FATarget` is
+                // safe: "Open in Web Browser" goes through `openURL` and never here.
+                //
+                // Compose's LinkInteractionListener fires on the UI thread, so this is
+                // already the main actor — assume it rather than hopping through a Task,
+                // which would defer the push by a frame.
+                MainActor.assumeIsolated {
+                    if let target = FATarget(with: url) {
+                        navigationStream.send(target)
+                    } else {
+                        openURL(url)
+                    }
+                }
             }
         )
         #else

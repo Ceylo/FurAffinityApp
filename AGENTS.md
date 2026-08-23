@@ -53,7 +53,7 @@ upstream). Images go through an Android-only pipeline
 - `Model.swift`: `@Observable @MainActor` — session, feeds, search results/query, notes, notifications, autorefresh, error storage.
 - `Helpers/FATarget.swift`: FA URL → navigation target.
 - `Helpers/iOS/InAppNavigation.swift` · `Helpers/Android/InAppNavigation+Android.swift`: `FATarget` → destination view.
-- `Helpers/InAppLinkConversion.swift`: `appNavigationScheme` + the URL/`AttributedString` link rewriting. Kept apart from `InAppNavigation.swift` (no SwiftUI) so both platforms share it — which is why it stays in the base while its sibling has an `iOS/` and an `Android/` build.
+- `Helpers/InAppLinkConversion.swift`: `appNavigationScheme`. Kept apart from `InAppNavigation.swift` (no SwiftUI) so both platforms share it — which is why it stays in the base while its sibling has an `iOS/` and an `Android/` build.
 - `Helper Views/RemoteView.swift`: loading/refresh wrapper for remote content.
 - `Helpers/iOS/Kingfisher+FA.swift`: image loading/prefetching with FA headers.
 
@@ -72,7 +72,7 @@ upstream). Images go through an Android-only pipeline
 
 URL-centered. `FATarget.init?(with:)` maps FA URLs to typed cases; `view(for:)` returns the destination view.
 
-Every in-app link routes **in-process** through `NavigationStream` (`Helper Views/FALink.swift`), never out through `UIApplication.open` — a LaunchServices round trip fails when the app is hidden behind Face ID, and can surface a different install sharing the URL scheme. Use `FALink` for tappable views; taps on links inside rich HTML are intercepted by `HTMLView`'s `UITextViewDelegate`, which routes anything `LinkActivation(for:)` matches and leaves the rest to Safari. The `furaffinity-app-navigation` scheme stays registered purely as an *external* entry point (Reminders, Shortcuts) handled by `.onOpenURL`.
+Every in-app link routes **in-process** through `NavigationStream` (`Helper Views/FALink.swift`), never out through `UIApplication.open` — a LaunchServices round trip fails when the app is hidden behind Face ID, and can surface a different install sharing the URL scheme. Use `FALink` for tappable views; taps on links inside rich HTML are intercepted before they can become an `openURL` — by `HTMLView`'s `UITextViewDelegate` on iOS and by its `onLinkTap` on Android — and anything `FATarget(with:)` matches goes to the stream, the rest to the browser. The `furaffinity-app-navigation` scheme stays registered on iOS purely as an *external* entry point (Reminders, Shortcuts) handled by `.onOpenURL`; Android registers no scheme.
 
 ## Submission Content Kinds
 
