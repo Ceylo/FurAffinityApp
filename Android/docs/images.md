@@ -78,6 +78,42 @@ Rules that are easy to get wrong here:
   where h1's six draws decorrelate and the retries recover. Note also how wide the
   run-to-run spread is even within one session — 0% to 97% on the same host — so never
   judge a change here on one run.
+- **The retry backoff sleeps inside `FAImageStore`'s concurrency permit, and that is
+  load-bearing.** It looks like pure waste: `FACoilBridge.fetchResult` runs all five
+  attempts inside one JNI call, so up to 2.5 s of `Thread.sleep` holds 1 of the gate's
+  6 permits while doing nothing, and five other images wait behind it. Moving the loop
+  into Swift so the permit is re-acquired per attempt and the backoff runs outside it
+  makes things dramatically **worse**. Cold runs on one emulator session, A-B-A so the
+  session's own drift is visible:
+
+  | arm | runs | responses/run | 403 rate | images lost/run | issuance span | drain |
+  |---|---|---|---|---|---|---|
+  | A1 backoff inside the permit | 9 | 122 | 29% | 2.8 | 7.1 s | 8.8 s |
+  | B1 backoff outside it | 9 | 221 | **75%** | **25.4** | — | 3.3 s |
+  | B2 as B1, but ≤6 URLs retrying at once | 9 | 150 | 48% | 1.7 | 2.0 s | 8.6 s |
+  | A2 backoff inside the permit, again | 6 | 106 | 26% | 1.0 | 4.2 s | 5.0 s |
+
+  The permit is not just a concurrency bound, it is the **pacing**. Holding it across
+  the backoff caps the burst at six URLs in the retry cycle; freeing it let all ~80
+  URLs of a cold launch retry in lockstep — every one exhausting all five attempts,
+  ~400 connection attempts in 3.4 s — and Cloudflare answers a burst like that by
+  challenging everything (B1 lost 64, 75 and 81 images on single runs; A1's worst was
+  6). Capping retry concurrency (B2) recovers most of that, but note A1 → B2 → A2 in
+  chronological order: images lost/run falls 2.8 → 1.7 → 1.0 monotonically, which is
+  the session drifting, not the change working. B2 buys faster *issuance* (2.0 s vs
+  4-7 s) and nothing else, at 40% more requests against FA's CDN. Reverted; the Kotlin
+  loop stays.
+
+  Corollary for the summarizer: `[Coil] GET request on` must be logged from **inside**
+  the permit. Logged before it, the line marks when a `Task` was created rather than
+  when the request went out, and `summarize-image-log.py`'s issuance cadence silently
+  becomes meaningless (every gap 0 ms).
+- **A scroll test measures nothing on the Followed feed.** Its whole 72-item page is
+  prefetched during the cold burst, so scrolling through it serves every thumbnail from
+  disk: the feed position advances and the `[Coil]` GET count does not move. Anything
+  that needs a *second* burst in the same process (connection-pool behaviour, say) has
+  to trigger one another way — clearing the caches from Settings and pulling to refresh
+  is the one that also drops the memory LRU, which otherwise absorbs everything.
 - **The Kotlin bridges' `android.util.Log` output never reaches the log file Settings
   exports**, which only carries what went through the Swift `logger`
   (`PersistentLogger`). So anything worth keeping has to be *returned* to Swift and
