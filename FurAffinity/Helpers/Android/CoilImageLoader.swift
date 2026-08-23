@@ -149,6 +149,7 @@ enum CoilImageLoader {
     /// ones each FA host really asks for, so `a.` avatars and `t.` thumbnails are both
     /// measured on live feed traffic instead of on a hardcoded guess.
     private final class HeaderProbe: @unchecked Sendable {
+        private static let queue = DispatchQueue(label: "FAHeaderProbe", qos: .utility)
         private let lock = NSLock()
         private var collected = [String: [URL]]()
         private var probed = Set<String>()
@@ -180,11 +181,12 @@ enum CoilImageLoader {
             lock.unlock()
             guard let ready else { return }
 
-            // Off the cooperative pool (16 blocking JNI requests, ~6 s) and off
+            // Off the cooperative pool (20 blocking JNI requests, ~8 s) and off
             // FAImageStore's gate. Delayed so the launch burst and its retries drain
             // first: the probe is meant to measure the header shape, not the queue it
-            // happened to be issued into.
-            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 12) {
+            // happened to be issued into. Serial, so `a.`'s square and `t.`'s don't
+            // overlap and halve each other's spacing.
+            Self.queue.asyncAfter(deadline: .now() + 12) {
                 CoilImageLoader.runHeaderProbe(host: host, urls: ready)
             }
         }
@@ -199,6 +201,7 @@ enum CoilImageLoader {
         var code: Int
         var cfMitigated: String?
         var cfRay: String?
+        var connection: String?
         var ms: Int
         var error: String?
     }
@@ -209,7 +212,7 @@ enum CoilImageLoader {
         guard let bridge else { return }
         guard let payload = try? JSONEncoder().encode(urls.map(\.absoluteString)),
               let json = String(data: payload, encoding: .utf8) else { return }
-        logger.info("[Probe] \(host): 4 URLs x 4 header variants")
+        logger.info("[Probe] \(host): 4 URLs x 5 header variants")
         do {
             let out: String? = try bridge.probeHeaders(json)
             guard let data = out?.data(using: .utf8),
@@ -220,8 +223,9 @@ enum CoilImageLoader {
             for row in rows {
                 let mitigated = (row.cfMitigated?.isEmpty == false) ? " cf-mitigated=\(row.cfMitigated!)" : ""
                 let ray = (row.cfRay?.isEmpty == false) ? " ray=\(row.cfRay!)" : ""
+                let connection = (row.connection?.isEmpty == false) ? " connection=\(row.connection!)" : ""
                 let failure = row.error.map { " \($0)" } ?? ""
-                logger.info("[Probe] \(row.variant) \(row.url) -> \(row.code)\(mitigated)\(ray)\(failure) \(row.ms)ms")
+                logger.info("[Probe] \(row.variant) \(row.url) -> \(row.code)\(mitigated)\(ray)\(connection)\(failure) \(row.ms)ms")
             }
         } catch {
             logger.error("[Probe] \(host): threw: \(error)")

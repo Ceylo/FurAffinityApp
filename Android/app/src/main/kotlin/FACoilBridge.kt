@@ -213,11 +213,11 @@ class FACoilBridge {
             val rows = JSONArray()
             if (urls.isEmpty()) return rows.toString()
 
-            val variants = listOf("A", "B", "C", "D")
-            // Round r pairs url j with variant (r + j) % 4: over four rounds every
-            // variant meets every URL once, and no two consecutive requests repeat a
-            // variant — firing the same one twice in a row at the same host is what
-            // inflated the second request's challenge rate in the earlier spike.
+            val variants = listOf("S", "A", "B", "C", "D")
+            // Round r pairs url j with variant (r + j) % 5: over five rounds every
+            // variant meets every URL exactly once, and no two consecutive requests
+            // repeat a variant — firing the same one twice in a row at the same host is
+            // what inflated the second request's challenge rate in the earlier spike.
             for (round in variants.indices) {
                 for ((j, url) in urls.withIndex()) {
                     rows.put(probeOnce(variants[(round + j) % variants.size], url))
@@ -227,25 +227,37 @@ class FACoilBridge {
             return rows.toString()
         }
 
-        /// One probe request. Variants: A today's `User-Agent` + `Cookie`; B adds the
-        /// image browser headers; C strips `__cf_bm`; D does both.
+        /// One probe request. Variants: **S** the production request itself, through the
+        /// shared client and its interceptor; A the same headers but on the probe's own
+        /// client; B adds the image browser headers; C strips `__cf_bm`; D does both.
+        ///
+        /// S is the control. Without it "every variant 403'd" cannot be read — it could
+        /// mean the headers make no difference, or that the whole window was being
+        /// challenged and the probe measured nothing.
         private fun probeOnce(variant: String, url: String): JSONObject {
             val row = JSONObject().put("variant", variant).put("url", url)
             val start = System.nanoTime()
             val builder = Request.Builder().url(url)
-            if (userAgent.isNotEmpty()) builder.header("User-Agent", userAgent)
-            val jar = if (variant == "C" || variant == "D") withoutCfBm(cookie) else cookie
-            if (jar.isNotEmpty()) builder.header("Cookie", jar)
-            if (variant == "B" || variant == "D") {
-                for ((name, value) in imageBrowserHeaders) builder.header(name, value)
+            if (variant != "S") {
+                if (userAgent.isNotEmpty()) builder.header("User-Agent", userAgent)
+                val jar = if (variant == "C" || variant == "D") withoutCfBm(cookie) else cookie
+                if (jar.isNotEmpty()) builder.header("Cookie", jar)
+                if (variant == "B" || variant == "D") {
+                    for ((name, value) in imageBrowserHeaders) builder.header(name, value)
+                }
             }
+            val client = if (variant == "S") sharedClient() else probeClient()
             try {
                 // The body is never read: this measures the verdict, not the bytes, and
                 // must not populate the disk cache the real path is being judged on.
-                probeClient().newCall(builder.build()).execute().use { response ->
+                client.newCall(builder.build()).execute().use { response ->
                     row.put("code", response.code)
                         .put("cfMitigated", response.header("cf-mitigated") ?: "")
                         .put("cfRay", response.header("cf-ray") ?: "")
+                        // `Connection: close` on a 403 is what makes the verdict stick:
+                        // the pooled connection dies with it, so the retry opens a fresh
+                        // one and draws a fresh verdict.
+                        .put("connection", response.header("Connection") ?: "")
                 }
             } catch (e: Exception) {
                 row.put("code", -1).put("error", e.toString())
