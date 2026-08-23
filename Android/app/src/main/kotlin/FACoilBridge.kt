@@ -115,7 +115,14 @@ class FACoilBridge {
                 val failure = try {
                     sharedClient().newCall(request).execute().use { response ->
                         if (!response.isSuccessful) {
-                            "HTTP ${response.code}"
+                            // Name Cloudflare's verdict: `cf-mitigated=challenge` is a
+                            // bot-score challenge, its absence on a 403 a WAF/hotlink
+                            // block. Kept as one string so the JSON contract and
+                            // CoilImageLoader's failure line need no change.
+                            val mitigated = response.header("cf-mitigated")
+                                ?.let { " cf-mitigated=$it" } ?: ""
+                            val ray = response.header("cf-ray")?.let { " ray=$it" } ?: ""
+                            "HTTP ${response.code}$mitigated$ray"
                         } else {
                             val editor = cache.openEditor(url)
                             if (editor == null) {
