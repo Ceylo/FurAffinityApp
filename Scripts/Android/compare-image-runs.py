@@ -95,7 +95,7 @@ def row(label, values, median=False):
 
 def main(arms):
     print(header())
-    medians = {}
+    medians, worsts = {}, {}
     for arm, paths in arms:
         runs = [parse(p) for p in paths]
         if len(arms) > 1:
@@ -103,13 +103,19 @@ def main(arms):
         for run in runs:
             print(row(run["name"], run))
         medians[arm] = {k: statistics.median(r[k] for r in runs) for k in KEYS}
-        print(row(f"MEDIAN {arm}" if len(arms) > 1 else "MEDIAN",
-                  medians[arm], median=True))
+        # Runs here are strongly bimodal — a session is either challenging almost
+        # nothing or challenging almost everything — so the median describes the good
+        # mode and says nothing about the bad one, which is the mode that loses images.
+        worsts[arm] = {k: max(r[k] for r in runs) for k in KEYS}
+        suffix = f" {arm}" if len(arms) > 1 else ""
+        print(row("MEDIAN" + suffix, medians[arm], median=True))
+        print(row("WORST" + suffix, worsts[arm], median=True))
 
     if len(medians) > 1:
-        print("\n" + header().replace("run ", "arm ", 1))
-        for arm, med in medians.items():
-            print(row(arm, med, median=True))
+        for label, table in (("median", medians), ("worst run", worsts)):
+            print(f"\n{label}\n" + header().replace("run ", "arm ", 1))
+            for arm, values in table.items():
+                print(row(arm, values, median=True))
 
 
 def parse_args(argv):
