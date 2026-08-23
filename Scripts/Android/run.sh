@@ -7,7 +7,7 @@
 # id carries a worktree suffix (see Android/app/build.gradle.kts). This does
 # both against the right id, and holds the shared-emulator lock while it does.
 #
-# Usage: Scripts/Android/run-android.sh [--timeout SECONDS] [gradle args…]
+# Usage: Scripts/Android/run.sh [--timeout SECONDS] [gradle args…]
 #
 #   --timeout   how long to wait for the emulator lock, default 1800s
 #
@@ -15,7 +15,7 @@
 # it runs the whole pipeline, host bridge included, so it catches the class of
 # `os(Android)`-guard error that `skip android build` never compiles.
 #
-# Boot an emulator first with Scripts/Android/start-android-emulator.sh — this
+# Boot an emulator first with Scripts/Android/start-emulator.sh — this
 # does not start one. Environment: ANDROID_HOME / ANDROID_SDK_ROOT (SDK
 # location), ANDROID_SERIAL (which device, when several are attached),
 # JAVA_HOME (the JDK Gradle runs on).
@@ -58,10 +58,10 @@ fi
 # --- require a booted device ------------------------------------------------
 
 [[ "$("$ADB" get-state 2>/dev/null | tr -d '\r')" == device ]] \
-    || die "no device — run Scripts/Android/start-android-emulator.sh (or set ANDROID_SERIAL)"
+    || die "no device — run Scripts/Android/start-emulator.sh (or set ANDROID_SERIAL)"
 
 [[ "$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == 1 ]] \
-    || die "the device is still booting — Scripts/Android/start-android-emulator.sh waits for it"
+    || die "the device is still booting — Scripts/Android/start-emulator.sh waits for it"
 
 # --- what to install and start ----------------------------------------------
 

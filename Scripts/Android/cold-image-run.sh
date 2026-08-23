@@ -25,7 +25,7 @@
 #     the worst outcome there is. One h2 arm produced four runs that loaded all 72
 #     feed items and then lost every single image.
 #
-# Environment: ANDROID_HOME / ANDROID_SDK_ROOT, ANDROID_SERIAL, as run-android.sh.
+# Environment: ANDROID_HOME / ANDROID_SDK_ROOT, ANDROID_SERIAL, as run.sh.
 
 set -eo pipefail
 
@@ -58,11 +58,11 @@ ADB="$SDK/platform-tools/adb"
 [[ -x "$ADB" ]] || die "$ADB is missing — run \`skip android sdk install\`"
 
 [[ "$("$ADB" get-state 2>/dev/null | tr -d '\r')" == device ]] \
-    || die "no device — run Scripts/Android/start-android-emulator.sh"
+    || die "no device — run Scripts/Android/start-emulator.sh"
 
 # --- which app -------------------------------------------------------------
 #
-# Same derivation as run-android.sh: the distribution stash overrides the app id,
+# Same derivation as run.sh: the distribution stash overrides the app id,
 # and every worktree carries its own suffix (Android/app/build.gradle.kts).
 
 skip_env() {

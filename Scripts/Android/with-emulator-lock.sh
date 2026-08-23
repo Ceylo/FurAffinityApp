@@ -14,7 +14,7 @@
 #
 # Exits with the wrapped command's status. Wrap anything that drives the
 # emulator from a second worktree — `skip android test`, `skip app launch`, a
-# bare `./gradlew` — but not Scripts/Android/run-android.sh, which takes the
+# bare `./gradlew` — but not Scripts/Android/run.sh, which takes the
 # lock itself.
 #
 # Environment: FA_EMULATOR_LOCK (the lock file, default /tmp/fa-emulator.lock).

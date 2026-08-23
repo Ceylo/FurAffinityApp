@@ -27,7 +27,7 @@ The path segment after `outputs/` is the **checkout directory's name**, not the 
 ## Generated art
 
 An entry big enough that a second copy in git would hurt is generated from the iOS
-art instead, and git-ignored. `Scripts/Android/generate-android-assets.sh` writes two sets:
+art instead, and git-ignored. `Scripts/Android/generate-assets.sh` writes two sets:
 
 - the in-app `AppIcon`, a 512×512 light/dark pair downscaled from two 1024×1024 PNGs
   (the view draws it at 100 pt);
@@ -56,7 +56,7 @@ documented prerequisite; skipping it there costs a blank in-app icon. It is
 idempotent and takes under a second:
 
 ```
-Scripts/Android/generate-android-assets.sh
+Scripts/Android/generate-assets.sh
 ```
 
 A SwiftPM prebuild plugin would be nicer, but it cannot work: `Image(_:bundle:)`

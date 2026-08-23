@@ -62,7 +62,7 @@ ADB="$SDK/platform-tools/adb"
 [[ -x "$ADB" ]] || die "$ADB is missing — run \`skip android sdk install\`"
 
 "$ADB" get-state >/dev/null 2>&1 \
-    || die "no device — run Scripts/Android/start-android-emulator.sh (or set ANDROID_SERIAL)"
+    || die "no device — run Scripts/Android/start-emulator.sh (or set ANDROID_SERIAL)"
 
 # Value of a Skip.env key, ignoring the `//`-commented lines.
 skip_env() {
@@ -137,7 +137,7 @@ if (( ALL )); then
     else
         PID="$(app_pid "$APP_ID")"
     fi
-    [[ -n "$PID" ]] || die "neither $SUFFIXED nor $APP_ID is running — launch it with \`Scripts/Android/run-android.sh\`"
+    [[ -n "$PID" ]] || die "neither $SUFFIXED nor $APP_ID is running — launch it with \`Scripts/Android/run.sh\`"
 
     logcat "${ARGS[@]}" --pid="$PID" "${EXTRA_TAGS[@]}"
     exit

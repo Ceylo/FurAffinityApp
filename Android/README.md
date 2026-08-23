@@ -48,9 +48,9 @@ for why it must be that flag and not `os(Android)`.
 ## Prerequisites
 
 ```
-skip checkup                     # verifies toolchain (Xcode, Android SDK, Gradle, JDK)
-skip android sdk install         # if the Android SDK/NDK is missing
-Scripts/Android/generate-android-assets.sh   # derived art (see docs/assets-and-resources.md)
+skip checkup                        # verifies toolchain (Xcode, Android SDK, Gradle, JDK)
+skip android sdk install            # if the Android SDK/NDK is missing
+Scripts/Android/generate-assets.sh  # derived art (see docs/assets-and-resources.md)
 ```
 
 ## Quick start
@@ -60,8 +60,8 @@ run and test. Each command is explained in
 [docs/build-and-run.md](docs/build-and-run.md).
 
 ```
-Scripts/Android/start-android-emulator.sh    # boots, waits, never touches the app
-Scripts/Android/run-android.sh               # builds, installs, starts this worktree's app
+Scripts/Android/start-emulator.sh  # boots, waits, never touches the app
+Scripts/Android/run.sh             # builds, installs, starts this worktree's app
 ```
 
 Each worktree installs its **own** debug app (its directory name becomes the

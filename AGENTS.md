@@ -161,7 +161,7 @@ FAKit: SwiftSoup, Cache, SwiftGraph, swift-collections, ZIPFoundation (DOCX unzi
   (`Scripts/iOS/simulator.sh`, above); Android keeps sharing the one emulator, and
   instead gives each worktree its own **debug** app — `applicationIdSuffix` and
   launcher label derived from the worktree directory name in
-  `Android/app/build.gradle.kts`. Run it with `Scripts/Android/run-android.sh`
+  `Android/app/build.gradle.kts`. Run it with `Scripts/Android/run.sh`
   rather than `skip app launch --android`, which starts the unsuffixed id; wrap
   anything else that drives the emulator from a second worktree in
   `Scripts/Android/with-emulator-lock.sh`. Release is untouched on both platforms.

@@ -7,7 +7,7 @@
 # already reached sys.boot_completed=1. This does that and nothing else — it
 # never builds or launches the app.
 #
-# Usage: Scripts/Android/start-android-emulator.sh [avd-name] [extra emulator flags…]
+# Usage: Scripts/Android/start-emulator.sh [avd-name] [extra emulator flags…]
 #
 # The AVD defaults to $ANDROID_AVD, or to the only installed one. Environment:
 # ANDROID_HOME / ANDROID_SDK_ROOT (SDK location), EMULATOR_BOOT_TIMEOUT (300s).

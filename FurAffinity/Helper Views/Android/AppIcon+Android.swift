@@ -7,7 +7,7 @@
 //  reason AvatarView is a substitute rather than a symlink.
 //
 //  The imageset is a downscaled rendition of the iOS art, generated (never committed)
-//  by Scripts/generate-android-assets.sh.
+//  by Scripts/Android/generate-assets.sh.
 //
 
 import SwiftUI

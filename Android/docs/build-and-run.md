@@ -7,14 +7,14 @@ fails with the emulator reported as **offline** both when no emulator is running
 *and* while one is still booting, so boot one first and wait for it:
 
 ```
-Scripts/Android/start-android-emulator.sh            # boots, waits, never touches the app
+Scripts/Android/start-emulator.sh  # boots, waits, never touches the app
 skip app launch --android
 ```
 
 The script is idempotent (a second run just confirms the running device), picks
 the only installed AVD unless given a name or `$ANDROID_AVD`, and leaves the
 emulator detached so it survives the script exiting or being interrupted. It
-takes optional emulator flags: `Scripts/Android/start-android-emulator.sh <avd> -no-window`.
+takes optional emulator flags: `Scripts/Android/start-emulator.sh <avd> -no-window`.
 
 Doing it by hand needs the same two non-obvious parts — detaching the process,
 and waiting for `sys.boot_completed` rather than just for adb to see the device:
@@ -71,7 +71,7 @@ the end of `Android/settings.gradle.kts` mirrors `sdk.dir` into every included b
 ## Run
 
 ```
-Scripts/Android/run-android.sh   # builds, installs, and starts this worktree's app
+Scripts/Android/run.sh   # builds, installs, and starts this worktree's app
 ```
 
 Boot an emulator first (see [Emulator](#emulator)) — this does not start one.
@@ -85,7 +85,7 @@ past `INSTALL_FAILED_VERSION_DOWNGRADE`). Release is untouched.
 That is why running goes through the script rather than
 `skip app launch --android`: `skip` reads the app id from `Skip.env`, so it
 installs the suffixed APK correctly and then starts an id that is not there.
-`run-android.sh` builds with `./gradlew :app:installDebug` (the full pipeline —
+`run.sh` builds with `./gradlew :app:installDebug` (the full pipeline —
 see [shared sources](shared-sources.md#why-everything-unported-is-guarded) for
 why that matters), reads the activity's package from `Skip.env`, and holds the
 emulator lock while it runs.
@@ -131,7 +131,7 @@ Scripts/Android/with-emulator-lock.sh ./gradlew :app:connectedDebugAndroidTest
 It waits (`--timeout`, default 1800 s), names the holder if the wait is real, and
 exits with the wrapped command's status. The lock records the holder's pid, so
 one left behind by a crashed run clears itself rather than deadlocking the next.
-`run-android.sh` takes it itself — do not wrap that one.
+`run.sh` takes it itself — do not wrap that one.
 
 ### Module-name poisoning
 
@@ -200,7 +200,7 @@ are resolved by `FAChallengeView` and the retry goes through `URLSession`.
 The **installed app id is `com.example.id1234`**, not `net.furaffinity.spike` —
 plus, for a debug build, this worktree's suffix. So reaching the data directory
 (the image cache lives at `cache/fa_coil_cache`) is
-`adb shell run-as com.example.id1234.<worktree> …`; `run-android.sh` prints the
+`adb shell run-as com.example.id1234.<worktree> …`; `run.sh` prints the
 id it starts, and `adb shell pm list packages | grep example` lists them all.
 
 Every install drops the WebView's Cloudflare clearance, so the
