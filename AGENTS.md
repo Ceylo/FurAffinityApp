@@ -42,7 +42,7 @@ Two main code areas:
 
 URL-centered. `FATarget.init?(with:)` maps FA URLs to typed cases; `view(for:)` returns the destination view.
 
-Every in-app link routes **in-process** through `NavigationStream` (`Helper Views/FALink.swift`), never out through `UIApplication.open` — a LaunchServices round trip fails when the app is hidden behind Face ID, and can surface a different install sharing the URL scheme. Use `FALink` for tappable views; taps on links inside rich HTML are intercepted by `HTMLView`'s `UITextViewDelegate`, which routes anything `LinkActivation(for:)` matches and leaves the rest to Safari. The `furaffinity-app-navigation` scheme stays registered purely as an *external* entry point (Reminders, Shortcuts) handled by `.onOpenURL`.
+Every in-app link routes **in-process** through `NavigationStream` (`Helper Views/FALink.swift`), never out through `UIApplication.open` — a LaunchServices round trip fails when the app is hidden behind Face ID, and can surface a different install sharing the URL scheme. Use `FALink` for tappable views; taps on links inside rich HTML are intercepted by `HTMLView`'s `UITextViewDelegate`, which routes anything `FATarget(with:)` matches and leaves the rest to Safari. The `furaffinity-app-navigation` scheme stays registered purely as an *external* entry point (Reminders, Shortcuts) handled by `.onOpenURL`.
 
 ## Submission Content Kinds
 
