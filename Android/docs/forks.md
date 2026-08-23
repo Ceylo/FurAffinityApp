@@ -111,6 +111,20 @@ entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
     with it. Transpiled, its loop iterates UTF-16 code units — the unit Compose counts
     offsets in — so an emoji earlier in the text cannot shift a placeholder.
 
+    The rebuild also has to **put the link back on the placeholder**. `append(text:start:end:)`
+    clips every annotation to the range it copies and the placeholder character is
+    deliberately outside those ranges — `appendInlineContent` appends it separately, bare.
+    So the parse's `LinkAnnotation` survived on everything around an image and on nothing
+    at it. FA writes a mention as *one* anchor holding the avatar and the name
+    (`<a class="iconusername"><img …> <span>name</span></a>`), which left the avatar dead
+    while the name beside it was tappable. `splicingInlineContent` now re-pushes whatever
+    `getLinkAnnotations` reports over the placeholder around the `appendInlineContent` call
+    — the very `LinkAnnotation` objects `fromHtml` made, so they still carry the
+    `LinkInteractionListener` feeding `onLinkTap`. `TextLinkScope` lays its clickable box
+    over the link range's layout bounds, a placeholder has real bounds, and `FAImageView`
+    installs no pointer-input node, so the tap reaches the box. A bare `<img>` (a smilie)
+    is in no anchor, `getLinkAnnotations` comes back empty, and nothing is pushed.
+
   A tapped link must not reach Compose's own `UriHandler`: it would open the browser
   before the app saw the URL. A `LinkInteractionListener` hands it to `onLinkTap`
   instead, and `HTMLView` marks it with the app scheme so `AndroidRootView`'s existing
