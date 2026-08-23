@@ -78,7 +78,33 @@ enum CoilImageLoader {
         var attempts: Int
         var bytes: Int?
         var ms: Int?
+        var proto: String?
+        /// Identity of the connection the winning attempt rode, and whether that
+        /// attempt is what opened it. Cloudflare's verdict is per connection, so this
+        /// is the causal variable — see Android/docs/images.md.
+        var conn: Int?
+        var newConn: Bool?
         var failures: [String]
+    }
+
+    /// Reports the HTTP protocol each FA host settled on, once per host per launch.
+    ///
+    /// Worth a line in the exported log: Cloudflare's verdict is per connection, so
+    /// whether the burst rides one multiplexed h2 connection or six h1 ones is the
+    /// single biggest input to the 403 rate — and a silent ALPN fallback to http/1.1
+    /// would otherwise look like the change simply not working.
+    nonisolated(unsafe) private static var loggedProtocols = Set<String>()
+    private static let protocolLock = NSLock()
+
+    private static func logProtocolOnce(_ proto: String?, for url: URL) {
+        guard let proto, !proto.isEmpty, let host = url.host else { return }
+        let key = "\(host) \(proto)"
+        protocolLock.lock()
+        let isNew = loggedProtocols.insert(key).inserted
+        protocolLock.unlock()
+        if isNew {
+            logger.info("[Coil] \(host) negotiated \(proto)")
+        }
     }
 
     /// On-disk path of `url`'s bytes, downloading them into the cache if needed.
@@ -100,15 +126,25 @@ enum CoilImageLoader {
                 logger.error("[Coil] \(url): unreadable fetch result \(json ?? "<nil>")")
                 return nil
             }
+            logProtocolOnce(result.proto, for: url)
             let reasons = result.failures.joined(separator: ", ")
             if let path = result.path {
-                // Silent on the common case — one line per request, as on iOS.
+                // One outcome line per *completed* fetch, not just per retried one.
+                // This drops the "silent on the common case" convention iOS keeps, and
+                // costs ~160 log lines on a cold run instead of ~85 — the price of
+                // counting connections. It also makes the summarizer's completion span
+                // exact: without it only retried and failed fetches are dated.
+                // The retry line first, so a URL's draws appear in attempt order:
+                // the failed attempts are inside `reasons`, the winning one is next.
                 if result.attempts > 1 {
                     logger.warning("[Coil] \(url): succeeded on attempt \(result.attempts) (\(reasons))")
                 }
+                let conn = result.conn.map { " conn=\($0) new=\(result.newConn ?? false)" } ?? ""
+                logger.info("[Coil] \(url): 200\(conn) \(result.ms ?? -1)ms")
                 return path
             }
-            logger.error("[Coil] \(url): failed after \(result.attempts) attempts (\(reasons))")
+            let plural = result.attempts == 1 ? "attempt" : "attempts"
+            logger.error("[Coil] \(url): failed after \(result.attempts) \(plural) (\(reasons))")
             return nil
         } catch {
             logger.error("[Coil] \(url): fetch threw: \(error)")

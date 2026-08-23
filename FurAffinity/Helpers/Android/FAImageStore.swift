@@ -320,11 +320,11 @@ actor FAImageStore {
     private func fetchAndDecode(_ url: URL, priority: FAImagePriority) async -> UIImage? {
         var fetched = await path(for: url, priority: priority)
         if fetched == nil, priority == .high {
-            // FA's CDN challenges roughly half of all bare requests, so a fetch can
-            // exhaust its attempts by luck. Coalescing means a visible row may have
-            // been sharing a *prefetch's* attempts; give it its own independent try
-            // rather than inheriting that verdict. `path(for:)` has already cleared
-            // the in-flight entry, so this really is a fresh fetch.
+            // Cloudflare challenges per connection, not per request, so a fetch that
+            // never landed on a warm one can exhaust its attempts. Coalescing means a
+            // visible row may have been sharing a *prefetch's* attempts; give it its
+            // own independent try rather than inheriting that verdict. `path(for:)`
+            // has already cleared the in-flight entry, so this really is a fresh fetch.
             fetched = await path(for: url, priority: priority)
         }
         guard let path = fetched else { return nil }
