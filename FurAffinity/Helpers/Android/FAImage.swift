@@ -101,7 +101,6 @@ struct FAImageView: View {
         // resetting unconditionally is what makes every re-appearance flash its
         // placeholder.
         if let cached = FAImageStore.shared.cachedImage(for: url) {
-            logger.debug("render memory url=\(url.absoluteString)")
             image = cached
             failed = false
             return
@@ -109,10 +108,7 @@ struct FAImageView: View {
         image = nil
         failed = false
 
-        let start = Date()
         let loaded = await FAImageStore.shared.image(for: url)
-        let elapsedMs = Int(Date().timeIntervalSince(start) * 1000)
-        logger.debug("render \(elapsedMs)ms url=\(url.absoluteString)")
         if let loaded {
             image = loaded
         } else {
