@@ -63,8 +63,10 @@ it is one transient frame: the prepended head shows for **30–50 ms**, then the
 back at `minY≈10` and stays. On screen that is a single frame of placeholder rows before
 the list is where it was, with the new rows above it and the badge showing.
 
-Still not verified, for want of the state to verify it against: the empty feed, which is
-unreachable through the offline session.
+The empty feed is reached with the login screen's second debug button, "Continue offline,
+empty (debug)" (`AndroidRootView`), which signs in with `OfflineFASession.empty` — no
+submissions, so `model.submissionPreviews` is `[]` and the feed mounts its `noPreview`
+placeholder for real rather than as a mock.
 
 ### `withAnimation` marks the whole frame, process-wide
 

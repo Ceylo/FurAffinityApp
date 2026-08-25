@@ -209,7 +209,10 @@ emulator window**: synthetic `adb shell input tap` events do not clear it (that 
 the cause of the old "CF loop").
 
 The logged-out screen's **"Continue offline (debug)"** button (`AndroidRootView`)
-drives ported screens without solving a Cloudflare challenge. It is gated on
+drives ported screens without solving a Cloudflare challenge; its sibling
+**"Continue offline, empty (debug)"** does the same with a session that has no
+submissions, notes or notifications, which is how the feed's empty placeholder is
+reached. Both are gated on
 `android:debuggable` at *runtime* via `AndroidAppInfo.isDebuggable`, not `#if DEBUG`
 — skipstone drops `#if DEBUG` blocks when it generates the view bridge, so a
 compile-time fence there is silently inert. `OfflineFASession` and its demo data
