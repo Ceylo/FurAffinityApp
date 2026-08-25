@@ -3,7 +3,7 @@
 | Fork | Why |
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
-| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
+| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)`, `Text.+`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
 
 All on an `android` branch, referenced by URL + branch from `Package.swift` (and,
@@ -82,6 +82,22 @@ get a record, since a spring has no play time to offset into.
 
 That is what the deep-linked comment's highlight pulse needed: it was only ever visible when
 the row's very first composition happened to land on screen.
+
+A fourth patch, to `Containers/ScrollView.swift`, gives the scrolled node its axis.
+`.refreshable` is `Modifier.pullRefresh`, and Compose's `pullRefresh` is purely a
+nested-scroll connection: it sees only the deltas a scrollable child dispatches, so the
+pull is accepted exactly over the scrollable node's bounds. Only the container `Box`
+filled; the scrolled `Column` stayed at content size. On the Followed feed's empty
+placeholder that meant pull-to-refresh worked over the text and nowhere else, where
+`UIScrollView` takes the gesture across its whole frame — and a fling started below short
+content was ignored outright. `RenderList` already avoids this with `fillMaxSize()` on the
+`LazyColumn`; the patch does the same, filling the scrolled axis *before* applying
+`verticalScroll` / `horizontalScroll`. Taller-than-viewport content is a no-op —
+`verticalScroll` still measures with `maxHeight = Infinity` — and short content is visually
+unchanged, the `Box` having filled and aligned `TopStart` already. One behavioural
+side effect, shared with `List` today: a short page in a large-title `NavigationStack` now
+has the title's worth of scroll range, so an upward drag can collapse the large title where
+iOS would keep it.
 
 **Note:** skip-ui arrives transitively via skip-fuse-ui, so overriding it needs its own
 entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
