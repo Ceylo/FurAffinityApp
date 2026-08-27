@@ -31,7 +31,7 @@ enum NotificationOverlayPhase {
 struct NotificationOverlay: View {
     @Binding var itemCount: Int?
     var dismissAfter: TimeInterval = 3.0
-    /// State on a bridged view must be internal, not private (Skip inventory #5).
+    // Not private: skipstone can't bridge a private @State/@Environment.
     /// Outlives `itemCount` so the text survives the fade-out.
     @State var lastCount = 0
     @State var phase = NotificationOverlayPhase.hidden

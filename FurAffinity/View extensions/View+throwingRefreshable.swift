@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-// Skip bridges views: a bridged view and its @Environment must not be private.
+// Not private: skipstone can't bridge a private @State/@Environment.
 struct RefreshableWithError: ViewModifier {
     var action: String
     var webBrowserURL: URL?

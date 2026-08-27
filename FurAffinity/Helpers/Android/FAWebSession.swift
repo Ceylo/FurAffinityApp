@@ -287,11 +287,9 @@ final class FAWebSession {
 
 /// The hidden WebView itself. Mounted once, at the root, for the life of the app.
 struct FAWebSessionView: View {
-    // Stock UA plus the FA app identifier, and byte-identical to the other two
-    // WebViews' — see FAWebViewUserAgent.
     let config = WebEngineConfiguration(customUserAgent: FAWebViewUserAgent.string)
 
-    // @State embedding skip-web must be internal, not private (Skip inventory #5).
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @State var webState = WebViewState()
 
     var body: some View {

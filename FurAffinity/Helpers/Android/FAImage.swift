@@ -31,7 +31,7 @@ struct FAImageView: View {
     fileprivate var onFailureHandler: ((any Error) -> Void)?
     fileprivate var fadeDuration: Double = 0
 
-    // @State on a bridged view must be internal, not private (Skip inventory #5).
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @State var image: UIImage?
     @State var failed = false
 

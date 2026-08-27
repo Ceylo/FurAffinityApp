@@ -23,13 +23,11 @@ struct FALoginView: View {
     @Binding var session: OnlineFASession?
     var onError: (Error) -> Void
 
-    // @State embedding skip-web must be internal, not private (Skip inventory #5).
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @State var navigator = WebViewNavigator()
     @State var webState = WebViewState()
     @State var establishing = false
 
-    // Stock UA plus the FA app identifier, and byte-identical to the other two
-    // WebViews' — see FAWebViewUserAgent.
     let config = WebEngineConfiguration(customUserAgent: FAWebViewUserAgent.string)
 
     var body: some View {

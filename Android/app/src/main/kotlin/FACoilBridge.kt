@@ -57,8 +57,7 @@ import skip.foundation.ProcessInfo
 /// app lifetime; all real state lives in the companion so the shared client, disk cache
 /// and interceptor headers are single-sourced regardless of the caller.
 class FACoilBridge {
-    // Returns a value (not Unit) so the Swift AnyDynamicObject call resolves to a typed
-    // overload instead of the ambiguous void one.
+    // Boolean, not Unit: AnyDynamicObject can't resolve the void overload.
     fun configure(userAgent: String, cookie: String): Boolean = Companion.configure(userAgent, cookie)
 
     fun isCached(url: String): Boolean = Companion.isCached(url)

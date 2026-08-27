@@ -7,9 +7,12 @@
 //  this target is only ever a dependency `.when(platforms: [.android])`, so
 //  Darwin always resolves the real system module.
 //
-//  Deliberately *not* named `os` — see the note in FAKit/Package.swift. A module
-//  by that name makes `canImport(os)` true across the whole Android build and
-//  breaks whichever target happens to compile after it.
+//  It must NOT be named `os`. A module by that name lands in the shared Modules
+//  directory and makes `canImport(os)` true for *every* target in the Android build,
+//  so whichever target compiles after it takes its Apple branch and fails — Defaults
+//  on `AndroidNDK`, swift-android-native's AndroidLogging on `OSLog`, its
+//  AndroidSystem on `os_unfair_lock`. Which target breaks is a scheduling race:
+//  intermittent in debug, and a hard block in release.
 //
 
 #if os(Android)

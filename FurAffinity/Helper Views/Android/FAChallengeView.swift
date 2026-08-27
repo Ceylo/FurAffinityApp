@@ -30,12 +30,10 @@ struct FAChallengeView: View {
     var onResolved: () -> Void
     var onInteractionRequired: (() -> Void)?
 
-    // @State embedding skip-web must be internal, not private (Skip inventory #5).
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @State var navigator = WebViewNavigator()
     @State var webState = WebViewState()
 
-    // Stock UA plus the FA app identifier, and byte-identical to the other two
-    // WebViews' — see FAWebViewUserAgent.
     let config = WebEngineConfiguration(customUserAgent: FAWebViewUserAgent.string)
 
     init(

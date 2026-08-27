@@ -17,8 +17,7 @@ import android.util.Log
 import skip.foundation.ProcessInfo
 
 class FADefaultsBridge {
-    // Returns a value (not Unit) so the Swift AnyDynamicObject call resolves to a typed
-    // overload instead of the ambiguous void one.
+    // Boolean, not Unit: AnyDynamicObject can't resolve the void overload.
     fun start(): Boolean = Companion.start()
 
     companion object {

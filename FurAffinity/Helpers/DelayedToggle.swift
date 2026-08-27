@@ -11,7 +11,7 @@ import SwiftUI
 struct DelayedToggle: ViewModifier {
     @Binding var toggle: Bool
     var delay: Duration
-    // Skip bridges these views: bridged @State/@Environment must not be private.
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @State var task: Task<(), Error>?
     
     func body(content: Content) -> some View {

@@ -15,7 +15,7 @@ struct CommentView: View {
     @Environment(\.colorScheme) var colorScheme
     private let avatarSize = 42.0
     private let contentVerticalPadding = 5.0
-    // Skip bridges these views: bridged @State/@Environment must not be private.
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @State var rowBackgroundAnimated = false
     
     var overlayStyle: some ShapeStyle {
