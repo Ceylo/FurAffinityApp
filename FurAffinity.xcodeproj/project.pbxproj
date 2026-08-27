@@ -166,6 +166,7 @@
 		D1B7779E7CB722ADBFB21575 /* GeometryProxy+FASize.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58119C7E67EC670409E1D1CC /* GeometryProxy+FASize.swift */; };
 		D84FB74D89392ACC0D73E55D /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 630BB43B07A3008252B5171B /* UserNotificationsUI.framework */; };
 		DA348CE7A0CF8BABDB01FBFA /* ImageCacheControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */; };
+		87FA55E200000000000A55E2 /* AssetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FA55E100000000000A55E1 /* AssetBundle.swift */; };
 		FA0000000000000000000008 /* SubmissionAudioContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000007 /* SubmissionAudioContent.swift */; };
 		FA000000000000000000000A /* AudioPlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000009 /* AudioPlaybackController.swift */; };
 		FB227FE8FD7642FAD0C63BF7 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E6731320A5B4D6196E99F0F9 /* UserNotifications.framework */; };
@@ -361,6 +362,7 @@
 		DE0FE3ECD383602E8F75046C /* InAppLinkConversion.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InAppLinkConversion.swift; sourceTree = "<group>"; };
 		E47802CF8DFEA36285E68BE4 /* PendingNotificationRecord.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PendingNotificationRecord.swift; sourceTree = "<group>"; };
 		E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ImageCacheControl.swift; sourceTree = "<group>"; };
+		87FA55E100000000000A55E1 /* AssetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AssetBundle.swift; sourceTree = "<group>"; };
 		E6731320A5B4D6196E99F0F9 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		FA0000000000000000000007 /* SubmissionAudioContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionAudioContent.swift; sourceTree = "<group>"; };
 		FA0000000000000000000009 /* AudioPlaybackController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlaybackController.swift; sourceTree = "<group>"; };
@@ -698,6 +700,8 @@
 				878EBC982EDB8CF6006A68D3 /* ErrorDisplay.swift */,
 				5D2364BADB5ED5A6F51CD91C /* UsernameField.swift */,
 				035B5AEBEA2399F8715F2744 /* ForegroundAutorefresh.swift */,
+				871B05EE2C84BAD400302500 /* AppIcon.swift */,
+				87F960CA2801EFF3000B30A3 /* AvatarView.swift */,
 				B8C7A5B318A7D623236CA39B /* iOS */,
 			);
 			path = "Helper Views";
@@ -728,8 +732,6 @@
 		B8C7A5B318A7D623236CA39B /* iOS */ = {
 			isa = PBXGroup;
 			children = (
-				871B05EE2C84BAD400302500 /* AppIcon.swift */,
-				87F960CA2801EFF3000B30A3 /* AvatarView.swift */,
 				3033B05A545010E29F30F1FD /* FlowLayout.swift */,
 				879233D1278216DF0019AC44 /* HTMLView.swift */,
 				875180572DB553FC00331762 /* RemoteContentToolbarItem.swift */,
@@ -754,6 +756,7 @@
 				87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */,
 				87AB10E22CB19E4D00E7BD94 /* ImageBlur.swift */,
 				E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */,
+				87FA55E100000000000A55E1 /* AssetBundle.swift */,
 				8733DDFC28F75C1200CD8BCF /* Sharing.swift */,
 				873E66102752AAB2009C8767 /* MediaSaveHandler.swift */,
 				87FACE0100000000000DEECF /* NotificationDeepLink.swift */,
@@ -1066,6 +1069,7 @@
 				3A6366CC81F99000EEA67C28 /* NotificationsProtocols.swift in Sources */,
 				D1B7779E7CB722ADBFB21575 /* GeometryProxy+FASize.swift in Sources */,
 				DA348CE7A0CF8BABDB01FBFA /* ImageCacheControl.swift in Sources */,
+				87FA55E200000000000A55E2 /* AssetBundle.swift in Sources */,
 				2EDFB020CB332BCD78AAAC83 /* LoginCookies.swift in Sources */,
 				B910E02605EEB533F4A7AE4D /* ForegroundAutorefresh.swift in Sources */,
 				5C20CD869230BE5FE479A913 /* LaunchLog.swift in Sources */,

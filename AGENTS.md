@@ -154,7 +154,7 @@ FAKit: SwiftSoup, Cache, SwiftGraph, swift-collections, ZIPFoundation (DOCX unzi
 - **Basenames must be unique across the whole `FurAffinity/` tree.** SwiftPM derives one
   object file per basename and skipstone one `<Name>_Bridge.swift`, both flattened, so a
   matching `iOS/`+`Android/` pair collides with "multiple producers" — even when the iOS
-  half is guarded down to nothing. Hence the `+Android` suffix on the eleven substitution
+  half is guarded down to nothing. Hence the `+Android` suffix on the ten substitution
   files; the directory still carries the meaning.
 - Only remote-loading wrappers that own `@Environment(Model.self)` (e.g. `RemoteSubmissionView`) may depend on `Model`. Leaf/content views must receive what they need via inputs or injected closures — never reach into `Model`.
 - **Several worktrees at once.** iOS gets a simulator device per worktree
