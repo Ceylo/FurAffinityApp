@@ -64,18 +64,21 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
         }
     }
     
-    /// Diagnostic only, and Kingfisher-specific: Coil manages its own cache on Android.
+    /// Diagnostic only: is this row's thumbnail in flight, cached, or not started?
     func controlCacheBehavior(for url: URL) async {
 #if canImport(Kingfisher)
-        let cacheType = ImageCache.default.imageCachedType(forKey: url.cacheKey)
         let downloadStartDate = await DownloadDelegate.shared.downloadStartDate(for: url)
+        let isCached = ImageCache.default.imageCachedType(forKey: url.cacheKey) != .none
+#else
+        let downloadStartDate = await FAImageStore.shared.downloadStartDate(for: url)
+        let isCached = FAImageStore.shared.isCached(url)
+#endif
         if let downloadStartDate {
             let elapsedMs = Int(abs(downloadStartDate.timeIntervalSinceNow * 1000))
             logger.info("Thumbnail download for \"\(submission.title)\" started \(elapsedMs)ms ago")
-        } else if cacheType == .none {
+        } else if !isCached {
             logger.info("Thumbnail for \"\(submission.title)\" isn't downloading yet")
         }
-#endif
     }
 }
 
