@@ -31,7 +31,7 @@ struct FAImageView: View {
     fileprivate var onFailureHandler: ((any Error) -> Void)?
     fileprivate var fadeDuration: Double = 0
 
-    // @State on a bridged view must be internal, not private (Skip inventory #5).
+    // Internal, not private: bridged state (Android/docs/shared-sources.md).
     @State var image: UIImage?
     @State var failed = false
 

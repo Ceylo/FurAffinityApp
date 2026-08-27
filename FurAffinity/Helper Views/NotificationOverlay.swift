@@ -31,7 +31,7 @@ enum NotificationOverlayPhase {
 struct NotificationOverlay: View {
     @Binding var itemCount: Int?
     var dismissAfter: TimeInterval = 3.0
-    /// State on a bridged view must be internal, not private (Skip inventory #5).
+    // Internal, not private: bridged state (Android/docs/shared-sources.md).
     /// Outlives `itemCount` so the text survives the fade-out.
     @State var lastCount = 0
     @State var phase = NotificationOverlayPhase.hidden

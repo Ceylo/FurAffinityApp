@@ -19,9 +19,8 @@ import UIKit
 @_spi(Advanced) import SwiftUIIntrospect
 #endif
 
-// State and environment are internal, not private: skipstone rejects private on
-// bridged state. Non-state members below stay private.
 struct SubmissionsFeedView: View {
+    // Internal, not private: bridged state (Android/docs/shared-sources.md).
     @Environment(Model.self) var model
     @Environment(ErrorStorage.self) var errorStorage
     @State var newSubmissionsCount: Int?

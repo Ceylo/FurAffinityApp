@@ -8,8 +8,7 @@
 import SwiftUI
 import FAKit
 
-// Internal, not private: this file is shared with the Android build, where a
-// bridged view's members must be visible to skipstone's generated bridge.
+// Internal, not private: a bridged view's type (Android/docs/shared-sources.md).
 struct HomeViewButtonContents: View {
     var text: String
     /// Marks the primary action, so it doesn't read as a peer of the secondary one.
@@ -44,8 +43,7 @@ struct HomeViewButtonContents: View {
 }
 
 struct HomeView: View {
-    // Internal, not private: a bridged view's @State/@Environment must be visible
-    // to skipstone's generated bridge (see RemoteView.swift).
+    // Internal, not private: bridged state (Android/docs/shared-sources.md).
     @State var checkingConnection = true
     @Environment(Model.self) var model
     @Environment(\.scenePhase) var scenePhase

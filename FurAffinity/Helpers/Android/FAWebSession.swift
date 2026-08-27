@@ -291,7 +291,7 @@ struct FAWebSessionView: View {
     // WebViews' — see FAWebViewUserAgent.
     let config = WebEngineConfiguration(customUserAgent: FAWebViewUserAgent.string)
 
-    // @State embedding skip-web must be internal, not private (Skip inventory #5).
+    // Internal, not private: bridged state (Android/docs/shared-sources.md).
     @State var webState = WebViewState()
 
     var body: some View {

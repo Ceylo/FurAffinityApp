@@ -30,7 +30,7 @@ struct FAChallengeView: View {
     var onResolved: () -> Void
     var onInteractionRequired: (() -> Void)?
 
-    // @State embedding skip-web must be internal, not private (Skip inventory #5).
+    // Internal, not private: bridged state (Android/docs/shared-sources.md).
     @State var navigator = WebViewNavigator()
     @State var webState = WebViewState()
 

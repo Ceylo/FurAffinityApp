@@ -11,8 +11,7 @@ import FALogging
 import Defaults
 
 struct SettingsView: View {
-    // Not private: this view is bridged on Android, and skipstone rejects private
-    // state/environment properties there.
+    // Internal, not private: bridged state (Android/docs/shared-sources.md).
     @Environment(Model.self) var model
     @State var dumpingLogs = false
 

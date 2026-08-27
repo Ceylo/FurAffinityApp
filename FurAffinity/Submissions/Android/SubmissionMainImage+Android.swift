@@ -23,7 +23,7 @@ struct SubmissionMainImage: View {
     var allowZoomableSheet = true
     @Binding var fullResolutionMediaFileUrl: URL?
 
-    // @State on a bridged view must be internal, not private (Skip inventory #5).
+    // Internal, not private: bridged state (Android/docs/shared-sources.md).
     @State var errorMessage: String?
     @State var showZoomableCover = false
 

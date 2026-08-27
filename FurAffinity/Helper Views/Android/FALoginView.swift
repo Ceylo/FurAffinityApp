@@ -23,7 +23,7 @@ struct FALoginView: View {
     @Binding var session: OnlineFASession?
     var onError: (Error) -> Void
 
-    // @State embedding skip-web must be internal, not private (Skip inventory #5).
+    // Internal, not private: bridged state (Android/docs/shared-sources.md).
     @State var navigator = WebViewNavigator()
     @State var webState = WebViewState()
     @State var establishing = false
