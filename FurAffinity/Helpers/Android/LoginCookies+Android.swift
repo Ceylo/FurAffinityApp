@@ -3,7 +3,7 @@
 //  FurAffinityUI (Android)
 //
 //  Android's `clearLoginCookies()`, matching the iOS one in
-//  FurAffinity/Helpers/LoginCookies.swift so SettingsView calls a single name on both
+//  FurAffinity/Helpers/iOS/LoginCookies.swift so SettingsView calls a single name on both
 //  platforms. Two stores hold the credentials here: the WebView's cookie jar (which
 //  every page fetch replays) and the Coil image layer's seeded UA + Cookie header.
 //

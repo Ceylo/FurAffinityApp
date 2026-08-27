@@ -2,7 +2,7 @@
 //  AvatarView.swift
 //  FurAffinityUI (Android)
 //
-//  Android counterpart of the shared `FurAffinity/Helper Views/AvatarView.swift`, which
+//  Android counterpart of the shared `FurAffinity/Helper Views/iOS/AvatarView.swift`, which
 //  is Kingfisher-only and therefore NOT symlinked here. This one matches the same public
 //  surface (`init(avatarUrl:)`, `.cornerRadius`, `.fadeDuration`) but is built on the
 //  Coil-backed `FAImage`.

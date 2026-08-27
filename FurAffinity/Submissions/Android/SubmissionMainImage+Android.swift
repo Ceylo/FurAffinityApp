@@ -8,9 +8,6 @@
 //  (`.placeholder(progress:)`, `.waitForCache()`, `.onSuccess`), which has no Android
 //  equivalent.
 //
-//  The zoomable full-screen viewer arrives in step 4; `allowZoomableSheet` is accepted
-//  and ignored until then.
-//
 
 import SwiftUI
 import FAKit

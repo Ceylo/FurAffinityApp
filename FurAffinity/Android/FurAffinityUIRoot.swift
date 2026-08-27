@@ -15,8 +15,6 @@ import FALogging
 import SkipFuse
 import SwiftUI
 
-// `logger` now comes from the shared Helpers/Logs.swift.
-
 /// The shared top-level view, loaded from the platform-specific app delegates below.
 /* SKIP @bridge */public struct FurAffinityUIRootView: View {
     /* SKIP @bridge */public init() {

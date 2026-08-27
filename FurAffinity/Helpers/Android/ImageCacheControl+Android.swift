@@ -3,7 +3,7 @@
 //  FurAffinityUI (Android)
 //
 //  Android's `ImageCacheControl`, matching the iOS one in
-//  FurAffinity/Helpers/ImageCacheControl.swift so SettingsView calls a single name on
+//  FurAffinity/Helpers/iOS/ImageCacheControl.swift so SettingsView calls a single name on
 //  both platforms. There is no Kingfisher here: the disk cache is coil3's, owned by
 //  FACoilBridge, and the memory cache is FAImageStore's.
 //
