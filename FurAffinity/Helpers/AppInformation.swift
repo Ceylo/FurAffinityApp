@@ -64,14 +64,13 @@ class AppInformation {
         // GitHub rejects requests without one.
         request.setValue(FAUserAgent.applicationName, forHTTPHeaderField: "User-Agent")
 
-        latestRelease = nil
-        isUpToDate = nil
-
         let data: Data
         do {
             let (body, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
                 logger.error("Update check: \(url) answered \(response)")
+                latestRelease = nil
+                isUpToDate = nil
                 return
             }
             data = body
@@ -79,6 +78,8 @@ class AppInformation {
             // Silent until now, which made "is the check even running?" unanswerable
             // from a log — the question Android's first release turns on.
             logger.error("Update check: \(url) failed: \(error)")
+            latestRelease = nil
+            isUpToDate = nil
             return
         }
 
