@@ -7,10 +7,8 @@
 //  platforms. It can't live in FAKit: it needs skip-web, which FAKit can't depend
 //  on (see FAHTTPDataSource for the CJNI rationale).
 //
-//  Not `#if os(Android)`-guarded — this module is compiled for its Darwin bridge
-//  too, where the shared caller would otherwise find no declaration at all.
-//  FAKit's own FALoginView is `#if !os(Android)`, so it exists in that compile;
-//  this module's declaration shadows it, as a module's own always does.
+//  Unguarded on purpose (Android/docs/shared-sources.md § Rules for shared sources): FAKit's own `#if !os(Android)` declaration exists in
+//  the Darwin bridge compile, and this module's shadows it.
 //
 
 import Foundation

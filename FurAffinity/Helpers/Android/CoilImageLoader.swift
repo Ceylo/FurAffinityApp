@@ -9,9 +9,10 @@
 //  image bytes — callers decode it off the main actor via `UIImage(contentsOfFile:)`.
 //
 //  Credentials (FA UA + Cloudflare cookie header) are seeded once via `configure`
-//  after login; `load` then just fetches. Android-only: the JNI machinery lives behind
-//  `canImport(Android)` (matching SkipFuse), so on Darwin the calls are no-ops and the
-//  shared module still compiles.
+//  after login; `load` then just fetches.
+//
+//  Unguarded on purpose — an Android substitution file must be, see
+//  Android/docs/shared-sources.md § Rules for shared sources. The JNI inside is `canImport(Android)`-guarded and no-ops on Darwin.
 //
 
 import Foundation

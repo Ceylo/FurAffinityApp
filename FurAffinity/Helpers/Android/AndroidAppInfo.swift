@@ -7,9 +7,8 @@
 //  `AnyDynamicObject` reflection as `CoilImageLoader` — FurAffinityUI is a native
 //  Skip module and can't `import android.*`.
 //
-//  Not `#if os(Android)`-guarded: this module is compiled for its Darwin bridge
-//  too, where the JNI machinery is absent and every value reads as its "unknown"
-//  default.
+//  Unguarded on purpose — an Android substitution file must be, see
+//  Android/docs/shared-sources.md § Rules for shared sources. The JNI inside is `canImport(Android)`-guarded and no-ops on Darwin.
 //
 
 import Foundation

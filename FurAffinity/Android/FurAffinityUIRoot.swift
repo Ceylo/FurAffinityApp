@@ -44,9 +44,9 @@ import SwiftUI
             operatingSystem: AndroidAppInfo.operatingSystem,
             details: "debuggable=\(AndroidAppInfo.isDebuggable)"
         )
-        // Must come first: a `Defaults.Key` captures its suite and registers its
-        // default value when it's created, so anything that touches a key before this
-        // lands in the orphan store.
+        // Before any `Defaults.Key` is created: a key captures its suite and registers
+        // its default value at construction, so one touched earlier lands in the orphan
+        // store.
         installDefaultsSuite()
         // Matches FurAffinityApp.init() on iOS. A no-op on a fresh Android install
         // (see Defaults.startingSchemaVersion), but it stamps the schema version so a
