@@ -139,9 +139,10 @@ final class FAWebSession {
     /// Drop Cloudflare's own cookies before a challenge navigation.
     ///
     /// `cf_chl_rc_ni` is its *re-challenge non-interactive* counter: presenting one
-    /// tells the edge how many passive challenges this client has already failed,
-    /// and ours had climbed to 33. iOS never sends it — its challenge WebView
-    /// starts from a cleared jar seeded with auth cookies only (`FAChallengeView`).
+    /// tells the edge how many passive challenges this client has already failed, and
+    /// a stuck client's climbs without bound (Android/docs/cloudflare-and-login.md).
+    /// iOS never sends it — its challenge WebView starts from a cleared jar seeded
+    /// with auth cookies only (`FAChallengeView`).
     /// Android has one process-global jar and can't copy that: a cookie read here
     /// comes from the request `Cookie:` header, so it carries no domain, path or
     /// expiry, and re-seeding what we wiped would downgrade the user's persistent
