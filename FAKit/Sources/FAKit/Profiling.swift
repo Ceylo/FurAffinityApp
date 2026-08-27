@@ -17,7 +17,7 @@ import os
 import OSCompat
 #endif
 
-private let subsystem = Bundle.main.bundleIdentifier ?? "FurAffinity"
+private let subsystem = FALogSubsystem.identifier
 let logger = PersistentLogger(subsystem: subsystem, category: "FAKit")
 
 private let signpostLog = Logger(subsystem: subsystem, category: "FAKit")

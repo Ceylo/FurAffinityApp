@@ -145,13 +145,20 @@ fi
 
 # --- our tags only ----------------------------------------------------------
 
-# PersistentLogger tags as "<subsystem>/<category>". The app module's subsystem
-# is its Android package name; FAKit's Bundle.main.bundleIdentifier is nil there,
-# so it falls back to the literal "FurAffinity".
-PKG="$(skip_env ANDROID_PACKAGE_NAME)"
-[[ -n "$PKG" ]] || die "no ANDROID_PACKAGE_NAME in $ROOT/Skip.env"
+# PersistentLogger tags as "<subsystem>/<category>", and every module's subsystem
+# is the installed applicationId (FALogSubsystem, installed at startup). A debug
+# build carries a per-worktree suffix and a release install does not, so match both.
+APP_ID="$(skip_env ANDROID_APPLICATION_ID)"
+[[ -n "$APP_ID" ]] || APP_ID="$(skip_env PRODUCT_BUNDLE_IDENTIFIER)"
+[[ -n "$APP_ID" ]] || die "no app id in $ROOT/Skip.env"
 
-TAGS=("$PKG/FA" FurAffinity/FAKit FurAffinity/FAPages)
+# "FurAffinity" is FALogSubsystem.fallback, what a process that installs no override
+# logs under — the `skip android test` runner, whose output is worth seeing here too.
+WORKTREE="$(basename "$ROOT")"
+TAGS=()
+for id in "$APP_ID.${WORKTREE//[^A-Za-z0-9_]/_}" "$APP_ID" FurAffinity; do
+    TAGS+=("$id/FA" "$id/FAKit" "$id/FAPages")
+done
 
 # The Kotlin bridges log under their own tags. logcat's -s takes no wildcards,
 # so collect them from the source instead of hardcoding a list that will drift.

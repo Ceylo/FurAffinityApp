@@ -2,8 +2,8 @@
 //  AndroidAppInfo.swift
 //  FurAffinityUI (Android)
 //
-//  Native-Swift driver for the Kotlin `FAAppInfoBridge`: the app version, whether
-//  this build is debuggable, and the stock WebView User-Agent. Same
+//  Native-Swift driver for the Kotlin `FAAppInfoBridge`: the package name, the app
+//  version, whether this build is debuggable, and the stock WebView User-Agent. Same
 //  `AnyDynamicObject` reflection as `CoilImageLoader` — FurAffinityUI is a native
 //  Skip module and can't `import android.*`.
 //
@@ -31,6 +31,24 @@ enum AndroidAppInfo {
         }
     }()
     #endif
+
+    /// The installed applicationId, or nil off Android. `Bundle.main.bundleIdentifier`
+    /// is nil in a plain SwiftPM module here and names the Skip module rather than the
+    /// install in the bridged one, so this is the only accurate source.
+    static let packageName: String? = {
+        #if canImport(Android)
+        guard let bridge else { return nil }
+        do {
+            let name: String? = try bridge.packageName()
+            return (name?.isEmpty ?? true) ? nil : name
+        } catch {
+            logger.error("AndroidAppInfo.packageName threw: \(error)")
+            return nil
+        }
+        #else
+        return nil
+        #endif
+    }()
 
     /// The installed app's `versionName` (Skip.env's MARKETING_VERSION), or nil off
     /// Android. `Bundle.main.infoDictionary` is empty in a native Skip module, so
