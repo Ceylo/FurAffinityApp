@@ -11,8 +11,8 @@
 //
 //  `FAImageView` mirrors the slice of Kingfisher's `KFImage` API the shared feed uses
 //  (`.placeholder`, `.onFailure`, `.fade`, `.resizable`) so a symlinked
-//  `SubmissionFeedItemView` compiles unchanged on both platforms. Animated GIFs are a
-//  deferred follow-up: `FAAnimatedImage` shows the first frame for now (static).
+//  `SubmissionFeedItemView` compiles unchanged on both platforms. `FAAnimatedImage` is
+//  the same static view: animating a GIF would need `coil-gif`.
 //
 
 import Foundation

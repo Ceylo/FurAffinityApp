@@ -125,7 +125,7 @@ struct NotificationOverlay: View {
             .onDisappear {
                 // Teardown cancels the timer, so reset here: otherwise a half-played
                 // badge re-runs .task with an unchanged id and replays a stale count.
-                // Being superseded by a new count doesn't come through here.
+                // (Being superseded by a new count goes through .task, not here.)
                 phase = .hidden
                 itemCount = nil
             }
