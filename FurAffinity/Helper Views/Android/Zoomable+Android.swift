@@ -14,6 +14,9 @@
 
 import SwiftUI
 
+/// How far a drag must travel before it counts as a pan rather than a tap.
+private let panSlop: Double = 4
+
 public enum ZoomLevel {
     case fit
     case fill
@@ -38,6 +41,8 @@ public struct Zoomable<Content: View>: View {
     @State var baseScale: Double = 1
     @State var baseOffset = CGSize.zero
     @State var didApplyInitialZoom = false
+    /// Latched once a drag passes the slop, so a pan's release can't be taken for a tap.
+    @State var didPan = false
 
     public init(@ViewBuilder content: () -> Content) {
         self.content = content()
@@ -92,6 +97,11 @@ public struct Zoomable<Content: View>: View {
                 .simultaneousGesture(
                     DragGesture()
                         .onChanged { value in
+                            // Translation is measured from the gesture's own start, so a
+                            // change that is still within the slop is a *new* gesture
+                            // beginning — which is where the latch resets.
+                            didPan = abs(value.translation.width) > panSlop
+                                || abs(value.translation.height) > panSlop
                             offset = CGSize(
                                 width: baseOffset.width + value.translation.width,
                                 height: baseOffset.height + value.translation.height
@@ -102,7 +112,16 @@ public struct Zoomable<Content: View>: View {
                             baseOffset = offset
                         }
                 )
-                .onTapGesture(count: 2) {
+                // A single tap, matching the iOS `UITapGestureRecognizer` with
+                // `numberOfTapsRequired = 1`. SkipUI's simultaneous-drag detector only
+                // *observes* pointer events (it never consumes them), so Compose's tap
+                // detector survives a pan and fires on its release too — hence the latch,
+                // cleared here so the pan swallows exactly one tap and no more.
+                .onTapGesture {
+                    guard !didPan else {
+                        didPan = false
+                        return
+                    }
                     toggleZoom(in: viewport)
                 }
                 // Keyed on the viewport, not `onAppear`: the first composition can run
@@ -147,6 +166,9 @@ public struct Zoomable<Content: View>: View {
         let target = abs(scale - primary) < 1e-3
             ? scale(for: secondaryZoomLevel, in: viewport)
             : primary
+        // `withAnimation` marks the whole Compose frame process-wide on SkipUI, so it is
+        // banned in shared code — tolerated here because the viewer is full-screen and
+        // nothing else is composing behind it.
         withAnimation {
             scale = max(1, target)
             baseScale = scale
