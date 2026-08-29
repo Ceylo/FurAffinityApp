@@ -124,6 +124,8 @@ actor FAImageStore {
 
     private var inFlightFetch = [URL: Task<String?, Never>]()
     private var inFlightImage = [URL: Task<UIImage?, Never>]()
+    /// When each in-flight fetch started. Diagnostic only, see `downloadStartDate(for:)`.
+    private var fetchStart = [URL: Date]()
 
     private let memory = FAImageMemoryCache.shared
 
@@ -133,6 +135,16 @@ actor FAImageStore {
     /// frame instead of flashing its placeholder.
     nonisolated func cachedImage(for url: URL) -> UIImage? {
         FAImageMemoryCache.shared.image(for: url)
+    }
+
+    /// When the in-flight download for `url` started, if any. The Android analog of
+    /// iOS's `DownloadDelegate.downloadStartDate(for:)`.
+    func downloadStartDate(for url: URL) -> Date? { fetchStart[url] }
+
+    /// Whether `url` is already available without a network fetch — memory LRU or
+    /// Coil's disk cache. The analog of Kingfisher's `imageCachedType != .none`.
+    nonisolated func isCached(_ url: URL) -> Bool {
+        FAImageMemoryCache.shared.contains(url) || CoilImageLoader.cachedPath(url) != nil
     }
 
     /// The decoded image for `url`, fetching and decoding it if needed. Concurrent
@@ -349,9 +361,11 @@ actor FAImageStore {
         let task = Task(priority: priority.taskPriority) { [self] in
             let path = await gated(priority) { CoilImageLoader.fetchPath(url) }
             inFlightFetch[url] = nil
+            fetchStart[url] = nil
             return path
         }
         inFlightFetch[url] = task
+        fetchStart[url] = Date()
         return await task.value
     }
 

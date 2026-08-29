@@ -25,11 +25,15 @@ public enum FAUserAgent {
     private static var cached: String?
     private static var pendingTask: Task<String, Never>?
 
-    /// Reads `navigator.userAgent` from the system WebView. Installed by the app
-    /// layer on platforms without WebKit — where it is the only way to learn the
-    /// string `cf_clearance` was minted against — and unused where `current()`
-    /// builds its own WKWebView. Declared unconditionally so the app module needs
-    /// no platform fence to install it.
+    /// Reads `navigator.userAgent` from the system WebView. Installed by the app layer on
+    /// platforms without WebKit — where it is the only way to learn the string `cf_clearance`
+    /// was minted against — and unused where `current()` builds its own WKWebView.
+    ///
+    /// Declared outside the `#if` on purpose: its installer,
+    /// `FurAffinity/Helpers/Android/FAWebSession.swift`, is an unguarded Android substitution
+    /// file, so it is also compiled by the module's Darwin bridge — where `canImport(WebKit)`
+    /// is true. Narrowing this to the `#else` breaks that compile, and only
+    /// `skip app launch` reports it.
     public static var webViewUserAgentProvider: (@Sendable () async -> String)?
 
     #if canImport(WebKit)

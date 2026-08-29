@@ -24,6 +24,29 @@ ls -R .build/plugins/outputs/*/FurAffinityUI/destination/skipstone/FurAffinityUI
 The path segment after `outputs/` is the **checkout directory's name**, not the word
 `android` — it differs per worktree, hence the glob.
 
+## Reaching a catalog image from shared code
+
+`Bundle.faAssets` is the bundle a shared view names when it draws an asset-catalog
+image or colour, so the view itself needs no `#if`:
+
+```swift
+Image("DefaultAvatar", bundle: Bundle.faAssets)
+```
+
+It is an ordinary substitution pair — `FurAffinity/Helpers/iOS/AssetBundle.swift`
+returns `.main` (an Xcode app target has no `Bundle.module`) and the unguarded
+`FurAffinity/Helpers/Android/AssetBundle+Android.swift` returns `.module` (this
+module has no `.main` catalog). `AppIcon` and `AvatarView` are single shared files
+because of it, and `Colors.swift` spells its colorsets the same way.
+
+Write `Bundle.faAssets`, not the leading-dot `.faAssets`: `Image(_:bundle:)` and
+`Color(_:bundle:)` take a `Bundle?`, and implicit member lookup does not reach an
+extension member through the optional in the Android build.
+
+An entry a shared view names must exist in **both** catalogs under the same name —
+`DefaultAvatar.imageset` is committed on both sides, `AppIcon.imageset` is committed
+on iOS and generated on Android (below).
+
 ## Generated art
 
 An entry big enough that a second copy in git would hurt is generated from the iOS

@@ -205,6 +205,13 @@ Rules that are easy to get wrong here:
   `{path, attempts, bytes, ms, failures}` as JSON so `CoilImageLoader.fetchPath` can
   emit the one `[Coil] GET request on <url>` line per network fetch (the analog of
   iOS's `[KF]` line) plus a retry/failure line. The same applies to the other bridges.
+- **`SubmissionFeedItemView.controlCacheBehavior` reports from the *feed card's* point
+  of view**, which the `[Coil]` lines cannot: on each row appearance it says whether
+  that thumbnail is already in flight (and for how long) or neither cached nor
+  starting. It is shared with iOS — `FAImageStore.downloadStartDate(for:)` and
+  `isCached(_:)` stand in for `DownloadDelegate.downloadStartDate(for:)` and
+  Kingfisher's `imageCachedType`. A warm feed logs neither line, so clear the caches
+  from Settings and pull to refresh to see it work.
 
 Measured on the emulator before/after this work — cold, disk cache wiped, time for the
 first visible thumbnail to appear:
