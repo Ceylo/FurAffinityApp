@@ -177,6 +177,28 @@ Rules that are easy to get wrong here:
   4-7 s) and nothing else, at 40% more requests against FA's CDN. Reverted; the Kotlin
   loop stays.
 
+  The backoff inside that permit is a **flat 1 s**, not the `250 ms x attempt` ramp it
+  started as, and 1 s because that is what `www.furaffinity.net`'s `robots.txt` asks a
+  crawler to wait. The directive does not formally bind this code — it is aimed at
+  crawlers, and `d.`/`t.`/`a.furaffinity.net` serve no `robots.txt` at all (404), while
+  the app already honours it where it genuinely crawls
+  (`ProgressiveLoadItem.crawlingDelay = 1 s`) — but nothing here should hit an FA host
+  faster than that either. Worst case, one URL holds its permit for 4 s instead of 2.5 s.
+  Since the pacing is load-bearing (above), it was measured A-B-A rather than assumed —
+  6 cold runs per arm, one emulator session:
+
+  | arm | 403% | images lost (median / worst) | conns | issuance | drain |
+  |---|---|---|---|---|---|
+  | A1 `250 ms x attempt` | 22% | 0.0 / 2 | 28.5 | 3.5 s | 4.8 s |
+  | B flat 1 s | 6% | 0.0 / 6 | 16.5 | 2.7 s | 2.9 s |
+  | A2 `250 ms x attempt`, again | 5% | 0.0 / 9 | 15.0 | 1.9 s | 3.5 s |
+
+  B lands *between* the two shipping arms on every column, and the shipping arms
+  themselves move 22% → 5% across the session — so what the table shows is drift, not
+  an effect, in either direction. Same story on the worst runs: 2 → 6 → 9 images lost is
+  monotone in chronological order. No measurable regression, so the slower, politer
+  backoff stays.
+
   Corollary for the summarizer: `[Coil] GET request on` must be logged from **inside**
   the permit. Logged before it, the line marks when a `Task` was created rather than
   when the request went out, and `summarize-image-log.py`'s issuance cadence silently

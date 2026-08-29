@@ -79,6 +79,23 @@ class FACoilBridge {
         private const val MAX_ATTEMPTS = 5
         private const val MAX_CONCURRENT_PER_HOST = 6
 
+        /// Flat, not a ramp, and one second rather than 250 ms.
+        ///
+        /// This loop has no iOS counterpart at all — Kingfisher exposes `.retryStrategy`
+        /// and `Kingfisher+FA.swift` never sets it — because iOS does not need one:
+        /// URLSession always negotiates h2 and keeps one connection per host, so its
+        /// requests ride a connection whose verdict is already known, while this client
+        /// is pinned to h1 and draws a fresh one per concurrent request. A retry here is
+        /// therefore a fresh draw, not a re-ask.
+        ///
+        /// One second because no retry should hit an FA host faster than
+        /// `www.furaffinity.net`'s `robots.txt` asks a crawler to. That `Crawl-delay: 1`
+        /// does not formally bind this code — it is aimed at crawlers, and `d.`/`t.`/`a.`
+        /// serve no `robots.txt` at all (404) — and the app already honours it where it
+        /// genuinely crawls (`ProgressiveLoadItem.crawlingDelay`); this just declines to
+        /// go faster than that anywhere.
+        private const val RETRY_BACKOFF_MS = 1000L
+
         /// Whether a failed response could plausibly come back different on a fresh
         /// connection. A 4xx is the origin's own answer, so re-asking it just burns
         /// attempts and one of `FAImageStore`'s permits — FA answers a missing avatar
@@ -268,7 +285,7 @@ class FACoilBridge {
                         .put("ms", ms(start))
                         .toString()
                 }
-                Thread.sleep(250L * attempt)
+                Thread.sleep(RETRY_BACKOFF_MS)
             }
         }
 
