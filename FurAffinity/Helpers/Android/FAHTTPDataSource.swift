@@ -2,16 +2,11 @@
 //  FAHTTPDataSource.swift
 //  FurAffinityUI (Android)
 //
-//  The Android backing for `HTTPDataSource`. Primary path is a plain URLSession
-//  (swift-corelibs FoundationNetworking, HTTP/1.1) that replays the WebView's
-//  Cloudflare clearance: the byte-exact WebView User-Agent plus the WebView's
-//  `Cookie:` header (cf_clearance + __cf_bm + FA auth). `cf_clearance` is bound to
-//  that UA and the device IP, so the same device that solved CF in the WebView
-//  can reuse it here (proven on the emulator: URLSession h1 → 200).
-//
-//  When a request still comes back `cf-mitigated: challenge`, it falls back to a
-//  WebView-fetch closure (skip-web navigates the cleared WebView and returns the
-//  page HTML).
+//  The Android backing for `HTTPDataSource`. Primary path is a plain URLSession that
+//  replays the WebView's Cloudflare clearance — the byte-exact WebView User-Agent plus
+//  its `Cookie:` header — since `cf_clearance` is bound to that UA and the device IP.
+//  A response that still says `cf-mitigated: challenge` falls back to a WebView-fetch
+//  closure. See Android/docs/cloudflare-and-login.md.
 //
 //  Lives in the app module, not FAKit: Skip tries to generate a Kotlin bridge for
 //  any public type that conforms to a public async protocol (HTTPDataSource), and

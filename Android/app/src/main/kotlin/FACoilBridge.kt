@@ -8,28 +8,19 @@
 //  Swift by class name through SkipBridge's AnyDynamicObject — see CoilImageLoader.swift.
 //
 //  It owns one OkHttpClient that replays FA's Cloudflare clearance — the byte-exact
-//  WebView User-Agent plus the WebView Cookie header (cf_clearance + __cf_bm + auth) —
-//  via an interceptor, the analog of the iOS Kingfisher DownloadDelegate. Credentials
-//  are seeded once after login via `configure`; the interceptor reads the volatile
-//  companion fields each request, so a CF re-solve just calls configure again.
+//  WebView User-Agent plus the WebView Cookie header — via an interceptor, the analog
+//  of the iOS Kingfisher DownloadDelegate. Credentials are seeded after login via
+//  `configure`; the interceptor reads the volatile companion fields each request, so a
+//  CF re-solve just calls configure again.
 //
-//  Only coil3's standalone `DiskCache` is used, not its `ImageLoader`: an ImageRequest
-//  decodes a full-resolution Bitmap that we then throw away, and the caller wants a
-//  file, not pixels. So we download with OkHttp straight into the cache and hand Swift
-//  back an on-disk **path** — no full-size image ever crosses JNI, and nothing is
-//  decoded here.
+//  Only coil3's standalone `DiskCache` is used, not its `ImageLoader`: the caller wants
+//  a file, not pixels. So we download with OkHttp straight into the cache and hand Swift
+//  back an on-disk **path** — nothing full-size crosses JNI, and nothing is decoded here.
 //
-//  Retry: Cloudflare judges the *connection*, not the request — a challenged response
-//  is a 403 with `cf-mitigated=challenge` and `Connection: close`, while a connection
-//  that once answered 200 keeps answering 200 for everything put on it (measured: 0 of
-//  ~600 responses on a reused connection was a 403). So a retry is really a fresh draw
-//  on a fresh connection, and `fetchResult` takes a few of them with backoff — but only
-//  where a fresh draw could answer differently, see `worthRedrawing`. HTTP/1.1 stays
-//  pinned: h2 has been measured and rejected twice, most recently *with* the launch
-//  ramp that was supposed to fix it. See Android/docs/images.md.
-//  It *reports* that retry story back to Swift as JSON rather than logging it:
-//  android.util.Log never reaches the log file Settings exports, so anything worth
-//  keeping has to be logged on the Swift side.
+//  Cloudflare judges the *connection*, not the request, which is what the retry loop
+//  and the pinned HTTP/1.1 are for; `Android/docs/images.md` has the measurements and
+//  the two rejected alternatives. Retry outcomes are *reported* to Swift as JSON rather
+//  than logged: android.util.Log never reaches the log file Settings exports.
 //
 //  Lives in the app Gradle module (not the FurAffinityUI module) so it compiles
 //  against coil3/okhttp declared in Android/app/build.gradle.kts; reflection loads it
@@ -57,8 +48,7 @@ import skip.foundation.ProcessInfo
 /// app lifetime; all real state lives in the companion so the shared client, disk cache
 /// and interceptor headers are single-sourced regardless of the caller.
 class FACoilBridge {
-    // Returns a value (not Unit) so the Swift AnyDynamicObject call resolves to a typed
-    // overload instead of the ambiguous void one.
+    // Boolean, not Unit: AnyDynamicObject can't resolve the void overload.
     fun configure(userAgent: String, cookie: String): Boolean = Companion.configure(userAgent, cookie)
 
     fun isCached(url: String): Boolean = Companion.isCached(url)
@@ -73,42 +63,33 @@ class FACoilBridge {
 
     companion object {
         private const val TAG = "FACoilBridge"
-        // Each attempt is an independent draw because the challenge closes the
-        // connection, so the next one necessarily opens a fresh one. On a cold launch
-        // that tail is long: measured over 111 fetches, a.furaffinity.net (four
-        // avatars, never warming a connection) went 20/20 x 403 and exhausted every
-        // one, against t.furaffinity.net's 30 of 135 responses. A retry costs ~740 ms
-        // — the challenge itself — not the ~35 ms a warm-connection fetch does.
+        // Each attempt is an independent draw: the challenge closes the connection, so
+        // the next one necessarily opens a fresh one. A cold launch can exhaust all
+        // five on a host that never warms a connection, and each retry costs the
+        // challenge round-trip rather than a warm fetch — see Android/docs/images.md.
         private const val MAX_ATTEMPTS = 5
         private const val MAX_CONCURRENT_PER_HOST = 6
 
         /// Whether a failed response could plausibly come back different on a fresh
-        /// connection. A 4xx is the origin's own answer and a retry just re-asks it —
-        /// most of the point being FA's missing avatars, which it answers **404** while
-        /// serving its default image, so `FAImage` substitutes ours and the five
-        /// attempts were pure waste: five requests plus ~2.5 s of backoff, all of it
-        /// holding one of `FAImageStore`'s six permits.
-        ///
-        /// The three exceptions are the ones that mean "ask again": 403 is Cloudflare's
-        /// per-connection verdict and the whole reason this loop exists, 408 and 429 say
-        /// so by definition. 5xx and anything else keeps the retry it always had.
+        /// connection. A 4xx is the origin's own answer, so re-asking it just burns
+        /// attempts and one of `FAImageStore`'s permits — FA answers a missing avatar
+        /// with a **404**, which `FAImage` substitutes for anyway. The exceptions mean
+        /// "ask again": 403 is Cloudflare's per-connection verdict and the reason this
+        /// loop exists, 408 and 429 say so by definition.
         private fun worthRedrawing(code: Int) =
             code !in 400..499 || code == 403 || code == 408 || code == 429
 
         // MARK: Connection instrument
         //
-        // Cloudflare judges the connection, so the causal variable is how many *cold*
-        // connections a burst opens and which requests ride them. Everything above was
-        // inferred from 403 patterns; this measures it.
+        // Which connection carried an attempt, and whether that attempt opened it —
+        // the causal variable behind every 403 (Android/docs/images.md).
         //
         // `fetchResult` calls `execute()` synchronously, so a ThreadLocal holds the
-        // per-attempt state with no map and no locking — but only the *reads* are on
-        // that thread. OkHttp 5 opens connections on its own fast-fallback threads, so
-        // a listener that resolved the ThreadLocal inside the callback saw an unrelated
-        // Draw and reported `new=false` for every request of a cold launch. Hence the
-        // factory: `create` runs in `RealCall.<init>`, i.e. on the calling thread, so
-        // the per-call listener captures the right Draw and the callbacks can arrive
-        // from anywhere. Reset per *attempt*, not per call: each is its own draw.
+        // per-attempt state with no map and no locking. The factory matters: OkHttp 5
+        // opens connections on its own fast-fallback threads, so a listener resolving
+        // the ThreadLocal inside a callback picks up an unrelated Draw. `create` runs
+        // in `RealCall.<init>`, on the calling thread, so the per-call listener
+        // captures the right one. Reset per *attempt* — each is its own draw.
 
         private class Draw {
             @Volatile var id: Int? = null

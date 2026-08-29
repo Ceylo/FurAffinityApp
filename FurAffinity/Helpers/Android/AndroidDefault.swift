@@ -3,32 +3,21 @@
 //  FurAffinityUI (Android)
 //
 //  Defaults' `@Default` for Android. `Ceylo/Defaults@android` guards its SwiftUI
-//  support behind `#if !os(Android)` — importing SwiftUI (→ SkipUI → CJNI) from a plain
-//  SwiftPM package breaks the Skip build — so the name is free here, and declaring it
-//  in the app module (which does link CJNI) lets shared screens write
-//  `@Default(.someKey)` exactly as they do on iOS, with no `#if`.
+//  support behind `#if !os(Android)`, so the name is free here, and declaring it in the
+//  app module (which does link CJNI) lets shared screens write `@Default(.someKey)`
+//  exactly as they do on iOS, with no `#if`.
 //
 //  `#if os(Android)` is correct here, unlike the other substitution files: the Darwin
 //  bridge compile of this module resolves `Default` from the real Defaults package.
 //
-//  Why this can't just be `@AppStorage`: skipstone recognizes state property wrappers
-//  by *attribute name* and generates each bridged view's `Java_initState_<name>` from
-//  it, so a wrapper of our own gets no bridge — its `BridgedAppStorageBox` never
-//  receives a Compose state, and the value neither persists nor recomposes. skipstone
-//  is a closed binary, so that list can't be extended.
-//
-//  What it can do instead is own the box itself. The pieces skipstone's generated code
-//  uses — `BridgedAppStorageBox`, `Java_initStateSupport()`, `Binding(appStorageBox:)`
-//  — are all public API of skip-fuse-ui, and the generated `rememberSaveable` only
-//  provides *lifetime*: it keeps one support object alive across recompositions. App
-//  settings are global and process-lived, so a static box per defaults key serves the
-//  same purpose. Reading it during body evaluation still reads the Compose
-//  `MutableState` inside the composition, which is what registers the recomposition
-//  dependency.
-//
-//  Reactivity matches iOS: `AppStorageSupport` registers a SharedPreferences change
-//  listener, so a write from anywhere — not just this wrapper — updates every view
-//  showing the key. Verified on the emulator.
+//  It cannot be `@AppStorage`, and it cannot delegate to one: skipstone matches state
+//  property wrappers by *attribute name* and is a closed binary, so a wrapper of our
+//  own gets no generated bridge and never receives a Compose state. What it can do is
+//  own the box itself — `BridgedAppStorageBox`, `Java_initStateSupport()` and
+//  `Binding(appStorageBox:)` are all public skip-fuse-ui API, and the bridge's
+//  `rememberSaveable` only supplies lifetime, which a static box per key gives just as
+//  well for process-lived app settings. Reading it during body evaluation still reads
+//  the Compose `MutableState`, which is what registers the recomposition dependency.
 //
 //  Bool-only: every settings key the ported screens read is a Bool.
 //

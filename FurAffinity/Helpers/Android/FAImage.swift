@@ -11,8 +11,8 @@
 //
 //  `FAImageView` mirrors the slice of Kingfisher's `KFImage` API the shared feed uses
 //  (`.placeholder`, `.onFailure`, `.fade`, `.resizable`) so a symlinked
-//  `SubmissionFeedItemView` compiles unchanged on both platforms. Animated GIFs are a
-//  deferred follow-up: `FAAnimatedImage` shows the first frame for now (static).
+//  `SubmissionFeedItemView` compiles unchanged on both platforms. `FAAnimatedImage` is
+//  the same static view: animating a GIF would need `coil-gif`.
 //
 
 import Foundation
@@ -31,7 +31,7 @@ struct FAImageView: View {
     fileprivate var onFailureHandler: ((any Error) -> Void)?
     fileprivate var fadeDuration: Double = 0
 
-    // Internal, not private: bridged state (Android/docs/shared-sources.md).
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @State var image: UIImage?
     @State var failed = false
 

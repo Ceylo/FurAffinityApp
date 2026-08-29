@@ -19,8 +19,9 @@ import UIKit
 @_spi(Advanced) import SwiftUIIntrospect
 #endif
 
+// Not private: skipstone can't bridge a private @State/@Environment. Non-state
+// members below stay private.
 struct SubmissionsFeedView: View {
-    // Internal, not private: bridged state (Android/docs/shared-sources.md).
     @Environment(Model.self) var model
     @Environment(ErrorStorage.self) var errorStorage
     @State var newSubmissionsCount: Int?
@@ -293,8 +294,8 @@ extension SubmissionsFeedView {
             }
 
             if let item = model.submissionPreviews?.first {
-                // This mounts the fetch trigger on that row, which effectively
-                // causes the refresh
+                // Setting the target mounts the fetch trigger on that row, which is
+                // what actually starts the refresh.
                 refreshTask = nil
                 targetScrollItem = item
             } else {

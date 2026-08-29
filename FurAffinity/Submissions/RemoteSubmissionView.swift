@@ -9,7 +9,7 @@ import SwiftUI
 import FAKit
 
 struct RemoteSubmissionView: View {
-    // Skip bridges these views: bridged @State/@Environment must not be private.
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @Environment(Model.self) var model
     @Environment(ErrorStorage.self) var errorStorage
     

@@ -18,7 +18,7 @@ import SwiftUI
 import FAKit
 
 struct HTMLView: View {
-    // Not private: skipstone can't bridge a private state property.
+    // Not private: skipstone can't bridge a private @State/@Environment.
     // Read out of the carrier here rather than in `body`: `init` still runs on every
     // evaluation of the parent's body, but the walk is O(runs) with nothing built.
     var fragments: [FAHTMLFragment]

@@ -136,8 +136,8 @@ extension Defaults {
         let persisted = Defaults[.settingsSchemaVersion]
         return persisted == 0 ? currentSettingsSchemaVersion : persisted
 #else
-        guard let bundleID = Bundle.main.bundleIdentifier,
-              let persisted = UserDefaults.standard.persistentDomain(forName: bundleID)
+        guard let persisted = UserDefaults.standard
+            .persistentDomain(forName: Bundle.main.bundleIdentifier!)
         else { return currentSettingsSchemaVersion }
 
         if let version = persisted[Keys.settingsSchemaVersion.name] as? Int {

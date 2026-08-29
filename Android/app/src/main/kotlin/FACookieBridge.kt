@@ -21,8 +21,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 class FACookieBridge {
-    // Returns a value (not Unit) so the Swift AnyDynamicObject call resolves to a typed
-    // overload instead of the ambiguous void one.
+    // Boolean, not Unit: AnyDynamicObject can't resolve the void overload.
     fun clearCookies(): Boolean = Companion.clearCookies()
 
     companion object {

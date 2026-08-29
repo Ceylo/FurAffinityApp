@@ -11,7 +11,7 @@ import SwiftUI
 
 struct UserProfileControlView: View {
     var username: String
-    // Non-private: skipstone can't bridge a private state property.
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @Environment(\.navigationStream) var navigationStream
     
     var body: some View {

@@ -19,11 +19,7 @@ public enum FAUserAgent {
     // Non-isolated: WebView configurations are built in SwiftUI property initializers,
     // which are not main-actor isolated.
     nonisolated public static var applicationName: String {
-        guard let version = FAAppVersion.string else {
-            logger.error("FAUserAgent: no app version available; FA traffic will be unidentifiable")
-            return "ceylo.FurAffinityApp/unknown"
-        }
-        return "ceylo.FurAffinityApp/\(version)"
+        "ceylo.FurAffinityApp/\(FAAppVersion.string)"
     }
 
     private static var cached: String?

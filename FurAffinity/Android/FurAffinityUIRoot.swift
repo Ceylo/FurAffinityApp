@@ -11,10 +11,9 @@
 import Foundation
 import Defaults
 import FAKit
+import FALogging
 import SkipFuse
 import SwiftUI
-
-// `logger` now comes from the shared Helpers/Logs.swift.
 
 /// The shared top-level view, loaded from the platform-specific app delegates below.
 /* SKIP @bridge */public struct FurAffinityUIRootView: View {
@@ -34,18 +33,20 @@ import SwiftUI
     }
 
     /* SKIP @bridge */public func onInit() {
-        // Before anything reads a version: `Bundle.main` has no Info.plist behind it
-        // in a native Skip module, so without this both the FA User-Agent suffix and
-        // the update check read "unknown".
+        // Both must land before anything reads them, and the loggers freeze their
+        // subsystem on first use — so this is the very first thing the app does.
+        // `Bundle.main` has no Info.plist behind it in a native Skip module, and its
+        // bundleIdentifier names the Skip module rather than the install.
+        FALogSubsystem.override = AndroidAppInfo.packageName
         FAAppVersion.override = AndroidAppInfo.versionName
         // The counterpart of FurAffinityApp.init()'s line, same shared format.
         logAppLaunch(
             operatingSystem: AndroidAppInfo.operatingSystem,
             details: "debuggable=\(AndroidAppInfo.isDebuggable)"
         )
-        // Must come first: a `Defaults.Key` captures its suite and registers its
-        // default value when it's created, so anything that touches a key before this
-        // lands in the orphan store.
+        // Before any `Defaults.Key` is created: a key captures its suite and registers
+        // its default value at construction, so one touched earlier lands in the orphan
+        // store.
         installDefaultsSuite()
         // Matches FurAffinityApp.init() on iOS. A no-op on a fresh Android install
         // (see Defaults.startingSchemaVersion), but it stamps the schema version so a

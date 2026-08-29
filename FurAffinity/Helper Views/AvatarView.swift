@@ -19,8 +19,7 @@ import Kingfisher
 
 struct AvatarView: View {
     var avatarUrl: URL?
-    // Internal, not private: bridged state (Android/docs/shared-sources.md).
-    @Default(.animateAvatars) var animateAvatars
+    @Default(.animateAvatars) private var animateAvatars: Bool
     private var cornerRadius: Double = 5
     private var fadeDuration = 0.25
 
@@ -59,8 +58,8 @@ struct AvatarView: View {
             .fade(duration: fadeDuration)
     }
 #else
-    /// Animated GIF avatars are a deferred follow-up (needs coil-gif), so
-    /// `animateAvatars` is read but not honored here — see Android/docs/images.md.
+    /// `@Default(.animateAvatars)` is not honored here: animated-GIF avatars need
+    /// `coil-gif`.
     private func configure(_ image: FAImageView) -> FAImageView {
         image
             .placeholder { loadingPlaceholder }

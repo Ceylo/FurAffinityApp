@@ -8,9 +8,6 @@
 //  (`.placeholder(progress:)`, `.waitForCache()`, `.onSuccess`), which has no Android
 //  equivalent.
 //
-//  The zoomable full-screen viewer arrives in step 4; `allowZoomableSheet` is accepted
-//  and ignored until then.
-//
 
 import SwiftUI
 import FAKit
@@ -23,7 +20,7 @@ struct SubmissionMainImage: View {
     var allowZoomableSheet = true
     @Binding var fullResolutionMediaFileUrl: URL?
 
-    // Internal, not private: bridged state (Android/docs/shared-sources.md).
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @State var errorMessage: String?
     @State var showZoomableCover = false
 

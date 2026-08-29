@@ -7,10 +7,8 @@
 //  platforms. It can't live in FAKit: it needs skip-web, which FAKit can't depend
 //  on (see FAHTTPDataSource for the CJNI rationale).
 //
-//  Not `#if os(Android)`-guarded — this module is compiled for its Darwin bridge
-//  too, where the shared caller would otherwise find no declaration at all.
-//  FAKit's own FALoginView is `#if !os(Android)`, so it exists in that compile;
-//  this module's declaration shadows it, as a module's own always does.
+//  Unguarded on purpose (Android/docs/shared-sources.md § Rules for shared sources): FAKit's own `#if !os(Android)` declaration exists in
+//  the Darwin bridge compile, and this module's shadows it.
 //
 
 import Foundation
@@ -23,13 +21,11 @@ struct FALoginView: View {
     @Binding var session: OnlineFASession?
     var onError: (Error) -> Void
 
-    // Internal, not private: bridged state (Android/docs/shared-sources.md).
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @State var navigator = WebViewNavigator()
     @State var webState = WebViewState()
     @State var establishing = false
 
-    // Stock UA plus the FA app identifier, and byte-identical to the other two
-    // WebViews' — see FAWebViewUserAgent.
     let config = WebEngineConfiguration(customUserAgent: FAWebViewUserAgent.string)
 
     var body: some View {

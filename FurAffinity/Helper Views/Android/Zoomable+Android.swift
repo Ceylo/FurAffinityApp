@@ -31,7 +31,7 @@ public struct Zoomable<Content: View>: View {
     /// Width over height of the content, used to derive fit/fill scales.
     private var contentAspectRatio: Double = 1
 
-    // Internal, not private: bridged state (Android/docs/shared-sources.md).
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @State var scale: Double = 1
     @State var offset = CGSize.zero
     /// Committed values, so a gesture composes with what came before it.

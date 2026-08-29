@@ -9,8 +9,7 @@ import Foundation
 import FALogging
 import Defaults
 
-private let loggingSubsystem = Bundle.main.bundleIdentifier ?? "net.furaffinity.app"
-let logger = PersistentLogger(subsystem: loggingSubsystem, category: "FA")
+let logger = PersistentLogger(subsystem: FALogSubsystem.identifier, category: "FA")
 
 /// The time window to include when exporting application logs.
 enum LogExportRange {

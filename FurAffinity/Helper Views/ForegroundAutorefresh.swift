@@ -14,7 +14,7 @@ import SwiftUI
 /// platforms also pass through `.inactive` for transient interruptions (Control Centre,
 /// a permission dialog) without ever backgrounding.
 struct ForegroundAutorefresh: ViewModifier {
-    // Internal, not private: bridged state (Android/docs/shared-sources.md).
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @Environment(\.scenePhase) var scenePhase
     var action: @MainActor () async -> Void
 

@@ -13,7 +13,7 @@ the direct test of the whole model — see Android/docs/images.md. Logs predatin
 `conn=` in the `[Coil]` lines simply omit that section.
 
     Scripts/Android/summarize-image-log.py run.log
-    adb logcat -d -s fur.affinity.ui/FA | Scripts/Android/summarize-image-log.py
+    Scripts/Android/logs.sh -d | Scripts/Android/summarize-image-log.py
 """
 
 import re

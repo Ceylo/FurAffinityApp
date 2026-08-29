@@ -5,10 +5,10 @@
 //  The Android stand-in for the parts of Kingfisher iOS gets for free: a decoded-image
 //  memory cache, request coalescing, off-main decoding, and bounded concurrency.
 //
-//  Without it the feed does, per image and per re-appearance: a blocking JNI fetch on
-//  an unbounded `Task.detached` (which pins a Swift cooperative-pool thread, so ~144
-//  prefetches starve the visible rows), then a decode on the main actor (`.task` on a
-//  SwiftUI view is MainActor-isolated, so the code after `await` resumes there).
+//  Without it, every image and every re-appearance costs a blocking JNI fetch on an
+//  unbounded `Task.detached` — which pins a cooperative-pool thread, so a page of
+//  prefetches starves the visible rows — and then decodes on the main actor, since
+//  `.task` on a SwiftUI view is MainActor-isolated.
 //
 //  Layering, from the bottom up:
 //

@@ -4,9 +4,10 @@
 //
 //  Native-Swift driver for the Kotlin `FAMediaBridge` (MediaStore save + ACTION_SEND),
 //  reached by class name through SkipBridge's `AnyDynamicObject` exactly like
-//  `CoilImageLoader`. Android-only work lives behind `canImport(Android)` so the
-//  module's Darwin bridge still compiles.
+//  `CoilImageLoader`.
 //
+//  Unguarded on purpose — an Android substitution file must be, see
+//  Android/docs/shared-sources.md § Rules for shared sources. The JNI inside is `canImport(Android)`-guarded and no-ops on Darwin.
 
 import Foundation
 #if canImport(Android)

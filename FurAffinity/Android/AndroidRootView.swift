@@ -79,11 +79,14 @@ struct AndroidRootView: View {
                     // placeholders in this mode.
                     .overlay(alignment: .top) {
                         if AndroidAppInfo.isDebuggable {
-                            Button("Continue offline (debug)") {
-                                Task {
-                                    await storeLocalizedError(in: model.errorStorage, action: "Sign In", webBrowserURL: nil) {
-                                        try await model.setSession(OfflineFASession.default)
-                                    }
+                            VStack(spacing: 4) {
+                                Button("Continue offline (debug)") {
+                                    signIn(offlineWith: OfflineFASession.default)
+                                }
+                                // The empty feed is otherwise unreachable: the
+                                // default offline session always has submissions.
+                                Button("Continue offline, empty (debug)") {
+                                    signIn(offlineWith: OfflineFASession.empty)
                                 }
                             }
                             .font(.footnote)
@@ -168,6 +171,14 @@ struct AndroidRootView: View {
         }
         .autorefreshingOnForeground {
             await model.autorefreshIfNeeded()
+        }
+    }
+
+    private func signIn(offlineWith session: OfflineFASession) {
+        Task {
+            await storeLocalizedError(in: model.errorStorage, action: "Sign In", webBrowserURL: nil) {
+                try await model.setSession(session)
+            }
         }
     }
 

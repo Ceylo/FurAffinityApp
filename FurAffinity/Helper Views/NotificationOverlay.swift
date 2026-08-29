@@ -31,7 +31,7 @@ enum NotificationOverlayPhase {
 struct NotificationOverlay: View {
     @Binding var itemCount: Int?
     var dismissAfter: TimeInterval = 3.0
-    // Internal, not private: bridged state (Android/docs/shared-sources.md).
+    // Not private: skipstone can't bridge a private @State/@Environment.
     /// Outlives `itemCount` so the text survives the fade-out.
     @State var lastCount = 0
     @State var phase = NotificationOverlayPhase.hidden
@@ -125,7 +125,7 @@ struct NotificationOverlay: View {
             .onDisappear {
                 // Teardown cancels the timer, so reset here: otherwise a half-played
                 // badge re-runs .task with an unchanged id and replays a stale count.
-                // Being superseded by a new count doesn't come through here.
+                // (Being superseded by a new count goes through .task, not here.)
                 phase = .hidden
                 itemCount = nil
             }
