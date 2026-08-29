@@ -126,6 +126,14 @@ Ported: the image, the zoomable full-screen viewer, favorite (with the optimisti
 routing, read-only threaded comments including the deep-linked one's highlight pulse,
 and the metadata screen.
 
+`SubmissionMainImage` itself is now *shared*, with `#if FA_SKIP_MODULE` around only the
+loader and the viewer's content. The viewer is presented from `fadingSheet` on both
+platforms, and behaves the same way: **a single tap** toggles fill/fit (matching iOS's
+`numberOfTapsRequired = 1`), and it is dismissed by **pulling it down** rather than by a
+close button — iOS gets that from `UISheetPresentationController`, Android from an
+explicit drag in `Zoomable`, which is the only place that knows whether a downward drag
+has anywhere left to pan. The system Back gesture still closes it.
+
 Deferred, with the reason:
 
 | Not ported | Why |
@@ -137,10 +145,10 @@ Deferred, with the reason:
 ### Android-only substitutes
 
 Each keeps the iOS name and signature so symlinked callers compile unchanged:
-`SubmissionMainImage` (the iOS one is written against Kingfisher's `KFImageProtocol`),
-`HTMLView`, `Zoomable`, `FlowLayout`, `MediaSaveHandler`,
-`RemoteContentToolbarItem`, `SubmissionTextContent`/`SubmissionAudioContent`, and the
-no-ops in `SubmissionShims.swift`.
+`HTMLView`, `Zoomable`, `FlowLayout`, `MediaSaveHandler`, `fadingSheet` (the iOS one
+crossfades a UIKit-backed `.sheet`; `View+pullableScreenCover.swift`),
+`SubmissionTextContent`/`SubmissionAudioContent`, and the no-ops in
+`SubmissionShims.swift`.
 
 `HTMLView` is the one that does real work rather than standing in. iOS renders FA's rich
 text through WebKit's HTML importer into a `UITextView`; here `FAKit` normalises the

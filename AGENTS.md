@@ -18,7 +18,8 @@ tree and every source it must not build carries `#if !FA_SKIP_MODULE`. The iOS X
 is unaffected. Ported so far: the login screen (shared
 `HomeView` + autologin, over an Android `FALoginView`), the Followed feed (on the shared
 `SubmissionsFeedView` container, badge and refresh choreography included), the
-submission detail screen (image, zoomable viewer, favorite, Save/Share, rich-text
+submission detail screen (shared `SubmissionMainImage`, a zoomable viewer presented from
+a `fadingSheet` and dismissed by pulling it down, favorite, Save/Share, rich-text
 description with in-app links, read-only comments, metadata) and the Settings tab (shared
 `SettingsView` / `NotificationSettingsView`, image-cache control, log sharing, logout).
 FA's rich text is rendered by Compose's own HTML parser: `FAKit/Sources/FAKit/RichText/`
@@ -154,7 +155,7 @@ FAKit: SwiftSoup, Cache, SwiftGraph, swift-collections, ZIPFoundation (DOCX unzi
 - **Basenames must be unique across the whole `FurAffinity/` tree.** SwiftPM derives one
   object file per basename and skipstone one `<Name>_Bridge.swift`, both flattened, so a
   matching `iOS/`+`Android/` pair collides with "multiple producers" — even when the iOS
-  half is guarded down to nothing. Hence the `+Android` suffix on the ten substitution
+  half is guarded down to nothing. Hence the `+Android` suffix on the nine substitution
   files; the directory still carries the meaning.
 - Only remote-loading wrappers that own `@Environment(Model.self)` (e.g. `RemoteSubmissionView`) may depend on `Model`. Leaf/content views must receive what they need via inputs or injected closures — never reach into `Model`.
 - **Several worktrees at once.** iOS gets a simulator device per worktree

@@ -43,7 +43,7 @@ error: couldn't build …/SkipBridgeGenerated/Zoomable_Bridge.swift
 ```
 
 This bites the `iOS/`+`Android/` substitution pairs, and a guard does not help —
-the guarded file still *emits* a same-named (empty) bridge. Hence the eleven
+the guarded file still *emits* a same-named (empty) bridge. Hence the nine
 `…+Android.swift` files; the directory still carries the platform meaning, the
 suffix only keeps the name unique.
 
