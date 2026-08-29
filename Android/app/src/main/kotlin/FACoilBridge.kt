@@ -22,6 +22,14 @@
 //  the two rejected alternatives. Retry outcomes are *reported* to Swift as JSON rather
 //  than logged: android.util.Log never reaches the log file Settings exports.
 //
+//  Cache policy is split between coil and us, because coil offers exactly one half of
+//  it: `DiskCache.Builder` *requires* a maximum size (it defaults to 2% of the volume)
+//  and has no expiry at all. So the ceiling below is coil's requirement, raised to 1 GB,
+//  and the per-entry lifetime is ours, applied lazily in `cachedPath`. Together they
+//  match iOS, where Kingfisher's `sizeLimit` is left at its unbounded default and the
+//  expiry is 7-14 days from write. `FAImageStore.pruneStagedMedia` already covers the
+//  `fa-media` staging directory at 7 days.
+//
 //  Lives in the app Gradle module (not the FurAffinityUI module) so it compiles
 //  against coil3/okhttp declared in Android/app/build.gradle.kts; reflection loads it
 //  by name at runtime from the single APK classloader.
@@ -31,6 +39,7 @@ package fur.affinity.ui
 
 import android.util.Log
 import coil3.disk.DiskCache
+import java.io.File
 import java.net.InetSocketAddress
 import java.net.Proxy
 import okhttp3.Call
@@ -141,14 +150,40 @@ class FACoilBridge {
 
         fun isCached(url: String): Boolean = cachedPath(url) != null
 
-        /// On-disk path of `url`'s already-cached bytes, or null if it isn't cached.
+        /// Per-entry lifetime, from the moment the bytes were written: coil never
+        /// touches mtime on a read, and iOS deliberately doesn't extend on access
+        /// either (`.diskCacheAccessExtending(.none)`).
+        ///
+        /// Deterministic in the URL rather than random, so an entry's deadline survives
+        /// process restarts — but spread over the same 7-14 day window iOS picks from,
+        /// so a cold cache filled in one session doesn't expire in one go. Kotlin's
+        /// `String.hashCode` is specified, unlike Swift's per-process-seeded one.
+        /// Widened to `Long` before taking the absolute value: `Int.MIN_VALUE.abs()` is
+        /// still `Int.MIN_VALUE`.
+        private fun lifetimeMillis(url: String): Long {
+            val spreadDays = Math.abs(url.hashCode().toLong()) % 8
+            return (7 + spreadDays) * 24 * 60 * 60 * 1000
+        }
+
+        /// On-disk path of `url`'s already-cached bytes, or null if it isn't cached —
+        /// or has expired, in which case the entry is dropped on the way out and the
+        /// caller re-downloads. `fetchResult` and `isCached` both come through here, so
+        /// expiry needs no second implementation and the feed's cache reporting stays
+        /// honest.
         ///
         /// The snapshot (a read lock) is released before the path is handed back, so a
         /// concurrent eviction in that window would leave Swift with a stale path; it
-        /// just decodes to nil and takes the existing failure path. With a 256 MB cache
+        /// just decodes to nil and takes the existing failure path. With a 1 GB cache
         /// and ~100 KB thumbnails this is not worth holding a lock across JNI for.
-        fun cachedPath(url: String): String? =
-            diskCache().openSnapshot(url)?.use { it.data.toString() }
+        fun cachedPath(url: String): String? {
+            val path = diskCache().openSnapshot(url)?.use { it.data.toString() } ?: return null
+            val age = System.currentTimeMillis() - File(path).lastModified()
+            if (age > lifetimeMillis(url)) {
+                diskCache().remove(url)
+                return null
+            }
+            return path
+        }
 
         /// Path of `url`'s bytes plus what it took to get them, as JSON:
         ///   {"path":"…","attempts":2,"bytes":98304,"conn":1234,"newConn":true,
@@ -263,7 +298,10 @@ class FACoilBridge {
                 sharedCache?.let { return it }
                 val cache = DiskCache.Builder()
                     .directory(context().cacheDir.resolve("fa_coil_cache").toOkioPath())
-                    .maxSizeBytes(256L * 1024 * 1024)
+                    // coil mandates a ceiling and offers no expiry; the lifetime is
+                    // ours, in `cachedPath`. iOS is the mirror image — Kingfisher's
+                    // `sizeLimit` is unbounded by default and only the expiry bites.
+                    .maxSizeBytes(1L * 1024 * 1024 * 1024)
                     .build()
                 sharedCache = cache
                 return cache

@@ -198,6 +198,22 @@ Rules that are easy to get wrong here:
   that needs a *second* burst in the same process (connection-pool behaviour, say) has
   to trigger one another way — clearing the caches from Settings and pulling to refresh
   is the one that also drops the memory LRU, which otherwise absorbs everything.
+- **The disk cache's two limits come from two places.** coil3's `DiskCache` *requires*
+  a maximum size — `DiskCache.Builder` defaults to `maxSizePercent(0.02)` — and offers
+  no expiry whatsoever, so the ceiling is coil's constraint and the lifetime is ours.
+  iOS is the exact mirror image: Kingfisher's `sizeLimit` is left at its unbounded
+  default `0`, and only the 7-14 day expiry bites. So `FACoilBridge` sets **1 GB** and
+  applies a **7-14 day** per-entry lifetime lazily, in `cachedPath` — the one door both
+  `fetchResult` and `isCached` come through, so an expired entry is dropped and
+  re-downloaded with no second implementation and the feed's cache reporting stays
+  honest. The window is measured from the *write*: coil never touches mtime on a read,
+  and iOS deliberately doesn't extend on access either
+  (`.diskCacheAccessExtending(.none)`). The spread within it is
+  `url.hashCode() % 8` days rather than random, so a deadline survives a process
+  restart while a cache filled in one session still doesn't expire in one go — Kotlin's
+  `String.hashCode` is specified, unlike Swift's per-process-seeded one.
+  `FAImageStore.pruneStagedMedia` already covers the `fa-media` staging directory at
+  7 days.
 - **The Kotlin bridges' `android.util.Log` output never reaches the log file Settings
   exports**, which only carries what went through the Swift `logger`
   (`PersistentLogger`). So anything worth keeping has to be *returned* to Swift and
