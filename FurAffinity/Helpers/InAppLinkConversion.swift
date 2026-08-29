@@ -16,5 +16,5 @@ import FAKit
 /// they route in-process through `NavigationStream`. Android registers no scheme at all
 /// (`Android/app/src/main/AndroidManifest.xml` declares only `MAIN`/`LAUNCHER`).
 ///
-/// - Important: must stay in sync with `CFBundleURLSchemes` in `FurAffinity/Info.plist`.
+/// - Important: must stay in sync with `CFBundleURLSchemes` in `FurAffinity/iOS/Info.plist`.
 let appNavigationScheme = "furaffinity-app-navigation"

@@ -118,7 +118,7 @@ private final class BackgroundRefreshTaskRunner: @unchecked Sendable {
 // items are available, honoring the user's toggles in Settings.
 enum BackgroundRefreshManager {
     // Identifier must be added to Info.plist (BGTaskSchedulerPermittedIdentifiers)
-    static var taskIdentifier: String { (Bundle.main.bundleIdentifier ?? "app") + ".background-refresh" }
+    static var taskIdentifier: String { Bundle.main.bundleIdentifier! + ".background-refresh" }
 
     /// Notification category for submission notifications. Matched by the
     /// NotificationContent app extension (`UNNotificationExtensionCategory`) so a

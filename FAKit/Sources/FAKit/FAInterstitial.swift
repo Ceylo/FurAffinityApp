@@ -70,10 +70,9 @@ public extension FAInterstitial {
         }
     }
 
-    /// The global Cloudflare's interstitial declares its challenge on. Named once
-    /// so `FAChallengeViewDOMTests` can hold it against a captured interstitial —
-    /// this used to read `__cf_chl_opt`, with two underscores, which matches
-    /// nothing and made `interactionRequired` below dead code.
+    /// The global Cloudflare's interstitial declares its challenge on. Named once so
+    /// `FAChallengeViewDOMTests` can hold it against a captured interstitial: spelt
+    /// wrong, it matches nothing and quietly makes `interactionRequired` dead code.
     nonisolated static var challengeOptionsGlobal: String { "_cf_chl_opt" }
 
     /// Reads `challengeOptionsGlobal` out of the page and returns a JSON
@@ -113,10 +112,9 @@ public extension FAInterstitial {
     /// escalating in the window before the interstitial's script has populated
     /// the global.
     ///
-    /// Deliberately *not* measured from the Turnstile checkbox's size, which is
-    /// what this did before: that widget lives in a **closed** shadow root, so
-    /// `document.querySelector('iframe[src*="challenges.cloudflare.com"]')` can
-    /// never reach it and always measures 0.
+    /// Not measurable from the Turnstile checkbox instead: that widget lives in a
+    /// **closed** shadow root, so `document.querySelector('iframe[src*=…]')` can never
+    /// reach it and always measures 0.
     nonisolated static func interactionRequired(snapshot: CFDOMSnapshot, elapsed: TimeInterval) -> Bool {
         snapshot.onChallenge && snapshot.cType == "interactive" && elapsed >= 2.0
     }

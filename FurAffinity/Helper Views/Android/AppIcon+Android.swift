@@ -2,7 +2,7 @@
 //  AppIcon.swift
 //  FurAffinityUI (Android)
 //
-//  Android counterpart of `FurAffinity/Helper Views/AppIcon.swift`, which can't be
+//  Android counterpart of `FurAffinity/Helper Views/iOS/AppIcon.swift`, which can't be
 //  symlinked because `Bundle.module` doesn't exist in an Xcode app target — the same
 //  reason AvatarView is a substitute rather than a symlink.
 //

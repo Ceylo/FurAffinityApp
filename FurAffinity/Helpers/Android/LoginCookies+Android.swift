@@ -3,12 +3,12 @@
 //  FurAffinityUI (Android)
 //
 //  Android's `clearLoginCookies()`, matching the iOS one in
-//  FurAffinity/Helpers/LoginCookies.swift so SettingsView calls a single name on both
+//  FurAffinity/Helpers/iOS/LoginCookies.swift so SettingsView calls a single name on both
 //  platforms. Two stores hold the credentials here: the WebView's cookie jar (which
 //  every page fetch replays) and the Coil image layer's seeded UA + Cookie header.
 //
-//  Not `#if os(Android)`-guarded — this module is compiled for its Darwin bridge too,
-//  where the iOS file is out of scope; the JNI is guarded inside instead.
+//  Unguarded on purpose — an Android substitution file must be, see
+//  Android/docs/shared-sources.md § Rules for shared sources. The JNI inside is `canImport(Android)`-guarded and no-ops on Darwin.
 //
 
 import Foundation

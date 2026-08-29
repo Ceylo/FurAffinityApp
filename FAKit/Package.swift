@@ -29,14 +29,8 @@ let package = Package(
     ],
     targets: [
         // Compatibility module: Android has no `os`, so this vends the Logger /
-        // OSSignposter surface shared code uses, behind `#if canImport(os)`.
-        //
-        // It must NOT be named `os`. A module by that name lands in the shared Modules
-        // directory and makes `canImport(os)` true for *every* target in the Android
-        // build, so whichever target compiles after it takes its Apple branch and
-        // fails — Defaults on `AndroidNDK`, swift-android-native's AndroidLogging on
-        // `OSLog`, its AndroidSystem on `os_unfair_lock`. Which target breaks is a
-        // scheduling race: intermittent in debug, and a hard block in release.
+        // OSSignposter surface shared code uses, behind `#if canImport(os)`. Its name
+        // matters — see Sources/OSCompat/OSCompat.swift.
         .target(
             name: "OSCompat",
             dependencies: [

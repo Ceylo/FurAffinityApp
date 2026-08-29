@@ -54,7 +54,7 @@ struct HTMLView: View {
         var animateGIFs: Bool
         var viewWidth: CGFloat
         @Binding var neededHeight: CGFloat
-        // Non-private: skipstone can't bridge a private state property.
+        // Not private: skipstone can't bridge a private @State/@Environment.
         @Environment(\.navigationStream) var navigationStream
 
         func makeUIView(context: Context) -> GIFOverlayTextView {

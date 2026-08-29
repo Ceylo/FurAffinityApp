@@ -139,9 +139,10 @@ final class FAWebSession {
     /// Drop Cloudflare's own cookies before a challenge navigation.
     ///
     /// `cf_chl_rc_ni` is its *re-challenge non-interactive* counter: presenting one
-    /// tells the edge how many passive challenges this client has already failed,
-    /// and ours had climbed to 33. iOS never sends it — its challenge WebView
-    /// starts from a cleared jar seeded with auth cookies only (`FAChallengeView`).
+    /// tells the edge how many passive challenges this client has already failed, and
+    /// a stuck client's climbs without bound (Android/docs/cloudflare-and-login.md).
+    /// iOS never sends it — its challenge WebView starts from a cleared jar seeded
+    /// with auth cookies only (`FAChallengeView`).
     /// Android has one process-global jar and can't copy that: a cookie read here
     /// comes from the request `Cookie:` header, so it carries no domain, path or
     /// expiry, and re-seeding what we wiped would downgrade the user's persistent
@@ -287,11 +288,9 @@ final class FAWebSession {
 
 /// The hidden WebView itself. Mounted once, at the root, for the life of the app.
 struct FAWebSessionView: View {
-    // Stock UA plus the FA app identifier, and byte-identical to the other two
-    // WebViews' — see FAWebViewUserAgent.
     let config = WebEngineConfiguration(customUserAgent: FAWebViewUserAgent.string)
 
-    // @State embedding skip-web must be internal, not private (Skip inventory #5).
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @State var webState = WebViewState()
 
     var body: some View {

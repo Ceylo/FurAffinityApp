@@ -2,7 +2,7 @@
 //  AvatarView.swift
 //  FurAffinityUI (Android)
 //
-//  Android counterpart of the shared `FurAffinity/Helper Views/AvatarView.swift`, which
+//  Android counterpart of the shared `FurAffinity/Helper Views/iOS/AvatarView.swift`, which
 //  is Kingfisher-only and therefore NOT symlinked here. This one matches the same public
 //  surface (`init(avatarUrl:)`, `.cornerRadius`, `.fadeDuration`) but is built on the
 //  Coil-backed `FAImage`.
@@ -11,8 +11,7 @@
 //  Android resources: a PNG rendition of the iOS `.heic`, which Android can't decode.
 //  `Color.borderOverlay` lives in Colors.swift.
 //
-//  Deferred to a later step: honoring `@Default(.animateAvatars)` with real animated-GIF
-//  avatars (needs `coil-gif`).
+//  `@Default(.animateAvatars)` is not honored: animated-GIF avatars need `coil-gif`.
 //
 //  `Double` (not `CGFloat`) throughout: two CGFloat typealiases (both aka Double) are
 //  visible here and lookup is ambiguous; Double is the same type and unambiguous.

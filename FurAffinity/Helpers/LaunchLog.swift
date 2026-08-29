@@ -36,7 +36,6 @@ enum BuildConfiguration: CustomStringConvertible {
 ///     platform has its own way to ask, and neither reads the other's correctly.
 ///   - details: appended verbatim. iOS carries its `[CFDIAG] applicationState` here.
 func logAppLaunch(operatingSystem: String, details: String = "") {
-    let version = FAAppVersion.string ?? "unknown version"
     let suffix = details.isEmpty ? "" : " \(details)"
-    logger.info("Launched FurAffinity \(version) on \(operatingSystem), \(buildConfiguration) build\(suffix)")
+    logger.info("Launched FurAffinity \(FAAppVersion.string) on \(operatingSystem), \(buildConfiguration) build\(suffix)")
 }

@@ -30,7 +30,7 @@ internal val logger: SkipLogger = SkipLogger(subsystem = "fur.affinity.ui", cate
 private typealias AppRootView = FurAffinityUIRootView
 private typealias AppDelegate = FurAffinityUIAppDelegate
 
-/// AndroidAppMain is the `android.app.Application` entry point, and must match `application android:name` in the AndroidMainfest.xml file.
+/// The `android.app.Application` entry point; must match `application android:name` in AndroidManifest.xml.
 open class AndroidAppMain: Application {
     constructor() {
     }
@@ -46,7 +46,7 @@ open class AndroidAppMain: Application {
     }
 }
 
-/// AndroidAppMain is initial `androidx.appcompat.app.AppCompatActivity`, and must match `activity android:name` in the AndroidMainfest.xml file.
+/// The launch `androidx.appcompat.app.AppCompatActivity`; must match `activity android:name` in AndroidManifest.xml.
 open class MainActivity: AppCompatActivity {
     constructor() {
     }
@@ -106,7 +106,6 @@ open class MainActivity: AppCompatActivity {
     override fun onSaveInstanceState(outState: android.os.Bundle): Unit = super.onSaveInstanceState(outState)
 
     override fun onRestoreInstanceState(bundle: android.os.Bundle) {
-        // Usually you restore your state in onCreate(). It is possible to restore it in onRestoreInstanceState() as well, but not very common. (onRestoreInstanceState() is called after onStart(), whereas onCreate() is called before onStart().
         logger.info("onRestoreInstanceState")
         super.onRestoreInstanceState(bundle)
     }

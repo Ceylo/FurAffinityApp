@@ -31,7 +31,7 @@ func deepHighlightFocus(in comments: [FAComment], targetCid: Int?, cutoff: Int) 
     return CommentFocusTarget(threadRoot: path[0], focusedCid: path[path.count - 2].cid)
 }
 
-// Skip bridges views: a bridged view and its @State must not be private.
+// Not private: skipstone can't bridge a private @State/@Environment.
 struct DeepHighlightAutoFocusModifier: ViewModifier {
     let comments: [FAComment]
     let targetCid: Int?

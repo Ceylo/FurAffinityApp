@@ -3,14 +3,12 @@
 //  FurAffinityUI (Android)
 //
 //  Android's `ImageCacheControl`, matching the iOS one in
-//  FurAffinity/Helpers/ImageCacheControl.swift so SettingsView calls a single name on
+//  FurAffinity/Helpers/iOS/ImageCacheControl.swift so SettingsView calls a single name on
 //  both platforms. There is no Kingfisher here: the disk cache is coil3's, owned by
 //  FACoilBridge, and the memory cache is FAImageStore's.
 //
-//  Not `#if os(Android)`-guarded: this module is compiled for its Darwin bridge too,
-//  where `os(Android)` is false and the iOS file is *not* in scope, so a guard here
-//  would leave shared callers with no `ImageCacheControl` at all. The JNI is already
-//  guarded inside CoilImageLoader, which no-ops on Darwin.
+//  Unguarded on purpose — an Android substitution file must be, see
+//  Android/docs/shared-sources.md § Rules for shared sources. The JNI inside is `canImport(Android)`-guarded and no-ops on Darwin.
 //
 
 import Foundation

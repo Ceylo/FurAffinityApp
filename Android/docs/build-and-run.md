@@ -178,10 +178,11 @@ Scripts/Android/logs.sh -d | grep CFFALLBACK # how often the WebView fetch is us
 The app logs far less than it emits: a typical minute is dominated by
 `SkipWeb.WebView` resource lines and `chromium`. `logs.sh` filters by tag rather
 than by pid, so it also keeps streaming across an app restart, where `--pid=`
-goes silent. The tags it passes to `adb logcat -s` are `fur.affinity.ui/FA`,
-`FurAffinity/FAKit`, `FurAffinity/FAPages` and each Kotlin bridge's `TAG` — the
-first is derived from `ANDROID_PACKAGE_NAME` and the last are read out of
-`Android/app/src/main/kotlin/`, so neither drifts. Requires `adb` only at
+goes silent. The tags it passes to `adb logcat -s` are `<app id>/FA`,
+`<app id>/FAKit`, `<app id>/FAPages` and each Kotlin bridge's `TAG` — the app id
+is derived from `Skip.env` (both with and without the per-worktree debug suffix)
+and the bridge tags are read out of `Android/app/src/main/kotlin/`, so neither
+drifts. Requires `adb` only at
 `$ANDROID_HOME/platform-tools`, not on `PATH`.
 
 `logcat -v color` paints the whole line, message included, which makes long URLs
@@ -235,10 +236,13 @@ package through `skip android build`, and concurrent invocations fail with
 `missing required module 'AndroidNDK'` and `error: cancelled`. Sequentially they are
 fine — no wipe needed between drivers.
 Swift-side logic runs natively (Skip Fuse), so `PersistentLogger` output appears
-in logcat as well — tagged `<subsystem>/<category>`, i.e. `fur.affinity.ui/FA` for
-the app module and `FurAffinity/FAKit` / `FurAffinity/FAPages` for FAKit
-(`Bundle.main.bundleIdentifier` is nil there, so the subsystem falls back to the
-literal `FurAffinity`).
+in logcat as well — tagged `<subsystem>/<category>`, e.g.
+`com.example.id1234.<worktree>/FAKit`. The subsystem is the installed
+applicationId for every module: `Bundle.main.bundleIdentifier` is nil in a plain
+SwiftPM module here and names the Skip module rather than the install in the
+bridged one, so `FALogSubsystem.override` is set from the Kotlin bridge at
+startup (`FurAffinityUIRoot.onInit()`). A process that installs no override — the
+`skip android test` runner, the Darwin bridge — falls back to `FurAffinity`.
 
 ## Test
 

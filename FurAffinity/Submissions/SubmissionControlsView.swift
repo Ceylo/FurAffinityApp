@@ -74,7 +74,7 @@ struct SubmissionControlsView: View {
         self.saveHandler = MediaSaveHandler(errorStorage: errorStorage)
     }
 
-    // Skip bridges these views: bridged @State/@Environment must not be private.
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @State var saveHandler: MediaSaveHandler
     
     var body: some View {

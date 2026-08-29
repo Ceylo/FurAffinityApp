@@ -6,18 +6,11 @@
 //  WebKit-backed `FAChallengeView`. It can't live in FAKit: it needs skip-web,
 //  which FAKit can't depend on (see FAHTTPDataSource for the CJNI rationale).
 //
-//  Not `#if os(Android)`-guarded — this module is compiled for its Darwin bridge
-//  too, where a guarded declaration would leave the caller with nothing. FAKit's
-//  own FAChallengeView is `#if !os(Android)`, so it exists in that compile; this
-//  module's declaration shadows it, as a module's own always does. Same rule as
-//  FALoginView.swift.
+//  Unguarded on purpose (Android/docs/shared-sources.md § Rules for shared sources): FAKit's own `#if !os(Android)` declaration exists in
+//  the Darwin bridge compile, and this module's shadows it.
 //
-//  Unlike iOS's, this one does not clear the WebView's cookie jar: Android has a
-//  single process-global jar, and a cookie read there comes from the request
-//  `Cookie:` header with no domain, path or expiry, so re-seeding what was wiped
-//  would downgrade the user's persistent login to session cookies.
-//  `FAWebSession.clearCloudflareCookies()` expires just the Cloudflare names
-//  instead, which is what the challenge actually needs gone.
+//  Unlike iOS's, this one never clears the WebView's cookie jar; it expires just the
+//  Cloudflare names via `FAWebSession.clearCloudflareCookies()`, whose doc says why.
 //
 
 import Foundation
@@ -30,12 +23,10 @@ struct FAChallengeView: View {
     var onResolved: () -> Void
     var onInteractionRequired: (() -> Void)?
 
-    // @State embedding skip-web must be internal, not private (Skip inventory #5).
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @State var navigator = WebViewNavigator()
     @State var webState = WebViewState()
 
-    // Stock UA plus the FA app identifier, and byte-identical to the other two
-    // WebViews' — see FAWebViewUserAgent.
     let config = WebEngineConfiguration(customUserAgent: FAWebViewUserAgent.string)
 
     init(

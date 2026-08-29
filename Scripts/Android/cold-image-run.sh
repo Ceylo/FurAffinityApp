@@ -16,14 +16,11 @@
 # has already produced one bogus measurement — so this holds the shared-emulator
 # lock for its whole duration.
 #
-# It flags two things on the way out:
-#   - a page-path Cloudflare challenge (`Cloudflare challenge on URLSession fetch`),
-#     which is context, not automatically a discard;
-#   - a feed page that never loaded, which is the one discard rule. That is read off
-#     `prefetchThumbnails count=`, NOT off the image GET count: a run where the image
-#     layer collapses issues very few GETs too, and discarding those would throw away
-#     the worst outcome there is. One h2 arm produced four runs that loaded all 72
-#     feed items and then lost every single image.
+# It flags two things on the way out: a page-path Cloudflare challenge, which is
+# context rather than a discard, and a feed page that never loaded, which is the
+# one discard rule. That is read off `prefetchThumbnails count=`, never off the
+# image GET count — a run where the image layer collapses issues few GETs too, and
+# discarding those would throw away the worst outcome there is.
 #
 # Environment: ANDROID_HOME / ANDROID_SDK_ROOT, ANDROID_SERIAL, as run.sh.
 
@@ -39,7 +36,7 @@ LOCK_ARGS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,25p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,23p' "$0" | cut -c3-; exit 0 ;;
         --wait)       WAIT="$2"; shift ;;
         --wait=*)     WAIT="${1#*=}" ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
@@ -92,7 +89,8 @@ fi
 "$ADB" logcat -c
 "$ADB" shell am start -n "$APP_ID/$PKG.MainActivity" >/dev/null
 sleep "$WAIT"
-"$ADB" logcat -d -s fur.affinity.ui/FA > "$OUT"
+# The subsystem is the installed applicationId (FALogSubsystem), suffix included.
+"$ADB" logcat -d -s "$APP_ID/FA" > "$OUT"
 
 # --- verdict ---------------------------------------------------------------
 

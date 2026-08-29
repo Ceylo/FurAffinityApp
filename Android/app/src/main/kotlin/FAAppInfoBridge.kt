@@ -2,7 +2,7 @@
 //  FAAppInfoBridge.kt
 //  FurAffinity (Android)
 //
-//  Three facts about the installed app that native Swift can't reach, exposed by
+//  Facts about the installed app that native Swift can't reach, exposed by
 //  class name through AnyDynamicObject like FACoilBridge/FADefaultsBridge — see
 //  AndroidAppInfo.swift.
 //
@@ -20,6 +20,10 @@ import skip.foundation.ProcessInfo
 
 class FAAppInfoBridge {
     private val context get() = ProcessInfo.processInfo.androidContext
+
+    /// The installed applicationId — Skip.env's PRODUCT_BUNDLE_IDENTIFIER plus the
+    /// per-worktree suffix a debug build adds (see build.gradle.kts).
+    fun packageName(): String = context.packageName
 
     /// `versionName` as installed, i.e. Skip.env's MARKETING_VERSION.
     fun versionName(): String = try {

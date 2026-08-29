@@ -21,11 +21,12 @@ import FAPages
 ///   `cf-mitigated: challenge`. The call suspends until the UI signals resolution.
 /// - Resolution happens in two stages:
 ///   1. **Background** (`backgroundResolutionPending == true`): the UI mounts an
-///      off-screen `FAChallengeView` (1×1, transparent). Cloudflare frequently
-///      resolves a *managed* challenge passively for an authenticated session
-///      with no user interaction, so this clears the challenge with no visible
-///      sheet. Escalates to stage 2 when DOM inspection detects an interactive
-///      checkbox, or when `backgroundResolutionSafetyTimeout` expires.
+///      invisible `FAChallengeView` — each platform hides it its own way, but it
+///      must keep rendering. Cloudflare frequently resolves a *managed* challenge
+///      passively for an authenticated session with no user interaction, so this
+///      clears the challenge with no visible sheet. Escalates to stage 2 when the
+///      challenge declares itself interactive, or when
+///      `backgroundResolutionSafetyTimeout` expires.
 ///   2. **Interactive** (`pending == true`): the UI presents `FAChallengeView`
 ///      in a visible sheet so the user can complete the check.
 /// - Either stage calls `markResolved()` once a fresh `cf_clearance` has landed

@@ -45,11 +45,10 @@ extension Version {
 @MainActor
 @Observable
 class AppInformation {
-    /// `Bundle.main` can't answer on Android, so this goes through FAAppVersion — which
-    /// can itself come back empty when the bridge is unreachable. Nil rather than a
-    /// stand-in: `Version(0, 0, 0)` compares below every release, so the app would badge
-    /// "update available" forever and offer the build already running.
-    let currentVersion = FAAppVersion.string.flatMap(Version.init(tolerant:))
+    /// Nil when the marketing version is not semver-parseable. A stand-in would be
+    /// worse than nothing: `Version(0, 0, 0)` compares below every release, so the app
+    /// would badge "update available" forever and offer the build already running.
+    let currentVersion = Version(tolerant: FAAppVersion.string)
     var latestRelease: Release?
     var isUpToDate: Bool?
 

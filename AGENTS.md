@@ -175,6 +175,10 @@ FAKit: SwiftSoup, Cache, SwiftGraph, swift-collections, ZIPFoundation (DOCX unzi
     [ -n "$p" ] && [ ! -e "$p" ] && echo "$d"
   done
   ```
+- **A bridged view's `@State`/`@Environment` must not be `private`.** skipstone
+  generates the bridge from the property list it can see, so a private one is
+  silently left out and the view never recomposes. Call sites carry a one-line
+  reminder because the natural instinct is to add `private` back.
 - Prefer existing helpers before adding new wrappers.
 - Tests: use fixture HTML, no live FA requests.
 - Login: cookie-based; never handle the user's FA password directly.
