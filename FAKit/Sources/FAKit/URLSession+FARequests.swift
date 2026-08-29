@@ -29,11 +29,10 @@ public enum FAUserAgent {
     /// platforms without WebKit — where it is the only way to learn the string `cf_clearance`
     /// was minted against — and unused where `current()` builds its own WKWebView.
     ///
-    /// Declared outside the `#if` on purpose: its installer,
-    /// `FurAffinity/Helpers/Android/FAWebSession.swift`, is an unguarded Android substitution
-    /// file, so it is also compiled by the module's Darwin bridge — where `canImport(WebKit)`
-    /// is true. Narrowing this to the `#else` breaks that compile, and only
-    /// `skip app launch` reports it.
+    /// Declared outside the `#if` on purpose: its installer, `Android/FAWebSession.swift`,
+    /// is an unguarded Android substitution file, so it is also compiled for Apple
+    /// platforms — where `canImport(WebKit)` is true. Narrowing this to the `#else`
+    /// breaks that compile.
     public static var webViewUserAgentProvider: (@Sendable () async -> String)?
 
     #if canImport(WebKit)

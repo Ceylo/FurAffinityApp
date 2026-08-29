@@ -25,6 +25,14 @@ FA's rich text is rendered by Compose's own HTML parser: `FAKit/Sources/FAKit/Ri
 normalises the markup into the subset `AnnotatedString.fromHtml` understands (and cuts it
 at its `<hr>`s, which that parser drops), and `Helper Views/Android/HTMLView+Android.swift`
 hands each fragment to `Text(html:)`.
+FAKit carries the skipstone plugin too (`FAKit/Sources/FAKit/Skip/skip.yml`), which is
+what lets it own the Android web layer — `FALoginView`, `FAChallengeView`,
+`FAWebSession`/`FAWebSessionView` and `FAWebView` all live in
+`FAKit/Sources/FAKit/Android/` now, because a *bridged* view only gets its Kotlin
+`@State` glue from a plugin-carrying module. The two Kotlin bridges that layer needs
+from the app (the stock WebView User-Agent, the Coil image loader) come back as
+injected hooks installed in `FurAffinityUIAppDelegate.onInit`. The iOS app pays for it:
+37 MB Release instead of 27, and 11 embedded frameworks instead of 1.
 Logging works on both platforms via `#if canImport(os) import os #else import OSCompat`:
 FAKit ships an Android-only `OSCompat` target (`FAKit/Sources/OSCompat/`) vending
 `Logger` (→ logcat) and a no-op `OSSignposter`. It must **not** be named `os` — a
@@ -151,10 +159,11 @@ FAKit: SwiftSoup, Cache, SwiftGraph, swift-collections, ZIPFoundation (DOCX unzi
   compiled twice for Skip — the Android cross-compile and a host build where `os(Android)`
   is **false** — so an `os(Android)` guard leaves UIKit/Kingfisher/Photos imports to
   resolve in a target that does not depend on them.
-- **Basenames must be unique across the whole `FurAffinity/` tree.** SwiftPM derives one
+- **Basenames must be unique across the whole `FurAffinity/` tree — and across
+  `FAKit/Sources/FAKit/`, which skipstone now processes too.** SwiftPM derives one
   object file per basename and skipstone one `<Name>_Bridge.swift`, both flattened, so a
   matching `iOS/`+`Android/` pair collides with "multiple producers" — even when the iOS
-  half is guarded down to nothing. Hence the `+Android` suffix on the ten substitution
+  half is guarded down to nothing. Hence the `+Android` suffix on the substitution
   files; the directory still carries the meaning.
 - Only remote-loading wrappers that own `@Environment(Model.self)` (e.g. `RemoteSubmissionView`) may depend on `Model`. Leaf/content views must receive what they need via inputs or injected closures — never reach into `Model`.
 - **Several worktrees at once.** iOS gets a simulator device per worktree
