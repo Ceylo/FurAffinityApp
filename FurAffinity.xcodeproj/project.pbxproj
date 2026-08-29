@@ -634,6 +634,14 @@
 			path = Comments;
 			sourceTree = "<group>";
 		};
+		87E0A1110000000000000001 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				322FD0A988FDCCA76357BE9C /* View+pullableScreenCover.swift */,
+			);
+			path = iOS;
+			sourceTree = "<group>";
+		};
 		878EBC9A2EDB8E11006A68D3 /* View extensions */ = {
 			isa = PBXGroup;
 			children = (
@@ -642,7 +650,7 @@
 				879C89FB2E2AFA8400F59A74 /* View+applying.swift */,
 				8750BF372ED904FC00B860C8 /* View+throwingRefreshable.swift */,
 				87C2ADE92F017C200061F837 /* RichLocalizedError.swift */,
-				322FD0A988FDCCA76357BE9C /* View+pullableScreenCover.swift */,
+				87E0A1110000000000000001 /* iOS */,
 			);
 			path = "View extensions";
 			sourceTree = "<group>";

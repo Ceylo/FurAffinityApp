@@ -22,7 +22,7 @@ struct SubmissionMainImage: View {
 
     // Not private: skipstone can't bridge a private @State/@Environment.
     @State var errorMessage: String?
-    @State var showZoomableCover = false
+    @State var showZoomableSheet = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -46,20 +46,19 @@ struct SubmissionMainImage: View {
                         errorMessage = error.localizedDescription
                     }
                     .aspectRatio(contentMode: .fit)
-                    // iOS presents the viewer from a `fadingSheet` (UIKit-backed).
-                    .fullScreenCover(isPresented: $showZoomableCover) {
-                        zoomableCover
+                    .fadingSheet(isPresented: $showZoomableSheet) {
+                        zoomableViewer
                     }
                     // Only when zooming is allowed, so this doesn't silently eat taps
                     // meant for a wrapping handler — same reason as iOS.
                     .applying {
                         if allowZoomableSheet {
-                            // Only once there is something to zoom: the cover has no
+                            // Only once there is something to zoom: the viewer has no
                             // content of its own, so opening it early is a black screen.
                             // iOS gates on its loaded image the same way.
                             $0.onTapGesture {
                                 if fullResolutionMediaFileUrl != nil {
-                                    showZoomableCover = true
+                                    showZoomableSheet = true
                                 }
                             }
                         } else {
@@ -82,28 +81,16 @@ struct SubmissionMainImage: View {
         }
     }
 
-    private var zoomableCover: some View {
-        ZStack(alignment: .topLeading) {
-            Color.black
-                .ignoresSafeArea()
-
-            Zoomable {
-                FAImage(fullResolutionMediaUrl)
-            }
-            .contentAspectRatio(Double(widthOnHeightRatio))
-            .initialZoomLevel(.boundedFill(maxScaledFit: 2))
-            .primaryZoomLevel(.fill)
-            .secondaryZoomLevel(.fit)
-            .ignoresSafeArea()
-
-            // fullScreenCover has no navigation chrome, so it needs its own way out.
-            Button {
-                showZoomableCover = false
-            } label: {
-                Image(systemName: "xmark")
-                    .foregroundStyle(.white)
-                    .padding(16)
-            }
+    // No close button: `Zoomable` dismisses on a downward pull the way iOS's sheet does,
+    // and SkipUI's presentation still dismisses on the system Back gesture.
+    private var zoomableViewer: some View {
+        Zoomable {
+            FAImage(fullResolutionMediaUrl)
         }
+        .contentAspectRatio(Double(widthOnHeightRatio))
+        .initialZoomLevel(.boundedFill(maxScaledFit: 2))
+        .primaryZoomLevel(.fill)
+        .secondaryZoomLevel(.fit)
+        .ignoresSafeArea()
     }
 }
