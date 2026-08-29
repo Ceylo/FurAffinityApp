@@ -12,6 +12,7 @@
 //
 
 import Foundation
+import FAKit
 #if canImport(Android)
 import SkipBridge
 #endif

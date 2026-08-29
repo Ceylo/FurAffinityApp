@@ -1,24 +1,28 @@
 //
-//  FALoginView.swift
-//  FurAffinityUI (Android)
+//  FALoginView+Android.swift
+//  FAKit (Android)
 //
-//  Android's login web view, matching the public surface of FAKit's WebKit-backed
-//  `FALoginView` so the shared `HomeView` compiles against one name on both
-//  platforms. It lives here because it is a *bridged* view: skipstone generates the
-//  Kotlin glue that makes its `@State` recompose, and it only processes this module.
-//  It also needs skip-web, which FAKit does not depend on.
+//  Android's login web view, the twin of `iOS/FALoginView.swift`, so the shared
+//  `HomeView` compiles against one name on both platforms.
 //
-//  Unguarded on purpose (Android/docs/shared-sources.md § Rules for shared sources): FAKit's own `#if !os(Android)` declaration exists in
-//  the Darwin bridge compile, and this module's shadows it.
+//  Guarded, unlike this directory's `FAWebSession`/`FAWebView`: its twin lives in the
+//  same module now, so the two would redeclare each other. `os(Android)` is the guard
+//  that works — skipstone evaluates it as *true*, so it still emits this view's Kotlin
+//  bridge (which is what makes a bridged view's `@State` recompose), while the twin's
+//  `#if !os(Android)` elides it from both the Android compile and skipstone's view of
+//  the module. The `+Android` suffix is required: skipstone flattens
+//  `<Name>_Bridge.swift`, so a file named `FALoginView.swift` would collide with the
+//  twin. See Android/docs/shared-sources.md § Rules for shared sources.
 //
+
+#if os(Android)
 
 import Foundation
 import SwiftUI
 import SkipWeb
-import FAKit
 import FAPages
 
-struct FALoginView: View {
+public struct FALoginView: View {
     @Binding var session: OnlineFASession?
     var onError: (Error) -> Void
 
@@ -29,7 +33,12 @@ struct FALoginView: View {
 
     let config = WebEngineConfiguration(customUserAgent: FAWebViewUserAgent.string)
 
-    var body: some View {
+    public init(session: Binding<OnlineFASession?>, onError: @escaping (Error) -> Void) {
+        self._session = session
+        self.onError = onError
+    }
+
+    public var body: some View {
         WebView(
             configuration: config,
             navigator: navigator,
@@ -76,7 +85,7 @@ extension FALoginView {
     /// `cookies` is accepted for signature parity with the iOS declaration and
     /// ignored — Android's cookies come from `CookieManager`, not from a cache this
     /// app keeps.
-    static func makeSession(cookies: [HTTPCookie]? = nil) async throws -> OnlineFASession? {
+    public static func makeSession(cookies: [HTTPCookie]? = nil) async throws -> OnlineFASession? {
         // The hidden WebView needs its engine attached before its cookie jar reads
         // as anything but empty, and on a cold launch this call races that.
         guard await FAWebSession.shared.awaitReady() else {
@@ -86,3 +95,5 @@ extension FALoginView {
         return try await FAWebSession.shared.establishSession()
     }
 }
+
+#endif

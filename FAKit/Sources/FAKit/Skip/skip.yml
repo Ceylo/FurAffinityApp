@@ -1,0 +1,13 @@
+# Skip configuration for the FAKit module
+
+# Natively-compiled Skip Fuse module, like FurAffinityUI and SkipSwiftUI. FAKit is
+# processed by skipstone so it can own the Android web layer: `FALoginView`,
+# `FAChallengeView` and `FAWebSessionView` are *bridged* views, and only a module
+# carrying the plugin gets the Kotlin glue that makes their `@State` recompose.
+#
+# `package` is required: skipstone splits a module name on camel case to derive the
+# Android package, and "FAKit" collapses to the single token "fakit", for which it
+# falls back to the unusable "fakit.module".
+skip:
+  mode: 'native'
+  package: 'fa.kit'
