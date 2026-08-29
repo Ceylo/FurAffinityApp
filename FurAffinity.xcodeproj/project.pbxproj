@@ -531,7 +531,7 @@
 				8708DA252D74CF19000B419C /* SubmissionMetadataView.swift */,
 				877D54812FF036E100BA9802 /* Text Submissions */,
 				877D547C2FF0351C00BA9802 /* Audio Submissions */,
-				FCCE6AD51AE9E40D4BF0BCD8 /* iOS */,
+				87566B83297DD02300FD3199 /* SubmissionMainImage.swift */,
 			);
 			path = Submissions;
 			sourceTree = "<group>";
@@ -781,14 +781,6 @@
 				702AF02EF9EF07FD91BDCD6C /* Info.plist */,
 			);
 			path = NotificationContent;
-			sourceTree = "<group>";
-		};
-		FCCE6AD51AE9E40D4BF0BCD8 /* iOS */ = {
-			isa = PBXGroup;
-			children = (
-				87566B83297DD02300FD3199 /* SubmissionMainImage.swift */,
-			);
-			path = iOS;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
