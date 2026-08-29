@@ -702,6 +702,7 @@
 				035B5AEBEA2399F8715F2744 /* ForegroundAutorefresh.swift */,
 				871B05EE2C84BAD400302500 /* AppIcon.swift */,
 				87F960CA2801EFF3000B30A3 /* AvatarView.swift */,
+				875180572DB553FC00331762 /* RemoteContentToolbarItem.swift */,
 				B8C7A5B318A7D623236CA39B /* iOS */,
 			);
 			path = "Helper Views";
@@ -734,7 +735,6 @@
 			children = (
 				3033B05A545010E29F30F1FD /* FlowLayout.swift */,
 				879233D1278216DF0019AC44 /* HTMLView.swift */,
-				875180572DB553FC00331762 /* RemoteContentToolbarItem.swift */,
 				87E528362CE8D3D800CAFDC0 /* Zoomable.swift */,
 				87307E1E2FC78C790069E7F2 /* CloudflareChallengeSheet.swift */,
 				FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */,

@@ -5,10 +5,14 @@
 //  Created by Ceylo on 20/04/2025.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import Defaults
+
+#if FA_SKIP_MODULE
+private let sharePlatformName = "Android"
+#else
+private let sharePlatformName = "iPhone"
+#endif
 
 struct RemoteContentToolbarItem<ContentsView: View>: ToolbarContent {
     init(url: URL, @ViewBuilder additionalToolbarItems: @escaping () -> ContentsView = { EmptyView() }) {
@@ -20,11 +24,13 @@ struct RemoteContentToolbarItem<ContentsView: View>: ToolbarContent {
     var additionalToolbarItems: () -> ContentsView
     @Default(.addMessageToSharedItems) private var addMessageToSharedItems
     
+    /// Nothing displays this on Android yet: SkipUI's `ShareLink` only puts EXTRA_TEXT
+    /// and EXTRA_SUBJECT in the intent and drops `message` on the floor.
     private var shareMessage: Text? {
         guard addMessageToSharedItems else {
             return nil
         }
-        return Text("Sent from the FurAffinity unofficial App for iPhone (https://furaffinity.app/)")
+        return Text("Sent from the FurAffinity unofficial App for \(sharePlatformName) (https://furaffinity.app/)")
     }
     
     var body: some ToolbarContent {
@@ -47,5 +53,3 @@ struct RemoteContentToolbarItem<ContentsView: View>: ToolbarContent {
         }
     }
 }
-
-#endif
