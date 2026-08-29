@@ -1,23 +1,27 @@
 //
 //  FAHTTPDataSource.swift
-//  FurAffinityUI (Android)
+//  FAKit (Android)
 //
-//  The Android backing for `HTTPDataSource`. Primary path is a plain URLSession that
-//  replays the WebView's Cloudflare clearance — the byte-exact WebView User-Agent plus
-//  its `Cookie:` header — since `cf_clearance` is bound to that UA and the device IP.
-//  A response that still says `cf-mitigated: challenge` falls back to a WebView-fetch
-//  closure. See Android/docs/cloudflare-and-login.md.
+//  The Android backing for `HTTPDataSource`, opposite `iOS/URLSession+HTTPDataSource.swift`.
+//  Primary path is a plain URLSession that replays the WebView's Cloudflare clearance —
+//  the byte-exact WebView User-Agent plus its `Cookie:` header — since `cf_clearance` is
+//  bound to that UA and the device IP. A response that still says `cf-mitigated: challenge`
+//  falls back to a WebView-fetch closure. See Android/docs/cloudflare-and-login.md.
 //
-//  Lives in the app module, not FAKit: Skip tries to generate a Kotlin bridge for
-//  any public type that conforms to a public async protocol (HTTPDataSource), and
-//  that bridge needs CJNI, which a plain SwiftPM package like FAKit can't provide.
-//  Keeping this concrete conformance in FurAffinityUI (which links skip-web/CJNI)
-//  and internal sidesteps the bridge entirely. It's injected into OnlineFASession
-//  via the shared `HTTPDataSource` protocol, so FAKit stays WebKit/skip-web free.
+//  Android's by role, not by availability: it replays a clearance only the WebView can
+//  obtain, and the WebView itself stays in the app module, reaching this type as the
+//  three closures the initializer takes.
+//
+//  Deliberately *unguarded*, unlike its `iOS/` siblings. The app module's
+//  `FAWebSession` constructs it and is itself unguarded, so it is also compiled by the
+//  Darwin bridge pass (`swift build --triple arm64-apple-ios` over the root package,
+//  where `os(Android)` is false). Guarding it on the platform fails that pass with
+//  "cannot find 'FAHTTPDataSource' in scope" — see Android/docs/shared-sources.md
+//  § Rules for shared sources. Nothing on Apple platforms uses it; `URLSession`
+//  conforms to `HTTPDataSource` there instead.
 //
 
 import Foundation
-import FAKit
 import FAPages
 #if canImport(FoundationNetworking)
 import FoundationNetworking
@@ -53,14 +57,14 @@ private final class FARedirectPolicy: NSObject, URLSessionTaskDelegate, @uncheck
     }
 }
 
-struct FAHTTPDataSource: HTTPDataSource {
+public struct FAHTTPDataSource: HTTPDataSource {
     /// Navigates the cleared WebView to `url` and returns the page's decoded HTML.
-    typealias WebViewFetch = @Sendable (URL) async throws -> Data
+    public typealias WebViewFetch = @Sendable (URL) async throws -> Data
     /// Reads the WebView's `Cookie:` header *now*. Every request prefers this over
     /// the header frozen at session creation, since `cf_clearance` rotates.
-    typealias CookieHeaderProbe = @Sendable () async -> String?
+    public typealias CookieHeaderProbe = @Sendable () async -> String?
     /// Reads the WebView's `navigator.userAgent` *now*, same idea.
-    typealias UserAgentProbe = @Sendable () async -> String?
+    public typealias UserAgentProbe = @Sendable () async -> String?
 
     private let session: URLSession
     private let userAgent: String
@@ -89,7 +93,7 @@ struct FAHTTPDataSource: HTTPDataSource {
         ("Upgrade-Insecure-Requests", "1"),
     ]
 
-    init(
+    public init(
         userAgent: String,
         cookieHeader: String,
         webViewFetch: WebViewFetch? = nil,
@@ -109,7 +113,7 @@ struct FAHTTPDataSource: HTTPDataSource {
         self.liveUserAgent = liveUserAgent
     }
 
-    func httpData(
+    public func httpData(
         from url: URL,
         cookies: [HTTPCookie]?,
         method: HTTPMethod,
@@ -333,11 +337,11 @@ struct FAHTTPDataSource: HTTPDataSource {
     }
 }
 
-enum FAHTTPError: LocalizedError {
+public enum FAHTTPError: LocalizedError {
     case nonHTTPResponse(URL)
     case failureStatus(url: URL, code: Int)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case let .nonHTTPResponse(url):
             "\(url): request failed with a non-HTTP response"

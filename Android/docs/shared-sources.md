@@ -120,6 +120,12 @@ never the iOS app target — so:
   The exception is a name a *package* already declares on Darwin: `Helpers/Android/AndroidDefault.swift`
   is `#if os(Android)`-guarded precisely because the bridge compile resolves `Default`
   from the real Defaults package, and an unguarded declaration would collide.
+
+  **The rule follows the callers into FAKit.** `FAKit/Sources/FAKit/Android/FAHTTPDataSource.swift`
+  is unguarded for exactly this reason: the unguarded `FAWebSession` constructs it, so
+  the bridge compile needs the declaration for `arm64-apple-ios`. Only the `iOS/` files
+  whose *frameworks* are Darwin-only (UIKit, WebKit, PDFKit, Cache) can be guarded on
+  the platform. An `Android/` file in FAKit that a shared caller names must not be.
 - **`import os` needs `#if canImport(os)`.** Android's Swift SDK has no `os`
   module, so FAKit ships `OSCompat` (`FAKit/Sources/OSCompat/`), which re-exports
   `AndroidLogging`'s `Logger` and vends a no-op `OSSignposter`. It is a dependency
@@ -175,11 +181,13 @@ aarch64-unknown-linux-android28/debug/FurAffinityUI.build/<File>.swift.o \
   for `^import Observation` — each hit is a silent non-recomposition waiting to
   happen.
 
-  This does **not** reach FAKit. A plain SwiftPM package cannot depend on
-  `SkipAndroidBridge`: it drags in `skip-bridge`, whose `CJNI` module is generated
-  by skipstone and unresolvable outside it. FAKit's `@Observable`s therefore still
-  need mirroring into a view's `@State` — see the Cloudflare stage flags in
-  `AndroidRootView`.
+  This does **not** reach FAKit as it is configured today: adding
+  `SkipAndroidBridge` to it fails the Android build on `missing required module
+  'CJNI'`. That is a dependency-edge problem, **not** the plugin story once told
+  here — `CJNI` is a plain C target inside `swift-jni`, and SwiftPM hands its
+  modulemap to any target that declares a path to it. FAKit's `@Observable`s
+  therefore still need mirroring into a view's `@State` — see the Cloudflare stage
+  flags in `AndroidRootView`.
 
   Same name-resolution family as [Module-name poisoning](build-and-run.md#module-name-poisoning),
   inverted: there a module shadowed what a target wanted, here a type must shadow

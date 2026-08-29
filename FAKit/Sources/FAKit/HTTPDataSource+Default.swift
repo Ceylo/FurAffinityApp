@@ -3,8 +3,10 @@
 //  FAKit
 //
 //  The data source used when a caller doesn't inject one. On Apple platforms
-//  `URLSession` conforms to `HTTPDataSource` directly; on Android the app layer
-//  installs one that carries the WebView's Cloudflare clearance.
+//  `URLSession` conforms to `HTTPDataSource` directly. Android has no such
+//  default: its data source replays a Cloudflare clearance that only the app
+//  module's WebView can obtain, so `FAWebSession` builds `FAHTTPDataSource` and
+//  passes it to `OnlineFASession(cookies:dataSource:)` explicitly.
 //
 
 import Foundation
@@ -14,21 +16,15 @@ import FoundationNetworking
 
 public enum FADefaultDataSource {
     #if os(Android)
-    /// Installed by the app layer before the first session is created.
-    @MainActor
-    public static var installed: HTTPDataSource?
-
-    @MainActor
+    /// Always throws: reaching here means a caller used the injection-free
+    /// `OnlineFASession(cookies:)`, which Android has no way to satisfy.
     public static func resolve() async throws -> HTTPDataSource {
-        guard let installed else {
-            throw NotInstalled()
-        }
-        return installed
+        throw NoDefault()
     }
 
-    public struct NotInstalled: LocalizedError {
+    public struct NoDefault: LocalizedError {
         public var errorDescription: String? {
-            "No HTTP data source has been installed for this platform."
+            "This platform has no default HTTP data source; one must be injected."
         }
     }
     #else

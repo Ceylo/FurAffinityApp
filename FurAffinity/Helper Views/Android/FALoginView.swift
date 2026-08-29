@@ -4,8 +4,9 @@
 //
 //  Android's login web view, matching the public surface of FAKit's WebKit-backed
 //  `FALoginView` so the shared `HomeView` compiles against one name on both
-//  platforms. It can't live in FAKit: it needs skip-web, which FAKit can't depend
-//  on (see FAHTTPDataSource for the CJNI rationale).
+//  platforms. It lives here because it is a *bridged* view: skipstone generates the
+//  Kotlin glue that makes its `@State` recompose, and it only processes this module.
+//  It also needs skip-web, which FAKit does not depend on.
 //
 //  Unguarded on purpose (Android/docs/shared-sources.md § Rules for shared sources): FAKit's own `#if !os(Android)` declaration exists in
 //  the Darwin bridge compile, and this module's shadows it.
