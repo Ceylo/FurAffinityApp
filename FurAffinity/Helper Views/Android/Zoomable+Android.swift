@@ -51,7 +51,11 @@ public struct Zoomable<Content: View>: View {
     /// Committed values, so a gesture composes with what came before it.
     @State var baseScale: Double = 1
     @State var baseOffset = CGSize.zero
-    @State var didApplyInitialZoom = false
+    /// Set by the first zoom or pan of a presentation. Until then the initial zoom is
+    /// re-derived from every new viewport measurement — the sheet reports a shorter one
+    /// before its insets settle, and latching on that first value left the content
+    /// visibly short of `boundedFill`.
+    @State var hasUserAdjusted = false
     /// Latched once a drag passes the slop, so a pan's release can't be taken for a tap.
     @State var didPan = false
     /// Latched when the current drag is the sheet's pull. The content then stays put for
@@ -114,6 +118,7 @@ public struct Zoomable<Content: View>: View {
                 .gesture(
                     MagnifyGesture()
                         .onChanged { value in
+                            hasUserAdjusted = true
                             scale = clamped(baseScale * value.magnification, in: viewport)
                         }
                         .onEnded { _ in
@@ -147,6 +152,7 @@ public struct Zoomable<Content: View>: View {
                             // content too would double it.
                             guard !sheetOwnsDrag else { return }
 
+                            hasUserAdjusted = true
                             offset = clampedOffset(
                                 CGSize(
                                     width: baseOffset.width + translation.width,
@@ -179,11 +185,13 @@ public struct Zoomable<Content: View>: View {
                 // Keyed on the viewport, not `onAppear` alone: the first composition can
                 // run before Compose has measured it, and every zoom level derives from
                 // that size — applying at 0×0 would silently latch the viewer at fit.
+                // Every *later* measurement re-derives it too, until the user zooms or
+                // pans: the sheet's first measurement is short of its final height, and
+                // the initial zoom computed from it leaves the content letterboxed.
                 .onChange(of: Foundation.CGSize(geometry.size), initial: true) { _, size in
                     guard size.width > 0, size.height > 0 else { return }
                     viewport = size
-                    guard !didApplyInitialZoom else { return }
-                    didApplyInitialZoom = true
+                    guard !hasUserAdjusted else { return }
                     resetForPresentation(in: size)
                 }
                 // `onAppear` is backed by a plain `remember`, so unlike the state it does
@@ -192,7 +200,6 @@ public struct Zoomable<Content: View>: View {
                 // 24pt shorter as it dismisses), so reset from it to avoid a flash and
                 // let the measurement above re-apply the real initial zoom.
                 .onAppear {
-                    didApplyInitialZoom = false
                     resetForPresentation(in: viewport)
                 }
         }
@@ -205,6 +212,7 @@ public struct Zoomable<Content: View>: View {
         baseOffset = .zero
         didPan = false
         sheetOwnsDrag = false
+        hasUserAdjusted = false
         scale = viewport.width > 0 && viewport.height > 0
             ? self.scale(for: initialZoomLevel, in: viewport)
             : 1
@@ -245,6 +253,7 @@ public struct Zoomable<Content: View>: View {
         let target = abs(scale - primary) < 1e-3
             ? scale(for: secondaryZoomLevel, in: viewport)
             : primary
+        hasUserAdjusted = true
         scale = max(1, target)
         baseScale = scale
         offset = clampedOffset(.zero, in: viewport)

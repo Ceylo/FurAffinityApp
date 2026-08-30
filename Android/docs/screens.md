@@ -160,7 +160,11 @@ three is one line in `Ceylo/skip-ui` — dropping `isFullScreen ||` from that
 
 The viewer also resets itself on each presentation — offset and zoom — because skipstone
 backs `@State` with `rememberSaveable`, which otherwise restores whatever the last
-presentation was left in.
+presentation was left in. The initial zoom is re-derived from **every** viewport
+measurement until the user first zooms or pans (`hasUserAdjusted`), not latched on the
+first one: the sheet reports a height ~129 px short of its final one before its insets
+settle, and `boundedFill` computed from that left the image visibly letterboxed where
+`fullScreenCover` had filled the screen.
 
 Deferred, with the reason:
 
