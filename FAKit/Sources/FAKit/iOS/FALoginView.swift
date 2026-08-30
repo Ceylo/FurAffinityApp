@@ -66,7 +66,8 @@ public struct FALoginView: View {
         }
         let authCookies = rawCookies.filter { $0.name != "cf_clearance" }
 
-        let session = try await OnlineFASession(cookies: authCookies)
+        let session = try await OnlineFASession(cookies: authCookies,
+                                                dataSource: await URLSession.sharedForFARequests)
         if session != nil {
             let codableCookies = rawCookies.map { CodableHTTPCookie($0)! }
             try! cookieCache.setObject(codableCookies, forKey: 0)

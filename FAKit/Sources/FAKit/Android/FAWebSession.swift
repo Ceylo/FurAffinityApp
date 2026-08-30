@@ -12,14 +12,14 @@
 //  - `FAHTTPDataSource` falls back to navigating a cleared WebView whenever FA
 //    answers a plain request with a challenge.
 //
-//  So `FAWebSessionView` mounts a 1×1, non-interactive WebView at the root of the
-//  app — the same trick `RootView` plays with `FAChallengeView` on iOS — and this
+//  So `FAWebSessionView` mounts a full-size, non-interactive WebView at the root of
+//  the app — the same trick `RootView` plays with `FAChallengeView` on iOS — and this
 //  class owns the navigator driving it. Cookies are process-global on Android
 //  (`CookieManager`), so whatever the *visible* login WebView earns is immediately
 //  visible here.
 //
-//  Deliberately *unguarded* — see FAWebView.swift for why, and for the User-Agent
-//  hook this class's image-layer hook mirrors.
+//  Deliberately *unguarded* — see FAWebView.swift, which also carries the sibling
+//  of this class's image-layer hook.
 //
 
 import Foundation
@@ -31,11 +31,9 @@ import FAPages
 public final class FAWebSession {
     public static let shared = FAWebSession()
 
-    /// Push a rotated User-Agent + `Cookie:` header into the app's image layer.
-    /// Installed by the app layer, like `FAWebViewUserAgent.platformProvider`: the
-    /// Coil loader behind it lives in the app module, reached over JNI.
-    ///
-    /// `nonisolated(unsafe)`: written once at launch, before any view exists.
+    /// Push a rotated User-Agent + `Cookie:` header into the app's image layer, whose
+    /// Coil loader lives in the app module. Installed at launch, like
+    /// `FAWebViewUserAgent.platformProvider`.
     nonisolated(unsafe) public static var imageCredentialsSink: (@Sendable (_ userAgent: String, _ cookieHeader: String) -> Void)?
 
     /// Drives the hidden root WebView. Handed to `FAHTTPDataSource` as its
@@ -304,8 +302,8 @@ public struct FAWebSessionView: View {
 
     public init() {}
 
-    // `SkipWeb.` qualified: this file is unguarded, so on Apple platforms FAKit's own
-    // internal `WebView` (iOS/WebView.swift) is in scope and shadows the imported one.
+    // `SkipWeb.`-qualified: this file is unguarded, so on Apple platforms FAKit's own
+    // `iOS/WebView.swift` is in scope and shadows the imported one.
     public var body: some View {
         SkipWeb.WebView(
             configuration: config,

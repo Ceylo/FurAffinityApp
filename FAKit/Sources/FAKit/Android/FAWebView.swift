@@ -7,11 +7,9 @@
 //  User-Agent (cf_clearance is UA-bound), the WebView's Cookie header, and a
 //  WebView-fetch fallback for pages that still draw a challenge.
 //
-//  Deliberately *unguarded*, like `FAHTTPDataSource`: `AndroidRootView` and
-//  `LoginCookies+Android` reach `FAWebSession` and are themselves unguarded, so
-//  this is also compiled by the Darwin bridge pass (`swift build --triple
-//  arm64-apple-ios` over the root package, where `os(Android)` is false) — and by
-//  the iOS app. Nothing on Apple platforms constructs any of it.
+//  Deliberately *unguarded*, like `FAHTTPDataSource`: the unguarded
+//  `AndroidRootView` and `LoginCookies+Android` reach `FAWebSession`, so the Darwin
+//  bridge pass needs these declarations too. Nothing on Apple platforms uses them.
 //
 
 import Foundation
@@ -31,13 +29,10 @@ import SkipWeb
 /// Nil if the platform default can't be read, which leaves the WebViews on their
 /// stock UA: unidentified traffic, but nothing broken.
 public enum FAWebViewUserAgent {
-    /// The stock platform WebView User-Agent. Installed by the app layer, the same
-    /// way `FAUserAgent.webViewUserAgentProvider` is: Android reads it off
-    /// `WebSettings` through a JNI bridge into the app's own Kotlin
-    /// (`fur.affinity.ui.FAAppInfoBridge`), which this module cannot reach.
-    ///
-    /// `nonisolated(unsafe)`: read from SwiftUI property initializers, which are not
-    /// main-actor isolated. Written once, before any view exists.
+    /// The stock platform WebView User-Agent. Installed by the app layer, like
+    /// `FAUserAgent.webViewUserAgentProvider`: it comes from a JNI bridge into the
+    /// app's own Kotlin, which this module cannot reach. `nonisolated(unsafe)` because
+    /// SwiftUI property initializers read it and are not main-actor isolated.
     nonisolated(unsafe) public static var platformProvider: (@Sendable () -> String?)?
 
     public static let string: String? = {

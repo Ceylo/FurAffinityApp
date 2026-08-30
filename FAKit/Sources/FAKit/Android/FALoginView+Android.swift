@@ -5,14 +5,11 @@
 //  Android's login web view, the twin of `iOS/FALoginView.swift`, so the shared
 //  `HomeView` compiles against one name on both platforms.
 //
-//  Guarded, unlike this directory's `FAWebSession`/`FAWebView`: its twin lives in the
-//  same module now, so the two would redeclare each other. `os(Android)` is the guard
-//  that works — skipstone evaluates it as *true*, so it still emits this view's Kotlin
-//  bridge (which is what makes a bridged view's `@State` recompose), while the twin's
-//  `#if !os(Android)` elides it from both the Android compile and skipstone's view of
-//  the module. The `+Android` suffix is required: skipstone flattens
-//  `<Name>_Bridge.swift`, so a file named `FALoginView.swift` would collide with the
-//  twin. See Android/docs/shared-sources.md § Rules for shared sources.
+//  Guarded, unlike this directory's `FAWebSession`/`FAWebView`: the twin is in the
+//  same module and would redeclare it. `os(Android)` works because skipstone evaluates
+//  it as *true*, so this view still gets the Kotlin bridge its `@State` needs. The
+//  `+Android` suffix keeps that bridge's flattened name off the twin's.
+//  See Android/docs/shared-sources.md § Rules for shared sources.
 //
 
 #if os(Android)

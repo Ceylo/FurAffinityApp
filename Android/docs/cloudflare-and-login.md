@@ -13,11 +13,10 @@ rules in [Rules for shared sources](shared-sources.md#rules-for-shared-sources) 
 
 `FAKit/Sources/FAKit/Android/FALoginView+Android.swift` is the Android substitute for
 FAKit's WebKit one, matching its public surface (`session` binding, `onError`,
-`makeSession()`) so the shared caller compiles unchanged. It lives in FAKit next to
-its twin: FAKit is a skipstone module now, so it gets the Kotlin glue a *bridged*
-view's `@State` needs, and it depends on skip-web. Sharing a module with its twin is
-why this one is guarded — `#if os(Android)` against the twin's `#if !os(Android)` —
-and why the file carries an `+Android` suffix. See
+`makeSession()`) so the shared caller compiles unchanged. It sits next to that twin:
+FAKit is a skipstone module now, so it gets the Kotlin glue a *bridged* view's `@State`
+needs. Sharing a module with the twin is why it is `#if os(Android)`-guarded and
+`+Android`-suffixed — see
 [Rules for shared sources](shared-sources.md#rules-for-shared-sources).
 
 ## Why a hidden WebView is mounted for the whole session
@@ -238,20 +237,17 @@ Two things differ from FAKit's iOS view and are worth knowing:
   `FAChallengeViewDOMTests` holds the probe's global against it.
 - **`AndroidRootView` reads the stage flags off the coordinator directly**, the way
   iOS's `RootView` does. It used to mirror them into local `@State` fed by a
-  `CloudflareChallengeCoordinator.onStateChange` callback, because
-  `CloudflareChallengeCoordinator` lives in FAKit and FAKit had no way to put
+  `CloudflareChallengeCoordinator.onStateChange` callback: FAKit had no way to put
   `SkipAndroidBridge`'s `Observation` in scope (see [Every `@Observable` needs
   `SkipAndroidBridge` in
-  scope](shared-sources.md#every-observable-needs-skipandroidbridge-in-scope)) — a
-  first attempt at adding `skip-android-bridge` to `FAKit/Package.swift` failed the
-  Android compile with `missing required module 'CJNI'`. Making FAKit a skipstone
-  module settled it: `SkipFuseUI` is in its Android closure, so `import SwiftUI`
-  under `#if os(Android)` is enough, and both the mirror and `onStateChange` are
-  gone. `CJNI` was never the obstacle it looked like — it is an ordinary SwiftPM C
-  target in `swift-jni` (`Sources/CJNI/{cjni.c,include/module.modulemap}`) whose
-  modulemap SwiftPM puts on the Clang search path of any target whose *dependency
-  closure reaches it*, so that failure was a missing dependency edge, not a plugin
-  refusing to run.
+  scope](shared-sources.md#every-observable-needs-skipandroidbridge-in-scope)), and
+  adding `skip-android-bridge` to `FAKit/Package.swift` failed the Android compile
+  with `missing required module 'CJNI'`. Making FAKit a skipstone module settled it —
+  `SkipFuseUI` is in its Android closure, so `import SwiftUI` under `#if os(Android)`
+  suffices, and mirror and callback are both gone. `CJNI` was never the obstacle it
+  looked like: it is a plain SwiftPM C target in `swift-jni` whose modulemap reaches
+  any target whose dependency closure reaches it, so that was a missing edge, not a
+  plugin refusing to run.
 
 ## Escalation must latch, not return
 

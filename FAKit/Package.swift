@@ -26,10 +26,8 @@ let package = Package(
         // Android-only: AndroidLogging backs the `os` compatibility module.
         // Matches skip-android-bridge's constraint so both unify on one version.
         .package(url: "https://source.skip.tools/swift-android-native.git", from: "1.4.1"),
-        // FAKit owns the Android web layer (FALoginView / FAChallengeView /
-        // FAWebSessionView), which means it must be a skipstone bridging module —
-        // see Android/docs/shared-sources.md. Keep the `skip` pin equal to the root
-        // manifest's and to `skip version`.
+        // FAKit is a skipstone bridging module so it can own the Android web layer —
+        // see Android/docs/shared-sources.md. Keep `skip` equal to the root manifest's.
         .package(url: "https://source.skip.tools/skip.git", exact: "1.9.4"),
         .package(url: "https://github.com/Ceylo/skip-fuse-ui.git", branch: "android"),
         .package(url: "https://github.com/Ceylo/skip-ui.git", branch: "android"),
@@ -86,11 +84,9 @@ let package = Package(
                 .product(name: "Cache", package: "Cache", condition: .when(platforms: [.iOS, .macOS])),
                 .product(name: "ZIPFoundation", package: "ZIPFoundation", condition: .when(platforms: [.iOS, .macOS])),
                 .target(name: "OSCompat", condition: .when(platforms: [.android])),
-                // Unconditional on purpose, both of them: SKIP_BRIDGE is unset in the
-                // pass that runs plugins, so gating either edge makes skipstone emit a
-                // 9-line stub build.gradle.kts with no `plugins {}` block and Gradle
-                // dies on "Unresolved reference 'android'". Neither reaches the iOS
-                // app — skip-fuse-ui only vends its `SwiftUI` shim `if android`.
+                // Unconditional on purpose: SKIP_BRIDGE is unset in the pass that runs
+                // plugins, so gating either edge makes skipstone emit a stub
+                // build.gradle.kts and Gradle dies on "Unresolved reference 'android'".
                 .product(name: "SkipFuseUI", package: "skip-fuse-ui"),
                 .product(name: "SkipWeb", package: "skip-web"),
             ],
@@ -107,9 +103,8 @@ let package = Package(
     ]
 )
 
-// Bridging edges for the Android build only. The skipstone plugin above stays
-// unconditional — SKIP_BRIDGE is not set in the pass that runs plugins, so gating
-// it there would silently never attach it.
+// Android build only. Unset in Xcode and in the Darwin bridge pass, so neither sees
+// FA_SKIP_MODULE — the plugin above must stay outside this block.
 if Context.environment["SKIP_BRIDGE"] ?? "0" != "0" {
     for target in package.targets where target.name == "FAKit" {
         target.swiftSettings = (target.swiftSettings ?? []) + [.define("FA_SKIP_MODULE")]

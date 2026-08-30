@@ -26,13 +26,11 @@ normalises the markup into the subset `AnnotatedString.fromHtml` understands (an
 at its `<hr>`s, which that parser drops), and `Helper Views/Android/HTMLView+Android.swift`
 hands each fragment to `Text(html:)`.
 FAKit carries the skipstone plugin too (`FAKit/Sources/FAKit/Skip/skip.yml`), which is
-what lets it own the Android web layer — `FALoginView`, `FAChallengeView`,
-`FAWebSession`/`FAWebSessionView` and `FAWebView` all live in
-`FAKit/Sources/FAKit/Android/` now, because a *bridged* view only gets its Kotlin
-`@State` glue from a plugin-carrying module. The two Kotlin bridges that layer needs
-from the app (the stock WebView User-Agent, the Coil image loader) come back as
-injected hooks installed in `FurAffinityUIAppDelegate.onInit`. The iOS app pays for it:
-37 MB Release instead of 27, and 11 embedded frameworks instead of 1.
+what lets it own the Android web layer in `FAKit/Sources/FAKit/Android/`: a *bridged*
+view only gets its Kotlin `@State` glue from a plugin-carrying module. The two Kotlin
+bridges that layer needs from the app come back as hooks installed in
+`FurAffinityUIAppDelegate.onInit`. The iOS app pays 37 MB Release instead of 27, and 11
+embedded frameworks instead of 1.
 Logging works on both platforms via `#if canImport(os) import os #else import OSCompat`:
 FAKit ships an Android-only `OSCompat` target (`FAKit/Sources/OSCompat/`) vending
 `Logger` (→ logcat) and a no-op `OSSignposter`. It must **not** be named `os` — a

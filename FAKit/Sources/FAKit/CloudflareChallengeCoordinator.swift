@@ -13,10 +13,9 @@ import UIKit
 import FoundationNetworking
 #endif
 #if os(Android)
-// Not `import Observation`: SkipSwiftUI re-exports SkipAndroidBridge's `Observation`
-// *struct*, and only that one gives the @Observable below a registrar Compose can
-// see. The module of the same name compiles fine and leaves the type inert — see
-// Android/docs/shared-sources.md.
+// Not `import Observation`: only SkipAndroidBridge's `Observation` *struct*, which
+// SkipSwiftUI re-exports, gives the @Observable below a registrar Compose can see.
+// The module of the same name leaves it silently inert.
 import SwiftUI
 #else
 import Observation
@@ -75,12 +74,9 @@ public final class CloudflareChallengeCoordinator {
     // Only the *defaults* are platform-specific; the state machine below is not,
     // so it stays shared rather than being duplicated for Android.
     //
-    // Android has no UIApplication, no WKWebView to resolve headlessly in, and
-    // keeps its cookies in the WebView's own process-global jar rather than
-    // HTTPCookieStorage. Reading that jar is async and this check is synchronous,
-    // so the defaults here are inert and `AndroidRootView` installs the real ones
-    // through `configure(…)` at startup — pointing the cookie provider at
-    // `FAWebSession.lastKnownAuthCookies`.
+    // Android has no UIApplication, no WKWebView to resolve headlessly in, and keeps
+    // its cookies in the WebView's own jar, which only reads async. So the defaults
+    // here are inert and `AndroidRootView` installs the real ones via `configure(…)`.
     #if os(Android)
     private static let defaultIsInBackground: @Sendable @MainActor () -> Bool = { false }
     private static let defaultBackgroundResolve: @Sendable @MainActor () async -> Bool = { false }

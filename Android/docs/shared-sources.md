@@ -47,11 +47,10 @@ the guarded file still *emits* a same-named (empty) bridge. Hence the
 `…+Android.swift` files; the directory still carries the platform meaning, the
 suffix only keeps the name unique.
 
-**The rule spans FAKit too.** FAKit carries the skipstone plugin (see
-[Rules for shared sources](#rules-for-shared-sources)), so its tree is flattened the
-same way — which is why `FALoginView+Android.swift` and `FAChallengeView+Android.swift`
-are suffixed while `FAWebSession.swift` and `FAWebView.swift`, which have no twin,
-are not.
+**The rule spans FAKit too**, which carries the plugin as well (see
+[Rules for shared sources](#rules-for-shared-sources)) — hence the suffix on
+`FALoginView+Android.swift` and `FAChallengeView+Android.swift`, but not on
+`FAWebSession.swift`/`FAWebView.swift`, which have no twin.
 
 ## Defaults
 
@@ -98,15 +97,12 @@ adb shell run-as com.example.id1234.<worktree> cat shared_prefs/defaults.xml
 
 <a name="every-observable-needs-skipandroidbridge-in-scope"></a>
 
-**Two modules carry the skipstone plugin, not one.** FurAffinityUI always did; FAKit
-joined it so it could own the Android web layer (`FALoginView`, `FAChallengeView`,
-`FAWebSessionView` are *bridged* views, and only a plugin-carrying module gets the
-Kotlin glue that makes a bridged view's `@State` recompose). Everything below applies
-to `FAKit/Sources/FAKit/` as well as to `FurAffinity/`, with one difference: FAKit's
-`FA_SKIP_MODULE` is defined only when `SKIP_BRIDGE` is set, so unlike FurAffinityUI's
-it is **not** defined in the Darwin bridge pass — there, FAKit compiles exactly as it
-does in Xcode. The cost is on the iOS side: 37 MB Release instead of 27, and 11
-embedded frameworks instead of 1.
+**Two modules carry the skipstone plugin, not one.** FAKit joined FurAffinityUI so it
+could own the Android web layer — only a plugin-carrying module gets the Kotlin glue a
+bridged view's `@State` needs. Everything below applies to `FAKit/Sources/FAKit/` too,
+with one difference: FAKit's `FA_SKIP_MODULE` is gated on `SKIP_BRIDGE`, which the
+Darwin bridge pass does not set, so there FAKit compiles exactly as in Xcode. Cost on
+the iOS side: 37 MB Release instead of 27, 11 embedded frameworks instead of 1.
 
 An *unguarded* file under `FurAffinity/` is compiled **twice more** than the iOS target
 compiles it: once for Android (`os(Android)` true) and once for the module's Darwin
@@ -137,24 +133,20 @@ never the iOS app target — so:
   is `#if os(Android)`-guarded precisely because the bridge compile resolves `Default`
   from the real Defaults package, and an unguarded declaration would collide.
 
-  **The rule follows the callers into FAKit.** `FAKit/Sources/FAKit/Android/`'s
-  `FAHTTPDataSource.swift`, `FAWebSession.swift` and `FAWebView.swift` are unguarded
-  for exactly this reason: `AndroidRootView` and `LoginCookies+Android` are themselves
-  unguarded and name `FAWebSession`/`FAWebSessionView`, so the bridge compile needs the
-  declarations for `arm64-apple-ios` — and so, therefore, does the iOS app, which is
-  the price of the arrangement. Only the `iOS/` files whose *frameworks* are
-  Darwin-only (UIKit, WebKit, PDFKit, Cache) can be guarded on the platform. An
-  `Android/` file in FAKit that a shared caller names must not be.
+  **The rule follows the callers into FAKit.** `Android/FAHTTPDataSource.swift`,
+  `FAWebSession.swift` and `FAWebView.swift` are unguarded because the unguarded
+  `AndroidRootView` and `LoginCookies+Android` name them, so the bridge compile needs
+  the declarations for `arm64-apple-ios` — and so, therefore, does the iOS app, which
+  is the price of the arrangement. Only `iOS/` files whose *frameworks* are Darwin-only
+  (UIKit, WebKit, PDFKit, Cache) can be guarded on the platform.
 
-  There is a **third** case now, beside the app-module `AndroidDefault` exception:
-  when the name's Darwin twin lives in *this same module*. `FALoginView+Android.swift`
-  and `FAChallengeView+Android.swift` sit next to `iOS/FALoginView.swift` and
-  `iOS/FAChallengeView.swift`, so unguarded they would redeclare them. They take
-  `#if os(Android)` against the twin's `#if !os(Android)`, and that is safe here
-  precisely because it is a bridged view: **skipstone evaluates `os(Android)` as
-  true**, so the Android view still gets its full `<Name>_Bridge.swift` while the
-  twin's bridge comes out empty. Verify it after any change — an empty bridge for a
-  bridged view is the silent kind of breakage (the view renders once and never
+  A **third** case, beside the app-module `AndroidDefault` exception: when the Darwin
+  twin is in *this same module*. `FALoginView+Android.swift` and
+  `FAChallengeView+Android.swift` would redeclare their `iOS/` twins unguarded, so they
+  take `#if os(Android)` against the twin's `#if !os(Android)`. That is safe for a
+  *bridged* view because **skipstone evaluates `os(Android)` as true**: this half still
+  gets its full `<Name>_Bridge.swift`, the twin's comes out empty. Check that after any
+  change — an empty bridge is the silent kind of breakage (renders once, never
   recomposes):
 
   ```
@@ -216,22 +208,21 @@ aarch64-unknown-linux-android28/debug/FurAffinityUI.build/<File>.swift.o \
   for `^import Observation` — each hit is a silent non-recomposition waiting to
   happen.
 
-  **This reaches FAKit too, since FAKit became a skipstone module.** `SkipFuseUI` is
-  in its Android closure, so an `@Observable` there needs the same import — FAKit
-  gates SwiftUI on the platform, so it spells it `#if os(Android) import SwiftUI #else
-  import Observation #endif`, as `CloudflareChallengeCoordinator` does. skipstone
-  says so itself when the import is missing:
+  **This reaches FAKit too, since it became a skipstone module** — with `SkipFuseUI`
+  in its Android closure the same import applies, spelled `#if os(Android) import
+  SwiftUI #else import Observation #endif` because FAKit gates SwiftUI on the platform
+  (`CloudflareChallengeCoordinator`). Here skipstone does warn, unlike the app-module
+  cases:
 
   ```
   warning: This file contains @Observables, but they will not be able to power your
   Android UI unless you 'import SkipFuse' or 'import SkipFuseUI'
   ```
 
-  An earlier attempt at this by adding `skip-android-bridge` to `FAKit/Package.swift`
-  failed the Android build on `missing required module 'CJNI'`; that was a
-  dependency-edge problem, **not** the plugin story once told here — `CJNI` is a plain
-  C target inside `swift-jni`, and SwiftPM hands its modulemap to any target that
-  declares a path to it. With the plugin in place the whole closure arrives at once and
+  Adding `skip-android-bridge` on its own instead fails the Android build on `missing
+  required module 'CJNI'` — a missing dependency edge, **not** the plugin story once
+  told here (`CJNI` is a plain C target in `swift-jni`, whose modulemap SwiftPM hands
+  to any target that declares a path to it). The plugin brings the whole closure, and
   the mirror `AndroidRootView` kept for the Cloudflare stage flags is gone.
 
   Same name-resolution family as [Module-name poisoning](build-and-run.md#module-name-poisoning),
