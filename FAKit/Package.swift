@@ -26,6 +26,12 @@ let package = Package(
         // Android-only: AndroidLogging backs the `os` compatibility module.
         // Matches skip-android-bridge's constraint so both unify on one version.
         .package(url: "https://source.skip.tools/swift-android-native.git", from: "1.4.1"),
+        // FAKit is a skipstone bridging module so it can own the Android web layer —
+        // see Android/docs/shared-sources.md. Keep `skip` equal to the root manifest's.
+        .package(url: "https://source.skip.tools/skip.git", exact: "1.9.4"),
+        .package(url: "https://github.com/Ceylo/skip-fuse-ui.git", branch: "android"),
+        .package(url: "https://github.com/Ceylo/skip-ui.git", branch: "android"),
+        .package(url: "https://source.skip.tools/skip-web.git", from: "0.11.2"),
     ],
     targets: [
         // Compatibility module: Android has no `os`, so this vends the Logger /
@@ -78,8 +84,14 @@ let package = Package(
                 .product(name: "Cache", package: "Cache", condition: .when(platforms: [.iOS, .macOS])),
                 .product(name: "ZIPFoundation", package: "ZIPFoundation", condition: .when(platforms: [.iOS, .macOS])),
                 .target(name: "OSCompat", condition: .when(platforms: [.android])),
+                // Unconditional on purpose: SKIP_BRIDGE is unset in the pass that runs
+                // plugins, so gating either edge makes skipstone emit a stub
+                // build.gradle.kts and Gradle dies on "Unresolved reference 'android'".
+                .product(name: "SkipFuseUI", package: "skip-fuse-ui"),
+                .product(name: "SkipWeb", package: "skip-web"),
             ],
-            resources: [.process("Resources")]
+            resources: [.process("Resources")],
+            plugins: [.plugin(name: "skipstone", package: "skip")]
         ),
         .testTarget(
             name: "FAKitTests",
@@ -90,3 +102,16 @@ let package = Package(
         ),
     ]
 )
+
+// Android build only. Unset in Xcode and in the Darwin bridge pass, so neither sees
+// FA_SKIP_MODULE — the plugin above must stay outside this block.
+if Context.environment["SKIP_BRIDGE"] ?? "0" != "0" {
+    for target in package.targets where target.name == "FAKit" {
+        target.swiftSettings = (target.swiftSettings ?? []) + [.define("FA_SKIP_MODULE")]
+    }
+    // all library types must be dynamic to support bridging
+    package.products = package.products.map { product in
+        guard let library = product as? Product.Library else { return product }
+        return .library(name: library.name, type: .dynamic, targets: library.targets)
+    }
+}

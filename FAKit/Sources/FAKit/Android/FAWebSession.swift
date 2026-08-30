@@ -1,6 +1,6 @@
 //
 //  FAWebSession.swift
-//  FurAffinityUI (Android)
+//  FAKit (Android)
 //
 //  The app's one long-lived WebView, and the session it produces.
 //
@@ -12,22 +12,29 @@
 //  - `FAHTTPDataSource` falls back to navigating a cleared WebView whenever FA
 //    answers a plain request with a challenge.
 //
-//  So `FAWebSessionView` mounts a 1×1, non-interactive WebView at the root of the
-//  app — the same trick `RootView` plays with `FAChallengeView` on iOS — and this
+//  So `FAWebSessionView` mounts a full-size, non-interactive WebView at the root of
+//  the app — the same trick `RootView` plays with `FAChallengeView` on iOS — and this
 //  class owns the navigator driving it. Cookies are process-global on Android
 //  (`CookieManager`), so whatever the *visible* login WebView earns is immediately
 //  visible here.
+//
+//  Deliberately *unguarded* — see FAWebView.swift, which also carries the sibling
+//  of this class's image-layer hook.
 //
 
 import Foundation
 import SwiftUI
 import SkipWeb
-import FAKit
 import FAPages
 
 @MainActor
-final class FAWebSession {
-    static let shared = FAWebSession()
+public final class FAWebSession {
+    public static let shared = FAWebSession()
+
+    /// Push a rotated User-Agent + `Cookie:` header into the app's image layer, whose
+    /// Coil loader lives in the app module. Installed at launch, like
+    /// `FAWebViewUserAgent.platformProvider`.
+    nonisolated(unsafe) public static var imageCredentialsSink: (@Sendable (_ userAgent: String, _ cookieHeader: String) -> Void)?
 
     /// Drives the hidden root WebView. Handed to `FAHTTPDataSource` as its
     /// challenge fallback, so it must outlive every screen.
@@ -36,7 +43,7 @@ final class FAWebSession {
     /// The FA auth cookies as of the last `establishSession()`. Reading the
     /// WebView jar is async, and `CloudflareChallengeCoordinator`'s logged-in
     /// check is synchronous, so it reads this instead.
-    private(set) var lastKnownAuthCookies = [HTTPCookie]()
+    public private(set) var lastKnownAuthCookies = [HTTPCookie]()
 
     /// What was last pushed into the Coil image layer. That layer holds a *copy* on
     /// the Kotlin side, so it can't pull a rotated clearance the way the HTTP layer
@@ -171,7 +178,7 @@ final class FAWebSession {
     /// header on every request; Coil can't, so this is the one place that keeps the
     /// two in step.
     @discardableResult
-    func refreshedCookieHeader() async -> String? {
+    public func refreshedCookieHeader() async -> String? {
         let header = await navigator.cookieHeader(for: FAURLs.homeUrl)
         let userAgent = await navigator.liveUserAgent()
         guard userAgent != pushedUserAgent || header != pushedCookieHeader else { return header }
@@ -189,7 +196,7 @@ final class FAWebSession {
         guard let userAgent, let header, !header.isEmpty else { return header }
 
         logger.info("FAWebSession: pushing rotated credentials to the image layer")
-        CoilImageLoader.configure(userAgent: userAgent, cookie: header)
+        Self.imageCredentialsSink?(userAgent, header)
         pushedUserAgent = userAgent
         pushedCookieHeader = header
         return header
@@ -221,7 +228,7 @@ final class FAWebSession {
 
     /// Drops what `refreshedCookieHeader()` remembers pushing, so the next real push
     /// isn't skipped as a no-op. Logging out de-seeds the image layer behind our back.
-    func forgetPushedCredentials() {
+    public func forgetPushedCredentials() {
         pushedUserAgent = nil
         pushedCookieHeader = nil
     }
@@ -231,7 +238,7 @@ final class FAWebSession {
     /// challenge for, so a challenge from the logged-out home screen would sit
     /// through the full 25 s background resolution and then pop the interactive
     /// sheet instead of failing fast.
-    func forgetAuthCookies() {
+    public func forgetAuthCookies() {
         lastKnownAuthCookies = []
     }
 
@@ -257,7 +264,7 @@ final class FAWebSession {
         // Seed the Coil image layer with FA's UA + Cloudflare cookie header so avatar
         // and thumbnail loads replay the clearance the WebView obtained. Recorded so
         // the first `refreshedCookieHeader()` doesn't push the same pair again.
-        CoilImageLoader.configure(userAgent: userAgent, cookie: cookieHeader)
+        Self.imageCredentialsSink?(userAgent, cookieHeader)
         pushedUserAgent = userAgent
         pushedCookieHeader = cookieHeader
 
@@ -287,14 +294,18 @@ final class FAWebSession {
 }
 
 /// The hidden WebView itself. Mounted once, at the root, for the life of the app.
-struct FAWebSessionView: View {
+public struct FAWebSessionView: View {
     let config = WebEngineConfiguration(customUserAgent: FAWebViewUserAgent.string)
 
     // Not private: skipstone can't bridge a private @State/@Environment.
     @State var webState = WebViewState()
 
-    var body: some View {
-        WebView(
+    public init() {}
+
+    // `SkipWeb.`-qualified: this file is unguarded, so on Apple platforms FAKit's own
+    // `iOS/WebView.swift` is in scope and shadows the imported one.
+    public var body: some View {
+        SkipWeb.WebView(
             configuration: config,
             navigator: FAWebSession.shared.navigator,
             url: FAURLs.homeUrl,
