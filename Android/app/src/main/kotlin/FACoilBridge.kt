@@ -79,21 +79,15 @@ class FACoilBridge {
         private const val MAX_ATTEMPTS = 5
         private const val MAX_CONCURRENT_PER_HOST = 6
 
-        /// Flat, not a ramp, and one second rather than 250 ms.
+        /// The loop has no iOS counterpart — Kingfisher exposes `.retryStrategy` and
+        /// `Kingfisher+FA.swift` never sets it — because iOS doesn't need one: URLSession
+        /// negotiates h2 and keeps one connection per host, while this client is pinned
+        /// to h1 and draws a fresh connection, and so a fresh verdict, per request.
         ///
-        /// This loop has no iOS counterpart at all — Kingfisher exposes `.retryStrategy`
-        /// and `Kingfisher+FA.swift` never sets it — because iOS does not need one:
-        /// URLSession always negotiates h2 and keeps one connection per host, so its
-        /// requests ride a connection whose verdict is already known, while this client
-        /// is pinned to h1 and draws a fresh one per concurrent request. A retry here is
-        /// therefore a fresh draw, not a re-ask.
-        ///
-        /// One second because no retry should hit an FA host faster than
-        /// `www.furaffinity.net`'s `robots.txt` asks a crawler to. That `Crawl-delay: 1`
-        /// does not formally bind this code — it is aimed at crawlers, and `d.`/`t.`/`a.`
-        /// serve no `robots.txt` at all (404) — and the app already honours it where it
-        /// genuinely crawls (`ProgressiveLoadItem.crawlingDelay`); this just declines to
-        /// go faster than that anywhere.
+        /// A flat second, matching `www.furaffinity.net`'s `Crawl-delay: 1`. That
+        /// directive doesn't bind here (`d.`/`t.`/`a.` serve no `robots.txt`, and
+        /// `ProgressiveLoadItem.crawlingDelay` is where the app really crawls), but
+        /// nothing should hit an FA host faster than it either.
         private const val RETRY_BACKOFF_MS = 1000L
 
         /// Whether a failed response could plausibly come back different on a fresh
@@ -167,26 +161,18 @@ class FACoilBridge {
 
         fun isCached(url: String): Boolean = cachedPath(url) != null
 
-        /// Per-entry lifetime, from the moment the bytes were written: coil never
-        /// touches mtime on a read, and iOS deliberately doesn't extend on access
-        /// either (`.diskCacheAccessExtending(.none)`).
-        ///
-        /// Deterministic in the URL rather than random, so an entry's deadline survives
-        /// process restarts — but spread over the same 7-14 day window iOS picks from,
-        /// so a cold cache filled in one session doesn't expire in one go. Kotlin's
-        /// `String.hashCode` is specified, unlike Swift's per-process-seeded one.
-        /// Widened to `Long` before taking the absolute value: `Int.MIN_VALUE.abs()` is
-        /// still `Int.MIN_VALUE`.
+        /// Spread across the window rather than random, so a deadline survives a
+        /// restart while a cache filled in one session still doesn't expire at once.
+        /// Kotlin's `String.hashCode` is specified, unlike Swift's per-process-seeded
+        /// one; widened to `Long` because `Int.MIN_VALUE.abs()` is `Int.MIN_VALUE`.
         private fun lifetimeMillis(url: String): Long {
             val spreadDays = Math.abs(url.hashCode().toLong()) % 8
             return (7 + spreadDays) * 24 * 60 * 60 * 1000
         }
 
-        /// On-disk path of `url`'s already-cached bytes, or null if it isn't cached —
-        /// or has expired, in which case the entry is dropped on the way out and the
-        /// caller re-downloads. `fetchResult` and `isCached` both come through here, so
-        /// expiry needs no second implementation and the feed's cache reporting stays
-        /// honest.
+        /// On-disk path of `url`'s already-cached bytes, or null if it isn't cached or
+        /// has expired — `fetchResult` and `isCached` both come through here, which is
+        /// what makes one expiry check enough.
         ///
         /// The snapshot (a read lock) is released before the path is handed back, so a
         /// concurrent eviction in that window would leave Swift with a stale path; it
@@ -315,9 +301,6 @@ class FACoilBridge {
                 sharedCache?.let { return it }
                 val cache = DiskCache.Builder()
                     .directory(context().cacheDir.resolve("fa_coil_cache").toOkioPath())
-                    // coil mandates a ceiling and offers no expiry; the lifetime is
-                    // ours, in `cachedPath`. iOS is the mirror image — Kingfisher's
-                    // `sizeLimit` is unbounded by default and only the expiry bites.
                     .maxSizeBytes(1L * 1024 * 1024 * 1024)
                     .build()
                 sharedCache = cache

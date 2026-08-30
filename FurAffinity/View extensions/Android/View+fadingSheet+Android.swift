@@ -8,14 +8,11 @@
 //
 //  SkipUI implements `sheet` and `fullScreenCover` as the same Compose
 //  `ModalBottomSheet` — `isFullScreen: true` only drops the corner radius and the drag
-//  handle — so there is nothing to crossfade *between* here, and no sheet-owned
-//  pull-to-dismiss to inherit either: the content decides when a downward drag has
-//  nowhere left to pan (see `Zoomable`), and calls the `\.dismiss` action the
-//  presentation publishes into it.
+//  handle — so there is nothing to crossfade *between*, and the pull-to-dismiss is
+//  `Zoomable`'s, over the `\.dismiss` action this presentation publishes.
 //
-//  Unguarded on purpose: an `os(Android)` guard would leave the shared caller with no
-//  declaration at all in the module's Darwin bridge compile, where `os(Android)` is
-//  false.
+//  Unguarded because the Darwin bridge compile has `os(Android) == false` and would
+//  otherwise see no declaration at all.
 //
 
 import SwiftUI
@@ -27,8 +24,8 @@ extension View {
     ) -> some View {
         fullScreenCover(isPresented: isPresented) {
             ZStack {
-                // The presentation itself has no background, so without this the page
-                // behind it shows through wherever the content doesn't cover.
+                // The presentation has none of its own, so the page behind would show
+                // through wherever the content doesn't cover.
                 Color.black
                     .ignoresSafeArea()
 

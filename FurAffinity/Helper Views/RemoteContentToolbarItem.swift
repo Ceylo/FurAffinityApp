@@ -24,8 +24,6 @@ struct RemoteContentToolbarItem<ContentsView: View>: ToolbarContent {
     var additionalToolbarItems: () -> ContentsView
     @Default(.addMessageToSharedItems) private var addMessageToSharedItems
     
-    /// Nothing displays this on Android yet: SkipUI's `ShareLink` only puts EXTRA_TEXT
-    /// and EXTRA_SUBJECT in the intent and drops `message` on the floor.
     private var shareMessage: Text? {
         guard addMessageToSharedItems else {
             return nil

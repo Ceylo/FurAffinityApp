@@ -12,16 +12,13 @@
 //  from the submission's aspect ratio. Without it, zoom levels fall back to `fit`.
 //
 //  It also owns the viewer's pull-to-dismiss, because only it knows whether a downward
-//  drag has anywhere left to pan. iOS gets that free from
-//  `UISheetPresentationController`; SkipUI's sheet has no equivalent.
+//  drag has anywhere left to pan; iOS gets that free from `UISheetPresentationController`.
 //
-//  Rebuilding this on a native `ScrollView([.horizontal, .vertical])` was considered and
-//  rejected: SwiftUI has no zoomable scroll view — magnification is a UIKit-only
-//  `UIScrollView` feature — so the pinch, the content sizing and the initial zoom would
-//  all still be hand-rolled, and it would additionally have to work around
-//  `ScrollViewReader`'s JNI local-ref hazard. The one thing it would buy is
-//  `ModalBottomSheet`'s own nested-scroll dismissal, which the explicit drag below
-//  delivers with far less machinery.
+//  Rebuilding it on a `ScrollView([.horizontal, .vertical])` was rejected: SwiftUI has no
+//  zoomable scroll view (magnification is a `UIScrollView` feature), so the pinch, the
+//  content sizing and the initial zoom would still be hand-rolled, against
+//  `ScrollViewReader`'s JNI local-ref hazard, to buy only `ModalBottomSheet`'s
+//  nested-scroll dismissal.
 //
 
 import SwiftUI
@@ -105,10 +102,8 @@ public struct Zoomable<Content: View>: View {
                     x: offset.width + dismissOffset.width,
                     y: offset.height + dismissOffset.height
                 )
-                // Keyed on the Bool, not on the offset: this has to animate the snap back
-                // when a pull is released short of the threshold, and *not* animate the
-                // pull itself. `withAnimation` is not an option — on SkipUI it marks the
-                // whole Compose frame process-wide.
+                // Keyed on the Bool, so the snap back animates and the pull itself
+                // doesn't. (`withAnimation` marks the whole Compose frame on SkipUI.)
                 .animation(.easeOut(duration: 0.2), value: isDismissDrag)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .gesture(
@@ -126,9 +121,8 @@ public struct Zoomable<Content: View>: View {
                     DragGesture()
                         .onChanged { value in
                             let translation = value.translation
-                            // Translation is measured from the gesture's own start, so a
-                            // change that is still within the slop is a *new* gesture
-                            // beginning — which is where the latches reset.
+                            // Measured from the gesture's own start, so still being
+                            // within the slop means a new gesture: reset there.
                             guard abs(translation.width) > panSlop
                                     || abs(translation.height) > panSlop else {
                                 didPan = false
@@ -138,7 +132,7 @@ public struct Zoomable<Content: View>: View {
                             }
 
                             // The first change with a direction picks the mode for the
-                            // whole gesture, so a pan can't turn into a dismiss halfway.
+                            // whole gesture: a pan can't become a dismiss halfway.
                             if !didPan {
                                 didPan = true
                                 isDismissDrag = isDismissPull(translation, in: viewport)
@@ -167,11 +161,9 @@ public struct Zoomable<Content: View>: View {
                             }
                         }
                 )
-                // A single tap, matching the iOS `UITapGestureRecognizer` with
-                // `numberOfTapsRequired = 1`. SkipUI's simultaneous-drag detector only
-                // *observes* pointer events (it never consumes them), so Compose's tap
-                // detector survives a pan and fires on its release too — hence the latch,
-                // cleared here so the pan swallows exactly one tap and no more.
+                // SkipUI's simultaneous-drag detector never *consumes* pointer events,
+                // so Compose's tap detector survives a pan and fires on its release too.
+                // Clearing the latch here is what makes a pan swallow one tap, not all.
                 .onTapGesture {
                     guard !didPan else {
                         didPan = false
@@ -221,9 +213,8 @@ public struct Zoomable<Content: View>: View {
         let target = abs(scale - primary) < 1e-3
             ? scale(for: secondaryZoomLevel, in: viewport)
             : primary
-        // `withAnimation` marks the whole Compose frame process-wide on SkipUI, so it is
-        // banned in shared code — tolerated here because the viewer is full-screen and
-        // nothing else is composing behind it.
+        // `withAnimation` marks the whole Compose frame on SkipUI, so it is banned in
+        // shared code — tolerable here only because the viewer is full-screen.
         withAnimation {
             scale = max(1, target)
             baseScale = scale
@@ -234,10 +225,9 @@ public struct Zoomable<Content: View>: View {
 
     // MARK: - Dismissal
 
-    /// A downward drag dismisses only when panning has nothing left to give: it must be
-    /// dominantly vertical and the content must already sit at its bottom-most pan
-    /// position — which includes the `maxY == 0` case, an image small enough to be
-    /// wholly visible.
+    /// A downward drag dismisses only when panning has nothing left to give: dominantly
+    /// vertical, and already at the bottom-most pan position — which includes `maxY == 0`,
+    /// an image small enough to be wholly visible.
     private func isDismissPull(_ translation: CGSize, in viewport: Foundation.CGSize) -> Bool {
         guard translation.height > 0, translation.height > abs(translation.width) else {
             return false

@@ -4,13 +4,11 @@
 //
 //  Created by Ceylo on 22/01/2023.
 //
-//  One file for both platforms. Only two things genuinely differ, and they are the two
-//  `#if FA_SKIP_MODULE` members below: how the image is *loaded* (iOS drives Kingfisher's
-//  `KFImageProtocol`, Android `FAImage` + `FAImageStore`), and what goes *inside* the
-//  zoom viewer — iOS frames the content at the loaded image's pixel size, which is what
-//  feeds `UIHostingController.intrinsicContentSize` and hence every zoom ratio, while
-//  Android states the ratio directly. Those two must not be unified: changing iOS's zoom
-//  base would change the meaning of its `maximumZoomScale = 10`.
+//  One file for both platforms; the `#if FA_SKIP_MODULE` members below are the only two
+//  things that genuinely differ. The loader is obvious (Kingfisher vs `FAImageStore`);
+//  the viewer's content is not — iOS sizes it in pixels because that is what feeds
+//  `UIHostingController.intrinsicContentSize` and hence every zoom ratio, so unifying it
+//  with Android's ratio would change the meaning of iOS's `maximumZoomScale = 10`.
 //
 //  Accepted difference: `displayProgress` draws nothing on Android — `FAImageStore`
 //  reports no byte progress across JNI.
@@ -36,15 +34,14 @@ struct SubmissionMainImage: View {
     var allowZoomableSheet = true
     @Binding var fullResolutionMediaFileUrl: URL?
 
-    // Every one of these is declared outside all `#if`s, and none is private: skipstone
-    // can't bridge a private `@State`, and it skips conditional blocks when generating
-    // the view's bridge — a `@State` inside one silently never recomposes.
+    // All outside every `#if`, none private: skipstone bridges neither a private
+    // `@State` nor one inside a conditional block, and silently never recomposes it.
     @State var errorMessage: String?
     @State var showZoomableSheet = false
-    /// Set once the viewer would have something to show. Each platform decides that
-    /// differently, but the tap gate itself is shared.
+    /// Set once the viewer would have something to show — differently per platform,
+    /// which is what lets the tap gate be shared.
     @State var canPresentViewer = false
-    /// iOS only — the loaded image is what the viewer sizes itself from.
+    /// iOS only: what the viewer sizes itself from.
     @State var fullResolutionImage: UIImage?
 
     var body: some View {
@@ -63,13 +60,11 @@ struct SubmissionMainImage: View {
                     .fadingSheet(isPresented: $showZoomableSheet) {
                         zoomableViewer
                     }
-                    // Only attach the tap gesture when zooming is allowed; otherwise it
-                    // would silently consume taps meant for a wrapping handler (e.g. the
-                    // text cover's tap-to-read).
+                    // Only when zooming is allowed, or it silently eats taps meant for
+                    // a wrapping handler — the story cover's tap-to-read. And only once
+                    // there is something to zoom: opening early is a black screen.
                     .applying {
                         if allowZoomableSheet {
-                            // And only once there is something to zoom: the viewer has no
-                            // content of its own, so opening it early is a black screen.
                             $0.onTapGesture {
                                 if canPresentViewer {
                                     showZoomableSheet = true
@@ -85,8 +80,8 @@ struct SubmissionMainImage: View {
         .applying { preparingFullResolutionMedia($0) }
     }
 
-    /// The zoom-level chain is the same on both platforms; the `Zoomable` it is applied
-    /// to is not, so it takes that value rather than being repeated in each branch.
+    /// Takes the `Zoomable` as a value so the shared chain isn't repeated in each
+    /// branch: the modifiers are `Zoomable`-typed and the two differ in their generic.
     private func configuredViewer<Content: View>(_ zoomable: Zoomable<Content>) -> some View {
         zoomable
             .initialZoomLevel(.boundedFill(maxScaledFit: 2))
@@ -111,13 +106,11 @@ struct SubmissionMainImage: View {
             }
     }
 
-    /// Publishing the file URL is what enables Save and Share. `FAImage` owns the load
-    /// and reports no path, so ask the store directly — it coalesces with the load
-    /// already in flight, so this costs no second download.
+    /// The file URL is what enables Save and Share. `FAImage` owns the load and reports
+    /// no path, so ask the store, which coalesces with the load already in flight.
     ///
-    /// Skipped where the caller can't use it: `SubmissionPreviewView` and the audio cover
-    /// pass `.constant(nil)`, and staging a copy of every previewed thumbnail for a
-    /// binding that discards it is pure waste.
+    /// Skipped where the caller can't use it — `SubmissionPreviewView` and the audio
+    /// cover pass `.constant(nil)` — rather than staging a copy of every thumbnail.
     private func preparingFullResolutionMedia(_ view: some View) -> some View {
         view.task(id: fullResolutionMediaUrl) {
             guard allowZoomableSheet else { return }
@@ -126,8 +119,8 @@ struct SubmissionMainImage: View {
         }
     }
 
-    /// No close button: `Zoomable` dismisses on a downward pull the way iOS's sheet does,
-    /// and SkipUI's presentation still dismisses on the system Back gesture.
+    /// No close button: `Zoomable` dismisses on a downward pull as iOS's sheet does, and
+    /// the presentation still answers the system Back gesture.
     private var zoomableViewer: some View {
         configuredViewer(
             Zoomable {
@@ -174,7 +167,7 @@ struct SubmissionMainImage: View {
         }
     }
 
-    /// Nothing to attach: Kingfisher's `onSuccess` already publishes both, through
+    /// Nothing to attach: Kingfisher's `onSuccess` publishes both, in
     /// `prepareFullResolutionMedia`.
     private func preparingFullResolutionMedia(_ view: some View) -> some View {
         view
