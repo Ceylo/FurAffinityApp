@@ -58,6 +58,9 @@ public struct Zoomable<Content: View>: View {
     /// Set when the current drag is pulling the viewer closed rather than panning.
     @State var isDismissDrag = false
     @State var dismissOffset = CGSize.zero
+    /// Last measured viewport. Restored with the rest of the state, so a re-presentation
+    /// can reset the zoom before Compose has measured again.
+    @State var viewport = Foundation.CGSize.zero
 
     @Environment(\.dismiss) var dismiss
 
@@ -93,8 +96,6 @@ public struct Zoomable<Content: View>: View {
 
     public var body: some View {
         GeometryReader { geometry in
-            let viewport = geometry.faSize
-
             content
                 .aspectRatio(contentAspectRatio, contentMode: .fit)
                 .scaleEffect(scale)
@@ -102,9 +103,6 @@ public struct Zoomable<Content: View>: View {
                     x: offset.width + dismissOffset.width,
                     y: offset.height + dismissOffset.height
                 )
-                // Keyed on the Bool, so the snap back animates and the pull itself
-                // doesn't. (`withAnimation` marks the whole Compose frame on SkipUI.)
-                .animation(.easeOut(duration: 0.2), value: isDismissDrag)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .gesture(
                     MagnifyGesture()
@@ -148,16 +146,27 @@ public struct Zoomable<Content: View>: View {
                             }
                         }
                         .onEnded { _ in
+                            // SkipUI routes the simultaneous detector's `onDragCancel`
+                            // here, so a plain tap ends up in `onEnded` too, with no
+                            // `onChanged` before it. `didPan` is left for the tap that
+                            // follows a pan to clear.
+                            guard didPan else { return }
+
                             guard isDismissDrag else {
                                 offset = clampedOffset(offset, in: viewport)
                                 baseOffset = offset
                                 return
                             }
-                            if dismissOffset.height > dismissThreshold {
+
+                            let shouldDismiss = dismissOffset.height > dismissThreshold
+                            isDismissDrag = false
+                            if shouldDismiss {
+                                dismissOffset = .zero
                                 dismiss()
                             } else {
-                                dismissOffset = .zero
-                                isDismissDrag = false
+                                // The one target that is set once and stays, so the only
+                                // one that can be animated without stalling the pull.
+                                withAnimation { dismissOffset = .zero }
                             }
                         }
                 )
@@ -171,16 +180,40 @@ public struct Zoomable<Content: View>: View {
                     }
                     toggleZoom(in: viewport)
                 }
-                // Keyed on the viewport, not `onAppear`: the first composition can run
-                // before Compose has measured it, and every zoom level derives from that
-                // size — applying at 0×0 would silently latch the viewer at fit.
+                // Keyed on the viewport, not `onAppear` alone: the first composition can
+                // run before Compose has measured it, and every zoom level derives from
+                // that size — applying at 0×0 would silently latch the viewer at fit.
                 .onChange(of: Foundation.CGSize(geometry.size), initial: true) { _, size in
-                    guard !didApplyInitialZoom, size.width > 0, size.height > 0 else { return }
+                    guard size.width > 0, size.height > 0 else { return }
+                    viewport = size
+                    guard !didApplyInitialZoom else { return }
                     didApplyInitialZoom = true
-                    scale = self.scale(for: initialZoomLevel, in: size)
-                    baseScale = scale
+                    resetForPresentation(in: size)
+                }
+                // `onAppear` is backed by a plain `remember`, so unlike the state it does
+                // re-run per presentation — and it runs before the fresh measurement.
+                // The restored viewport is only an approximation (the sheet is remeasured
+                // 24pt shorter as it dismisses), so reset from it to avoid a flash and
+                // let the measurement above re-apply the real initial zoom.
+                .onAppear {
+                    didApplyInitialZoom = false
+                    resetForPresentation(in: viewport)
                 }
         }
+    }
+
+    /// Puts the viewer back to its opening state. Needed because skipstone backs `@State`
+    /// with `rememberSaveable`, which restores the previous presentation's pull and zoom.
+    private func resetForPresentation(in viewport: Foundation.CGSize) {
+        offset = .zero
+        baseOffset = .zero
+        dismissOffset = .zero
+        didPan = false
+        isDismissDrag = false
+        scale = viewport.width > 0 && viewport.height > 0
+            ? self.scale(for: initialZoomLevel, in: viewport)
+            : 1
+        baseScale = scale
     }
 
     // MARK: - Zoom levels
