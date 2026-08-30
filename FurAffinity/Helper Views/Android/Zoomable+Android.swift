@@ -11,23 +11,22 @@
 //  on iOS, so the caller states it via `contentSize(_:)` — `SubmissionMainImage` knows it
 //  from the submission's aspect ratio. Without it, zoom levels fall back to `fit`.
 //
-//  It also owns the viewer's pull-to-dismiss, because only it knows whether a downward
-//  drag has anywhere left to pan; iOS gets that free from `UISheetPresentationController`.
+//  Pull-to-dismiss is *not* this view's: it is Compose's, from the `ModalBottomSheet`
+//  behind `fadingSheet`. All this view contributes is `interactiveDismissDisabled`,
+//  saying whether a vertical drag still has somewhere to pan — the declared equivalent of
+//  the negotiation iOS gets free between `UIScrollView` and
+//  `UISheetPresentationController`.
 //
-//  Rebuilding it on a `ScrollView([.horizontal, .vertical])` was rejected: SwiftUI has no
-//  zoomable scroll view (magnification is a `UIScrollView` feature), so the pinch, the
-//  content sizing and the initial zoom would still be hand-rolled, against
-//  `ScrollViewReader`'s JNI local-ref hazard, to buy only `ModalBottomSheet`'s
-//  nested-scroll dismissal.
+//  Rebuilding it on a `ScrollView([.horizontal, .vertical])` was rejected: Compose has no
+//  zoomable scroll container (`transformable`/`detectTransformGestures` hand you deltas to
+//  apply yourself), and SkipUI drives both axes of a two-axis `ScrollView` off a single
+//  `rememberScrollState`, so it can't pan X and Y independently.
 //
 
 import SwiftUI
 
 /// How far a drag must travel before it counts as a pan rather than a tap.
 private let panSlop: Double = 4
-
-/// How far the content must be pulled down before releasing dismisses the viewer.
-private let dismissThreshold: Double = 120
 
 public enum ZoomLevel {
     case fit
@@ -55,14 +54,18 @@ public struct Zoomable<Content: View>: View {
     @State var didApplyInitialZoom = false
     /// Latched once a drag passes the slop, so a pan's release can't be taken for a tap.
     @State var didPan = false
-    /// Set when the current drag is pulling the viewer closed rather than panning.
-    @State var isDismissDrag = false
-    @State var dismissOffset = CGSize.zero
+    /// Latched when the current drag is the sheet's pull. The content then stays put for
+    /// the rest of the gesture — including on the horizontal axis, which would otherwise
+    /// drift sideways while the sheet travels down.
+    @State var sheetOwnsDrag = false
+    /// Bumped by `toggleZoom`, so `.animation(_:value:)` animates that one target and
+    /// nothing else. `withAnimation` marks the whole Compose frame, which arms the
+    /// `Animatable`s behind `scaleEffect`/`offset`; an armed one restarts on every
+    /// per-frame gesture write and eases towards a target the finger keeps moving.
+    @State var zoomToggleCount = 0
     /// Last measured viewport. Restored with the rest of the state, so a re-presentation
     /// can reset the zoom before Compose has measured again.
     @State var viewport = Foundation.CGSize.zero
-
-    @Environment(\.dismiss) var dismiss
 
     public init(@ViewBuilder content: () -> Content) {
         self.content = content()
@@ -96,20 +99,17 @@ public struct Zoomable<Content: View>: View {
 
     public var body: some View {
         GeometryReader { geometry in
-            // iOS's sheet dims the page behind as the pull travels. Fading `fadingSheet`'s
-            // backdrop can't do that here: SkipUI hands `ModalBottomSheet` a
-            // `Color.Unspecified` container that paints an opaque grey, so what the fade
-            // reveals is that grey, not the page. Fade and shrink the content instead.
-            let dismissProgress = min(max(dismissOffset.height, 0) / dismissThreshold, 1)
+            // Whoever has somewhere to go owns vertical drags: the content while it can
+            // still be panned, the sheet once it can't. SkipUI passes this preference
+            // straight to `ModalBottomSheet`'s `sheetGesturesEnabled`, so it tracks the
+            // zoom live, one composition behind.
+            let canPanVertically = maxOffset(in: viewport).height > 0.5
 
             content
                 .aspectRatio(contentAspectRatio, contentMode: .fit)
-                .scaleEffect(scale * (1 - 0.08 * dismissProgress))
-                .offset(
-                    x: offset.width + dismissOffset.width,
-                    y: offset.height + dismissOffset.height
-                )
-                .opacity(1 - 0.4 * dismissProgress)
+                .scaleEffect(scale)
+                .offset(x: offset.width, y: offset.height)
+                .animation(.default, value: zoomToggleCount)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .gesture(
                     MagnifyGesture()
@@ -131,26 +131,29 @@ public struct Zoomable<Content: View>: View {
                             guard abs(translation.width) > panSlop
                                     || abs(translation.height) > panSlop else {
                                 didPan = false
-                                isDismissDrag = false
-                                dismissOffset = .zero
+                                sheetOwnsDrag = false
                                 return
                             }
 
-                            // The first change with a direction picks the mode for the
-                            // whole gesture: a pan can't become a dismiss halfway.
+                            // The first change with a direction picks the owner for the
+                            // whole gesture: a pan can't become a pull halfway.
                             if !didPan {
                                 didPan = true
-                                isDismissDrag = isDismissPull(translation, in: viewport)
+                                sheetOwnsDrag = abs(translation.height) > abs(translation.width)
+                                    && maxOffset(in: viewport).height <= 0.5
                             }
 
-                            if isDismissDrag {
-                                dismissOffset = translation
-                            } else {
-                                offset = CGSize(
+                            // Compose is already translating the sheet; moving the
+                            // content too would double it.
+                            guard !sheetOwnsDrag else { return }
+
+                            offset = clampedOffset(
+                                CGSize(
                                     width: baseOffset.width + translation.width,
                                     height: baseOffset.height + translation.height
-                                )
-                            }
+                                ),
+                                in: viewport
+                            )
                         }
                         .onEnded { _ in
                             // SkipUI routes the simultaneous detector's `onDragCancel`
@@ -158,23 +161,8 @@ public struct Zoomable<Content: View>: View {
                             // `onChanged` before it. `didPan` is left for the tap that
                             // follows a pan to clear.
                             guard didPan else { return }
-
-                            guard isDismissDrag else {
-                                offset = clampedOffset(offset, in: viewport)
-                                baseOffset = offset
-                                return
-                            }
-
-                            let shouldDismiss = dismissOffset.height > dismissThreshold
-                            isDismissDrag = false
-                            if shouldDismiss {
-                                dismissOffset = .zero
-                                dismiss()
-                            } else {
-                                // The one target that is set once and stays, so the only
-                                // one that can be animated without stalling the pull.
-                                withAnimation { dismissOffset = .zero }
-                            }
+                            sheetOwnsDrag = false
+                            baseOffset = offset
                         }
                 )
                 // SkipUI's simultaneous-drag detector never *consumes* pointer events,
@@ -187,6 +175,7 @@ public struct Zoomable<Content: View>: View {
                     }
                     toggleZoom(in: viewport)
                 }
+                .interactiveDismissDisabled(canPanVertically)
                 // Keyed on the viewport, not `onAppear` alone: the first composition can
                 // run before Compose has measured it, and every zoom level derives from
                 // that size — applying at 0×0 would silently latch the viewer at fit.
@@ -210,17 +199,20 @@ public struct Zoomable<Content: View>: View {
     }
 
     /// Puts the viewer back to its opening state. Needed because skipstone backs `@State`
-    /// with `rememberSaveable`, which restores the previous presentation's pull and zoom.
+    /// with `rememberSaveable`, which restores the previous presentation's zoom and pan.
     private func resetForPresentation(in viewport: Foundation.CGSize) {
         offset = .zero
         baseOffset = .zero
-        dismissOffset = .zero
         didPan = false
-        isDismissDrag = false
+        sheetOwnsDrag = false
         scale = viewport.width > 0 && viewport.height > 0
             ? self.scale(for: initialZoomLevel, in: viewport)
             : 1
         baseScale = scale
+        // `zoomToggleCount` is deliberately not reset: bumping it back to 0 is itself a
+        // change, and would animate the snap to the initial zoom. It and the value
+        // `.animation` remembers are both `rememberSaveable`, so they stay in step
+        // across a presentation on their own.
     }
 
     // MARK: - Zoom levels
@@ -253,26 +245,13 @@ public struct Zoomable<Content: View>: View {
         let target = abs(scale - primary) < 1e-3
             ? scale(for: secondaryZoomLevel, in: viewport)
             : primary
-        // `withAnimation` marks the whole Compose frame on SkipUI, so it is banned in
-        // shared code — tolerable here only because the viewer is full-screen.
-        withAnimation {
-            scale = max(1, target)
-            baseScale = scale
-            offset = clampedOffset(.zero, in: viewport)
-            baseOffset = offset
-        }
-    }
-
-    // MARK: - Dismissal
-
-    /// A downward drag dismisses only when panning has nothing left to give: dominantly
-    /// vertical, and already at the bottom-most pan position — which includes `maxY == 0`,
-    /// an image small enough to be wholly visible.
-    private func isDismissPull(_ translation: CGSize, in viewport: Foundation.CGSize) -> Bool {
-        guard translation.height > 0, translation.height > abs(translation.width) else {
-            return false
-        }
-        return baseOffset.height >= maxOffset(in: viewport).height - 0.5
+        scale = max(1, target)
+        baseScale = scale
+        offset = clampedOffset(.zero, in: viewport)
+        baseOffset = offset
+        // Arms `.animation(_:value:)` for this one composition — the "target set once"
+        // shape, the only one that survives a gesture running alongside it.
+        zoomToggleCount += 1
     }
 
     // MARK: - Bounds
