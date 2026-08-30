@@ -134,6 +134,18 @@ close button — iOS gets that from `UISheetPresentationController`, Android fro
 explicit drag in `Zoomable`, which is the only place that knows whether a downward drag
 has anywhere left to pan. The system Back gesture still closes it.
 
+The Android pull tracks the finger 1:1 — no `.animation(_:value:)` anywhere on the offset
+chain, only a `withAnimation` on the snap back (see `shared-sources.md`). Where iOS's
+sheet dims the page behind, this one fades and shrinks the *content*: fading
+`fadingSheet`'s backdrop was tried and reverted, because SkipUI hands `ModalBottomSheet`
+a `Color.Unspecified` container that paints an opaque grey, so the fade reveals that grey
+rather than the submission page. Making the presentation genuinely transparent would take
+a `Ceylo/skip-ui` change.
+
+The viewer also resets itself on each presentation — offset, pull and zoom — because
+skipstone backs `@State` with `rememberSaveable`, which otherwise restores whatever the
+last presentation was left in.
+
 Deferred, with the reason:
 
 | Not ported | Why |

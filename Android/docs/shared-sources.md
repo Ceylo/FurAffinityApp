@@ -278,3 +278,15 @@ grep Java_initState_ .build/plugins/outputs/*/FurAffinityUI/destination/skipston
   its rows and turns its `scrollTo` into an animated scroll. Use `.animation(_:value:)`,
   which is scoped to a subtree. See
   [§`withAnimation` marks the whole frame](screens.md#withanimation-marks-the-whole-frame-process-wide).
+- **`.animation(_:value:)` only suits a target that is set once.** SkipUI resolves an
+  animated property through a Compose `Animatable`, re-launching `animateTo` on every
+  write while the animation is armed. Arm one on a value a gesture rewrites each frame
+  and it eases from a standstill toward a target the finger keeps moving: the property
+  creeps and never arrives. `Zoomable+Android`'s pull-to-dismiss cost a bug this way —
+  the offset now carries no animation at all, and only the snap back is animated.
+- **A bridged `@State` survives a sheet dismissal.** Skipstone backs it with
+  `rememberSaveable`, which saves on disposal and restores at the same key, so
+  re-presenting a sheet hands the content whatever the last presentation left behind.
+  Presented content has to reset itself — `Zoomable+Android` does it from `onAppear`
+  (a plain `remember`, so that one *does* re-run) and again from the fresh viewport
+  measurement, since the sheet is remeasured 24 pt shorter as it dismisses.
