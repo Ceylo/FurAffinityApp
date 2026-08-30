@@ -96,13 +96,20 @@ public struct Zoomable<Content: View>: View {
 
     public var body: some View {
         GeometryReader { geometry in
+            // iOS's sheet dims the page behind as the pull travels. Fading `fadingSheet`'s
+            // backdrop can't do that here: SkipUI hands `ModalBottomSheet` a
+            // `Color.Unspecified` container that paints an opaque grey, so what the fade
+            // reveals is that grey, not the page. Fade and shrink the content instead.
+            let dismissProgress = min(max(dismissOffset.height, 0) / dismissThreshold, 1)
+
             content
                 .aspectRatio(contentAspectRatio, contentMode: .fit)
-                .scaleEffect(scale)
+                .scaleEffect(scale * (1 - 0.08 * dismissProgress))
                 .offset(
                     x: offset.width + dismissOffset.width,
                     y: offset.height + dismissOffset.height
                 )
+                .opacity(1 - 0.4 * dismissProgress)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .gesture(
                     MagnifyGesture()
