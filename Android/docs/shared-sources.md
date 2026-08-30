@@ -278,12 +278,23 @@ grep Java_initState_ .build/plugins/outputs/*/FurAffinityUI/destination/skipston
   its rows and turns its `scrollTo` into an animated scroll. Use `.animation(_:value:)`,
   which is scoped to a subtree. See
   [§`withAnimation` marks the whole frame](screens.md#withanimation-marks-the-whole-frame-process-wide).
-- **`.animation(_:value:)` only suits a target that is set once.** SkipUI resolves an
-  animated property through a Compose `Animatable`, re-launching `animateTo` on every
-  write while the animation is armed. Arm one on a value a gesture rewrites each frame
-  and it eases from a standstill toward a target the finger keeps moving: the property
-  creeps and never arrives. `Zoomable+Android`'s pull-to-dismiss cost a bug this way —
-  the offset now carries no animation at all, and only the snap back is animated.
+- **An armed animation poisons every per-frame write in the same subtree.** `.offset`
+  and `.scaleEffect` don't set a Compose value, they route it through `toAnimatable`
+  (`Animation.swift`), which parks it in an `Animatable` and re-launches `animateTo` on
+  every write while an animation is armed. So a gesture writing 60 times a second eases
+  from a standstill toward a target the finger keeps moving: the property creeps and
+  never arrives. Worse, `withAnimation` is what arms it — process-wide, for the whole
+  frame — so an animated zoom toggle is enough to poison a drag that starts a second
+  later. And the `Animatable`'s resume record is `rememberSaveable`, so an interrupted
+  animation's start value outlives a sheet dismissal and the next presentation's first
+  frames render from it. Use `.animation(_:value:)` on a value **set once** (a counter
+  bumped by the action), which arms only the composition where it changes;
+  `Zoomable+Android`'s zoom toggle is that shape, and its pull carries no animation at
+  all because the sheet, not the view, does the moving.
+- **SkipUI's `.offset` is Compose's *layout* offset**, not a draw-time translation, so
+  the moved node is still clipped to the rect it had before the offset. Content that
+  must survive being pushed past its own bounds has to be sized to the viewport first,
+  or — as in `Zoomable+Android` — kept clamped so the pre-offset rect always covers it.
 - **A bridged `@State` survives a sheet dismissal.** Skipstone backs it with
   `rememberSaveable`, which saves on disposal and restores at the same key, so
   re-presenting a sheet hands the content whatever the last presentation left behind.

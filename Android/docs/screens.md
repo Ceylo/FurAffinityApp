@@ -130,21 +130,37 @@ and the metadata screen.
 loader and the viewer's content. The viewer is presented from `fadingSheet` on both
 platforms, and behaves the same way: **a single tap** toggles fill/fit (matching iOS's
 `numberOfTapsRequired = 1`), and it is dismissed by **pulling it down** rather than by a
-close button — iOS gets that from `UISheetPresentationController`, Android from an
-explicit drag in `Zoomable`, which is the only place that knows whether a downward drag
-has anywhere left to pan. The system Back gesture still closes it.
+close button. The system Back gesture still closes it.
 
-The Android pull tracks the finger 1:1 — no `.animation(_:value:)` anywhere on the offset
-chain, only a `withAnimation` on the snap back (see `shared-sources.md`). Where iOS's
-sheet dims the page behind, this one fades and shrinks the *content*: fading
-`fadingSheet`'s backdrop was tried and reverted, because SkipUI hands `ModalBottomSheet`
-a `Color.Unspecified` container that paints an opaque grey, so the fade reveals that grey
-rather than the submission page. Making the presentation genuinely transparent would take
-a `Ceylo/skip-ui` change.
+The pull is the presentation's on both platforms — `UISheetPresentationController`'s on
+iOS, `ModalBottomSheet`'s here. Getting Compose's took presenting with `.sheet`: SkipUI
+draws `sheet` and `fullScreenCover` as the same `ModalBottomSheet`, but passes
+`sheetGesturesEnabled: !(isFullScreen || interactiveDismissDisabled)`, so
+`fullScreenCover` is precisely what had switched the pull off and made `Zoomable` grow a
+hand-rolled one.
 
-The viewer also resets itself on each presentation — offset, pull and zoom — because
-skipstone backs `@State` with `rememberSaveable`, which otherwise restores whatever the
-last presentation was left in.
+What `Zoomable` still owns is the *negotiation* iOS gets free between `UIScrollView` and
+the sheet: `.interactiveDismissDisabled(maxOffset(in:).height > 0.5)`, a preference SkipUI
+feeds straight to `sheetGesturesEnabled`, so vertical drags belong to the content exactly
+while it has somewhere left to pan and to the sheet once it hasn't. A `sheetOwnsDrag`
+latch then makes the content ignore the whole of a drag the sheet owns — the horizontal
+component included, or it drifts sideways while the sheet travels down.
+
+The backdrop deliberately does **not** fade to reveal the page: SkipUI hands
+`ModalBottomSheet` a `Color.Unspecified` container that paints an opaque grey, and
+`presentationBackground` is `@available(*, unavailable)` in skip-fuse-ui, so a fade
+reveals that grey rather than the submission. Compose's own scrim does the reveal instead.
+
+Accepted cost of `.sheet` over `fullScreenCover`, weighed and kept: an 18 pt band at the
+top (`presentationDragIndicator(.hidden)` suppresses the capsule but keeps its footprint)
+showing the scrimmed page, 16 pt rounded top corners, and `BottomSheetDefaults`'
+**640 pt width cap**, which boxes the viewer in landscape and on tablets. Undoing all
+three is one line in `Ceylo/skip-ui` — dropping `isFullScreen ||` from that
+`interactiveDismissDisabled`, then presenting with `fullScreenCover` again.
+
+The viewer also resets itself on each presentation — offset and zoom — because skipstone
+backs `@State` with `rememberSaveable`, which otherwise restores whatever the last
+presentation was left in.
 
 Deferred, with the reason:
 
