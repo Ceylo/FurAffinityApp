@@ -1,17 +1,19 @@
 //
 //  FAWebView.swift
-//  FurAffinityUI (Android)
+//  FAKit (Android)
 //
 //  skip-web glue for the Android build: a WebView that solves Cloudflare and
 //  hands the shared FAKit networking layer what it needs — the live WebView
 //  User-Agent (cf_clearance is UA-bound), the WebView's Cookie header, and a
 //  WebView-fetch fallback for pages that still draw a challenge.
 //
+//  Deliberately *unguarded*, like `FAHTTPDataSource`: the unguarded
+//  `AndroidRootView` and `LoginCookies+Android` reach `FAWebSession`, so the Darwin
+//  bridge pass needs these declarations too. Nothing on Apple platforms uses them.
+//
 
 import Foundation
-import SwiftUI
 import SkipWeb
-import FAKit
 
 /// The one User-Agent every WebView in this app is configured with.
 ///
@@ -26,9 +28,15 @@ import FAKit
 ///
 /// Nil if the platform default can't be read, which leaves the WebViews on their
 /// stock UA: unidentified traffic, but nothing broken.
-enum FAWebViewUserAgent {
-    static let string: String? = {
-        guard let base = AndroidAppInfo.webViewDefaultUserAgent else {
+public enum FAWebViewUserAgent {
+    /// The stock platform WebView User-Agent. Installed by the app layer, like
+    /// `FAUserAgent.webViewUserAgentProvider`: it comes from a JNI bridge into the
+    /// app's own Kotlin, which this module cannot reach. `nonisolated(unsafe)` because
+    /// SwiftUI property initializers read it and are not main-actor isolated.
+    nonisolated(unsafe) public static var platformProvider: (@Sendable () -> String?)?
+
+    public static let string: String? = {
+        guard let base = platformProvider?() else {
             logger.error("FAWebViewUserAgent: no platform WebView User-Agent; leaving it unset")
             return nil
         }

@@ -39,6 +39,12 @@ import SwiftUI
         // bundleIdentifier names the Skip module rather than the install.
         FALogSubsystem.override = AndroidAppInfo.packageName
         FAAppVersion.override = AndroidAppInfo.versionName
+        // FAKit owns the web layer but not the two Kotlin bridges behind it. Here
+        // rather than in a `.task`: both are read as a view is *constructed*.
+        FAWebViewUserAgent.platformProvider = { AndroidAppInfo.webViewDefaultUserAgent }
+        FAWebSession.imageCredentialsSink = { userAgent, cookieHeader in
+            CoilImageLoader.configure(userAgent: userAgent, cookie: cookieHeader)
+        }
         // The counterpart of FurAffinityApp.init()'s line, same shared format.
         logAppLaunch(
             operatingSystem: AndroidAppInfo.operatingSystem,

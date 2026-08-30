@@ -1,25 +1,24 @@
 //
-//  FAChallengeView.swift
-//  FurAffinityUI (Android)
+//  FAChallengeView+Android.swift
+//  FAKit (Android)
 //
-//  Android's Cloudflare challenge view, matching the public surface of FAKit's
-//  WebKit-backed `FAChallengeView`. It can't live in FAKit: it needs skip-web,
-//  which FAKit can't depend on (see FAHTTPDataSource for the CJNI rationale).
+//  Android's Cloudflare challenge view, the twin of `iOS/FAChallengeView.swift`.
 //
-//  Unguarded on purpose (Android/docs/shared-sources.md § Rules for shared sources): FAKit's own `#if !os(Android)` declaration exists in
-//  the Darwin bridge compile, and this module's shadows it.
+//  Guarded and `+Android`-suffixed for the same reasons as `FALoginView+Android.swift`,
+//  which spells them out.
 //
 //  Unlike iOS's, this one never clears the WebView's cookie jar; it expires just the
 //  Cloudflare names via `FAWebSession.clearCloudflareCookies()`, whose doc says why.
 //
 
+#if os(Android)
+
 import Foundation
 import SwiftUI
 import SkipWeb
-import FAKit
 import FAPages
 
-struct FAChallengeView: View {
+public struct FAChallengeView: View {
     var onResolved: () -> Void
     var onInteractionRequired: (() -> Void)?
 
@@ -29,7 +28,7 @@ struct FAChallengeView: View {
 
     let config = WebEngineConfiguration(customUserAgent: FAWebViewUserAgent.string)
 
-    init(
+    public init(
         onResolved: @escaping () -> Void,
         onInteractionRequired: (() -> Void)? = nil
     ) {
@@ -37,7 +36,7 @@ struct FAChallengeView: View {
         self.onInteractionRequired = onInteractionRequired
     }
 
-    var body: some View {
+    public var body: some View {
         WebView(
             configuration: config,
             navigator: navigator,
@@ -107,3 +106,5 @@ struct FAChallengeView: View {
         return (try? FAHomePage(html: html, url: FAURLs.homeUrl)) != nil
     }
 }
+
+#endif

@@ -12,7 +12,14 @@ import UIKit
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
+#if os(Android)
+// Not `import Observation`: only SkipAndroidBridge's `Observation` *struct*, which
+// SkipSwiftUI re-exports, gives the @Observable below a registrar Compose can see.
+// The module of the same name leaves it silently inert.
+import SwiftUI
+#else
 import Observation
+#endif
 import FAPages
 
 /// Coordinates the in-app CloudFlare challenge flow:
@@ -46,22 +53,12 @@ public final class CloudflareChallengeCoordinator {
     /// attempt a passive (no-UI) resolution before falling back to the sheet.
     public private(set) var backgroundResolutionPending: Bool = false
 
-    /// Called whenever either stage flag changes.
-    ///
-    /// iOS observes the two properties directly through Observation. Skip's
-    /// Compose bridge doesn't see changes to an `@Observable` declared in another
-    /// module, so Android mirrors them into the view's own `@State` from here —
-    /// without it, neither stage ever mounts.
-    @ObservationIgnored
-    public var onStateChange: (@Sendable @MainActor () -> Void)?
-
     private func setStages(pending: Bool, backgroundResolution: Bool) {
         guard pending != self.pending || backgroundResolution != backgroundResolutionPending else {
             return
         }
         self.pending = pending
         self.backgroundResolutionPending = backgroundResolution
-        onStateChange?()
     }
 
     /// Safety-net backstop: if neither passive resolution nor checkbox detection
@@ -77,11 +74,9 @@ public final class CloudflareChallengeCoordinator {
     // Only the *defaults* are platform-specific; the state machine below is not,
     // so it stays shared rather than being duplicated for Android.
     //
-    // Android has no UIApplication, no WKWebView to resolve headlessly in, and
-    // keeps its cookies in the WebView's own process-global jar rather than
-    // HTTPCookieStorage — which FAKit can't reach, because it can't depend on
-    // skip-web (see FAHTTPDataSource). So the defaults there are inert and the
-    // app installs the real ones through `configure(…)` at startup.
+    // Android has no UIApplication, no WKWebView to resolve headlessly in, and keeps
+    // its cookies in the WebView's own jar, which only reads async. So the defaults
+    // here are inert and `AndroidRootView` installs the real ones via `configure(…)`.
     #if os(Android)
     private static let defaultIsInBackground: @Sendable @MainActor () -> Bool = { false }
     private static let defaultBackgroundResolve: @Sendable @MainActor () async -> Bool = { false }

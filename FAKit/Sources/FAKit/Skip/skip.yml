@@ -1,0 +1,7 @@
+# Natively-compiled Skip Fuse module, like FurAffinityUI. FAKit carries the plugin so
+# it can own the Android web layer: only such a module gets the Kotlin glue a bridged
+# view's `@State` needs. `package` is required — skipstone would otherwise derive the
+# unusable "fakit.module" from a name that doesn't split on camel case.
+skip:
+  mode: 'native'
+  package: 'fa.kit'

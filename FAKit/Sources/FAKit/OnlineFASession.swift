@@ -380,18 +380,15 @@ extension OnlineFASession {
     /// is logged in. The caller is responsible for stripping any transport-layer
     /// cookies (e.g. `cf_clearance`) and depositing them in
     /// `HTTPCookieStorage.shared` itself.
-    public convenience init?(cookies: [HTTPCookie], dataSource: HTTPDataSource? = nil) async throws {
+    /// - Parameter dataSource: required rather than defaulted: Android has no default
+    /// to fall back on, since its requests must replay a Cloudflare clearance only the
+    /// WebView can obtain. Apple callers pass `URLSession.sharedForFARequests`.
+    public convenience init?(cookies: [HTTPCookie], dataSource: HTTPDataSource) async throws {
         guard cookies.map(\.name).contains("a") else {
             return nil
         }
 
-        let resolvedDataSource: HTTPDataSource
-        if let dataSource {
-            resolvedDataSource = dataSource
-        } else {
-            resolvedDataSource = try await FADefaultDataSource.resolve()
-        }
-        let data = try await resolvedDataSource.httpData(from: FAURLs.homeUrl, cookies: cookies)
+        let data = try await dataSource.httpData(from: FAURLs.homeUrl, cookies: cookies)
         let page = try await make(FAHomePage.self, with: data, url: FAURLs.homeUrl)
         logger.info("User is logged in")
 
@@ -399,7 +396,7 @@ extension OnlineFASession {
             username: page.username,
             displayUsername: page.displayUsername,
             cookies: cookies,
-            dataSource: resolvedDataSource
+            dataSource: dataSource
         )
     }
 }

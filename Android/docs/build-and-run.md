@@ -153,8 +153,10 @@ third appears.
    `OSCompat` and the three call sites choose with `#if canImport(os)`.
 
 2. **`canImport(SwiftUI)` in FAKit.** On Android `SwiftUI` is SkipSwiftUI's façade,
-   which requires CJNI through SkipAndroidBridge → SwiftJNI — modules a plain
-   SwiftPM package like FAKit cannot see. `DynamicThumbnail` gated a `GeometryProxy`
+   which reaches `CJNI` through SkipAndroidBridge → SwiftJNI. `CJNI` is a plain C
+   target in `swift-jni`, and SwiftPM only puts its modulemap on a target whose own
+   dependency closure reaches it — which FAKit's does not, so FAKit cannot compile
+   that façade. `DynamicThumbnail` gated a `GeometryProxy`
    overload on `canImport(SwiftUI)`, so it compiled fine in debug (FAKit happened to
    go first) and failed the **release** build outright with
    `missing required module 'CJNI'`. It gates on `#if !os(Android)` now.

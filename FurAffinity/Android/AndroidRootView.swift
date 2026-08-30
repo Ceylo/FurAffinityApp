@@ -21,12 +21,6 @@ struct AndroidRootView: View {
     @State var navigationStream = NavigationStream()
     @State var path = [FATarget]()
     @State var selectedTab: Tab = .submissions
-    // Mirrors of the coordinator's two stage flags. iOS's RootView observes the
-    // coordinator itself, but Skip's Compose bridge doesn't see changes to an
-    // @Observable declared in another module, so the stages are driven from
-    // local state fed by `onStateChange` below.
-    @State var challengePending = false
-    @State var challengeBackgroundPending = false
 
     enum Tab {
         case submissions
@@ -52,7 +46,7 @@ struct AndroidRootView: View {
             // has to lay out and render at full size to solve anything — and it
             // escalates to the sheet only when Cloudflare says the challenge is
             // interactive, or when the coordinator's safety timeout expires.
-            if challengeBackgroundPending {
+            if CloudflareChallengeCoordinator.shared.backgroundResolutionPending {
                 FAChallengeView(
                     // Push the fresh clearance into the image layer *before* the
                     // parked callers are released. Nothing else pushes it, so
@@ -129,9 +123,9 @@ struct AndroidRootView: View {
         // fails the parked request rather than leaving it hanging.
         .sheet(
             isPresented: Binding(
-                get: { challengePending },
+                get: { CloudflareChallengeCoordinator.shared.pending },
                 set: { isPresented in
-                    if !isPresented && challengePending {
+                    if !isPresented && CloudflareChallengeCoordinator.shared.pending {
                         CloudflareChallengeCoordinator.shared.markFailed()
                     }
                 }
@@ -152,11 +146,6 @@ struct AndroidRootView: View {
                 // sheet in front of the user that was about to go away by itself.
                 safetyTimeout: .seconds(25)
             )
-            CloudflareChallengeCoordinator.shared.onStateChange = {
-                let coordinator = CloudflareChallengeCoordinator.shared
-                challengePending = coordinator.pending
-                challengeBackgroundPending = coordinator.backgroundResolutionPending
-            }
         }
         .environment(model)
         .environment(model.errorStorage)
