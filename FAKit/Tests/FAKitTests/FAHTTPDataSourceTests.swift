@@ -67,9 +67,9 @@ actor ScriptedTransport {
 
     private func repair(observed: UInt64) -> UInt64 {
         calls.append(.repair(observed: observed))
-        // The same rule CloudflareConnectionRepair states, so a test can tell one
-        // eviction from N.
-        if observed == epoch { epoch += 1 }
+        if CloudflareConnectionRepair.shouldEvict(observed: observed, current: epoch) {
+            epoch += 1
+        }
         return epoch
     }
 
