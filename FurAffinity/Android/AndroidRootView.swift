@@ -115,9 +115,17 @@ struct AndroidRootView: View {
                 }
             }
         }
-        // Above the TabView so it also covers pushed screens.
+        // Above the TabView so they also cover pushed screens.
         .overlay(alignment: .top) {
             errorBanner
+        }
+        // Says why the app is waiting during stage 1, and is the only way to reach
+        // stage 2 on demand — the coordinator otherwise escalates on its own timeout.
+        .overlay(alignment: .top) {
+            if CloudflareChallengeCoordinator.shared.backgroundResolutionPending {
+                CloudflareResolutionOverlay()
+                    .padding(.top, 8)
+            }
         }
         // Stage 2: the challenge needs a human. Dismissing without solving it
         // fails the parked request rather than leaving it hanging.
