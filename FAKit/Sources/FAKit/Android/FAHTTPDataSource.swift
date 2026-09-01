@@ -143,14 +143,34 @@ public struct FANativeHTTPResponse: Sendable {
     }
 }
 
+/// What one `repairConnections` call did — enough for `[CFREPAIR] evicted` to
+/// distinguish an eviction from a skip, which the returned epoch alone cannot:
+/// a pool already ahead of the observed epoch returns a different epoch without
+/// having evicted anything.
+public struct FAConnectionRepairResult: Sendable {
+    /// `false` when somebody else had already repaired since the observed epoch.
+    public var didEvict: Bool
+    /// Connections closed by this call. 0 when it skipped, or when the pool was empty.
+    public var evictedConnections: Int
+    /// The pool's epoch afterwards.
+    public var epoch: UInt64
+
+    public init(didEvict: Bool, evictedConnections: Int, epoch: UInt64) {
+        self.didEvict = didEvict
+        self.evictedConnections = evictedConnections
+        self.epoch = epoch
+    }
+}
+
 /// A struct of closures rather than a protocol, so FAKit never names a type the app
 /// module owns and a test can build one inline.
 public struct FANativeTransport: Sendable {
     /// **Must not block the caller's thread** — the implementation owns its own queue.
     public typealias Perform = @Sendable (FANativeHTTPRequest) async throws -> FANativeHTTPResponse
     /// Evicts every pooled connection *iff* the pool is still at `observedEpoch`, then
-    /// bumps it. Idempotent: N callers that observed the same epoch cause one eviction.
-    public typealias Repair = @Sendable (UInt64) async -> UInt64
+    /// bumps it — `CloudflareConnectionRepair.shouldEvict`. Idempotent: N callers that
+    /// observed the same epoch cause one eviction.
+    public typealias Repair = @Sendable (UInt64) async -> FAConnectionRepairResult
 
     public let perform: Perform
     public let repairConnections: Repair
@@ -195,8 +215,22 @@ public struct FAHTTPDataSource: HTTPDataSource {
     /// touching the main-actor singleton the app uses.
     private let awaitChallengeResolution: ChallengeResolver
 
-    /// URLSession attempts before falling back to a WebView navigation.
-    static let challengeRetries = 5
+    /// Blind redraws after a challenge, before anything is repaired.
+    ///
+    /// Under HTTP/1.1 a challenge carries `Connection: close`, so a retry
+    /// necessarily opens a new connection and draws a genuinely fresh verdict —
+    /// worth one attempt. HTTP/2 has no such header: the retry rides the same
+    /// poisoned connection, which is exactly how the earlier h2 arm reached 100%
+    /// 403 on new *and* reused connections. So it is protocol-conditional, and the
+    /// post-repair retry gets none either way — a second failure there means the
+    /// solve didn't produce a passing connection, and the next move is the WebView
+    /// fallback, not another sample of the same mechanism.
+    static func blindRedraws(after response: FANativeHTTPResponse) -> Int {
+        response.networkProtocol == "h2" ? 0 : 1
+    }
+
+    /// Pause before a blind redraw, matching what the five-retry loop used to open with.
+    private static let blindRedrawDelay = Duration.milliseconds(250)
 
     // A top-level-navigation header set consistent with a Chrome-on-Android UA.
     // Deliberately no `sec-ch-ua*` Client Hints: they must agree with the UA's
@@ -285,44 +319,49 @@ public struct FAHTTPDataSource: HTTPDataSource {
             .map { " with cf_clearance=\($0.prefix(8))…" } ?? ""
         logger.info("\(method) request on \(target)\(bodyDesc)\(hasAwaitedResolution ? " (retry post-challenge)" : "")\(clearanceDesc)")
 
-        // Cloudflare's decision is per-request, not per-session: the same cookies
-        // and UA can be challenged and then let through seconds later. So retry
-        // the cheap path a few times before paying for a WebView navigation.
-        // Only `cf-mitigated: challenge` is retried — unlike FACoilBridge's image
-        // loop, which retries any non-2xx and so cannot tell a challenge from a
-        // 404 or a socket error.
+        // Cloudflare judges a *connection*, not a request, and it does not change
+        // its mind about one: a challenge is repaired — evict, solve, redial — not
+        // waited out. Only `cf-mitigated: challenge` goes down that path; unlike
+        // FACoilBridge's image loop, which retries any non-2xx and so cannot tell a
+        // challenge from a 404 or a socket error.
         var response: FANativeHTTPResponse?
-        for attempt in 1...Self.challengeRetries {
+        var attempt = 0
+        var attemptBudget = 1
+        while attempt < attemptBudget {
+            attempt += 1
             let received = try await exchange(request, reporting: url)
             response = received
+
+            if hasAwaitedResolution {
+                if received.isCloudflareChallenge {
+                    logger.warning("[CFREPAIR] retry \(url) → still challenged, falling back")
+                } else {
+                    logger.info("[CFREPAIR] retry \(url) → \(received.statusCode) \(Self.connectionDescription(received))")
+                }
+            }
             guard received.isCloudflareChallenge else { break }
 
-            logger.warning("\(url): Cloudflare challenge on URLSession fetch (HTTP \(received.statusCode)), attempt \(attempt)/\(Self.challengeRetries)")
+            logger.warning("[CFREPAIR] challenge \(url) \(Self.connectionDescription(received)) epoch=\(request.connectionEpoch)")
             if attempt == 1 {
                 await logClearanceDiagnostics(sent: built.cookieHeader)
+                if !hasAwaitedResolution {
+                    attemptBudget += Self.blindRedraws(after: received)
+                }
             }
-            if attempt < Self.challengeRetries {
-                try? await Task.sleep(for: .milliseconds(250 * attempt))
+            if attempt < attemptBudget {
+                try? await Task.sleep(for: Self.blindRedrawDelay)
                 continue
             }
 
-            // Ask the UI to clear the challenge before falling back to reading a
-            // page out of the WebView: resolution puts a fresh clearance in the
+            // Repair rather than retry: resolution puts a fresh clearance in the
             // shared jar, which fixes every *subsequent* request too, whereas the
-            // fallback only rescues this one. Mirrors the single-retry loop in
-            // FAKit's URLSession+HTTPDataSource.
-            if !hasAwaitedResolution {
-                logger.warning("\(url): still challenged after \(Self.challengeRetries) attempts; asking for resolution")
-                do {
-                    try await awaitChallengeResolution()
-                    return try await httpData(
-                        from: url, cookies: cookies, method: method,
-                        parameters: parameters, hasAwaitedResolution: true
-                    )
-                } catch is CloudflareChallengeRequired {
-                    // Fall through to the WebView fetch below — it can still
-                    // rescue this one request.
-                }
+            // WebView fallback below only rescues this one.
+            if !hasAwaitedResolution,
+               await repairAndResolve(url: url, observedEpoch: request.connectionEpoch, sent: built.cookieHeader) {
+                return try await httpData(
+                    from: url, cookies: cookies, method: method,
+                    parameters: parameters, hasAwaitedResolution: true
+                )
             }
 
             // Entry and rescue both carry [CFFALLBACK], so how often the expensive
@@ -346,6 +385,65 @@ public struct FAHTTPDataSource: HTTPDataSource {
             throw FAHTTPError.failureStatus(url: url, code: response.statusCode)
         }
         return response.body
+    }
+
+    /// Evict, solve, evict again — the whole repair, in the one order that works.
+    ///
+    /// - Returns: `true` when a fresh clearance has landed and the caller should
+    ///   retry once. `false` when the challenge could not be solved, so the caller
+    ///   should fall through to the WebView fetch.
+    private func repairAndResolve(url: URL, observedEpoch: UInt64, sent: String) async -> Bool {
+        // 1. Evict *before* awaiting, not only after. A solve takes 1.5–3 s
+        //    typically and up to 25 s; every other page fetch and every image
+        //    worker keeps running in that window, and under h2 the poisoned
+        //    connection is still pooled and carries no `Connection: close`, so
+        //    anything starting then rides it and is challenged too.
+        let firstRepair = await repairConnections(observed: observedEpoch)
+        let startedAt = ContinuousClock.now
+
+        // 2. AndroidRootView.refreshCredentialsThenRelease() awaits
+        //    refreshedCookieHeader() *before* markResolved(), so by the time this
+        //    returns the fresh clearance is already in the live jar that step 5's
+        //    retry reads. That ordering is load-bearing and invisible here; the
+        //    other end carries the matching comment.
+        do {
+            try await awaitChallengeResolution()
+        } catch {
+            return false
+        }
+
+        // 3. Evict again. Between (1) and (2) another worker will have opened a
+        //    connection carrying the *old* clearance, which is equally suspect.
+        //    Cheap — the pool holds one to a handful.
+        _ = await repairConnections(observed: firstRepair.epoch)
+
+        let live = await liveCookieHeader?() ?? ""
+        let before = Self.cookieValue("cf_clearance", in: sent).map { "\($0.prefix(8))…" } ?? "<none>"
+        let after = Self.cookieValue("cf_clearance", in: live).map { "\($0.prefix(8))…" } ?? "<none>"
+        logger.warning("[CFREPAIR] resolution took \(ContinuousClock.now - startedAt), cf_clearance \(before)→\(after)")
+        return true
+    }
+
+    /// A no-op returning the epoch unchanged when no native transport is installed,
+    /// which is what makes Step 4's ordering measurable before OkHttp exists.
+    private func repairConnections(observed: UInt64) async -> FAConnectionRepairResult {
+        guard let nativeTransport else {
+            return FAConnectionRepairResult(didEvict: false, evictedConnections: 0, epoch: observed)
+        }
+        let result = await nativeTransport.repairConnections(observed)
+        if result.didEvict {
+            logger.warning("[CFREPAIR] evicted \(result.evictedConnections) connections, epoch \(observed)→\(result.epoch)")
+        } else {
+            logger.warning("[CFREPAIR] evict skipped, pool already at epoch \(result.epoch)")
+        }
+        return result
+    }
+
+    /// The connection a response came back on, in the token shapes the log
+    /// summarisers parse.
+    private static func connectionDescription(_ response: FANativeHTTPResponse) -> String {
+        let id = response.connectionID.map(String.init) ?? "-"
+        return "conn=\(id) new=\(response.openedConnection) proto=\(response.networkProtocol)"
     }
 
     /// The wire request, plus the cookie header that went into it — the logs and

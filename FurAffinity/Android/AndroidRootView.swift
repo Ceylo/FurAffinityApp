@@ -186,6 +186,12 @@ struct AndroidRootView: View {
     /// wires `liveCookieHeader` through `refreshedCookieHeader()`), but a re-solve
     /// isn't always followed by a page fetch — and images alone would then keep
     /// replaying the clearance the WebView no longer has.
+    ///
+    /// **The order of these two lines is load-bearing.** `FAHTTPDataSource`'s repair
+    /// evicts the connection pool the moment `awaitResolution()` returns and then
+    /// redials on the *live* cookie header; releasing before the refresh would send
+    /// that redial out with the dead clearance. See `repairAndResolve`, which
+    /// carries the matching comment.
     private func refreshCredentialsThenRelease() {
         Task { @MainActor in
             await FAWebSession.shared.refreshedCookieHeader()

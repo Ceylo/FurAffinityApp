@@ -65,12 +65,13 @@ actor ScriptedTransport {
         return stamped
     }
 
-    private func repair(observed: UInt64) -> UInt64 {
+    private func repair(observed: UInt64) -> FAConnectionRepairResult {
         calls.append(.repair(observed: observed))
-        if CloudflareConnectionRepair.shouldEvict(observed: observed, current: epoch) {
-            epoch += 1
+        guard CloudflareConnectionRepair.shouldEvict(observed: observed, current: epoch) else {
+            return FAConnectionRepairResult(didEvict: false, evictedConnections: 0, epoch: epoch)
         }
-        return epoch
+        epoch += 1
+        return FAConnectionRepairResult(didEvict: true, evictedConnections: 1, epoch: epoch)
     }
 
     private func readEpoch() -> UInt64 {
@@ -195,10 +196,14 @@ struct FAHTTPDataSourceTests {
 
     // MARK: - Challenge handling
 
-    /// Today's behaviour, pinned before it changes: five blind exchanges, and only
-    /// then does anyone ask the UI to solve anything.
-    @Test func challengeIsRetriedFiveTimesBeforeAskingForResolution() async throws {
-        let transport = ScriptedTransport([.challenge()])
+    /// A challenge is repaired, not waited out. Under h2 the very first one asks —
+    /// a retry there would ride the same poisoned connection, which is how the
+    /// earlier h2 arm reached 100% 403. Under h1 the challenge carries
+    /// `Connection: close`, so exactly one blind redraw is a genuinely fresh
+    /// verdict and is worth taking first.
+    @Test(arguments: [("h2", 1), ("http/1.1", 2), ("urlsession", 2)])
+    func blindRedrawsAreProtocolConditional(networkProtocol: String, expectedExchanges: Int) async throws {
+        let transport = ScriptedTransport([.challenge(protocol: networkProtocol)])
         let resolveCount = Counter()
         let source = Self.dataSource(transport: transport, resolve: {
             await resolveCount.increment()
@@ -209,8 +214,86 @@ struct FAHTTPDataSourceTests {
             _ = try await source.httpData(from: Self.feedURL, cookies: nil)
         }
 
-        #expect(await transport.requests.count == FAHTTPDataSource.challengeRetries)
+        #expect(await transport.requests.count == expectedExchanges)
         #expect(await resolveCount.value == 1)
+    }
+
+    /// Evict, solve, evict again, redial — in that order. Evicting *before* the
+    /// solve is what keeps other workers off the poisoned connection during the
+    /// 1.5–25 s it takes; evicting again after is what drops the connection some
+    /// other worker opened with the old clearance while we waited.
+    @Test func repairEvictsBeforeAndAfterResolution() async throws {
+        let transport = ScriptedTransport([.challenge(protocol: "h2"), .ok()], epoch: 4)
+        let source = Self.dataSource(transport: transport, resolve: {})
+
+        _ = try await source.httpData(from: Self.feedURL, cookies: nil)
+
+        #expect(await transport.significantCalls == [
+            .perform,
+            .repair(observed: 4),   // the epoch read before the first exchange
+            .repair(observed: 5),   // …and the one the first repair produced
+            .perform,
+        ])
+    }
+
+    /// The redial must carry the clearance the solve just minted, not the one that
+    /// was challenged. Nothing in `repairAndResolve` re-reads the jar itself — it
+    /// relies on `awaitResolution()` returning only after the refresh — so this is
+    /// the test that keeps that invariant honest.
+    @Test func retryCarriesTheRefreshedClearance() async throws {
+        let clearance = Latch("a=auth; cf_clearance=STALE000")
+        let transport = ScriptedTransport([.challenge(protocol: "h2"), .ok()])
+        let source = FAHTTPDataSource(
+            userAgent: "TestAgent/1.0",
+            cookieHeader: "a=auth; cf_clearance=STALE000",
+            liveCookieHeader: { await clearance.value },
+            nativeTransport: transport.transport,
+            awaitChallengeResolution: { await clearance.set("a=auth; cf_clearance=FRESH111") }
+        )
+
+        _ = try await source.httpData(from: Self.feedURL, cookies: nil)
+
+        let sent = await transport.requests.map(\.cookieHeader)
+        #expect(sent == ["a=auth; cf_clearance=STALE000", "a=auth; cf_clearance=FRESH111"])
+    }
+
+    /// Exactly one retry after a repair. A second failure means the solve didn't
+    /// produce a passing connection, and the right next move is a different
+    /// mechanism, not another sample of the same one.
+    @Test func onePostRepairRetryThenTheWebViewFallback() async throws {
+        let transport = ScriptedTransport([.challenge(protocol: "h2")])
+        let fetched = Counter()
+        let source = Self.dataSource(
+            transport: transport,
+            webViewFetch: { _ in
+                await fetched.increment()
+                return Data("<html>rescued</html>".utf8)
+            },
+            resolve: {}
+        )
+
+        let rescued = try await source.httpData(from: Self.feedURL, cookies: nil)
+
+        #expect(String(data: rescued, encoding: .utf8) == "<html>rescued</html>")
+        #expect(await transport.requests.count == 2)   // the challenged one, and one redial
+        #expect(await fetched.value == 1)
+    }
+
+    /// With no transport installed the repair is a no-op that leaves the epoch
+    /// alone — so the ordering above lands and is measurable before any OkHttp
+    /// exists.
+    @Test func repairIsANoOpWithoutATransport() async throws {
+        let resolved = Counter()
+        let source = FAHTTPDataSource(
+            userAgent: "TestAgent/1.0",
+            cookieHeader: "a=auth",
+            awaitChallengeResolution: { await resolved.increment() }
+        )
+        await #expect(throws: URLError.self) {
+            _ = try await source.httpData(from: URL(string: "http://127.0.0.1:1/")!, cookies: nil)
+        }
+        // A refused connection is not a challenge, so nothing was repaired.
+        #expect(await resolved.value == 0)
     }
 
     /// The WebView fallback navigates, so it can only ever rescue a GET. A challenged
@@ -223,14 +306,14 @@ struct FAHTTPDataSourceTests {
         }
 
         let getSource = Self.dataSource(
-            transport: ScriptedTransport([.challenge()]), webViewFetch: fetch
+            transport: ScriptedTransport([.challenge(protocol: "h2")]), webViewFetch: fetch
         )
         let rescued = try await getSource.httpData(from: Self.feedURL, cookies: nil)
         #expect(String(data: rescued, encoding: .utf8) == "<html>rescued</html>")
         #expect(await fetched.value == 1)
 
         let postSource = Self.dataSource(
-            transport: ScriptedTransport([.challenge()]), webViewFetch: fetch
+            transport: ScriptedTransport([.challenge(protocol: "h2")]), webViewFetch: fetch
         )
         await #expect(throws: CloudflareChallengeRequired.self) {
             _ = try await postSource.httpData(
@@ -262,6 +345,14 @@ struct FAHTTPDataSourceTests {
             _ = try await source.httpData(from: URL(string: "http://127.0.0.1:1/")!, cookies: nil)
         }
     }
+}
+
+/// A `String` behind an actor, so a `@Sendable` probe and a `@Sendable` resolver
+/// can share one live cookie jar.
+actor Latch {
+    private(set) var value: String
+    init(_ value: String) { self.value = value }
+    func set(_ new: String) { value = new }
 }
 
 /// `Int` behind an actor, for counting calls made from `@Sendable` closures.

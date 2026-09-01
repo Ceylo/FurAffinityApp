@@ -75,6 +75,20 @@ APP_ID="$APP_ID.${WORKTREE//[^A-Za-z0-9_]/_}"
 PKG="$(skip_env ANDROID_PACKAGE_NAME)"
 [[ -n "$PKG" ]] || die "no ANDROID_PACKAGE_NAME in $ROOT/Skip.env"
 
+# Every tag our code logs under, same derivation as logs.sh. The app module logs
+# under the installed applicationId; FAKit and FAPages build their loggers before
+# the app installs FALogSubsystem.override, so they log under the fallback. Filtering
+# on the app tag alone silently drops every [CFREPAIR], [CFDIAG] and [CFFALLBACK]
+# line, which is where the whole Cloudflare story is.
+TAGS=()
+for id in "$APP_ID" "$(skip_env ANDROID_APPLICATION_ID)" FurAffinity; do
+    [[ -n "$id" ]] && TAGS+=("$id/FA" "$id/FAKit" "$id/FAPages")
+done
+while IFS= read -r tag; do
+    [[ -n "$tag" ]] && TAGS+=("$tag")
+done < <(sed -nE 's@.*\bTAG[[:space:]]*=[[:space:]]*"([^"]+)".*@\1@p' \
+    "$ROOT"/Android/app/src/main/kotlin/*.kt 2>/dev/null | sort -u)
+
 # --- run -------------------------------------------------------------------
 
 if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
@@ -89,8 +103,7 @@ fi
 "$ADB" logcat -c
 "$ADB" shell am start -n "$APP_ID/$PKG.MainActivity" >/dev/null
 sleep "$WAIT"
-# The subsystem is the installed applicationId (FALogSubsystem), suffix included.
-"$ADB" logcat -d -s "$APP_ID/FA" > "$OUT"
+"$ADB" logcat -d -s "${TAGS[@]}" > "$OUT"
 
 # --- verdict ---------------------------------------------------------------
 
@@ -98,7 +111,7 @@ gets=$(grep -c '\[Coil\] GET request on' "$OUT" || true)
 loaded=$(sed -nE 's/.*prefetchThumbnails count=([0-9]+).*/\1/p' "$OUT" | head -1)
 echo "=== $(basename "$OUT"): ${loaded:-0} feed items, $gets image GETs ==="
 
-if grep -q 'Cloudflare challenge on URLSession fetch' "$OUT"; then
+if grep -q '\[CFREPAIR\] challenge' "$OUT"; then
     echo "note: the page path was challenged this run — context, not a discard"
 fi
 
