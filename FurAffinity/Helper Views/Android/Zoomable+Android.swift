@@ -42,6 +42,13 @@ private let velocitySampleWindow: Foundation.TimeInterval = 0.1
 /// Oversamples every panel up to 240 Hz, so no two frames can read the same position.
 /// Nothing in SkipSwiftUI aligns work to vsync, so this stands in for a frame clock.
 private let motionTick: Duration = .milliseconds(4)
+/// Fraction of the finger's travel that still gets through just past a bound.
+private let overscrollRubber = 0.55
+/// Compose's `spring(dampingRatio: .noBouncy, stiffness:)` in its own units, so this sits
+/// between `StiffnessLow` (200) and `StiffnessMedium` (1500). Settles in ~0.35 s.
+private let settleStiffness: Double = 400
+/// Below this, in dp, the settle has arrived.
+private let settleEpsilon = 0.5
 
 public enum ZoomLevel {
     case fit
@@ -187,7 +194,7 @@ public struct Zoomable<Content: View>: View {
 
                             sampleVelocity(translation, at: value.time)
                             hasUserAdjusted = true
-                            offset = clampedOffset(
+                            offset = overscrolled(
                                 CGSize(
                                     width: baseOffset.width + translation.width - panStartTranslation.width,
                                     height: baseOffset.height + translation.height - panStartTranslation.height
@@ -203,7 +210,13 @@ public struct Zoomable<Content: View>: View {
                             guard didPan else { return }
                             sheetOwnsDrag = false
                             baseOffset = offset
-                            startFling(in: viewport)
+                            // Past a bound the pull has to come back before anything
+                            // else; within them the release is a fling or nothing.
+                            if isOverscrolled(in: viewport) {
+                                startSettle(in: viewport)
+                            } else {
+                                startFling(in: viewport)
+                            }
                         }
                 )
                 // SkipUI's simultaneous-drag detector never *consumes* pointer events,
@@ -365,24 +378,29 @@ public struct Zoomable<Content: View>: View {
         lastSampleTranslation = .zero
     }
 
+    /// The sampled velocity, or zero once it is stale. A finger that stops moving stops
+    /// producing events, so the sampler is never called again to notice the pause and the
+    /// pre-pause velocity would survive to here. Compose's tracker discards stale samples
+    /// when queried; so does this.
+    private var releaseVelocity: CGSize {
+        let age = Foundation.Date().timeIntervalSinceReferenceDate - lastSampleTime
+        return age < velocitySampleWindow ? panVelocity : .zero
+    }
+
     /// Coasts on from the release along the pan's own direction, on Android's spline.
     private func startFling(in viewport: Foundation.CGSize) {
-        let speed = (panVelocity.width * panVelocity.width
-                     + panVelocity.height * panVelocity.height).squareRoot()
-        // A finger that stops moving stops producing events, so the sampler is never
-        // called again to notice the pause: the last velocity would otherwise survive it
-        // and fling. Compose's tracker discards stale samples when queried; so does this.
-        let sampleAge = Foundation.Date().timeIntervalSinceReferenceDate - lastSampleTime
+        let velocity = releaseVelocity
+        let speed = (velocity.width * velocity.width
+                     + velocity.height * velocity.height).squareRoot()
         let bounds = maxOffset(in: viewport)
-        guard sampleAge < velocitySampleWindow, speed >= minimumFlingSpeed,
-              bounds.width > 0.5 || bounds.height > 0.5 else {
+        guard speed >= minimumFlingSpeed, bounds.width > 0.5 || bounds.height > 0.5 else {
             return
         }
 
         let duration = flingDuration(speed)
         let distance = flingDistance(speed)
-        let direction = CGSize(width: panVelocity.width / speed,
-                               height: panVelocity.height / speed)
+        let direction = CGSize(width: velocity.width / speed,
+                               height: velocity.height / speed)
         let start = offset
 
         runMotion { elapsed in
@@ -395,6 +413,31 @@ public struct Zoomable<Content: View>: View {
                 in: viewport
             )
             return t < 1
+        }
+    }
+
+    /// Brings a pull that went past a bound back to it. Critically damped, so an inward
+    /// residual velocity simply arrives while the outward velocity of a release from an
+    /// overscrolled pull carries a little further first — the visible spring-back.
+    private func startSettle(in viewport: Foundation.CGSize) {
+        let target = clampedOffset(offset, in: viewport)
+        let x0 = CGSize(width: offset.width - target.width,
+                        height: offset.height - target.height)
+        let v0 = releaseVelocity
+        let omega = settleStiffness.squareRoot()
+
+        runMotion { elapsed in
+            let decay = Foundation.exp(-omega * elapsed)
+            let x = CGSize(
+                width: (x0.width + (v0.width + omega * x0.width) * elapsed) * decay,
+                height: (x0.height + (v0.height + omega * x0.height) * elapsed) * decay
+            )
+            guard abs(x.width) >= settleEpsilon || abs(x.height) >= settleEpsilon else {
+                offset = target
+                return false
+            }
+            offset = CGSize(width: target.width + x.width, height: target.height + x.height)
+            return true
         }
     }
 
@@ -440,6 +483,33 @@ public struct Zoomable<Content: View>: View {
             width: max((fittedWidth * scale - viewport.width) / 2, 0),
             height: max((fittedHeight * scale - viewport.height) / 2, 0)
         )
+    }
+
+    private func isOverscrolled(in viewport: Foundation.CGSize) -> Bool {
+        let target = clampedOffset(offset, in: viewport)
+        return abs(offset.width - target.width) >= settleEpsilon
+            || abs(offset.height - target.height) >= settleEpsilon
+    }
+
+    /// Lets a drag continue past its bound against resistance, which is what Android's
+    /// zoomable image viewers do. Not the Android-12 stretch overscroll: that belongs to
+    /// a scroll container's own edge effect, and there is no scroll container here.
+    private func overscrolled(_ offset: CGSize, in viewport: Foundation.CGSize) -> CGSize {
+        let bounds = maxOffset(in: viewport)
+        return CGSize(
+            width: resisted(offset.width, bound: bounds.width, extent: viewport.width),
+            height: resisted(offset.height, bound: bounds.height, extent: viewport.height)
+        )
+    }
+
+    /// Pass-through within the bound; past it `overscrollRubber` of the travel gets
+    /// through, asymptoting at `extent` so the content can never be pulled clear of the
+    /// viewport however far the finger goes.
+    private func resisted(_ value: Double, bound: Double, extent: Double) -> Double {
+        let excess = abs(value) - bound
+        guard excess > 0, extent > 0 else { return value }
+        let through = excess * extent * overscrollRubber / (extent + overscrollRubber * excess)
+        return value < 0 ? -(bound + through) : bound + through
     }
 
     /// Keeps the panned content covering the viewport instead of drifting off-screen.
