@@ -36,6 +36,12 @@ public final class FAWebSession {
     /// `FAWebViewUserAgent.platformProvider`.
     nonisolated(unsafe) public static var imageCredentialsSink: (@Sendable (_ userAgent: String, _ cookieHeader: String) -> Void)?
 
+    /// The HTTP client page fetches run on, installed at launch for the same reason
+    /// as `imageCredentialsSink`: it is the app module that owns the JNI, and
+    /// `establishSession()` — which builds the data source — lives here. Left nil,
+    /// `FAHTTPDataSource` keeps its URLSession path.
+    nonisolated(unsafe) public static var nativeTransport: FANativeTransport?
+
     /// Drives the hidden root WebView. Handed to `FAHTTPDataSource` as its
     /// challenge fallback, so it must outlive every screen.
     let navigator = WebViewNavigator()
@@ -286,7 +292,11 @@ public final class FAWebSession {
             // is what most often notices a rotation first, and it should carry the
             // image layer along rather than leave it replaying a dead clearance.
             liveCookieHeader: { await FAWebSession.shared.refreshedCookieHeader() },
-            liveUserAgent: { await navigator.liveUserAgent() }
+            liveUserAgent: { await navigator.liveUserAgent() },
+            // Shares the image layer's connection pool, which is the whole point:
+            // one connection is one Cloudflare verdict to repair rather than
+            // several to lose.
+            nativeTransport: Self.nativeTransport
         )
 
         return try await OnlineFASession(cookies: authCookies, dataSource: dataSource)
