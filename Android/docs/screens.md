@@ -158,6 +158,23 @@ showing the scrimmed page, 16 pt rounded top corners, and `BottomSheetDefaults`'
 three is one line in `Ceylo/skip-ui` — dropping `isFullScreen ||` from that
 `interactiveDismissDisabled`, then presenting with `fullScreenCover` again.
 
+A `UIScrollView` gives the iOS viewer inertia and edge behaviour for free; here both are
+hand-built. Releasing a pan runs Android's `OverScroller` spline — its closed forms
+reconstructed in Swift, since a Skip Fuse module has no Compose to borrow `splineBasedDecay`
+from — and the velocity that launches it is timed by hand from successive translations,
+because SkipUI builds every `DragGesture.Value` with `velocity: .zero`. Compose's 100 ms
+staleness window is applied at the release as well as between samples: a finger that stops
+moving stops producing events, so the sampler never sees the pause on its own and the
+pre-pause velocity would otherwise fling.
+
+At a bound the pan continues past with resistance and a critically damped spring brings it
+back, which is what Android's *zoomable image viewers* do (Google Photos, telephoto). It is
+deliberately not the Android-12 stretch overscroll: that is a scroll container's own edge
+effect, and there is no scroll container here. Resistance is a hyperbolic falloff — ~55% of
+the finger's travel gets through just past the bound, and the excess asymptotes at the
+viewport's own extent, so the content can never be pulled clear of the viewport. Flings stay
+clamped, so one that reaches a limit simply arrives; only a drag can overscroll.
+
 The viewer also resets itself on each presentation — offset and zoom — because skipstone
 backs `@State` with `rememberSaveable`, which otherwise restores whatever the last
 presentation was left in. The initial zoom is re-derived from **every** viewport

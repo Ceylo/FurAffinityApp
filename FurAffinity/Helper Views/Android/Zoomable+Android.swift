@@ -22,6 +22,12 @@
 //  apply yourself), and SkipUI drives both axes of a two-axis `ScrollView` off a single
 //  `rememberScrollState`, so it can't pan X and Y independently.
 //
+//  The inertia a `UIScrollView` also gives away is hand-built here: releasing a pan runs
+//  Android's `OverScroller` spline, and a pull past a bound comes back on a critically
+//  damped spring. Both are stepped by `runMotion` rather than declared, and the velocity
+//  they start from is timed by hand because SkipUI builds every `DragGesture.Value` with
+//  `velocity: .zero`.
+//
 
 import SwiftUI
 
