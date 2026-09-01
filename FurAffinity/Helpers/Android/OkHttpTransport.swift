@@ -179,16 +179,47 @@ enum OkHttpTransport {
         #endif
     }
 
-    /// What the pool holds, for the `[HTTP] census` lines. Blocking JNI.
-    static func poolStats() async -> String? {
+    /// Log what the pool holds and every connection this launch has used. Debug
+    /// builds only — it is a diagnostic, and it costs a JNI hop plus a JSON parse.
+    ///
+    /// The per-connection rows are the coalescing instrument in aggregate form: a row
+    /// whose `hosts` names both `www.` and `t.`/`a.` is the page and image pipelines
+    /// sharing one connection.
+    static func logCensus(_ label: String) async {
         #if canImport(Android)
-        return await onQueue { () -> String? in
+        let json: String? = await onQueue { () -> String? in
             guard let bridge = Self.bridge else { return nil }
             return try? bridge.poolStats()
         }
-        #else
-        return nil
+        guard let data = json?.data(using: .utf8),
+              let stats = try? JSONDecoder().decode(PoolStats.self, from: data) else { return }
+        logger.info("""
+            [HTTP] census \(label) pool=\(stats.pool) idle=\(stats.idle) \
+            conns=\(stats.connections.count) calls=\(stats.calls) \
+            h2=\(stats.h2) epoch=\(stats.epoch)
+            """)
+        for connection in stats.connections.sorted(by: { $0.calls > $1.calls }) {
+            logger.info("""
+                [HTTP] census conn=\(connection.conn) calls=\(connection.calls) \
+                hosts=\(connection.hosts)
+                """)
+        }
         #endif
+    }
+
+    private struct PoolStats: Decodable {
+        var pool: Int
+        var idle: Int
+        var epoch: UInt64
+        var h2: Bool
+        var calls: Int
+        var connections: [Connection]
+
+        struct Connection: Decodable {
+            var conn: Int
+            var calls: Int
+            var hosts: String
+        }
     }
 
     /// Whether the shared client offers HTTP/2, and the switch for it. Debug-only UI.

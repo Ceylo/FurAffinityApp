@@ -18,6 +18,7 @@
 
 package fur.affinity.ui
 
+import android.content.Context
 import java.net.InetSocketAddress
 import java.net.Proxy
 import okhttp3.Call
@@ -26,7 +27,9 @@ import okhttp3.ConnectionPool
 import okhttp3.EventListener
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import org.json.JSONArray
 import org.json.JSONObject
+import skip.foundation.ProcessInfo
 
 /// The FA credentials one call should carry, attached as an OkHttp request tag.
 ///
@@ -69,6 +72,18 @@ object FAHttpClient {
 
     val draw: ThreadLocal<Draw> = ThreadLocal.withInitial { Draw() }
 
+    /// conn id -> the hosts it has served and how many responses it carried. The
+    /// coalescing census: one id with more than one host is two pipelines sharing a
+    /// connection, which only h2 can do.
+    private val census = HashMap<Int, MutableSet<String>>()
+    private val callsPerConnection = HashMap<Int, Int>()
+
+    @Synchronized
+    private fun record(id: Int, host: String) {
+        census.getOrPut(id) { HashSet() }.add(host)
+        callsPerConnection[id] = (callsPerConnection[id] ?: 0) + 1
+    }
+
     private val connectionTracer = object : EventListener.Factory {
         override fun create(call: Call): EventListener {
             val attempt = draw.get()
@@ -84,7 +99,9 @@ object FAHttpClient {
                 }
 
                 override fun connectionAcquired(call: Call, connection: Connection) {
-                    attempt.id = System.identityHashCode(connection)
+                    val id = System.identityHashCode(connection)
+                    attempt.id = id
+                    record(id, call.request().url.host)
                 }
             }
         }
@@ -145,7 +162,10 @@ object FAHttpClient {
         synchronized(FAHttpClient::class.java) {
             client?.let { return it }
             val built = OkHttpClient.Builder()
-                .protocols(if (http2Enabled) listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
+                // One switch for both pipelines, because there is only one client —
+                // which is the point of the extraction, and removes a confound the
+                // earlier h2 arms had.
+                .protocols(if (isHTTP2Enabled()) listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
                            else listOf(Protocol.HTTP_1_1))
                 .eventListenerFactory(connectionTracer)
                 // A **network** interceptor, not an application one: OkHttp strips
@@ -191,16 +211,39 @@ object FAHttpClient {
 
     // MARK: HTTP/2
 
+    /// A prefs file of its own, not `defaults.xml`: that one holds every other
+    /// setting, and the script that flips this between measurement arms rewrites the
+    /// file wholesale. `fa_http.xml` has one key, so clobbering it costs nothing —
+    /// and no iOS file gains a `Defaults.Key`.
+    private const val PREFS = "fa_http"
+    private const val KEY_HTTP2 = "http2"
+
+    private fun prefs() = ProcessInfo.processInfo.androidContext
+        .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    @Volatile private var http2Loaded = false
     @Volatile private var http2Enabled = false
 
-    fun isHTTP2Enabled(): Boolean = http2Enabled
+    fun isHTTP2Enabled(): Boolean {
+        if (!http2Loaded) {
+            synchronized(FAHttpClient::class.java) {
+                if (!http2Loaded) {
+                    http2Enabled = prefs().getBoolean(KEY_HTTP2, false)
+                    http2Loaded = true
+                }
+            }
+        }
+        return http2Enabled
+    }
 
     /// Rebuilds the client so the change takes effect without a relaunch, and evicts
     /// what the old one pooled.
     fun setHTTP2Enabled(enabled: Boolean): Boolean {
         synchronized(FAHttpClient::class.java) {
-            if (enabled == http2Enabled) return true
+            if (http2Loaded && enabled == http2Enabled) return true
             http2Enabled = enabled
+            http2Loaded = true
+            prefs().edit().putBoolean(KEY_HTTP2, enabled).apply()
             client?.connectionPool?.evictAll()
             client = null
         }
@@ -209,14 +252,28 @@ object FAHttpClient {
 
     // MARK: Census
 
-    /// What the pool is holding right now, for the `[HTTP] census` lines. Swift logs it.
+    /// What the pool is holding, plus every connection this launch has used and the
+    /// hosts it served. Swift logs it — android.util.Log never reaches the exported
+    /// log. The per-connection rows are the coalescing answer.
+    @Synchronized
     fun poolStats(): String {
         val pool: ConnectionPool = shared().connectionPool
+        val connections = JSONArray()
+        for ((id, hosts) in census) {
+            connections.put(
+                JSONObject()
+                    .put("conn", id)
+                    .put("calls", callsPerConnection[id] ?: 0)
+                    .put("hosts", hosts.sorted().joinToString(","))
+            )
+        }
         return JSONObject()
             .put("pool", pool.connectionCount())
             .put("idle", pool.idleConnectionCount())
             .put("epoch", epoch)
-            .put("h2", http2Enabled)
+            .put("h2", isHTTP2Enabled())
+            .put("calls", callsPerConnection.values.sum())
+            .put("connections", connections)
             .toString()
     }
 }
