@@ -28,6 +28,21 @@ import SwiftUI
 /// How far a drag must travel before it counts as a pan rather than a tap.
 private let panSlop: Double = 4
 
+// Android's `OverScroller.SplineOverScroller` constants, in dp — a dp is 1/160 inch by
+// definition, so the density term of Android's own coefficient is exactly 160.
+private let flingFriction = 0.015                              // ViewConfiguration.SCROLL_FRICTION
+private let flingPhysicalCoeff = 9.80665 * 39.37 * 160 * 0.84  // g x in/m x dp/in x tuning
+private let flingInflexion = 0.35
+private let flingDecelerationRate = Foundation.log(0.78) / Foundation.log(0.9)
+/// Below this a release is a stop, not a flick.
+private let minimumFlingSpeed: Double = 50                     // dp/s
+/// Compose's `VelocityTracker` staleness window: samples further apart than this start
+/// afresh, which is what makes "pan, hold still, lift" not fling.
+private let velocitySampleWindow: Foundation.TimeInterval = 0.1
+/// Oversamples every panel up to 240 Hz, so no two frames can read the same position.
+/// Nothing in SkipSwiftUI aligns work to vsync, so this stands in for a frame clock.
+private let motionTick: Duration = .milliseconds(4)
+
 public enum ZoomLevel {
     case fit
     case fill
@@ -70,6 +85,18 @@ public struct Zoomable<Content: View>: View {
     /// Last measured viewport. Restored with the rest of the state, so a re-presentation
     /// can reset the zoom before Compose has measured again.
     @State var viewport = Foundation.CGSize.zero
+    /// Pan speed in dp/s, timed by hand: SkipUI builds every `DragGesture.Value` with
+    /// `velocity: .zero`, so there is nothing to read off the gesture.
+    @State var panVelocity = CGSize.zero
+    @State var lastSampleTime: Double = 0
+    @State var lastSampleTranslation = CGSize.zero
+    /// Translation already accumulated when the pan took over, discounted from every
+    /// offset below. Zero for a gesture that starts on still content — Compose subtracts
+    /// its touch slop before the first callback — but not for one that catches a fling.
+    @State var panStartTranslation = CGSize.zero
+    /// Bumped to cancel whatever fling or settle is running: the loop stops as soon as it
+    /// sees a generation other than its own.
+    @State var motionGeneration = 0
 
     public init(@ViewBuilder content: () -> Content) {
         self.content = content()
@@ -118,6 +145,7 @@ public struct Zoomable<Content: View>: View {
                 .gesture(
                     MagnifyGesture()
                         .onChanged { value in
+                            stopMotion()
                             hasUserAdjusted = true
                             scale = clamped(baseScale * value.magnification, in: viewport)
                         }
@@ -137,6 +165,7 @@ public struct Zoomable<Content: View>: View {
                                     || abs(translation.height) > panSlop else {
                                 didPan = false
                                 sheetOwnsDrag = false
+                                catchMotion(at: translation)
                                 return
                             }
 
@@ -146,17 +175,22 @@ public struct Zoomable<Content: View>: View {
                                 didPan = true
                                 sheetOwnsDrag = abs(translation.height) > abs(translation.width)
                                     && maxOffset(in: viewport).height <= 0.5
+                                // Repeated from the branch above, which Compose's slop
+                                // subtraction normally runs first but which a coarse
+                                // event clearing the slop in one step skips.
+                                catchMotion(at: translation)
                             }
 
                             // Compose is already translating the sheet; moving the
                             // content too would double it.
                             guard !sheetOwnsDrag else { return }
 
+                            sampleVelocity(translation, at: value.time)
                             hasUserAdjusted = true
                             offset = clampedOffset(
                                 CGSize(
-                                    width: baseOffset.width + translation.width,
-                                    height: baseOffset.height + translation.height
+                                    width: baseOffset.width + translation.width - panStartTranslation.width,
+                                    height: baseOffset.height + translation.height - panStartTranslation.height
                                 ),
                                 in: viewport
                             )
@@ -169,6 +203,7 @@ public struct Zoomable<Content: View>: View {
                             guard didPan else { return }
                             sheetOwnsDrag = false
                             baseOffset = offset
+                            startFling(in: viewport)
                         }
                 )
                 // SkipUI's simultaneous-drag detector never *consumes* pointer events,
@@ -208,8 +243,11 @@ public struct Zoomable<Content: View>: View {
     /// Puts the viewer back to its opening state. Needed because skipstone backs `@State`
     /// with `rememberSaveable`, which restores the previous presentation's zoom and pan.
     private func resetForPresentation(in viewport: Foundation.CGSize) {
+        stopMotion()
+        resetVelocitySampling()
         offset = .zero
         baseOffset = .zero
+        panStartTranslation = .zero
         didPan = false
         sheetOwnsDrag = false
         hasUserAdjusted = false
@@ -253,6 +291,7 @@ public struct Zoomable<Content: View>: View {
         let target = abs(scale - primary) < 1e-3
             ? scale(for: secondaryZoomLevel, in: viewport)
             : primary
+        stopMotion()
         hasUserAdjusted = true
         scale = max(1, target)
         baseScale = scale
@@ -261,6 +300,124 @@ public struct Zoomable<Content: View>: View {
         // Arms `.animation(_:value:)` for this one composition — the "target set once"
         // shape, the only one that survives a gesture running alongside it.
         zoomToggleCount += 1
+    }
+
+    // MARK: - Inertia
+
+    /// `.animation(_:value:)` cannot drive a value the gesture also writes — an armed
+    /// `Animatable` restarts on every per-frame write, and it leaves `offset` already at
+    /// its target, so a fling could never be caught mid-flight. The motion is stepped by
+    /// hand instead, one `@State` write per tick, exactly as the drag does.
+    ///
+    /// `step` receives the elapsed time and returns whether to keep going. It must be a
+    /// closed form of that time rather than an accumulation, so an overslept tick costs
+    /// one frame's smoothness and never distorts the curve.
+    private func runMotion(_ step: @escaping @MainActor (Foundation.TimeInterval) -> Bool) {
+        motionGeneration += 1
+        let generation = motionGeneration
+        let start = Foundation.Date()
+        Task { @MainActor in
+            while true {
+                do { try await Task.sleep(for: motionTick) } catch { return }
+                guard motionGeneration == generation else { return }
+                guard step(Foundation.Date().timeIntervalSince(start)) else {
+                    baseOffset = offset
+                    return
+                }
+            }
+        }
+    }
+
+    private func stopMotion() {
+        motionGeneration += 1
+    }
+
+    /// Takes a gesture over from whatever motion is running: stops it where it is and
+    /// rebases the pan there, so a touch landing on a fling continues from the position
+    /// it caught rather than jumping back to where the fling began.
+    private func catchMotion(at translation: CGSize) {
+        stopMotion()
+        baseOffset = offset
+        resetVelocitySampling()
+        panStartTranslation = translation
+    }
+
+    /// Times the pan by hand from successive translations. Weighted towards the newest
+    /// sample, the way Compose's tracker is, so a flick after a slow drag still flings.
+    private func sampleVelocity(_ translation: CGSize, at time: Foundation.Date) {
+        let now = time.timeIntervalSinceReferenceDate
+        let dt = now - lastSampleTime
+        if lastSampleTime > 0, dt > 0, dt < velocitySampleWindow {
+            let sample = CGSize(width: (translation.width - lastSampleTranslation.width) / dt,
+                                height: (translation.height - lastSampleTranslation.height) / dt)
+            panVelocity = CGSize(width: 0.7 * sample.width + 0.3 * panVelocity.width,
+                                 height: 0.7 * sample.height + 0.3 * panVelocity.height)
+        } else {
+            panVelocity = .zero
+        }
+        lastSampleTime = now
+        lastSampleTranslation = translation
+    }
+
+    private func resetVelocitySampling() {
+        panVelocity = .zero
+        lastSampleTime = 0
+        lastSampleTranslation = .zero
+    }
+
+    /// Coasts on from the release along the pan's own direction, on Android's spline.
+    private func startFling(in viewport: Foundation.CGSize) {
+        let speed = (panVelocity.width * panVelocity.width
+                     + panVelocity.height * panVelocity.height).squareRoot()
+        // A finger that stops moving stops producing events, so the sampler is never
+        // called again to notice the pause: the last velocity would otherwise survive it
+        // and fling. Compose's tracker discards stale samples when queried; so does this.
+        let sampleAge = Foundation.Date().timeIntervalSinceReferenceDate - lastSampleTime
+        let bounds = maxOffset(in: viewport)
+        guard sampleAge < velocitySampleWindow, speed >= minimumFlingSpeed,
+              bounds.width > 0.5 || bounds.height > 0.5 else {
+            return
+        }
+
+        let duration = flingDuration(speed)
+        let distance = flingDistance(speed)
+        let direction = CGSize(width: panVelocity.width / speed,
+                               height: panVelocity.height / speed)
+        let start = offset
+
+        runMotion { elapsed in
+            let t = min(elapsed / duration, 1)
+            let travelled = distance * flingProgress(t)
+            // Each axis stops at its own bound rather than the whole fling ending there.
+            offset = clampedOffset(
+                CGSize(width: start.width + direction.width * travelled,
+                       height: start.height + direction.height * travelled),
+                in: viewport
+            )
+            return t < 1
+        }
+    }
+
+    // Android's `SplineOverScroller` closed forms. The position curve stands in for its
+    // 100-entry `SPLINE_POSITION` table: it starts at 0, ends at 1, and its initial slope
+    // returns the launch speed exactly, because `distance / (flingInflexion * duration)`
+    // is that speed.
+
+    private func splineDeceleration(_ speed: Double) -> Double {
+        Foundation.log(flingInflexion * speed / (flingFriction * flingPhysicalCoeff))
+    }
+
+    private func flingDuration(_ speed: Double) -> Foundation.TimeInterval {
+        Foundation.exp(splineDeceleration(speed) / (flingDecelerationRate - 1))
+    }
+
+    private func flingDistance(_ speed: Double) -> Double {
+        flingFriction * flingPhysicalCoeff
+            * Foundation.exp(flingDecelerationRate / (flingDecelerationRate - 1) * splineDeceleration(speed))
+    }
+
+    private func flingProgress(_ t: Double) -> Double {
+        1 - Foundation.pow(1 - t, 1 / flingInflexion)
     }
 
     // MARK: - Bounds
