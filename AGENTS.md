@@ -42,7 +42,11 @@ SwiftUI on `#if !os(Android)` rather than `canImport`. Three dependencies are fo
 `Text(_:inlineViews:)`, `Text + Text` and `FlowRow`, all unavailable or absent
 upstream). Images go through an Android-only pipeline
 (`FAImageStore` + `FACoilBridge`) rather than Kingfisher, and Save/Share through
-`FAMediaBridge`. `Android/README.md` orients and indexes the topic docs under
+`FAMediaBridge`. Pages and images share **one** `OkHttpClient` and one connection
+pool (`FAHttpClient.kt`, reached from FAKit through `FAWebSession.nativeTransport`),
+because Cloudflare judges a connection: a challenge on it is repaired — evict, solve
+in the WebView, redial — rather than retried into. HTTP/2 is measured and off; see
+`Android/docs/images.md`. `Android/README.md` orients and indexes the topic docs under
 `Android/docs/`.
 
 ## Architecture

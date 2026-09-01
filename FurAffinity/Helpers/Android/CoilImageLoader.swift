@@ -118,7 +118,12 @@ enum CoilImageLoader {
     /// the reason this is not just `String?` any more.
     enum CoilFetchOutcome {
         case path(String)
-        case challenged(epoch: UInt64)
+        /// `attempts`/`reasons` come along so that a caller which ultimately gives up
+        /// can log the same `failed after …` line an exhausted fetch does. Without it
+        /// a challenged image that is never recovered is invisible to
+        /// `summarize-image-log.py` — and "images lost" is the number every
+        /// measurement here turns on.
+        case challenged(epoch: UInt64, attempts: Int, reasons: String)
         case failed(epoch: UInt64)
 
         var path: String? {
@@ -167,7 +172,7 @@ enum CoilImageLoader {
             if result.challenged == true {
                 let conn = result.conn.map { " conn=\($0) new=\(result.newConn ?? false)" } ?? ""
                 logger.warning("[CFREPAIR] challenge \(url)\(conn) proto=\(result.proto ?? "?") epoch=\(epoch)")
-                return .challenged(epoch: epoch)
+                return .challenged(epoch: epoch, attempts: result.attempts, reasons: reasons)
             }
             let plural = result.attempts == 1 ? "attempt" : "attempts"
             logger.error("[Coil] \(url): failed after \(result.attempts) \(plural) (\(reasons))")
@@ -179,6 +184,13 @@ enum CoilImageLoader {
         #else
         return .failed(epoch: 0)
         #endif
+    }
+
+    /// The line an exhausted fetch logs, for a caller that has decided a challenged
+    /// one is not coming back either. Same shape, so one summariser counts both.
+    static func logAbandoned(_ url: URL, attempts: Int, reasons: String) {
+        let plural = attempts == 1 ? "attempt" : "attempts"
+        logger.error("[Coil] \(url): failed after \(attempts) \(plural) (\(reasons))")
     }
 
     /// The image client's connection-pool generation. Bumped by every eviction, so a

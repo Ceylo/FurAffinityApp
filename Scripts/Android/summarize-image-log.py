@@ -146,7 +146,10 @@ def main(lines):
     print(f"{'host':<24}{'urls':>6}{'resps':>7}{'403s':>6}{'403 rate':>10}"
           f"{'urls w/403':>12}{'unresolved':>12}")
     for h in hosts:
-        urls = [u for _, u in issued if host(u) == h]
+        # Distinct urls, not fetches: a challenged image parks and is issued a second
+        # time, and counting that as two would double every column — including
+        # `unresolved`, which is the "images lost" number every arm is judged on.
+        urls = sorted({u for _, u in issued if host(u) == h})
         # A url with no outcome line succeeded first try: one response, no failure.
         resps = sum(max(attempts.get(u, 1), 1) for u in urls)
         codes = [CODE.search(f) for u in urls for f in failures.get(u, [])]

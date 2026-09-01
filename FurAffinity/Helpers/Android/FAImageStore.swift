@@ -413,6 +413,7 @@ actor FAImageStore {
             outcome: .notIssued, latched: challengeEpoch != nil,
             epochAtFailure: 0, epochNow: 0
         ) == .park, await park(observing: challengeEpoch ?? CoilImageLoader.connectionEpoch()) == false {
+            CoilImageLoader.logAbandoned(url, attempts: 0, reasons: "parked, never issued")
             return nil
         }
 
@@ -423,10 +424,13 @@ actor FAImageStore {
         case let .failed(epoch):
             lastFailureEpoch = epoch
             return nil
-        case let .challenged(epoch):
+        case let .challenged(epoch, attempts, reasons):
             challengeEpoch = epoch
             lastFailureEpoch = epoch
-            guard await park(observing: epoch) else { return nil }
+            guard await park(observing: epoch) else {
+                CoilImageLoader.logAbandoned(url, attempts: attempts, reasons: reasons)
+                return nil
+            }
             // One retry, on the repaired pool and the fresh clearance. A second would
             // be another sample of a mechanism that just failed; the row shows its
             // placeholder and a later scroll re-asks.
@@ -437,6 +441,15 @@ actor FAImageStore {
             }
             logger.warning("[CFREPAIR] retry \(url) → still challenged, giving up")
             lastFailureEpoch = CoilImageLoader.connectionEpoch()
+            // The image is lost, and it has to say so in the shape the summariser
+            // counts — otherwise a challenged image that never came back looks
+            // exactly like one that was never asked for.
+            if case let .challenged(_, retryAttempts, retryReasons) = retried {
+                CoilImageLoader.logAbandoned(url, attempts: attempts + retryAttempts,
+                                             reasons: "\(reasons), \(retryReasons)")
+            } else {
+                CoilImageLoader.logAbandoned(url, attempts: attempts, reasons: reasons)
+            }
             return nil
         }
     }
