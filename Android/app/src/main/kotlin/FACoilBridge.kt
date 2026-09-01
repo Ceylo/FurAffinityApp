@@ -57,6 +57,10 @@ class FACoilBridge {
 
     fun fetchResult(url: String): String = Companion.fetchResult(url)
 
+    fun connectionEpoch(): Long = Companion.connectionEpoch()
+
+    fun evictIfUnchanged(observedEpoch: Long): String = Companion.evictIfUnchanged(observedEpoch)
+
     fun cacheSizeBytes(): Long = Companion.cacheSizeBytes()
 
     fun clearCache(): Boolean = Companion.clearCache()
@@ -133,6 +137,35 @@ class FACoilBridge {
         @Volatile private var sharedCache: DiskCache? = null
         @Volatile private var sharedClient: OkHttpClient? = null
 
+        // MARK: Connection repair
+        //
+        // Cloudflare's verdict rides the connection, so a challenge is repaired by
+        // evicting the pool and redialling after a solve — not by retrying onto the
+        // same poisoned connection. The epoch counts repairs so that N workers
+        // challenged on the same generation cause one eviction between them; the rule
+        // itself is `CloudflareConnectionRepair.shouldEvict`, stated and tested in
+        // FAKit, and this is its @Synchronized shell.
+
+        @Volatile private var epoch: Long = 0
+
+        fun connectionEpoch(): Long = epoch
+
+        /// {"didEvict":bool,"evicted":n,"epoch":e}. Swift does the logging.
+        @Synchronized
+        fun evictIfUnchanged(observedEpoch: Long): String {
+            val json = JSONObject()
+            if (observedEpoch != epoch) {
+                return json.put("didEvict", false).put("evicted", 0)
+                    .put("epoch", epoch).toString()
+            }
+            val pool = sharedClient().connectionPool
+            val evicted = pool.connectionCount()
+            pool.evictAll()
+            epoch += 1
+            return json.put("didEvict", true).put("evicted", evicted)
+                .put("epoch", epoch).toString()
+        }
+
         fun configure(userAgent: String, cookie: String): Boolean {
             this.userAgent = userAgent
             this.cookie = cookie
@@ -152,17 +185,25 @@ class FACoilBridge {
 
         /// Path of `url`'s bytes plus what it took to get them, as JSON:
         ///   {"path":"…","attempts":2,"bytes":98304,"conn":1234,"newConn":true,
-        ///    "ms":611,"failures":["HTTP 403 … conn=5678 new=true"]}
+        ///    "ms":611,"epoch":3,"failures":["HTTP 403 … conn=5678 new=true"]}
         /// `conn`/`newConn` describe the winning attempt; every failed attempt carries
         /// its own draw in its string. `path` is absent when every attempt failed.
         /// Swift does the logging — android.util.Log never reaches the exported log.
+        ///
+        /// `"challenged":true` means Cloudflare's verdict, not a dead URL: Swift can
+        /// repair that — park on the solve the page path is already asking for, evict,
+        /// and redial — where retrying here just burns the same connection's verdict
+        /// five times. Reported instead of retried under h2 immediately (the retry
+        /// rides the same connection) and under h1 only once the attempts are spent,
+        /// so h1 keeps the redraws `Connection: close` makes genuine.
         fun fetchResult(url: String): String {
             val start = System.nanoTime()
             val failures = JSONArray()
             val json = JSONObject().put("failures", failures)
 
             cachedPath(url)?.let {
-                return json.put("path", it).put("attempts", 0).put("ms", ms(start)).toString()
+                return json.put("path", it).put("attempts", 0).put("ms", ms(start))
+                    .put("epoch", epoch).toString()
             }
 
             val cache = diskCache()
@@ -175,10 +216,12 @@ class FACoilBridge {
             // that is not an HTTP status — a socket error, a cache-editor race — keeps
             // the retry it always had.
             var redraw = true
+            var challenged = false
             while (true) {
                 attempt++
                 conn.reset()
                 redraw = true
+                challenged = false
                 val failure = try {
                     sharedClient().newCall(request).execute().use { response ->
                         proto = response.protocol.toString()
@@ -191,6 +234,8 @@ class FACoilBridge {
                                 ?.let { " cf-mitigated=$it" } ?: ""
                             val ray = response.header("cf-ray")?.let { " ray=$it" } ?: ""
                             redraw = worthRedrawing(response.code)
+                            challenged = response.code == 403 &&
+                                response.header("cf-mitigated") == "challenge"
                             "HTTP ${response.code}$mitigated$ray${conn.suffix()}"
                         } else {
                             val editor = cache.openEditor(url)
@@ -212,6 +257,7 @@ class FACoilBridge {
                                             .put("proto", proto)
                                             .put("newConn", conn.isNew)
                                             .put("ms", ms(start))
+                                            .put("epoch", epoch)
                                             .toString()
                                     }
                                     "no snapshot after commit${conn.suffix()}"
@@ -227,12 +273,31 @@ class FACoilBridge {
                 }
 
                 failures.put(failure)
+                // Hand a challenge back to Swift rather than redrawing into it. Under
+                // h1 that only happens once the attempts are spent — each of those is
+                // a genuinely new connection, since the challenge closes the last one.
+                // Under anything else the retry rides the same connection, so the
+                // first challenge is already the whole answer.
+                if (challenged && (proto != "http/1.1" || attempt >= MAX_ATTEMPTS)) {
+                    conn.id?.let { json.put("conn", it) }
+                    return json.put("challenged", true)
+                        .put("attempts", attempt)
+                        .put("proto", proto)
+                        .put("newConn", conn.isNew)
+                        .put("ms", ms(start))
+                        .put("epoch", epoch)
+                        .toString()
+                }
                 if (attempt >= MAX_ATTEMPTS || !redraw) {
                     return json.put("attempts", attempt)
                         .put("proto", proto)
                         .put("ms", ms(start))
+                        .put("epoch", epoch)
                         .toString()
                 }
+                // Inside the permit on purpose: this sleep *is* the pacing, and
+                // freeing the permit across it is what let ~80 URLs resume in
+                // lockstep and 403 (Android/docs/images.md).
                 Thread.sleep(250L * attempt)
             }
         }

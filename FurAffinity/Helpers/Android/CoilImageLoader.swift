@@ -80,6 +80,12 @@ enum CoilImageLoader {
         var bytes: Int?
         var ms: Int?
         var proto: String?
+        /// Cloudflare's verdict on the connection rather than a dead URL — the one
+        /// failure a solve can repair.
+        var challenged: Bool?
+        /// The connection-pool generation this fetch rode, so a caller can tell a
+        /// repaired pool from an unchanged one.
+        var epoch: UInt64?
         /// Identity of the connection the winning attempt rode, and whether that
         /// attempt is what opened it. Cloudflare's verdict is per connection, so this
         /// is the causal variable — see Android/docs/images.md.
@@ -108,6 +114,19 @@ enum CoilImageLoader {
         }
     }
 
+    /// How one image fetch ended. `.challenged` is the case a solve can repair, and
+    /// the reason this is not just `String?` any more.
+    enum CoilFetchOutcome {
+        case path(String)
+        case challenged(epoch: UInt64)
+        case failed(epoch: UInt64)
+
+        var path: String? {
+            if case let .path(path) = self { return path }
+            return nil
+        }
+    }
+
     /// On-disk path of `url`'s bytes, downloading them into the cache if needed.
     ///
     /// **Blocking** — the JNI call runs the HTTP request and its Cloudflare retries
@@ -116,17 +135,18 @@ enum CoilImageLoader {
     ///
     /// The analog of iOS's `willDownloadImageForURL`: `FAImageStore` only gets here
     /// after `cachedPath` missed, so the `GET request` line is one per real fetch.
-    static func fetchPath(_ url: URL) -> String? {
+    static func fetchPath(_ url: URL) -> CoilFetchOutcome {
         #if canImport(Android)
-        guard let bridge else { return nil }
+        guard let bridge else { return .failed(epoch: 0) }
         logger.info("[Coil] GET request on \(url)")
         do {
             let json: String? = try bridge.fetchResult(url.absoluteString)
             guard let data = json?.data(using: .utf8),
                   let result = try? JSONDecoder().decode(FetchResult.self, from: data) else {
                 logger.error("[Coil] \(url): unreadable fetch result \(json ?? "<nil>")")
-                return nil
+                return .failed(epoch: 0)
             }
+            let epoch = result.epoch ?? 0
             logProtocolOnce(result.proto, for: url)
             let reasons = result.failures.joined(separator: ", ")
             if let path = result.path {
@@ -142,18 +162,72 @@ enum CoilImageLoader {
                 }
                 let conn = result.conn.map { " conn=\($0) new=\(result.newConn ?? false)" } ?? ""
                 logger.info("[Coil] \(url): 200\(conn) \(result.ms ?? -1)ms")
-                return path
+                return .path(path)
+            }
+            if result.challenged == true {
+                let conn = result.conn.map { " conn=\($0) new=\(result.newConn ?? false)" } ?? ""
+                logger.warning("[CFREPAIR] challenge \(url)\(conn) proto=\(result.proto ?? "?") epoch=\(epoch)")
+                return .challenged(epoch: epoch)
             }
             let plural = result.attempts == 1 ? "attempt" : "attempts"
             logger.error("[Coil] \(url): failed after \(result.attempts) \(plural) (\(reasons))")
-            return nil
+            return .failed(epoch: epoch)
         } catch {
             logger.error("[Coil] \(url): fetch threw: \(error)")
-            return nil
+            return .failed(epoch: 0)
         }
         #else
-        return nil
+        return .failed(epoch: 0)
         #endif
+    }
+
+    /// The image client's connection-pool generation. Bumped by every eviction, so a
+    /// caller can tell "the pool was repaired under me" from "nothing has changed".
+    static func connectionEpoch() -> UInt64 {
+        #if canImport(Android)
+        guard let bridge else { return 0 }
+        let epoch: Int64? = try? bridge.connectionEpoch()
+        return UInt64(max(epoch ?? 0, 0))
+        #else
+        return 0
+        #endif
+    }
+
+    /// Evict the image client's pooled connections, unless somebody has already done
+    /// so since `observed`. Blocking JNI — call off the main actor.
+    @discardableResult
+    static func repairConnections(observed: UInt64) -> FAConnectionRepairResult {
+        let unchanged = FAConnectionRepairResult(didEvict: false, evictedConnections: 0, epoch: observed)
+        #if canImport(Android)
+        guard let bridge else { return unchanged }
+        do {
+            let json: String? = try bridge.evictIfUnchanged(Int64(observed))
+            guard let data = json?.data(using: .utf8),
+                  let result = try? JSONDecoder().decode(RepairResult.self, from: data) else {
+                logger.error("[CFREPAIR] unreadable evict result \(json ?? "<nil>")")
+                return unchanged
+            }
+            if result.didEvict {
+                logger.warning("[CFREPAIR] evicted \(result.evicted) connections, epoch \(observed)→\(result.epoch)")
+            } else {
+                logger.warning("[CFREPAIR] evict skipped, pool already at epoch \(result.epoch)")
+            }
+            return FAConnectionRepairResult(
+                didEvict: result.didEvict, evictedConnections: result.evicted, epoch: result.epoch
+            )
+        } catch {
+            logger.error("[CFREPAIR] evict threw: \(error)")
+            return unchanged
+        }
+        #else
+        return unchanged
+        #endif
+    }
+
+    private struct RepairResult: Decodable {
+        var didEvict: Bool
+        var evicted: Int
+        var epoch: UInt64
     }
 
     /// Bytes the disk cache currently holds, or nil if the bridge is unavailable.
