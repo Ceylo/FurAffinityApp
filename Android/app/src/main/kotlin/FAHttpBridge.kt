@@ -36,8 +36,6 @@ class FAHttpBridge {
 
     fun repair(observedEpoch: Long): String = FAHttpClient.evictIfUnchanged(observedEpoch)
 
-    fun epoch(): Long = FAHttpClient.connectionEpoch()
-
     fun poolStats(): String = FAHttpClient.poolStats()
 
     // Boolean, not Unit: AnyDynamicObject can't resolve the void overload.
@@ -46,14 +44,6 @@ class FAHttpBridge {
     fun isHTTP2Enabled(): Boolean = FAHttpClient.isHTTP2Enabled()
 
     companion object {
-        /// Response headers worth carrying back. An allowlist, and **never**
-        /// `set-cookie`: nothing above consumes it, and logging it would put a live
-        /// Cloudflare clearance in the log file Settings exports.
-        private val CARRIED = setOf(
-            "cf-mitigated", "cf-ray", "cf-cache-status", "connection",
-            "content-type", "content-length", "location", "server",
-        )
-
         /// Bodies Swift never got to read — it crashed, or was killed between the
         /// write and its `defer`-ed unlink. Swept on construction and periodically,
         /// so the directory is bounded by a minute's traffic rather than by uptime.
@@ -61,21 +51,24 @@ class FAHttpBridge {
         private const val SWEEP_EVERY = 32
         private val calls = AtomicInteger(0)
 
+        /// `FileManager.temporaryDirectory` is this same directory on Android, so
+        /// Swift opens the path directly with no translation. Created once, not
+        /// `mkdirs()`-ed per request.
+        ///
+        /// Declared above the `init` below on purpose: a companion's initialisers run
+        /// in declaration order, so a `by lazy` the init block reaches through has to
+        /// come first or its delegate is still null.
+        private val bodyDir: File by lazy {
+            File(ProcessInfo.processInfo.androidContext.cacheDir, "fa_http").also { it.mkdirs() }
+        }
+
         init {
             sweep()
         }
 
-        private fun bodyDir(): File {
-            // `FileManager.temporaryDirectory` is this same directory on Android, so
-            // Swift opens the path directly with no translation.
-            val dir = File(ProcessInfo.processInfo.androidContext.cacheDir, "fa_http")
-            dir.mkdirs()
-            return dir
-        }
-
         private fun sweep() {
             val cutoff = System.currentTimeMillis() - BODY_TTL_MS
-            bodyDir().listFiles()?.forEach { if (it.lastModified() < cutoff) it.delete() }
+            bodyDir.listFiles()?.forEach { if (it.lastModified() < cutoff) it.delete() }
         }
 
         /// One exchange. Redirects are OkHttp's (the network interceptor re-scopes the
@@ -116,40 +109,56 @@ class FAHttpBridge {
                 builder.post((body ?: "").toRequestBody(contentType?.toMediaType()))
             }
 
+            // The response headers worth carrying back, named by Swift — the same
+            // `FANativeHTTPResponse.carriedHeaders` the URLSession path filters on, so
+            // the two cannot drift. `set-cookie` is not in it and must never be: it
+            // would put a live Cloudflare clearance in the log file Settings exports.
+            val carriedNames = spec.optJSONArray("carried")
+            val carried = HashSet<String>()
+            for (i in 0 until (carriedNames?.length() ?: 0)) {
+                carried.add(carriedNames!!.getString(i).lowercase())
+            }
+
             val draw = FAHttpClient.draw.get()
             draw.reset()
+            // The generation the call is *issued* against, which is what a challenged
+            // caller must compare when it asks for an eviction. Read here rather than
+            // over a JNI round trip per request from Swift, and after the gate, so it
+            // cannot already be stale by the time the request goes out.
+            val epochAtIssue = FAHttpClient.connectionEpoch()
             val start = System.nanoTime()
 
             return try {
                 FAHttpClient.shared().newCall(builder.build()).execute().use { response ->
-                    val carried = JSONObject()
-                    for (name in response.headers.names()) {
+                    // One pass over the indexed pairs: `headers.names()` builds a
+                    // case-insensitive set and `header(name)` then rescans the whole
+                    // list per name.
+                    val headersJson = JSONObject()
+                    response.headers.forEach { (name, value) ->
                         val lower = name.lowercase()
-                        if (lower in CARRIED) carried.put(lower, response.header(name) ?: "")
+                        if (lower in carried) headersJson.put(lower, value)
                     }
 
-                    val file = File(bodyDir(), "${UUID.randomUUID()}.body")
-                    val bytes = response.body?.byteStream()?.use { input ->
+                    val file = File(bodyDir, "${UUID.randomUUID()}.body")
+                    response.body?.byteStream()?.use { input ->
                         file.outputStream().use { output -> input.copyTo(output) }
-                    } ?: 0L
+                    }
 
                     val json = JSONObject()
                         .put("status", response.code)
                         .put("proto", response.protocol.toString())
                         .put("newConn", draw.isNew)
-                        .put("epoch", FAHttpClient.connectionEpoch())
-                        .put("finalUrl", response.request.url.toString())
-                        .put("bytes", bytes)
+                        .put("epoch", epochAtIssue)
                         .put("ms", (System.nanoTime() - start) / 1_000_000)
                         .put("bodyPath", file.absolutePath)
-                        .put("headers", carried)
+                        .put("headers", headersJson)
                     draw.id?.let { json.put("conn", it) }
                     json.toString()
                 }
             } catch (e: Exception) {
                 JSONObject().put("error", e.toString())
                     .put("ms", (System.nanoTime() - start) / 1_000_000)
-                    .put("epoch", FAHttpClient.connectionEpoch())
+                    .put("epoch", epochAtIssue)
                     .toString()
             }
         }

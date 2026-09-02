@@ -23,18 +23,17 @@ FA_HOST = re.compile(r"^([at]\.furaffinity\.net)\s+(.*)$")
 ISSUANCE = re.compile(r"issuance: ([\d.]+) s span, gaps median (\d+) ms, max (\d+) ms")
 COMPLETION = re.compile(r"completion: ([\d.]+) s to the last outcome \((\d+) ")
 SPLIT = re.compile(r"^(\d+)/(\d+)$")
-# A challenged *response*, in either pipeline. `[CFREPAIR] challenge <url>` is what
-# both paths log now; the old spelling stays so archived runs still parse.
-CFPAGE = re.compile(r"\[CFREPAIR\] challenge https://www\.|Cloudflare challenge on URLSession")
-CFIMG = re.compile(r"\[CFREPAIR\] challenge https://[ta]\.")
-REPAIRED = re.compile(r"\[CFREPAIR\] evicted ")
-RETRY_OK = re.compile(r"\[CFREPAIR\] retry \S+ → 200")
-RETRY_BAD = re.compile(r"\[CFREPAIR\] retry \S+ → still challenged")
-RESOLUTION = re.compile(r"\[CFREPAIR\] resolution took ([\d.]+)")
-ARM = re.compile(r"\[HTTP\] transport=(\S+) h2=(\S+)")
-PAGES = re.compile(r"\[HTTP\] (?:GET|POST) ")
-CONNS = re.compile(r"(\d+) connections, \d+ serving more than one host")
-SHARED = re.compile(r"\d+ connections, (\d+) serving more than one host")
+PAGE_HOST = re.compile(r"^(www\.furaffinity\.net)\s+(.*)$")
+# Everything below is read out of the summariser's own output, never out of the raw
+# log: it already parses the whole `[CFREPAIR]` vocabulary (the legacy page-challenge
+# spelling included), and a second parser of the same log is a second thing to update
+# the next time one of those strings moves.
+ARM = re.compile(r"^arm: transport=(\S+) h2=(\S+)")
+CHALLENGES = re.compile(r"challenges (\d+) \(page (\d+), image (\d+)\), "
+                        r"evicted (\d+), skipped (\d+)")
+RETRIES = re.compile(r"post-repair retries: (\d+) → 200, (\d+) still challenged")
+RESOLUTION = re.compile(r"resolutions \d+, median ([\d.]+) s")
+CONNS = re.compile(r"(\d+) connections, (\d+) serving more than one host")
 
 # name, width, how to render one run, how to render an arm's median.
 COLUMNS = [
@@ -90,6 +89,12 @@ def parse(path):
             run["n403"] += int(f[2])
             run["lost"] += int(f[5])
 
+    # Page fetches, from the same table's www row — the image hosts above are summed
+    # on their own because `403%` and `lost` are image numbers.
+    for line in out.splitlines():
+        if (m := PAGE_HOST.match(line)) and "." not in m.group(2).split()[2]:
+            run["pages"] += int(m.group(2).split()[1])
+
     if m := ISSUANCE.search(out):
         run["issuance"] = float(m.group(1))
     if m := COMPLETION.search(out):
@@ -97,30 +102,25 @@ def parse(path):
     # Issuance is the honest fallback when nothing logged a dated outcome.
     run["drain"] = run["drain"] or run["issuance"]
 
-    text = Path(path).read_text()
-    run["cfpage"] = len(CFPAGE.findall(text))
-    run["cfimg"] = len(CFIMG.findall(text))
-    run["pages"] = len(PAGES.findall(text))
-    run["repair"] = len(REPAIRED.findall(text))
-    if m := ARM.search(text):
+    if m := ARM.search(out):
         run["arm"] = f"{m.group(1)} h2={m.group(2)}"
+    if m := CHALLENGES.search(out):
+        run["cfpage"], run["cfimg"] = int(m.group(2)), int(m.group(3))
+        run["repair"] = int(m.group(4))
+    if m := RESOLUTION.search(out):
+        run["solve"] = float(m.group(1))
     # Did a repair actually fix anything? The post-repair retry is the only honest
     # answer: a challenge that leads to a 200 was repaired, one that leads to another
-    # challenge was not.
-    ok, bad = len(RETRY_OK.findall(text)), len(RETRY_BAD.findall(text))
-    # An em dash rather than 0% when nothing was repaired: "no repairs" and "every
-    # repair failed" are opposite results and must not print the same.
+    # challenge was not. An em dash rather than 0% when nothing was repaired: "no
+    # repairs" and "every repair failed" are opposite results and must not print the
+    # same.
+    ok, bad = (int(m.group(1)), int(m.group(2))) if (m := RETRIES.search(out)) else (0, 0)
     run["fixed"] = f"{100 * ok // (ok + bad)}%" if ok + bad else "—"
-    solves = [float(x) for x in RESOLUTION.findall(text)]
-    run["solve"] = statistics.median(solves) if solves else 0.0
 
     # `conns` changes meaning: distinct connection ids across *both* pipelines, which
-    # is the honest count once they share a client. Taken from the summariser's own
-    # connection table so the two can never disagree.
+    # is the honest count once they share a client.
     if m := CONNS.search(out):
-        run["conns"] = int(m.group(1))
-    if m := SHARED.search(out):
-        run["shared"] = int(m.group(1))
+        run["conns"], run["shared"] = int(m.group(1)), int(m.group(2))
 
     run["rate"] = 100 * run["n403"] / max(run["resps"], 1)
     run["new403"] = run["new403"] / max(run["new"], 1)

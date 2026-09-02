@@ -50,10 +50,6 @@ class FACoilBridge {
 
     fun fetchResult(url: String): String = Companion.fetchResult(url)
 
-    fun connectionEpoch(): Long = FAHttpClient.connectionEpoch()
-
-    fun evictIfUnchanged(observedEpoch: Long): String = FAHttpClient.evictIfUnchanged(observedEpoch)
-
     fun cacheSizeBytes(): Long = Companion.cacheSizeBytes()
 
     fun clearCache(): Boolean = Companion.clearCache()

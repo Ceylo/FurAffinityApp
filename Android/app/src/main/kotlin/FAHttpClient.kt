@@ -19,6 +19,7 @@
 package fur.affinity.ui
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import java.net.InetSocketAddress
 import java.net.Proxy
 import okhttp3.Call
@@ -75,13 +76,25 @@ object FAHttpClient {
     /// conn id -> the hosts it has served and how many responses it carried. The
     /// coalescing census: one id with more than one host is two pipelines sharing a
     /// connection, which only h2 can do.
+    ///
+    /// Debug builds only, and behind a lock of its own rather than the object monitor
+    /// `evictIfUnchanged` uses: this runs once per connection acquisition on the image
+    /// burst's hottest path, and the only reader is a debug-gated census line.
+    private val censusLock = Object()
     private val census = HashMap<Int, MutableSet<String>>()
     private val callsPerConnection = HashMap<Int, Int>()
 
-    @Synchronized
+    private val isDebuggable: Boolean by lazy {
+        val context = ProcessInfo.processInfo.androidContext
+        (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    }
+
     private fun record(id: Int, host: String) {
-        census.getOrPut(id) { HashSet() }.add(host)
-        callsPerConnection[id] = (callsPerConnection[id] ?: 0) + 1
+        if (!isDebuggable) return
+        synchronized(censusLock) {
+            census.getOrPut(id) { HashSet() }.add(host)
+            callsPerConnection[id] = (callsPerConnection[id] ?: 0) + 1
+        }
     }
 
     private val connectionTracer = object : EventListener.Factory {
@@ -255,16 +268,21 @@ object FAHttpClient {
     /// What the pool is holding, plus every connection this launch has used and the
     /// hosts it served. Swift logs it — android.util.Log never reaches the exported
     /// log. The per-connection rows are the coalescing answer.
-    @Synchronized
     fun poolStats(): String {
         val pool: ConnectionPool = shared().connectionPool
+        // Snapshot under the census lock, then build the JSON outside it — one
+        // JSONObject per connection is dozens of allocations to hold a per-request
+        // instrument's lock across.
+        val snapshot = synchronized(censusLock) {
+            census.map { (id, hosts) -> Triple(id, callsPerConnection[id] ?: 0, hosts.sorted()) }
+        }
         val connections = JSONArray()
-        for ((id, hosts) in census) {
+        for ((id, calls, hosts) in snapshot) {
             connections.put(
                 JSONObject()
                     .put("conn", id)
-                    .put("calls", callsPerConnection[id] ?: 0)
-                    .put("hosts", hosts.sorted().joinToString(","))
+                    .put("calls", calls)
+                    .put("hosts", hosts.joinToString(","))
             )
         }
         return JSONObject()
@@ -272,7 +290,7 @@ object FAHttpClient {
             .put("idle", pool.idleConnectionCount())
             .put("epoch", epoch)
             .put("h2", isHTTP2Enabled())
-            .put("calls", callsPerConnection.values.sum())
+            .put("calls", snapshot.sumOf { it.second })
             .put("connections", connections)
             .toString()
     }

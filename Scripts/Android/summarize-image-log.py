@@ -46,6 +46,9 @@ NEGOTIATED = re.compile(r"\[Coil\] (\S+) negotiated (\S+)")
 # The repair vocabulary. A repair worked iff a `challenge` is followed by a
 # `retry → 200` and no further challenge at the next epoch.
 REPAIR = re.compile(r"\[CFREPAIR\] (\S+)(.*)")
+# What a page challenge was called before the repair work. Kept so runs archived
+# under the old vocabulary still count here rather than reading as zero.
+LEGACY_CFPAGE = re.compile(r"Cloudflare challenge on URLSession")
 STAMP = re.compile(r"^(\d\d-\d\d \d\d:\d\d:\d\d\.\d+)")
 CODE = re.compile(r"HTTP (\d+)(?: cf-mitigated=(\S+))?")
 # Every failed attempt carries its own draw, appended by FACoilBridge.
@@ -131,10 +134,19 @@ def main(lines):
                 resolutions.append(float(d.group(1)))
             if verb == "retry":
                 repairs["retry 200" if "→ 200" in rest else "retry still challenged"] += 1
+            # Which pipeline drew the challenge. Both log the same verb, and the URL
+            # is the only thing that tells them apart — `www.` is a page fetch,
+            # `t.`/`a.` an image.
+            if verb == "challenge":
+                h = host(rest.split()[0]) if rest.split() else ""
+                repairs["challenge page" if h.startswith("www.") else "challenge image"] += 1
             if verb == "image" and "timed out" in rest:
                 parks.append("timed out")
             if verb == "image" and "refused" in rest:
                 parks.append("refused")
+        elif LEGACY_CFPAGE.search(line):
+            repairs["challenge"] += 1
+            repairs["challenge page"] += 1
 
     if not issued:
         sys.exit("no `[Coil] GET request on` or `[HTTP]` lines found")
@@ -254,7 +266,8 @@ def main(lines):
 
     if repairs:
         print("\n[CFREPAIR]")
-        print(f"  challenges {repairs['challenge']}, "
+        print(f"  challenges {repairs['challenge']} "
+              f"(page {repairs['challenge page']}, image {repairs['challenge image']}), "
               f"evicted {repairs['evicted']}, skipped {repairs['evict skipped']}")
         print(f"  resolutions {repairs['resolution']}"
               + (f", median {statistics.median(resolutions):.1f} s, "

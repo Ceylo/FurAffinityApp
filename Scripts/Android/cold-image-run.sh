@@ -85,20 +85,6 @@ APP_ID="$APP_ID.${WORKTREE//[^A-Za-z0-9_]/_}"
 PKG="$(skip_env ANDROID_PACKAGE_NAME)"
 [[ -n "$PKG" ]] || die "no ANDROID_PACKAGE_NAME in $ROOT/Skip.env"
 
-# Every tag our code logs under, same derivation as logs.sh. The app module logs
-# under the installed applicationId; FAKit and FAPages build their loggers before
-# the app installs FALogSubsystem.override, so they log under the fallback. Filtering
-# on the app tag alone silently drops every [CFREPAIR], [CFDIAG] and [CFFALLBACK]
-# line, which is where the whole Cloudflare story is.
-TAGS=()
-for id in "$APP_ID" "$(skip_env ANDROID_APPLICATION_ID)" FurAffinity; do
-    [[ -n "$id" ]] && TAGS+=("$id/FA" "$id/FAKit" "$id/FAPages")
-done
-while IFS= read -r tag; do
-    [[ -n "$tag" ]] && TAGS+=("$tag")
-done < <(sed -nE 's@.*\bTAG[[:space:]]*=[[:space:]]*"([^"]+)".*@\1@p' \
-    "$ROOT"/Android/app/src/main/kotlin/*.kt 2>/dev/null | sort -u)
-
 # --- run -------------------------------------------------------------------
 
 if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
@@ -126,7 +112,11 @@ fi
 "$ADB" logcat -c
 "$ADB" shell am start -n "$APP_ID/$PKG.MainActivity" >/dev/null
 sleep "$WAIT"
-"$ADB" logcat -d -s "${TAGS[@]}" > "$OUT"
+# logs.sh owns the tag list — the app id with and without this worktree's suffix,
+# FALogSubsystem's fallback, and the Kotlin bridges' own tags scraped out of the
+# source. Deriving it a second time here is how a run silently loses every
+# [CFREPAIR], [CFDIAG] and [CFFALLBACK] line the moment the two copies disagree.
+"$ROOT/Scripts/Android/logs.sh" -d --color=none > "$OUT"
 
 # --- verdict ---------------------------------------------------------------
 

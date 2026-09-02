@@ -43,7 +43,6 @@ actor ScriptedTransport {
     enum Call: Equatable {
         case perform
         case repair(observed: UInt64)
-        case epoch
     }
 
     private var responses: [FANativeHTTPResponse]
@@ -74,21 +73,12 @@ actor ScriptedTransport {
         return FAConnectionRepairResult(didEvict: true, evictedConnections: 1, epoch: epoch)
     }
 
-    private func readEpoch() -> UInt64 {
-        calls.append(.epoch)
-        return epoch
-    }
-
     nonisolated var transport: FANativeTransport {
         FANativeTransport(
             perform: { await self.perform($0) },
-            repairConnections: { await self.repair(observed: $0) },
-            currentEpoch: { await self.readEpoch() }
+            repairConnections: { await self.repair(observed: $0) }
         )
     }
-
-    /// `calls` without the bookkeeping `epoch` reads, which every request makes.
-    var significantCalls: [Call] { calls.filter { $0 != .epoch } }
 }
 
 struct FAHTTPDataSourceTests {
@@ -228,9 +218,9 @@ struct FAHTTPDataSourceTests {
 
         _ = try await source.httpData(from: Self.feedURL, cookies: nil)
 
-        #expect(await transport.significantCalls == [
+        #expect(await transport.calls == [
             .perform,
-            .repair(observed: 4),   // the epoch read before the first exchange
+            .repair(observed: 4),   // the epoch the challenged exchange was issued against
             .repair(observed: 5),   // …and the one the first repair produced
             .perform,
         ])

@@ -73,9 +73,6 @@ public struct FANativeHTTPRequest: Sendable {
     /// Percent-encoded form body, built here so it stays byte-identical to the
     /// URLSession path. ASCII by construction.
     public var body: String?
-    /// The connection-pool generation this request was issued against, so a
-    /// challenged caller can ask for an eviction only if nobody has evicted since.
-    public var connectionEpoch: UInt64
 
     public init(
         url: URL,
@@ -83,8 +80,7 @@ public struct FANativeHTTPRequest: Sendable {
         headers: [String: String] = [:],
         userAgent: String? = nil,
         cookieHeader: String? = nil,
-        body: String? = nil,
-        connectionEpoch: UInt64 = 0
+        body: String? = nil
     ) {
         self.url = url
         self.method = method
@@ -92,7 +88,6 @@ public struct FANativeHTTPRequest: Sendable {
         self.userAgent = userAgent
         self.cookieHeader = cookieHeader
         self.body = body
-        self.connectionEpoch = connectionEpoch
     }
 }
 
@@ -107,11 +102,18 @@ public struct FANativeHTTPResponse: Sendable {
     public var networkProtocol: String
     public var connectionID: Int?
     public var openedConnection: Bool
+    /// The pool generation this request was *issued* against, stamped by the
+    /// transport. A challenged caller asks to evict that generation, and the pool
+    /// evicts only if nothing has repaired since — `CloudflareConnectionRepair`.
     public var connectionEpoch: UInt64
-    public var finalURL: URL?
-    public var elapsed: Duration
 
     public var isCloudflareChallenge: Bool { headers["cf-mitigated"] == "challenge" }
+
+    /// The connection this came back on, in the token shapes the log summarisers
+    /// parse. One spelling, so `[HTTP]` and `[CFREPAIR]` lines stay greppable together.
+    public var connectionDescription: String {
+        "conn=\(connectionID.map(String.init) ?? "-") new=\(openedConnection) proto=\(networkProtocol)"
+    }
 
     /// Everything the retry loop, the logs or the diagnostics read. Response
     /// headers not in here are dropped at the seam.
@@ -127,9 +129,7 @@ public struct FANativeHTTPResponse: Sendable {
         networkProtocol: String,
         connectionID: Int? = nil,
         openedConnection: Bool = false,
-        connectionEpoch: UInt64 = 0,
-        finalURL: URL? = nil,
-        elapsed: Duration = .zero
+        connectionEpoch: UInt64 = 0
     ) {
         self.statusCode = statusCode
         self.headers = headers
@@ -138,8 +138,6 @@ public struct FANativeHTTPResponse: Sendable {
         self.connectionID = connectionID
         self.openedConnection = openedConnection
         self.connectionEpoch = connectionEpoch
-        self.finalURL = finalURL
-        self.elapsed = elapsed
     }
 }
 
@@ -174,16 +172,13 @@ public struct FANativeTransport: Sendable {
 
     public let perform: Perform
     public let repairConnections: Repair
-    public let currentEpoch: @Sendable () async -> UInt64
 
     public init(
         perform: @escaping Perform,
-        repairConnections: @escaping Repair,
-        currentEpoch: @escaping @Sendable () async -> UInt64
+        repairConnections: @escaping Repair
     ) {
         self.perform = perform
         self.repairConnections = repairConnections
-        self.currentEpoch = currentEpoch
     }
 }
 
@@ -215,7 +210,8 @@ public struct FAHTTPDataSource: HTTPDataSource {
     /// touching the main-actor singleton the app uses.
     private let awaitChallengeResolution: ChallengeResolver
 
-    /// Blind redraws after a challenge, before anything is repaired.
+    /// Whether one blind redraw is worth taking after a challenge, before anything
+    /// is repaired.
     ///
     /// Under HTTP/1.1 a challenge carries `Connection: close`, so a retry
     /// necessarily opens a new connection and draws a genuinely fresh verdict —
@@ -225,8 +221,8 @@ public struct FAHTTPDataSource: HTTPDataSource {
     /// post-repair retry gets none either way — a second failure there means the
     /// solve didn't produce a passing connection, and the next move is the WebView
     /// fallback, not another sample of the same mechanism.
-    static func blindRedraws(after response: FANativeHTTPResponse) -> Int {
-        response.networkProtocol == "h2" ? 0 : 1
+    static func blindRedrawIsWorthIt(after response: FANativeHTTPResponse) -> Bool {
+        response.networkProtocol != "h2"
     }
 
     /// Pause before a blind redraw, matching what the five-retry loop used to open with.
@@ -324,40 +320,38 @@ public struct FAHTTPDataSource: HTTPDataSource {
         // waited out. Only `cf-mitigated: challenge` goes down that path; unlike
         // FACoilBridge's image loop, which retries any non-2xx and so cannot tell a
         // challenge from a 404 or a socket error.
-        var response: FANativeHTTPResponse?
-        var attempt = 0
-        var attemptBudget = 1
-        while attempt < attemptBudget {
-            attempt += 1
-            let received = try await exchange(request, reporting: url)
-            response = received
+        var response = try await exchange(request, reporting: url)
 
-            if hasAwaitedResolution {
-                if received.isCloudflareChallenge {
-                    logger.warning("[CFREPAIR] retry \(url) → still challenged, falling back")
-                } else {
-                    logger.info("[CFREPAIR] retry \(url) → \(received.statusCode) \(Self.connectionDescription(received))")
-                }
+        if hasAwaitedResolution {
+            if response.isCloudflareChallenge {
+                logger.warning("[CFREPAIR] retry \(url) → still challenged, falling back")
+            } else {
+                logger.info("[CFREPAIR] retry \(url) → \(response.statusCode) \(response.connectionDescription)")
             }
-            guard received.isCloudflareChallenge else { break }
+        }
 
-            logger.warning("[CFREPAIR] challenge \(url) \(Self.connectionDescription(received)) epoch=\(request.connectionEpoch)")
-            if attempt == 1 {
-                await logClearanceDiagnostics(sent: built.cookieHeader)
-                if !hasAwaitedResolution {
-                    attemptBudget += Self.blindRedraws(after: received)
-                }
-            }
-            if attempt < attemptBudget {
+        if response.isCloudflareChallenge {
+            logger.warning("[CFREPAIR] challenge \(url) \(response.connectionDescription) epoch=\(response.connectionEpoch)")
+            await logClearanceDiagnostics(sent: built.cookieHeader)
+
+            // One blind redraw under h1, where the challenge carries `Connection:
+            // close` so a retry genuinely redials, and none otherwise. The
+            // post-repair retry gets none either way.
+            if !hasAwaitedResolution, Self.blindRedrawIsWorthIt(after: response) {
                 try? await Task.sleep(for: Self.blindRedrawDelay)
-                continue
+                response = try await exchange(request, reporting: url)
+                if response.isCloudflareChallenge {
+                    logger.warning("[CFREPAIR] challenge \(url) \(response.connectionDescription) epoch=\(response.connectionEpoch)")
+                }
             }
+        }
 
+        if response.isCloudflareChallenge {
             // Repair rather than retry: resolution puts a fresh clearance in the
             // shared jar, which fixes every *subsequent* request too, whereas the
             // WebView fallback below only rescues this one.
             if !hasAwaitedResolution,
-               await repairAndResolve(url: url, observedEpoch: request.connectionEpoch, sent: built.cookieHeader) {
+               await repairAndResolve(url: url, observedEpoch: response.connectionEpoch, sent: built.cookieHeader) {
                 return try await httpData(
                     from: url, cookies: cookies, method: method,
                     parameters: parameters, hasAwaitedResolution: true
@@ -377,7 +371,6 @@ public struct FAHTTPDataSource: HTTPDataSource {
             }
             throw CloudflareChallengeRequired()
         }
-        guard let response else { throw FAHTTPError.nonHTTPResponse(url) }
 
         guard (200...299).contains(response.statusCode) || (response.statusCode == 400 && !response.body.isEmpty) else {
             let body = String(data: response.body, encoding: .utf8) ?? "<non-UTF8>"
@@ -417,33 +410,27 @@ public struct FAHTTPDataSource: HTTPDataSource {
         //    Cheap — the pool holds one to a handful.
         _ = await repairConnections(observed: firstRepair.epoch)
 
-        let live = await liveCookieHeader?() ?? ""
+        // Only the clearance that *failed*. Reading the live one here costs two
+        // @MainActor WebView calls purely to format this line — on the thread that
+        // has just finished running challenge script, and microseconds before the
+        // retry's own `makeRequest` pulls the very same header. The retry's
+        // `… with cf_clearance=…` line names the replacement.
         let before = Self.cookieValue("cf_clearance", in: sent).map { "\($0.prefix(8))…" } ?? "<none>"
-        let after = Self.cookieValue("cf_clearance", in: live).map { "\($0.prefix(8))…" } ?? "<none>"
-        logger.warning("[CFREPAIR] resolution took \(ContinuousClock.now - startedAt), cf_clearance \(before)→\(after)")
+        logger.warning("[CFREPAIR] resolution took \(ContinuousClock.now - startedAt), replacing cf_clearance \(before)")
         return true
     }
 
     /// A no-op returning the epoch unchanged when no native transport is installed,
     /// which is what makes Step 4's ordering measurable before OkHttp exists.
+    ///
+    /// The `[CFREPAIR] evicted …` / `evict skipped …` line is the transport's to log —
+    /// it is the one that owns the pool, and the image pipeline evicts the same pool
+    /// without coming through here.
     private func repairConnections(observed: UInt64) async -> FAConnectionRepairResult {
         guard let nativeTransport else {
             return FAConnectionRepairResult(didEvict: false, evictedConnections: 0, epoch: observed)
         }
-        let result = await nativeTransport.repairConnections(observed)
-        if result.didEvict {
-            logger.warning("[CFREPAIR] evicted \(result.evictedConnections) connections, epoch \(observed)→\(result.epoch)")
-        } else {
-            logger.warning("[CFREPAIR] evict skipped, pool already at epoch \(result.epoch)")
-        }
-        return result
-    }
-
-    /// The connection a response came back on, in the token shapes the log
-    /// summarisers parse.
-    private static func connectionDescription(_ response: FANativeHTTPResponse) -> String {
-        let id = response.connectionID.map(String.init) ?? "-"
-        return "conn=\(id) new=\(response.openedConnection) proto=\(response.networkProtocol)"
+        return await nativeTransport.repairConnections(observed)
     }
 
     /// The wire request, plus the cookie header that went into it — the logs and
@@ -502,8 +489,7 @@ public struct FAHTTPDataSource: HTTPDataSource {
             headers: headers,
             userAgent: userAgent,
             cookieHeader: header.isEmpty ? nil : header,
-            body: body,
-            connectionEpoch: await nativeTransport?.currentEpoch() ?? 0
+            body: body
         )
         return (request, header)
     }
@@ -536,9 +522,7 @@ public struct FAHTTPDataSource: HTTPDataSource {
             urlRequest.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
         }
 
-        let startedAt = ContinuousClock.now
         let (body, response) = try await session.data(for: urlRequest, delegate: FARedirectPolicy.shared)
-        let elapsed = ContinuousClock.now - startedAt
         guard let http = response as? HTTPURLResponse else {
             throw FAHTTPError.nonHTTPResponse(url)
         }
@@ -556,9 +540,7 @@ public struct FAHTTPDataSource: HTTPDataSource {
             // URLSession on Android is HTTP/1.1 by absence — its libcurl carries no
             // nghttp2 — but it reports nothing, so say where the bytes came from
             // rather than guess a protocol.
-            networkProtocol: "urlsession",
-            finalURL: http.url,
-            elapsed: elapsed
+            networkProtocol: "urlsession"
         )
     }
 

@@ -174,8 +174,7 @@ enum CoilImageLoader {
                 logger.warning("[CFREPAIR] challenge \(url)\(conn) proto=\(result.proto ?? "?") epoch=\(epoch)")
                 return .challenged(epoch: epoch, attempts: result.attempts, reasons: reasons)
             }
-            let plural = result.attempts == 1 ? "attempt" : "attempts"
-            logger.error("[Coil] \(url): failed after \(result.attempts) \(plural) (\(reasons))")
+            logAbandoned(url, attempts: result.attempts, reasons: reasons)
             return .failed(epoch: epoch)
         } catch {
             logger.error("[Coil] \(url): fetch threw: \(error)")
@@ -186,60 +185,12 @@ enum CoilImageLoader {
         #endif
     }
 
-    /// The line an exhausted fetch logs, for a caller that has decided a challenged
-    /// one is not coming back either. Same shape, so one summariser counts both.
+    /// The line a lost image logs — an exhausted fetch here, and a challenged one that
+    /// `FAImageStore` finally gives up on. One spelling, so `summarize-image-log.py`
+    /// counts both as the same thing: an image that never came back.
     static func logAbandoned(_ url: URL, attempts: Int, reasons: String) {
         let plural = attempts == 1 ? "attempt" : "attempts"
         logger.error("[Coil] \(url): failed after \(attempts) \(plural) (\(reasons))")
-    }
-
-    /// The image client's connection-pool generation. Bumped by every eviction, so a
-    /// caller can tell "the pool was repaired under me" from "nothing has changed".
-    static func connectionEpoch() -> UInt64 {
-        #if canImport(Android)
-        guard let bridge else { return 0 }
-        let epoch: Int64? = try? bridge.connectionEpoch()
-        return UInt64(max(epoch ?? 0, 0))
-        #else
-        return 0
-        #endif
-    }
-
-    /// Evict the image client's pooled connections, unless somebody has already done
-    /// so since `observed`. Blocking JNI — call off the main actor.
-    @discardableResult
-    static func repairConnections(observed: UInt64) -> FAConnectionRepairResult {
-        let unchanged = FAConnectionRepairResult(didEvict: false, evictedConnections: 0, epoch: observed)
-        #if canImport(Android)
-        guard let bridge else { return unchanged }
-        do {
-            let json: String? = try bridge.evictIfUnchanged(Int64(observed))
-            guard let data = json?.data(using: .utf8),
-                  let result = try? JSONDecoder().decode(RepairResult.self, from: data) else {
-                logger.error("[CFREPAIR] unreadable evict result \(json ?? "<nil>")")
-                return unchanged
-            }
-            if result.didEvict {
-                logger.warning("[CFREPAIR] evicted \(result.evicted) connections, epoch \(observed)→\(result.epoch)")
-            } else {
-                logger.warning("[CFREPAIR] evict skipped, pool already at epoch \(result.epoch)")
-            }
-            return FAConnectionRepairResult(
-                didEvict: result.didEvict, evictedConnections: result.evicted, epoch: result.epoch
-            )
-        } catch {
-            logger.error("[CFREPAIR] evict threw: \(error)")
-            return unchanged
-        }
-        #else
-        return unchanged
-        #endif
-    }
-
-    private struct RepairResult: Decodable {
-        var didEvict: Bool
-        var evicted: Int
-        var epoch: UInt64
     }
 
     /// Bytes the disk cache currently holds, or nil if the bridge is unavailable.

@@ -57,8 +57,7 @@ enum OkHttpTransport {
     static var transport: FANativeTransport {
         FANativeTransport(
             perform: { try await perform($0) },
-            repairConnections: { await repair(observed: $0) },
-            currentEpoch: { await currentEpoch() }
+            repairConnections: { await repair(observed: $0) }
         )
     }
 
@@ -66,8 +65,18 @@ enum OkHttpTransport {
 
     private static func perform(_ request: FANativeHTTPRequest) async throws -> FANativeHTTPResponse {
         await gate.acquire()
-        defer { Task { await gate.release() } }
-        return try await onQueue { try performBlocking(request) }
+        // Released on both paths rather than from a `defer`: `release()` is actor
+        // work, so a `defer` has to spawn a Task, and the next waiter is then
+        // admitted whenever that Task happens to be scheduled instead of the moment
+        // the permit frees.
+        do {
+            let response = try await onQueue { try performBlocking(request) }
+            await gate.release()
+            return response
+        } catch {
+            await gate.release()
+            throw error
+        }
     }
 
     private static func performBlocking(_ request: FANativeHTTPRequest) throws -> FANativeHTTPResponse {
@@ -82,6 +91,9 @@ enum OkHttpTransport {
                 "userAgent": request.userAgent ?? "",
                 "cookie": request.cookieHeader ?? "",
             ],
+            // The response-header allowlist travels with the request, so FAKit stays
+            // the single owner of it and the two paths cannot drift.
+            "carried": Array(FANativeHTTPResponse.carriedHeaders),
         ]
         if let body = request.body { spec["body"] = body }
         let requestJSON = String(
@@ -113,14 +125,15 @@ enum OkHttpTransport {
             networkProtocol: result.proto ?? "?",
             connectionID: result.conn,
             openedConnection: result.newConn ?? false,
-            connectionEpoch: result.epoch ?? 0,
-            finalURL: result.finalUrl.flatMap(URL.init(string:)),
-            elapsed: .milliseconds(result.ms ?? 0)
+            connectionEpoch: result.epoch ?? 0
         )
         // The coalescing instrument: a `conn=` id appearing on both a [HTTP] line for
         // www. and a [Coil] line for t./a. is the direct evidence the two pipelines
         // share a connection. They can only be compared because both now come from
         // one client's `System.identityHashCode`.
+        //
+        // `connectionDescription` orders the tokens as `conn= new= proto=`; this line
+        // keeps the protocol up front, where the summariser's [HTTP] pattern wants it.
         logger.info("""
             [HTTP] \(request.method) \(request.url) → \(status) \
             \(response.networkProtocol) conn=\(result.conn.map(String.init) ?? "-") \
@@ -134,49 +147,11 @@ enum OkHttpTransport {
 
     // MARK: - Repair
 
-    // Each of these looks the bridge up *inside* the queue block rather than binding
-    // it first: `AnyDynamicObject` is not Sendable, so a local binding cannot be
-    // captured by the `@Sendable` closure — only the `nonisolated(unsafe)` static can.
-
+    /// `FAConnectionPool` blocks, so it runs on this transport's queue rather than on
+    /// the caller. The eviction itself, its epoch guard and its logging belong to the
+    /// pool — pages are just one of the two callers.
     private static func repair(observed: UInt64) async -> FAConnectionRepairResult {
-        let unchanged = FAConnectionRepairResult(
-            didEvict: false, evictedConnections: 0, epoch: observed
-        )
-        #if canImport(Android)
-        return await onQueue {
-            guard let bridge = Self.bridge else { return unchanged }
-            do {
-                let json: String? = try bridge.repair(Int64(observed))
-                guard let data = json?.data(using: .utf8),
-                      let result = try? JSONDecoder().decode(RepairResult.self, from: data) else {
-                    logger.error("[CFREPAIR] unreadable evict result \(json ?? "<nil>")")
-                    return unchanged
-                }
-                return FAConnectionRepairResult(
-                    didEvict: result.didEvict,
-                    evictedConnections: result.evicted,
-                    epoch: result.epoch
-                )
-            } catch {
-                logger.error("[CFREPAIR] evict threw: \(error)")
-                return unchanged
-            }
-        }
-        #else
-        return unchanged
-        #endif
-    }
-
-    private static func currentEpoch() async -> UInt64 {
-        #if canImport(Android)
-        return await onQueue {
-            guard let bridge = Self.bridge else { return UInt64(0) }
-            let epoch: Int64? = try? bridge.epoch()
-            return UInt64(max(epoch ?? 0, 0))
-        }
-        #else
-        return 0
-        #endif
+        await onQueue { FAConnectionPool.repair(observed: observed) }
     }
 
     /// Log what the pool holds and every connection this launch has used. Debug
@@ -268,8 +243,6 @@ enum OkHttpTransport {
         var conn: Int?
         var newConn: Bool?
         var epoch: UInt64?
-        var finalUrl: String?
-        var bytes: Int?
         var ms: Int?
         var bodyPath: String?
         var headers: [String: String]?

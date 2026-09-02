@@ -109,7 +109,7 @@ final class FAImageMemoryCache: @unchecked Sendable {
 actor FAImageStore {
     static let shared = FAImageStore()
 
-    /// Matches `FACoilBridge`'s per-host dispatcher limit and URLSession's default.
+    /// Matches `FAHttpClient.MAX_CONCURRENT_PER_HOST` and URLSession's default.
     private let concurrencyLimit = 6
 
     /// The blocking JNI fetch and the decode both run here rather than on a
@@ -408,11 +408,13 @@ actor FAImageStore {
         defer { release() }
 
         // A fetch starting during an unresolved challenge is certain to be challenged
-        // too; park before issuing rather than paying for the round trip.
-        if FAImageChallengePolicy.action(
-            outcome: .notIssued, latched: challengeEpoch != nil,
-            epochAtFailure: 0, epochNow: 0
-        ) == .park, await park(observing: challengeEpoch ?? CoilImageLoader.connectionEpoch()) == false {
+        // too; park before issuing rather than paying for the round trip. `.park` here
+        // means exactly "latched", so the epoch to observe is the latched one.
+        if let latched = challengeEpoch,
+           FAImageChallengePolicy.action(
+               outcome: .notIssued, latched: true, epochAtFailure: 0, epochNow: 0
+           ) == .park,
+           await park(observing: latched) == false {
             CoilImageLoader.logAbandoned(url, attempts: 0, reasons: "parked, never issued")
             return nil
         }
@@ -440,15 +442,21 @@ actor FAImageStore {
                 return path
             }
             logger.warning("[CFREPAIR] retry \(url) → still challenged, giving up")
-            lastFailureEpoch = CoilImageLoader.connectionEpoch()
             // The image is lost, and it has to say so in the shape the summariser
             // counts — otherwise a challenged image that never came back looks
-            // exactly like one that was never asked for.
-            if case let .challenged(_, retryAttempts, retryReasons) = retried {
+            // exactly like one that was never asked for. Both outcomes carry the
+            // epoch the retry rode, so this needs no further JNI call: reading it
+            // back would block the actor for a number already in hand.
+            switch retried {
+            case let .challenged(retryEpoch, retryAttempts, retryReasons):
+                lastFailureEpoch = retryEpoch
                 CoilImageLoader.logAbandoned(url, attempts: attempts + retryAttempts,
                                              reasons: "\(reasons), \(retryReasons)")
-            } else {
+            case let .failed(retryEpoch):
+                lastFailureEpoch = retryEpoch
                 CoilImageLoader.logAbandoned(url, attempts: attempts, reasons: reasons)
+            case .path:
+                break // handled above
             }
             return nil
         }
@@ -490,7 +498,7 @@ actor FAImageStore {
         case .resolved:
             // Whoever gets here first evicts; the rest observe the bumped epoch and
             // skip, so six woken workers cause one eviction, not six.
-            let repaired = await onQueue { CoilImageLoader.repairConnections(observed: epoch) }
+            let repaired = await onQueue { FAConnectionPool.repair(observed: epoch) }
             lastFailureEpoch = repaired.epoch
             return true
         case .refused:

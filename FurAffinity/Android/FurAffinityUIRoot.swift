@@ -49,10 +49,14 @@ import SwiftUI
         // the transport is a struct of closures the app module fills in.
         FAWebSession.nativeTransport = OkHttpTransport.transport
         // Every run self-identifies, so a measurement can assert it got the arm it
-        // asked for instead of silently reporting the default.
-        Task {
-            let http2 = await OkHttpTransport.isHTTP2Enabled()
-            logger.info("[HTTP] transport=okhttp h2=\(http2)")
+        // asked for instead of silently reporting the default. Debug builds only: its
+        // only readers are cold-image-run.sh and the two summarisers, and it forces
+        // the bridge lookup and the first prefs read into the cold-launch window.
+        if AndroidAppInfo.isDebuggable {
+            Task {
+                let http2 = await OkHttpTransport.isHTTP2Enabled()
+                logger.info("[HTTP] transport=okhttp h2=\(http2)")
+            }
         }
         // The counterpart of FurAffinityApp.init()'s line, same shared format.
         logAppLaunch(
