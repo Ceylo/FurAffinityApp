@@ -12,10 +12,14 @@
 //  from the submission's aspect ratio. Without it, zoom levels fall back to `fit`.
 //
 //  Pull-to-dismiss is *not* this view's: it is Compose's, from the `ModalBottomSheet`
-//  behind `fadingSheet`. All this view contributes is `interactiveDismissDisabled`,
-//  saying whether a vertical drag still has somewhere to pan — the declared equivalent of
-//  the negotiation iOS gets free between `UIScrollView` and
-//  `UISheetPresentationController`.
+//  behind `fadingSheet`. All this view contributes is `interactiveDismissDisabled` — the
+//  declared equivalent of the negotiation iOS gets free between `UIScrollView` and
+//  `UISheetPresentationController`. It has to do that arbitration itself because nothing
+//  else does: SkipUI's simultaneous-drag detector never *consumes*, so Material3's
+//  `draggable` behind the sheet sees every event too, arms on ~8 dp of vertical travel
+//  however sideways the gesture is, and dismisses on any release past 125 dp/s. So the
+//  view both says whether a vertical drag still has somewhere to pan and, once the
+//  content has claimed a gesture, locks the sheet out for the rest of it.
 //
 //  Rebuilding it on a `ScrollView([.horizontal, .vertical])` was rejected: Compose has no
 //  zoomable scroll container (`transformable`/`detectTransformGestures` hand you deltas to
@@ -33,6 +37,11 @@ import SwiftUI
 
 /// How far a drag must travel before it counts as a pan rather than a tap.
 private let panSlop: Double = 4
+/// How far a drag must travel before its owner is decided — as early as a direction
+/// exists. Material3's `draggable` behind the sheet arms on ~8 dp of *vertical* travel
+/// however sideways the gesture is, so deciding at `panSlop` (which sits on top of
+/// Compose's own ~8 dp radial slop) loses the race on a diagonal.
+private let ownerSlop: Double = 1
 
 // Android's `OverScroller.SplineOverScroller` constants, in dp — a dp is 1/160 inch by
 // definition, so the density term of Android's own coefficient is exactly 160.
@@ -86,6 +95,9 @@ public struct Zoomable<Content: View>: View {
     @State var hasUserAdjusted = false
     /// Latched once a drag passes the slop, so a pan's release can't be taken for a tap.
     @State var didPan = false
+    /// Set once this gesture's owner is known, at `ownerSlop`. Separate from `didPan`,
+    /// which a pan deliberately leaves set for the tap that follows it to clear.
+    @State var didDecideOwner = false
     /// Latched when the current drag is the sheet's pull. The content then stays put for
     /// the rest of the gesture — including on the horizontal axis, which would otherwise
     /// drift sideways while the sheet travels down.
@@ -158,11 +170,19 @@ public struct Zoomable<Content: View>: View {
                 .gesture(
                     MagnifyGesture()
                         .onChanged { value in
+                            // A pinch is the content moving under the finger, so it owns
+                            // the gesture outright — SkipUI reports the two-finger
+                            // centroid to the drag detector too, and a vertically
+                            // dominant first sample would otherwise hand the sheet a
+                            // pinch that never gains vertical room to disarm it.
+                            claimForContent()
                             stopMotion()
                             hasUserAdjusted = true
                             scale = clamped(baseScale * value.magnification, in: viewport)
                         }
                         .onEnded { _ in
+                            didDecideOwner = false
+                            sheetOwnsDrag = false
                             baseScale = scale
                             offset = clampedOffset(offset, in: viewport)
                             baseOffset = offset
@@ -177,20 +197,30 @@ public struct Zoomable<Content: View>: View {
                             guard abs(translation.width) > panSlop
                                     || abs(translation.height) > panSlop else {
                                 didPan = false
-                                sheetOwnsDrag = false
+                                // The first change with a direction picks the owner for
+                                // the whole gesture: a pan can't become a pull halfway.
+                                // Under `ownerSlop` there is no direction yet, and being
+                                // back there means a new gesture — so undecide.
+                                if abs(translation.width) > ownerSlop
+                                    || abs(translation.height) > ownerSlop {
+                                    decideOwner(of: translation)
+                                } else {
+                                    didDecideOwner = false
+                                    sheetOwnsDrag = false
+                                }
                                 catchMotion(at: translation)
                                 return
                             }
 
-                            // The first change with a direction picks the owner for the
-                            // whole gesture: a pan can't become a pull halfway.
+                            // Normally already decided in the branch above, which
+                            // Compose's slop subtraction runs first — but not for a
+                            // coarse event that clears both slops in one step, and not
+                            // when `didPan` is still set from a pan whose release no tap
+                            // followed. Outside the `didPan` check for that second case:
+                            // `decideOwner` guards itself.
+                            decideOwner(of: translation)
                             if !didPan {
                                 didPan = true
-                                sheetOwnsDrag = abs(translation.height) > abs(translation.width)
-                                    && maxOffset(in: viewport).height <= 0.5
-                                // Repeated from the branch above, which Compose's slop
-                                // subtraction normally runs first but which a coarse
-                                // event clearing the slop in one step skips.
                                 catchMotion(at: translation)
                             }
 
@@ -213,8 +243,12 @@ public struct Zoomable<Content: View>: View {
                             // here, so a plain tap ends up in `onEnded` too, with no
                             // `onChanged` before it. `didPan` is left for the tap that
                             // follows a pan to clear.
-                            guard didPan else { return }
+                            // Cleared before the guard: an owner decided by a drag that
+                            // never reached `panSlop` would otherwise stay latched and
+                            // keep the sheet disarmed for good.
+                            didDecideOwner = false
                             sheetOwnsDrag = false
+                            guard didPan else { return }
                             baseOffset = offset
                             // Past a bound the pull has to come back before anything
                             // else; within them the release is a fling or nothing.
@@ -235,7 +269,12 @@ public struct Zoomable<Content: View>: View {
                     }
                     toggleZoom(in: viewport)
                 }
-                .interactiveDismissDisabled(canPanVertically)
+                // Once the content owns the drag the sheet is locked out for the rest of
+                // it: SkipUI's simultaneous detector never consumes, so Material3's
+                // `draggable` sees the same events and would dismiss on any release past
+                // its 125 dp/s velocity threshold. Turning `sheetGesturesEnabled` off
+                // cancels the drag it had begun and settles it back to `Expanded`.
+                .interactiveDismissDisabled(canPanVertically || (didDecideOwner && !sheetOwnsDrag))
                 // Keyed on the viewport, not `onAppear` alone: the first composition can
                 // run before Compose has measured it, and every zoom level derives from
                 // that size — applying at 0×0 would silently latch the viewer at fit.
@@ -268,6 +307,7 @@ public struct Zoomable<Content: View>: View {
         baseOffset = .zero
         panStartTranslation = .zero
         didPan = false
+        didDecideOwner = false
         sheetOwnsDrag = false
         hasUserAdjusted = false
         scale = viewport.width > 0 && viewport.height > 0
@@ -278,6 +318,27 @@ public struct Zoomable<Content: View>: View {
         // change, and would animate the snap to the initial zoom. It and the value
         // `.animation` remembers are both `rememberSaveable`, so they stay in step
         // across a presentation on their own.
+    }
+
+    /// Picks the owner of the gesture from its direction so far: the sheet's pull only
+    /// when the drag is vertically dominant *and* the content has no vertical pan room
+    /// left. An upward drag stays the sheet's, as it always has — it has nowhere to go, so
+    /// it is inert, and making it a content pan would newly rubber-band the image upward.
+    private func decideOwner(of translation: CGSize) {
+        guard !didDecideOwner else { return }
+        didDecideOwner = true
+        sheetOwnsDrag = abs(translation.height) > abs(translation.width)
+            && maxOffset(in: viewport).height <= 0.5
+    }
+
+    /// Settles the gesture on the content without consulting a direction, for a pinch.
+    /// Overrides an earlier decision rather than deferring to it: the drag detector can
+    /// see the two-finger centroid first and guess from a direction, which a pinch makes
+    /// meaningless.
+    private func claimForContent() {
+        guard !didDecideOwner || sheetOwnsDrag else { return }
+        didDecideOwner = true
+        sheetOwnsDrag = false
     }
 
     // MARK: - Zoom levels
