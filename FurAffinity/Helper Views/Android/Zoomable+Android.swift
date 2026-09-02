@@ -98,9 +98,10 @@ public struct Zoomable<Content: View>: View {
     /// Set once this gesture's owner is known, at `ownerSlop`. Separate from `didPan`,
     /// which a pan deliberately leaves set for the tap that follows it to clear.
     @State var didDecideOwner = false
-    /// Latched when the current drag is the sheet's pull. The content then stays put for
-    /// the rest of the gesture — including on the horizontal axis, which would otherwise
-    /// drift sideways while the sheet travels down.
+    /// Latched when the current drag is the sheet's pull, which is downward by
+    /// construction. The content then stays put for the rest of the gesture on *both*
+    /// axes: the sheet is already carrying it down, and panning it sideways meanwhile
+    /// would have it drift out from under the finger.
     @State var sheetOwnsDrag = false
     /// Bumped by `toggleZoom`, so `.animation(_:value:)` animates that one target and
     /// nothing else. `withAnimation` marks the whole Compose frame, which arms the
@@ -321,13 +322,14 @@ public struct Zoomable<Content: View>: View {
     }
 
     /// Picks the owner of the gesture from its direction so far: the sheet's pull only
-    /// when the drag is vertically dominant *and* the content has no vertical pan room
-    /// left. An upward drag stays the sheet's, as it always has — it has nowhere to go, so
-    /// it is inert, and making it a content pan would newly rubber-band the image upward.
+    /// when the drag is *downward* and vertically dominant — one comparison, since the
+    /// sheet can travel in that one direction — and the content has no vertical pan room
+    /// left. An upward drag is therefore the content's, which is what lets it still pan
+    /// sideways and rubber-band vertically rather than move nothing at all.
     private func decideOwner(of translation: CGSize) {
         guard !didDecideOwner else { return }
         didDecideOwner = true
-        sheetOwnsDrag = abs(translation.height) > abs(translation.width)
+        sheetOwnsDrag = translation.height > abs(translation.width)
             && maxOffset(in: viewport).height <= 0.5
     }
 
