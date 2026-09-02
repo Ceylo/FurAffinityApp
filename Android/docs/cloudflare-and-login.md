@@ -354,7 +354,7 @@ OkHttp client the same forced challenge reads:
 [CFREPAIR] challenge https://www.furaffinity.net conn=114083628 new=true proto=http/1.1 epoch=0
 [CFREPAIR] challenge https://www.furaffinity.net conn=34945193  new=true proto=http/1.1 epoch=0
 [CFREPAIR] evicted 0 connections, epoch 0→1
-[CFREPAIR] resolution took 4.2 seconds, cf_clearance <none>→sbKILipq…
+[CFREPAIR] resolution took 4.2 seconds, replacing cf_clearance <none>
 [CFREPAIR] evicted 0 connections, epoch 1→2
 [CFREPAIR] retry https://www.furaffinity.net → 200 conn=62280485 new=true
 …every following page fetch reuses conn=62280485
