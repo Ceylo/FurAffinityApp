@@ -4,9 +4,10 @@
 //
 //  The app's single HTTP client for furaffinity.net — **one** `OkHttpClient` with
 //  **one** `ConnectionPool`, which is the whole premise: Cloudflare judges a
-//  connection, not a request, so the fewer of them the app opens the fewer
-//  independent verdicts it draws, and a challenge on the one it has is repairable
-//  (evict, solve in the WebView, redial) rather than a lost draw.
+//  connection, not a request, so a challenge is a verdict on whatever pipeline drew
+//  it — and one shared pool means one verdict to repair (evict, solve in the
+//  WebView, redial) rather than several to lose. Sharing, not *minimising*: the h2
+//  arm proved fewer connections is the wrong goal, and `shared()` says why.
 //
 //  It is deliberately *not* inside `FACoilBridge`, which legitimately owns the coil
 //  `DiskCache` and an image-specific retry loop the page path must not inherit.
@@ -18,19 +19,14 @@
 
 package fur.affinity.ui
 
-import android.content.Context
-import android.content.pm.ApplicationInfo
 import java.net.InetSocketAddress
 import java.net.Proxy
 import okhttp3.Call
 import okhttp3.Connection
-import okhttp3.ConnectionPool
 import okhttp3.EventListener
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import org.json.JSONArray
 import org.json.JSONObject
-import skip.foundation.ProcessInfo
 
 /// The FA credentials one call should carry, attached as an OkHttp request tag.
 ///
@@ -73,30 +69,6 @@ object FAHttpClient {
 
     val draw: ThreadLocal<Draw> = ThreadLocal.withInitial { Draw() }
 
-    /// conn id -> the hosts it has served and how many responses it carried. The
-    /// coalescing census: one id with more than one host is two pipelines sharing a
-    /// connection, which only h2 can do.
-    ///
-    /// Debug builds only, and behind a lock of its own rather than the object monitor
-    /// `evictIfUnchanged` uses: this runs once per connection acquisition on the image
-    /// burst's hottest path, and the only reader is a debug-gated census line.
-    private val censusLock = Object()
-    private val census = HashMap<Int, MutableSet<String>>()
-    private val callsPerConnection = HashMap<Int, Int>()
-
-    private val isDebuggable: Boolean by lazy {
-        val context = ProcessInfo.processInfo.androidContext
-        (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
-    }
-
-    private fun record(id: Int, host: String) {
-        if (!isDebuggable) return
-        synchronized(censusLock) {
-            census.getOrPut(id) { HashSet() }.add(host)
-            callsPerConnection[id] = (callsPerConnection[id] ?: 0) + 1
-        }
-    }
-
     private val connectionTracer = object : EventListener.Factory {
         override fun create(call: Call): EventListener {
             val attempt = draw.get()
@@ -112,9 +84,7 @@ object FAHttpClient {
                 }
 
                 override fun connectionAcquired(call: Call, connection: Connection) {
-                    val id = System.identityHashCode(connection)
-                    attempt.id = id
-                    record(id, call.request().url.host)
+                    attempt.id = System.identityHashCode(connection)
                 }
             }
         }
@@ -139,17 +109,25 @@ object FAHttpClient {
         host == "furaffinity.net" || host.endsWith(".furaffinity.net")
 
     // MARK: Connection repair
-    //
-    // The epoch counts repairs, so N workers challenged on the same generation cause
-    // one eviction between them and a worker whose request started after a repair
-    // causes none. The rule is `CloudflareConnectionRepair.shouldEvict`, stated and
-    // tested in FAKit; this is its @Synchronized shell.
 
+    /// The pool generation, bumped by every eviction. `FAHttpBridge.perform` stamps
+    /// it onto each response, so a challenged caller knows which generation its
+    /// request rode.
     @Volatile private var epoch: Long = 0
 
     fun connectionEpoch(): Long = epoch
 
-    /// {"didEvict":bool,"evicted":n,"epoch":e}. Swift does the logging —
+    /// Evict every pooled connection, **iff** the pool is still at `observedEpoch`,
+    /// then bump it. That guard is the whole answer to eviction thrash: N concurrent
+    /// callers that all observed epoch E cause one eviction between them rather than
+    /// N, and a caller whose request was issued *after* a repair causes none — so
+    /// nobody evicts the fresh connection somebody else just dialled.
+    ///
+    /// Cloudflare judges a connection, not a request: once one is challenged every
+    /// request riding it is challenged too, so a challenge has to be repaired
+    /// (evict, solve in the WebView, redial) rather than retried into.
+    ///
+    /// Returns {"didEvict":bool,"evicted":n,"epoch":e}. Swift does the logging —
     /// android.util.Log never reaches the log file Settings exports.
     @Synchronized
     fun evictIfUnchanged(observedEpoch: Long): String {
@@ -175,11 +153,18 @@ object FAHttpClient {
         synchronized(FAHttpClient::class.java) {
             client?.let { return it }
             val built = OkHttpClient.Builder()
-                // One switch for both pipelines, because there is only one client —
-                // which is the point of the extraction, and removes a confound the
-                // earlier h2 arms had.
-                .protocols(if (isHTTP2Enabled()) listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
-                           else listOf(Protocol.HTTP_1_1))
+                // h1 only, and measured: h2 coalesces every FA host onto one
+                // connection and reaches 0% image 403, but a poisoned connection
+                // cannot be repaired (0 of 26 post-repair retries came back 200) and
+                // three of eight runs lost every image they attempted. h1's 20-60
+                // connections are 20-60 independent draws, and being able to *redraw*
+                // is what matters — see Android/docs/images.md. Re-measuring means
+                // editing this line and rebuilding.
+                //
+                // One client means one protocol for both pipelines, so pages and
+                // images can never disagree about it — the confound the earlier h2
+                // arms had.
+                .protocols(listOf(Protocol.HTTP_1_1))
                 .eventListenerFactory(connectionTracer)
                 // A **network** interceptor, not an application one: OkHttp strips
                 // only `Authorization` on a cross-host redirect and never `Cookie`
@@ -220,78 +205,5 @@ object FAHttpClient {
             client = built
             return built
         }
-    }
-
-    // MARK: HTTP/2
-
-    /// A prefs file of its own, not `defaults.xml`: that one holds every other
-    /// setting, and the script that flips this between measurement arms rewrites the
-    /// file wholesale. `fa_http.xml` has one key, so clobbering it costs nothing —
-    /// and no iOS file gains a `Defaults.Key`.
-    private const val PREFS = "fa_http"
-    private const val KEY_HTTP2 = "http2"
-
-    private fun prefs() = ProcessInfo.processInfo.androidContext
-        .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-
-    @Volatile private var http2Loaded = false
-    @Volatile private var http2Enabled = false
-
-    fun isHTTP2Enabled(): Boolean {
-        if (!http2Loaded) {
-            synchronized(FAHttpClient::class.java) {
-                if (!http2Loaded) {
-                    http2Enabled = prefs().getBoolean(KEY_HTTP2, false)
-                    http2Loaded = true
-                }
-            }
-        }
-        return http2Enabled
-    }
-
-    /// Rebuilds the client so the change takes effect without a relaunch, and evicts
-    /// what the old one pooled.
-    fun setHTTP2Enabled(enabled: Boolean): Boolean {
-        synchronized(FAHttpClient::class.java) {
-            if (http2Loaded && enabled == http2Enabled) return true
-            http2Enabled = enabled
-            http2Loaded = true
-            prefs().edit().putBoolean(KEY_HTTP2, enabled).apply()
-            client?.connectionPool?.evictAll()
-            client = null
-        }
-        return true
-    }
-
-    // MARK: Census
-
-    /// What the pool is holding, plus every connection this launch has used and the
-    /// hosts it served. Swift logs it — android.util.Log never reaches the exported
-    /// log. The per-connection rows are the coalescing answer.
-    fun poolStats(): String {
-        val pool: ConnectionPool = shared().connectionPool
-        // Snapshot under the census lock, then build the JSON outside it — one
-        // JSONObject per connection is dozens of allocations to hold a per-request
-        // instrument's lock across.
-        val snapshot = synchronized(censusLock) {
-            census.map { (id, hosts) -> Triple(id, callsPerConnection[id] ?: 0, hosts.sorted()) }
-        }
-        val connections = JSONArray()
-        for ((id, calls, hosts) in snapshot) {
-            connections.put(
-                JSONObject()
-                    .put("conn", id)
-                    .put("calls", calls)
-                    .put("hosts", hosts.joinToString(","))
-            )
-        }
-        return JSONObject()
-            .put("pool", pool.connectionCount())
-            .put("idle", pool.idleConnectionCount())
-            .put("epoch", epoch)
-            .put("h2", isHTTP2Enabled())
-            .put("calls", snapshot.sumOf { it.second })
-            .put("connections", connections)
-            .toString()
     }
 }

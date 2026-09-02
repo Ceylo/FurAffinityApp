@@ -36,13 +36,6 @@ class FAHttpBridge {
 
     fun repair(observedEpoch: Long): String = FAHttpClient.evictIfUnchanged(observedEpoch)
 
-    fun poolStats(): String = FAHttpClient.poolStats()
-
-    // Boolean, not Unit: AnyDynamicObject can't resolve the void overload.
-    fun setHTTP2Enabled(enabled: Boolean): Boolean = FAHttpClient.setHTTP2Enabled(enabled)
-
-    fun isHTTP2Enabled(): Boolean = FAHttpClient.isHTTP2Enabled()
-
     companion object {
         /// Bodies Swift never got to read — it crashed, or was killed between the
         /// write and its `defer`-ed unlink. Swept on construction and periodically,

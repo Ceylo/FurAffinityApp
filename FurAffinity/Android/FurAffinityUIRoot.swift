@@ -48,16 +48,6 @@ import SwiftUI
         // Page fetches join the image layer's connection pool. FAKit gains no JNI:
         // the transport is a struct of closures the app module fills in.
         FAWebSession.nativeTransport = OkHttpTransport.transport
-        // Every run self-identifies, so a measurement can assert it got the arm it
-        // asked for instead of silently reporting the default. Debug builds only: its
-        // only readers are cold-image-run.sh and the two summarisers, and it forces
-        // the bridge lookup and the first prefs read into the cold-launch window.
-        if AndroidAppInfo.isDebuggable {
-            Task {
-                let http2 = await OkHttpTransport.isHTTP2Enabled()
-                logger.info("[HTTP] transport=okhttp h2=\(http2)")
-            }
-        }
         // The counterpart of FurAffinityApp.init()'s line, same shared format.
         logAppLaunch(
             operatingSystem: AndroidAppInfo.operatingSystem,
@@ -75,14 +65,6 @@ import SwiftUI
 
     /* SKIP @bridge */public func onLaunch() {
         logger.debug("onLaunch")
-        // One census after the cold burst has drained, inside cold-image-run.sh's
-        // 50 s window. Debug builds only.
-        if AndroidAppInfo.isDebuggable {
-            Task {
-                try? await Task.sleep(for: .seconds(45))
-                await OkHttpTransport.logCensus("cold")
-            }
-        }
     }
 
     /* SKIP @bridge */public func onResume() {
@@ -95,9 +77,6 @@ import SwiftUI
 
     /* SKIP @bridge */public func onStop() {
         logger.debug("onStop")
-        if AndroidAppInfo.isDebuggable {
-            Task { await OkHttpTransport.logCensus("stop") }
-        }
         // Android's "entered the background", the same moment Kingfisher sweeps its
         // disk cache on iOS — and off the launch path, which is why not onLaunch.
         Task { await FAImageStore.shared.pruneStagedMedia() }

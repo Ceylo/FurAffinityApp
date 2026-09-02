@@ -350,11 +350,7 @@ actor FAImageStore {
             // verdict — pure cost, and under h2 there is only ever one connection to
             // inherit it from. `path(for:)` has already cleared the in-flight entry,
             // so this really is a fresh fetch.
-            let action = FAImageChallengePolicy.action(
-                outcome: .failed, latched: challengeEpoch != nil,
-                epochAtFailure: epochBefore, epochNow: lastFailureEpoch
-            )
-            if action == .retry {
+            if lastFailureEpoch != epochBefore {
                 fetched = await path(for: url, priority: priority)
             }
         }
@@ -408,13 +404,9 @@ actor FAImageStore {
         defer { release() }
 
         // A fetch starting during an unresolved challenge is certain to be challenged
-        // too; park before issuing rather than paying for the round trip. `.park` here
-        // means exactly "latched", so the epoch to observe is the latched one.
-        if let latched = challengeEpoch,
-           FAImageChallengePolicy.action(
-               outcome: .notIssued, latched: true, epochAtFailure: 0, epochNow: 0
-           ) == .park,
-           await park(observing: latched) == false {
+        // too; park before issuing rather than paying for the round trip — on the
+        // latched epoch, which is the generation the challenge was drawn against.
+        if let latched = challengeEpoch, await park(observing: latched) == false {
             CoilImageLoader.logAbandoned(url, attempts: 0, reasons: "parked, never issued")
             return nil
         }

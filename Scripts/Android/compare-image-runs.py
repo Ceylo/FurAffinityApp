@@ -28,7 +28,6 @@ PAGE_HOST = re.compile(r"^(www\.furaffinity\.net)\s+(.*)$")
 # log: it already parses the whole `[CFREPAIR]` vocabulary (the legacy page-challenge
 # spelling included), and a second parser of the same log is a second thing to update
 # the next time one of those strings moves.
-ARM = re.compile(r"^arm: transport=(\S+) h2=(\S+)")
 CHALLENGES = re.compile(r"challenges (\d+) \(page (\d+), image (\d+)\), "
                         r"evicted (\d+), skipped (\d+)")
 RETRIES = re.compile(r"post-repair retries: (\d+) → 200, (\d+) still challenged")
@@ -68,7 +67,7 @@ def parse(path):
     run = dict(name=Path(path).stem, resps=0, n403=0, lost=0, conns=0,
                new403=0, new=0, reused403=0, reused=0,
                issuance=0.0, drain=0.0, cfpage=0,
-               pages=0, cfimg=0, repair=0, fixed=0.0, shared=0, solve=0.0, arm="")
+               pages=0, cfimg=0, repair=0, fixed=0.0, shared=0, solve=0.0)
 
     # Both per-host tables name the same hosts and are told apart by shape: the
     # first is all integers, the connections one carries a float (resps/conn) in
@@ -102,8 +101,6 @@ def parse(path):
     # Issuance is the honest fallback when nothing logged a dated outcome.
     run["drain"] = run["drain"] or run["issuance"]
 
-    if m := ARM.search(out):
-        run["arm"] = f"{m.group(1)} h2={m.group(2)}"
     if m := CHALLENGES.search(out):
         run["cfpage"], run["cfimg"] = int(m.group(2)), int(m.group(3))
         run["repair"] = int(m.group(4))
@@ -155,10 +152,8 @@ def main(arms):
     medians, worsts = {}, {}
     for arm, paths in arms:
         runs = [parse(p) for p in paths]
-        declared = {r["arm"] for r in runs if r["arm"]}
         if len(arms) > 1:
-            label = arm + (f" [{', '.join(sorted(declared))}]" if declared else "")
-            print(f"-- {label} " + "-" * max(len(header()) - len(label) - 4, 3))
+            print(f"-- {arm} " + "-" * max(len(header()) - len(arm) - 4, 3))
         for run in runs:
             print(row(run["name"], run))
         medians[arm] = {k: statistics.median(r[k] for r in runs) for k in KEYS}

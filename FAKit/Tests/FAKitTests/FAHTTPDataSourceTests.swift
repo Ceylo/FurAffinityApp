@@ -66,7 +66,9 @@ actor ScriptedTransport {
 
     private func repair(observed: UInt64) -> FAConnectionRepairResult {
         calls.append(.repair(observed: observed))
-        guard CloudflareConnectionRepair.shouldEvict(observed: observed, current: epoch) else {
+        // The same rule FAHttpClient.evictIfUnchanged enforces, so a test can tell
+        // one eviction from N.
+        guard observed == epoch else {
             return FAConnectionRepairResult(didEvict: false, evictedConnections: 0, epoch: epoch)
         }
         epoch += 1

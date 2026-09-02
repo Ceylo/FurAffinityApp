@@ -22,11 +22,6 @@ struct SettingsView: View {
 
     @State var cleaningCache = false
 
-#if os(Android)
-    // Not private: skipstone can't bridge a private @State.
-    @State var http2Enabled = false
-#endif
-
     var body: some View {
         NavigationStack {
             content
@@ -74,36 +69,6 @@ struct SettingsView: View {
             } footer: {
                 Text("When enabled, sharing a link adds a message in order to let the recipient know about this app.")
             }
-
-#if os(Android)
-            // The measurement switch for the shared OkHttp client's protocol, which
-            // both the page and the image pipelines ride. Debug builds only, and
-            // gated on `android:debuggable` rather than `#if DEBUG`: skipstone skips
-            // those blocks when generating the view bridge, so a compile-time fence
-            // here would leave the @State above inert.
-            //
-            // Deliberately not a `Defaults.Key`: this lives in its own prefs file so
-            // a script can flip it between arms without rewriting every other
-            // setting, and so no iOS file gains a key for an Android-only knob.
-            if AndroidAppInfo.isDebuggable {
-                Section {
-                    Toggle("HTTP/2 (debug)", isOn: Binding(
-                        get: { http2Enabled },
-                        set: { enabled in
-                            http2Enabled = enabled
-                            Task { await OkHttpTransport.setHTTP2Enabled(enabled) }
-                        }
-                    ))
-                } header: {
-                    Text("Network")
-                } footer: {
-                    Text("Takes effect immediately — the connection pool is evicted and redialled.")
-                }
-                .task {
-                    http2Enabled = await OkHttpTransport.isHTTP2Enabled()
-                }
-            }
-#endif
             
             if let session = model.session {
                 Section("Account") {

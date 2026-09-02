@@ -202,8 +202,13 @@ h2=false  census cold pool=5 idle=5 conns=43 calls=118
           census conn=92260943 calls=38 hosts=t.furaffinity.net   …42 more, one host each
 ```
 
-One connection carried the entire cold launch. And it still does not ship, for one
-reason: **the repair cannot repair it.**
+One connection carried the entire cold launch. (Those `census` lines came from a
+per-connection tally built to answer exactly this question; it was retired with the
+switch, since under the h1 that ships it can only ever print one host per connection.
+The per-request `conn=`/`new=` tokens, which `summarize-image-log.py` builds its
+connection table from, say the same thing at higher resolution.)
+
+And it still does not ship, for one reason: **the repair cannot repair it.**
 
 | | images lost per run |
 |---|---|
@@ -228,10 +233,10 @@ So the model behind `Android/docs/images.md` survives intact, and the conclusion
 sharper than before: **the number of connections is not the thing to minimise.** Being
 able to redraw is.
 
-h2 stays behind the debug-only Settings toggle (`fa_http.xml`, default off) so a future
-session can re-measure cheaply — one prefs write, no rebuild. Everything else the work
-built for it is kept, because all of it pays under h1: the shared client, the epoch
-guard, the repair, and the census.
+The protocol is therefore pinned to h1 in `FAHttpClient.shared()`: re-measuring h2 means
+editing that one `.protocols(…)` line and rebuilding, which is how both h2 arms above
+were run. Everything else the work built for it is kept, because all of it pays under
+h1: the shared client, the epoch guard, and the repair.
 
   Two things worth keeping out of it. **h2 coalesces `a.` and `t.` onto one
   connection** — the same `conn=` id serves both hosts — which does structurally fix

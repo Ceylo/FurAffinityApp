@@ -40,7 +40,6 @@ SUCCESS = re.compile(r"\[Coil\] (\S+): (\d{3}) conn=(-?\d+) new=(true|false) (-?
 PAGE = re.compile(
     r"\[HTTP\] (?:GET|POST) (\S+) → (\d{3}) (\S+) conn=(-?\d+|-) new=(true|false) (-?\d+)ms"
 )
-ARM = re.compile(r"\[HTTP\] transport=(\S+) h2=(\S+)")
 # The image pipeline names its protocol once per host, not per connection.
 NEGOTIATED = re.compile(r"\[Coil\] (\S+) negotiated (\S+)")
 # The repair vocabulary. A repair worked iff a `challenge` is followed by a
@@ -71,7 +70,6 @@ def main(lines):
     issued_at = {}                   # url -> when its current fetch was handed out
     protocol_of = {}                 # conn id -> the protocol it negotiated
     host_protocol = {}               # host -> protocol, for the image pipeline
-    arm = None                       # the run's self-declared transport
     repairs = Counter()              # [CFREPAIR] verb -> count
     resolutions = []                 # seconds each solve took
     parks = []                       # ("timed out"|"refused", …)
@@ -125,8 +123,6 @@ def main(lines):
                 protocol_of[int(m.group(4))] = m.group(3)
         elif m := NEGOTIATED.search(line):
             host_protocol[m.group(1)] = m.group(2)
-        elif m := ARM.search(line):
-            arm = f"transport={m.group(1)} h2={m.group(2)}"
         elif m := REPAIR.search(line):
             verb, rest = m.group(1), m.group(2)
             repairs[verb] += 1
@@ -151,8 +147,6 @@ def main(lines):
     if not issued:
         sys.exit("no `[Coil] GET request on` or `[HTTP]` lines found")
 
-    if arm:
-        print(f"arm: {arm}\n")
     hosts = sorted({host(u) for _, u in issued})
     print(f"{len(issued)} requests over {len(hosts)} host(s)\n")
     print(f"{'host':<24}{'urls':>6}{'resps':>7}{'403s':>6}{'403 rate':>10}"

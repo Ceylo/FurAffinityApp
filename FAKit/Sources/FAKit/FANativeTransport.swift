@@ -59,7 +59,7 @@ public struct FANativeHTTPResponse: Sendable {
     public var openedConnection: Bool
     /// The pool generation this request was *issued* against, stamped by the
     /// transport. A challenged caller asks to evict that generation, and the pool
-    /// evicts only if nothing has repaired since — `CloudflareConnectionRepair`.
+    /// evicts only if nothing has repaired since.
     public var connectionEpoch: UInt64
 
     public var isCloudflareChallenge: Bool { headers["cf-mitigated"] == "challenge" }
@@ -121,8 +121,8 @@ public struct FANativeTransport: Sendable {
     /// **Must not block the caller's thread** — the implementation owns its own queue.
     public typealias Perform = @Sendable (FANativeHTTPRequest) async throws -> FANativeHTTPResponse
     /// Evicts every pooled connection *iff* the pool is still at `observedEpoch`, then
-    /// bumps it — `CloudflareConnectionRepair.shouldEvict`. Idempotent: N callers that
-    /// observed the same epoch cause one eviction.
+    /// bumps it. Idempotent: N callers that observed the same epoch cause one
+    /// eviction, and one whose request was issued after a repair causes none.
     public typealias Repair = @Sendable (UInt64) async -> FAConnectionRepairResult
 
     public let perform: Perform

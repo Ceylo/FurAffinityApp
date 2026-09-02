@@ -327,8 +327,9 @@ issued against; a challenged caller evicts only if nothing has repaired since, a
 eviction bumps the epoch. N concurrent challenged workers therefore cause one eviction
 between them, not N — measured directly: six woken image workers produced
 `evicted 1 connections, epoch 0→1` once and `evict skipped, pool already at epoch 1`
-five times. The rule is `CloudflareConnectionRepair.shouldEvict` in FAKit, with a truth
-table; Kotlin's `FAHttpClient.evictIfUnchanged` is a `@Synchronized` shell over it.
+five times. The rule — evict iff the pool is still at the observed epoch, then bump it
+— lives in `FAHttpClient.evictIfUnchanged`, which is `@Synchronized`; `FAConnectionPool`
+is the one Swift door to it and logs the evicted/skipped pair.
 
 ### What it bought (A-B-A, 5 forced-challenge runs per arm)
 

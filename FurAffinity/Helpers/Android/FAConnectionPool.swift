@@ -36,8 +36,9 @@ enum FAConnectionPool {
     #endif
 
     /// Evict every pooled connection, unless somebody has already done so since
-    /// `observed` — `CloudflareConnectionRepair.shouldEvict`, enforced in Kotlin under
-    /// a lock. N callers challenged on one generation therefore cause one eviction.
+    /// `observed` — the epoch guard, enforced under a lock in Kotlin's
+    /// `FAHttpClient.evictIfUnchanged`. N callers challenged on one generation
+    /// therefore cause one eviction.
     ///
     /// **Blocking JNI** — call it off the main actor, and off any actor whose executor
     /// you would rather not stall.

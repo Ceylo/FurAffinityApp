@@ -8,15 +8,9 @@
 # every thumbnail from disk and moves nothing (Android/docs/images.md).
 #
 # Usage: Scripts/Android/cold-image-run.sh OUT.log [--wait SECONDS] [--timeout SECONDS]
-#                                          [--http2 on|off]
 #
 #   --wait      how long to let the burst drain before dumping, default 50s
 #   --timeout   how long to wait for the emulator lock, default 1800s
-#   --http2     which protocol the shared OkHttp client should offer, written to
-#               shared_prefs/fa_http.xml while the app is stopped. The run then
-#               asserts the log's self-declared arm matches, and discards loudly on
-#               a mismatch: a rejected hand-written XML would otherwise silently
-#               give you the default and a wrongly labelled table.
 #
 # Runs must never overlap — a background loop colliding with a manual launch
 # has already produced one bogus measurement — so this holds the shared-emulator
@@ -38,18 +32,15 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 OUT=""
 WAIT=50
-HTTP2=""
 LOCK_ARGS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,30p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,25p' "$0" | cut -c3-; exit 0 ;;
         --wait)       WAIT="$2"; shift ;;
         --wait=*)     WAIT="${1#*=}" ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;
-        --http2)      HTTP2="$2"; shift ;;
-        --http2=*)    HTTP2="${1#*=}" ;;
         -*)           die "unknown option $1 (see --help)" ;;
         *)            [[ -z "$OUT" ]] || die "one output path, not two"; OUT="$1" ;;
     esac
@@ -58,7 +49,6 @@ done
 
 [[ -n "$OUT" ]] || die "no output path (see --help)"
 [[ "$WAIT" =~ ^[0-9]+$ ]] || die "--wait takes a number of seconds"
-[[ -z "$HTTP2" || "$HTTP2" == on || "$HTTP2" == off ]] || die "--http2 takes on or off"
 
 SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 ADB="$SDK/platform-tools/adb"
@@ -90,7 +80,7 @@ PKG="$(skip_env ANDROID_PACKAGE_NAME)"
 if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
     export FA_EMULATOR_LOCK_HELD=1
     exec "$(dirname "${BASH_SOURCE[0]}")/with-emulator-lock.sh" "${LOCK_ARGS[@]}" \
-        "${BASH_SOURCE[0]}" "$OUT" --wait "$WAIT" ${HTTP2:+--http2 "$HTTP2"}
+        "${BASH_SOURCE[0]}" "$OUT" --wait "$WAIT"
 fi
 
 "$ADB" shell am force-stop "$APP_ID"
@@ -99,15 +89,6 @@ fi
 # Page bodies Swift never got to unlink. Beside the coil wipe so a run starts cold
 # in both caches.
 "$ADB" shell run-as "$APP_ID" rm -rf cache/fa_http
-
-# After force-stop, so there is no in-memory copy to fight. A file of its own, not
-# defaults.xml, precisely so this can be written wholesale.
-if [[ -n "$HTTP2" ]]; then
-    XML="<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
-<map><boolean name=\"http2\" value=\"$([[ $HTTP2 == on ]] && echo true || echo false)\" /></map>"
-    "$ADB" shell "run-as $APP_ID mkdir -p shared_prefs"
-    "$ADB" shell "run-as $APP_ID sh -c 'cat > shared_prefs/fa_http.xml'" <<< "$XML"
-fi
 
 "$ADB" logcat -c
 "$ADB" shell am start -n "$APP_ID/$PKG.MainActivity" >/dev/null
@@ -119,20 +100,6 @@ sleep "$WAIT"
 "$ROOT/Scripts/Android/logs.sh" -d --color=none > "$OUT"
 
 # --- verdict ---------------------------------------------------------------
-
-# The run must be the arm that was asked for. A silently-rejected prefs file would
-# otherwise give the default and a wrongly labelled table.
-if [[ -n "$HTTP2" ]]; then
-    want="$([[ $HTTP2 == on ]] && echo true || echo false)"
-    got=$(sed -nE 's/.*\[HTTP\] transport=[^ ]+ h2=([^ ]+).*/\1/p' "$OUT" | head -1)
-    if [[ -z "$got" ]]; then
-        echo "DISCARD: the run never declared its arm, so --http2 $HTTP2 is unverified"
-        exit 1
-    elif [[ "$got" != "$want" ]]; then
-        echo "DISCARD: asked for --http2 $HTTP2 but the run declared h2=$got"
-        exit 1
-    fi
-fi
 
 gets=$(grep -c '\[Coil\] GET request on' "$OUT" || true)
 loaded=$(sed -nE 's/.*prefetchThumbnails count=([0-9]+).*/\1/p' "$OUT" | head -1)
