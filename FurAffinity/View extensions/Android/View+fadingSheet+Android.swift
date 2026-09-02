@@ -9,11 +9,9 @@
 //  Here it is a plain `.sheet`, and that is the whole point. SkipUI renders `sheet` and
 //  `fullScreenCover` as the same Compose `ModalBottomSheet`, but hands it
 //  `sheetGesturesEnabled: !(isFullScreen || interactiveDismissDisabled)` — so
-//  `fullScreenCover` is precisely what switches Compose's own pull-to-dismiss off. A
-//  `.sheet` at `.fraction(1)` is full-bleed and keeps it: the sheet slides with the
-//  finger, reveals the page under the scrim and dismisses at Compose's own threshold,
-//  and `Zoomable` only says — through `interactiveDismissDisabled` — when a vertical
-//  drag is a pan instead.
+//  `fullScreenCover` is precisely what switches Compose's own pull-to-dismiss off, while
+//  a `.sheet` at `.fraction(1)` is full-bleed and keeps it. `Zoomable` arbitrates the
+//  rest through that same `interactiveDismissDisabled`.
 //
 //  There is nothing left to crossfade between: `presentationBackground` is
 //  `@available(*, unavailable)` in skip-fuse-ui, so the sheet's own `Surface` stays

@@ -12,14 +12,12 @@
 //  from the submission's aspect ratio. Without it, zoom levels fall back to `fit`.
 //
 //  Pull-to-dismiss is *not* this view's: it is Compose's, from the `ModalBottomSheet`
-//  behind `fadingSheet`. All this view contributes is `interactiveDismissDisabled` — the
-//  declared equivalent of the negotiation iOS gets free between `UIScrollView` and
-//  `UISheetPresentationController`. It has to do that arbitration itself because nothing
-//  else does: SkipUI's simultaneous-drag detector never *consumes*, so Material3's
-//  `draggable` behind the sheet sees every event too, arms on ~8 dp of vertical travel
-//  however sideways the gesture is, and dismisses on any release past 125 dp/s. So the
-//  view both says whether a vertical drag still has somewhere to pan and, once the
-//  content has claimed a gesture, locks the sheet out for the rest of it.
+//  behind `fadingSheet`. All this view adds is the arbitration iOS gets free between
+//  `UIScrollView` and `UISheetPresentationController`, declared through
+//  `interactiveDismissDisabled` — needed because SkipUI's simultaneous-drag detector
+//  never *consumes* pointer events, so Compose's tap detector and Material3's
+//  `draggable` behind the sheet see every one too, the latter arming on ~8 dp of
+//  vertical travel however sideways the gesture is and dismissing past 125 dp/s.
 //
 //  Rebuilding it on a `ScrollView([.horizontal, .vertical])` was rejected: Compose has no
 //  zoomable scroll container (`transformable`/`detectTransformGestures` hand you deltas to
@@ -28,9 +26,7 @@
 //
 //  The inertia a `UIScrollView` also gives away is hand-built here: releasing a pan runs
 //  Android's `OverScroller` spline, and a pull past a bound comes back on a critically
-//  damped spring. Both are stepped by `runMotion` rather than declared, and the velocity
-//  they start from is timed by hand because SkipUI builds every `DragGesture.Value` with
-//  `velocity: .zero`.
+//  damped spring. Both are stepped by `runMotion` rather than declared.
 //
 
 import SwiftUI
@@ -52,12 +48,12 @@ private let flingDecelerationRate = Foundation.log(0.78) / Foundation.log(0.9)
 /// Below this a release is a stop, not a flick.
 private let minimumFlingSpeed: Double = 50                     // dp/s
 /// Compose's `VelocityTracker` staleness window: samples further apart than this start
-/// afresh, which is what makes "pan, hold still, lift" not fling.
+/// afresh.
 private let velocitySampleWindow: Foundation.TimeInterval = 0.1
 /// Oversamples every panel up to 240 Hz, so no two frames can read the same position.
 /// Nothing in SkipSwiftUI aligns work to vsync, so this stands in for a frame clock.
 private let motionTick: Duration = .milliseconds(4)
-/// Fraction of the finger's travel that still gets through just past a bound.
+/// Fraction of the finger's travel that gets through just past a bound.
 private let overscrollRubber = 0.55
 /// Compose's `spring(dampingRatio: .noBouncy, stiffness:)` in its own units, so this sits
 /// between `StiffnessLow` (200) and `StiffnessMedium` (1500). Settles in ~0.35 s.
@@ -70,7 +66,6 @@ public enum ZoomLevel {
     case fill
     /// minimum between `fill` and `scaledFit(scale: maxScaledFit)`.
     case boundedFill(maxScaledFit: Float)
-    /// `scale` x `fit`.
     case scaledFit(scale: Float)
 }
 
@@ -156,10 +151,9 @@ public struct Zoomable<Content: View>: View {
 
     public var body: some View {
         GeometryReader { geometry in
-            // Whoever has somewhere to go owns vertical drags: the content while it can
-            // still be panned, the sheet once it can't. SkipUI passes this preference
-            // straight to `ModalBottomSheet`'s `sheetGesturesEnabled`, so it tracks the
-            // zoom live, one composition behind.
+            // Vertical drags are the content's while it can still be panned. SkipUI
+            // passes this preference straight to `ModalBottomSheet`'s
+            // `sheetGesturesEnabled`, so it tracks the zoom live, one composition behind.
             let canPanVertically = maxOffset(in: viewport).height > 0.5
 
             content
@@ -171,11 +165,6 @@ public struct Zoomable<Content: View>: View {
                 .gesture(
                     MagnifyGesture()
                         .onChanged { value in
-                            // A pinch is the content moving under the finger, so it owns
-                            // the gesture outright — SkipUI reports the two-finger
-                            // centroid to the drag detector too, and a vertically
-                            // dominant first sample would otherwise hand the sheet a
-                            // pinch that never gains vertical room to disarm it.
                             claimForContent()
                             stopMotion()
                             hasUserAdjusted = true
@@ -199,9 +188,8 @@ public struct Zoomable<Content: View>: View {
                                     || abs(translation.height) > panSlop else {
                                 didPan = false
                                 // The first change with a direction picks the owner for
-                                // the whole gesture: a pan can't become a pull halfway.
-                                // Under `ownerSlop` there is no direction yet, and being
-                                // back there means a new gesture — so undecide.
+                                // the whole gesture; under `ownerSlop` there is none yet,
+                                // and being back there means a new gesture — so undecide.
                                 if abs(translation.width) > ownerSlop
                                     || abs(translation.height) > ownerSlop {
                                     decideOwner(of: translation)
@@ -213,20 +201,16 @@ public struct Zoomable<Content: View>: View {
                                 return
                             }
 
-                            // Normally already decided in the branch above, which
-                            // Compose's slop subtraction runs first — but not for a
-                            // coarse event that clears both slops in one step, and not
-                            // when `didPan` is still set from a pan whose release no tap
-                            // followed. Outside the `didPan` check for that second case:
-                            // `decideOwner` guards itself.
+                            // Usually decided in the branch above, but not for a coarse
+                            // event that clears both slops in one step, nor when `didPan`
+                            // survives a pan whose release no tap followed — hence
+                            // outside the `didPan` check below.
                             decideOwner(of: translation)
                             if !didPan {
                                 didPan = true
                                 catchMotion(at: translation)
                             }
 
-                            // Compose is already translating the sheet; moving the
-                            // content too would double it.
                             guard !sheetOwnsDrag else { return }
 
                             sampleVelocity(translation, at: value.time)
@@ -242,8 +226,7 @@ public struct Zoomable<Content: View>: View {
                         .onEnded { _ in
                             // SkipUI routes the simultaneous detector's `onDragCancel`
                             // here, so a plain tap ends up in `onEnded` too, with no
-                            // `onChanged` before it. `didPan` is left for the tap that
-                            // follows a pan to clear.
+                            // `onChanged` before it.
                             // Cleared before the guard: an owner decided by a drag that
                             // never reached `panSlop` would otherwise stay latched and
                             // keep the sheet disarmed for good.
@@ -260,9 +243,8 @@ public struct Zoomable<Content: View>: View {
                             }
                         }
                 )
-                // SkipUI's simultaneous-drag detector never *consumes* pointer events,
-                // so Compose's tap detector survives a pan and fires on its release too.
-                // Clearing the latch here is what makes a pan swallow one tap, not all.
+                // A pan's release fires this too, so clearing the latch here is what
+                // makes a pan swallow one tap, not all.
                 .onTapGesture {
                     guard !didPan else {
                         didPan = false
@@ -270,18 +252,14 @@ public struct Zoomable<Content: View>: View {
                     }
                     toggleZoom(in: viewport)
                 }
-                // Once the content owns the drag the sheet is locked out for the rest of
-                // it: SkipUI's simultaneous detector never consumes, so Material3's
-                // `draggable` sees the same events and would dismiss on any release past
-                // its 125 dp/s velocity threshold. Turning `sheetGesturesEnabled` off
-                // cancels the drag it had begun and settles it back to `Expanded`.
+                // Once the content owns the drag the sheet is locked out for the rest
+                // of it, or `draggable` would dismiss on the release. Turning
+                // `sheetGesturesEnabled` off cancels the drag it had begun and settles
+                // it back to `Expanded`.
                 .interactiveDismissDisabled(canPanVertically || (didDecideOwner && !sheetOwnsDrag))
-                // Keyed on the viewport, not `onAppear` alone: the first composition can
-                // run before Compose has measured it, and every zoom level derives from
-                // that size — applying at 0×0 would silently latch the viewer at fit.
-                // Every *later* measurement re-derives it too, until the user zooms or
-                // pans: the sheet's first measurement is short of its final height, and
-                // the initial zoom computed from it leaves the content letterboxed.
+                // Keyed on the viewport, not `onAppear` alone: every zoom level derives
+                // from that size, and the first composition can run before Compose has
+                // measured it — applying at 0×0 would silently latch the viewer at fit.
                 .onChange(of: Foundation.CGSize(geometry.size), initial: true) { _, size in
                     guard size.width > 0, size.height > 0 else { return }
                     viewport = size
@@ -334,9 +312,10 @@ public struct Zoomable<Content: View>: View {
     }
 
     /// Settles the gesture on the content without consulting a direction, for a pinch.
-    /// Overrides an earlier decision rather than deferring to it: the drag detector can
-    /// see the two-finger centroid first and guess from a direction, which a pinch makes
-    /// meaningless.
+    /// Overrides an earlier decision rather than deferring to it: SkipUI reports the
+    /// two-finger centroid to the drag detector too, which guesses from a direction a
+    /// pinch makes meaningless — and a downward first sample would hand the sheet a
+    /// pinch that never gains vertical room to disarm it.
     private func claimForContent() {
         guard !didDecideOwner || sheetOwnsDrag else { return }
         didDecideOwner = true
@@ -379,17 +358,16 @@ public struct Zoomable<Content: View>: View {
         baseScale = scale
         offset = clampedOffset(.zero, in: viewport)
         baseOffset = offset
-        // Arms `.animation(_:value:)` for this one composition — the "target set once"
-        // shape, the only one that survives a gesture running alongside it.
+        // Arms `.animation(_:value:)` for this one composition.
         zoomToggleCount += 1
     }
 
     // MARK: - Inertia
 
-    /// `.animation(_:value:)` cannot drive a value the gesture also writes — an armed
-    /// `Animatable` restarts on every per-frame write, and it leaves `offset` already at
-    /// its target, so a fling could never be caught mid-flight. The motion is stepped by
-    /// hand instead, one `@State` write per tick, exactly as the drag does.
+    /// `.animation(_:value:)` cannot drive a value the gesture also writes (see
+    /// `zoomToggleCount`), and it leaves `offset` already at its target, so a fling could
+    /// never be caught mid-flight. The motion is stepped by hand instead, one `@State`
+    /// write per tick, exactly as the drag does.
     ///
     /// `step` receives the elapsed time and returns whether to keep going. It must be a
     /// closed form of that time rather than an accumulation, so an overslept tick costs
@@ -448,9 +426,8 @@ public struct Zoomable<Content: View>: View {
     }
 
     /// The sampled velocity, or zero once it is stale. A finger that stops moving stops
-    /// producing events, so the sampler is never called again to notice the pause and the
-    /// pre-pause velocity would survive to here. Compose's tracker discards stale samples
-    /// when queried; so does this.
+    /// producing events, so only a check here catches the pause — which is what makes
+    /// "pan, hold still, lift" not fling.
     private var releaseVelocity: CGSize {
         let age = Foundation.Date().timeIntervalSinceReferenceDate - lastSampleTime
         return age < velocitySampleWindow ? panVelocity : .zero
@@ -571,9 +548,8 @@ public struct Zoomable<Content: View>: View {
         )
     }
 
-    /// Pass-through within the bound; past it `overscrollRubber` of the travel gets
-    /// through, asymptoting at `extent` so the content can never be pulled clear of the
-    /// viewport however far the finger goes.
+    /// Pass-through within the bound; past it the excess asymptotes at `extent`, so the
+    /// content can never be pulled clear of the viewport however far the finger goes.
     private func resisted(_ value: Double, bound: Double, extent: Double) -> Double {
         let excess = abs(value) - bound
         guard excess > 0, extent > 0 else { return value }

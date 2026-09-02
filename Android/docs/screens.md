@@ -140,11 +140,16 @@ draws `sheet` and `fullScreenCover` as the same `ModalBottomSheet`, but passes
 hand-rolled one.
 
 What `Zoomable` still owns is the *negotiation* iOS gets free between `UIScrollView` and
-the sheet: `.interactiveDismissDisabled(maxOffset(in:).height > 0.5)`, a preference SkipUI
-feeds straight to `sheetGesturesEnabled`, so vertical drags belong to the content exactly
-while it has somewhere left to pan and to the sheet once it hasn't. A `sheetOwnsDrag`
-latch then makes the content ignore the whole of a drag the sheet owns — the horizontal
-component included, or it drifts sideways while the sheet travels down.
+the sheet, declared through `.interactiveDismissDisabled` — a preference SkipUI feeds
+straight to `sheetGesturesEnabled`. Ownership is decided at the first drag event carrying
+a direction, ahead of Material3's ~8 dp *vertical* slop (SkipUI never consumes, so
+`draggable` behind the sheet sees the same events), and is never revised mid-gesture. The
+sheet gets only a **downward**, vertically dominant drag made with no vertical pan room
+left; a pinch claims the gesture outright; everything else is the content's, and the sheet
+is then locked out for the rest of that gesture — otherwise `draggable` would dismiss on
+any release past its 125 dp/s threshold, whatever the drag was for. A `sheetOwnsDrag`
+latch does the mirror job on the drag the sheet does get: the content ignores it on both
+axes, or it drifts sideways while the sheet travels down.
 
 The backdrop deliberately does **not** fade to reveal the page: SkipUI hands
 `ModalBottomSheet` a `Color.Unspecified` container that paints an opaque grey, and
@@ -163,25 +168,21 @@ hand-built. Releasing a pan runs Android's `OverScroller` spline — its closed 
 reconstructed in Swift, since a Skip Fuse module has no Compose to borrow `splineBasedDecay`
 from — and the velocity that launches it is timed by hand from successive translations,
 because SkipUI builds every `DragGesture.Value` with `velocity: .zero`. Compose's 100 ms
-staleness window is applied at the release as well as between samples: a finger that stops
-moving stops producing events, so the sampler never sees the pause on its own and the
-pre-pause velocity would otherwise fling.
+staleness window is applied at the release as well as between samples, or "pan, hold
+still, lift" would fling.
 
 At a bound the pan continues past with resistance and a critically damped spring brings it
-back, which is what Android's *zoomable image viewers* do (Google Photos, telephoto). It is
-deliberately not the Android-12 stretch overscroll: that is a scroll container's own edge
-effect, and there is no scroll container here. Resistance is a hyperbolic falloff — ~55% of
-the finger's travel gets through just past the bound, and the excess asymptotes at the
-viewport's own extent, so the content can never be pulled clear of the viewport. Flings stay
-clamped, so one that reaches a limit simply arrives; only a drag can overscroll.
+back, which is what Android's *zoomable image viewers* do (Google Photos, telephoto) —
+deliberately not the Android-12 stretch overscroll, which is a scroll container's own edge
+effect, and there is no scroll container here. Flings stay clamped, so one that reaches a
+limit simply arrives; only a drag can overscroll.
 
 The viewer also resets itself on each presentation — offset and zoom — because skipstone
-backs `@State` with `rememberSaveable`, which otherwise restores whatever the last
-presentation was left in. The initial zoom is re-derived from **every** viewport
-measurement until the user first zooms or pans (`hasUserAdjusted`), not latched on the
-first one: the sheet reports a height ~129 px short of its final one before its insets
-settle, and `boundedFill` computed from that left the image visibly letterboxed where
-`fullScreenCover` had filled the screen.
+backs `@State` with `rememberSaveable`. The initial zoom is re-derived from **every**
+viewport measurement until the user first zooms or pans (`hasUserAdjusted`), not latched
+on the first one: the sheet reports a height ~129 px short of its final one before its
+insets settle, and `boundedFill` computed from that left the image visibly letterboxed
+where `fullScreenCover` had filled the screen.
 
 Deferred, with the reason:
 
