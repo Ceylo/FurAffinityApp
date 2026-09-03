@@ -246,6 +246,14 @@ bridged one, so `FALogSubsystem.override` is set from the Kotlin bridge at
 startup (`FurAffinityUIRoot.onInit()`). A process that installs no override — the
 `skip android test` runner, the Darwin bridge — falls back to `FurAffinity`.
 
+That one write only reaches every module because `FALogging` is a package of its
+own, and so is linked as one shared object. While it was a target inside FAKit,
+`libFAKit.so` and `libFAPages.so` each carried a private copy of `override` (and
+of `PersistentLogStore.shared`, which is the destructive half) — see
+[One module, one image](shared-sources.md#one-module-one-image). Nothing at
+runtime detects a relapse; `Scripts/Android/check-shared-globals.sh`, which
+`run.sh` runs after the Gradle build, does.
+
 ## Test
 
 The parser + logic layer is tested on the emulator via FAKit:
