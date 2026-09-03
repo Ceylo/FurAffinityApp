@@ -38,7 +38,7 @@
                BlueprintIdentifier = "FALoggingTests"
                BuildableName = "FALoggingTests"
                BlueprintName = "FALoggingTests"
-               ReferencedContainer = "container:FAKit">
+               ReferencedContainer = "container:FALogging">
             </BuildableReference>
          </TestableReference>
          <TestableReference
