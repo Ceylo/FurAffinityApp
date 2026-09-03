@@ -126,11 +126,13 @@ Ported: the image, the zoomable full-screen viewer, favorite (with the optimisti
 routing, read-only threaded comments including the deep-linked one's highlight pulse,
 and the metadata screen.
 
-`SubmissionMainImage` itself is now *shared*, with `#if FA_SKIP_MODULE` around only the
-loader and the viewer's content. The viewer is presented from `fadingSheet` on both
-platforms, and behaves the same way: **a single tap** toggles fill/fit (matching iOS's
-`numberOfTapsRequired = 1`), and it is dismissed by **pulling it down** rather than by a
-close button. The system Back gesture still closes it.
+`SubmissionMainImage` itself is now *shared*, with `#if FA_SKIP_MODULE` around three
+seams only: the loader, the viewer's content, and the `.task` Android needs to ask
+`FAImageStore` for a file URL that Kingfisher hands iOS from `onSuccess`. The viewer is
+presented from `fadingSheet` on both platforms, and behaves the same way: **a single
+tap** toggles fill/fit (matching iOS's `numberOfTapsRequired = 1`), and it is dismissed
+by **pulling it down** rather than by a close button. The system Back gesture still
+closes it.
 
 The pull is the presentation's on both platforms — `UISheetPresentationController`'s on
 iOS, `ModalBottomSheet`'s here. Getting Compose's took presenting with `.sheet`: SkipUI

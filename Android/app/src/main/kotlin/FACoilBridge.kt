@@ -22,13 +22,9 @@
 //  the two rejected alternatives. Retry outcomes are *reported* to Swift as JSON rather
 //  than logged: android.util.Log never reaches the log file Settings exports.
 //
-//  Cache policy is split between coil and us, because coil offers exactly one half of
-//  it: `DiskCache.Builder` *requires* a maximum size (it defaults to 2% of the volume)
-//  and has no expiry at all. So the ceiling below is coil's requirement, raised to 1 GB,
-//  and the per-entry lifetime is ours, applied lazily in `cachedPath`. Together they
-//  match iOS, where Kingfisher's `sizeLimit` is left at its unbounded default and the
-//  expiry is 7-14 days from write. `FAImageStore.pruneStagedMedia` already covers the
-//  `fa-media` staging directory at 7 days.
+//  Cache policy is split: the 1 GB ceiling is coil's (its `DiskCache` requires a size and
+//  offers no expiry), the 7-14 day per-entry lifetime is ours, applied lazily in
+//  `cachedPath`. `Android/docs/images.md` has why each half sits where it does.
 //
 //  Lives in the app Gradle module (not the FurAffinityUI module) so it compiles
 //  against coil3/okhttp declared in Android/app/build.gradle.kts; reflection loads it
@@ -79,15 +75,9 @@ class FACoilBridge {
         private const val MAX_ATTEMPTS = 5
         private const val MAX_CONCURRENT_PER_HOST = 6
 
-        /// The loop has no iOS counterpart — Kingfisher exposes `.retryStrategy` and
-        /// `Kingfisher+FA.swift` never sets it — because iOS doesn't need one: URLSession
-        /// negotiates h2 and keeps one connection per host, while this client is pinned
-        /// to h1 and draws a fresh connection, and so a fresh verdict, per request.
-        ///
-        /// A flat second, matching `www.furaffinity.net`'s `Crawl-delay: 1`. That
-        /// directive doesn't bind here (`d.`/`t.`/`a.` serve no `robots.txt`, and
-        /// `ProgressiveLoadItem.crawlingDelay` is where the app really crawls), but
-        /// nothing should hit an FA host faster than it either.
+        /// Flat rather than a ramp, and a second because that is what `robots.txt` asks
+        /// of a crawler — measured A-B-A in `Android/docs/images.md`, which also covers
+        /// why this loop has no iOS counterpart.
         private const val RETRY_BACKOFF_MS = 1000L
 
         /// Whether a failed response could plausibly come back different on a fresh
@@ -161,10 +151,9 @@ class FACoilBridge {
 
         fun isCached(url: String): Boolean = cachedPath(url) != null
 
-        /// Spread across the window rather than random, so a deadline survives a
-        /// restart while a cache filled in one session still doesn't expire at once.
-        /// Kotlin's `String.hashCode` is specified, unlike Swift's per-process-seeded
-        /// one; widened to `Long` because `Int.MIN_VALUE.abs()` is `Int.MIN_VALUE`.
+        /// 7-14 days from the write, spread by the URL's hash rather than at random so a
+        /// deadline survives a restart (see `Android/docs/images.md`). Widened to `Long`
+        /// because `Int.MIN_VALUE.abs()` is `Int.MIN_VALUE`.
         private fun lifetimeMillis(url: String): Long {
             val spreadDays = Math.abs(url.hashCode().toLong()) % 8
             return (7 + spreadDays) * 24 * 60 * 60 * 1000

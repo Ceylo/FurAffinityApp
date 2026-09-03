@@ -4,11 +4,16 @@
 //
 //  Created by Ceylo on 22/01/2023.
 //
-//  One file for both platforms; the `#if FA_SKIP_MODULE` members below are the only two
-//  things that genuinely differ. The loader is obvious (Kingfisher vs `FAImageStore`);
-//  the viewer's content is not — iOS sizes it in pixels because that is what feeds
-//  `UIHostingController.intrinsicContentSize` and hence every zoom ratio, so unifying it
-//  with Android's ratio would change the meaning of iOS's `maximumZoomScale = 10`.
+//  One file for both platforms. Three seams stay behind `#if FA_SKIP_MODULE`:
+//
+//  - `loader`, the obvious one (Kingfisher vs `FAImageStore`).
+//  - `zoomableViewer`'s content, the one that isn't: iOS sizes it in pixels because that
+//    is what feeds `UIHostingController.intrinsicContentSize` and hence every zoom ratio,
+//    so unifying it with Android's aspect ratio would change the meaning of iOS's
+//    `maximumZoomScale = 10` (which `Zoomable+Android` mirrors).
+//  - `preparingFullResolutionMedia`, which exists only because Android has to *ask* the
+//    store for the file URL in a `.task`; Kingfisher publishes it from `onSuccess`, so
+//    the iOS body attaches nothing.
 //
 //  Accepted difference: `displayProgress` draws nothing on Android — `FAImageStore`
 //  reports no byte progress across JNI.
@@ -80,6 +85,16 @@ struct SubmissionMainImage: View {
         .applying { preparingFullResolutionMedia($0) }
     }
 
+    /// What shows until the full-resolution media arrives. Shared: only the progress
+    /// bar iOS draws over it is platform-specific.
+    @ViewBuilder
+    private func thumbnailPlaceholder(geometry: GeometryProxy) -> some View {
+        if let thumbnailUrl = thumbnailImage?.bestThumbnailUrl(for: geometry) {
+            FAImage(thumbnailUrl)
+                .aspectRatio(contentMode: .fit)
+        }
+    }
+
     /// Takes the `Zoomable` as a value so the shared chain isn't repeated in each
     /// branch: the modifiers are `Zoomable`-typed and the two differ in their generic.
     private func configuredViewer<Content: View>(_ zoomable: Zoomable<Content>) -> some View {
@@ -96,10 +111,7 @@ struct SubmissionMainImage: View {
     private func loader(geometry: GeometryProxy) -> some View {
         FAImage(fullResolutionMediaUrl)
             .placeholder {
-                if let thumbnailUrl = thumbnailImage?.bestThumbnailUrl(for: geometry) {
-                    FAImage(thumbnailUrl)
-                        .aspectRatio(contentMode: .fit)
-                }
+                thumbnailPlaceholder(geometry: geometry)
             }
             .onFailure { error in
                 errorMessage = error.localizedDescription
@@ -136,10 +148,7 @@ struct SubmissionMainImage: View {
         image
             .placeholder { progress in
                 ZStack {
-                    if let thumbnailUrl = thumbnailImage?.bestThumbnailUrl(for: geometry) {
-                        FAImage(thumbnailUrl)
-                            .aspectRatio(contentMode: .fit)
-                    }
+                    thumbnailPlaceholder(geometry: geometry)
 
                     if displayProgress {
                         LinearProgress(progress: Float(progress.fractionCompleted))

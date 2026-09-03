@@ -301,7 +301,10 @@ grep Java_initState_ .build/plugins/outputs/*/FurAffinityUI/destination/skipston
   at 61 fps with zero duplicates, against the control's 21 at 63 fps with zero.
   (Duplicates do appear in the last 40 ms, where the spline's own velocity is under a
   pixel per frame; Android's `OverScroller` tail is the same. Nothing here speaks to
-  90/120 Hz panels.)
+  90/120 Hz panels.) A hand-stepped loop needs a hand-written stop, too: a `Task`
+  outlives the composition that started it, where a Compose animation dies with it, so
+  the view has to cancel from `onDisappear` or a fling launched just before a sheet
+  dismissal keeps ticking against nothing.
 - **SkipUI's `.offset` is Compose's *layout* offset**, not a draw-time translation, so
   the moved node is still clipped to the rect it had before the offset. Content that must
   survive being pushed past its own bounds has to be sized to the viewport first, or —

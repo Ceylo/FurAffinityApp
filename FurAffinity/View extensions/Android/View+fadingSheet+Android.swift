@@ -6,16 +6,16 @@
 //  crossfades a UIKit-backed `.sheet` so the viewer inherits
 //  `UISheetPresentationController`'s pull-to-dismiss.
 //
-//  Here it is a plain `.sheet`, and that is the whole point. SkipUI renders `sheet` and
-//  `fullScreenCover` as the same Compose `ModalBottomSheet`, but hands it
-//  `sheetGesturesEnabled: !(isFullScreen || interactiveDismissDisabled)` — so
-//  `fullScreenCover` is precisely what switches Compose's own pull-to-dismiss off, while
-//  a `.sheet` at `.fraction(1)` is full-bleed and keeps it. `Zoomable` arbitrates the
-//  rest through that same `interactiveDismissDisabled`.
+//  Here it is a plain `.sheet`, and that is the whole point: SkipUI renders `sheet` and
+//  `fullScreenCover` as the same Compose `ModalBottomSheet`, and `fullScreenCover` is
+//  precisely what switches Compose's own pull-to-dismiss off, while a `.sheet` at
+//  `.fraction(1)` is full-bleed and keeps it. `Zoomable` arbitrates the rest through
+//  `interactiveDismissDisabled`. `Android/docs/screens.md` has the `sheetGesturesEnabled`
+//  formula behind all three, and the accepted costs of the swap.
 //
-//  There is nothing left to crossfade between: `presentationBackground` is
-//  `@available(*, unavailable)` in skip-fuse-ui, so the sheet's own `Surface` stays
-//  opaque and a fade would reveal that grey, not the page behind.
+//  There is nothing left to crossfade between either — `presentationBackground` is
+//  unavailable in skip-fuse-ui, so a fade would reveal the sheet's own opaque `Surface`
+//  rather than the page behind it.
 //
 //  Unguarded because the Darwin bridge compile has `os(Android) == false` and would
 //  otherwise see no declaration at all.

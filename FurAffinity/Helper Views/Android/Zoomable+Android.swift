@@ -8,16 +8,16 @@
 //  on `MagnifyGesture` + `DragGesture` + a tap gesture instead.
 //
 //  The content's natural size can't be read back the way `intrinsicContentSize` gives it
-//  on iOS, so the caller states it via `contentSize(_:)` — `SubmissionMainImage` knows it
-//  from the submission's aspect ratio. Without it, zoom levels fall back to `fit`.
+//  on iOS, so the caller states it via `contentAspectRatio(_:)` — `SubmissionMainImage`
+//  knows it from the submission's aspect ratio. Without it, zoom levels fall back to `fit`.
 //
 //  Pull-to-dismiss is *not* this view's: it is Compose's, from the `ModalBottomSheet`
 //  behind `fadingSheet`. All this view adds is the arbitration iOS gets free between
 //  `UIScrollView` and `UISheetPresentationController`, declared through
 //  `interactiveDismissDisabled` — needed because SkipUI's simultaneous-drag detector
 //  never *consumes* pointer events, so Compose's tap detector and Material3's
-//  `draggable` behind the sheet see every one too, the latter arming on ~8 dp of
-//  vertical travel however sideways the gesture is and dismissing past 125 dp/s.
+//  `draggable` behind the sheet see every one too, the latter arming early on vertical
+//  travel (see `ownerSlop`) and dismissing past 125 dp/s.
 //
 //  Rebuilding it on a `ScrollView([.horizontal, .vertical])` was rejected: Compose has no
 //  zoomable scroll container (`transformable`/`detectTransformGestures` hand you deltas to
@@ -60,6 +60,12 @@ private let overscrollRubber = 0.55
 private let settleStiffness: Double = 400
 /// Below this, in dp, the settle has arrived.
 private let settleEpsilon = 0.5
+/// Below this, in dp, an axis has no pan room left: the content already fits the viewport
+/// along it, so a drag there can only be the sheet's.
+private let panRoomEpsilon = 0.5
+/// Mirrors the iOS viewer's `UIScrollView.maximumZoomScale`. The two have to stay in
+/// step — `SubmissionMainImage`'s header reasons about that coupling.
+private let maximumZoomScale: Double = 10
 
 public enum ZoomLevel {
     case fit
@@ -151,11 +157,6 @@ public struct Zoomable<Content: View>: View {
 
     public var body: some View {
         GeometryReader { geometry in
-            // Vertical drags are the content's while it can still be panned. SkipUI
-            // passes this preference straight to `ModalBottomSheet`'s
-            // `sheetGesturesEnabled`, so it tracks the zoom live, one composition behind.
-            let canPanVertically = maxOffset(in: viewport).height > 0.5
-
             content
                 .aspectRatio(contentAspectRatio, contentMode: .fit)
                 .scaleEffect(scale)
@@ -168,13 +169,12 @@ public struct Zoomable<Content: View>: View {
                             claimForContent()
                             stopMotion()
                             hasUserAdjusted = true
-                            scale = clamped(baseScale * value.magnification, in: viewport)
+                            scale = clampedScale(baseScale * value.magnification)
                         }
                         .onEnded { _ in
-                            didDecideOwner = false
-                            sheetOwnsDrag = false
+                            undecideOwner()
                             baseScale = scale
-                            offset = clampedOffset(offset, in: viewport)
+                            offset = clampedOffset(offset)
                             baseOffset = offset
                         }
                 )
@@ -182,36 +182,29 @@ public struct Zoomable<Content: View>: View {
                     DragGesture()
                         .onChanged { value in
                             let translation = value.translation
-                            // Measured from the gesture's own start, so still being
-                            // within the slop means a new gesture: reset there.
-                            guard abs(translation.width) > panSlop
-                                    || abs(translation.height) > panSlop else {
-                                didPan = false
-                                // The first change with a direction picks the owner for
-                                // the whole gesture; under `ownerSlop` there is none yet,
-                                // and being back there means a new gesture — so undecide.
-                                if abs(translation.width) > ownerSlop
-                                    || abs(translation.height) > ownerSlop {
-                                    decideOwner(of: translation)
-                                } else {
-                                    didDecideOwner = false
-                                    sheetOwnsDrag = false
-                                }
-                                catchMotion(at: translation)
-                                return
+                            // Both measured from the gesture's own start, so being back
+                            // within a slop means a new gesture rather than a return.
+                            let hasDirection = exceeds(translation, ownerSlop)
+                            let isPan = exceeds(translation, panSlop)
+
+                            // The first change with a direction picks the owner for the
+                            // whole gesture; under `ownerSlop` there is none yet. `isPan`
+                            // implies `hasDirection`, so this covers a coarse event that
+                            // clears both slops in one step.
+                            if hasDirection {
+                                decideOwner(of: translation)
+                            } else {
+                                undecideOwner()
                             }
 
-                            // Usually decided in the branch above, but not for a coarse
-                            // event that clears both slops in one step, nor when `didPan`
-                            // survives a pan whose release no tap followed — hence
-                            // outside the `didPan` check below.
-                            decideOwner(of: translation)
-                            if !didPan {
-                                didPan = true
+                            // Rebase on the transition into a pan, and keep rebasing
+                            // while still within the slop, where a new gesture starts.
+                            if !isPan || !didPan {
                                 catchMotion(at: translation)
                             }
+                            didPan = isPan
 
-                            guard !sheetOwnsDrag else { return }
+                            guard isPan, !sheetOwnsDrag else { return }
 
                             sampleVelocity(translation, at: value.time)
                             hasUserAdjusted = true
@@ -219,8 +212,7 @@ public struct Zoomable<Content: View>: View {
                                 CGSize(
                                     width: baseOffset.width + translation.width - panStartTranslation.width,
                                     height: baseOffset.height + translation.height - panStartTranslation.height
-                                ),
-                                in: viewport
+                                )
                             )
                         }
                         .onEnded { _ in
@@ -230,16 +222,15 @@ public struct Zoomable<Content: View>: View {
                             // Cleared before the guard: an owner decided by a drag that
                             // never reached `panSlop` would otherwise stay latched and
                             // keep the sheet disarmed for good.
-                            didDecideOwner = false
-                            sheetOwnsDrag = false
+                            undecideOwner()
                             guard didPan else { return }
                             baseOffset = offset
                             // Past a bound the pull has to come back before anything
                             // else; within them the release is a fling or nothing.
-                            if isOverscrolled(in: viewport) {
-                                startSettle(in: viewport)
+                            if isOverscrolled {
+                                startSettle()
                             } else {
-                                startFling(in: viewport)
+                                startFling()
                             }
                         }
                 )
@@ -250,21 +241,25 @@ public struct Zoomable<Content: View>: View {
                         didPan = false
                         return
                     }
-                    toggleZoom(in: viewport)
+                    toggleZoom()
                 }
-                // Once the content owns the drag the sheet is locked out for the rest
-                // of it, or `draggable` would dismiss on the release. Turning
-                // `sheetGesturesEnabled` off cancels the drag it had begun and settles
-                // it back to `Expanded`.
-                .interactiveDismissDisabled(canPanVertically || (didDecideOwner && !sheetOwnsDrag))
+                // Vertical drags are the content's while it can still be panned, and
+                // once it owns a drag the sheet is locked out for the rest of it, or
+                // `draggable` would dismiss on the release. SkipUI passes this
+                // preference straight to `ModalBottomSheet`'s `sheetGesturesEnabled`, so
+                // it tracks the zoom live, one composition behind; turning that off
+                // cancels the drag it had begun and settles it back to `Expanded`.
+                .interactiveDismissDisabled(
+                    hasVerticalPanRoom || (didDecideOwner && !sheetOwnsDrag)
+                )
                 // Keyed on the viewport, not `onAppear` alone: every zoom level derives
                 // from that size, and the first composition can run before Compose has
                 // measured it — applying at 0×0 would silently latch the viewer at fit.
-                .onChange(of: Foundation.CGSize(geometry.size), initial: true) { _, size in
+                .onChange(of: geometry.faSize, initial: true) { _, size in
                     guard size.width > 0, size.height > 0 else { return }
                     viewport = size
                     guard !hasUserAdjusted else { return }
-                    resetForPresentation(in: size)
+                    resetForPresentation()
                 }
                 // `onAppear` is backed by a plain `remember`, so unlike the state it does
                 // re-run per presentation — and it runs before the fresh measurement.
@@ -272,31 +267,43 @@ public struct Zoomable<Content: View>: View {
                 // 24pt shorter as it dismisses), so reset from it to avoid a flash and
                 // let the measurement above re-apply the real initial zoom.
                 .onAppear {
-                    resetForPresentation(in: viewport)
+                    resetForPresentation()
+                }
+                // A `Task`, unlike a Compose animation, outlives the composition that
+                // started it: without this a fling launched just before the dismissal
+                // keeps ticking, writing an offset nothing composes any more.
+                .onDisappear {
+                    stopMotion()
                 }
         }
     }
 
     /// Puts the viewer back to its opening state. Needed because skipstone backs `@State`
     /// with `rememberSaveable`, which restores the previous presentation's zoom and pan.
-    private func resetForPresentation(in viewport: Foundation.CGSize) {
+    private func resetForPresentation() {
         stopMotion()
         resetVelocitySampling()
+        undecideOwner()
         offset = .zero
         baseOffset = .zero
         panStartTranslation = .zero
         didPan = false
-        didDecideOwner = false
-        sheetOwnsDrag = false
         hasUserAdjusted = false
         scale = viewport.width > 0 && viewport.height > 0
-            ? self.scale(for: initialZoomLevel, in: viewport)
+            ? self.scale(for: initialZoomLevel)
             : 1
         baseScale = scale
         // `zoomToggleCount` is deliberately not reset: bumping it back to 0 is itself a
         // change, and would animate the snap to the initial zoom. It and the value
         // `.animation` remembers are both `rememberSaveable`, so they stay in step
         // across a presentation on their own.
+    }
+
+    // MARK: - Gesture ownership
+
+    /// Whether a drag has travelled far enough on either axis to clear `slop`.
+    private func exceeds(_ translation: CGSize, _ slop: Double) -> Bool {
+        abs(translation.width) > slop || abs(translation.height) > slop
     }
 
     /// Picks the owner of the gesture from its direction so far: the sheet's pull only
@@ -307,8 +314,7 @@ public struct Zoomable<Content: View>: View {
     private func decideOwner(of translation: CGSize) {
         guard !didDecideOwner else { return }
         didDecideOwner = true
-        sheetOwnsDrag = translation.height > abs(translation.width)
-            && maxOffset(in: viewport).height <= 0.5
+        sheetOwnsDrag = translation.height > abs(translation.width) && !hasVerticalPanRoom
     }
 
     /// Settles the gesture on the content without consulting a direction, for a pinch.
@@ -317,8 +323,13 @@ public struct Zoomable<Content: View>: View {
     /// pinch makes meaningless — and a downward first sample would hand the sheet a
     /// pinch that never gains vertical room to disarm it.
     private func claimForContent() {
-        guard !didDecideOwner || sheetOwnsDrag else { return }
         didDecideOwner = true
+        sheetOwnsDrag = false
+    }
+
+    /// Puts the gesture back to having no owner, for the next one to decide afresh.
+    private func undecideOwner() {
+        didDecideOwner = false
         sheetOwnsDrag = false
     }
 
@@ -326,7 +337,7 @@ public struct Zoomable<Content: View>: View {
 
     /// `content` is laid out `.fit` already, so "fit" is scale 1 and "fill" is however
     /// much more is needed to cover the viewport's other axis.
-    private func fillScale(in viewport: Foundation.CGSize) -> Double {
+    private var fillScale: Double {
         guard viewport.width > 0, viewport.height > 0 else { return 1 }
         let viewportRatio = viewport.width / viewport.height
         return contentAspectRatio > viewportRatio
@@ -334,29 +345,29 @@ public struct Zoomable<Content: View>: View {
             : viewportRatio / contentAspectRatio
     }
 
-    private func scale(for zoomLevel: ZoomLevel, in viewport: Foundation.CGSize) -> Double {
+    private func scale(for zoomLevel: ZoomLevel) -> Double {
         switch zoomLevel {
         case .fit:
             1
         case .fill:
-            fillScale(in: viewport)
+            fillScale
         case let .boundedFill(maxScaledFit):
-            min(Double(maxScaledFit), fillScale(in: viewport))
+            min(Double(maxScaledFit), fillScale)
         case let .scaledFit(scale):
             Double(scale)
         }
     }
 
-    private func toggleZoom(in viewport: Foundation.CGSize) {
-        let primary = scale(for: primaryZoomLevel, in: viewport)
+    private func toggleZoom() {
+        let primary = scale(for: primaryZoomLevel)
         let target = abs(scale - primary) < 1e-3
-            ? scale(for: secondaryZoomLevel, in: viewport)
+            ? scale(for: secondaryZoomLevel)
             : primary
         stopMotion()
         hasUserAdjusted = true
         scale = max(1, target)
         baseScale = scale
-        offset = clampedOffset(.zero, in: viewport)
+        offset = clampedOffset(.zero)
         baseOffset = offset
         // Arms `.animation(_:value:)` for this one composition.
         zoomToggleCount += 1
@@ -434,12 +445,15 @@ public struct Zoomable<Content: View>: View {
     }
 
     /// Coasts on from the release along the pan's own direction, on Android's spline.
-    private func startFling(in viewport: Foundation.CGSize) {
+    private func startFling() {
         let velocity = releaseVelocity
         let speed = (velocity.width * velocity.width
                      + velocity.height * velocity.height).squareRoot()
-        let bounds = maxOffset(in: viewport)
-        guard speed >= minimumFlingSpeed, bounds.width > 0.5 || bounds.height > 0.5 else {
+        // Captured rather than re-derived per tick: nothing a running fling does can
+        // change the scale or the viewport it comes from.
+        let bounds = maxOffset
+        guard speed >= minimumFlingSpeed,
+              bounds.width > panRoomEpsilon || bounds.height > panRoomEpsilon else {
             return
         }
 
@@ -456,7 +470,7 @@ public struct Zoomable<Content: View>: View {
             offset = clampedOffset(
                 CGSize(width: start.width + direction.width * travelled,
                        height: start.height + direction.height * travelled),
-                in: viewport
+                to: bounds
             )
             return t < 1
         }
@@ -465,8 +479,8 @@ public struct Zoomable<Content: View>: View {
     /// Brings a pull that went past a bound back to it. Critically damped, so an inward
     /// residual velocity simply arrives while the outward velocity of a release from an
     /// overscrolled pull carries a little further first — the visible spring-back.
-    private func startSettle(in viewport: Foundation.CGSize) {
-        let target = clampedOffset(offset, in: viewport)
+    private func startSettle() {
+        let target = clampedOffset(offset)
         let x0 = CGSize(width: offset.width - target.width,
                         height: offset.height - target.height)
         let v0 = releaseVelocity
@@ -511,12 +525,12 @@ public struct Zoomable<Content: View>: View {
 
     // MARK: - Bounds
 
-    private func clamped(_ scale: Double, in viewport: Foundation.CGSize) -> Double {
-        min(max(scale, 1), 10)
+    private func clampedScale(_ scale: Double) -> Double {
+        min(max(scale, 1), maximumZoomScale)
     }
 
     /// How far the scaled content can be panned from centre before an edge would show.
-    private func maxOffset(in viewport: Foundation.CGSize) -> CGSize {
+    private var maxOffset: CGSize {
         guard viewport.width > 0, viewport.height > 0 else { return .zero }
 
         // The content is `.fit` inside the viewport before scaling, so one axis matches
@@ -531,8 +545,15 @@ public struct Zoomable<Content: View>: View {
         )
     }
 
-    private func isOverscrolled(in viewport: Foundation.CGSize) -> Bool {
-        let target = clampedOffset(offset, in: viewport)
+    /// Whether the content still has somewhere to go vertically. Both the sheet's arming
+    /// preference and `decideOwner` read it, and they have to agree: a sheet armed for a
+    /// drag the arbitration hands to the content is the failure this whole dance avoids.
+    private var hasVerticalPanRoom: Bool {
+        maxOffset.height > panRoomEpsilon
+    }
+
+    private var isOverscrolled: Bool {
+        let target = clampedOffset(offset)
         return abs(offset.width - target.width) >= settleEpsilon
             || abs(offset.height - target.height) >= settleEpsilon
     }
@@ -540,8 +561,8 @@ public struct Zoomable<Content: View>: View {
     /// Lets a drag continue past its bound against resistance, which is what Android's
     /// zoomable image viewers do. Not the Android-12 stretch overscroll: that belongs to
     /// a scroll container's own edge effect, and there is no scroll container here.
-    private func overscrolled(_ offset: CGSize, in viewport: Foundation.CGSize) -> CGSize {
-        let bounds = maxOffset(in: viewport)
+    private func overscrolled(_ offset: CGSize) -> CGSize {
+        let bounds = maxOffset
         return CGSize(
             width: resisted(offset.width, bound: bounds.width, extent: viewport.width),
             height: resisted(offset.height, bound: bounds.height, extent: viewport.height)
@@ -558,10 +579,13 @@ public struct Zoomable<Content: View>: View {
     }
 
     /// Keeps the panned content covering the viewport instead of drifting off-screen.
-    private func clampedOffset(_ offset: CGSize, in viewport: Foundation.CGSize) -> CGSize {
-        // A degenerate viewport yields zero bounds, which clamps to `.zero` anyway.
-        let bounds = maxOffset(in: viewport)
-        return CGSize(
+    /// A degenerate viewport yields zero bounds, which clamps to `.zero` anyway.
+    private func clampedOffset(_ offset: CGSize) -> CGSize {
+        clampedOffset(offset, to: maxOffset)
+    }
+
+    private func clampedOffset(_ offset: CGSize, to bounds: CGSize) -> CGSize {
+        CGSize(
             width: min(max(offset.width, -bounds.width), bounds.width),
             height: min(max(offset.height, -bounds.height), bounds.height)
         )
