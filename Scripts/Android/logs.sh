@@ -7,6 +7,9 @@
 # than by pid — which also means it keeps streaming across an app restart, where
 # a `--pid=` filter would go silent.
 #
+# Lines from a *sibling worktree's* app are then dropped by uid, because the tag
+# alone cannot tell them apart: see "sibling worktrees" below.
+#
 # Usage: Scripts/Android/logs.sh [-a] [-c] [-d] [--color=MODE] [extra-tag…]
 #
 #   -a, --all       every line from the app process instead (WebView included);
@@ -30,12 +33,13 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ALL=0
 CLEAR=0
 COLOR=auto
+FOREIGN_UIDS=""
 ARGS=(-v time)
 EXTRA_TAGS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)   sed -n '3,22p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)   sed -n '3,25p' "$0" | cut -c3-; exit 0 ;;
         -a|--all)    ALL=1 ;;
         -c|--clear)  CLEAR=1 ;;
         -d|--dump)   ARGS+=(-d) ;;
@@ -102,13 +106,45 @@ colorize() {
     '
 }
 
-# Runs logcat, repainting unless adb or the caller already settled the colors.
+# Drops the lines whose app UID is in "$1" (space separated), then renders the
+# prefix the way plain `-v time` would.
+#
+# This runs under `-v uid`, which prints "<time> <level>/<tag>(<uid>:<pid>): ". A
+# uid is the *installed package*, so it still names the owner of a line whose
+# process has since exited or restarted — which the pid alone does not, and
+# restarting is exactly what a sibling under development does. The uid is then
+# stripped back out: once the foreign lines are gone every survivor carries the
+# same one, and archived logs and the summarisers keep the prefix they know.
+#
+# A tag never contains "(", so the first "(" in the line is always this field.
+own_lines() {
+    awk -v foreign="$1" '
+        BEGIN { n = split(foreign, a, " "); for (i = 1; i <= n; i++) drop[a[i]] = 1 }
+        {
+            open = index($0, "(")
+            end = index($0, "): ")
+            if (open > 0 && end > open) {
+                field = substr($0, open + 1, end - open - 1)
+                colon = index(field, ":")
+                if (colon > 0) {
+                    uid = substr(field, 1, colon - 1)
+                    gsub(/[^0-9]/, "", uid)
+                    if (uid in drop) next
+                    $0 = substr($0, 1, open) substr(field, colon + 1) substr($0, end)
+                }
+            }
+            print; fflush()
+        }
+    '
+}
+
+# Runs logcat through the two optional filters: sibling worktrees out, then the
+# repaint unless adb or the caller already settled the colors. `cat` stands in for
+# a filter that has nothing to do, so the pipeline stays one expression.
 logcat() {
-    if [[ "$COLOR" == prefix || "$COLOR" == level ]]; then
-        "$ADB" logcat "$@" | colorize "$COLOR"
-    else
-        "$ADB" logcat "$@"
-    fi
+    "$ADB" logcat "$@" \
+        | { if [[ -n "$FOREIGN_UIDS" ]]; then own_lines "$FOREIGN_UIDS"; else cat; fi; } \
+        | { if [[ "$COLOR" == prefix || "$COLOR" == level ]]; then colorize "$COLOR"; else cat; fi; }
 }
 
 (( CLEAR )) && "$ADB" logcat -c
@@ -166,5 +202,30 @@ while IFS= read -r tag; do
     [[ -n "$tag" ]] && TAGS+=("$tag")
 done < <(sed -nE 's@.*\bTAG[[:space:]]*=[[:space:]]*"([^"]+)".*@\1@p' \
     "$ROOT"/Android/app/src/main/kotlin/*.kt 2>/dev/null | sort -u)
+
+# --- sibling worktrees ------------------------------------------------------
+#
+# Every worktree installs the same applicationId under its own suffix, and the
+# tags above cannot separate two of them: FAKit's module-level logger freezes its
+# subsystem before FurAffinityUIRoot.onInit installs FALogSubsystem.override, so
+# *both* apps' FAKit lines — [CFREPAIR] and [CFDIAG] among them — come out under
+# the `FurAffinity` fallback tag. Dropping that tag is therefore not an option:
+# it carries our own repair vocabulary. Left unfiltered this inflates a
+# measurement silently — one run read "challenges 12" where 10 belonged to a
+# worktree that merely happened to be running.
+#
+# So filter by the installed package's uid instead, which `own_lines` reads off
+# `-v uid`. Every FA app id but ours is foreign; a bare id (a release or
+# distribution install) is ours.
+FOREIGN_UIDS="$("$ADB" shell pm list packages -U 2>/dev/null | tr -d '\r' | awk \
+    -v ours="$APP_ID.${WORKTREE//[^A-Za-z0-9_]/_}" -v bare="$APP_ID" '
+        {
+            sub(/^package:/, "", $1)
+            sub(/^uid:/, "", $2)
+        }
+        $1 == ours || $1 == bare { next }
+        substr($1, 1, length(bare) + 1) == bare "." { printf "%s ", $2 }')"
+
+[[ -n "$FOREIGN_UIDS" ]] && ARGS+=(-v uid)
 
 logcat "${ARGS[@]}" -s "${TAGS[@]}" "${EXTRA_TAGS[@]}"

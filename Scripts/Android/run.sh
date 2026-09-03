@@ -98,5 +98,11 @@ fi
 
 ( cd "$ROOT/Android" && ./gradlew :app:installDebug "$@" )
 
+# Gradle prints its own errors and still says BUILD SUCCESSFUL, so this gate
+# gets its own exit status: a relapse to one module per consumer is invisible
+# at runtime (see the script's header).
+"$(dirname "${BASH_SOURCE[0]}")/check-shared-globals.sh" debug \
+    || die "shared globals are duplicated — the app above was installed anyway"
+
 echo "starting $APP_ID"
 "$ADB" shell am start -n "$APP_ID/$PKG.MainActivity"

@@ -115,9 +115,17 @@ struct AndroidRootView: View {
                 }
             }
         }
-        // Above the TabView so it also covers pushed screens.
+        // Above the TabView so they also cover pushed screens.
         .overlay(alignment: .top) {
             errorBanner
+        }
+        // Says why the app is waiting during stage 1, and is the only way to reach
+        // stage 2 on demand — the coordinator otherwise escalates on its own timeout.
+        .overlay(alignment: .top) {
+            if CloudflareChallengeCoordinator.shared.backgroundResolutionPending {
+                CloudflareResolutionOverlay()
+                    .padding(.top, 8)
+            }
         }
         // Stage 2: the challenge needs a human. Dismissing without solving it
         // fails the parked request rather than leaving it hanging.
@@ -178,6 +186,12 @@ struct AndroidRootView: View {
     /// wires `liveCookieHeader` through `refreshedCookieHeader()`), but a re-solve
     /// isn't always followed by a page fetch — and images alone would then keep
     /// replaying the clearance the WebView no longer has.
+    ///
+    /// **The order of these two lines is load-bearing.** `FAHTTPDataSource`'s repair
+    /// evicts the connection pool the moment `awaitResolution()` returns and then
+    /// redials on the *live* cookie header; releasing before the refresh would send
+    /// that redial out with the dead clearance. See `repairAndResolve`, which
+    /// carries the matching comment.
     private func refreshCredentialsThenRelease() {
         Task { @MainActor in
             await FAWebSession.shared.refreshedCookieHeader()

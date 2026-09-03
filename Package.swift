@@ -20,10 +20,9 @@ let package = Package(
         .library(name: "FurAffinityUI", type: .dynamic, targets: ["FurAffinityUI"]),
     ],
     dependencies: [
-        // Exact, not `from:`: `Package.resolved` is git-ignored, so a floating pin
-        // silently drifts past the installed `skip` CLI and the build fails inside a
-        // dependency (`AndroidUserDefaults` … "must use a 'required' initializer").
-        // Keep this equal to `skip version`.
+        // Exact, not `from:`: a floating pin silently drifts past the installed
+        // `skip` CLI and the build fails inside a dependency (`AndroidUserDefaults`
+        // … "must use a 'required' initializer"). Keep this equal to `skip version`.
         .package(url: "https://source.skip.tools/skip.git", exact: "1.9.4"),
         // Forked for `listRowInsets`, `Text(AttributedString)`, `FlowRow` and a few
         // unavailable-to-passthrough fixes — see Android/docs/forks.md. skip-ui comes
@@ -32,6 +31,7 @@ let package = Package(
         .package(url: "https://github.com/Ceylo/skip-ui.git", branch: "android"),
         .package(url: "https://source.skip.tools/skip-web.git", from: "0.11.2"),
         .package(path: "FAKit"),
+        .package(path: "FALogging"),
         .package(url: "https://github.com/Ceylo/Defaults.git", branch: "android"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.3"),
         .package(url: "https://github.com/mxcl/Version.git", from: "2.0.0"),
@@ -43,7 +43,7 @@ let package = Package(
                 .product(name: "SkipFuseUI", package: "skip-fuse-ui"),
                 .product(name: "SkipWeb", package: "skip-web"),
                 .product(name: "FAKit", package: "FAKit"),
-                .product(name: "FALogging", package: "FAKit"),
+                .product(name: "FALogging", package: "FALogging"),
                 .product(name: "FAPages", package: "FAKit"),
                 .product(name: "Defaults", package: "Defaults"),
                 .product(name: "OrderedCollections", package: "swift-collections"),

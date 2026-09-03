@@ -211,10 +211,11 @@ per-platform (see the class comment). Android installs its own through
 `configure(…)` from `AndroidRootView`, because there is no `UIApplication` and
 the cookies live in the WebView's jar rather than `HTTPCookieStorage`.
 
-When `FAHTTPDataSource` exhausts its URLSession retries it now calls
-`awaitResolution()` *before* the WebView fetch, because resolution mints a
-clearance that fixes every subsequent request, while the fallback only rescues
-the one in hand. Then the two stages run:
+A challenge is **repaired**, not waited out (see [Repairing a challenge](#repairing-a-challenge-measured-2026-09-01)):
+`FAHTTPDataSource` calls `awaitResolution()` on the first challenge under h2 and
+the second under h1, long before the WebView fetch, because resolution mints a
+clearance that fixes every subsequent request while the fallback only rescues the
+one in hand. Then the two stages run:
 
 1. **Passive** — `FAChallengeView` mounts under the opaque background and clears
    the challenge with no visible UI. Measured 1.5–3 s per challenge on the
@@ -269,25 +270,130 @@ sheet's hot path.
 Two `FAChallengeView`s are briefly alive while stage 1 unmounts. Both can only
 reach `markResolved()` → `complete()`, which is idempotent. Benign.
 
-Still unexercised: the interactive sheet. Cloudflare served only managed
-challenges throughout, so stage 2 has never actually drawn, and the
-escalate → stay-alive → human-click → resolve sequence is covered by
-`FAChallengeViewDOMTests` rather than on-device.
+The interactive sheet **has** now drawn (2026-09-01). Cloudflare still serves only
+managed challenges here, so it is never reached by escalation — but
+`CloudflareResolutionOverlay` is shared with iOS now, and tapping the pill calls
+`markInteractionRequired()`, which puts stage 2 on screen on demand. It renders
+the real interstitial. The escalate → human-click → resolve sequence is still
+covered by `FAChallengeViewDOMTests` rather than on-device, because Cloudflare
+never asks for the click.
 
 So `fetchPageHTML` no longer hands the interstitial to the parser (which
 reported it as a missing element at `FAHomePage.swift:28`, naming a parser line
 for a Cloudflare problem). It waits the challenge out in place — reloading
 restarts it — retries the navigation, and throws `CloudflareChallengeRequired`
-when exhausted. `FAHTTPDataSource` likewise retries `cf-mitigated: challenge`
-before paying for a WebView navigation, since the decision is per-request. The
-cost when everything is challenged is ~60 s of retries before the error lands
-(5 URLSession attempts, then 3 navigations of 8 s polling). That tail is now
-useful rather than just slow — the navigations it pays for do clear challenges —
-but it is still worth retuning.
+when exhausted. `FAHTTPDataSource` no longer spends
+five blind retries first — see below.
 
 One more thing that run turned up: repeated cold launches ANR the app
 (`Input dispatching timed out`, main thread blocked ≥15 s) — roughly two thirds
 of forced relaunches produced no HTTP request at all and no log past
 `updateSession() start`. `establishSession()` is `@MainActor` and awaits
 skip-web JNI calls on a WebView that is busy running challenge script. Not
-investigated further.
+investigated further. It did **not** come back when the page path moved onto a
+blocking JNI transport: `OkHttpTransport` owns its own `DispatchQueue`, and 15
+cold runs on that arm produced no failed launch.
+
+## Repairing a challenge (measured 2026-09-01)
+
+Cloudflare judges a **connection**, not a request, and it does not change its mind
+about one. Five blind retries were therefore a way to spend 2.5 s of sleep and five
+doomed requests before asking anyone to solve anything. A challenge is now repaired,
+in this order and no other:
+
+1. **Evict, before awaiting.** A solve takes 1.5–3 s typically and up to 25 s. Every
+   other page fetch and every image worker keeps running in that window, and the
+   poisoned connection is still pooled — under h2 with no `Connection: close` to stop
+   anything riding it.
+2. `awaitResolution()`.
+3. **Evict again.** Between (1) and (2) another worker will have opened a connection
+   carrying the *old* clearance, which is equally suspect. Cheap; the pool holds one
+   to a handful.
+4. **Exactly one retry**, on a freshly pulled live cookie header. A second failure
+   means the solve produced no passing connection, and the next move is the WebView
+   fallback — a different mechanism, not another sample of the same one.
+
+Step (4) depends on `AndroidRootView.refreshCredentialsThenRelease()` awaiting
+`refreshedCookieHeader()` *before* `markResolved()`. That ordering is load-bearing and
+invisible at both ends, so both carry a comment and
+`FAHTTPDataSourceTests.retryCarriesTheRefreshedClearance` holds it.
+
+Blind redraws are protocol-conditional: **one** under h1, where the challenge carries
+`Connection: close` so a retry genuinely redials, and **none** otherwise, where the
+retry rides the same connection.
+
+Eviction is guarded by an **epoch**. Every request records the pool generation it was
+issued against; a challenged caller evicts only if nothing has repaired since, and the
+eviction bumps the epoch. N concurrent challenged workers therefore cause one eviction
+between them, not N — measured directly: six woken image workers produced
+`evicted 1 connections, epoch 0→1` once and `evict skipped, pool already at epoch 1`
+five times. The rule — evict iff the pool is still at the observed epoch, then bump it
+— lives in `FAHttpClient.evictIfUnchanged`, which is `@Synchronized`; `FAConnectionPool`
+is the one Swift door to it and logs the evicted/skipped pair.
+
+### What it bought (A-B-A, 5 forced-challenge runs per arm)
+
+Forcing a challenge means deleting `cf_clearance` from the WebView cookie jar before a
+cold launch (see below). All 15 runs loaded the full 72-item feed.
+
+| | page 403s | tail to feed | time to *ask* |
+|---|---|---|---|
+| MEDIAN A1 / **B** / A2 | 8 / **5** / 7 | 11.3 / **9.5** / 11.7 s | 4.3 / **0.7** / 3.9 s |
+| WORST A1 / **B** / A2 | 14 / **14** / 28 | 16.2 / **12.0** / 25.8 s | 4.9 / **0.7** / 4.4 s |
+
+Read against *both* shipping arms, as always here. The tail's worst case is what moved.
+
+### The repair only works if something can be evicted
+
+On the URLSession path `repairConnections` is a no-op — corelibs `URLSession` exposes
+no pool — so the redial went straight back onto the poisoned connection. Measured: the
+post-repair retry was **still challenged every time**, and each following page fetch
+paid its own solve plus a WebView rescue. Once the page path moved onto the shared
+OkHttp client the same forced challenge reads:
+
+```
+[CFREPAIR] challenge https://www.furaffinity.net conn=114083628 new=true proto=http/1.1 epoch=0
+[CFREPAIR] challenge https://www.furaffinity.net conn=34945193  new=true proto=http/1.1 epoch=0
+[CFREPAIR] evicted 0 connections, epoch 0→1
+[CFREPAIR] resolution took 4.2 seconds, replacing cf_clearance <none>
+[CFREPAIR] evicted 0 connections, epoch 1→2
+[CFREPAIR] retry https://www.furaffinity.net → 200 conn=62280485 new=true
+…every following page fetch reuses conn=62280485
+```
+
+Zero `[CFFALLBACK]`, against four on the URLSession arm. "evicted 0" is right: those
+challenged connections carried `Connection: close`, so OkHttp had already dropped them
+— the epoch bump is the part that matters.
+
+The same A-B-A on ordinary cold runs (5 per arm) says the page path moving onto the
+shared client helps the *image* burst too, because the app spends far less time in a
+challenged state:
+
+| | image 403% | connections | page challenges | post-repair retries that worked |
+|---|---|---|---|---|
+| MEDIAN A1 / **B** / A2 | 12% / **5%** / 11% | 15 / 17 / 18 | 3 / **1** / 3 | 0% / **—** / 100% |
+| WORST A1 / **B** / A2 | 41% / **6%** / 30% | 59 / **21** / 40 | 11 / **2** / 9 | **0% / 100% / 0%** |
+
+`fixed%` — post-repair retries that came back 200 — is the crispest number of the lot:
+without a pool to evict it is 0, with one it is 100.
+
+## Forcing a challenge
+
+`skip app launch` does **not** drop the clearance; a relaunch reinstalls over the
+existing install and app data, `app_webview/Default/Cookies` included. Edit that DB
+directly. There is no `sqlite3` on the emulator image and `run-as` cannot read
+`/sdcard`, so stage through `/data/local/tmp`:
+
+```
+PKG=com.example.id1234.<worktree>          # the applicationId, NOT fur.affinity.ui
+adb shell am force-stop $PKG               # flush the DB first
+adb exec-out run-as $PKG cat app_webview/Default/Cookies > Cookies.db   # exec-out, not shell
+sqlite3 Cookies.db "delete from cookies where name in ('cf_clearance','__cf_bm','cf_chl_rc_ni','cf_chl_rc_i');"
+adb push Cookies.db /data/local/tmp/C.new && adb shell chmod 644 /data/local/tmp/C.new
+adb shell "run-as $PKG cp /data/local/tmp/C.new app_webview/Default/Cookies"
+adb shell "run-as $PKG rm -f app_webview/Default/Cookies-journal"
+```
+
+Keeping `a`/`b` is what makes this a *mid-session* re-solve rather than a fresh login.
+The challenge then resolves **passively** — the "needs a real click" rule applies to an
+interactive Turnstile widget, not to every challenge.

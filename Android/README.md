@@ -12,8 +12,8 @@ still built by `FurAffinity.xcodeproj` and none of its files move.
 | [docs/shared-sources.md](docs/shared-sources.md) | guarding, and every rule for writing a file both platforms compile |
 | [docs/assets-and-resources.md](docs/assets-and-resources.md) | asset-catalog symlinks, generated launcher/app art |
 | [docs/forks.md](docs/forks.md) | the three forked dependencies and every patch in them |
-| [docs/images.md](docs/images.md) | the Android image pipeline and its rules |
-| [docs/cloudflare-and-login.md](docs/cloudflare-and-login.md) | login, the long-lived hidden WebView, Cloudflare challenges |
+| [docs/images.md](docs/images.md) | the Android image pipeline, the shared HTTP client, and why HTTP/2 does not ship |
+| [docs/cloudflare-and-login.md](docs/cloudflare-and-login.md) | login, the long-lived hidden WebView, Cloudflare challenges and how one is repaired |
 | [docs/screens.md](docs/screens.md) | Followed feed, submission screen, animation on SkipUI |
 | [docs/releasing.md](docs/releasing.md) | update check, release signing, handing a build to testers |
 

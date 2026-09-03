@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 55;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -681,6 +681,7 @@
 				87A185A12745A8A100B10D2A /* CenteredView.swift */,
 				875EF2E52C1E1705000D4BFB /* LinearProgress.swift */,
 				87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */,
+				FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */,
 				873E65F127529866009C8767 /* SaveButton.swift */,
 				8733DDFE28FAD58D00CD8BCF /* SwapView.swift */,
 				87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */,
@@ -737,7 +738,6 @@
 				875180572DB553FC00331762 /* RemoteContentToolbarItem.swift */,
 				87E528362CE8D3D800CAFDC0 /* Zoomable.swift */,
 				87307E1E2FC78C790069E7F2 /* CloudflareChallengeSheet.swift */,
-				FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -871,7 +871,7 @@
 				};
 			};
 			buildConfigurationList = 8716E7E3271C659C00C0BC4A /* Build configuration list for PBXProject "FurAffinity" */;
-			compatibilityVersion = "Xcode 13.0";
+			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -880,6 +880,7 @@
 			);
 			mainGroup = 8716E7DF271C659C00C0BC4A;
 			packageReferences = (
+				599D1B3400000000AFFCC434 /* XCLocalSwiftPackageReference "FALogging" */,
 				87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */,
 				879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
 				877173732C35878700B84624 /* XCRemoteSwiftPackageReference "Amplitude-Swift" */,
@@ -1414,6 +1415,13 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		599D1B3400000000AFFCC434 /* XCLocalSwiftPackageReference "FALogging" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = FALogging;
+		};
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
 		87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {

@@ -45,6 +45,9 @@ import SwiftUI
         FAWebSession.imageCredentialsSink = { userAgent, cookieHeader in
             CoilImageLoader.configure(userAgent: userAgent, cookie: cookieHeader)
         }
+        // Page fetches join the image layer's connection pool. FAKit gains no JNI:
+        // the transport is a struct of closures the app module fills in.
+        FAWebSession.nativeTransport = OkHttpTransport.transport
         // The counterpart of FurAffinityApp.init()'s line, same shared format.
         logAppLaunch(
             operatingSystem: AndroidAppInfo.operatingSystem,

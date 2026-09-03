@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Summarise the `[Coil]` image lines of an exported / logcat FurAffinity log.
+"""Summarise the `[Coil]` image and `[HTTP]` page lines of a FurAffinity log.
 
 Answers, per host, "how many image requests did we fire, how many came back
 403, and were they challenges or blocks?" — plus the issuance cadence, which is
@@ -11,6 +11,13 @@ it opened them, and the 403 rate split by whether the response rode a fresh
 connection or a reused one. Cloudflare judges the connection, so that split is
 the direct test of the whole model — see Android/docs/images.md. Logs predating
 `conn=` in the `[Coil]` lines simply omit that section.
+
+Page fetches feed the *same* tables — they ride the same client and the same
+pool, so a per-host 403 split covers them for free. Two sections are theirs
+alone: a table keyed by connection id, which is where coalescing shows up (one
+id serving www. *and* t./a. means the two pipelines share a connection), and a
+`[CFREPAIR]` section, which is how you tell a repair that worked from one that
+did not.
 
     Scripts/Android/summarize-image-log.py run.log
     Scripts/Android/logs.sh -d | Scripts/Android/summarize-image-log.py
@@ -28,6 +35,19 @@ OUTCOME = re.compile(r"\[Coil\] (\S+): (succeeded on attempt|failed after) (\d+)
 # The per-fetch success line, which only a build carrying the connection instrument
 # emits: `[Coil] <url>: 200 conn=<id> new=<bool> <ms>ms`.
 SUCCESS = re.compile(r"\[Coil\] (\S+): (\d{3}) conn=(-?\d+) new=(true|false) (-?\d+)ms")
+# A page fetch, in the same token shapes:
+# `[HTTP] GET <url> → 200 h2 conn=<id> new=false 214ms`
+PAGE = re.compile(
+    r"\[HTTP\] (?:GET|POST) (\S+) → (\d{3}) (\S+) conn=(-?\d+|-) new=(true|false) (-?\d+)ms"
+)
+# The image pipeline names its protocol once per host, not per connection.
+NEGOTIATED = re.compile(r"\[Coil\] (\S+) negotiated (\S+)")
+# The repair vocabulary. A repair worked iff a `challenge` is followed by a
+# `retry → 200` and no further challenge at the next epoch.
+REPAIR = re.compile(r"\[CFREPAIR\] (\S+)(.*)")
+# What a page challenge was called before the repair work. Kept so runs archived
+# under the old vocabulary still count here rather than reading as zero.
+LEGACY_CFPAGE = re.compile(r"Cloudflare challenge on URLSession")
 STAMP = re.compile(r"^(\d\d-\d\d \d\d:\d\d:\d\d\.\d+)")
 CODE = re.compile(r"HTTP (\d+)(?: cf-mitigated=(\S+))?")
 # Every failed attempt carries its own draw, appended by FACoilBridge.
@@ -48,6 +68,11 @@ def main(lines):
     successes = 0                    # per-fetch 200 lines, absent from older logs
     attempt_of = defaultdict(int)    # url -> attempts drawn since its last GET
     issued_at = {}                   # url -> when its current fetch was handed out
+    protocol_of = {}                 # conn id -> the protocol it negotiated
+    host_protocol = {}               # host -> protocol, for the image pipeline
+    repairs = Counter()              # [CFREPAIR] verb -> count
+    resolutions = []                 # seconds each solve took
+    parks = []                       # ("timed out"|"refused", …)
 
     def draw(url, text, code):
         """Record the connection one attempt rode, if the log names it.
@@ -82,16 +107,55 @@ def main(lines):
             outcomes.append((when, m.group(1)))
             successes += 1
             draw(m.group(1), line, int(m.group(2)))
+        elif m := PAGE.search(line):
+            # A page fetch is one response, always: FAHTTPDataSource logs a line per
+            # exchange, so each is its own draw with no retry line to unpack.
+            url, code = m.group(1), int(m.group(2))
+            issued.append((when, url))
+            outcomes.append((when, url))
+            attempts[url] = attempts.get(url, 0) + 1
+            if code == 403:
+                failures[url].append(f"HTTP 403 cf-mitigated=challenge{m.group(0)[m.group(0).index(' conn='):]}")
+            if m.group(4) != "-":
+                attempt_of[url] += 1
+                draws.append((url, int(m.group(4)), m.group(5) == "true", code,
+                              attempt_of[url], when))
+                protocol_of[int(m.group(4))] = m.group(3)
+        elif m := NEGOTIATED.search(line):
+            host_protocol[m.group(1)] = m.group(2)
+        elif m := REPAIR.search(line):
+            verb, rest = m.group(1), m.group(2)
+            repairs[verb] += 1
+            if verb == "resolution" and (d := re.search(r"took ([\d.]+)", rest)):
+                resolutions.append(float(d.group(1)))
+            if verb == "retry":
+                repairs["retry 200" if "→ 200" in rest else "retry still challenged"] += 1
+            # Which pipeline drew the challenge. Both log the same verb, and the URL
+            # is the only thing that tells them apart — `www.` is a page fetch,
+            # `t.`/`a.` an image.
+            if verb == "challenge":
+                h = host(rest.split()[0]) if rest.split() else ""
+                repairs["challenge page" if h.startswith("www.") else "challenge image"] += 1
+            if verb == "image" and "timed out" in rest:
+                parks.append("timed out")
+            if verb == "image" and "refused" in rest:
+                parks.append("refused")
+        elif LEGACY_CFPAGE.search(line):
+            repairs["challenge"] += 1
+            repairs["challenge page"] += 1
 
     if not issued:
-        sys.exit("no `[Coil] GET request on` lines found")
+        sys.exit("no `[Coil] GET request on` or `[HTTP]` lines found")
 
     hosts = sorted({host(u) for _, u in issued})
     print(f"{len(issued)} requests over {len(hosts)} host(s)\n")
     print(f"{'host':<24}{'urls':>6}{'resps':>7}{'403s':>6}{'403 rate':>10}"
           f"{'urls w/403':>12}{'unresolved':>12}")
     for h in hosts:
-        urls = [u for _, u in issued if host(u) == h]
+        # Distinct urls, not fetches: a challenged image parks and is issued a second
+        # time, and counting that as two would double every column — including
+        # `unresolved`, which is the "images lost" number every arm is judged on.
+        urls = sorted({u for _, u in issued if host(u) == h})
         # A url with no outcome line succeeded first try: one response, no failure.
         resps = sum(max(attempts.get(u, 1), 1) for u in urls)
         codes = [CODE.search(f) for u in urls for f in failures.get(u, [])]
@@ -174,6 +238,38 @@ def main(lines):
                 if offsets:
                     print(f"  {h} opened {len(offsets)} at " +
                           " ".join(f"{o:.1f}" for o in offsets) + " s")
+
+    # Appended, never woven into the two tables above: compare-image-runs.py scrapes
+    # those by shape.
+    #
+    # The coalescing answer. One connection id serving www. *and* t./a. means the page
+    # and image pipelines share a connection — only possible under h2, and only
+    # comparable at all because both now come from one client's identityHashCode.
+    if draws:
+        by_conn = defaultdict(list)
+        for row in draws:
+            by_conn[row[1]].append(row)
+        print(f"\n{'conn':>12}{'proto':>10}{'resps':>7}{'403s':>6}  hosts")
+        for conn, rows in sorted(by_conn.items(), key=lambda kv: -len(kv[1])):
+            names = sorted({host(r[0]) for r in rows})
+            n403 = sum(1 for r in rows if r[3] == 403)
+            proto = protocol_of.get(conn) or host_protocol.get(names[0], "?")
+            print(f"{conn:>12}{proto:>10}{len(rows):>7}{n403:>6}  " + ",".join(names))
+        shared = [c for c, rows in by_conn.items() if len({host(r[0]) for r in rows}) > 1]
+        print(f"{len(by_conn)} connections, {len(shared)} serving more than one host")
+
+    if repairs:
+        print("\n[CFREPAIR]")
+        print(f"  challenges {repairs['challenge']} "
+              f"(page {repairs['challenge page']}, image {repairs['challenge image']}), "
+              f"evicted {repairs['evicted']}, skipped {repairs['evict skipped']}")
+        print(f"  resolutions {repairs['resolution']}"
+              + (f", median {statistics.median(resolutions):.1f} s, "
+                 f"worst {max(resolutions):.1f} s" if resolutions else ""))
+        print(f"  post-repair retries: {repairs['retry 200']} → 200, "
+              f"{repairs['retry still challenged']} still challenged")
+        if parks:
+            print(f"  image parks ended early: " + ", ".join(parks))
 
     ranks = [i for i, (_, u) in enumerate(issued) if u in unresolved or failures.get(u)]
     if ranks:

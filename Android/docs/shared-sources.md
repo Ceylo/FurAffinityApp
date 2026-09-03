@@ -93,6 +93,80 @@ adb shell run-as com.example.id1234.<worktree> cat shared_prefs/defaults.xml
 (a debug build's applicationId carries the worktree suffix — see
 [Run](build-and-run.md#run))
 
+## One module, one image
+
+A module that holds process-global state must be defined by **exactly one** `.so` in
+the APK, or every consumer gets its own copy of every global and they never see each
+other's writes. This is the linkage sibling of [Defaults](#defaults) above — the same
+class of bug, arrived at from the other direction.
+
+SwiftPM decides that per *edge*. A **cross-package product** is linked dynamically: one
+image, everyone imports it. A **target dependency inside the same package** is linked
+*statically into each product of that package*, even when the product is `.dynamic`.
+
+That is what happened to `FALogging`. It was a target inside `FAKit`, and `FAKit`'s two
+products both depended on it by target name, so `libFAKit.so` and `libFAPages.so` each
+absorbed a private copy alongside the real `libFALogging.so`. Only `FurAffinityUI`, a
+different package, linked it correctly. Three copies of `FALogSubsystem.override` meant
+the Kotlin bridge's write at startup reached one of them (the wrong logcat tag was the
+cosmetic half), and three copies of `PersistentLogStore.shared` meant three positional
+`FileHandle`s writing `files/Logs/app.log` at three independent offsets — lines
+truncated mid-word and overwritten, in the file the user exports from Settings and
+sends us to diagnose a bug. Rotation would have been worse: three `currentSize` counters
+against one cap, and the first to rotate leaves the other two writing an unlinked inode.
+
+The fix is structural, not a logic change: `FALogging` is its own package at the repo
+root, so `FAKit` and `FAPages` reach it — and `OSCompat`, which moved with it, a
+cross-package *target* dependency being impossible — as products. **The `.dynamic`
+rewrite under `SKIP_BRIDGE` is the load-bearing half** and the new manifest carries its
+own copy: with an automatic (static) product no `libFALogging.so` is produced at all and
+both consumers define their own again.
+
+None of this is visible from Swift. An `assert(FALogSubsystem.identifier == …)` in
+`onInit()` **passes** while FAKit still reads nil, because both sides of the comparison
+bind to the app module's copy — the same *never trust a read-back* caution as
+[Defaults](#defaults). Only the symbol tables tell the truth, so the check is a
+build-time one:
+
+```
+Scripts/Android/check-shared-globals.sh [debug|release]
+```
+
+It counts, per image, the defined `OBJECT` symbols mangled into each listed module
+(`$s9FALogging…`) and fails naming every extra definer and the `vpZ` static storage it
+duplicates. `Scripts/Android/run.sh` runs it after the Gradle build. Its module list is
+the modules that own mutable process-global state *and* are consumed by more than one
+image; add to it when a module grows some. `FAPages` is deliberately not on it: it is
+absorbed by `libFAKit.so` too, but everything it defines is an immutable `let`, so the
+copies are indistinguishable.
+
+### What the split costs the Xcode project
+
+The iOS app is not built by SwiftPM, and Xcode is stricter about local packages than
+`xcodebuild` is. Two constraints fell out of making FALogging its own package, and they
+pull against each other:
+
+- **A package that is already another package's path dependency does not become a
+  workspace root on its own.** `FAKit` is registered by its plain folder reference in
+  `project.pbxproj`; `FALogging` cannot be, because `FAKit` reaches it as
+  `.package(path: "../FALogging")` first. Xcode then builds its targets but exposes
+  none of its *products*, and every target that links one fails with
+  `Missing package product 'FALogging'` / `'OSCompat'` — while `xcodebuild` resolves
+  the same tree happily. The fix is an explicit `XCLocalSwiftPackageReference`
+  (`relativePath = FALogging`) in `packageReferences`, which needs
+  `objectVersion = 60` / `compatibilityVersion = "Xcode 14.0"`. **FALogging must have
+  no folder `PBXFileReference`**: with both, Xcode goes back to failing.
+- **Dropping that folder reference costs the scheme its container.** A testable's
+  `ReferencedContainer = "container:<dir>"` resolves through the folder reference, not
+  through the package reference, so `FALoggingTests` was silently skipped — no error,
+  just fifteen tests gone from the run. So the test target is declared in
+  `FAKit/Package.swift` over sources in `FAKit/Tests/FALoggingTests/`, depending on the
+  `FALogging` product, and the scheme keeps `container:FAKit`.
+
+Check the count, not just the exit status: a dropped testable does not fail the build.
+The suite is **346** cases — 78 FurAffinityTests, 213 FAKitTests, 40 FAPagesTests,
+15 FALoggingTests.
+
 ## Rules for shared sources
 
 <a name="every-observable-needs-skipandroidbridge-in-scope"></a>
@@ -154,8 +228,9 @@ never the iOS app target — so:
   build/swift/plugins/outputs/fakit/FAKit/destination/skipstone/SkipBridgeGenerated/
   ```
 - **`import os` needs `#if canImport(os)`.** Android's Swift SDK has no `os`
-  module, so FAKit ships `OSCompat` (`FAKit/Sources/OSCompat/`), which re-exports
-  `AndroidLogging`'s `Logger` and vends a no-op `OSSignposter`. It is a dependency
+  module, so the `FALogging` package ships `OSCompat`
+  (`FALogging/Sources/OSCompat/`), which re-exports `AndroidLogging`'s `Logger` and
+  vends a no-op `OSSignposter`. It is a dependency
   only `.when(platforms: [.android])`, so Darwin still resolves the system module,
   and the three call sites pick between them:
 

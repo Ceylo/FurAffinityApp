@@ -32,17 +32,30 @@ bridges that layer needs from the app come back as hooks installed in
 `FurAffinityUIAppDelegate.onInit`. The iOS app pays 37 MB Release instead of 27, and 11
 embedded frameworks instead of 1.
 Logging works on both platforms via `#if canImport(os) import os #else import OSCompat`:
-FAKit ships an Android-only `OSCompat` target (`FAKit/Sources/OSCompat/`) vending
-`Logger` (→ logcat) and a no-op `OSSignposter`. It must **not** be named `os` — a
-module by that name makes `canImport(os)` true for the whole Android build; see
-`Android/docs/build-and-run.md` § Module-name poisoning, which is also why FAKit gates
-SwiftUI on `#if !os(Android)` rather than `canImport`. Three dependencies are forked on
+the sibling `FALogging/` package ships an Android-only `OSCompat` target
+(`FALogging/Sources/OSCompat/`) vending `Logger` (→ logcat) and a no-op `OSSignposter`.
+It must **not** be named `os` — a module by that name makes `canImport(os)` true for
+the whole Android build; see `Android/docs/build-and-run.md` § Module-name poisoning,
+which is also why FAKit gates SwiftUI on `#if !os(Android)` rather than `canImport`.
+`FALogging` is a package rather than a FAKit target so that FAKit and FAPages link it
+**dynamically**: a target dependency inside one package is absorbed statically into
+each of its products, which gave the app three copies of `PersistentLogStore.shared`
+destroying each other's writes in one log file. See `Android/docs/shared-sources.md`
+§ One module, one image; `Scripts/Android/check-shared-globals.sh`, run by
+`Scripts/Android/run.sh`, is the guard. Xcode reaches that package only through an
+`XCLocalSwiftPackageReference` and **must not** also have a folder reference for it,
+which is why `FALoggingTests` is declared in `FAKit/Package.swift` — same doc,
+§ What the split costs the Xcode project. Three dependencies are forked on
 `Ceylo/<repo>` `android` branches — `Defaults` and `skip-ui`/`skip-fuse-ui`
 (the latter two for `listRowInsets`, `Text(html:)`, `Text(AttributedString)` /
 `Text(_:inlineViews:)`, `Text + Text` and `FlowRow`, all unavailable or absent
 upstream). Images go through an Android-only pipeline
 (`FAImageStore` + `FACoilBridge`) rather than Kingfisher, and Save/Share through
-`FAMediaBridge`. `Android/README.md` orients and indexes the topic docs under
+`FAMediaBridge`. Pages and images share **one** `OkHttpClient` and one connection
+pool (`FAHttpClient.kt`, reached from FAKit through `FAWebSession.nativeTransport`),
+because Cloudflare judges a connection: a challenge on it is repaired — evict, solve
+in the WebView, redial — rather than retried into. HTTP/2 is measured and off; see
+`Android/docs/images.md`. `Android/README.md` orients and indexes the topic docs under
 `Android/docs/`.
 
 ## Architecture
@@ -137,7 +150,7 @@ runtime, which has only an "iPhone 17 **Pro**" and so matches nothing.
 ## Dependencies
 
 App: AmplitudeSwift, Defaults, Kingfisher, SwiftUI-Introspect, Version, swift-algorithms. (Wrapping layouts use the in-house `Helper Views/iOS/FlowLayout.swift` — WrappingHStack was dropped.)
-FAKit: SwiftSoup, Cache, SwiftGraph, swift-collections, ZIPFoundation (DOCX unzip for `StoryDocument`).
+FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, Cache, SwiftGraph, swift-collections, ZIPFoundation (DOCX unzip for `StoryDocument`).
 
 ## Working Notes
 

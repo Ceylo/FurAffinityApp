@@ -5,11 +5,21 @@ download queue from Kingfisher. Android has none of that for free, so the pipeli
 three Android-only pieces:
 
 ```
-FACoilBridge.kt        OkHttp + coil3's standalone DiskCache. Returns an on-disk PATH.
+FAHttpClient.kt        the app's ONE OkHttpClient and ONE ConnectionPool, shared with
+                       the page path (FAHttpBridge). Credentials, the connection
+                       instrument, and the epoch-guarded eviction live here.
+FACoilBridge.kt        coil3's standalone DiskCache + the image retry loop. Returns
+                       an on-disk PATH.
 CoilImageLoader.swift  AnyDynamicObject/JNI driver for it.
-FAImageStore.swift     memory LRU, coalescing, concurrency gate, off-main decode.
+FAImageStore.swift     memory LRU, coalescing, concurrency gate, off-main decode,
+                       and the challenge park.
 FAImage.swift          KFImage-shaped view + the prefetch API shared views call.
 ```
+
+One client is the premise, not a tidiness choice: Cloudflare judges a connection, so
+the fewer the app opens the fewer independent verdicts it draws, and a challenge on
+the one it has is *repairable* rather than a lost draw. See
+[cloudflare-and-login.md § Repairing a challenge](cloudflare-and-login.md#repairing-a-challenge-measured-2026-09-01).
 
 Rules that are easy to get wrong here:
 
@@ -35,6 +45,25 @@ Rules that are easy to get wrong here:
 - **`UIImage(contentsOfFile:)` needs a `file://` URI**, despite the name — SkipUI
   implements it with `Uri.parse` + `ContentResolver.openInputStream`, and a bare
   filesystem path yields nil with no error.
+- **A challenge is reported, not retried into.** `FACoilBridge` hands
+  `cf-mitigated: challenge` back to Swift — under h1 once its five attempts are spent,
+  since each of those genuinely redials, and immediately otherwise. `FAImageStore` then
+  parks on `awaitResolution()` and retries once on the repaired pool, which is how an
+  image that drew a bad verdict stops being simply lost.
+- **Park inside the permit.** The measured catastrophe (75% 403, 25 images lost per run)
+  was freeing the permit across the wait and letting ~80 URLs resume in lockstep. Holding
+  it caps parked fetches at six and leaves the rest in the gate's FIFO, off the network
+  entirely; on release they retry and hand their permits on one at a time. The park is
+  capped at 20 s — a failed page fetch is visible, six permanently parked permits would
+  freeze the image layer silently. Nothing on the resolution path takes a permit, which
+  is why this cannot deadlock; the argument is in the comment because a future change
+  could break it.
+- **A lost image has to say so in the shape the summariser counts.** A challenged fetch
+  exits early, so it logs no `failed after …` line of its own; `FAImageStore` emits one
+  when it finally gives up. Without it a challenged image that never came back looks
+  exactly like one that was never asked for — and "images lost" is the number every arm
+  here is judged on. Cost of learning that: one h2 arm that read as 0% 403 and 0 images
+  lost while it was actually losing every image it attempted.
 - **Retry only what a fresh connection could answer differently** (`worthRedrawing`).
   The loop exists for Cloudflare's per-connection verdict, so a 4xx that is the origin's
   own answer gets one attempt, not five. FA answers a **404** for a user with no custom
@@ -143,6 +172,71 @@ Rules that are easy to get wrong here:
   four of eight runs loaded all 72 feed items and then lost every image, over 40+ s.
   Evicting the challenged connection (`connectionPool.evictAll()`, arm C) removes the
   collapse and is still beaten by both shipping arms on every count.
+
+  **h2 with a coordinator-driven repair** — the one arm none of the above tested, and
+  the reason for all of `FAHttpClient`: evict, solve the challenge in the WebView, mint
+  a fresh clearance, redial. It is measured in the next section, and it loses too.
+
+## HTTP/2, for the third and last time (measured 2026-09-01)
+
+The two earlier h2 arms both retried blindly with a dead clearance. This one repairs:
+one shared client for pages *and* images, evictions guarded by an epoch, and
+`awaitResolution()` on the first challenge. A-B-A, **8 cold runs per arm**, protocol
+switched by a prefs file so nothing is rebuilt between arms and the run asserts the arm
+it actually got.
+
+Everything h2 promised, it delivered:
+
+| | image 403% | distinct connections | connections serving >1 host |
+|---|---|---|---|
+| MEDIAN h1 / **h2** / h1 | 7% / **0%** / 19% | 21 / **2.5** / 32 | 0 / **1** / 0 |
+| WORST h1 / **h2** / h1 | 39% / **0%** / 29% | 51 / **5** / 64 | 0 / **1** / 0 |
+
+`www.` **does** coalesce with `t.` and `a.` — structurally predicted, never previously
+measured, and now direct:
+
+```
+h2=true   census cold pool=1 idle=1 conns=1  calls=85
+          census conn=88501491 calls=85 hosts=a.,t.,www.furaffinity.net
+h2=false  census cold pool=5 idle=5 conns=43 calls=118
+          census conn=92260943 calls=38 hosts=t.furaffinity.net   …42 more, one host each
+```
+
+One connection carried the entire cold launch. (Those `census` lines came from a
+per-connection tally built to answer exactly this question; it was retired with the
+switch, since under the h1 that ships it can only ever print one host per connection.
+The per-request `conn=`/`new=` tokens, which `summarize-image-log.py` builds its
+connection table from, say the same thing at higher resolution.)
+
+And it still does not ship, for one reason: **the repair cannot repair it.**
+
+| | images lost per run |
+|---|---|
+| h1 A1, 8 runs | 0 0 0 0 0 0 3 1 |
+| **h2 B, 8 runs** | 0 0 0 0 0 **14 28 35** |
+| h1 A2, 8 runs | 0 0 0 0 0 0 2 5 |
+
+Post-repair retries that came back 200: **0 of 26** in the worst h2 run, against 100%
+once the page path had a pool to evict under h1. Forced-challenge runs say the same
+thing louder — three per arm, and the one h2 run that drew a bad verdict produced 328
+page 403s, 61 challenged URLs, **40** separate resolutions and 58 lost images, where
+the worst h1 run in the same session lost 2.
+
+The mechanism is the one the ramp arm already named, now with the repair ruled out as
+a fix: under h2 there is exactly **one** connection, so a bad verdict poisons every
+request at once, and evicting it and redialling draws the *same* verdict again. h1's
+20-60 connections are 20-60 independent draws, and one winner carries ~70 requests.
+Cloudflare is not deciding per connection so much as per *client-and-moment*, and h1
+simply resamples that moment more often.
+
+So the model behind `Android/docs/images.md` survives intact, and the conclusion is
+sharper than before: **the number of connections is not the thing to minimise.** Being
+able to redraw is.
+
+The protocol is therefore pinned to h1 in `FAHttpClient.shared()`: re-measuring h2 means
+editing that one `.protocols(…)` line and rebuilding, which is how both h2 arms above
+were run. Everything else the work built for it is kept, because all of it pays under
+h1: the shared client, the epoch guard, and the repair.
 
   Two things worth keeping out of it. **h2 coalesces `a.` and `t.` onto one
   connection** — the same `conn=` id serves both hosts — which does structurally fix

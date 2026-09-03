@@ -36,7 +36,7 @@ LOCK_ARGS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,23p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,25p' "$0" | cut -c3-; exit 0 ;;
         --wait)       WAIT="$2"; shift ;;
         --wait=*)     WAIT="${1#*=}" ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
@@ -86,11 +86,18 @@ fi
 "$ADB" shell am force-stop "$APP_ID"
 # `run-as` is the only way into a debuggable app's private cache dir.
 "$ADB" shell run-as "$APP_ID" rm -rf cache/fa_coil_cache
+# Page bodies Swift never got to unlink. Beside the coil wipe so a run starts cold
+# in both caches.
+"$ADB" shell run-as "$APP_ID" rm -rf cache/fa_http
+
 "$ADB" logcat -c
 "$ADB" shell am start -n "$APP_ID/$PKG.MainActivity" >/dev/null
 sleep "$WAIT"
-# The subsystem is the installed applicationId (FALogSubsystem), suffix included.
-"$ADB" logcat -d -s "$APP_ID/FA" > "$OUT"
+# logs.sh owns the tag list — the app id with and without this worktree's suffix,
+# FALogSubsystem's fallback, and the Kotlin bridges' own tags scraped out of the
+# source. Deriving it a second time here is how a run silently loses every
+# [CFREPAIR], [CFDIAG] and [CFFALLBACK] line the moment the two copies disagree.
+"$ROOT/Scripts/Android/logs.sh" -d --color=none > "$OUT"
 
 # --- verdict ---------------------------------------------------------------
 
@@ -98,7 +105,7 @@ gets=$(grep -c '\[Coil\] GET request on' "$OUT" || true)
 loaded=$(sed -nE 's/.*prefetchThumbnails count=([0-9]+).*/\1/p' "$OUT" | head -1)
 echo "=== $(basename "$OUT"): ${loaded:-0} feed items, $gets image GETs ==="
 
-if grep -q 'Cloudflare challenge on URLSession fetch' "$OUT"; then
+if grep -q '\[CFREPAIR\] challenge' "$OUT"; then
     echo "note: the page path was challenged this run — context, not a discard"
 fi
 

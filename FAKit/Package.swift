@@ -11,9 +11,6 @@ let package = Package(
             name: "FAKit",
             targets: ["FAKit"]),
         .library(
-            name: "FALogging",
-            targets: ["FALogging"]),
-        .library(
             name: "FAPages",
             targets: ["FAPages"]),
     ],
@@ -23,9 +20,10 @@ let package = Package(
         .package(url: "https://github.com/davecom/SwiftGraph.git", from: "3.1.0"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.3"),
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19"),
-        // Android-only: AndroidLogging backs the `os` compatibility module.
-        // Matches skip-android-bridge's constraint so both unify on one version.
-        .package(url: "https://source.skip.tools/swift-android-native.git", from: "1.4.1"),
+        // Its own package, not a target here: a target dependency would be linked
+        // statically into every product, duplicating FALogging's globals — see
+        // Android/docs/shared-sources.md § One module, one image.
+        .package(path: "../FALogging"),
         // FAKit is a skipstone bridging module so it can own the Android web layer —
         // see Android/docs/shared-sources.md. Keep `skip` equal to the root manifest's.
         .package(url: "https://source.skip.tools/skip.git", exact: "1.9.4"),
@@ -34,35 +32,22 @@ let package = Package(
         .package(url: "https://source.skip.tools/skip-web.git", from: "0.11.2"),
     ],
     targets: [
-        // Compatibility module: Android has no `os`, so this vends the Logger /
-        // OSSignposter surface shared code uses, behind `#if canImport(os)`. Its name
-        // matters — see Sources/OSCompat/OSCompat.swift.
-        .target(
-            name: "OSCompat",
-            dependencies: [
-                .product(name: "AndroidLogging", package: "swift-android-native",
-                         condition: .when(platforms: [.android])),
-            ],
-            path: "Sources/OSCompat"
-        ),
-        .target(
-            name: "FALogging",
-            dependencies: [
-                .target(name: "OSCompat", condition: .when(platforms: [.android])),
-            ]
-        ),
-        .testTarget(
-            name: "FALoggingTests",
-            dependencies: ["FALogging"]
-        ),
         .target(
             name: "FAPages",
             dependencies: [
                 "SwiftSoup",
-                "FALogging",
+                .product(name: "FALogging", package: "FALogging"),
                 .product(name: "OrderedCollections", package: "swift-collections"),
-                .target(name: "OSCompat", condition: .when(platforms: [.android])),
+                .product(name: "OSCompat", package: "FALogging", condition: .when(platforms: [.android])),
             ]
+        ),
+        // FALogging's tests live here, not in its own package: the Xcode project
+        // reaches package test targets only through a folder reference, and
+        // FALogging needs an XCLocalSwiftPackageReference instead — see
+        // Android/docs/shared-sources.md § One module, one image.
+        .testTarget(
+            name: "FALoggingTests",
+            dependencies: [.product(name: "FALogging", package: "FALogging")]
         ),
         .testTarget(
             name: "FAPagesTests",
@@ -75,7 +60,7 @@ let package = Package(
             name: "FAKit",
             dependencies: [
                 "FAPages",
-                "FALogging",
+                .product(name: "FALogging", package: "FALogging"),
                 "SwiftSoup",
                 "SwiftGraph",
                 .product(name: "OrderedCollections", package: "swift-collections"),
@@ -83,7 +68,7 @@ let package = Package(
                 // DOCX reader — both out of scope on Android.
                 .product(name: "Cache", package: "Cache", condition: .when(platforms: [.iOS, .macOS])),
                 .product(name: "ZIPFoundation", package: "ZIPFoundation", condition: .when(platforms: [.iOS, .macOS])),
-                .target(name: "OSCompat", condition: .when(platforms: [.android])),
+                .product(name: "OSCompat", package: "FALogging", condition: .when(platforms: [.android])),
                 // Unconditional on purpose: SKIP_BRIDGE is unset in the pass that runs
                 // plugins, so gating either edge makes skipstone emit a stub
                 // build.gradle.kts and Gradle dies on "Unresolved reference 'android'".

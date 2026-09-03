@@ -109,7 +109,7 @@ final class FAImageMemoryCache: @unchecked Sendable {
 actor FAImageStore {
     static let shared = FAImageStore()
 
-    /// Matches `FACoilBridge`'s per-host dispatcher limit and URLSession's default.
+    /// Matches `FAHttpClient.MAX_CONCURRENT_PER_HOST` and URLSession's default.
     private let concurrencyLimit = 6
 
     /// The blocking JNI fetch and the decode both run here rather than on a
@@ -126,6 +126,16 @@ actor FAImageStore {
     private var inFlightImage = [URL: Task<UIImage?, Never>]()
     /// When each in-flight fetch started. Diagnostic only, see `downloadStartDate(for:)`.
     private var fetchStart = [URL: Date]()
+
+    /// The pool generation an unresolved challenge was seen on, or nil when there
+    /// isn't one. A fetch starting while this is set would be challenged too, so it
+    /// parks *before* issuing rather than spending a permit on a doomed request.
+    /// Cleared on resolution, on the park timing out, and when resolution throws.
+    private var challengeEpoch: UInt64?
+
+    /// How long a parked fetch waits before giving up. A failed page fetch is visible;
+    /// six permanently parked permits would silently freeze the image layer forever.
+    private static let maxParkDuration = Duration.seconds(20)
 
     private let memory = FAImageMemoryCache.shared
 
@@ -330,14 +340,19 @@ actor FAImageStore {
     // MARK: - Fetch + decode
 
     private func fetchAndDecode(_ url: URL, priority: FAImagePriority) async -> UIImage? {
+        let epochBefore = lastFailureEpoch
         var fetched = await path(for: url, priority: priority)
         if fetched == nil, priority == .high {
-            // Cloudflare challenges per connection, not per request, so a fetch that
-            // never landed on a warm one can exhaust its attempts. Coalescing means a
-            // visible row may have been sharing a *prefetch's* attempts; give it its
-            // own independent try rather than inheriting that verdict. `path(for:)`
-            // has already cleared the in-flight entry, so this really is a fresh fetch.
-            fetched = await path(for: url, priority: priority)
+            // Coalescing means a visible row may have been sharing a *prefetch's*
+            // exhausted attempts, so it used to get an unconditional second try. It
+            // now gets one only when the pool has actually been repaired underneath
+            // it: otherwise the retry rides the same connection and inherits the same
+            // verdict — pure cost, and under h2 there is only ever one connection to
+            // inherit it from. `path(for:)` has already cleared the in-flight entry,
+            // so this really is a fresh fetch.
+            if lastFailureEpoch != epochBefore {
+                fetched = await path(for: url, priority: priority)
+            }
         }
         guard let path = fetched else { return nil }
         // Re-check: a concurrent decode of the same URL may have finished while we
@@ -359,7 +374,7 @@ actor FAImageStore {
             return await existing.value
         }
         let task = Task(priority: priority.taskPriority) { [self] in
-            let path = await gated(priority) { CoilImageLoader.fetchPath(url) }
+            let path = await fetchHoldingPermit(url, priority: priority)
             inFlightFetch[url] = nil
             fetchStart[url] = nil
             return path
@@ -367,6 +382,126 @@ actor FAImageStore {
         inFlightFetch[url] = task
         fetchStart[url] = Date()
         return await task.value
+    }
+
+    /// One image fetch, holding its permit for the whole thing — the park included.
+    ///
+    /// **The permit is the pacing, and it stays the pacing.** Freeing it across the
+    /// wait is what let ~80 queued URLs resume in lockstep the moment a solve landed
+    /// and produced 75% 403 with 25 images lost per run (Android/docs/images.md).
+    /// Holding it means at most `concurrencyLimit` fetches are ever parked and the
+    /// rest sit in the gate's FIFO without touching the network; when the challenge
+    /// clears, those six retry and release one permit each, so the queue is admitted
+    /// one at a time.
+    ///
+    /// **Why this cannot deadlock**, since a future change could break it: nothing on
+    /// the resolution path takes an `FAImageStore` permit. The challenge WebView loads
+    /// through Chromium, not through here, and `refreshCredentialsThenRelease` awaits
+    /// on the MainActor and pushes the new credentials through `imageCredentialsSink`
+    /// → `CoilImageLoader.configure`, a non-blocking volatile write.
+    private func fetchHoldingPermit(_ url: URL, priority: FAImagePriority) async -> String? {
+        await acquire(priority)
+        defer { release() }
+
+        // A fetch starting during an unresolved challenge is certain to be challenged
+        // too; park before issuing rather than paying for the round trip — on the
+        // latched epoch, which is the generation the challenge was drawn against.
+        if let latched = challengeEpoch, await park(observing: latched) == false {
+            CoilImageLoader.logAbandoned(url, attempts: 0, reasons: "parked, never issued")
+            return nil
+        }
+
+        let outcome = await onQueue { CoilImageLoader.fetchPath(url) }
+        switch outcome {
+        case let .path(path):
+            return path
+        case let .failed(epoch):
+            lastFailureEpoch = epoch
+            return nil
+        case let .challenged(epoch, attempts, reasons):
+            challengeEpoch = epoch
+            lastFailureEpoch = epoch
+            guard await park(observing: epoch) else {
+                CoilImageLoader.logAbandoned(url, attempts: attempts, reasons: reasons)
+                return nil
+            }
+            // One retry, on the repaired pool and the fresh clearance. A second would
+            // be another sample of a mechanism that just failed; the row shows its
+            // placeholder and a later scroll re-asks.
+            let retried = await onQueue { CoilImageLoader.fetchPath(url) }
+            if case let .path(path) = retried {
+                logger.info("[CFREPAIR] retry \(url) → 200")
+                return path
+            }
+            logger.warning("[CFREPAIR] retry \(url) → still challenged, giving up")
+            // The image is lost, and it has to say so in the shape the summariser
+            // counts — otherwise a challenged image that never came back looks
+            // exactly like one that was never asked for. Both outcomes carry the
+            // epoch the retry rode, so this needs no further JNI call: reading it
+            // back would block the actor for a number already in hand.
+            switch retried {
+            case let .challenged(retryEpoch, retryAttempts, retryReasons):
+                lastFailureEpoch = retryEpoch
+                CoilImageLoader.logAbandoned(url, attempts: attempts + retryAttempts,
+                                             reasons: "\(reasons), \(retryReasons)")
+            case let .failed(retryEpoch):
+                lastFailureEpoch = retryEpoch
+                CoilImageLoader.logAbandoned(url, attempts: attempts, reasons: reasons)
+            case .path:
+                break // handled above
+            }
+            return nil
+        }
+    }
+
+    /// The pool epoch the last failed fetch rode. `fetchAndDecode` compares it before
+    /// and after to decide whether a second try would be a different draw.
+    private var lastFailureEpoch: UInt64 = 0
+
+    /// Wait for the challenge to clear, then repair the pool. Returns false when the
+    /// caller should give up rather than retry.
+    ///
+    /// The wait is bounded by `maxParkDuration`: `awaitResolution()` itself can hang
+    /// on a sheet nobody is looking at.
+    private func park(observing epoch: UInt64) async -> Bool {
+        let startedAt = ContinuousClock.now
+        enum Park { case resolved, refused, timedOut }
+
+        let outcome = await withTaskGroup(of: Park.self) { group in
+            group.addTask {
+                do {
+                    try await CloudflareChallengeCoordinator.shared.awaitResolution()
+                    return .resolved
+                } catch {
+                    return .refused
+                }
+            }
+            group.addTask {
+                try? await Task.sleep(for: Self.maxParkDuration)
+                return .timedOut
+            }
+            let first = await group.next() ?? .timedOut
+            group.cancelAll()
+            return first
+        }
+
+        challengeEpoch = nil
+        switch outcome {
+        case .resolved:
+            // Whoever gets here first evicts; the rest observe the bumped epoch and
+            // skip, so six woken workers cause one eviction, not six.
+            let repaired = await onQueue { FAConnectionPool.repair(observed: epoch) }
+            lastFailureEpoch = repaired.epoch
+            return true
+        case .refused:
+            // Logged out, or the user dismissed the sheet. Fail fast rather than
+            // parking every other image behind a challenge nobody is going to solve.
+            logger.warning("[CFREPAIR] image park refused after \(ContinuousClock.now - startedAt)")
+            return false
+        case .timedOut:
+            logger.warning("[CFREPAIR] image park timed out after \(ContinuousClock.now - startedAt)")
+            return false
+        }
     }
 
     private func decode(_ path: String, priority: FAImagePriority) async -> UIImage? {
@@ -395,7 +530,13 @@ actor FAImageStore {
     ) async -> T {
         await acquire(priority)
         defer { release() }
-        return await withCheckedContinuation { continuation in
+        return await onQueue(work)
+    }
+
+    /// The queue hop on its own, for callers that hold their permit across more than
+    /// one blocking call — see `fetchHoldingPermit`.
+    private nonisolated func onQueue<T: Sendable>(_ work: @escaping @Sendable () -> T) async -> T {
+        await withCheckedContinuation { continuation in
             queue.async {
                 continuation.resume(returning: work())
             }
