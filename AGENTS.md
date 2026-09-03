@@ -42,7 +42,10 @@ which is also why FAKit gates SwiftUI on `#if !os(Android)` rather than `canImpo
 each of its products, which gave the app three copies of `PersistentLogStore.shared`
 destroying each other's writes in one log file. See `Android/docs/shared-sources.md`
 § One module, one image; `Scripts/Android/check-shared-globals.sh`, run by
-`Scripts/Android/run.sh`, is the guard. Three dependencies are forked on
+`Scripts/Android/run.sh`, is the guard. Xcode reaches that package only through an
+`XCLocalSwiftPackageReference` and **must not** also have a folder reference for it,
+which is why `FALoggingTests` is declared in `FAKit/Package.swift` — same doc,
+§ What the split costs the Xcode project. Three dependencies are forked on
 `Ceylo/<repo>` `android` branches — `Defaults` and `skip-ui`/`skip-fuse-ui`
 (the latter two for `listRowInsets`, `Text(html:)`, `Text(AttributedString)` /
 `Text(_:inlineViews:)`, `Text + Text` and `FlowRow`, all unavailable or absent

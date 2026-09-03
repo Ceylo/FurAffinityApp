@@ -41,6 +41,14 @@ let package = Package(
                 .product(name: "OSCompat", package: "FALogging", condition: .when(platforms: [.android])),
             ]
         ),
+        // FALogging's tests live here, not in its own package: the Xcode project
+        // reaches package test targets only through a folder reference, and
+        // FALogging needs an XCLocalSwiftPackageReference instead — see
+        // Android/docs/shared-sources.md § One module, one image.
+        .testTarget(
+            name: "FALoggingTests",
+            dependencies: [.product(name: "FALogging", package: "FALogging")]
+        ),
         .testTarget(
             name: "FAPagesTests",
             dependencies: ["FAPages"],

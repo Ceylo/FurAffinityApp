@@ -140,6 +140,33 @@ image; add to it when a module grows some. `FAPages` is deliberately not on it: 
 absorbed by `libFAKit.so` too, but everything it defines is an immutable `let`, so the
 copies are indistinguishable.
 
+### What the split costs the Xcode project
+
+The iOS app is not built by SwiftPM, and Xcode is stricter about local packages than
+`xcodebuild` is. Two constraints fell out of making FALogging its own package, and they
+pull against each other:
+
+- **A package that is already another package's path dependency does not become a
+  workspace root on its own.** `FAKit` is registered by its plain folder reference in
+  `project.pbxproj`; `FALogging` cannot be, because `FAKit` reaches it as
+  `.package(path: "../FALogging")` first. Xcode then builds its targets but exposes
+  none of its *products*, and every target that links one fails with
+  `Missing package product 'FALogging'` / `'OSCompat'` — while `xcodebuild` resolves
+  the same tree happily. The fix is an explicit `XCLocalSwiftPackageReference`
+  (`relativePath = FALogging`) in `packageReferences`, which needs
+  `objectVersion = 60` / `compatibilityVersion = "Xcode 14.0"`. **FALogging must have
+  no folder `PBXFileReference`**: with both, Xcode goes back to failing.
+- **Dropping that folder reference costs the scheme its container.** A testable's
+  `ReferencedContainer = "container:<dir>"` resolves through the folder reference, not
+  through the package reference, so `FALoggingTests` was silently skipped — no error,
+  just fifteen tests gone from the run. So the test target is declared in
+  `FAKit/Package.swift` over sources in `FAKit/Tests/FALoggingTests/`, depending on the
+  `FALogging` product, and the scheme keeps `container:FAKit`.
+
+Check the count, not just the exit status: a dropped testable does not fail the build.
+The suite is **346** cases — 78 FurAffinityTests, 213 FAKitTests, 40 FAPagesTests,
+15 FALoggingTests.
+
 ## Rules for shared sources
 
 <a name="every-observable-needs-skipandroidbridge-in-scope"></a>

@@ -1,6 +1,12 @@
 // swift-tools-version:6.0
 // The logging package.
 //
+// Its tests live in FAKit (`FAKit/Tests/FALoggingTests`), not here: the Xcode
+// project can only reach test targets through a package it has a *folder*
+// reference for, and FALogging must instead be an XCLocalSwiftPackageReference
+// to be a workspace root at all — see Android/docs/shared-sources.md
+// § One module, one image.
+//
 // FALogging lives outside FAKit so that FAKit and FAPages reach it as a
 // *cross-package product*, which SwiftPM links dynamically. A target
 // dependency inside one package is linked statically into each consuming
@@ -42,10 +48,6 @@ let package = Package(
             dependencies: [
                 .target(name: "OSCompat", condition: .when(platforms: [.android])),
             ]
-        ),
-        .testTarget(
-            name: "FALoggingTests",
-            dependencies: ["FALogging"]
         ),
     ]
 )

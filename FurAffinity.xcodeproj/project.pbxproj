@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 55;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -259,7 +259,6 @@
 		875EF2E52C1E1705000D4BFB /* LinearProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinearProgress.swift; sourceTree = "<group>"; };
 		875EF2E72C1E1FF7000D4BFB /* Comparable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Comparable.swift; sourceTree = "<group>"; };
 		875FDC7D2D21D2D300CF8AE5 /* DelayedToggle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DelayedToggle.swift; sourceTree = "<group>"; };
-		599D1B3356549996AFFCC434 /* FALogging */ = {isa = PBXFileReference; lastKnownFileType = folder; path = FALogging; sourceTree = "<group>"; };
 		8761834C271F5E380021A051 /* FAKit */ = {isa = PBXFileReference; lastKnownFileType = folder; path = FAKit; sourceTree = "<group>"; };
 		8766005729055FBC00C7A998 /* CommentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsView.swift; sourceTree = "<group>"; };
 		876C137229D5F8E3001EB05B /* UserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserView.swift; sourceTree = "<group>"; };
@@ -444,7 +443,6 @@
 			children = (
 				877226B127400B7A00245DF0 /* README.md */,
 				878B0B8A296CA5B200A08685 /* Privacy Policy.md */,
-				599D1B3356549996AFFCC434 /* FALogging */,
 				8761834C271F5E380021A051 /* FAKit */,
 				8716E7EA271C659C00C0BC4A /* FurAffinity */,
 				8791D60129C4D627003FDBBE /* FurAffinityTests */,
@@ -873,7 +871,7 @@
 				};
 			};
 			buildConfigurationList = 8716E7E3271C659C00C0BC4A /* Build configuration list for PBXProject "FurAffinity" */;
-			compatibilityVersion = "Xcode 13.0";
+			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -882,6 +880,7 @@
 			);
 			mainGroup = 8716E7DF271C659C00C0BC4A;
 			packageReferences = (
+				599D1B3400000000AFFCC434 /* XCLocalSwiftPackageReference "FALogging" */,
 				87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */,
 				879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
 				877173732C35878700B84624 /* XCRemoteSwiftPackageReference "Amplitude-Swift" */,
@@ -1416,6 +1415,13 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		599D1B3400000000AFFCC434 /* XCLocalSwiftPackageReference "FALogging" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = FALogging;
+		};
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
 		87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
