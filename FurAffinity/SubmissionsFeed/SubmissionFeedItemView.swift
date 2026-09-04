@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 import FAKit
-#if canImport(Kingfisher)
+#if !FA_SKIP_MODULE
 import Kingfisher
 #endif
 
@@ -66,7 +66,7 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
     
     /// Diagnostic only: is this row's thumbnail in flight, cached, or not started?
     func controlCacheBehavior(for url: URL) async {
-#if canImport(Kingfisher)
+#if !FA_SKIP_MODULE
         let downloadStartDate = await DownloadDelegate.shared.downloadStartDate(for: url)
         let isCached = ImageCache.default.imageCachedType(forKey: url.cacheKey) != .none
 #else

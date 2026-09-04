@@ -13,7 +13,7 @@ import Foundation
 import SwiftUI
 import FAKit
 import Defaults
-#if canImport(Kingfisher)
+#if !FA_SKIP_MODULE
 import Kingfisher
 #endif
 
@@ -50,7 +50,10 @@ struct AvatarView: View {
 
     // Only `configure`'s signature differs by platform, but Swift wants whole
     // declarations in an `#if` arm, so the chain is spelled twice.
-#if canImport(Kingfisher)
+    //
+    // Gated on FA_SKIP_MODULE, not `canImport(Kingfisher)`: Kingfisher builds for
+    // Android now, so it *is* importable there — it is `KFImage` that is not ready yet.
+#if !FA_SKIP_MODULE
     private func configure(_ image: some KFImageProtocol) -> some KFImageProtocol {
         image
             .placeholder { loadingPlaceholder }
@@ -70,7 +73,7 @@ struct AvatarView: View {
 
     var body: some View {
         ZStack {
-#if canImport(Kingfisher)
+#if !FA_SKIP_MODULE
             if animateAvatars {
                 configure(FAAnimatedImage(avatarUrl))
             } else {
