@@ -126,6 +126,66 @@ Ported: the image, the zoomable full-screen viewer, favorite (with the optimisti
 routing, read-only threaded comments including the deep-linked one's highlight pulse,
 and the metadata screen.
 
+`SubmissionMainImage` itself is now *shared*, with `#if FA_SKIP_MODULE` around three
+seams only: the loader, the viewer's content, and the `.task` Android needs to ask
+`FAImageStore` for a file URL that Kingfisher hands iOS from `onSuccess`. The viewer is
+presented from `fadingSheet` on both platforms, and behaves the same way: **a single
+tap** toggles fill/fit (matching iOS's `numberOfTapsRequired = 1`), and it is dismissed
+by **pulling it down** rather than by a close button. The system Back gesture still
+closes it.
+
+The pull is the presentation's on both platforms — `UISheetPresentationController`'s on
+iOS, `ModalBottomSheet`'s here. Getting Compose's took presenting with `.sheet`: SkipUI
+draws `sheet` and `fullScreenCover` as the same `ModalBottomSheet`, but passes
+`sheetGesturesEnabled: !(isFullScreen || interactiveDismissDisabled)`, so
+`fullScreenCover` is precisely what had switched the pull off and made `Zoomable` grow a
+hand-rolled one.
+
+What `Zoomable` still owns is the *negotiation* iOS gets free between `UIScrollView` and
+the sheet, declared through `.interactiveDismissDisabled` — a preference SkipUI feeds
+straight to `sheetGesturesEnabled`. Ownership is decided at the first drag event carrying
+a direction, ahead of Material3's ~8 dp *vertical* slop (SkipUI never consumes, so
+`draggable` behind the sheet sees the same events), and is never revised mid-gesture. The
+sheet gets only a **downward**, vertically dominant drag made with no vertical pan room
+left; a pinch claims the gesture outright; everything else is the content's, and the sheet
+is then locked out for the rest of that gesture — otherwise `draggable` would dismiss on
+any release past its 125 dp/s threshold, whatever the drag was for. A `sheetOwnsDrag`
+latch does the mirror job on the drag the sheet does get: the content ignores it on both
+axes, or it drifts sideways while the sheet travels down.
+
+The backdrop deliberately does **not** fade to reveal the page: SkipUI hands
+`ModalBottomSheet` a `Color.Unspecified` container that paints an opaque grey, and
+`presentationBackground` is `@available(*, unavailable)` in skip-fuse-ui, so a fade
+reveals that grey rather than the submission. Compose's own scrim does the reveal instead.
+
+Accepted cost of `.sheet` over `fullScreenCover`, weighed and kept: an 18 pt band at the
+top (`presentationDragIndicator(.hidden)` suppresses the capsule but keeps its footprint)
+showing the scrimmed page, 16 pt rounded top corners, and `BottomSheetDefaults`'
+**640 pt width cap**, which boxes the viewer in landscape and on tablets. Undoing all
+three is one line in `Ceylo/skip-ui` — dropping `isFullScreen ||` from that
+`interactiveDismissDisabled`, then presenting with `fullScreenCover` again.
+
+A `UIScrollView` gives the iOS viewer inertia and edge behaviour for free; here both are
+hand-built. Releasing a pan runs Android's `OverScroller` spline — its closed forms
+reconstructed in Swift, since a Skip Fuse module has no Compose to borrow `splineBasedDecay`
+from — and the velocity that launches it is timed by hand from successive translations,
+because SkipUI builds every `DragGesture.Value` with `velocity: .zero`. Compose's 100 ms
+staleness window is applied at the release as well as between samples, or "pan, hold
+still, lift" would fling.
+
+At a bound the pan continues past with resistance and a critically damped spring brings it
+back, which is what Android's *zoomable image viewers* do (Google Photos, telephoto) —
+deliberately not the Android-12 stretch overscroll, which is a scroll container's own edge
+effect, and there is no scroll container here. Flings stay clamped, so one that reaches a
+limit simply arrives; only a drag can overscroll.
+
+The viewer also resets itself on each presentation — offset and zoom — because skipstone
+backs `@State` with `rememberSaveable`. The initial zoom is re-derived from **every**
+viewport measurement until the user first zooms or pans (`hasUserAdjusted`), not latched
+on the first one: the sheet reports a height ~129 px short of its final one before its
+insets settle, and `boundedFill` computed from that left the image visibly letterboxed
+where `fullScreenCover` had filled the screen.
+
 Deferred, with the reason:
 
 | Not ported | Why |
@@ -137,10 +197,10 @@ Deferred, with the reason:
 ### Android-only substitutes
 
 Each keeps the iOS name and signature so symlinked callers compile unchanged:
-`SubmissionMainImage` (the iOS one is written against Kingfisher's `KFImageProtocol`),
-`HTMLView`, `Zoomable`, `FlowLayout`, `MediaSaveHandler`,
-`RemoteContentToolbarItem`, `SubmissionTextContent`/`SubmissionAudioContent`, and the
-no-ops in `SubmissionShims.swift`.
+`HTMLView`, `Zoomable`, `FlowLayout`, `MediaSaveHandler`, `fadingSheet` (the iOS one
+crossfades a UIKit-backed `.sheet`; `View+pullableScreenCover.swift`),
+`SubmissionTextContent`/`SubmissionAudioContent`, and the no-ops in
+`SubmissionShims.swift`.
 
 `HTMLView` is the one that does real work rather than standing in. iOS renders FA's rich
 text through WebKit's HTML importer into a `UITextView`; here `FAKit` normalises the

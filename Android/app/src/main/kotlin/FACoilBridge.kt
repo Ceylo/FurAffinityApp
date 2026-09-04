@@ -21,6 +21,10 @@
 //  alternatives. Retry outcomes are *reported* to Swift as JSON rather than logged:
 //  android.util.Log never reaches the log file Settings exports.
 //
+//  Cache policy is split: the 1 GB ceiling is coil's (its `DiskCache` requires a size and
+//  offers no expiry), the 7-14 day per-entry lifetime is ours, applied lazily in
+//  `cachedPath`. `Android/docs/images.md` has why each half sits where it does.
+//
 //  Lives in the app Gradle module (not the FurAffinityUI module) so it compiles
 //  against coil3/okhttp declared in Android/app/build.gradle.kts; reflection loads it
 //  by name at runtime from the single APK classloader.
@@ -30,6 +34,7 @@ package fur.affinity.ui
 
 import android.util.Log
 import coil3.disk.DiskCache
+import java.io.File
 import okhttp3.Request
 import okio.Path.Companion.toOkioPath
 import org.json.JSONArray
@@ -61,6 +66,12 @@ class FACoilBridge {
         // five on a host that never warms a connection, and each retry costs the
         // challenge round-trip rather than a warm fetch — see Android/docs/images.md.
         private const val MAX_ATTEMPTS = 5
+
+        /// Flat rather than a ramp, and a second because that is what `robots.txt` asks
+        /// of a crawler — measured A-B-A in `Android/docs/images.md`, which also covers
+        /// why this loop has no iOS counterpart.
+        private const val RETRY_BACKOFF_MS = 1000L
+
         /// Whether a failed response could plausibly come back different on a fresh
         /// connection. A 4xx is the origin's own answer, so re-asking it just burns
         /// attempts and one of `FAImageStore`'s permits — FA answers a missing avatar
@@ -74,14 +85,31 @@ class FACoilBridge {
 
         fun isCached(url: String): Boolean = cachedPath(url) != null
 
-        /// On-disk path of `url`'s already-cached bytes, or null if it isn't cached.
+        /// 7-14 days from the write, spread by the URL's hash rather than at random so a
+        /// deadline survives a restart (see `Android/docs/images.md`). Widened to `Long`
+        /// because `Int.MIN_VALUE.abs()` is `Int.MIN_VALUE`.
+        private fun lifetimeMillis(url: String): Long {
+            val spreadDays = Math.abs(url.hashCode().toLong()) % 8
+            return (7 + spreadDays) * 24 * 60 * 60 * 1000
+        }
+
+        /// On-disk path of `url`'s already-cached bytes, or null if it isn't cached or
+        /// has expired — `fetchResult` and `isCached` both come through here, which is
+        /// what makes one expiry check enough.
         ///
         /// The snapshot (a read lock) is released before the path is handed back, so a
         /// concurrent eviction in that window would leave Swift with a stale path; it
-        /// just decodes to nil and takes the existing failure path. With a 256 MB cache
+        /// just decodes to nil and takes the existing failure path. With a 1 GB cache
         /// and ~100 KB thumbnails this is not worth holding a lock across JNI for.
-        fun cachedPath(url: String): String? =
-            diskCache().openSnapshot(url)?.use { it.data.toString() }
+        fun cachedPath(url: String): String? {
+            val path = diskCache().openSnapshot(url)?.use { it.data.toString() } ?: return null
+            val age = System.currentTimeMillis() - File(path).lastModified()
+            if (age > lifetimeMillis(url)) {
+                diskCache().remove(url)
+                return null
+            }
+            return path
+        }
 
         /// Path of `url`'s bytes plus what it took to get them, as JSON:
         ///   {"path":"…","attempts":2,"bytes":98304,"conn":1234,"newConn":true,
@@ -198,7 +226,7 @@ class FACoilBridge {
                 // Inside the permit on purpose: this sleep *is* the pacing, and
                 // freeing the permit across it is what let ~80 URLs resume in
                 // lockstep and 403 (Android/docs/images.md).
-                Thread.sleep(250L * attempt)
+                Thread.sleep(RETRY_BACKOFF_MS)
             }
         }
 
@@ -228,7 +256,7 @@ class FACoilBridge {
                 sharedCache?.let { return it }
                 val cache = DiskCache.Builder()
                     .directory(context().cacheDir.resolve("fa_coil_cache").toOkioPath())
-                    .maxSizeBytes(256L * 1024 * 1024)
+                    .maxSizeBytes(1L * 1024 * 1024 * 1024)
                     .build()
                 sharedCache = cache
                 return cache

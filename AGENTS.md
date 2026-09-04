@@ -18,7 +18,8 @@ tree and every source it must not build carries `#if !FA_SKIP_MODULE`. The iOS X
 is unaffected. Ported so far: the login screen (shared
 `HomeView` + autologin, over an Android `FALoginView`), the Followed feed (on the shared
 `SubmissionsFeedView` container, badge and refresh choreography included), the
-submission detail screen (image, zoomable viewer, favorite, Save/Share, rich-text
+submission detail screen (shared `SubmissionMainImage`, a zoomable viewer presented from
+a `fadingSheet` and dismissed by pulling it down, favorite, Save/Share, rich-text
 description with in-app links, read-only comments, metadata) and the Settings tab (shared
 `SettingsView` / `NotificationSettingsView`, image-cache control, log sharing, logout).
 FA's rich text is rendered by Compose's own HTML parser: `FAKit/Sources/FAKit/RichText/`

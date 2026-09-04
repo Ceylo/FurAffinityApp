@@ -531,7 +531,7 @@
 				8708DA252D74CF19000B419C /* SubmissionMetadataView.swift */,
 				877D54812FF036E100BA9802 /* Text Submissions */,
 				877D547C2FF0351C00BA9802 /* Audio Submissions */,
-				FCCE6AD51AE9E40D4BF0BCD8 /* iOS */,
+				87566B83297DD02300FD3199 /* SubmissionMainImage.swift */,
 			);
 			path = Submissions;
 			sourceTree = "<group>";
@@ -634,6 +634,14 @@
 			path = Comments;
 			sourceTree = "<group>";
 		};
+		87E0A1110000000000000001 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				322FD0A988FDCCA76357BE9C /* View+pullableScreenCover.swift */,
+			);
+			path = iOS;
+			sourceTree = "<group>";
+		};
 		878EBC9A2EDB8E11006A68D3 /* View extensions */ = {
 			isa = PBXGroup;
 			children = (
@@ -642,7 +650,7 @@
 				879C89FB2E2AFA8400F59A74 /* View+applying.swift */,
 				8750BF372ED904FC00B860C8 /* View+throwingRefreshable.swift */,
 				87C2ADE92F017C200061F837 /* RichLocalizedError.swift */,
-				322FD0A988FDCCA76357BE9C /* View+pullableScreenCover.swift */,
+				87E0A1110000000000000001 /* iOS */,
 			);
 			path = "View extensions";
 			sourceTree = "<group>";
@@ -703,6 +711,7 @@
 				035B5AEBEA2399F8715F2744 /* ForegroundAutorefresh.swift */,
 				871B05EE2C84BAD400302500 /* AppIcon.swift */,
 				87F960CA2801EFF3000B30A3 /* AvatarView.swift */,
+				875180572DB553FC00331762 /* RemoteContentToolbarItem.swift */,
 				B8C7A5B318A7D623236CA39B /* iOS */,
 			);
 			path = "Helper Views";
@@ -735,7 +744,6 @@
 			children = (
 				3033B05A545010E29F30F1FD /* FlowLayout.swift */,
 				879233D1278216DF0019AC44 /* HTMLView.swift */,
-				875180572DB553FC00331762 /* RemoteContentToolbarItem.swift */,
 				87E528362CE8D3D800CAFDC0 /* Zoomable.swift */,
 				87307E1E2FC78C790069E7F2 /* CloudflareChallengeSheet.swift */,
 			);
@@ -773,14 +781,6 @@
 				702AF02EF9EF07FD91BDCD6C /* Info.plist */,
 			);
 			path = NotificationContent;
-			sourceTree = "<group>";
-		};
-		FCCE6AD51AE9E40D4BF0BCD8 /* iOS */ = {
-			isa = PBXGroup;
-			children = (
-				87566B83297DD02300FD3199 /* SubmissionMainImage.swift */,
-			);
-			path = iOS;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

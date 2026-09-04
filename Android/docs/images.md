@@ -271,6 +271,28 @@ h1: the shared client, the epoch guard, and the repair.
   4-7 s) and nothing else, at 40% more requests against FA's CDN. Reverted; the Kotlin
   loop stays.
 
+  The backoff inside that permit is a **flat 1 s**, not the `250 ms x attempt` ramp it
+  started as, and 1 s because that is what `www.furaffinity.net`'s `robots.txt` asks a
+  crawler to wait. The directive does not formally bind this code — it is aimed at
+  crawlers, and `d.`/`t.`/`a.furaffinity.net` serve no `robots.txt` at all (404), while
+  the app already honours it where it genuinely crawls
+  (`ProgressiveLoadItem.crawlingDelay = 1 s`) — but nothing here should hit an FA host
+  faster than that either. Worst case, one URL holds its permit for 4 s instead of 2.5 s.
+  Since the pacing is load-bearing (above), it was measured A-B-A rather than assumed —
+  6 cold runs per arm, one emulator session:
+
+  | arm | 403% | images lost (median / worst) | conns | issuance | drain |
+  |---|---|---|---|---|---|
+  | A1 `250 ms x attempt` | 22% | 0.0 / 2 | 28.5 | 3.5 s | 4.8 s |
+  | B flat 1 s | 6% | 0.0 / 6 | 16.5 | 2.7 s | 2.9 s |
+  | A2 `250 ms x attempt`, again | 5% | 0.0 / 9 | 15.0 | 1.9 s | 3.5 s |
+
+  B lands *between* the two shipping arms on every column, and the shipping arms
+  themselves move 22% → 5% across the session — so what the table shows is drift, not
+  an effect, in either direction. Same story on the worst runs: 2 → 6 → 9 images lost is
+  monotone in chronological order. No measurable regression, so the slower, politer
+  backoff stays.
+
   Corollary for the summarizer: `[Coil] GET request on` must be logged from **inside**
   the permit. Logged before it, the line marks when a `Task` was created rather than
   when the request went out, and `summarize-image-log.py`'s issuance cadence silently
@@ -292,6 +314,22 @@ h1: the shared client, the epoch guard, and the repair.
   that needs a *second* burst in the same process (connection-pool behaviour, say) has
   to trigger one another way — clearing the caches from Settings and pulling to refresh
   is the one that also drops the memory LRU, which otherwise absorbs everything.
+- **The disk cache's two limits come from two places.** coil3's `DiskCache` *requires*
+  a maximum size — `DiskCache.Builder` defaults to `maxSizePercent(0.02)` — and offers
+  no expiry whatsoever, so the ceiling is coil's constraint and the lifetime is ours.
+  iOS is the exact mirror image: Kingfisher's `sizeLimit` is left at its unbounded
+  default `0`, and only the 7-14 day expiry bites. So `FACoilBridge` sets **1 GB** and
+  applies a **7-14 day** per-entry lifetime lazily, in `cachedPath` — the one door both
+  `fetchResult` and `isCached` come through, so an expired entry is dropped and
+  re-downloaded with no second implementation and the feed's cache reporting stays
+  honest. The window is measured from the *write*: coil never touches mtime on a read,
+  and iOS deliberately doesn't extend on access either
+  (`.diskCacheAccessExtending(.none)`). The spread within it is
+  `url.hashCode() % 8` days rather than random, so a deadline survives a process
+  restart while a cache filled in one session still doesn't expire in one go — Kotlin's
+  `String.hashCode` is specified, unlike Swift's per-process-seeded one.
+  `FAImageStore.pruneStagedMedia` already covers the `fa-media` staging directory at
+  7 days.
 - **The Kotlin bridges' `android.util.Log` output never reaches the log file Settings
   exports**, which only carries what went through the Swift `logger`
   (`PersistentLogger`). So anything worth keeping has to be *returned* to Swift and

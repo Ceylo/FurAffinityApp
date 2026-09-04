@@ -353,3 +353,40 @@ grep Java_initState_ .build/plugins/outputs/*/FurAffinityUI/destination/skipston
   its rows and turns its `scrollTo` into an animated scroll. Use `.animation(_:value:)`,
   which is scoped to a subtree. See
   [§`withAnimation` marks the whole frame](screens.md#withanimation-marks-the-whole-frame-process-wide).
+- **An armed animation poisons every per-frame write in the same subtree.** `.offset`
+  and `.scaleEffect` don't set a Compose value, they route it through `toAnimatable`
+  (`Animation.swift`), which parks it in an `Animatable` and re-launches `animateTo` on
+  every write while an animation is armed — so a gesture writing 60 times a second eases
+  from a standstill toward a target the finger keeps moving. `withAnimation` (previous
+  bullet) is what arms it, and the `Animatable`'s resume record is `rememberSaveable`, so
+  an interrupted animation's start value outlives a sheet dismissal and the next
+  presentation's first frames render from it. Use `.animation(_:value:)` on a value
+  **set once** — a counter bumped by the action — which arms only the composition where
+  it changes.
+- **To animate a value a gesture also writes, step it yourself.** `.animation(_:value:)`
+  is no use for the reason above, and it leaves the property already *at* its target, so
+  an animation in flight can't be caught and continued — most of what inertia means.
+  `Zoomable+Android`'s `runMotion` is the shape. Nothing in the SkipSwiftUI surface
+  aligns work to a frame — `TimelineView` exists in skip-ui but has no SkipSwiftUI
+  counterpart, and `withFrameNanos` is reachable only from skip-ui's own Kotlin — so it
+  over-ticks at 4 ms instead, which Compose absorbs: snapshot writes apply immediately
+  but recomposition happens at frame time, and the per-tick cost is a JNI state write,
+  not a layout pass. Measured on a 60 Hz AVD against Compose's own frame-clock-driven
+  animation as the control, a stepped fling held one distinct frame per vsync — 16 frames
+  at 61 fps with zero duplicates, against the control's 21 at 63 fps with zero.
+  (Duplicates do appear in the last 40 ms, where the spline's own velocity is under a
+  pixel per frame; Android's `OverScroller` tail is the same. Nothing here speaks to
+  90/120 Hz panels.) A hand-stepped loop needs a hand-written stop, too: a `Task`
+  outlives the composition that started it, where a Compose animation dies with it, so
+  the view has to cancel from `onDisappear` or a fling launched just before a sheet
+  dismissal keeps ticking against nothing.
+- **SkipUI's `.offset` is Compose's *layout* offset**, not a draw-time translation, so
+  the moved node is still clipped to the rect it had before the offset. Content that must
+  survive being pushed past its own bounds has to be sized to the viewport first, or —
+  as in `Zoomable+Android` — kept to a bounded offset.
+- **A bridged `@State` survives a sheet dismissal.** Skipstone backs it with
+  `rememberSaveable`, which saves on disposal and restores at the same key, so
+  re-presenting a sheet hands the content whatever the last presentation left behind.
+  Presented content has to reset itself — `Zoomable+Android` does it from `onAppear`
+  (a plain `remember`, so that one *does* re-run) and again from the fresh viewport
+  measurement, since the sheet is remeasured 24 pt shorter as it dismisses.
