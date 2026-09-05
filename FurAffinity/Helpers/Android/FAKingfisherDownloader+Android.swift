@@ -71,7 +71,12 @@ final class FAOkHttpDownloader: ImageDownloader, @unchecked Sendable {
             return .failure(.responseError(reason: .URLSessionError(error: FAImageError.loadFailed(url))))
         }
 
-        guard let image = options.processor.process(item: .data(data), options: options) else {
+        // Through the gate, not straight here: the processor decodes, and a decode is
+        // another blocking JNI call on a thread Swift concurrency owns.
+        let image = await FAImageStore.shared.decoding(priority) {
+            options.processor.process(item: .data(data), options: options)
+        }
+        guard let image else {
             return .failure(.processorError(
                 reason: .processingFailed(processor: options.processor, item: .data(data))
             ))

@@ -5,9 +5,10 @@
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
 | `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
+| `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, and a public `DownloadTask` initializer so a subclass outside the module can replace the transport |
 
-All on an `android` branch, referenced by URL + branch from `Package.swift` (and,
-for Defaults, the Xcode project too). While iterating, re-point the root
+All on an `android` branch, referenced by URL + branch from `Package.swift` (and, for
+Defaults and Kingfisher, the Xcode project too). While iterating, re-point the root
 `Package.swift` at a local clone:
 
 ```
@@ -17,7 +18,7 @@ for Defaults, the Xcode project too). While iterating, re-point the root
 then push to the `android` branch before the step's gate.
 
 The root `Package.resolved` **is** committed (`.gitignore` carries a `!/Package.resolved`
-negation; `FAKit/Package.resolved` and the Xcode workspace's copy stay ignored). Three
+negation; `FAKit/Package.resolved` and the Xcode workspace's copy stay ignored). Four
 deps resolve from mutable `branch: "android"` refs, so without the recorded revisions a
 release APK isn't reproducible. Refreshing a fork is still
 `swift package update <dep>` — now followed by committing the resulting diff.
@@ -119,6 +120,68 @@ initializer whose parameter is expressible by a string literal wants
 **Note:** skip-ui arrives transitively via skip-fuse-ui, so overriding it needs its own
 entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
 
+**Note:** a package can be one declaration too many. `Ceylo/Kingfisher` declares
+`Ceylo/skip-ui` for the same reason FAKit does — it depends on `Ceylo/skip-fuse-ui`,
+whose `SkipSwiftUI` calls fork-only `SkipUI` API, so pairing it with upstream skip-ui
+does not compile. But adding that third declaration of the identity to the Xcode graph
+flipped SwiftPM's tie-break: the first resolve rewrote the workspace pin's *location* to
+`source.skip.tools/skip-ui` while keeping the fork's revision, which then could not be
+checked out, and left a half-written checkout that failed every later resolve with
+"Package.swift doesn't exist in file system". Recovery is to put the location back by
+hand, `rm -rf` that one directory under `DerivedData/…/SourcePackages/checkouts/`, and
+resolve again; it settles and stays settled.
+
+## Why Kingfisher is forked
+
+Android reimplemented, in Swift and Kotlin, what iOS gets from Kingfisher for free: a
+decoded-image LRU, fetch and decode coalescing, off-main decoding, disk staging with its
+own expiry, and a KFImage-shaped view. A July 2026 attempt had concluded that
+"Kingfisher's networking is coupled to its CoreGraphics/ImageIO image-decoding pipeline,
+which can't compile on Android without gutting it."
+
+The coupling is real but narrow. Every decode funnels through five entry points in
+`Sources/Image/Image.swift`, and SkipSwiftUI's Bitmap-backed `UIImage` answers all of
+them — `init?(data:scale:)`, `pngData()`, `jpegData(compressionQuality:)`,
+`preparingThumbnail(of:)`. Substituting there is far cheaper than emulating
+`CGImageSource`, and it avoids two traps a shim would walk into: `UIImage.init(cgImage:)`
+and `.cgImage` are `@available(*, unavailable)` in skip-fuse-ui, and a module named
+`ImageIO` or `CoreGraphics` would re-run the module-name poisoning in
+[build-and-run.md](build-and-run.md). Two things do not cross: there is no ObjC runtime
+to hang the per-image metadata on, and there is no animated path, so a GIF decodes to its
+first frame.
+
+Guards in the fork are `#if os(Android)` / `#if !os(Android)`, never `canImport(...)`,
+for the same poisoning reason — Kingfisher's non-Android platforms are all Apple, so the
+platform gate is both safe and correct there.
+
+Three things the port needed beyond the guards:
+
+- **A public `DownloadTask` initializer.** `ImageDownloader.downloadImage` is `open`, but
+  every `DownloadTask` initializer was internal, so an override outside the module had
+  nothing valid to return — and `KingfisherManager` drops the download entirely when the
+  task it gets back is not `isInitialized`. `init(cancelling:)` exposes the
+  provider-backed one under a name that says what it is for.
+- **`@Observable` instead of `ObservableObject`.** `KFImage.ImageBinder` was Combine's;
+  on Android it is `@Observable` and `KFImageRenderer` holds it in a `@State`. And
+  `withAnimation` marks the *whole* Compose frame on SkipUI, so the binder records the
+  load animation and the renderer applies it with `.animation(_:value:)` instead.
+- **No `canImport` gate on the SwiftUI files.** skipstone's bridge generator silently
+  drops a file whose top-level `#if` it cannot evaluate, and
+  `#if canImport(SwiftUI) && canImport(Combine)` is one such. `KFImageRenderer` therefore
+  got no Kotlin glue for its `@State`, `KFImage` was never made a `SkipUI.View`, and the
+  result was a view that downloaded its image and drew nothing at all — no error
+  anywhere. `KFImage` also has to name `View` in its conformance list rather than inherit
+  it through `KFImageProtocol`, which the generator does not follow. The symptom to
+  recognise: an empty `<Type>_Bridge.swift` under
+  `.build/plugins/outputs/…/SkipBridgeGenerated/`.
+
+`Sources/Documentation.docc` is deleted in the fork rather than excluded: skipstone walks
+the whole target directory and generates a bridge for every SwiftUI `View` it finds,
+including the tutorial snippets, whose repeated `ContentView` steps then collide as
+Kotlin redeclarations. `#if` around them does not help, for the reason above.
+
+Adopting the fork moves iOS from upstream 8.10.0 to a branch based on 8.11.0.
+
 ## The other fork patches
 
 - **`Text(html:)`** hands markup to Compose's own parser,
@@ -154,8 +217,8 @@ entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
     `getLinkAnnotations` reports over the placeholder around the `appendInlineContent` call
     — the very `LinkAnnotation` objects `fromHtml` made, so they still carry the
     `LinkInteractionListener` feeding `onLinkTap`. `TextLinkScope` lays its clickable box
-    over the link range's layout bounds, a placeholder has real bounds, and `FAImageView`
-    installs no pointer-input node, so the tap reaches the box. A bare `<img>` (a smilie)
+    over the link range's layout bounds, a placeholder has real bounds, and the inline
+    `KFImage` installs no pointer-input node, so the tap reaches the box. A bare `<img>` (a smilie)
     is in no anchor, `getLinkAnnotations` comes back empty, and nothing is pushed.
 
   A tapped link must not reach Compose's own `UriHandler`: it would open the browser

@@ -83,6 +83,8 @@ import SwiftUI
         // gets this from `UIApplicationDidEnterBackground`, which `ImageCache` cannot
         // observe here.
         ImageCache.default.cleanExpiredDiskCache()
+        // Save/Share copies. `tmp/` is `cacheDir` here, which nothing else empties.
+        Task.detached(priority: .utility) { pruneMediaCopies() }
     }
 
     /* SKIP @bridge */public func onDestroy() {

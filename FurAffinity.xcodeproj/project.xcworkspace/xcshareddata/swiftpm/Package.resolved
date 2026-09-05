@@ -1,5 +1,5 @@
 {
-  "originHash" : "0ce30758d649ae986e05f5bfc986d9156360063bf72912c8191162ef7c524044",
+  "originHash" : "b744cf95158c1bcde4db51509f1e3128dc169a4435d97bac7ba6c4dd0289a1e7",
   "pins" : [
     {
       "identity" : "amplitude-swift",
@@ -49,10 +49,10 @@
     {
       "identity" : "kingfisher",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/onevcat/Kingfisher.git",
+      "location" : "https://github.com/Ceylo/Kingfisher.git",
       "state" : {
-        "revision" : "ac632bd26a1c00f139ff62fd01806f21cf67325e",
-        "version" : "8.10.0"
+        "branch" : "android",
+        "revision" : "ae0b4f07974597fd13190387933a18d4d176d6a0"
       }
     },
     {

@@ -1,19 +1,27 @@
 # Images
 
-iOS gets a memory cache, background decoding, request coalescing and a bounded
-download queue from Kingfisher. Android has none of that for free, so the pipeline is
-three Android-only pieces:
+Kingfisher runs on Android too (see [forks.md § Why Kingfisher is
+forked](forks.md#why-kingfisher-is-forked)), so the memory cache, the disk cache, the
+expiry policy, request coalescing, the processor, `KFImage` and `ImagePrefetcher` are the
+same code on both platforms. What stays Android-only is the *transport* underneath it,
+because Cloudflare judges a connection and pages and images must share one pool:
 
 ```
 FAHttpClient.kt        the app's ONE OkHttpClient and ONE ConnectionPool, shared with
                        the page path (FAHttpBridge). Credentials, the connection
                        instrument, and the epoch-guarded eviction live here.
-FACoilBridge.kt        coil3's standalone DiskCache + the image retry loop. Returns
-                       an on-disk PATH.
-CoilImageLoader.swift  AnyDynamicObject/JNI driver for it.
-FAImageStore.swift     memory LRU, coalescing, concurrency gate, off-main decode,
-                       and the challenge park.
-FAImage.swift          KFImage-shaped view + the prefetch API shared views call.
+FACoilBridge.kt        the image retry loop. Stages a fetch in a throwaway file under
+                       cacheDir and returns its PATH — it caches nothing.
+CoilImageLoader.swift  AnyDynamicObject/JNI driver for it; reads that file and unlinks
+                       it. The `[Coil]` log prefix and the file names are kept because
+                       `summarize-image-log.py` counts them and the measured runs below
+                       are stated in them.
+FAImageStore.swift     what is left: the two-FIFO concurrency gate, the challenge park,
+                       the connection-pool epoch, and fetch coalescing.
+FAKingfisherDownloader
+  +Android.swift       `FAOkHttpDownloader`, an `ImageDownloader` subclass that
+                       overrides the single method `KingfisherManager` calls. Kingfisher's
+                       own URLSession is never used here.
 ```
 
 One client is the premise, not a tidiness choice: Cloudflare judges a connection, so
@@ -35,16 +43,14 @@ Rules that are easy to get wrong here:
   header — no new state. `String.carriesCloudflareClearance` (in FAKit, so
   `StringFATests` covers it under the iOS gate) matches the cookie *name*: a plain
   `contains("cf_clearance=")` would also accept `xcf_clearance`.
-- **Nothing decodes on the main actor.** `.task` on a SwiftUI view is MainActor-isolated,
-  so anything after an `await` in it resumes on the main thread. Decoding belongs on
-  `FAImageStore`'s queue.
-- **Never block on a `Task.detached`.** FurAffinityUI is a *native* Skip module, so a
-  blocking JNI call there pins a Swift cooperative-pool thread. Go through
-  `FAImageStore`'s gate, which submits to a real `DispatchQueue`.
-- **No image bytes cross JNI.** The bridge returns a path; `FAImageStore` decodes it.
-- **`UIImage(contentsOfFile:)` needs a `file://` URI**, despite the name — SkipUI
-  implements it with `Uri.parse` + `ContentResolver.openInputStream`, and a bare
-  filesystem path yields nil with no error.
+- **Never block on a cooperative-pool thread.** FurAffinityUI is a *native* Skip module,
+  so a blocking JNI call there pins a thread Swift concurrency owns. Both blocking calls
+  in this pipeline — the fetch and the decode — go through `FAImageStore`'s gate, which
+  submits to a real `DispatchQueue`. The decode is easy to lose: `FAOkHttpDownloader`
+  runs in a plain `Task`, so `options.processor.process(...)` would otherwise decode
+  wherever that task resumed.
+- **No image bytes cross JNI.** The bridge returns a path; Swift reads that file
+  natively and unlinks it.
 - **A challenge is reported, not retried into.** `FACoilBridge` hands
   `cf-mitigated: challenge` back to Swift — under h1 once its five attempts are spent,
   since each of those genuinely redials, and immediately otherwise. `FAImageStore` then
@@ -314,36 +320,40 @@ h1: the shared client, the epoch guard, and the repair.
   that needs a *second* burst in the same process (connection-pool behaviour, say) has
   to trigger one another way — clearing the caches from Settings and pulling to refresh
   is the one that also drops the memory LRU, which otherwise absorbs everything.
-- **The disk cache's two limits come from two places.** coil3's `DiskCache` *requires*
-  a maximum size — `DiskCache.Builder` defaults to `maxSizePercent(0.02)` — and offers
-  no expiry whatsoever, so the ceiling is coil's constraint and the lifetime is ours.
-  iOS is the exact mirror image: Kingfisher's `sizeLimit` is left at its unbounded
-  default `0`, and only the 7-14 day expiry bites. So `FACoilBridge` sets **1 GB** and
-  applies a **7-14 day** per-entry lifetime lazily, in `cachedPath` — the one door both
-  `fetchResult` and `isCached` come through, so an expired entry is dropped and
-  re-downloaded with no second implementation and the feed's cache reporting stays
-  honest. The window is measured from the *write*: coil never touches mtime on a read,
-  and iOS deliberately doesn't extend on access either
-  (`.diskCacheAccessExtending(.none)`). The spread within it is
-  `url.hashCode() % 8` days rather than random, so a deadline survives a process
-  restart while a cache filled in one session still doesn't expire in one go — Kotlin's
-  `String.hashCode` is specified, unlike Swift's per-process-seeded one.
-  `FAImageStore.pruneStagedMedia` already covers the `fa-media` staging directory at
-  7 days.
+- **The disk cache is Kingfisher's, and so is its policy.** There used to be two — a
+  coil3 `DiskCache` under the transport and Kingfisher's above it — which meant every
+  image was written twice and the 7-14 day expiry existed in two implementations, one of
+  them Kotlin's (coil's `DiskCache` *requires* a size ceiling and offers no expiry at
+  all, so the two halves sat on opposite sides of JNI). Now `FACoilBridge` stages a fetch
+  in a throwaway file and Kingfisher stores the only copy, under
+  `cache/com.onevcat.Kingfisher.ImageCache.default`, with the same
+  `.diskCacheExpiration(.days(7...14))` / `.diskCacheAccessExtending(.none)` iOS has.
+  The sweep is `UIApplicationDidEnterBackground` on iOS and `onStop` here, since
+  `ImageCache` cannot observe Android's lifecycle. Settings reports and clears that one
+  number.
+- **`temporaryDirectory` is not temporary here.** `cachedImageFileURL` copies out of the
+  disk cache so Save/Share hands over a file with a real name and extension, and on iOS
+  those land in `tmp/`, which the system purges. On Android `temporaryDirectory` resolves
+  to the app's `cacheDir`, which nothing empties short of storage pressure — so every
+  submission ever opened left a full-resolution file behind. The copies go in
+  `tmp/fa-media/` and `onStop` prunes them at a day.
 - **The Kotlin bridges' `android.util.Log` output never reaches the log file Settings
   exports**, which only carries what went through the Swift `logger`
   (`PersistentLogger`). So anything worth keeping has to be *returned* to Swift and
   logged there — the reason `FACoilBridge.fetch` became `fetchResult`, handing back
-  `{path, attempts, bytes, ms, failures}` as JSON so `CoilImageLoader.fetchPath` can
-  emit the one `[Coil] GET request on <url>` line per network fetch (the analog of
-  iOS's `[KF]` line) plus a retry/failure line. The same applies to the other bridges.
+  `{path, attempts, bytes, ms, failures}` as JSON so `CoilImageLoader.fetchImageData`
+  can emit the one `[Coil] GET request on <url>` line per network fetch plus a
+  retry/failure line. The same applies to the other bridges. The `[Coil]` prefix is kept
+  now that coil is gone: `summarize-image-log.py` counts it, and every measurement on
+  this page is stated in it.
 - **`SubmissionFeedItemView.controlCacheBehavior` reports from the *feed card's* point
   of view**, which the `[Coil]` lines cannot: on each row appearance it says whether
   that thumbnail is already in flight (and for how long) or neither cached nor
-  starting. It is shared with iOS — `FAImageStore.downloadStartDate(for:)` and
-  `isCached(_:)` stand in for `DownloadDelegate.downloadStartDate(for:)` and
-  Kingfisher's `imageCachedType`. A warm feed logs neither line, so clear the caches
-  from Settings and pull to refresh to see it work.
+  starting. It is one implementation on both platforms now, over
+  `DownloadDelegate.downloadStartDate(for:)` and `ImageCache.imageCachedType` —
+  `FAOkHttpDownloader` calls the same delegate hooks the URLSession downloader does. A
+  warm feed logs neither line, so clear the caches from Settings and pull to refresh to
+  see it work.
 
 Measured on the emulator before/after this work — cold, disk cache wiped, time for the
 first visible thumbnail to appear:

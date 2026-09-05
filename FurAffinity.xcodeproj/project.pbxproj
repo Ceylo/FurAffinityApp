@@ -1426,10 +1426,10 @@
 /* Begin XCRemoteSwiftPackageReference section */
 		87098D342CB14F1000E7BD94 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			repositoryURL = "https://github.com/Ceylo/Kingfisher.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 8.5.0;
+				branch = android;
+				kind = branch;
 			};
 		};
 		871034802E8F12A80030F36E /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {

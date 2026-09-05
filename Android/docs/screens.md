@@ -83,11 +83,13 @@ That is what made the feed slide: `fetchSubmissionPreviews()` ended with
 the choreography's `scrollTo`. **Prefer `.animation(_:value:)`**, which sets
 `EnvironmentValues._animation` for one subtree and never touches the marker.
 
-Two callers had to change, and the second one is the lesson: `FAImage` faded a freshly
+Two callers had to change, and the second one is the lesson: the image view faded a freshly
 loaded image in with `withAnimation`, so *every thumbnail arrival* marked a frame. Removing
 only the feed's call cut the excursion from ~5 s to ~460 ms; the rest went away only when
 the image fade became scoped too. Anything on a hot path — image loads, list rows, badges —
-must not use the global form.
+must not use the global form. Kingfisher's own `ImageBinder` had the same call, and the
+Android fork moves the load animation to `KFImageRenderer`'s `.animation(_:value:)` for
+exactly this reason.
 
 `.transition(…)` is not a substitute: SkipUI resolves transitions in the *container*
 (`VStack.swift`, via `Animation.current(isAnimating:)`, evaluated before it recurses into the
@@ -126,9 +128,12 @@ Ported: the image, the zoomable full-screen viewer, favorite (with the optimisti
 routing, read-only threaded comments including the deep-linked one's highlight pulse,
 and the metadata screen.
 
-`SubmissionMainImage` itself is now *shared*, with `#if FA_SKIP_MODULE` around three
-seams only: the loader, the viewer's content, and the `.task` Android needs to ask
-`FAImageStore` for a file URL that Kingfisher hands iOS from `onSuccess`. The viewer is
+`SubmissionMainImage` itself is *shared*, and since Kingfisher builds for Android the
+loader is shared too: one `configure(_:geometry:)` chain over `KFImageProtocol`, with
+Kingfisher's own `onSuccess` publishing the loaded image and the cached file URL on both
+platforms. Two `#if FA_SKIP_MODULE` seams are left — the download-progress bar, which the
+OkHttp transport cannot feed because no byte progress crosses JNI, and the viewer's
+content, where iOS's pixel sizing is load-bearing for its zoom ratios. The viewer is
 presented from `fadingSheet` on both platforms, and behaves the same way: **a single
 tap** toggles fill/fit (matching iOS's `numberOfTapsRequired = 1`), and it is dismissed
 by **pulling it down** rather than by a close button. The system Back gesture still
@@ -260,9 +265,10 @@ That is what `ScrollToItemModifier` does — `ScrollViewReader { reader in conte
 - `WRITE_EXTERNAL_STORAGE` with `maxSdkVersion="28"` — the MediaStore insert needs no
   permission under scoped storage, but does on API ≤28.
 
-`FAImageStore.namedFileUrl(for:)` stages the bytes under the media URL's own filename
-first: the coil cache names entries by content hash with **no extension**, so saving or
-sharing straight out of it yields a nameless file with no detectable MIME type.
+`cachedImageFileURL(for:)` copies the bytes out of Kingfisher's disk cache to a temp file
+named `<uuid>-<the media URL's last path component>` first — the same helper iOS uses for
+notification attachments. The cache names its entries by hash with **no extension**, so
+saving or sharing straight out of it yields a nameless file with no detectable MIME type.
 
 `FileManager.default.temporaryDirectory` is safe to share from and needs no platform
 branch: the Android build of corelibs Foundation resolves it through `XDG_CACHE_HOME`

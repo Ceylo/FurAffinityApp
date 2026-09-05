@@ -165,6 +165,13 @@ extension KingfisherManager {
     }
 }
 
+/// Where `cachedImageFileURL` puts its copies. A directory of their own rather than
+/// `tmp/` itself, so Android can sweep it — `temporaryDirectory` there resolves to the
+/// app's `cacheDir`, which the system only clears under storage pressure, where iOS
+/// purges `tmp/` on its own.
+private let mediaCopiesDirectory = URL.temporaryDirectory
+    .appending(component: "fa-media", directoryHint: .isDirectory)
+
 /// Copies the (already disk-cached) image for `url` to a fresh temp file and returns
 /// it; `nil` when not cached or the copy fails. The destination is UUID-prefixed so
 /// concurrent calls — or distinct URLs sharing a filename, e.g. each author's
@@ -179,11 +186,43 @@ func cachedImageFileURL(for url: URL) throws -> URL {
 
     let path = cache.cachePath(forKey: cacheKey)
     let fileManager = FileManager.default
-    let pathWithExtension = URL.temporaryDirectory
+    try fileManager.createDirectory(at: mediaCopiesDirectory, withIntermediateDirectories: true)
+    let pathWithExtension = mediaCopiesDirectory
         .appending(component: "\(UUID().uuidString)-\(url.lastPathComponent)")
     try fileManager.copyItem(atPath: path, toPath: pathWithExtension.path(percentEncoded: false))
     return pathWithExtension
 }
+
+// `FA_SKIP_MODULE`, not `os(Android)`: the Darwin bridge pass compiles the caller and
+// evaluates `os(Android)` as false.
+#if FA_SKIP_MODULE
+/// Drop media copies older than a day.
+///
+/// A copy is only needed while the screen that asked for it is up, so a day is already
+/// generous; without a sweep every submission ever opened leaves a full-resolution file
+/// behind forever — `temporaryDirectory` on Android is the app's `cacheDir`. iOS needs
+/// no counterpart: `tmp/` is the system's to purge, and a notification attachment there
+/// is handed to `UNNotificationAttachment`, which takes ownership of it. Blocking file
+/// I/O — call it off the main actor.
+func pruneMediaCopies() {
+    let fileManager = FileManager.default
+    guard let files = try? fileManager.contentsOfDirectory(
+        at: mediaCopiesDirectory, includingPropertiesForKeys: nil
+    ) else { return }
+
+    let cutoff = Date().addingTimeInterval(-24 * 60 * 60)
+    var removed = 0
+    for file in files {
+        let modified = (try? fileManager.attributesOfItem(atPath: file.path)[.modificationDate]) as? Date
+        guard let modified, modified < cutoff else { continue }
+        try? fileManager.removeItem(at: file)
+        removed += 1
+    }
+    if removed > 0 {
+        logger.info("Pruned \(removed) media copies older than a day")
+    }
+}
+#endif
 
 #if !FA_SKIP_MODULE
 #if DEBUG

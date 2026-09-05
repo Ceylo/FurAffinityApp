@@ -17,6 +17,8 @@
 //  - `inFlightFetch` coalesces downloads; a row's own load and its prefetch become one.
 //    Kingfisher coalesces concurrent loads for a URL inside its `SessionDelegate`,
 //    which a downloader that overrides the transport never reaches — so this stays.
+//  - `decoding` runs the decode under the same permit and on the same queue, because it
+//    is another blocking JNI call.
 //
 
 import Foundation
@@ -80,6 +82,19 @@ actor FAImageStore {
         }
         inFlightFetch[url] = task
         return await task.value
+    }
+
+    /// Runs `work` on the store's queue, under a permit.
+    ///
+    /// For the decode, which is as blocking as the fetch: `UIImage(data:)` is a JNI call
+    /// into `ImageDecoder`, and FurAffinityUI is a *native* Skip module, so running it on
+    /// a cooperative-pool thread would block Swift concurrency itself. Kingfisher's
+    /// downloader has no queue of its own to put it on.
+    func decoding<T: Sendable>(
+        _ priority: FAImagePriority,
+        _ work: @escaping @Sendable () -> T
+    ) async -> T {
+        await gated(priority, work)
     }
 
     // MARK: - Fetch
@@ -223,8 +238,19 @@ actor FAImageStore {
 
     // MARK: - Concurrency gate
 
-    /// The queue hop. Callers hold their permit across more than one blocking call —
-    /// see `fetchHoldingPermit` — so acquiring and hopping are separate.
+    /// Runs `work` on `queue` under a permit, so at most `concurrencyLimit` blocking
+    /// operations are outstanding. Suspends rather than blocking while waiting.
+    private func gated<T: Sendable>(
+        _ priority: FAImagePriority,
+        _ work: @escaping @Sendable () -> T
+    ) async -> T {
+        await acquire(priority)
+        defer { release() }
+        return await onQueue(work)
+    }
+
+    /// The queue hop on its own, for callers that hold their permit across more than one
+    /// blocking call — see `fetchHoldingPermit`.
     private nonisolated func onQueue<T: Sendable>(_ work: @escaping @Sendable () -> T) async -> T {
         await withCheckedContinuation { continuation in
             queue.async {
