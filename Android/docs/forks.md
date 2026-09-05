@@ -7,6 +7,10 @@
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
 | `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, and a public `DownloadTask` initializer so a subclass outside the module can replace the transport |
 
+Sending any of these patches back to its origin project — the gates each project sets, what
+its own merged and rejected PRs show, and the shape a PR must take — is
+[upstreaming.md](upstreaming.md).
+
 All on an `android` branch, referenced by URL + branch from `Package.swift` (and, for
 Defaults and Kingfisher, the Xcode project too). While iterating, re-point the root
 `Package.swift` at a local clone:
