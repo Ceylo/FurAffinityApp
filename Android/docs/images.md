@@ -367,3 +367,36 @@ first visible thumbnail to appear:
 
 The network was never the problem: the visible rows were queued behind ~144 unbounded
 prefetches. Scrolling 72 items and back now serves 93 images from memory vs 38 re-decodes.
+
+## Moving to Kingfisher (measured 2026-09-05)
+
+A-B-A, cold runs on one emulator session, against the port that preceded it — the same
+tree at `2c31fe2`, installed side by side as its own app so neither arm needed a
+reinstall or a fresh login between runs (the app id carries the worktree name, so a
+second worktree is a second app with its own container; that is the way to run an A-B-A
+that needs two builds).
+
+| arm | runs | 403% median / worst | images lost median / worst | connections median | drain median |
+|---|---|---|---|---|---|
+| A1 shipping | 7 | 15% / 46% | 0.0 / **5.0** | 23 | 15.1 s |
+| B Kingfisher | 8 | **0% / 4%** | **0.0 / 0.0** | 13 | 3.9 s |
+| A2 shipping | 8 | 0% / 36% | 0.0 / **3.0** | 17 | 3.8 s |
+
+Read the worst run, not the median — the spread here is bimodal and B's advantage is
+entirely in it: **no B run lost an image**, where each shipping arm had one run that lost
+several. Time from the first image GET to the first `t.furaffinity.net` 200, which is
+what a user sees fill in:
+
+| arm | median | worst |
+|---|---|---|
+| A1 shipping | 1558 ms | 11064 ms |
+| B Kingfisher | **542 ms** | **1017 ms** |
+| A2 shipping | 660 ms | 2045 ms |
+
+Two caveats on the arms themselves. A1 has seven runs, not eight: the emulator degraded
+mid-arm (autologin's hidden WebView stopped finishing inside the 50 s window) and was
+rebooted with 4096 MB before B, so **A2 is the arm B should be read against** — it is the
+one measured under the same conditions. And B is not obviously *causing* the improvement:
+the transport is unchanged, so the honest claim is that replacing the cache and view
+layers costs nothing measurable and does not regress the number this pipeline is judged
+on.
