@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# One cold image run: force-stop this worktree's app, wipe the coil disk cache,
+# One cold image run: force-stop this worktree's app, wipe the image disk cache,
 # clear logcat, launch, wait for the burst to drain, dump the `FA` log.
 #
 # The cold burst *is* the measurement — do not scroll the feed during it. The
