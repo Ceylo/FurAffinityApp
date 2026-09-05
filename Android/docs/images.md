@@ -3,11 +3,10 @@
 Kingfisher runs on Android too (see [forks.md § Why Kingfisher is
 forked](forks.md#why-kingfisher-is-forked)), so the memory cache, the disk cache, the
 expiry policy, the processor, `KFImage` and `ImagePrefetcher` are the same code on both
-platforms. **Coalescing is not**, though it reads like it should be: Kingfisher dedupes
-concurrent loads for a URL inside `SessionDataTask`/`SessionDelegate`, which a
-downloader that replaces the transport never reaches — so the download is coalesced by
-`FAImageStore.bytes(for:)` and the decode by `DecodeCoalescer`, both Android-only. What
-else stays Android-only is the *transport* underneath it, because Cloudflare judges a
+platforms. **Coalescing is not**: Kingfisher dedupes concurrent loads inside
+`SessionDataTask`/`SessionDelegate`, which a downloader that replaces the transport
+never reaches, so `FAImageStore.bytes(for:)` and `DecodeCoalescer` do it here. What
+else stays Android-only is the *transport* underneath, because Cloudflare judges a
 connection and pages and images must share one pool:
 
 ```
@@ -25,8 +24,8 @@ FAImageStore.swift     what is left: the two-FIFO concurrency gate, the challeng
 FAKingfisherDownloader
   +Android.swift       `FAOkHttpDownloader`, an `ImageDownloader` subclass that
                        overrides the single method `KingfisherManager` calls. Kingfisher's
-                       own URLSession is never used here. `DecodeCoalescer` lives here
-                       too, keyed by URL *and* processor identifier.
+                       own URLSession is never used here. `DecodeCoalescer` too,
+                       keyed by URL *and* processor identifier.
 ```
 
 One client is the premise, not a tidiness choice: Cloudflare judges a connection, so
@@ -48,23 +47,19 @@ Rules that are easy to get wrong here:
   header — no new state. `String.carriesCloudflareClearance` (in FAKit, so
   `StringFATests` covers it under the iOS gate) matches the cookie *name*: a plain
   `contains("cf_clearance=")` would also accept `xcf_clearance`.
-- **The memory cache needs an explicit ceiling here.**
-  `ImageCache.createMemoryStorage()` sizes itself at `ProcessInfo.processInfo.physicalMemory / 4`,
-  which is no bound at all on Android: `NSCache.totalCostLimit == 0` means *unlimited*,
-  so a `physicalMemory` the Android SDK's Foundation reports as 0 leaves the cache
-  unbounded rather than merely large. And `MemoryStorage.Backend`'s `cleanTimer` is a
-  `Timer.scheduledTimer`, which never fires without a running run loop — so the cost
-  limit is the *only* thing bounding it. `configureImageCacheForAndroid()`, called from
-  `FurAffinityUIRoot.onInit`, sets it to 64 MB: what `FAImageMemoryCache` carried before
-  the move to Kingfisher, so the runs below stay comparable. iOS is untouched, where
-  NSCache purges under system memory pressure and corelibs' does not.
-- **Settings counts and clears `fa-media` as well as the disk cache.**
-  `ImageCacheControl.formattedDiskSize()` adds `mediaCopiesDiskSize()` and `clear()`
-  calls `clearMediaCopies()`, because under-reporting would make the row's number
-  disagree with what clearing actually reclaims. Both are blocking file I/O and go
-  through `FAImageStore.performingFileIO`, the same gate the fetch and the decode use —
-  as does the `onStop` sweep, which used to be a `Task.detached` onto the cooperative
-  pool. iOS counts only Kingfisher's cache: `tmp/` there is the system's to purge.
+- **The memory cache needs an explicit ceiling here.** Kingfisher's default is
+  `physicalMemory / 4`, which bounds nothing on Android: `NSCache.totalCostLimit == 0`
+  means *unlimited*, so a `physicalMemory` reported as 0 leaves the cache unbounded
+  rather than merely large, and `MemoryStorage.Backend`'s `cleanTimer` is a
+  `Timer.scheduledTimer` that never fires without a run loop. So the cost limit is the
+  only bound, and `configureImageCacheForAndroid()` (from `onInit`) sets it to 64 MB —
+  what `FAImageMemoryCache` carried before Kingfisher, so the runs below stay
+  comparable. iOS needs none of it: NSCache purges under memory pressure there.
+- **Settings counts and clears `fa-media` as well as the disk cache**, or the row's
+  number disagrees with what clearing reclaims. Both halves are blocking file I/O and
+  go through `FAImageStore.performingFileIO`, the same gate the fetch and the decode
+  use — as does the `onStop` sweep, which used to be a `Task.detached` onto the
+  cooperative pool. iOS counts only Kingfisher's cache; `tmp/` there is the system's.
 - **Never block on a cooperative-pool thread.** FurAffinityUI is a *native* Skip module,
   so a blocking JNI call there pins a thread Swift concurrency owns. Both blocking calls
   in this pipeline — the fetch and the decode — go through `FAImageStore`'s gate, which
@@ -88,11 +83,9 @@ Rules that are easy to get wrong here:
   could break it.
 - **A lost image has to say so in the shape the summariser counts.** A challenged fetch
   exits early, so it logs no `failed after …` line of its own; `FAImageStore` emits one
-  when it finally gives up. The same hole reopened on a second path — a 200 whose staged
-  file could not be read back — which returned `.failed` with only an `[Coil] … staged
-  bytes unreadable` line; it goes through `logAbandoned` too. Without such a line a
-  challenged image that never came back looks exactly like one that was never asked
-  for — and "images lost" is the number every arm here is judged on. Cost of learning that: one h2 arm that read as 0% 403 and 0 images
+  when it finally gives up, and so does the other early exit — a 200 whose staged file
+  could not be read back. Without such a line a lost image looks exactly like one that
+  was never asked for, and "images lost" is the number every arm here is judged on. Cost of learning that: one h2 arm that read as 0% 403 and 0 images
   lost while it was actually losing every image it attempted.
 - **Retry only what a fresh connection could answer differently** (`worthRedrawing`).
   The loop exists for Cloudflare's per-connection verdict, so a 4xx that is the origin's
@@ -361,16 +354,18 @@ h1: the shared client, the epoch guard, and the repair.
   to the app's `cacheDir`, which nothing empties short of storage pressure — so every
   submission ever opened left a full-resolution file behind. The copies go in
   `tmp/fa-media/<UUID>/<remote filename>` and `onStop` prunes them at a day. Three
-  details of that path are load-bearing. The copy is only staged when
-  `allowZoomableSheet` is set, since nothing else reads it — `SubmissionPreviewView`
-  (`RemoteSubmissionView`'s placeholder), the story cover and the audio cover all pass
-  `false` and bind `fullResolutionMediaFileUrl` to a constant. The UUID is the
-  *directory*, not a filename prefix, because `MediaBridge` hands `lastPathComponent` to
-  MediaStore as the gallery entry's display name and to the share sheet, and neither
-  call site has the remote URL to pass a better one from. And the name still goes
-  through `FAFileStaging.safeFileName`: a remote filename is attacker-controlled and
-  `lastPathComponent` percent-decodes, so one carrying a separator fails `copyItem`
-  outright and the submission silently loses both its zoom viewer and Save/Share.
+  details of that path are load-bearing:
+
+  - It is staged **only when `allowZoomableSheet` is set**, since nothing else reads
+    it. `SubmissionPreviewView` (`RemoteSubmissionView`'s placeholder), the story cover
+    and the audio cover all pass `false`, so every submission opened used to stage two
+    copies and read one.
+  - The UUID is the **directory**, not a filename prefix, because `MediaBridge` hands
+    `lastPathComponent` to MediaStore as the gallery entry's display name and to the
+    share sheet, and neither call site has the remote URL to pass a better one from.
+  - The name still goes through **`FAFileStaging.safeFileName`**: `lastPathComponent`
+    percent-decodes, so an attacker-controlled name carrying a separator fails
+    `copyItem` and the submission silently loses its viewer and Save/Share.
 - **The Kotlin bridges' `android.util.Log` output never reaches the log file Settings
   exports**, which only carries what went through the Swift `logger`
   (`PersistentLogger`). So anything worth keeping has to be *returned* to Swift and
@@ -437,9 +432,8 @@ on.
 
 ### The review fixes on top of it (measured 2026-09-05)
 
-The memory cap and the decode coalescer above are the two of those fixes that touch
-image-layer behaviour, so they were measured the same way. A-B-A, 8 cold runs per arm,
-one emulator session, B installed between the two shipping arms:
+The memory cap and the decode coalescer are the two review fixes that touch image-layer
+behaviour. A-B-A, 8 cold runs per arm, one emulator session:
 
 | arm | 403% median / worst | images lost median / worst | conns median | drain median |
 |---|---|---|---|---|
@@ -448,10 +442,9 @@ one emulator session, B installed between the two shipping arms:
 | A2 before, again | 28% / 35% | 0.0 / 6.0 | 40.5 | 16.6 s |
 
 B lands *between* the two shipping arms on every median column, and the shipping arms
-themselves move 16% → 28% and 11.2 s → 16.6 s across the session — so what the table
-shows is the session drifting, in the direction it always drifts, not an effect. Read
-the worst runs the same way: 3 → 10 → 6 images lost is noisy in both directions, and
-none of the three arms has a median above 0. Neither change issues a request, so
-there is no mechanism by which either could move a 403 rate; the reason to measure was
-that the cap trades memory-cache hit rate for a bounded footprint, and the drain
-column says that costs nothing on a cold burst.
+themselves move 16% → 28% and 11.2 s → 16.6 s across the session — so the table shows
+drift, not an effect. The worst runs read the same way: 3 → 10 → 6 images lost is noisy
+in both directions and no arm's median is above 0. Neither change issues a request, so
+neither has a mechanism for moving a 403 rate; what was worth measuring is that the cap
+trades memory-cache hit rate for a bounded footprint, and the drain column says that
+costs nothing on a cold burst.

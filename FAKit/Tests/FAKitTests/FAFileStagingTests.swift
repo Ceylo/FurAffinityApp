@@ -36,8 +36,6 @@ struct FAFileStagingTests {
     func anOverLongNameIsTruncated() throws {
         let long = String(repeating: "a", count: 400) + ".png"
         let name = try #require(FAFileStaging.safeFileName(long))
-        // The stem is what gives, so the extension survives — iOS types a
-        // notification attachment from it.
         #expect(name.count <= 120)
         #expect(name.hasSuffix(".png"))
     }

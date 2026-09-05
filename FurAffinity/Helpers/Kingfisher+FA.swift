@@ -52,17 +52,14 @@ private var faImageDownloader: ImageDownloader {
 // `FA_SKIP_MODULE`, not `os(Android)`: the Darwin bridge pass compiles the caller in
 // `FurAffinityUIRoot` and evaluates `os(Android)` as false.
 #if FA_SKIP_MODULE
-/// Bounds the memory cache. Idempotent, and called from `FurAffinityUIRoot.onInit`.
+/// Bounds the memory cache. Idempotent; called from `FurAffinityUIRoot.onInit`.
 ///
-/// `ImageCache.createMemoryStorage()` sizes itself at `physicalMemory / 4`, which on
-/// Android is both far too generous and unverifiable — `NSCache.totalCostLimit == 0`
-/// means *no limit*, so a `physicalMemory` of 0 under the Android SDK's Foundation
-/// leaves it unbounded rather than merely large. And `MemoryStorage.Backend`'s
-/// `cleanTimer` is a `Timer.scheduledTimer`, which never fires without a run loop, so
-/// the cost limit is the only thing bounding it here. 64 MB is what `FAImageMemoryCache`
-/// carried before Kingfisher — about 40 feed thumbnails — so the runs recorded in
-/// `Android/docs/images.md` stay comparable. iOS is untouched: NSCache purges under
-/// system memory pressure there, which corelibs' does not.
+/// Kingfisher's default is `physicalMemory / 4`, which bounds nothing here: a
+/// `physicalMemory` of 0 leaves `totalCostLimit` at 0, meaning *unlimited*, and
+/// `MemoryStorage`'s `cleanTimer` never fires without a run loop. 64 MB is what
+/// `FAImageMemoryCache` carried before Kingfisher, so the runs in
+/// `Android/docs/images.md` stay comparable. iOS needs none of this: NSCache purges
+/// under memory pressure there and corelibs' does not.
 func configureImageCacheForAndroid() {
     ImageCache.default.memoryStorage.config.totalCostLimit = 64 * 1024 * 1024
 }
@@ -194,15 +191,11 @@ private let mediaCopiesDirectory = URL.temporaryDirectory
 /// Copies the (already disk-cached) image for `url` to a fresh temp file and returns
 /// it; throws when not cached or the copy fails.
 ///
-/// The copy goes in a UUID *directory* rather than under a UUID-prefixed name, so
-/// concurrent calls — and distinct URLs sharing a filename, e.g. each author's
-/// `<username>.gif` avatar — stay apart while the file keeps the remote name. That
-/// name is what the user sees: `MediaBridge` hands `lastPathComponent` to MediaStore
-/// as the gallery entry's display name and to the share sheet, and neither call site
-/// has the remote URL to pass a better one from. It is still run through
-/// `FAFileStaging.safeFileName`, which is what keeps a name carrying a separator from
-/// failing the copy outright and leaving the submission with no viewer and no
-/// Save/Share. The extension is preserved since iOS infers the image type from it.
+/// The UUID is the *directory*, not a filename prefix, so concurrent calls and
+/// distinct URLs sharing a name (each author's `<username>.gif` avatar) stay apart
+/// while the file keeps the remote name — which the user sees, since `MediaBridge`
+/// hands `lastPathComponent` to MediaStore and to the share sheet.
+/// `FAFileStaging.safeFileName` is what keeps a hostile one from failing the copy.
 func cachedImageFileURL(for url: URL) throws -> URL {
     let cacheKey = url.cacheKey
     let cache = ImageCache.default
@@ -234,8 +227,8 @@ func cachedImageFileURL(for url: URL) throws -> URL {
 /// is handed to `UNNotificationAttachment`, which takes ownership of it. Blocking file
 /// I/O — call it through `FAImageStore.shared.performingFileIO`.
 ///
-/// The entries are the per-copy directories `cachedImageFileURL` makes; the date check
-/// reads the same on a directory as it did on a file.
+/// The entries are the per-copy directories `cachedImageFileURL` makes; the date
+/// check reads the same on a directory as on a file.
 func pruneMediaCopies() {
     let fileManager = FileManager.default
     guard let copies = try? fileManager.contentsOfDirectory(
@@ -255,12 +248,9 @@ func pruneMediaCopies() {
     }
 }
 
-/// Total bytes of the staged media copies.
-///
-/// Settings adds this to Kingfisher's own disk size, because `clear()` removes both:
-/// under-reporting here would make the row's number disagree with what clearing
-/// actually reclaims. Blocking file I/O, but after the `allowZoomableSheet` guard the
-/// directory holds few files — one per submission whose viewer was opened.
+/// Total bytes of the staged media copies. Settings adds this to Kingfisher's own
+/// disk size, since `clear()` removes both. Blocking file I/O, but the directory
+/// holds one file per submission whose viewer was opened.
 func mediaCopiesDiskSize() -> UInt {
     let fileManager = FileManager.default
     guard let copies = try? fileManager.contentsOfDirectory(
@@ -279,8 +269,8 @@ func mediaCopiesDiskSize() -> UInt {
     }
 }
 
-/// Removes every staged media copy. The counterpart of `mediaCopiesDiskSize`, so
-/// Settings' Clear reclaims the number it displayed. Blocking file I/O.
+/// Removes every staged media copy, so Settings' Clear reclaims the number
+/// `mediaCopiesDiskSize` displayed. Blocking file I/O.
 func clearMediaCopies() {
     try? FileManager.default.removeItem(at: mediaCopiesDirectory)
 }

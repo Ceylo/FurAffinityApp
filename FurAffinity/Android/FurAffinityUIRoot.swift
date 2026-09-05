@@ -54,8 +54,7 @@ import SwiftUI
             operatingSystem: AndroidAppInfo.operatingSystem,
             details: "debuggable=\(AndroidAppInfo.isDebuggable)"
         )
-        // Before the first image load, and idempotent: Kingfisher's default is
-        // `physicalMemory / 4`, and nothing on Android bounds it if that reads 0.
+        // Before the first image load; Kingfisher's own default bounds nothing here.
         configureImageCacheForAndroid()
         // Before any `Defaults.Key` is created: a key captures its suite and registers
         // its default value at construction, so one touched earlier lands in the orphan
@@ -87,8 +86,8 @@ import SwiftUI
         // observe here.
         ImageCache.default.cleanExpiredDiskCache()
         // Save/Share copies. `tmp/` is `cacheDir` here, which nothing else empties.
-        // Through the store's gate, not `Task.detached`: that runs on the cooperative
-        // pool, which is exactly where blocking file I/O must not go.
+        // Through the store's gate, since `Task.detached` would block the
+        // cooperative pool.
         Task { await FAImageStore.shared.performingFileIO { pruneMediaCopies() } }
     }
 

@@ -12,10 +12,9 @@
 //  `KingfisherParsedOptionsInfo` overload of `downloadImage`, so that is the whole
 //  seam. Kingfisher's own `URLSession` is never used here.
 //
-//  Coalescing is the one thing that does *not* come for free with it: Kingfisher
-//  dedupes concurrent loads inside `SessionDataTask`/`SessionDelegate`, which a
-//  downloader replacing the transport never reaches. So the download is coalesced by
-//  `FAImageStore.bytes(for:)` and the decode by `DecodeCoalescer` below.
+//  Coalescing is the one thing that does not come with it: Kingfisher dedupes inside
+//  `SessionDataTask`/`SessionDelegate`, which this never reaches. Hence
+//  `FAImageStore.bytes(for:)` for the download and `DecodeCoalescer` for the decode.
 //
 //  Unguarded on purpose — an Android substitution file must be, see
 //  Android/docs/shared-sources.md § Rules for shared sources. The JNI it reaches is
@@ -32,8 +31,7 @@ import Kingfisher
 /// epoch-guarded pool repair and the single post-repair retry. This type only turns
 /// the on-disk path that comes back into the `ImageLoadingResult` Kingfisher expects.
 final class FAOkHttpDownloader: ImageDownloader, @unchecked Sendable {
-    /// `delegate` is `weak`; `DownloadDelegate.shared`, a `static let`, is what keeps
-    /// it alive. `@MainActor` to match it and `faImageDownloader`, the only reader.
+    /// `delegate` is `weak`; `DownloadDelegate.shared` is what keeps it alive.
     @MainActor static let shared: FAOkHttpDownloader = {
         let downloader = FAOkHttpDownloader()
         downloader.delegate = DownloadDelegate.shared
@@ -59,12 +57,10 @@ final class FAOkHttpDownloader: ImageDownloader, @unchecked Sendable {
             let result = await self.load(url, priority: priority, options: options)
             // A completion on *every* path, cancellation included:
             // `KingfisherManager.retrieveImage`'s async form resumes its continuation
-            // only from this handler — its `onCancel` merely calls `task.cancel()` —
-            // so returning silently here strands the caller forever, and strands
-            // `InFlightCoalescer`'s `inFlight[key]` with it. `.asyncTaskContextCancelled`
-            // is the reason `KingfisherManager` itself uses for a cancelled async
-            // context, and the only cancellation reason constructible from outside the
-            // module. iOS already reports one (URLSession delivers `.taskCancelled`).
+            // only from here, so returning silently strands the caller — and
+            // `InFlightCoalescer`'s `inFlight[key]` — forever.
+            // `.asyncTaskContextCancelled` is what `KingfisherManager` itself reports
+            // for this, and the only cancellation reason constructible from outside.
             let delivered: Result<ImageLoadingResult, KingfisherError> = Task.isCancelled
                 ? .failure(.requestError(reason: .asyncTaskContextCancelled))
                 : result
@@ -94,9 +90,8 @@ final class FAOkHttpDownloader: ImageDownloader, @unchecked Sendable {
 
         // Through the gate, not straight here: the processor decodes, and a decode is
         // another blocking JNI call on a thread Swift concurrency owns. And through
-        // the coalescer, because `bytes(for:)` only coalesces the *download*: N views
-        // of one avatar would otherwise run one fetch and N decodes, each taking one
-        // of the gate's six permits.
+        // the coalescer, since `bytes(for:)` only coalesces the *download*: N views of
+        // one avatar would run one fetch and N decodes, one permit each.
         let image = await decodes.image(for: url, options: options) {
             await FAImageStore.shared.decoding(priority) {
                 options.processor.process(item: .data(data), options: options)
@@ -111,12 +106,9 @@ final class FAOkHttpDownloader: ImageDownloader, @unchecked Sendable {
     }
 }
 
-/// Coalesces concurrent decodes of the same processed image.
-///
-/// Kingfisher dedupes concurrent `retrieveImage` calls inside
-/// `SessionDataTask`/`SessionDelegate`, which a downloader replacing the transport
-/// never reaches, so this is the counterpart of `FAImageStore.bytes(for:)` for the
-/// decode. The processor is part of the key: what is shared is the *processed* image.
+/// Coalesces concurrent decodes of the same processed image — the counterpart of
+/// `FAImageStore.bytes(for:)`. The processor is part of the key because what is
+/// shared is the *processed* image.
 private actor DecodeCoalescer {
     private var inFlight = [String: Task<KFCrossPlatformImage?, Never>]()
 
@@ -130,7 +122,7 @@ private actor DecodeCoalescer {
             return await existing.value
         }
         // Unstructured, like `bytes(for:)`: one caller cancelling must not cancel the
-        // decode the others are waiting on. The starter clears the entry.
+        // decode the others await.
         let task = Task { await decode() }
         inFlight[key] = task
         let image = await task.value

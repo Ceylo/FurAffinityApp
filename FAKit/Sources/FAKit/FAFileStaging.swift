@@ -13,13 +13,9 @@ public enum FAFileStaging {
     /// in it.
     ///
     /// A remote filename is attacker-controlled and `URL.lastPathComponent`
-    /// percent-decodes, so it can carry separators: a media URL ending
-    /// `..%2F..%2F..%2Fshared_prefs%2Fdefaults.xml` yields a name that walks out of
-    /// the staging directory and into the app's private data. It also fails the copy
-    /// outright — `URL.appending(component:)` percent-encodes the separator and
-    /// `path(percentEncoded: false)` decodes it back — which is the visible symptom:
-    /// no zoom viewer and no Save/Share for that submission. Flatten it to one
-    /// component or reject it.
+    /// percent-decodes, so it can carry separators — which both escape the staging
+    /// directory and fail `copyItem`, leaving the submission with no viewer and no
+    /// Save/Share.
     public static func safeFileName(_ name: String) -> String? {
         let flat = name
             .replacingOccurrences(of: "/", with: "_")
@@ -30,8 +26,7 @@ public enum FAFileStaging {
         let limit = 120  // well inside ext4's 255-byte cap
         guard flat.count > limit else { return flat }
 
-        // Truncate the stem and keep the extension: iOS types a notification
-        // attachment from it.
+        // Keep the extension; iOS types a notification attachment from it.
         if let dot = flat.lastIndex(of: "."), dot != flat.startIndex {
             let ext = flat[dot...]
             if ext.count < limit {
