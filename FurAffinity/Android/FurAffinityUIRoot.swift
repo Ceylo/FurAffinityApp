@@ -54,6 +54,9 @@ import SwiftUI
             operatingSystem: AndroidAppInfo.operatingSystem,
             details: "debuggable=\(AndroidAppInfo.isDebuggable)"
         )
+        // Before the first image load, and idempotent: Kingfisher's default is
+        // `physicalMemory / 4`, and nothing on Android bounds it if that reads 0.
+        configureImageCacheForAndroid()
         // Before any `Defaults.Key` is created: a key captures its suite and registers
         // its default value at construction, so one touched earlier lands in the orphan
         // store.

@@ -49,6 +49,25 @@ private var faImageDownloader: ImageDownloader {
     #endif
 }
 
+// `FA_SKIP_MODULE`, not `os(Android)`: the Darwin bridge pass compiles the caller in
+// `FurAffinityUIRoot` and evaluates `os(Android)` as false.
+#if FA_SKIP_MODULE
+/// Bounds the memory cache. Idempotent, and called from `FurAffinityUIRoot.onInit`.
+///
+/// `ImageCache.createMemoryStorage()` sizes itself at `physicalMemory / 4`, which on
+/// Android is both far too generous and unverifiable — `NSCache.totalCostLimit == 0`
+/// means *no limit*, so a `physicalMemory` of 0 under the Android SDK's Foundation
+/// leaves it unbounded rather than merely large. And `MemoryStorage.Backend`'s
+/// `cleanTimer` is a `Timer.scheduledTimer`, which never fires without a run loop, so
+/// the cost limit is the only thing bounding it here. 64 MB is what `FAImageMemoryCache`
+/// carried before Kingfisher — about 40 feed thumbnails — so the runs recorded in
+/// `Android/docs/images.md` stay comparable. iOS is untouched: NSCache purges under
+/// system memory pressure there, which corelibs' does not.
+func configureImageCacheForAndroid() {
+    ImageCache.default.memoryStorage.config.totalCostLimit = 64 * 1024 * 1024
+}
+#endif
+
 extension KingfisherOptionsInfo {
     @MainActor
     static var defaultsForFA: Self {
