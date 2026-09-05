@@ -192,10 +192,17 @@ private let mediaCopiesDirectory = URL.temporaryDirectory
     .appending(component: "fa-media", directoryHint: .isDirectory)
 
 /// Copies the (already disk-cached) image for `url` to a fresh temp file and returns
-/// it; `nil` when not cached or the copy fails. The destination is UUID-prefixed so
-/// concurrent calls — or distinct URLs sharing a filename, e.g. each author's
-/// `<username>.gif` avatar — can't collide on one path and race their copies. The
-/// extension is preserved since iOS infers the image type from it.
+/// it; throws when not cached or the copy fails.
+///
+/// The copy goes in a UUID *directory* rather than under a UUID-prefixed name, so
+/// concurrent calls — and distinct URLs sharing a filename, e.g. each author's
+/// `<username>.gif` avatar — stay apart while the file keeps the remote name. That
+/// name is what the user sees: `MediaBridge` hands `lastPathComponent` to MediaStore
+/// as the gallery entry's display name and to the share sheet, and neither call site
+/// has the remote URL to pass a better one from. It is still run through
+/// `FAFileStaging.safeFileName`, which is what keeps a name carrying a separator from
+/// failing the copy outright and leaving the submission with no viewer and no
+/// Save/Share. The extension is preserved since iOS infers the image type from it.
 func cachedImageFileURL(for url: URL) throws -> URL {
     let cacheKey = url.cacheKey
     let cache = ImageCache.default
@@ -205,11 +212,14 @@ func cachedImageFileURL(for url: URL) throws -> URL {
 
     let path = cache.cachePath(forKey: cacheKey)
     let fileManager = FileManager.default
-    try fileManager.createDirectory(at: mediaCopiesDirectory, withIntermediateDirectories: true)
-    let pathWithExtension = mediaCopiesDirectory
-        .appending(component: "\(UUID().uuidString)-\(url.lastPathComponent)")
-    try fileManager.copyItem(atPath: path, toPath: pathWithExtension.path(percentEncoded: false))
-    return pathWithExtension
+    let directory = mediaCopiesDirectory
+        .appending(component: UUID().uuidString, directoryHint: .isDirectory)
+    try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+    let name = FAFileStaging.safeFileName(url.lastPathComponent)
+        ?? (url.pathExtension.isEmpty ? "image" : "image.\(url.pathExtension)")
+    let destination = directory.appending(component: name)
+    try fileManager.copyItem(atPath: path, toPath: destination.path(percentEncoded: false))
+    return destination
 }
 
 // `FA_SKIP_MODULE`, not `os(Android)`: the Darwin bridge pass compiles the caller and
@@ -222,25 +232,29 @@ func cachedImageFileURL(for url: URL) throws -> URL {
 /// behind forever — `temporaryDirectory` on Android is the app's `cacheDir`. iOS needs
 /// no counterpart: `tmp/` is the system's to purge, and a notification attachment there
 /// is handed to `UNNotificationAttachment`, which takes ownership of it. Blocking file
-/// I/O — call it off the main actor.
+/// I/O — call it through `FAImageStore.shared.performingFileIO`.
+///
+/// The entries are the per-copy directories `cachedImageFileURL` makes; the date check
+/// reads the same on a directory as it did on a file.
 func pruneMediaCopies() {
     let fileManager = FileManager.default
-    guard let files = try? fileManager.contentsOfDirectory(
+    guard let copies = try? fileManager.contentsOfDirectory(
         at: mediaCopiesDirectory, includingPropertiesForKeys: nil
     ) else { return }
 
     let cutoff = Date().addingTimeInterval(-24 * 60 * 60)
     var removed = 0
-    for file in files {
-        let modified = (try? fileManager.attributesOfItem(atPath: file.path)[.modificationDate]) as? Date
+    for copy in copies {
+        let modified = (try? fileManager.attributesOfItem(atPath: copy.path)[.modificationDate]) as? Date
         guard let modified, modified < cutoff else { continue }
-        try? fileManager.removeItem(at: file)
+        try? fileManager.removeItem(at: copy)
         removed += 1
     }
     if removed > 0 {
         logger.info("Pruned \(removed) media copies older than a day")
     }
 }
+
 #endif
 
 #if !FA_SKIP_MODULE
