@@ -153,6 +153,12 @@ enum CoilImageLoader {
                 defer { try? FileManager.default.removeItem(at: file) }
                 guard let bytes = try? Data(contentsOf: file) else {
                     logger.error("[Coil] \(url): staged bytes unreadable at \(path)")
+                    // The image is lost, so it has to say so in the shape
+                    // `summarize-image-log.py` counts — the same accounting hole a
+                    // challenged-and-abandoned fetch had.
+                    logAbandoned(url, attempts: result.attempts,
+                                 reasons: reasons.isEmpty ? "staged bytes unreadable"
+                                                          : "\(reasons), staged bytes unreadable")
                     return .failed(epoch: epoch)
                 }
                 return .bytes(bytes)
