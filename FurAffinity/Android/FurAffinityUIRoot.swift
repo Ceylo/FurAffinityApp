@@ -87,7 +87,9 @@ import SwiftUI
         // observe here.
         ImageCache.default.cleanExpiredDiskCache()
         // Save/Share copies. `tmp/` is `cacheDir` here, which nothing else empties.
-        Task.detached(priority: .utility) { pruneMediaCopies() }
+        // Through the store's gate, not `Task.detached`: that runs on the cooperative
+        // pool, which is exactly where blocking file I/O must not go.
+        Task { await FAImageStore.shared.performingFileIO { pruneMediaCopies() } }
     }
 
     /* SKIP @bridge */public func onDestroy() {

@@ -17,7 +17,13 @@ enum ImageCacheControl {
             return nil
         }
         #if os(Android)
-        return formattedByteCount(Int64(size))
+        // The staged Save/Share copies too, because `clear()` removes them: a number
+        // that disagreed with what clearing reclaims would be worse than no number.
+        // iOS counts only Kingfisher's cache — `tmp/` there is the system's to purge,
+        // and it never counted it. Synchronous, as the Android implementation this
+        // replaced was; the directory holds one file per submission whose viewer was
+        // opened.
+        return formattedByteCount(Int64(size + mediaCopiesDiskSize()))
         #else
         return ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)
         #endif
@@ -25,6 +31,11 @@ enum ImageCacheControl {
 
     static func clear() async {
         await ImageCache.default.clearCache()
+        #if os(Android)
+        // Blocking file I/O, so through the image store's gate rather than on
+        // whichever thread Settings called from.
+        await FAImageStore.shared.performingFileIO { clearMediaCopies() }
+        #endif
     }
 
     #if os(Android)

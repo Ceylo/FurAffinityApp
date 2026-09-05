@@ -97,6 +97,17 @@ actor FAImageStore {
         await gated(priority, work)
     }
 
+    /// Runs blocking file I/O on the store's queue, under a permit.
+    ///
+    /// The same seam the fetch and the decode use, and for the same reason: a
+    /// `Task.detached` runs on the cooperative pool, and blocking a thread Swift
+    /// concurrency owns is the one thing this pipeline must not do. `.low`, because
+    /// every caller is housekeeping — the media-copy sweep — and must not outrank a
+    /// visible row.
+    func performingFileIO(_ work: @escaping @Sendable () -> Void) async {
+        await gated(.low, work)
+    }
+
     // MARK: - Fetch
 
     private func fetchWithRepair(_ url: URL, priority: FAImagePriority) async -> Data? {

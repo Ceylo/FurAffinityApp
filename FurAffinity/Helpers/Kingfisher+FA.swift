@@ -255,6 +255,35 @@ func pruneMediaCopies() {
     }
 }
 
+/// Total bytes of the staged media copies.
+///
+/// Settings adds this to Kingfisher's own disk size, because `clear()` removes both:
+/// under-reporting here would make the row's number disagree with what clearing
+/// actually reclaims. Blocking file I/O, but after the `allowZoomableSheet` guard the
+/// directory holds few files — one per submission whose viewer was opened.
+func mediaCopiesDiskSize() -> UInt {
+    let fileManager = FileManager.default
+    guard let copies = try? fileManager.contentsOfDirectory(
+        at: mediaCopiesDirectory, includingPropertiesForKeys: nil
+    ) else { return 0 }
+
+    // One file per copy directory, but read the directory rather than assume it.
+    return copies.reduce(0) { total, copy in
+        let files = (try? fileManager.contentsOfDirectory(
+            at: copy, includingPropertiesForKeys: [.fileSizeKey]
+        )) ?? []
+        return files.reduce(total) { subtotal, file in
+            let size = (try? file.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+            return subtotal + UInt(size)
+        }
+    }
+}
+
+/// Removes every staged media copy. The counterpart of `mediaCopiesDiskSize`, so
+/// Settings' Clear reclaims the number it displayed. Blocking file I/O.
+func clearMediaCopies() {
+    try? FileManager.default.removeItem(at: mediaCopiesDirectory)
+}
 #endif
 
 #if !FA_SKIP_MODULE
