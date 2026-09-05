@@ -578,6 +578,8 @@
 				58119C7E67EC670409E1D1CC /* GeometryProxy+FASize.swift */,
 				3A24D8C3751477ACBD19CBA9 /* LaunchLog.swift */,
 				DE0FE3ECD383602E8F75046C /* InAppLinkConversion.swift */,
+				87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */,
+				E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */,
 				C97C529B7292DB5FD30EAAB9 /* iOS */,
 			);
 			path = Helpers;
@@ -761,9 +763,7 @@
 		C97C529B7292DB5FD30EAAB9 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
-				87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */,
 				87AB10E22CB19E4D00E7BD94 /* ImageBlur.swift */,
-				E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */,
 				87FA55E100000000000A55E1 /* AssetBundle.swift */,
 				8733DDFC28F75C1200CD8BCF /* Sharing.swift */,
 				873E66102752AAB2009C8767 /* MediaSaveHandler.swift */,

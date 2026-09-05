@@ -4,14 +4,26 @@
 //
 //  Created by Ceylo on 05/10/2024.
 //
-
-#if !FA_SKIP_MODULE
+//  One file for both platforms. Kingfisher's caches, options and prefetcher are the
+//  same everywhere; what forks is the transport — URLSession plus a Cloudflare cookie
+//  on iOS, `FAOkHttpDownloader` over the shared OkHttp pool on Android — and the few
+//  entry points that are still iOS-only (`KFImage` itself, HTML inlining and
+//  notification attachments).
+//
 
 import FAKit
 import Foundation
 import Kingfisher
 import SwiftUI
-import os
+
+/// Kingfisher takes download priority as a plain `Float`. Spelled out rather than
+/// read off `URLSessionTask`, whose name SkipFoundation shadows with an `AnyObject`
+/// alias inside this module — the values are Foundation's own.
+enum FADownloadPriority {
+    static let low: Float = 0.25
+    static let normal: Float = 0.5
+    static let high: Float = 0.75
+}
 
 enum KFError: LocalizedError {
     case missingFile(String)
@@ -24,11 +36,24 @@ enum KFError: LocalizedError {
     }
 }
 
+/// The downloader every FA load goes through. Kingfisher's own `URLSession` is never
+/// used on Android; `FAOkHttpDownloader` overrides the transport so images ride the
+/// same OkHttp connection pool as pages, which is what makes a Cloudflare clearance
+/// apply to both.
+@MainActor
+private var faImageDownloader: ImageDownloader {
+    #if os(Android)
+    FAOkHttpDownloader.shared
+    #else
+    downloaderWithCloudFlareCookie
+    #endif
+}
+
 extension KingfisherOptionsInfo {
     @MainActor
     static var defaultsForFA: Self {
         [
-            .downloader(downloaderWithCloudFlareCookie),
+            .downloader(faImageDownloader),
             .requestModifier(FAUserAgentRequestModifier()),
             .diskCacheExpiration(.days((7...14).randomElement()!)),
             .diskCacheAccessExtendingExpiration(.none),
@@ -36,12 +61,13 @@ extension KingfisherOptionsInfo {
     }
 }
 
+#if !FA_SKIP_MODULE
 extension KFImageProtocol {
     fileprivate func defaultConfiguration() -> Self {
         self
             .backgroundDecode()
             .reducePriorityOnDisappear(true)
-            .downloader(downloaderWithCloudFlareCookie)
+            .downloader(faImageDownloader)
             .requestModifier(FAUserAgentRequestModifier())
             .diskCacheExpiration(.days((7...14).randomElement()!))
             .diskCacheAccessExtending(.none)
@@ -50,6 +76,7 @@ extension KFImageProtocol {
             }
     }
 }
+#endif
 
 struct FAUserAgentRequestModifier: AsyncImageDownloadRequestModifier {
     var onDownloadTaskStarted: (@Sendable (DownloadTask?) -> Void)? { nil }
@@ -106,6 +133,7 @@ extension KingfisherManager {
         )
     }
 
+#if !FA_SKIP_MODULE
     /// Image-data provider used by `FAImageInliner` to fetch images for HTML inlining.
     /// Reuses Kingfisher's cache: a cache hit skips download entirely, and a cache miss
     /// downloads through `downloaderWithUserAgent` and populates the cache for later use.
@@ -124,7 +152,11 @@ extension KingfisherManager {
 
         return (data, FAImageInliner.mimeType(for: url))
     }
-    
+#endif
+
+    /// Downloads `url` if needed and returns a copy of its bytes on disk. Backs the
+    /// notification attachments on iOS and Save/Share of the full-resolution media on
+    /// Android.
     func retrieveFAImageFile(with url: URL) async throws -> URL {
         // Only the retrieve-and-cache step is shared; the copy stays per-caller because
         // `UNNotificationAttachment` takes ownership of the file it is handed.
@@ -155,6 +187,7 @@ func cachedImageFileURL(for url: URL) throws -> URL {
     return pathWithExtension
 }
 
+#if !FA_SKIP_MODULE
 #if DEBUG
     /// Test seam: seeds the disk cache so `cachedImageFileURL` can be tested without a
     /// fetch. Here (not in the test) so the test target needn't link Kingfisher.
@@ -180,9 +213,12 @@ func FAAnimatedImage(_ url: URL?) -> KFAnimatedImage {
             view.framePreloadCount = .max
         }
 }
+#endif
+
+// MARK: - Prefetching
 
 @MainActor
-func prefetch(_ urls: [URL], priority: Float = URLSessionTask.lowPriority) {
+func prefetch(_ urls: [URL], priority: Float = FADownloadPriority.low) {
     let prefetcher = ImagePrefetcher(
         urls: urls,
         options: .defaultsForFA + [
@@ -215,19 +251,22 @@ func prefetchAvatars(for previews: some Collection<FASubmissionPreview>) {
     prefetch(avatars)
 }
 
+/// `Double`, not `CGFloat`: two `CGFloat` typealiases (both aka `Double`) are visible
+/// on Android and the bare name is ambiguous as a type annotation. SE-0307's implicit
+/// conversion keeps the iOS call sites unchanged.
 @MainActor
-func prefetchThumbnails(for previews: some Collection<FASubmissionPreview>, availableWidth: CGFloat) {
+func prefetchThumbnails(for previews: some Collection<FASubmissionPreview>, availableWidth: Double) {
     let thumbnails = previews.map { preview in
-        let size = CGSize(
+        let size = Foundation.CGSize(
             width: availableWidth,
             // thumbnailWidthOnHeightRatio = width / height
             // 1/ratio = height / width
             // width / ratio = height
-            height: availableWidth / CGFloat(preview.thumbnailWidthOnHeightRatio)
+            height: availableWidth / Double(preview.thumbnailWidthOnHeightRatio)
         )
         return preview.dynamicThumbnail.bestThumbnailUrl(for: size)
     }
-    prefetch(Array(thumbnails.prefix(3)), priority: URLSessionTask.highPriority)
+    prefetch(Array(thumbnails.prefix(3)), priority: FADownloadPriority.high)
     prefetch(thumbnails)
 }
 
@@ -235,11 +274,11 @@ extension View {
     /// Prefetches thumbnails and avatars for `previews` whenever they change (and
     /// once on appear), so a feed/results list has its images warming before the
     /// user scrolls. `availableWidth` sizes the thumbnail requests; callers inside
-    /// a `GeometryReader` pass `geometry.size.width`.
+    /// a `GeometryReader` pass `geometry.faSize.width`.
     @MainActor
     func prefetchingPreviews<C: Collection<FASubmissionPreview> & Equatable>(
         _ previews: C?,
-        availableWidth: CGFloat
+        availableWidth: Double
     ) -> some View {
         onChange(of: previews, initial: true) { _, newValue in
             guard let newValue else { return }
@@ -249,6 +288,7 @@ extension View {
     }
 }
 
+#if !FA_SKIP_MODULE
 struct Prefetch: View {
     init(_ url: URL) {
         prefetch([url])
@@ -258,6 +298,7 @@ struct Prefetch: View {
         EmptyView()
     }
 }
+#endif
 
 @MainActor
 private let downloaderWithCloudFlareCookie: ImageDownloader = {
@@ -266,16 +307,14 @@ private let downloaderWithCloudFlareCookie: ImageDownloader = {
     return downloader
 }()
 
+/// Records when each download started, so a feed row can report whether its thumbnail
+/// is in flight, cached, or not started. On iOS it also seeds the Cloudflare cookie
+/// onto the downloader's session; Android has no session to seed — its credentials go
+/// through `FAWebSession.imageCredentialsSink` → `CoilImageLoader.configure`.
 actor DownloadDelegate: ImageDownloaderDelegate {
     @MainActor static let shared = DownloadDelegate()
 
     private init() {}
-
-    // Serializes the read-of-shared-storage + write-to-downloader-storage in
-    // setCloudflareCookie. That method is nonisolated and Kingfisher invokes it
-    // concurrently (one Task per download, no lock) right before resuming the
-    // request, so without this guard concurrent loads corrupt the cookie array.
-    nonisolated private let cookieLock = OSAllocatedUnfairLock()
 
     private var downloadStartDates = [URL: Date]()
     // Get/set boilerplate needed for actor isolation
@@ -285,6 +324,13 @@ actor DownloadDelegate: ImageDownloaderDelegate {
     public func downloadStartDate(for url: URL) -> Date? {
         downloadStartDates[url]
     }
+
+#if !os(Android)
+    // Serializes the read-of-shared-storage + write-to-downloader-storage in
+    // setCloudflareCookie. That method is nonisolated and Kingfisher invokes it
+    // concurrently (one Task per download, no lock) right before resuming the
+    // request, so without this guard concurrent loads corrupt the cookie array.
+    nonisolated private let cookieLock = NSLock()
 
     nonisolated private func setCloudflareCookie(for url: URL, on downloader: ImageDownloader) {
         guard let downloaderCookieStorage = downloader.sessionConfiguration.httpCookieStorage
@@ -308,18 +354,20 @@ actor DownloadDelegate: ImageDownloaderDelegate {
             downloaderCookieStorage.setCookie(cf_clearance)
         }
     }
+#endif
 
     nonisolated func imageDownloader(
         _ downloader: ImageDownloader,
         willDownloadImageForURL url: URL,
         with request: URLRequest?
     ) {
-        setCloudflareCookie(for: url, on: downloader)
-
         let startDate = Date()
         Task {
             await setDownloadStartDate(startDate, for: url)
         }
+
+#if !os(Android)
+        setCloudflareCookie(for: url, on: downloader)
 
         if let request {
             let method = request.httpMethod ?? "GET"
@@ -327,6 +375,9 @@ actor DownloadDelegate: ImageDownloaderDelegate {
         } else {
             logger.info("[KF] Request on \(url)")
         }
+#endif
+        // Android logs `[Coil] GET request on …` from inside the permit instead, which
+        // is the line `summarize-image-log.py` counts.
     }
 
     nonisolated func imageDownloader(
@@ -340,5 +391,3 @@ actor DownloadDelegate: ImageDownloaderDelegate {
         }
     }
 }
-
-#endif

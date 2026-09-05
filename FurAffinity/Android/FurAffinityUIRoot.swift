@@ -12,6 +12,7 @@ import Foundation
 import Defaults
 import FAKit
 import FALogging
+import Kingfisher
 import SkipFuse
 import SwiftUI
 
@@ -78,8 +79,10 @@ import SwiftUI
     /* SKIP @bridge */public func onStop() {
         logger.debug("onStop")
         // Android's "entered the background", the same moment Kingfisher sweeps its
-        // disk cache on iOS — and off the launch path, which is why not onLaunch.
-        Task { await FAImageStore.shared.pruneStagedMedia() }
+        // disk cache on iOS — and off the launch path, which is why not onLaunch. iOS
+        // gets this from `UIApplicationDidEnterBackground`, which `ImageCache` cannot
+        // observe here.
+        ImageCache.default.cleanExpiredDiskCache()
     }
 
     /* SKIP @bridge */public func onDestroy() {
@@ -90,6 +93,6 @@ import SwiftUI
         logger.debug("onLowMemory")
         // Decoded images are the app's largest reclaimable allocation; the disk cache
         // behind them is untouched, so this only costs a re-decode.
-        FAImageStore.shared.clearMemoryCache()
+        ImageCache.default.clearMemoryCache()
     }
 }

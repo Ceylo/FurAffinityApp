@@ -21,6 +21,11 @@
 #
 # The modules below are the ones that own mutable process-global state and are
 # consumed by more than one image. Add a module here when it grows some.
+# Kingfisher is here for `KingfisherManager.shared`, `ImageCache.default`,
+# `ImageDownloader.default` and `NetworkMonitor.default`: two copies would give the
+# app two image caches, and a downloader registered on one would be invisible to the
+# other. Its fork's manifest makes the library `.dynamic` under SKIP_BRIDGE for that
+# reason.
 #
 # Environment: ANDROID_HOME / ANDROID_SDK_ROOT (for the NDK's llvm-readelf).
 
@@ -30,8 +35,12 @@ die() { echo "error: $*" >&2; exit 1; }
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-# Swift mangles a symbol's module as <length><name>, e.g. `$s9FALogging…`.
-MODULES=(FALogging)
+# Swift mangles a symbol's module as <length><name>, e.g. `$s9FALogging…`, and a
+# static stored property as `…vpZ`. Both halves matter: the module prefix alone also
+# matches symbols another module emits for a *retroactive extension* on this one — the
+# app's `KingfisherManager.retrieveFAImage` is mangled under Kingfisher — and those are
+# code, not state.
+MODULES=(FALogging Kingfisher)
 
 VARIANT="debug"
 case "$1" in
@@ -67,7 +76,7 @@ for module in "${MODULES[@]}"; do
 
     for so in "$LIBS"/*.so; do
         n=$("$READELF" --dyn-syms "$so" 2>/dev/null \
-            | awk -v p="$prefix" '$4 == "OBJECT" && $7 != "UND" && index($8, p) == 1' \
+            | awk -v p="$prefix" '$4 == "OBJECT" && $7 != "UND" && index($8, p) == 1 && $8 ~ /vpZ$/' \
             | wc -l | tr -d ' ')
         (( n > 0 )) && definers+=("$(basename "$so"):$n")
     done

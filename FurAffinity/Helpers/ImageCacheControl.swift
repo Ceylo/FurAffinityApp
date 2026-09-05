@@ -1,0 +1,47 @@
+//
+//  ImageCacheControl.swift
+//  FurAffinity
+//
+//  The image cache's Settings-facing surface, so SettingsView doesn't name a
+//  particular image stack. Kingfisher owns the caches on both platforms now; the only
+//  fork left is the byte formatter, `ByteCountFormatter` being Darwin-only.
+//
+
+import Foundation
+import Kingfisher
+
+enum ImageCacheControl {
+    /// Disk footprint, ready to display, or nil if it can't be read.
+    static func formattedDiskSize() -> String? {
+        guard let size = try? ImageCache.default.diskStorage.totalSize() else {
+            return nil
+        }
+        #if os(Android)
+        return formattedByteCount(Int64(size))
+        #else
+        return ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)
+        #endif
+    }
+
+    static func clear() async {
+        await ImageCache.default.clearCache()
+    }
+
+    #if os(Android)
+    /// `ByteCountFormatter` is a Darwin API, so format by hand. Decimal units and one
+    /// decimal place, matching `.file` count style on iOS.
+    private static func formattedByteCount(_ bytes: Int64) -> String {
+        guard bytes >= 1000 else { return "\(bytes) bytes" }
+
+        let units = ["kB", "MB", "GB", "TB"]
+        var value = Double(bytes) / 1000
+        var unit = units[0]
+        for next in units.dropFirst() {
+            if value < 1000 { break }
+            value /= 1000
+            unit = next
+        }
+        return String(format: "%.1f %@", value, unit)
+    }
+    #endif
+}

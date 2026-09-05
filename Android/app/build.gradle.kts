@@ -16,10 +16,11 @@ kotlin {
 }
 
 dependencies {
-    // FACoilBridge.kt drives Coil 3 imperatively for the native-Swift image layer.
-    // SkipUI pulls these in as `implementation` (not exposed to us transitively), so
-    // declare them here; versions match SkipUI's classpath (coil 3.4.0) to avoid a
-    // duplicate-version conflict. okhttp/okio arrive transitively via coil-network-okhttp.
+    // `FAHttpClient`/`FACoilBridge` need okhttp and okio, which arrive transitively via
+    // coil-network-okhttp. SkipUI pulls coil in as `implementation` (not exposed to us
+    // transitively), so declare it here; versions match SkipUI's classpath (coil 3.4.0)
+    // to avoid a duplicate-version conflict. Kingfisher owns the image caches now, so
+    // nothing here uses coil's own `DiskCache` or `ImageLoader` any more.
     implementation("io.coil-kt.coil3:coil-core:3.4.0")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.4.0")
 }

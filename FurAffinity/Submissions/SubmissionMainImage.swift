@@ -6,23 +6,23 @@
 //
 //  One file for both platforms. Three seams stay behind `#if FA_SKIP_MODULE`:
 //
-//  - `loader`, the obvious one (Kingfisher vs `FAImageStore`).
+//  - `loader`, the obvious one (`KFImage` vs the `FAImageView` stand-in).
 //  - `zoomableViewer`'s content, the one that isn't: iOS sizes it in pixels because that
 //    is what feeds `UIHostingController.intrinsicContentSize` and hence every zoom ratio,
 //    so unifying it with Android's aspect ratio would change the meaning of iOS's
 //    `maximumZoomScale = 10` (which `Zoomable+Android` mirrors).
-//  - `preparingFullResolutionMedia`, which exists only because Android has to *ask* the
-//    store for the file URL in a `.task`; Kingfisher publishes it from `onSuccess`, so
-//    the iOS body attaches nothing.
+//  - `preparingFullResolutionMedia`, which exists only because `FAImageView` has no
+//    `onSuccess` to publish the file URL from, so Android asks for it in a `.task`.
 //
-//  Accepted difference: `displayProgress` draws nothing on Android — `FAImageStore`
-//  reports no byte progress across JNI.
+//  Accepted difference: `displayProgress` draws nothing on Android — the OkHttp
+//  transport reports no byte progress across JNI.
 //
 
 import SwiftUI
 import FAKit
-#if !FA_SKIP_MODULE
 import Kingfisher
+
+#if !FA_SKIP_MODULE
 
 // KFAnimatedImage may display with an incorrect aspect ratio
 // on the initial display, so we don't use it unless needed.
@@ -118,15 +118,17 @@ struct SubmissionMainImage: View {
             }
     }
 
-    /// The file URL is what enables Save and Share. `FAImage` owns the load and reports
-    /// no path, so ask the store, which coalesces with the load already in flight.
+    /// The file URL is what enables Save and Share. `FAImageView` has no `onSuccess`
+    /// to hang this on, so ask Kingfisher directly; the request coalesces with the
+    /// load already in flight and normally resolves straight out of the disk cache.
     ///
     /// Skipped where the caller can't use it — `SubmissionPreviewView` and the audio
-    /// cover pass `.constant(nil)` — rather than staging a copy of every thumbnail.
+    /// cover pass `.constant(nil)` — rather than copying every thumbnail.
     private func preparingFullResolutionMedia(_ view: some View) -> some View {
         view.task(id: fullResolutionMediaUrl) {
             guard allowZoomableSheet else { return }
-            fullResolutionMediaFileUrl = await FAImageStore.shared.namedFileUrl(for: fullResolutionMediaUrl)
+            fullResolutionMediaFileUrl = try? await KingfisherManager.shared
+                .retrieveFAImageFile(with: fullResolutionMediaUrl)
             canPresentViewer = fullResolutionMediaFileUrl != nil
         }
     }
