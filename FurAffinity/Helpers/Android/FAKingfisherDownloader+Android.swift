@@ -52,8 +52,18 @@ final class FAOkHttpDownloader: ImageDownloader, @unchecked Sendable {
         let work = Task(priority: priority.taskPriority) { [weak self] in
             guard let self else { return }
             let result = await self.load(url, priority: priority, options: options)
-            guard !Task.isCancelled else { return }
-            options.callbackQueue.execute { completionHandler?(result) }
+            // A completion on *every* path, cancellation included:
+            // `KingfisherManager.retrieveImage`'s async form resumes its continuation
+            // only from this handler — its `onCancel` merely calls `task.cancel()` —
+            // so returning silently here strands the caller forever, and strands
+            // `InFlightCoalescer`'s `inFlight[key]` with it. `.asyncTaskContextCancelled`
+            // is the reason `KingfisherManager` itself uses for a cancelled async
+            // context, and the only cancellation reason constructible from outside the
+            // module. iOS already reports one (URLSession delivers `.taskCancelled`).
+            let delivered: Result<ImageLoadingResult, KingfisherError> = Task.isCancelled
+                ? .failure(.requestError(reason: .asyncTaskContextCancelled))
+                : result
+            options.callbackQueue.execute { completionHandler?(delivered) }
         }
         return DownloadTask(cancelling: work)
     }
