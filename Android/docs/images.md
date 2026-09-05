@@ -1,19 +1,29 @@
 # Images
 
-iOS gets a memory cache, background decoding, request coalescing and a bounded
-download queue from Kingfisher. Android has none of that for free, so the pipeline is
-three Android-only pieces:
+Kingfisher runs on Android too (see [forks.md § Why Kingfisher is
+forked](forks.md#why-kingfisher-is-forked)), so the memory cache, the disk cache, the
+expiry policy, the processor, `KFImage` and `ImagePrefetcher` are the same code on both
+platforms. **Coalescing is not**: Kingfisher dedupes concurrent loads inside
+`SessionDataTask`/`SessionDelegate`, which a downloader that replaces the transport
+never reaches, so `FAImageStore.bytes(for:)` and `DecodeCoalescer` do it here. What
+else stays Android-only is the *transport* underneath, because Cloudflare judges a
+connection and pages and images must share one pool:
 
 ```
 FAHttpClient.kt        the app's ONE OkHttpClient and ONE ConnectionPool, shared with
                        the page path (FAHttpBridge). Credentials, the connection
                        instrument, and the epoch-guarded eviction live here.
-FACoilBridge.kt        coil3's standalone DiskCache + the image retry loop. Returns
-                       an on-disk PATH.
-CoilImageLoader.swift  AnyDynamicObject/JNI driver for it.
-FAImageStore.swift     memory LRU, coalescing, concurrency gate, off-main decode,
-                       and the challenge park.
-FAImage.swift          KFImage-shaped view + the prefetch API shared views call.
+FAImageFetchBridge.kt  the image retry loop. Stages a fetch in a throwaway file under
+                       cacheDir and returns its PATH — it caches nothing.
+ImageFetchBridge.swift AnyDynamicObject/JNI driver for it; reads that file and unlinks
+                       it, and emits the `[IMG]` lines the summarizer counts.
+FAImageStore.swift     what is left: the two-FIFO concurrency gate, the challenge park,
+                       the connection-pool epoch, and fetch coalescing.
+FAKingfisherDownloader
+  +Android.swift       `FAOkHttpDownloader`, an `ImageDownloader` subclass that
+                       overrides the single method `KingfisherManager` calls. Kingfisher's
+                       own URLSession is never used here. The decode `InFlightCoalescer`
+                       too, keyed by URL *and* processor identifier.
 ```
 
 One client is the premise, not a tidiness choice: Cloudflare judges a connection, so
@@ -23,8 +33,8 @@ the one it has is *repairable* rather than a lost draw. See
 
 Rules that are easy to get wrong here:
 
-- **Never push a `Cookie:` header that lost its `cf_clearance`.** Coil cannot pull
-  a fresh header per request the way the HTTP layer can, so
+- **Never push a `Cookie:` header that lost its `cf_clearance`.** The image layer
+  cannot pull a fresh header per request the way the HTTP layer can, so
   `FAWebSession.refreshedCookieHeader()` is the one place that keeps the two in
   step — and a header read *mid-wipe* has no clearance at all. Pushing that
   de-seeds the image layer and every subsequent request's `Cookie:` line, turning
@@ -35,17 +45,28 @@ Rules that are easy to get wrong here:
   header — no new state. `String.carriesCloudflareClearance` (in FAKit, so
   `StringFATests` covers it under the iOS gate) matches the cookie *name*: a plain
   `contains("cf_clearance=")` would also accept `xcf_clearance`.
-- **Nothing decodes on the main actor.** `.task` on a SwiftUI view is MainActor-isolated,
-  so anything after an `await` in it resumes on the main thread. Decoding belongs on
-  `FAImageStore`'s queue.
-- **Never block on a `Task.detached`.** FurAffinityUI is a *native* Skip module, so a
-  blocking JNI call there pins a Swift cooperative-pool thread. Go through
-  `FAImageStore`'s gate, which submits to a real `DispatchQueue`.
-- **No image bytes cross JNI.** The bridge returns a path; `FAImageStore` decodes it.
-- **`UIImage(contentsOfFile:)` needs a `file://` URI**, despite the name — SkipUI
-  implements it with `Uri.parse` + `ContentResolver.openInputStream`, and a bare
-  filesystem path yields nil with no error.
-- **A challenge is reported, not retried into.** `FACoilBridge` hands
+- **The memory cache needs an explicit ceiling here.** Kingfisher's default is
+  `physicalMemory / 4`, which bounds nothing on Android: `NSCache.totalCostLimit == 0`
+  means *unlimited*, so a `physicalMemory` reported as 0 leaves the cache unbounded
+  rather than merely large, and `MemoryStorage.Backend`'s `cleanTimer` is a
+  `Timer.scheduledTimer` that never fires without a run loop. So the cost limit is the
+  only bound, and `configureImageCacheForAndroid()` (from `onInit`) sets it to 64 MB —
+  what `FAImageMemoryCache` carried before Kingfisher, so the runs below stay
+  comparable. iOS needs none of it: NSCache purges under memory pressure there.
+- **Settings counts and clears `fa-media` as well as the disk cache**, or the row's
+  number disagrees with what clearing reclaims. Both halves are blocking file I/O and
+  go through `FAImageStore.performingFileIO`, the same gate the fetch and the decode
+  use — as does the `onStop` sweep, which used to be a `Task.detached` onto the
+  cooperative pool. iOS counts only Kingfisher's cache; `tmp/` there is the system's.
+- **Never block on a cooperative-pool thread.** FurAffinityUI is a *native* Skip module,
+  so a blocking JNI call there pins a thread Swift concurrency owns. Both blocking calls
+  in this pipeline — the fetch and the decode — go through `FAImageStore`'s gate, which
+  submits to a real `DispatchQueue`. The decode is easy to lose: `FAOkHttpDownloader`
+  runs in a plain `Task`, so `options.processor.process(...)` would otherwise decode
+  wherever that task resumed.
+- **No image bytes cross JNI.** The bridge returns a path; Swift reads that file
+  natively and unlinks it.
+- **A challenge is reported, not retried into.** `FAImageFetchBridge` hands
   `cf-mitigated: challenge` back to Swift — under h1 once its five attempts are spent,
   since each of those genuinely redials, and immediately otherwise. `FAImageStore` then
   parks on `awaitResolution()` and retries once on the repaired pool, which is how an
@@ -60,9 +81,9 @@ Rules that are easy to get wrong here:
   could break it.
 - **A lost image has to say so in the shape the summariser counts.** A challenged fetch
   exits early, so it logs no `failed after …` line of its own; `FAImageStore` emits one
-  when it finally gives up. Without it a challenged image that never came back looks
-  exactly like one that was never asked for — and "images lost" is the number every arm
-  here is judged on. Cost of learning that: one h2 arm that read as 0% 403 and 0 images
+  when it finally gives up, and so does the other early exit — a 200 whose staged file
+  could not be read back. Without such a line a lost image looks exactly like one that
+  was never asked for, and "images lost" is the number every arm here is judged on. Cost of learning that: one h2 arm that read as 0% 403 and 0 images
   lost while it was actually losing every image it attempted.
 - **Retry only what a fresh connection could answer differently** (`worthRedrawing`).
   The loop exists for Cloudflare's per-connection verdict, so a 4xx that is the origin's
@@ -76,7 +97,7 @@ Rules that are easy to get wrong here:
   the URL and silently voids every prefetch. This is what the `listRowInsets` fork is for.
 - **Cloudflare's verdict on an image request is per *connection*, not per request and
   not per header set.** Measured on the emulator with a debug-only header probe in
-  `FACoilBridge` — a 4 URL x 5 variant Latin square run inside one launch, so that
+  `FAImageFetchBridge` — a 4 URL x 5 variant Latin square run inside one launch, so that
   run-to-run drift could not be mistaken for an effect (removed once the connection
   instrument below superseded it; `git log -- Android/app/src/main/kotlin` has it):
 
@@ -99,7 +120,7 @@ Rules that are easy to get wrong here:
   rate was clean, and `a.furaffinity.net` — only four avatars, so it never got a warm
   connection — went 20/20 x 403 against `t.furaffinity.net`'s 30 of 135 responses.
 - **The connection is measured, not inferred.** All of the above was read off 403
-  patterns until `FACoilBridge` grew an `EventListener.Factory` reporting, per attempt,
+  patterns until `FAImageFetchBridge` grew an `EventListener.Factory` reporting, per attempt,
   which connection carried it (`conn=`) and whether that attempt opened it (`new=`).
   `summarize-image-log.py` splits the 403 rate on it. Eight cold runs settle the model:
 
@@ -246,7 +267,7 @@ h1: the shared client, the epoch guard, and the repair.
   judge a change here on one run, and read each arm's *worst* run next to its median
   (`compare-image-runs.py` prints both). The medians describe the good mode only.
 - **The retry backoff sleeps inside `FAImageStore`'s concurrency permit, and that is
-  load-bearing.** It looks like pure waste: `FACoilBridge.fetchResult` runs all five
+  load-bearing.** It looks like pure waste: `FAImageFetchBridge.fetchResult` runs all five
   attempts inside one JNI call, so up to 2.5 s of `Thread.sleep` holds 1 of the gate's
   6 permits while doing nothing, and five other images wait behind it. Moving the loop
   into Swift so the permit is re-acquired per attempt and the backoff runs outside it
@@ -293,7 +314,7 @@ h1: the shared client, the epoch guard, and the repair.
   monotone in chronological order. No measurable regression, so the slower, politer
   backoff stays.
 
-  Corollary for the summarizer: `[Coil] GET request on` must be logged from **inside**
+  Corollary for the summarizer: `[IMG] GET request on` must be logged from **inside**
   the permit. Logged before it, the line marks when a `Task` was created rather than
   when the request went out, and `summarize-image-log.py`'s issuance cadence silently
   becomes meaningless (every gap 0 ms).
@@ -310,40 +331,56 @@ h1: the shared client, the epoch guard, and the repair.
   in the connection counter.
 - **A scroll test measures nothing on the Followed feed.** Its whole 72-item page is
   prefetched during the cold burst, so scrolling through it serves every thumbnail from
-  disk: the feed position advances and the `[Coil]` GET count does not move. Anything
+  disk: the feed position advances and the `[IMG]` GET count does not move. Anything
   that needs a *second* burst in the same process (connection-pool behaviour, say) has
   to trigger one another way — clearing the caches from Settings and pulling to refresh
   is the one that also drops the memory LRU, which otherwise absorbs everything.
-- **The disk cache's two limits come from two places.** coil3's `DiskCache` *requires*
-  a maximum size — `DiskCache.Builder` defaults to `maxSizePercent(0.02)` — and offers
-  no expiry whatsoever, so the ceiling is coil's constraint and the lifetime is ours.
-  iOS is the exact mirror image: Kingfisher's `sizeLimit` is left at its unbounded
-  default `0`, and only the 7-14 day expiry bites. So `FACoilBridge` sets **1 GB** and
-  applies a **7-14 day** per-entry lifetime lazily, in `cachedPath` — the one door both
-  `fetchResult` and `isCached` come through, so an expired entry is dropped and
-  re-downloaded with no second implementation and the feed's cache reporting stays
-  honest. The window is measured from the *write*: coil never touches mtime on a read,
-  and iOS deliberately doesn't extend on access either
-  (`.diskCacheAccessExtending(.none)`). The spread within it is
-  `url.hashCode() % 8` days rather than random, so a deadline survives a process
-  restart while a cache filled in one session still doesn't expire in one go — Kotlin's
-  `String.hashCode` is specified, unlike Swift's per-process-seeded one.
-  `FAImageStore.pruneStagedMedia` already covers the `fa-media` staging directory at
-  7 days.
+- **The disk cache is Kingfisher's, and so is its policy.** There used to be two — a
+  coil3 `DiskCache` under the transport and Kingfisher's above it — which meant every
+  image was written twice and the 7-14 day expiry existed in two implementations, one of
+  them Kotlin's (coil's `DiskCache` *requires* a size ceiling and offers no expiry at
+  all, so the two halves sat on opposite sides of JNI). Now `FAImageFetchBridge` stages a fetch
+  in a throwaway file and Kingfisher stores the only copy, under
+  `cache/com.onevcat.Kingfisher.ImageCache.default`, with the same
+  `.diskCacheExpiration(.days(7...14))` / `.diskCacheAccessExtending(.none)` iOS has.
+  The sweep is `UIApplicationDidEnterBackground` on iOS and `onStop` here, since
+  `ImageCache` cannot observe Android's lifecycle. Settings reports and clears that one
+  number.
+- **`temporaryDirectory` is not temporary here.** `cachedImageFileURL` copies out of the
+  disk cache so Save/Share hands over a file with a real name and extension, and on iOS
+  those land in `tmp/`, which the system purges. On Android `temporaryDirectory` resolves
+  to the app's `cacheDir`, which nothing empties short of storage pressure — so every
+  submission ever opened left a full-resolution file behind. The copies go in
+  `tmp/fa-media/<UUID>/<remote filename>` and `onStop` prunes them at a day. Three
+  details of that path are load-bearing:
+
+  - It is staged **only when `allowZoomableSheet` is set**, since nothing else reads
+    it. `SubmissionPreviewView` (`RemoteSubmissionView`'s placeholder), the story cover
+    and the audio cover all pass `false`, so every submission opened used to stage two
+    copies and read one.
+  - The UUID is the **directory**, not a filename prefix, because `MediaBridge` hands
+    `lastPathComponent` to MediaStore as the gallery entry's display name and to the
+    share sheet, and neither call site has the remote URL to pass a better one from.
+  - The name still goes through **`FAFileStaging.safeFileName`**: `lastPathComponent`
+    percent-decodes, so an attacker-controlled name carrying a separator fails
+    `copyItem` and the submission silently loses its viewer and Save/Share.
 - **The Kotlin bridges' `android.util.Log` output never reaches the log file Settings
   exports**, which only carries what went through the Swift `logger`
   (`PersistentLogger`). So anything worth keeping has to be *returned* to Swift and
-  logged there — the reason `FACoilBridge.fetch` became `fetchResult`, handing back
-  `{path, attempts, bytes, ms, failures}` as JSON so `CoilImageLoader.fetchPath` can
-  emit the one `[Coil] GET request on <url>` line per network fetch (the analog of
-  iOS's `[KF]` line) plus a retry/failure line. The same applies to the other bridges.
+  logged there — the reason `FAImageFetchBridge.fetch` became `fetchResult`, handing back
+  `{path, attempts, bytes, ms, failures}` as JSON so `ImageFetchBridge.fetchImageData`
+  can emit the one `[IMG] GET request on <url>` line per network fetch plus a
+  retry/failure line. The same applies to the other bridges. Those lines were prefixed
+  `[Coil]` until the coil dependency went away; `summarize-image-log.py` and
+  `cold-image-run.sh` read both, so every run measured on this page still parses.
 - **`SubmissionFeedItemView.controlCacheBehavior` reports from the *feed card's* point
-  of view**, which the `[Coil]` lines cannot: on each row appearance it says whether
+  of view**, which the `[IMG]` lines cannot: on each row appearance it says whether
   that thumbnail is already in flight (and for how long) or neither cached nor
-  starting. It is shared with iOS — `FAImageStore.downloadStartDate(for:)` and
-  `isCached(_:)` stand in for `DownloadDelegate.downloadStartDate(for:)` and
-  Kingfisher's `imageCachedType`. A warm feed logs neither line, so clear the caches
-  from Settings and pull to refresh to see it work.
+  starting. It is one implementation on both platforms now, over
+  `DownloadDelegate.downloadStartDate(for:)` and `ImageCache.imageCachedType` —
+  `FAOkHttpDownloader` calls the same delegate hooks the URLSession downloader does. A
+  warm feed logs neither line, so clear the caches from Settings and pull to refresh to
+  see it work.
 
 Measured on the emulator before/after this work — cold, disk cache wiped, time for the
 first visible thumbnail to appear:
@@ -357,3 +394,55 @@ first visible thumbnail to appear:
 
 The network was never the problem: the visible rows were queued behind ~144 unbounded
 prefetches. Scrolling 72 items and back now serves 93 images from memory vs 38 re-decodes.
+
+## Moving to Kingfisher (measured 2026-09-05)
+
+A-B-A, cold runs on one emulator session, against the port that preceded it — the same
+tree at `2c31fe2`, installed side by side as its own app so neither arm needed a
+reinstall or a fresh login between runs (the app id carries the worktree name, so a
+second worktree is a second app with its own container; that is the way to run an A-B-A
+that needs two builds).
+
+| arm | runs | 403% median / worst | images lost median / worst | connections median | drain median |
+|---|---|---|---|---|---|
+| A1 shipping | 7 | 15% / 46% | 0.0 / **5.0** | 23 | 15.1 s |
+| B Kingfisher | 8 | **0% / 4%** | **0.0 / 0.0** | 13 | 3.9 s |
+| A2 shipping | 8 | 0% / 36% | 0.0 / **3.0** | 17 | 3.8 s |
+
+Read the worst run, not the median — the spread here is bimodal and B's advantage is
+entirely in it: **no B run lost an image**, where each shipping arm had one run that lost
+several. Time from the first image GET to the first `t.furaffinity.net` 200, which is
+what a user sees fill in:
+
+| arm | median | worst |
+|---|---|---|
+| A1 shipping | 1558 ms | 11064 ms |
+| B Kingfisher | **542 ms** | **1017 ms** |
+| A2 shipping | 660 ms | 2045 ms |
+
+Two caveats on the arms themselves. A1 has seven runs, not eight: the emulator degraded
+mid-arm (autologin's hidden WebView stopped finishing inside the 50 s window) and was
+rebooted with 4096 MB before B, so **A2 is the arm B should be read against** — it is the
+one measured under the same conditions. And B is not obviously *causing* the improvement:
+the transport is unchanged, so the honest claim is that replacing the cache and view
+layers costs nothing measurable and does not regress the number this pipeline is judged
+on.
+
+### The review fixes on top of it (measured 2026-09-05)
+
+The memory cap and the decode coalescer are the two review fixes that touch image-layer
+behaviour. A-B-A, 8 cold runs per arm, one emulator session:
+
+| arm | 403% median / worst | images lost median / worst | conns median | drain median |
+|---|---|---|---|---|
+| A1 before | 16% / 45% | 0.0 / 3.0 | 32.0 | 11.2 s |
+| B cap + decode coalescing | 22% / 53% | 0.0 / 10.0 | 34.5 | **11.1 s** |
+| A2 before, again | 28% / 35% | 0.0 / 6.0 | 40.5 | 16.6 s |
+
+B lands *between* the two shipping arms on every median column, and the shipping arms
+themselves move 16% → 28% and 11.2 s → 16.6 s across the session — so the table shows
+drift, not an effect. The worst runs read the same way: 3 → 10 → 6 images lost is noisy
+in both directions and no arm's median is above 0. Neither change issues a request, so
+neither has a mechanism for moving a 403 rate; what was worth measuring is that the cap
+trades memory-cache hit rate for a bounded footprint, and the drain column says that
+costs nothing on a cold burst.

@@ -3,7 +3,7 @@
 //  FurAffinity (Android)
 //
 //  Kotlin half of `Defaults.updates` on Android, reached by class name through
-//  AnyDynamicObject like FACoilBridge/FAMediaBridge — see AndroidDefaultsUpdates.swift.
+//  AnyDynamicObject like FAImageFetchBridge/FAMediaBridge — see AndroidDefaultsUpdates.swift.
 //
 //  A listener on the preferences file is the faithful analog of KVO on the suite: every
 //  writer lands in `shared_prefs/defaults.xml`, `@AppStorage` included.

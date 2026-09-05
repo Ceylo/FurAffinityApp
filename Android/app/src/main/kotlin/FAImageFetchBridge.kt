@@ -1,66 +1,52 @@
 //
-//  FACoilBridge.kt
+//  FAImageFetchBridge.kt
 //  FurAffinity (Android)
 //
 //  Kotlin helper backing the native-Swift image layer. FurAffinityUI is a *native*
 //  Skip module (its Swift is compiled directly, not transpiled), so it cannot
-//  `import coil3.*`/`okhttp3.*` the way SkipUI can. Instead this class is called from
-//  Swift by class name through SkipBridge's AnyDynamicObject — see CoilImageLoader.swift.
+//  `import okhttp3.*` the way SkipUI can. Instead this class is called from
+//  Swift by class name through SkipBridge's AnyDynamicObject — see ImageFetchBridge.swift.
 //
 //  The HTTP client, its connection pool, the credential interceptor and the
 //  connection instrument all live in `FAHttpClient`, shared with the page path — one
-//  pool is the whole point. What stays here is what is image-specific: the coil disk
-//  cache and the retry loop.
+//  pool is the whole point. What stays here is what is image-specific: the retry loop.
 //
-//  Only coil3's standalone `DiskCache` is used, not its `ImageLoader`: the caller wants
-//  a file, not pixels. So we download with OkHttp straight into the cache and hand Swift
-//  back an on-disk **path** — nothing full-size crosses JNI, and nothing is decoded here.
+//  Nothing is cached and nothing is decoded here any more: Kingfisher owns both caches
+//  on this platform, so a fetch lands in a throwaway file under `cacheDir` and Swift is
+//  handed its **path**. Nothing full-size crosses JNI, and the caller unlinks the file
+//  the moment it has read it (`ImageFetchBridge.fetchImageData`).
 //
 //  Cloudflare judges the *connection*, not the request, which is what the retry loop
 //  is for; `Android/docs/images.md` has the measurements and the two rejected
 //  alternatives. Retry outcomes are *reported* to Swift as JSON rather than logged:
 //  android.util.Log never reaches the log file Settings exports.
 //
-//  Cache policy is split: the 1 GB ceiling is coil's (its `DiskCache` requires a size and
-//  offers no expiry), the 7-14 day per-entry lifetime is ours, applied lazily in
-//  `cachedPath`. `Android/docs/images.md` has why each half sits where it does.
-//
 //  Lives in the app Gradle module (not the FurAffinityUI module) so it compiles
-//  against coil3/okhttp declared in Android/app/build.gradle.kts; reflection loads it
+//  against okhttp declared in Android/app/build.gradle.kts; reflection loads it
 //  by name at runtime from the single APK classloader.
 //
 
 package fur.affinity.ui
 
-import android.util.Log
-import coil3.disk.DiskCache
 import java.io.File
 import okhttp3.Request
-import okio.Path.Companion.toOkioPath
+import okio.buffer
+import okio.sink
 import org.json.JSONArray
 import org.json.JSONObject
 import skip.foundation.ProcessInfo
 
 /// Instantiated once from Swift (`AnyDynamicObject(className:)`) and retained for the
-/// app lifetime; all real state lives in the companion so the shared client, disk cache
-/// and interceptor headers are single-sourced regardless of the caller.
-class FACoilBridge {
+/// app lifetime; all real state lives in the companion so the shared client and the
+/// interceptor headers are single-sourced regardless of the caller.
+class FAImageFetchBridge {
     // Boolean, not Unit: AnyDynamicObject can't resolve the void overload.
     fun configure(userAgent: String, cookie: String): Boolean =
         FAHttpClient.configure(userAgent, cookie)
 
-    fun isCached(url: String): Boolean = Companion.isCached(url)
-
-    fun cachedPath(url: String): String? = Companion.cachedPath(url)
-
     fun fetchResult(url: String): String = Companion.fetchResult(url)
 
-    fun cacheSizeBytes(): Long = Companion.cacheSizeBytes()
-
-    fun clearCache(): Boolean = Companion.clearCache()
-
     companion object {
-        private const val TAG = "FACoilBridge"
         // Each attempt is an independent draw: the challenge closes the connection, so
         // the next one necessarily opens a fresh one. A cold launch can exhaust all
         // five on a host that never warms a connection, and each retry costs the
@@ -81,34 +67,26 @@ class FACoilBridge {
         private fun worthRedrawing(code: Int) =
             code !in 400..499 || code == 403 || code == 408 || code == 429
 
-        @Volatile private var sharedCache: DiskCache? = null
+        /// Where a fetch's bytes land on their way to Swift. Not a cache: each file is
+        /// read once and unlinked, and a sweep on first use clears anything a crash
+        /// left behind.
+        private const val STAGING_DIR = "fa-image-fetch"
+        private const val STALE_STAGING_MS = 60 * 60 * 1000L
+        @Volatile private var sweptStaging = false
 
-        fun isCached(url: String): Boolean = cachedPath(url) != null
-
-        /// 7-14 days from the write, spread by the URL's hash rather than at random so a
-        /// deadline survives a restart (see `Android/docs/images.md`). Widened to `Long`
-        /// because `Int.MIN_VALUE.abs()` is `Int.MIN_VALUE`.
-        private fun lifetimeMillis(url: String): Long {
-            val spreadDays = Math.abs(url.hashCode().toLong()) % 8
-            return (7 + spreadDays) * 24 * 60 * 60 * 1000
-        }
-
-        /// On-disk path of `url`'s already-cached bytes, or null if it isn't cached or
-        /// has expired — `fetchResult` and `isCached` both come through here, which is
-        /// what makes one expiry check enough.
-        ///
-        /// The snapshot (a read lock) is released before the path is handed back, so a
-        /// concurrent eviction in that window would leave Swift with a stale path; it
-        /// just decodes to nil and takes the existing failure path. With a 1 GB cache
-        /// and ~100 KB thumbnails this is not worth holding a lock across JNI for.
-        fun cachedPath(url: String): String? {
-            val path = diskCache().openSnapshot(url)?.use { it.data.toString() } ?: return null
-            val age = System.currentTimeMillis() - File(path).lastModified()
-            if (age > lifetimeMillis(url)) {
-                diskCache().remove(url)
-                return null
+        private fun stagingDir(): File {
+            val dir = File(context().cacheDir, STAGING_DIR)
+            dir.mkdirs()
+            if (!sweptStaging) {
+                synchronized(FAImageFetchBridge::class.java) {
+                    if (!sweptStaging) {
+                        sweptStaging = true
+                        val cutoff = System.currentTimeMillis() - STALE_STAGING_MS
+                        dir.listFiles()?.forEach { if (it.lastModified() < cutoff) it.delete() }
+                    }
+                }
             }
-            return path
+            return dir
         }
 
         /// Path of `url`'s bytes plus what it took to get them, as JSON:
@@ -129,12 +107,6 @@ class FACoilBridge {
             val failures = JSONArray()
             val json = JSONObject().put("failures", failures)
 
-            cachedPath(url)?.let {
-                return json.put("path", it).put("attempts", 0).put("ms", ms(start))
-                    .put("epoch", FAHttpClient.connectionEpoch()).toString()
-            }
-
-            val cache = diskCache()
             val request = Request.Builder().url(url).build()
 
             var attempt = 0
@@ -157,7 +129,7 @@ class FACoilBridge {
                             // Name Cloudflare's verdict: `cf-mitigated=challenge` is a
                             // bot-score challenge, its absence on a 403 a WAF/hotlink
                             // block. Kept as one string so the JSON contract and
-                            // CoilImageLoader's failure line need no change.
+                            // ImageFetchBridge's failure line need no change.
                             val mitigated = response.header("cf-mitigated")
                                 ?.let { " cf-mitigated=$it" } ?: ""
                             val ray = response.header("cf-ray")?.let { " ray=$it" } ?: ""
@@ -166,33 +138,23 @@ class FACoilBridge {
                                 response.header("cf-mitigated") == "challenge"
                             "HTTP ${response.code}$mitigated$ray${conn.suffix()}"
                         } else {
-                            val editor = cache.openEditor(url)
-                            if (editor == null) {
-                                // Another thread is writing the same key; it will win.
-                                "editor busy${conn.suffix()}"
-                            } else {
-                                try {
-                                    val bytes = cache.fileSystem.write(editor.data) {
-                                        writeAll(response.body!!.source())
-                                    }
-                                    val path = editor.commitAndOpenSnapshot()
-                                        ?.use { it.data.toString() }
-                                    if (path != null) {
-                                        conn.id?.let { json.put("conn", it) }
-                                        return json.put("path", path)
-                                            .put("attempts", attempt)
-                                            .put("bytes", bytes)
-                                            .put("proto", proto)
-                                            .put("newConn", conn.isNew)
-                                            .put("ms", ms(start))
-                                            .put("epoch", FAHttpClient.connectionEpoch())
-                                            .toString()
-                                    }
-                                    "no snapshot after commit${conn.suffix()}"
-                                } catch (e: Exception) {
-                                    editor.abort()
-                                    throw e
+                            val file = File.createTempFile("img", null, stagingDir())
+                            try {
+                                val bytes = file.sink().buffer().use {
+                                    it.writeAll(response.body!!.source())
                                 }
+                                conn.id?.let { json.put("conn", it) }
+                                return json.put("path", file.path)
+                                    .put("attempts", attempt)
+                                    .put("bytes", bytes)
+                                    .put("proto", proto)
+                                    .put("newConn", conn.isNew)
+                                    .put("ms", ms(start))
+                                    .put("epoch", FAHttpClient.connectionEpoch())
+                                    .toString()
+                            } catch (e: Exception) {
+                                file.delete()
+                                throw e
                             }
                         }
                     }
@@ -230,38 +192,8 @@ class FACoilBridge {
             }
         }
 
-        /// Bytes currently held on disk. Backs the Settings row, so it is only ever
-        /// read for display.
-        fun cacheSizeBytes(): Long = diskCache().size
-
-        /// Empties the disk cache. Coil's `clear()` deletes the whole cache directory
-        /// and recreates it, so the same DiskCache instance stays usable.
-        fun clearCache(): Boolean {
-            return try {
-                diskCache().clear()
-                true
-            } catch (e: Exception) {
-                Log.e(TAG, "clearCache failed: $e")
-                false
-            }
-        }
-
         private fun ms(startNanos: Long) = (System.nanoTime() - startNanos) / 1_000_000
 
         private fun context() = ProcessInfo.processInfo.androidContext
-
-        private fun diskCache(): DiskCache {
-            sharedCache?.let { return it }
-            synchronized(FACoilBridge::class.java) {
-                sharedCache?.let { return it }
-                val cache = DiskCache.Builder()
-                    .directory(context().cacheDir.resolve("fa_coil_cache").toOkioPath())
-                    .maxSizeBytes(1L * 1024 * 1024 * 1024)
-                    .build()
-                sharedCache = cache
-                return cache
-            }
-        }
-
     }
 }

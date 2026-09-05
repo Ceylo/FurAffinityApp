@@ -46,13 +46,16 @@ destroying each other's writes in one log file. See `Android/docs/shared-sources
 `Scripts/Android/run.sh`, is the guard. Xcode reaches that package only through an
 `XCLocalSwiftPackageReference` and **must not** also have a folder reference for it,
 which is why `FALoggingTests` is declared in `FAKit/Package.swift` — same doc,
-§ What the split costs the Xcode project. Three dependencies are forked on
-`Ceylo/<repo>` `android` branches — `Defaults` and `skip-ui`/`skip-fuse-ui`
+§ What the split costs the Xcode project. Four dependencies are forked on
+`Ceylo/<repo>` `android` branches — `Defaults`, `skip-ui`/`skip-fuse-ui`
 (the latter two for `listRowInsets`, `Text(html:)`, `Text(AttributedString)` /
 `Text(_:inlineViews:)`, `Text + Text` and `FlowRow`, all unavailable or absent
-upstream). Images go through an Android-only pipeline
-(`FAImageStore` + `FACoilBridge`) rather than Kingfisher, and Save/Share through
-`FAMediaBridge`. Pages and images share **one** `OkHttpClient` and one connection
+upstream) and `Kingfisher`, which now builds for Android: its decoding is
+substituted onto SkipSwiftUI's `UIImage` rather than ImageIO, and its SwiftUI
+layer onto `@Observable`, so `FAImage(_:)` is a real `KFImage` on both platforms.
+Only the *transport* under it is Android-only — `FAOkHttpDownloader` over
+`FAImageStore` + `FAImageFetchBridge` — and Save/Share goes through `FAMediaBridge`.
+Pages and images share **one** `OkHttpClient` and one connection
 pool (`FAHttpClient.kt`, reached from FAKit through `FAWebSession.nativeTransport`),
 because Cloudflare judges a connection: a challenge on it is repaired — evict, solve
 in the WebView, redial — rather than retried into. HTTP/2 is measured and off; see
@@ -75,7 +78,7 @@ in the WebView, redial — rather than retried into. HTTP/2 is measured and off;
 - `Helpers/iOS/InAppNavigation.swift` · `Helpers/Android/InAppNavigation+Android.swift`: `FATarget` → destination view.
 - `Helpers/InAppLinkConversion.swift`: `appNavigationScheme`. Kept apart from `InAppNavigation.swift` (no SwiftUI) so both platforms share it — which is why it stays in the base while its sibling has an `iOS/` and an `Android/` build.
 - `Helper Views/RemoteView.swift`: loading/refresh wrapper for remote content.
-- `Helpers/iOS/Kingfisher+FA.swift`: image loading/prefetching with FA headers.
+- `Helpers/Kingfisher+FA.swift`: image loading/prefetching with FA headers; shared, with the transport forked per platform.
 
 **FAKit:**
 - `FAKit/OnlineFASession.swift`: network impl — fetch, parse, map to domain models.
@@ -119,7 +122,7 @@ Prefer `RemoteView` (no preview state, default toolbar item) or `PreviewableRemo
 
 ## Images
 
-Use `FAImage`/`FAAnimatedImage` (not raw Kingfisher views) — they apply project downloader, cache policy, and logging. Use `prefetchThumbnails`/`prefetchAvatars` for list views.
+Use `FAImage`/`FAAnimatedImage` (not raw Kingfisher views) — they apply project downloader, cache policy, and logging. Use `prefetchThumbnails`/`prefetchAvatars` for list views. Both return `KFImage` on Android too; what differs there is the downloader (`FAOkHttpDownloader`, so images ride the page path's OkHttp connection pool) and the absence of an animated path, so `FAAnimatedImage` is the same static view. See `Android/docs/images.md`.
 
 ## Cloudflare Challenge
 

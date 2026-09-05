@@ -200,7 +200,7 @@ never the iOS app target — so:
   directory while its `iOS/` twin is guarded out. `os(Android)` is false for the Darwin
   bridge compile, so a file-level guard there leaves shared callers with *no*
   declaration at all. Leave the file unguarded and put `#if canImport(Android)`
-  around the JNI inside, with a Darwin no-op — the way `CoilImageLoader` does. This
+  around the JNI inside, with a Darwin no-op — the way `ImageFetchBridge` does. This
   fails quietly: `skip android build` and the APK are both green, and only
   `skip app launch --android` (which builds the bridge) reports it.
   The exception is a name a *package* already declares on Darwin: `Helpers/Android/AndroidDefault.swift`

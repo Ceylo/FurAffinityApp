@@ -196,7 +196,7 @@ public struct FAHTTPDataSource: HTTPDataSource {
         // Cloudflare judges a *connection*, not a request, and it does not change
         // its mind about one: a challenge is repaired — evict, solve, redial — not
         // waited out. Only `cf-mitigated: challenge` goes down that path; unlike
-        // FACoilBridge's image loop, which retries any non-2xx and so cannot tell a
+        // FAImageFetchBridge's image loop, which retries any non-2xx and so cannot tell a
         // challenge from a 404 or a socket error.
         var response = try await exchange(request, reporting: url)
 

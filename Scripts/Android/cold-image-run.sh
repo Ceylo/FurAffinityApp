@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# One cold image run: force-stop this worktree's app, wipe the coil disk cache,
+# One cold image run: force-stop this worktree's app, wipe the image disk cache,
 # clear logcat, launch, wait for the burst to drain, dump the `FA` log.
 #
 # The cold burst *is* the measurement — do not scroll the feed during it. The
@@ -85,8 +85,11 @@ fi
 
 "$ADB" shell am force-stop "$APP_ID"
 # `run-as` is the only way into a debuggable app's private cache dir.
-"$ADB" shell run-as "$APP_ID" rm -rf cache/fa_coil_cache
-# Page bodies Swift never got to unlink. Beside the coil wipe so a run starts cold
+"$ADB" shell run-as "$APP_ID" rm -rf cache/com.onevcat.Kingfisher.ImageCache.default
+# Save/Share copies, and a fetch staging file a crash left behind. Neither is a cache
+# a run reads from, but both make the "after" size meaningless if left.
+"$ADB" shell run-as "$APP_ID" rm -rf cache/fa-media cache/fa-image-fetch
+# Page bodies Swift never got to unlink. Beside the image wipe so a run starts cold
 # in both caches.
 "$ADB" shell run-as "$APP_ID" rm -rf cache/fa_http
 
@@ -101,7 +104,8 @@ sleep "$WAIT"
 
 # --- verdict ---------------------------------------------------------------
 
-gets=$(grep -c '\[Coil\] GET request on' "$OUT" || true)
+# Both prefixes: the image lines were `[Coil]` before the coil dependency went away.
+gets=$(grep -cE '\[(Coil|IMG)\] GET request on' "$OUT" || true)
 loaded=$(sed -nE 's/.*prefetchThumbnails count=([0-9]+).*/\1/p' "$OUT" | head -1)
 echo "=== $(basename "$OUT"): ${loaded:-0} feed items, $gets image GETs ==="
 

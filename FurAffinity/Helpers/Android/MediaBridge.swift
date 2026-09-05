@@ -4,7 +4,7 @@
 //
 //  Native-Swift driver for the Kotlin `FAMediaBridge` (MediaStore save + ACTION_SEND),
 //  reached by class name through SkipBridge's `AnyDynamicObject` exactly like
-//  `CoilImageLoader`.
+//  `ImageFetchBridge`.
 //
 //  Unguarded on purpose — an Android substitution file must be, see
 //  Android/docs/shared-sources.md § Rules for shared sources. The JNI inside is `canImport(Android)`-guarded and no-ops on Darwin.
@@ -30,7 +30,7 @@ enum MediaBridge {
 
     /// Copies the file into the gallery's Pictures/FurAffinity album.
     ///
-    /// **Blocking** — like the Coil bridge, the JNI call does its I/O synchronously, so
+    /// **Blocking** — like the image bridge, the JNI call does its I/O synchronously, so
     /// callers must be off the main actor.
     static func saveImage(atFileUrl url: URL) -> Bool {
         #if canImport(Android)

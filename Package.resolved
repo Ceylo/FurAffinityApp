@@ -1,5 +1,5 @@
 {
-  "originHash" : "7744a7693ed3207be35f28358b7289e6ca0bbe95cdd74e74c574b079c22d57a1",
+  "originHash" : "dec51cb839d59f9a0b8021a7af49a3251eea860a4cccc3ea415afe65404e02f5",
   "pins" : [
     {
       "identity" : "cache",
@@ -17,6 +17,15 @@
       "state" : {
         "branch" : "android",
         "revision" : "fb0ef04cae83e07a2d3728214a8ddb60c6ff6163"
+      }
+    },
+    {
+      "identity" : "kingfisher",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Ceylo/Kingfisher.git",
+      "state" : {
+        "branch" : "android",
+        "revision" : "ae0b4f07974597fd13190387933a18d4d176d6a0"
       }
     },
     {

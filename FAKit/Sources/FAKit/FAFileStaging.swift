@@ -13,31 +13,26 @@ public enum FAFileStaging {
     /// in it.
     ///
     /// A remote filename is attacker-controlled and `URL.lastPathComponent`
-    /// percent-decodes, so it can carry separators: a media URL ending
-    /// `..%2F..%2F..%2Fshared_prefs%2Fdefaults.xml` yields a name that walks out of
-    /// the staging directory and into the app's private data. Flatten it to one
-    /// component or reject it.
+    /// percent-decodes, so it can carry separators — which both escape the staging
+    /// directory and fail `copyItem`, leaving the submission with no viewer and no
+    /// Save/Share.
     public static func safeFileName(_ name: String) -> String? {
         let flat = name
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "\\", with: "_")
             .replacingOccurrences(of: "\0", with: "")
         guard !flat.isEmpty, flat != ".", flat != ".." else { return nil }
-        return String(flat.prefix(120))  // well inside ext4's 255-byte cap
-    }
 
-    /// A stable per-URL directory name for staged media.
-    ///
-    /// `String.hashValue` is seeded per process, so a key built from it changes on
-    /// every relaunch and re-stages media that is already on disk into a directory
-    /// nothing will ever find again. FNV-1a is deterministic and needs no
-    /// dependency.
-    public static func stagingKey(for url: URL) -> String {
-        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
-        for byte in url.absoluteString.utf8 {
-            hash ^= UInt64(byte)
-            hash &*= 0x0000_0100_0000_01B3
+        let limit = 120  // well inside ext4's 255-byte cap
+        guard flat.count > limit else { return flat }
+
+        // Keep the extension; iOS types a notification attachment from it.
+        if let dot = flat.lastIndex(of: "."), dot != flat.startIndex {
+            let ext = flat[dot...]
+            if ext.count < limit {
+                return String(flat[flat.startIndex ..< dot].prefix(limit - ext.count)) + ext
+            }
         }
-        return String(hash, radix: 16)
+        return String(flat.prefix(limit))
     }
 }

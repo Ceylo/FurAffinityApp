@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Directories FAMediaBridge may hand out as content:// URIs when sharing — the log
      file from Settings as well as a submission. The staging directory sits inside the
-     app cache, next to the coil disk cache. -->
+     app cache, next to Kingfisher's disk cache. -->
 <paths>
     <cache-path name="shared" path="shared/" />
 </paths>

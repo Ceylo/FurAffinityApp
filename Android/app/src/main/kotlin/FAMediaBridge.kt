@@ -3,7 +3,7 @@
 //  FurAffinity (Android)
 //
 //  Kotlin helper backing Save-to-gallery and Share. Same rationale and shape as
-//  FACoilBridge: FurAffinityUI is a *native* Skip module, so it cannot touch Android
+//  FAImageFetchBridge: FurAffinityUI is a *native* Skip module, so it cannot touch Android
 //  framework classes directly and reaches this one by name through SkipBridge's
 //  AnyDynamicObject — see MediaBridge.swift.
 //
@@ -13,8 +13,8 @@
 //  maxSdkVersion="28".
 //
 //  Share hands out a content:// URI from the app's FileProvider rather than a file
-//  path: the source file lives in the app's cache directory (the coil disk cache), which
-//  no other app may read. res/xml/file_paths.xml exposes exactly that directory.
+//  path: the source file lives in a staging directory inside the app's cache, which no
+//  other app may read. res/xml/file_paths.xml exposes exactly that directory.
 //
 
 package fur.affinity.ui

@@ -13,9 +13,7 @@ import Foundation
 import SwiftUI
 import FAKit
 import Defaults
-#if canImport(Kingfisher)
 import Kingfisher
-#endif
 
 struct AvatarView: View {
     var avatarUrl: URL?
@@ -48,37 +46,23 @@ struct AvatarView: View {
             .resizable()
     }
 
-    // Only `configure`'s signature differs by platform, but Swift wants whole
-    // declarations in an `#if` arm, so the chain is spelled twice.
-#if canImport(Kingfisher)
     private func configure(_ image: some KFImageProtocol) -> some KFImageProtocol {
         image
             .placeholder { loadingPlaceholder }
             .onFailureView { failureImage }
             .fade(duration: fadeDuration)
     }
-#else
-    /// `@Default(.animateAvatars)` is not honored here: animated-GIF avatars need
-    /// `coil-gif`.
-    private func configure(_ image: FAImageView) -> FAImageView {
-        image
-            .placeholder { loadingPlaceholder }
-            .onFailureView { failureImage }
-            .fade(duration: fadeDuration)
-    }
-#endif
 
     var body: some View {
         ZStack {
-#if canImport(Kingfisher)
+            // On Android both arms are the same static view — `FAAnimatedImage` is
+            // `FAImage` there — so the toggle has no effect until an animated decode
+            // path exists.
             if animateAvatars {
                 configure(FAAnimatedImage(avatarUrl))
             } else {
                 configure(FAImage(avatarUrl))
             }
-#else
-            configure(FAImage(avatarUrl))
-#endif
         }
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
         .overlay {

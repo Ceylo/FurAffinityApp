@@ -12,6 +12,7 @@ import Foundation
 import Defaults
 import FAKit
 import FALogging
+import Kingfisher
 import SkipFuse
 import SwiftUI
 
@@ -43,7 +44,7 @@ import SwiftUI
         // rather than in a `.task`: both are read as a view is *constructed*.
         FAWebViewUserAgent.platformProvider = { AndroidAppInfo.webViewDefaultUserAgent }
         FAWebSession.imageCredentialsSink = { userAgent, cookieHeader in
-            CoilImageLoader.configure(userAgent: userAgent, cookie: cookieHeader)
+            ImageFetchBridge.configure(userAgent: userAgent, cookie: cookieHeader)
         }
         // Page fetches join the image layer's connection pool. FAKit gains no JNI:
         // the transport is a struct of closures the app module fills in.
@@ -53,6 +54,8 @@ import SwiftUI
             operatingSystem: AndroidAppInfo.operatingSystem,
             details: "debuggable=\(AndroidAppInfo.isDebuggable)"
         )
+        // Before the first image load; Kingfisher's own default bounds nothing here.
+        configureImageCacheForAndroid()
         // Before any `Defaults.Key` is created: a key captures its suite and registers
         // its default value at construction, so one touched earlier lands in the orphan
         // store.
@@ -78,8 +81,14 @@ import SwiftUI
     /* SKIP @bridge */public func onStop() {
         logger.debug("onStop")
         // Android's "entered the background", the same moment Kingfisher sweeps its
-        // disk cache on iOS — and off the launch path, which is why not onLaunch.
-        Task { await FAImageStore.shared.pruneStagedMedia() }
+        // disk cache on iOS — and off the launch path, which is why not onLaunch. iOS
+        // gets this from `UIApplicationDidEnterBackground`, which `ImageCache` cannot
+        // observe here.
+        ImageCache.default.cleanExpiredDiskCache()
+        // Save/Share copies. `tmp/` is `cacheDir` here, which nothing else empties.
+        // Through the store's gate, since `Task.detached` would block the
+        // cooperative pool.
+        Task { await FAImageStore.shared.performingFileIO { pruneMediaCopies() } }
     }
 
     /* SKIP @bridge */public func onDestroy() {
@@ -90,6 +99,6 @@ import SwiftUI
         logger.debug("onLowMemory")
         // Decoded images are the app's largest reclaimable allocation; the disk cache
         // behind them is untouched, so this only costs a re-decode.
-        FAImageStore.shared.clearMemoryCache()
+        ImageCache.default.clearMemoryCache()
     }
 }

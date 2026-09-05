@@ -3,7 +3,7 @@
 //  FurAffinity (Android)
 //
 //  Facts about the installed app that native Swift can't reach, exposed by
-//  class name through AnyDynamicObject like FACoilBridge/FADefaultsBridge — see
+//  class name through AnyDynamicObject like FAImageFetchBridge/FADefaultsBridge — see
 //  AndroidAppInfo.swift.
 //
 //  `Bundle.main` in a Skip Fuse *native* module is swift-corelibs-foundation's,

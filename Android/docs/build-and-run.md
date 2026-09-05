@@ -202,7 +202,7 @@ are resolved by `FAChallengeView` and the retry goes through `URLSession`.
 
 The **installed app id is `com.example.id1234`**, not `net.furaffinity.spike` —
 plus, for a debug build, this worktree's suffix. So reaching the data directory
-(the image cache lives at `cache/fa_coil_cache`) is
+(the image cache lives at `cache/com.onevcat.Kingfisher.ImageCache.default`) is
 `adb shell run-as com.example.id1234.<worktree> …`; `run.sh` prints the
 id it starts, and `adb shell pm list packages | grep example` lists them all.
 

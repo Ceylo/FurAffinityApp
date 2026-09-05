@@ -5,7 +5,7 @@
 //  Android's `clearLoginCookies()`, matching the iOS one in
 //  FurAffinity/Helpers/iOS/LoginCookies.swift so SettingsView calls a single name on both
 //  platforms. Two stores hold the credentials here: the WebView's cookie jar (which
-//  every page fetch replays) and the Coil image layer's seeded UA + Cookie header.
+//  every page fetch replays) and the image layer's seeded UA + Cookie header.
 //
 //  Unguarded on purpose — an Android substitution file must be, see
 //  Android/docs/shared-sources.md § Rules for shared sources. The JNI inside is `canImport(Android)`-guarded and no-ops on Darwin.
@@ -30,7 +30,7 @@ func clearLoginCookies() async {
     // FAWebSession's back would also make the next real push look like a no-op, so
     // clear what it remembers pushing — and the auth cookies it cached for the
     // challenge coordinator's synchronous logged-in check, which are just as invalid.
-    CoilImageLoader.configure(userAgent: "", cookie: "")
+    ImageFetchBridge.configure(userAgent: "", cookie: "")
     await FAWebSession.shared.forgetPushedCredentials()
     await FAWebSession.shared.forgetAuthCookies()
 }

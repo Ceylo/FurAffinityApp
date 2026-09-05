@@ -30,6 +30,10 @@ let package = Package(
         .package(url: "https://github.com/Ceylo/skip-fuse-ui.git", branch: "android"),
         .package(url: "https://github.com/Ceylo/skip-ui.git", branch: "android"),
         .package(url: "https://source.skip.tools/skip-web.git", from: "0.11.2"),
+        // Forked to build on Android: platform guards plus a decode seam onto
+        // SkipSwiftUI's `UIImage`, and a bridgeable SwiftUI layer — see
+        // Android/docs/forks.md.
+        .package(url: "https://github.com/Ceylo/Kingfisher.git", branch: "android"),
         .package(path: "FAKit"),
         .package(path: "FALogging"),
         .package(url: "https://github.com/Ceylo/Defaults.git", branch: "android"),
@@ -46,6 +50,7 @@ let package = Package(
                 .product(name: "FALogging", package: "FALogging"),
                 .product(name: "FAPages", package: "FAKit"),
                 .product(name: "Defaults", package: "Defaults"),
+                .product(name: "Kingfisher", package: "Kingfisher"),
                 .product(name: "OrderedCollections", package: "swift-collections"),
                 .product(name: "Version", package: "Version"),
             ],

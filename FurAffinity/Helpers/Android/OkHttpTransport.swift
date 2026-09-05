@@ -128,7 +128,7 @@ enum OkHttpTransport {
             connectionEpoch: result.epoch ?? 0
         )
         // The coalescing instrument: a `conn=` id appearing on both a [HTTP] line for
-        // www. and a [Coil] line for t./a. is the direct evidence the two pipelines
+        // www. and an [IMG] line for t./a. is the direct evidence the two pipelines
         // share a connection. They can only be compared because both now come from
         // one client's `System.identityHashCode`.
         //

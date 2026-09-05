@@ -60,7 +60,7 @@ after. skip-web applies it at engine construction, so no navigation can precede 
 
 Everything downstream still reads the UA *live* out of the WebView
 (`FAWebSession.swift` → `liveUserAgent()` → `FAHTTPDataSource` and
-`CoilImageLoader.configure`). The computed string is an input to the WebView only; the
+`ImageFetchBridge.configure`). The computed string is an input to the WebView only; the
 WebView stays the single source of truth. `[CFDIAG] User-Agent drifted=` in the
 challenge diagnostics compares the two.
 

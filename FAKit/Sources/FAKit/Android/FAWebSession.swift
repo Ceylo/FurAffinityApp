@@ -32,7 +32,7 @@ public final class FAWebSession {
     public static let shared = FAWebSession()
 
     /// Push a rotated User-Agent + `Cookie:` header into the app's image layer, whose
-    /// Coil loader lives in the app module. Installed at launch, like
+    /// image bridge lives in the app module. Installed at launch, like
     /// `FAWebViewUserAgent.platformProvider`.
     nonisolated(unsafe) public static var imageCredentialsSink: (@Sendable (_ userAgent: String, _ cookieHeader: String) -> Void)?
 
@@ -51,7 +51,7 @@ public final class FAWebSession {
     /// check is synchronous, so it reads this instead.
     public private(set) var lastKnownAuthCookies = [HTTPCookie]()
 
-    /// What was last pushed into the Coil image layer. That layer holds a *copy* on
+    /// What was last pushed into the image layer. That layer holds a *copy* on
     /// the Kotlin side, so it can't pull a rotated clearance the way the HTTP layer
     /// can — it has to be pushed to, and these two are how `refreshedCookieHeader()`
     /// tells a rotation from a no-op.
@@ -181,7 +181,7 @@ public final class FAWebSession {
     ///
     /// `cf_clearance` rotates — a re-solve mints a new one, and so does an ordinary
     /// WebView navigation that trips a challenge. The HTTP layer can pull the fresh
-    /// header on every request; Coil can't, so this is the one place that keeps the
+    /// header on every request; the image layer can't, so this is the one place that keeps the
     /// two in step.
     @discardableResult
     public func refreshedCookieHeader() async -> String? {
@@ -192,7 +192,7 @@ public final class FAWebSession {
         // A header that *lost* its clearance is a wipe in flight, not a rotation. Hand
         // back the last-good one: expiring the cookie locally doesn't invalidate it at
         // the edge, so replaying it is right — whereas laundering a clearance-less
-        // header into Coil and into every in-flight request's Cookie: line is what
+        // header into the image layer and into every in-flight request's Cookie: line is what
         // turns one challenged fetch into a stampede.
         if let header, !header.carriesCloudflareClearance,
            pushedCookieHeader?.carriesCloudflareClearance == true { return pushedCookieHeader }
@@ -267,7 +267,7 @@ public final class FAWebSession {
         }
         let cookieHeader = await navigator.cookieHeader(for: FAURLs.homeUrl) ?? ""
 
-        // Seed the Coil image layer with FA's UA + Cloudflare cookie header so avatar
+        // Seed the image layer with FA's UA + Cloudflare cookie header so avatar
         // and thumbnail loads replay the clearance the WebView obtained. Recorded so
         // the first `refreshedCookieHeader()` doesn't push the same pair again.
         Self.imageCredentialsSink?(userAgent, cookieHeader)
