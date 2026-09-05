@@ -46,12 +46,15 @@ destroying each other's writes in one log file. See `Android/docs/shared-sources
 `Scripts/Android/run.sh`, is the guard. Xcode reaches that package only through an
 `XCLocalSwiftPackageReference` and **must not** also have a folder reference for it,
 which is why `FALoggingTests` is declared in `FAKit/Package.swift` — same doc,
-§ What the split costs the Xcode project. Four dependencies are forked on
+§ What the split costs the Xcode project. Five dependencies are forked on
 `Ceylo/<repo>` `android` branches — `Defaults`, `skip-ui`/`skip-fuse-ui`
 (the latter two for `listRowInsets`, `Text(html:)`, `Text(AttributedString)` /
 `Text(_:inlineViews:)`, `Text + Text` and `FlowRow`, all unavailable or absent
-upstream) and `Kingfisher`, which now builds for Android: its decoding is
-substituted onto SkipSwiftUI's `UIImage` rather than ImageIO, and its SwiftUI
+upstream), `skip-web` (dependency identity only: SwiftPM allows one location per
+package identity, so every chain must name `Ceylo/skip-ui` — see
+`Android/docs/forks.md` § One location per identity) and `Kingfisher`, which now
+builds for Android: its decoding is substituted onto SkipSwiftUI's `UIImage`
+rather than ImageIO, and its SwiftUI
 layer onto `@Observable`, so `FAImage(_:)` is a real `KFImage` on both platforms.
 Only the *transport* under it is Android-only — `FAOkHttpDownloader` over
 `FAImageStore` + `FAImageFetchBridge` — and Save/Share goes through `FAMediaBridge`.
