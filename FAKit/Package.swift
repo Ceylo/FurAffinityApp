@@ -26,10 +26,12 @@ let package = Package(
         .package(path: "../FALogging"),
         // FAKit is a skipstone bridging module so it can own the Android web layer —
         // see Android/docs/shared-sources.md. Keep `skip` equal to the root manifest's.
+        // skip-web is forked for its dependency locations alone. One location per
+        // package identity: the forks name Ceylo/skip-ui between them, so this
+        // manifest must not re-declare it.
         .package(url: "https://source.skip.tools/skip.git", exact: "1.9.4"),
         .package(url: "https://github.com/Ceylo/skip-fuse-ui.git", branch: "android"),
-        .package(url: "https://github.com/Ceylo/skip-ui.git", branch: "android"),
-        .package(url: "https://source.skip.tools/skip-web.git", from: "0.11.2"),
+        .package(url: "https://github.com/Ceylo/skip-web.git", branch: "android"),
     ],
     targets: [
         .target(

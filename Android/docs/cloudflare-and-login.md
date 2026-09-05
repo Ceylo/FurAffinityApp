@@ -69,7 +69,9 @@ Three earlier comments claimed setting `customUserAgent` "empties
 with the override in place the emulator reports
 `{"mobile":true,"platform":"Android","brands":[…Android WebView 151, Chromium 151]}`,
 and a cold launch clears the challenge and loads the feed with thumbnails. No
-`WebSettingsCompat.setUserAgentMetadata` and no fourth skip-web fork are needed.
+`WebSettingsCompat.setUserAgentMetadata` is needed, and neither is a skip-web patch
+exposing it. (skip-web *is* forked now, but only for its dependency locations — see
+[forks](forks.md#one-location-per-identity).)
 
 One expected consequence: the suffix embeds the app version, so **an app update changes
 the UA and invalidates any persisted `cf_clearance`**. It is re-minted on the next
