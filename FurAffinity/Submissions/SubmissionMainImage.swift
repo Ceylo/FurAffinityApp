@@ -4,32 +4,26 @@
 //
 //  Created by Ceylo on 22/01/2023.
 //
-//  One file for both platforms. Three seams stay behind `#if FA_SKIP_MODULE`:
+//  One file for both platforms. Two seams stay behind `#if FA_SKIP_MODULE`:
 //
-//  - `loader`, the obvious one (`KFImage` vs the `FAImageView` stand-in).
-//  - `zoomableViewer`'s content, the one that isn't: iOS sizes it in pixels because that
-//    is what feeds `UIHostingController.intrinsicContentSize` and hence every zoom ratio,
-//    so unifying it with Android's aspect ratio would change the meaning of iOS's
+//  - `zoomableViewer`'s content: iOS sizes it in pixels because that is what feeds
+//    `UIHostingController.intrinsicContentSize` and hence every zoom ratio, so unifying
+//    it with Android's aspect ratio would change the meaning of iOS's
 //    `maximumZoomScale = 10` (which `Zoomable+Android` mirrors).
-//  - `preparingFullResolutionMedia`, which exists only because `FAImageView` has no
-//    `onSuccess` to publish the file URL from, so Android asks for it in a `.task`.
-//
-//  Accepted difference: `displayProgress` draws nothing on Android — the OkHttp
-//  transport reports no byte progress across JNI.
+//  - the download-progress bar, which the OkHttp transport cannot feed: it reports no
+//    byte progress across JNI, so the bar would sit at zero for the whole download.
 //
 
 import SwiftUI
 import FAKit
 import Kingfisher
 
-#if !FA_SKIP_MODULE
-
 // KFAnimatedImage may display with an incorrect aspect ratio
-// on the initial display, so we don't use it unless needed.
+// on the initial display, so we don't use it unless needed. On Android
+// `FAAnimatedImage` is the same static view, so this only ever costs a branch.
 private func canAnimate(_ url: URL?) -> Bool {
     url?.pathExtension.lowercased() == "gif"
 }
-#endif
 
 struct SubmissionMainImage: View {
     var widthOnHeightRatio: Float
@@ -105,56 +99,17 @@ struct SubmissionMainImage: View {
             .ignoresSafeArea()
     }
 
-#if FA_SKIP_MODULE
-
-    @ViewBuilder
-    private func loader(geometry: GeometryProxy) -> some View {
-        FAImage(fullResolutionMediaUrl)
-            .placeholder {
-                thumbnailPlaceholder(geometry: geometry)
-            }
-            .onFailure { error in
-                errorMessage = error.localizedDescription
-            }
-    }
-
-    /// The file URL is what enables Save and Share. `FAImageView` has no `onSuccess`
-    /// to hang this on, so ask Kingfisher directly; the request coalesces with the
-    /// load already in flight and normally resolves straight out of the disk cache.
-    ///
-    /// Skipped where the caller can't use it — `SubmissionPreviewView` and the audio
-    /// cover pass `.constant(nil)` — rather than copying every thumbnail.
-    private func preparingFullResolutionMedia(_ view: some View) -> some View {
-        view.task(id: fullResolutionMediaUrl) {
-            guard allowZoomableSheet else { return }
-            fullResolutionMediaFileUrl = try? await KingfisherManager.shared
-                .retrieveFAImageFile(with: fullResolutionMediaUrl)
-            canPresentViewer = fullResolutionMediaFileUrl != nil
-        }
-    }
-
-    /// No close button: `Zoomable` dismisses on a downward pull as iOS's sheet does, and
-    /// the presentation still answers the system Back gesture.
-    private var zoomableViewer: some View {
-        configuredViewer(
-            Zoomable {
-                FAImage(fullResolutionMediaUrl)
-            }
-            .contentAspectRatio(Double(widthOnHeightRatio))
-        )
-    }
-
-#else
-
     private func configure(_ image: some KFImageProtocol, geometry: GeometryProxy) -> some KFImageProtocol {
         image
             .placeholder { progress in
                 ZStack {
                     thumbnailPlaceholder(geometry: geometry)
 
+                    #if !FA_SKIP_MODULE
                     if displayProgress {
                         LinearProgress(progress: Float(progress.fractionCompleted))
                     }
+                    #endif
                 }
             }
             .onFailure { error in
@@ -192,6 +147,21 @@ struct SubmissionMainImage: View {
         fullResolutionImage = loadedImage
         canPresentViewer = true
     }
+
+#if FA_SKIP_MODULE
+
+    /// No close button: `Zoomable` dismisses on a downward pull as iOS's sheet does, and
+    /// the presentation still answers the system Back gesture.
+    private var zoomableViewer: some View {
+        configuredViewer(
+            Zoomable {
+                FAImage(fullResolutionMediaUrl)
+            }
+            .contentAspectRatio(Double(widthOnHeightRatio))
+        )
+    }
+
+#else
 
     private var zoomableViewer: some View {
         configuredViewer(

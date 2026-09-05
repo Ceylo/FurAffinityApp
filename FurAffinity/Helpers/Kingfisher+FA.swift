@@ -61,7 +61,6 @@ extension KingfisherOptionsInfo {
     }
 }
 
-#if !FA_SKIP_MODULE
 extension KFImageProtocol {
     fileprivate func defaultConfiguration() -> Self {
         self
@@ -76,7 +75,6 @@ extension KFImageProtocol {
             }
     }
 }
-#endif
 
 struct FAUserAgentRequestModifier: AsyncImageDownloadRequestModifier {
     var onDownloadTaskStarted: (@Sendable (DownloadTask?) -> Void)? { nil }
@@ -195,6 +193,7 @@ func cachedImageFileURL(for url: URL) throws -> URL {
         try ImageCache.default.diskStorage.store(value: data, forKey: url.cacheKey)
     }
 #endif
+#endif
 
 @MainActor
 func FAImage(_ url: URL?) -> KFImage {
@@ -205,6 +204,15 @@ func FAImage(_ url: URL?) -> KFImage {
         .defaultConfiguration()
 }
 
+#if FA_SKIP_MODULE
+/// The same static view. `KFAnimatedImage` renders through `AnimatedImageView`, which
+/// is UIKit-backed and not built for the Skip module — and Android's decode seam has no
+/// animated path either, so a GIF shows its first frame.
+@MainActor
+func FAAnimatedImage(_ url: URL?) -> KFImage {
+    FAImage(url)
+}
+#else
 @MainActor
 func FAAnimatedImage(_ url: URL?) -> KFAnimatedImage {
     KFAnimatedImage(url)
