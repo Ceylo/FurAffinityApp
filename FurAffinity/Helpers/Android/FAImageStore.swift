@@ -14,7 +14,7 @@
 //  - `gate` admits at most `concurrencyLimit` operations, so at most that many
 //    `queue` blocks — and therefore threads — exist at once. Waiters are two FIFOs so a
 //    visible row is never queued behind a batch of prefetches.
-//  - `inFlightFetch` coalesces downloads; a row's own load and its prefetch become one.
+//  - `fetches` coalesces downloads; a row's own load and its prefetch become one.
 //    Kingfisher coalesces concurrent loads for a URL inside its `SessionDelegate`,
 //    which a downloader that overrides the transport never reaches — so this stays.
 //  - `decoding` runs the decode under the same permit and on the same queue, because it
@@ -55,7 +55,7 @@ actor FAImageStore {
     private var highPriorityWaiters = [CheckedContinuation<Void, Never>]()
     private var lowPriorityWaiters = [CheckedContinuation<Void, Never>]()
 
-    private var inFlightFetch = [URL: Task<Data?, Never>]()
+    private let fetches = InFlightCoalescer<URL, Data?>()
 
     /// The pool generation an unresolved challenge was seen on, or nil when there
     /// isn't one. A fetch starting while this is set would be challenged too, so it
@@ -72,16 +72,11 @@ actor FAImageStore {
     /// The encoded bytes behind `url`, downloading them now. Concurrent callers for
     /// the same URL share one fetch.
     func bytes(for url: URL, priority: FAImagePriority) async -> Data? {
-        if let existing = inFlightFetch[url] {
-            return await existing.value
+        // The fetch task is created on the coalescer rather than here; nothing before
+        // the `await` needs this actor's isolation.
+        await fetches.run(url, priority: priority.taskPriority) { [self] in
+            await fetchWithRepair(url, priority: priority)
         }
-        let task = Task(priority: priority.taskPriority) { [self] in
-            let bytes = await fetchWithRepair(url, priority: priority)
-            inFlightFetch[url] = nil
-            return bytes
-        }
-        inFlightFetch[url] = task
-        return await task.value
     }
 
     /// Runs `work` on the store's queue, under a permit.

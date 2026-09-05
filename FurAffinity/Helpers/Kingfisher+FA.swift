@@ -103,23 +103,46 @@ struct FAUserAgentRequestModifier: AsyncImageDownloadRequestModifier {
 }
 
 /// Coalesces concurrent work for the same key: callers arriving while an operation is
-/// in flight await that one instead of starting their own.
-actor InFlightCoalescer<Key: Hashable & Sendable> {
-    private var inFlight = [Key: Task<Void, any Error>]()
+/// in flight await that one instead of starting their own. The one coalescer for the
+/// whole image path — downloads keyed by URL, decodes by URL plus processor.
+actor InFlightCoalescer<Key: Hashable & Sendable, Value: Sendable> {
+    private var inFlight = [Key: Task<Value, Never>]()
 
-    func run(_ key: Key, operation: @escaping @Sendable () async throws -> Void) async throws {
+    /// `priority` is the starter's — the visible/prefetch split `FAImageStore`'s two
+    /// FIFOs rely on rides on it.
+    func run(
+        _ key: Key,
+        priority: TaskPriority? = nil,
+        operation: @escaping @Sendable () async -> Value
+    ) async -> Value {
         if let existing = inFlight[key] {
-            return try await existing.value
+            return await existing.value
         }
 
         // Unstructured on purpose: one caller cancelling must not cancel the shared
         // work out from under the others.
-        let task = Task { try await operation() }
+        let task = Task(priority: priority) { await operation() }
         inFlight[key] = task
         // Only the caller that started the task clears it; late joiners already hold
         // the task reference, so clearing here is harmless for them.
         defer { inFlight[key] = nil }
-        try await task.value
+        return await task.value
+    }
+}
+
+extension InFlightCoalescer where Value == Result<Void, any Error> {
+    /// Distinct name, not an overload: a non-throwing closure is a subtype of a
+    /// throwing one, so two `run`s would be ambiguous at the call site.
+    func perform(_ key: Key, operation: @escaping @Sendable () async throws -> Void) async throws {
+        let result = await run(key) { () async -> Result<Void, any Error> in
+            do {
+                try await operation()
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
+        }
+        try result.get()
     }
 }
 
@@ -127,7 +150,7 @@ actor InFlightCoalescer<Key: Hashable & Sendable> {
 /// per joined callback, so N callers for one URL run N `ImageCache.store` writes, and
 /// `DiskStorage.store` writes non-atomically. A store landing while another caller
 /// copies the cache file yields a truncated copy.
-private let imageFetches = InFlightCoalescer<URL>()
+private let imageFetches = InFlightCoalescer<URL, Result<Void, any Error>>()
 
 extension KingfisherManager {
     func retrieveFAImage(with url: URL) async throws -> KFCrossPlatformImage {
@@ -152,7 +175,7 @@ extension KingfisherManager {
     /// Reuses Kingfisher's cache: a cache hit skips download entirely, and a cache miss
     /// downloads through `downloaderWithUserAgent` and populates the cache for later use.
     func retrieveFAImageData(with url: URL) async throws -> (data: Data, mimeType: String) {
-        try await imageFetches.run(url) {
+        try await imageFetches.perform(url) {
             _ = try await KingfisherManager.shared.retrieveFAImageResult(with: url, waitForCache: true)
         }
         // Original bytes live in the disk cache; the memory cache holds the decoded image.
@@ -174,7 +197,7 @@ extension KingfisherManager {
     func retrieveFAImageFile(with url: URL) async throws -> URL {
         // Only the retrieve-and-cache step is shared; the copy stays per-caller because
         // `UNNotificationAttachment` takes ownership of the file it is handed.
-        try await imageFetches.run(url) {
+        try await imageFetches.perform(url) {
             _ = try await KingfisherManager.shared.retrieveFAImageResult(with: url, waitForCache: true)
         }
         return try cachedImageFileURL(for: url)

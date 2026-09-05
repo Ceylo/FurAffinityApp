@@ -91,8 +91,10 @@ final class FAOkHttpDownloader: ImageDownloader, @unchecked Sendable {
         // Through the gate, not straight here: the processor decodes, and a decode is
         // another blocking JNI call on a thread Swift concurrency owns. And through
         // the coalescer, since `bytes(for:)` only coalesces the *download*: N views of
-        // one avatar would run one fetch and N decodes, one permit each.
-        let image = await decodes.image(for: url, options: options) {
+        // one avatar would run one fetch and N decodes, one permit each. The processor
+        // is in the key because what is shared is the *processed* image.
+        let key = "\(url.absoluteString)|\(options.processor.identifier)"
+        let image = await decodes.run(key) {
             await FAImageStore.shared.decoding(priority) {
                 options.processor.process(item: .data(data), options: options)
             }
@@ -106,32 +108,7 @@ final class FAOkHttpDownloader: ImageDownloader, @unchecked Sendable {
     }
 }
 
-/// Coalesces concurrent decodes of the same processed image — the counterpart of
-/// `FAImageStore.bytes(for:)`. The processor is part of the key because what is
-/// shared is the *processed* image.
-private actor DecodeCoalescer {
-    private var inFlight = [String: Task<KFCrossPlatformImage?, Never>]()
-
-    func image(
-        for url: URL,
-        options: KingfisherParsedOptionsInfo,
-        decode: @escaping @Sendable () async -> KFCrossPlatformImage?
-    ) async -> KFCrossPlatformImage? {
-        let key = "\(url.absoluteString)|\(options.processor.identifier)"
-        if let existing = inFlight[key] {
-            return await existing.value
-        }
-        // Unstructured, like `bytes(for:)`: one caller cancelling must not cancel the
-        // decode the others await.
-        let task = Task { await decode() }
-        inFlight[key] = task
-        let image = await task.value
-        inFlight[key] = nil
-        return image
-    }
-}
-
-private let decodes = DecodeCoalescer()
+private let decodes = InFlightCoalescer<String, KFCrossPlatformImage?>()
 
 enum FAImageError: LocalizedError {
     case loadFailed(URL)
