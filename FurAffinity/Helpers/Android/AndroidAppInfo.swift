@@ -4,7 +4,7 @@
 //
 //  Native-Swift driver for the Kotlin `FAAppInfoBridge`: the package name, the app
 //  version, whether this build is debuggable, and the stock WebView User-Agent. Same
-//  `AnyDynamicObject` reflection as `CoilImageLoader` — FurAffinityUI is a native
+//  `AnyDynamicObject` reflection as `ImageFetchBridge` — FurAffinityUI is a native
 //  Skip module and can't `import android.*`.
 //
 //  Unguarded on purpose — an Android substitution file must be, see

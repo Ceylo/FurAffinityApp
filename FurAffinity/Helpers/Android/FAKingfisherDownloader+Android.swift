@@ -5,7 +5,7 @@
 //  Kingfisher's transport on Android. Everything above this — the memory and disk
 //  caches, the processor, `KFImage`'s options — is Kingfisher's; everything below is
 //  the OkHttp pipeline this port already had
-//  (`FAHttpClient` → `FACoilBridge` → `CoilImageLoader`), which stays because
+//  (`FAHttpClient` → `FAImageFetchBridge` → `ImageFetchBridge`), which stays because
 //  Cloudflare judges a *connection* and pages and images must share one pool.
 //
 //  `KingfisherManager` reaches a downloader through exactly one method, the

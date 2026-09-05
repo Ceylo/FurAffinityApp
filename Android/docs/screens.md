@@ -256,7 +256,7 @@ That is what `ScrollToItemModifier` does — `ScrollViewReader { reader in conte
 ### Save and Share
 
 `FAMediaBridge.kt` (app module, reached by name through `AnyDynamicObject` like
-`FACoilBridge`) inserts into MediaStore's `Pictures/FurAffinity` and starts
+`FAImageFetchBridge`) inserts into MediaStore's `Pictures/FurAffinity` and starts
 `ACTION_SEND`. Two things the manifest must carry, both easy to lose in a regeneration:
 
 - `<provider android:name="androidx.core.content.FileProvider">` with

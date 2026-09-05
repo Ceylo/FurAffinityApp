@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Summarise the `[Coil]` image and `[HTTP]` page lines of a FurAffinity log.
+"""Summarise the `[IMG]` image and `[HTTP]` page lines of a FurAffinity log.
 
 Answers, per host, "how many image requests did we fire, how many came back
 403, and were they challenges or blocks?" — plus the issuance cadence, which is
@@ -10,7 +10,9 @@ Then the causal variable itself: how many *connections* the burst opened, when
 it opened them, and the 403 rate split by whether the response rode a fresh
 connection or a reused one. Cloudflare judges the connection, so that split is
 the direct test of the whole model — see Android/docs/images.md. Logs predating
-`conn=` in the `[Coil]` lines simply omit that section.
+`conn=` in the image lines simply omit that section. The image prefix was `[Coil]`
+before the coil dependency went away; both are read, so runs archived under it —
+every measurement in Android/docs/images.md — still parse.
 
 Page fetches feed the *same* tables — they ride the same client and the same
 pool, so a per-host 403 split covers them for free. Two sections are theirs
@@ -30,18 +32,19 @@ from collections import Counter, defaultdict
 from datetime import datetime
 from urllib.parse import urlparse
 
-GET = re.compile(r"\[Coil\] GET request on (\S+)")
-OUTCOME = re.compile(r"\[Coil\] (\S+): (succeeded on attempt|failed after) (\d+)\D*\((.*)\)\s*$")
+IMG = r"\[(?:Coil|IMG)\]"
+GET = re.compile(rf"{IMG} GET request on (\S+)")
+OUTCOME = re.compile(rf"{IMG} (\S+): (succeeded on attempt|failed after) (\d+)\D*\((.*)\)\s*$")
 # The per-fetch success line, which only a build carrying the connection instrument
-# emits: `[Coil] <url>: 200 conn=<id> new=<bool> <ms>ms`.
-SUCCESS = re.compile(r"\[Coil\] (\S+): (\d{3}) conn=(-?\d+) new=(true|false) (-?\d+)ms")
+# emits: `[IMG] <url>: 200 conn=<id> new=<bool> <ms>ms`.
+SUCCESS = re.compile(rf"{IMG} (\S+): (\d{{3}}) conn=(-?\d+) new=(true|false) (-?\d+)ms")
 # A page fetch, in the same token shapes:
 # `[HTTP] GET <url> → 200 h2 conn=<id> new=false 214ms`
 PAGE = re.compile(
     r"\[HTTP\] (?:GET|POST) (\S+) → (\d{3}) (\S+) conn=(-?\d+|-) new=(true|false) (-?\d+)ms"
 )
 # The image pipeline names its protocol once per host, not per connection.
-NEGOTIATED = re.compile(r"\[Coil\] (\S+) negotiated (\S+)")
+NEGOTIATED = re.compile(rf"{IMG} (\S+) negotiated (\S+)")
 # The repair vocabulary. A repair worked iff a `challenge` is followed by a
 # `retry → 200` and no further challenge at the next epoch.
 REPAIR = re.compile(r"\[CFREPAIR\] (\S+)(.*)")
@@ -50,7 +53,7 @@ REPAIR = re.compile(r"\[CFREPAIR\] (\S+)(.*)")
 LEGACY_CFPAGE = re.compile(r"Cloudflare challenge on URLSession")
 STAMP = re.compile(r"^(\d\d-\d\d \d\d:\d\d:\d\d\.\d+)")
 CODE = re.compile(r"HTTP (\d+)(?: cf-mitigated=(\S+))?")
-# Every failed attempt carries its own draw, appended by FACoilBridge.
+# Every failed attempt carries its own draw, appended by FAImageFetchBridge.
 CONN = re.compile(r"conn=(-?\d+) new=(true|false)")
 
 
@@ -145,7 +148,7 @@ def main(lines):
             repairs["challenge page"] += 1
 
     if not issued:
-        sys.exit("no `[Coil] GET request on` or `[HTTP]` lines found")
+        sys.exit("no `[IMG] GET request on` or `[HTTP]` lines found")
 
     hosts = sorted({host(u) for _, u in issued})
     print(f"{len(issued)} requests over {len(hosts)} host(s)\n")

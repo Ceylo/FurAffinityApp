@@ -436,7 +436,7 @@ private let downloaderWithCloudFlareCookie: ImageDownloader = {
 /// Records when each download started, so a feed row can report whether its thumbnail
 /// is in flight, cached, or not started. On iOS it also seeds the Cloudflare cookie
 /// onto the downloader's session; Android has no session to seed — its credentials go
-/// through `FAWebSession.imageCredentialsSink` → `CoilImageLoader.configure`.
+/// through `FAWebSession.imageCredentialsSink` → `ImageFetchBridge.configure`.
 actor DownloadDelegate: ImageDownloaderDelegate {
     @MainActor static let shared = DownloadDelegate()
 
@@ -497,13 +497,13 @@ actor DownloadDelegate: ImageDownloaderDelegate {
 
         if let request {
             let method = request.httpMethod ?? "GET"
-            logger.info("[KF] \(method) request on \(url)")
+            logger.info("[IMG] \(method) request on \(url)")
         } else {
-            logger.info("[KF] Request on \(url)")
+            logger.info("[IMG] Request on \(url)")
         }
 #endif
-        // Android logs `[Coil] GET request on …` from inside the permit instead, which
-        // is the line `summarize-image-log.py` counts.
+        // Android emits its own `[IMG] … request on …` from inside the permit instead,
+        // which is the line `summarize-image-log.py` counts.
     }
 
     nonisolated func imageDownloader(

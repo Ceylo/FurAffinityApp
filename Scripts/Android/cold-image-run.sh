@@ -104,7 +104,8 @@ sleep "$WAIT"
 
 # --- verdict ---------------------------------------------------------------
 
-gets=$(grep -c '\[Coil\] GET request on' "$OUT" || true)
+# Both prefixes: the image lines were `[Coil]` before the coil dependency went away.
+gets=$(grep -cE '\[(Coil|IMG)\] GET request on' "$OUT" || true)
 loaded=$(sed -nE 's/.*prefetchThumbnails count=([0-9]+).*/\1/p' "$OUT" | head -1)
 echo "=== $(basename "$OUT"): ${loaded:-0} feed items, $gets image GETs ==="
 

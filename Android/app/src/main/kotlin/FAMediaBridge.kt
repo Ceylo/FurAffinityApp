@@ -3,7 +3,7 @@
 //  FurAffinity (Android)
 //
 //  Kotlin helper backing Save-to-gallery and Share. Same rationale and shape as
-//  FACoilBridge: FurAffinityUI is a *native* Skip module, so it cannot touch Android
+//  FAImageFetchBridge: FurAffinityUI is a *native* Skip module, so it cannot touch Android
 //  framework classes directly and reaches this one by name through SkipBridge's
 //  AnyDynamicObject — see MediaBridge.swift.
 //

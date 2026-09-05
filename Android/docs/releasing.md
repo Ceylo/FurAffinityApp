@@ -129,7 +129,7 @@ without it AGP's `stripReleaseDebugSymbols` silently copies the libraries throug
 
 R8 and resource shrinking run clean. The existing `-keep class fur.affinity.ui.**`
 already covers every Kotlin bridge reached by name through `AnyDynamicObject`
-(`FAAppInfoBridge`, `FACoilBridge`, `FACookieBridge`, `FADefaultsBridge`,
+(`FAAppInfoBridge`, `FAImageFetchBridge`, `FACookieBridge`, `FADefaultsBridge`,
 `FAMediaBridge`, `FADefaultsObserver`) — verified present in the release DEX.
 
 What to tell a tester:

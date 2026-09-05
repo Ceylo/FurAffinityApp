@@ -9,7 +9,7 @@
 //  WebView, redial) rather than several to lose. Sharing, not *minimising*: the h2
 //  arm proved fewer connections is the wrong goal, and `shared()` says why.
 //
-//  It is deliberately *not* inside `FACoilBridge`, which owns an image-specific retry
+//  It is deliberately *not* inside `FAImageFetchBridge`, which owns an image-specific retry
 //  loop the page path must not inherit.
 //
 //  Lives in the app Gradle module (not FurAffinityUI) so it compiles against okhttp

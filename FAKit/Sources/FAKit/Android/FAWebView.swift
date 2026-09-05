@@ -98,7 +98,7 @@ extension WebViewNavigator {
     /// challenge). Only when a whole polling budget expires is the navigation
     /// retried, and an exhausted fetch throws a Cloudflare-named error.
     ///
-    /// Deliberately slower than `FACoilBridge`'s image retry (5 × 250 ms linear):
+    /// Deliberately slower than `FAImageFetchBridge`'s image retry (5 × 250 ms linear):
     /// a managed challenge needs seconds of script execution, so a budget that
     /// short would expire before the page could possibly clear and would only
     /// re-report the interstitial.

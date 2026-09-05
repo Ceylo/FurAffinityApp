@@ -1,11 +1,11 @@
 //
-//  FACoilBridge.kt
+//  FAImageFetchBridge.kt
 //  FurAffinity (Android)
 //
 //  Kotlin helper backing the native-Swift image layer. FurAffinityUI is a *native*
 //  Skip module (its Swift is compiled directly, not transpiled), so it cannot
-//  `import coil3.*`/`okhttp3.*` the way SkipUI can. Instead this class is called from
-//  Swift by class name through SkipBridge's AnyDynamicObject — see CoilImageLoader.swift.
+//  `import okhttp3.*` the way SkipUI can. Instead this class is called from
+//  Swift by class name through SkipBridge's AnyDynamicObject — see ImageFetchBridge.swift.
 //
 //  The HTTP client, its connection pool, the credential interceptor and the
 //  connection instrument all live in `FAHttpClient`, shared with the page path — one
@@ -14,10 +14,7 @@
 //  Nothing is cached and nothing is decoded here any more: Kingfisher owns both caches
 //  on this platform, so a fetch lands in a throwaway file under `cacheDir` and Swift is
 //  handed its **path**. Nothing full-size crosses JNI, and the caller unlinks the file
-//  the moment it has read it (`CoilImageLoader.fetchImageData`).
-//
-//  The name is kept — coil3's `DiskCache` used to be the store here, and
-//  `summarize-image-log.py` counts the `[Coil]` log lines the Swift side still emits.
+//  the moment it has read it (`ImageFetchBridge.fetchImageData`).
 //
 //  Cloudflare judges the *connection*, not the request, which is what the retry loop
 //  is for; `Android/docs/images.md` has the measurements and the two rejected
@@ -42,7 +39,7 @@ import skip.foundation.ProcessInfo
 /// Instantiated once from Swift (`AnyDynamicObject(className:)`) and retained for the
 /// app lifetime; all real state lives in the companion so the shared client and the
 /// interceptor headers are single-sourced regardless of the caller.
-class FACoilBridge {
+class FAImageFetchBridge {
     // Boolean, not Unit: AnyDynamicObject can't resolve the void overload.
     fun configure(userAgent: String, cookie: String): Boolean =
         FAHttpClient.configure(userAgent, cookie)
@@ -81,7 +78,7 @@ class FACoilBridge {
             val dir = File(context().cacheDir, STAGING_DIR)
             dir.mkdirs()
             if (!sweptStaging) {
-                synchronized(FACoilBridge::class.java) {
+                synchronized(FAImageFetchBridge::class.java) {
                     if (!sweptStaging) {
                         sweptStaging = true
                         val cutoff = System.currentTimeMillis() - STALE_STAGING_MS
@@ -132,7 +129,7 @@ class FACoilBridge {
                             // Name Cloudflare's verdict: `cf-mitigated=challenge` is a
                             // bot-score challenge, its absence on a 403 a WAF/hotlink
                             // block. Kept as one string so the JSON contract and
-                            // CoilImageLoader's failure line need no change.
+                            // ImageFetchBridge's failure line need no change.
                             val mitigated = response.header("cf-mitigated")
                                 ?.let { " cf-mitigated=$it" } ?: ""
                             val ray = response.header("cf-ray")?.let { " ray=$it" } ?: ""

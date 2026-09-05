@@ -8,7 +8,7 @@
 //  straight to the process-wide `CookieManager` instead.
 //
 //  Called from Swift by class name through SkipBridge's AnyDynamicObject; lives in the
-//  app Gradle module for the same reason FACoilBridge does. See AndroidLoginCookies.swift.
+//  app Gradle module for the same reason FAImageFetchBridge does. See AndroidLoginCookies.swift.
 //
 
 package fur.affinity.ui

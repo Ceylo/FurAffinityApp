@@ -13,19 +13,17 @@ connection and pages and images must share one pool:
 FAHttpClient.kt        the app's ONE OkHttpClient and ONE ConnectionPool, shared with
                        the page path (FAHttpBridge). Credentials, the connection
                        instrument, and the epoch-guarded eviction live here.
-FACoilBridge.kt        the image retry loop. Stages a fetch in a throwaway file under
+FAImageFetchBridge.kt  the image retry loop. Stages a fetch in a throwaway file under
                        cacheDir and returns its PATH — it caches nothing.
-CoilImageLoader.swift  AnyDynamicObject/JNI driver for it; reads that file and unlinks
-                       it. The `[Coil]` log prefix and the file names are kept because
-                       `summarize-image-log.py` counts them and the measured runs below
-                       are stated in them.
+ImageFetchBridge.swift AnyDynamicObject/JNI driver for it; reads that file and unlinks
+                       it, and emits the `[IMG]` lines the summarizer counts.
 FAImageStore.swift     what is left: the two-FIFO concurrency gate, the challenge park,
                        the connection-pool epoch, and fetch coalescing.
 FAKingfisherDownloader
   +Android.swift       `FAOkHttpDownloader`, an `ImageDownloader` subclass that
                        overrides the single method `KingfisherManager` calls. Kingfisher's
-                       own URLSession is never used here. `DecodeCoalescer` too,
-                       keyed by URL *and* processor identifier.
+                       own URLSession is never used here. The decode `InFlightCoalescer`
+                       too, keyed by URL *and* processor identifier.
 ```
 
 One client is the premise, not a tidiness choice: Cloudflare judges a connection, so
@@ -35,8 +33,8 @@ the one it has is *repairable* rather than a lost draw. See
 
 Rules that are easy to get wrong here:
 
-- **Never push a `Cookie:` header that lost its `cf_clearance`.** Coil cannot pull
-  a fresh header per request the way the HTTP layer can, so
+- **Never push a `Cookie:` header that lost its `cf_clearance`.** The image layer
+  cannot pull a fresh header per request the way the HTTP layer can, so
   `FAWebSession.refreshedCookieHeader()` is the one place that keeps the two in
   step — and a header read *mid-wipe* has no clearance at all. Pushing that
   de-seeds the image layer and every subsequent request's `Cookie:` line, turning
@@ -68,7 +66,7 @@ Rules that are easy to get wrong here:
   wherever that task resumed.
 - **No image bytes cross JNI.** The bridge returns a path; Swift reads that file
   natively and unlinks it.
-- **A challenge is reported, not retried into.** `FACoilBridge` hands
+- **A challenge is reported, not retried into.** `FAImageFetchBridge` hands
   `cf-mitigated: challenge` back to Swift — under h1 once its five attempts are spent,
   since each of those genuinely redials, and immediately otherwise. `FAImageStore` then
   parks on `awaitResolution()` and retries once on the repaired pool, which is how an
@@ -99,7 +97,7 @@ Rules that are easy to get wrong here:
   the URL and silently voids every prefetch. This is what the `listRowInsets` fork is for.
 - **Cloudflare's verdict on an image request is per *connection*, not per request and
   not per header set.** Measured on the emulator with a debug-only header probe in
-  `FACoilBridge` — a 4 URL x 5 variant Latin square run inside one launch, so that
+  `FAImageFetchBridge` — a 4 URL x 5 variant Latin square run inside one launch, so that
   run-to-run drift could not be mistaken for an effect (removed once the connection
   instrument below superseded it; `git log -- Android/app/src/main/kotlin` has it):
 
@@ -122,7 +120,7 @@ Rules that are easy to get wrong here:
   rate was clean, and `a.furaffinity.net` — only four avatars, so it never got a warm
   connection — went 20/20 x 403 against `t.furaffinity.net`'s 30 of 135 responses.
 - **The connection is measured, not inferred.** All of the above was read off 403
-  patterns until `FACoilBridge` grew an `EventListener.Factory` reporting, per attempt,
+  patterns until `FAImageFetchBridge` grew an `EventListener.Factory` reporting, per attempt,
   which connection carried it (`conn=`) and whether that attempt opened it (`new=`).
   `summarize-image-log.py` splits the 403 rate on it. Eight cold runs settle the model:
 
@@ -269,7 +267,7 @@ h1: the shared client, the epoch guard, and the repair.
   judge a change here on one run, and read each arm's *worst* run next to its median
   (`compare-image-runs.py` prints both). The medians describe the good mode only.
 - **The retry backoff sleeps inside `FAImageStore`'s concurrency permit, and that is
-  load-bearing.** It looks like pure waste: `FACoilBridge.fetchResult` runs all five
+  load-bearing.** It looks like pure waste: `FAImageFetchBridge.fetchResult` runs all five
   attempts inside one JNI call, so up to 2.5 s of `Thread.sleep` holds 1 of the gate's
   6 permits while doing nothing, and five other images wait behind it. Moving the loop
   into Swift so the permit is re-acquired per attempt and the backoff runs outside it
@@ -316,7 +314,7 @@ h1: the shared client, the epoch guard, and the repair.
   monotone in chronological order. No measurable regression, so the slower, politer
   backoff stays.
 
-  Corollary for the summarizer: `[Coil] GET request on` must be logged from **inside**
+  Corollary for the summarizer: `[IMG] GET request on` must be logged from **inside**
   the permit. Logged before it, the line marks when a `Task` was created rather than
   when the request went out, and `summarize-image-log.py`'s issuance cadence silently
   becomes meaningless (every gap 0 ms).
@@ -333,7 +331,7 @@ h1: the shared client, the epoch guard, and the repair.
   in the connection counter.
 - **A scroll test measures nothing on the Followed feed.** Its whole 72-item page is
   prefetched during the cold burst, so scrolling through it serves every thumbnail from
-  disk: the feed position advances and the `[Coil]` GET count does not move. Anything
+  disk: the feed position advances and the `[IMG]` GET count does not move. Anything
   that needs a *second* burst in the same process (connection-pool behaviour, say) has
   to trigger one another way — clearing the caches from Settings and pulling to refresh
   is the one that also drops the memory LRU, which otherwise absorbs everything.
@@ -341,7 +339,7 @@ h1: the shared client, the epoch guard, and the repair.
   coil3 `DiskCache` under the transport and Kingfisher's above it — which meant every
   image was written twice and the 7-14 day expiry existed in two implementations, one of
   them Kotlin's (coil's `DiskCache` *requires* a size ceiling and offers no expiry at
-  all, so the two halves sat on opposite sides of JNI). Now `FACoilBridge` stages a fetch
+  all, so the two halves sat on opposite sides of JNI). Now `FAImageFetchBridge` stages a fetch
   in a throwaway file and Kingfisher stores the only copy, under
   `cache/com.onevcat.Kingfisher.ImageCache.default`, with the same
   `.diskCacheExpiration(.days(7...14))` / `.diskCacheAccessExtending(.none)` iOS has.
@@ -369,14 +367,14 @@ h1: the shared client, the epoch guard, and the repair.
 - **The Kotlin bridges' `android.util.Log` output never reaches the log file Settings
   exports**, which only carries what went through the Swift `logger`
   (`PersistentLogger`). So anything worth keeping has to be *returned* to Swift and
-  logged there — the reason `FACoilBridge.fetch` became `fetchResult`, handing back
-  `{path, attempts, bytes, ms, failures}` as JSON so `CoilImageLoader.fetchImageData`
-  can emit the one `[Coil] GET request on <url>` line per network fetch plus a
-  retry/failure line. The same applies to the other bridges. The `[Coil]` prefix is kept
-  now that coil is gone: `summarize-image-log.py` counts it, and every measurement on
-  this page is stated in it.
+  logged there — the reason `FAImageFetchBridge.fetch` became `fetchResult`, handing back
+  `{path, attempts, bytes, ms, failures}` as JSON so `ImageFetchBridge.fetchImageData`
+  can emit the one `[IMG] GET request on <url>` line per network fetch plus a
+  retry/failure line. The same applies to the other bridges. Those lines were prefixed
+  `[Coil]` until the coil dependency went away; `summarize-image-log.py` and
+  `cold-image-run.sh` read both, so every run measured on this page still parses.
 - **`SubmissionFeedItemView.controlCacheBehavior` reports from the *feed card's* point
-  of view**, which the `[Coil]` lines cannot: on each row appearance it says whether
+  of view**, which the `[IMG]` lines cannot: on each row appearance it says whether
   that thumbnail is already in flight (and for how long) or neither cached nor
   starting. It is one implementation on both platforms now, over
   `DownloadDelegate.downloadStartDate(for:)` and `ImageCache.imageCachedType` —

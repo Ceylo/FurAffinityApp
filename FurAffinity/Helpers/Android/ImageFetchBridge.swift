@@ -1,17 +1,17 @@
 //
-//  CoilImageLoader.swift
+//  ImageFetchBridge.swift
 //  FurAffinityUI (Android)
 //
-//  Native-Swift driver for the Kotlin `FACoilBridge`. FurAffinityUI is a native Skip
+//  Native-Swift driver for the Kotlin `FAImageFetchBridge`. FurAffinityUI is a native Skip
 //  module, so it can't `import okhttp3.*`; instead it reaches the bridge by class name
 //  through SkipBridge's `AnyDynamicObject` (@dynamicMemberLookup / @dynamicCallable JNI
 //  reflection). The bridge hands back an on-disk *path*, never image bytes; this file
 //  reads that file natively and unlinks it, so nothing full-size crosses JNI and
 //  nothing is left behind.
 //
-//  Caching is Kingfisher's, above `FAOkHttpDownloader`. The `[Coil]` log prefix stays:
-//  it is what `Scripts/Android/summarize-image-log.py` counts, and keeping it makes the
-//  measured runs comparable across this change.
+//  Caching is Kingfisher's, above `FAOkHttpDownloader`. The image lines are the `[IMG]`
+//  ones `Scripts/Android/summarize-image-log.py` counts; it also still reads the `[Coil]`
+//  prefix these carried before, so runs recorded then stay re-analysable.
 //
 //  Credentials (FA UA + Cloudflare cookie header) are seeded once via `configure`
 //  after login; `fetchImageData` then just fetches.
@@ -26,7 +26,7 @@ import FAKit
 import SkipBridge
 #endif
 
-enum CoilImageLoader {
+enum ImageFetchBridge {
     #if canImport(Android)
     // One bridge instance for the app lifetime. The shared OkHttp client behind it is
     // a companion singleton on the Kotlin side, so a single Swift handle is enough.
@@ -34,9 +34,9 @@ enum CoilImageLoader {
     // ref that is safe to read from any thread.
     nonisolated(unsafe) private static let bridge: AnyDynamicObject? = {
         do {
-            return try AnyDynamicObject(className: "fur.affinity.ui.FACoilBridge")
+            return try AnyDynamicObject(className: "fur.affinity.ui.FAImageFetchBridge")
         } catch {
-            logger.error("CoilImageLoader: could not create FACoilBridge: \(error)")
+            logger.error("ImageFetchBridge: could not create FAImageFetchBridge: \(error)")
             return nil
         }
     }()
@@ -49,12 +49,12 @@ enum CoilImageLoader {
         guard let bridge else { return }
         let ok: Bool? = try? bridge.configure(userAgent, cookie)
         if ok != true {
-            logger.error("CoilImageLoader.configure did not confirm")
+            logger.error("ImageFetchBridge.configure did not confirm")
         }
         #endif
     }
 
-    /// What `FACoilBridge.fetchResult` reports back about one download. The bridge
+    /// What `FAImageFetchBridge.fetchResult` reports back about one download. The bridge
     /// returns it as JSON because its own `android.util.Log` output never reaches the
     /// log file Settings exports — the logging has to happen here.
     private struct FetchResult: Decodable {
@@ -93,13 +93,13 @@ enum CoilImageLoader {
         let isNew = loggedProtocols.insert(key).inserted
         protocolLock.unlock()
         if isNew {
-            logger.info("[Coil] \(host) negotiated \(proto)")
+            logger.info("[IMG] \(host) negotiated \(proto)")
         }
     }
 
     /// How one image fetch ended. `.challenged` is the case a solve can repair, and
     /// the reason this is not just `Data?` any more.
-    enum CoilFetchOutcome {
+    enum ImageFetchOutcome {
         case bytes(Data)
         /// `attempts`/`reasons` come along so that a caller which ultimately gives up
         /// can log the same `failed after …` line an exhausted fetch does. Without it
@@ -122,15 +122,15 @@ enum CoilImageLoader {
     /// The analog of iOS's `willDownloadImageForURL`: Kingfisher consults its own
     /// caches before reaching the downloader, so the `GET request` line is one per
     /// real fetch.
-    static func fetchImageData(_ url: URL) -> CoilFetchOutcome {
+    static func fetchImageData(_ url: URL) -> ImageFetchOutcome {
         #if canImport(Android)
         guard let bridge else { return .failed(epoch: 0) }
-        logger.info("[Coil] GET request on \(url)")
+        logger.info("[IMG] GET request on \(url)")
         do {
             let json: String? = try bridge.fetchResult(url.absoluteString)
             guard let data = json?.data(using: .utf8),
                   let result = try? JSONDecoder().decode(FetchResult.self, from: data) else {
-                logger.error("[Coil] \(url): unreadable fetch result \(json ?? "<nil>")")
+                logger.error("[IMG] \(url): unreadable fetch result \(json ?? "<nil>")")
                 return .failed(epoch: 0)
             }
             let epoch = result.epoch ?? 0
@@ -145,14 +145,14 @@ enum CoilImageLoader {
                 // The retry line first, so a URL's draws appear in attempt order:
                 // the failed attempts are inside `reasons`, the winning one is next.
                 if result.attempts > 1 {
-                    logger.warning("[Coil] \(url): succeeded on attempt \(result.attempts) (\(reasons))")
+                    logger.warning("[IMG] \(url): succeeded on attempt \(result.attempts) (\(reasons))")
                 }
                 let conn = result.conn.map { " conn=\($0) new=\(result.newConn ?? false)" } ?? ""
-                logger.info("[Coil] \(url): 200\(conn) \(result.ms ?? -1)ms")
+                logger.info("[IMG] \(url): 200\(conn) \(result.ms ?? -1)ms")
                 let file = URL(fileURLWithPath: path)
                 defer { try? FileManager.default.removeItem(at: file) }
                 guard let bytes = try? Data(contentsOf: file) else {
-                    logger.error("[Coil] \(url): staged bytes unreadable at \(path)")
+                    logger.error("[IMG] \(url): staged bytes unreadable at \(path)")
                     // The image is lost, so it has to say so in the shape
                     // `summarize-image-log.py` counts.
                     logAbandoned(url, attempts: result.attempts,
@@ -170,7 +170,7 @@ enum CoilImageLoader {
             logAbandoned(url, attempts: result.attempts, reasons: reasons)
             return .failed(epoch: epoch)
         } catch {
-            logger.error("[Coil] \(url): fetch threw: \(error)")
+            logger.error("[IMG] \(url): fetch threw: \(error)")
             return .failed(epoch: 0)
         }
         #else
@@ -183,7 +183,7 @@ enum CoilImageLoader {
     /// counts both as the same thing: an image that never came back.
     static func logAbandoned(_ url: URL, attempts: Int, reasons: String) {
         let plural = attempts == 1 ? "attempt" : "attempts"
-        logger.error("[Coil] \(url): failed after \(attempts) \(plural) (\(reasons))")
+        logger.error("[IMG] \(url): failed after \(attempts) \(plural) (\(reasons))")
     }
 
 }

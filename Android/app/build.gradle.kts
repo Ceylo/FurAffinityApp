@@ -16,10 +16,10 @@ kotlin {
 }
 
 dependencies {
-    // `FAHttpClient`/`FAHttpBridge`/`FACoilBridge` use okhttp and okio directly. SkipUI
-    // still pulls coil in for its own `AsyncImage`; this module no longer rides on it.
-    // Versions are what the classpath already resolves (SkipFoundation's okhttp-bom) —
-    // a higher pin would drag coil's okhttp onto a different version.
+    // `FAHttpClient`/`FAHttpBridge`/`FAImageFetchBridge` use okhttp and okio directly.
+    // SkipUI still pulls coil in for its own `AsyncImage`; this module no longer rides
+    // on it. Versions are what the classpath already resolves (SkipFoundation's
+    // okhttp-bom) — a higher pin would drag coil's okhttp onto a different version.
     implementation("com.squareup.okhttp3:okhttp:5.3.2")
     implementation("com.squareup.okio:okio:3.16.4")
 }

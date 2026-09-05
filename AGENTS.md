@@ -54,7 +54,7 @@ upstream) and `Kingfisher`, which now builds for Android: its decoding is
 substituted onto SkipSwiftUI's `UIImage` rather than ImageIO, and its SwiftUI
 layer onto `@Observable`, so `FAImage(_:)` is a real `KFImage` on both platforms.
 Only the *transport* under it is Android-only — `FAOkHttpDownloader` over
-`FAImageStore` + `FACoilBridge` — and Save/Share goes through `FAMediaBridge`.
+`FAImageStore` + `FAImageFetchBridge` — and Save/Share goes through `FAMediaBridge`.
 Pages and images share **one** `OkHttpClient` and one connection
 pool (`FAHttpClient.kt`, reached from FAKit through `FAWebSession.nativeTransport`),
 because Cloudflare judges a connection: a challenge on it is repaired — evict, solve

@@ -44,7 +44,7 @@ import SwiftUI
         // rather than in a `.task`: both are read as a view is *constructed*.
         FAWebViewUserAgent.platformProvider = { AndroidAppInfo.webViewDefaultUserAgent }
         FAWebSession.imageCredentialsSink = { userAgent, cookieHeader in
-            CoilImageLoader.configure(userAgent: userAgent, cookie: cookieHeader)
+            ImageFetchBridge.configure(userAgent: userAgent, cookie: cookieHeader)
         }
         // Page fetches join the image layer's connection pool. FAKit gains no JNI:
         // the transport is a struct of closures the app module fills in.

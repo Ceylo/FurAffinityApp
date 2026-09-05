@@ -9,8 +9,8 @@
 //
 //  Layering, from the bottom up:
 //
-//  - `FACoilBridge` (Kotlin) stages a fetch in a throwaway file and returns its
-//    *path*; `CoilImageLoader` reads and unlinks it, so no bytes cross JNI.
+//  - `FAImageFetchBridge` (Kotlin) stages a fetch in a throwaway file and returns its
+//    *path*; `ImageFetchBridge` reads and unlinks it, so no bytes cross JNI.
 //  - `gate` admits at most `concurrencyLimit` operations, so at most that many
 //    `queue` blocks — and therefore threads — exist at once. Waiters are two FIFOs so a
 //    visible row is never queued behind a batch of prefetches.
@@ -132,7 +132,7 @@ actor FAImageStore {
     /// the resolution path takes an `FAImageStore` permit. The challenge WebView loads
     /// through Chromium, not through here, and `refreshCredentialsThenRelease` awaits
     /// on the MainActor and pushes the new credentials through `imageCredentialsSink`
-    /// → `CoilImageLoader.configure`, a non-blocking volatile write.
+    /// → `ImageFetchBridge.configure`, a non-blocking volatile write.
     private func fetchHoldingPermit(_ url: URL, priority: FAImagePriority) async -> Data? {
         await acquire(priority)
         defer { release() }
@@ -141,11 +141,11 @@ actor FAImageStore {
         // too; park before issuing rather than paying for the round trip — on the
         // latched epoch, which is the generation the challenge was drawn against.
         if let latched = challengeEpoch, await park(observing: latched) == false {
-            CoilImageLoader.logAbandoned(url, attempts: 0, reasons: "parked, never issued")
+            ImageFetchBridge.logAbandoned(url, attempts: 0, reasons: "parked, never issued")
             return nil
         }
 
-        let outcome = await onQueue { CoilImageLoader.fetchImageData(url) }
+        let outcome = await onQueue { ImageFetchBridge.fetchImageData(url) }
         switch outcome {
         case let .bytes(bytes):
             return bytes
@@ -156,13 +156,13 @@ actor FAImageStore {
             challengeEpoch = epoch
             lastFailureEpoch = epoch
             guard await park(observing: epoch) else {
-                CoilImageLoader.logAbandoned(url, attempts: attempts, reasons: reasons)
+                ImageFetchBridge.logAbandoned(url, attempts: attempts, reasons: reasons)
                 return nil
             }
             // One retry, on the repaired pool and the fresh clearance. A second would
             // be another sample of a mechanism that just failed; the row shows its
             // placeholder and a later scroll re-asks.
-            let retried = await onQueue { CoilImageLoader.fetchImageData(url) }
+            let retried = await onQueue { ImageFetchBridge.fetchImageData(url) }
             if case let .bytes(bytes) = retried {
                 logger.info("[CFREPAIR] retry \(url) → 200")
                 return bytes
@@ -176,11 +176,11 @@ actor FAImageStore {
             switch retried {
             case let .challenged(retryEpoch, retryAttempts, retryReasons):
                 lastFailureEpoch = retryEpoch
-                CoilImageLoader.logAbandoned(url, attempts: attempts + retryAttempts,
+                ImageFetchBridge.logAbandoned(url, attempts: attempts + retryAttempts,
                                              reasons: "\(reasons), \(retryReasons)")
             case let .failed(retryEpoch):
                 lastFailureEpoch = retryEpoch
-                CoilImageLoader.logAbandoned(url, attempts: attempts, reasons: reasons)
+                ImageFetchBridge.logAbandoned(url, attempts: attempts, reasons: reasons)
             case .bytes:
                 break // handled above
             }
