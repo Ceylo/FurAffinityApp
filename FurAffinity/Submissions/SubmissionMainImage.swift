@@ -140,6 +140,12 @@ struct SubmissionMainImage: View {
     }
 
     func prepareFullResolutionMedia(sourceUrl: URL, loadedImage: UIImage) {
+        // Only the viewer reads `canPresentViewer` and `fullResolutionImage`, and the
+        // three call sites that disable it also bind `fullResolutionMediaFileUrl` to a
+        // constant — so without this every submission opened stages a multi-MB copy
+        // nobody reads, into what on Android is `cacheDir`.
+        guard allowZoomableSheet else { return }
+
         guard let fileUrl = try? cachedImageFileURL(for: sourceUrl) else {
             return
         }
