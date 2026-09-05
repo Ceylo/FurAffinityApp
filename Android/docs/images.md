@@ -89,7 +89,7 @@ Rules that are easy to get wrong here:
   The loop exists for Cloudflare's per-connection verdict, so a 4xx that is the origin's
   own answer gets one attempt, not five. FA answers a **404** for a user with no custom
   avatar — while still serving its default image — so those five attempts were five
-  requests plus ~2.5 s of backoff per missing avatar, each of them holding one of
+  requests plus ~4 s of backoff per missing avatar, each of them holding one of
   `FAImageStore`'s six permits. 403 (the verdict itself), 408 and 429 keep their
   retries, as does anything that is not an HTTP status.
 - **The width passed to `prefetchingPreviews` must be the width the row renders at.**
@@ -268,11 +268,12 @@ h1: the shared client, the epoch guard, and the repair.
   (`compare-image-runs.py` prints both). The medians describe the good mode only.
 - **The retry backoff sleeps inside `FAImageStore`'s concurrency permit, and that is
   load-bearing.** It looks like pure waste: `FAImageFetchBridge.fetchResult` runs all five
-  attempts inside one JNI call, so up to 2.5 s of `Thread.sleep` holds 1 of the gate's
+  attempts inside one JNI call, so up to 4 s of `Thread.sleep` holds 1 of the gate's
   6 permits while doing nothing, and five other images wait behind it. Moving the loop
   into Swift so the permit is re-acquired per attempt and the backoff runs outside it
   makes things dramatically **worse**. Cold runs on one emulator session, A-B-A so the
-  session's own drift is visible:
+  session's own drift is visible — measured on the `250 ms x attempt` backoff of the
+  time, so 2.5 s rather than today's 4 s:
 
   | arm | runs | responses/run | 403 rate | images lost/run | issuance span | drain |
   |---|---|---|---|---|---|---|
@@ -313,6 +314,11 @@ h1: the shared client, the epoch guard, and the repair.
   an effect, in either direction. Same story on the worst runs: 2 → 6 → 9 images lost is
   monotone in chronological order. No measurable regression, so the slower, politer
   backoff stays.
+
+  None of this loop has an iOS counterpart, and should not grow one: URLSession
+  negotiates h2 and keeps one warm connection per host (above), and not one reused
+  connection was challenged across the instrument's ~600 requests — so there is no bad
+  draw there to retry out of.
 
   Corollary for the summarizer: `[IMG] GET request on` must be logged from **inside**
   the permit. Logged before it, the line marks when a `Task` was created rather than
