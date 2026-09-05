@@ -27,7 +27,13 @@ import Kingfisher
 /// epoch-guarded pool repair and the single post-repair retry. This type only turns
 /// the on-disk path that comes back into the `ImageLoadingResult` Kingfisher expects.
 final class FAOkHttpDownloader: ImageDownloader, @unchecked Sendable {
-    static let shared = FAOkHttpDownloader()
+    /// `delegate` is `weak`; `DownloadDelegate.shared`, a `static let`, is what keeps
+    /// it alive. `@MainActor` to match it and `faImageDownloader`, the only reader.
+    @MainActor static let shared: FAOkHttpDownloader = {
+        let downloader = FAOkHttpDownloader()
+        downloader.delegate = DownloadDelegate.shared
+        return downloader
+    }()
 
     private init() {
         super.init(name: "FurAffinity OkHttp Downloader")
