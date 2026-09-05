@@ -3,14 +3,19 @@
 //  FurAffinityUI (Android)
 //
 //  Kingfisher's transport on Android. Everything above this — the memory and disk
-//  caches, coalescing of repeat loads, the processor, `KFImage`'s options — is
-//  Kingfisher's; everything below is the OkHttp pipeline this port already had
+//  caches, the processor, `KFImage`'s options — is Kingfisher's; everything below is
+//  the OkHttp pipeline this port already had
 //  (`FAHttpClient` → `FACoilBridge` → `CoilImageLoader`), which stays because
 //  Cloudflare judges a *connection* and pages and images must share one pool.
 //
 //  `KingfisherManager` reaches a downloader through exactly one method, the
 //  `KingfisherParsedOptionsInfo` overload of `downloadImage`, so that is the whole
 //  seam. Kingfisher's own `URLSession` is never used here.
+//
+//  Coalescing is the one thing that does *not* come for free with it: Kingfisher
+//  dedupes concurrent loads inside `SessionDataTask`/`SessionDelegate`, which a
+//  downloader replacing the transport never reaches. So the download is coalesced by
+//  `FAImageStore.bytes(for:)` and the decode by `DecodeCoalescer` below.
 //
 //  Unguarded on purpose — an Android substitution file must be, see
 //  Android/docs/shared-sources.md § Rules for shared sources. The JNI it reaches is
@@ -88,9 +93,14 @@ final class FAOkHttpDownloader: ImageDownloader, @unchecked Sendable {
         }
 
         // Through the gate, not straight here: the processor decodes, and a decode is
-        // another blocking JNI call on a thread Swift concurrency owns.
-        let image = await FAImageStore.shared.decoding(priority) {
-            options.processor.process(item: .data(data), options: options)
+        // another blocking JNI call on a thread Swift concurrency owns. And through
+        // the coalescer, because `bytes(for:)` only coalesces the *download*: N views
+        // of one avatar would otherwise run one fetch and N decodes, each taking one
+        // of the gate's six permits.
+        let image = await decodes.image(for: url, options: options) {
+            await FAImageStore.shared.decoding(priority) {
+                options.processor.process(item: .data(data), options: options)
+            }
         }
         guard let image else {
             return .failure(.processorError(
@@ -100,6 +110,36 @@ final class FAOkHttpDownloader: ImageDownloader, @unchecked Sendable {
         return .success(ImageLoadingResult(image: image, url: url, originalData: data))
     }
 }
+
+/// Coalesces concurrent decodes of the same processed image.
+///
+/// Kingfisher dedupes concurrent `retrieveImage` calls inside
+/// `SessionDataTask`/`SessionDelegate`, which a downloader replacing the transport
+/// never reaches, so this is the counterpart of `FAImageStore.bytes(for:)` for the
+/// decode. The processor is part of the key: what is shared is the *processed* image.
+private actor DecodeCoalescer {
+    private var inFlight = [String: Task<KFCrossPlatformImage?, Never>]()
+
+    func image(
+        for url: URL,
+        options: KingfisherParsedOptionsInfo,
+        decode: @escaping @Sendable () async -> KFCrossPlatformImage?
+    ) async -> KFCrossPlatformImage? {
+        let key = "\(url.absoluteString)|\(options.processor.identifier)"
+        if let existing = inFlight[key] {
+            return await existing.value
+        }
+        // Unstructured, like `bytes(for:)`: one caller cancelling must not cancel the
+        // decode the others are waiting on. The starter clears the entry.
+        let task = Task { await decode() }
+        inFlight[key] = task
+        let image = await task.value
+        inFlight[key] = nil
+        return image
+    }
+}
+
+private let decodes = DecodeCoalescer()
 
 enum FAImageError: LocalizedError {
     case loadFailed(URL)
