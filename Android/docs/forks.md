@@ -216,7 +216,7 @@ Guards in the fork are `#if os(Android)` / `#if !os(Android)`, never `canImport(
 for the same poisoning reason — Kingfisher's non-Android platforms are all Apple, so the
 platform gate is both safe and correct there.
 
-Four things the port needed beyond the guards:
+Five things the port needed beyond the guards:
 
 - **A public `DownloadTask` initializer.** `ImageDownloader.downloadImage` is `open`, but
   every `DownloadTask` initializer was internal, so an override outside the module had
@@ -260,6 +260,19 @@ Four things the port needed beyond the guards:
   in it gets a **fresh binder**. Measured on the submission screen, the whole image area
   and the author avatar went blank for one 33 ms frame at that swap even though both
   images were in the memory cache.
+- **The placeholder is released a pass late.** Upstream drops it in the same pass that
+  first gives the image a real frame and full opacity — right on SwiftUI, which paints the
+  new bitmap in that pass, wrong on SkipUI, which is not guaranteed to: the view is laid
+  out at its final size with neither the placeholder nor the image drawn in it. On the
+  submission screen that is the thumbnail vanishing before the full-resolution image
+  arrives. `KFImageRenderer` now keeps the placeholder mounted — on top, so it hides
+  nothing — until the image has had a composition of its own, reported one pass later by
+  an `onAppear`, i.e. by the very `SideEffect` timing that causes the problem in the
+  first place. `placeholderWasShown` is what stops the cure from becoming the disease:
+  an image resolved on the first composition (the memory hit above) never had a
+  placeholder on screen, so no hand-off is inserted for it. The sequence to expect, one
+  line per composition: `renderable=false placeholder=true` →
+  `renderable=true placeholder=true` → `renderable=true placeholder=false`.
 
 `Sources/Documentation.docc` is deleted in the fork rather than excluded: skipstone walks
 the whole target directory and generates a bridge for every SwiftUI `View` it finds,
