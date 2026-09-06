@@ -122,6 +122,27 @@ initializer whose parameter is expressible by a string literal wants
 `@_disfavoredOverload`, as `init<S: StringProtocol>` and
 `init(_ resource: AndroidLocalizedStringResource)` already carry.
 
+A sixth patch, to `Layout/GeometryReader.swift`, makes the content composable on the
+*measure* pass. It composed a `Box` with `onGloballyPositionedInRoot` and rendered
+`content(proxy)` only once that callback's state write had scheduled a recomposition, so
+every `GeometryReader` in the app drew nothing on its first frame — SwiftUI, by contrast,
+hands its content a size on the first pass. `BoxWithConstraints` composes during measure,
+and since the modifier is `fillSize()` bounded constraints already *are* the final size, so
+the proxy is exact straight away. Only the global *origin* is late: `frame(in: .global)`
+reads (0, 0) until placement delivers the real rect one recomposition on, which is why the
+remembered rect stays and still wins once it exists. Where either axis is unbounded — a
+`GeometryReader` inside a scroll axis — the constraint is `Constraints.Infinity`, a worse
+answer than none, so there the old wait-for-placement behaviour stands.
+
+Measured at `SubmissionPreviewView` → `SubmissionView`, where the cost was most visible:
+`SubmissionMainImage`'s body ran 616–689 ms before its `GeometryReader` composed anything,
+and a `.background(.red)` probe showed the row fully laid out — header, title, correct
+aspect-ratio height — over a solid red image area. After the patch that gap is 263 ms of
+composition→measure latency, which draws nothing because nothing is drawn before measure
+completes, and no blank frame survives on a 30 fps capture. The one caveat is cost:
+`BoxWithConstraints` is a `SubcomposeLayout`, heavier than a `Box`, and `GeometryReader` is
+on the feed-card path.
+
 ## One location per identity
 
 SwiftPM allows a package identity exactly one location across the whole graph, and
