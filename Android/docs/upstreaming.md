@@ -20,7 +20,7 @@ is never described as submitted.
 | `Ceylo/skip-fuse-ui` | all but one commit | `cfa7d82` — names our forks in `Package.swift` |
 | `Ceylo/Kingfisher` | `b01358ef` today; the Android port only if onevcat wants one | skipstone plugin, the unconditional `SkipFuseUI` edge, the `Documentation.docc` deletion, the dynamic-library manifest |
 | `Ceylo/Defaults` | `Defaults.defaultSuite`, pitched on its own merits | dropping `DefaultsMacros` + swift-syntax, the `#if !os(Android)` guards |
-| `Ceylo/skip-web` | nothing | `64de0f8` — one line, retires when the two above land |
+| `Ceylo/skip-web` | nothing | `64de0f8` — dependency locations only; required today, retires when the two above land |
 
 Per patch. "Paired" means the change touches API surface and so needs a matching
 `skip-fuse-ui` PR *and* a Showcase playground (see [Skip](#skip-ui--skip-fuse-ui) below).
@@ -48,27 +48,31 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `fb0ef04` `Defaults.defaultSuite` | Defaults | no | issue first; re-pitch without the Android rationale |
 | `4c1ad29` drop macros + guards | — | — | fork-only, permanently |
 | `e67bf25` + `4f7ad45` Android `@Default` | — | — | nothing to send: the second commit moved it out of the fork again, so the pair is a no-op against upstream |
-| `cfa7d82`, `64de0f8` fork re-points | — | — | fork-only; they retire with the patches above |
+| `cfa7d82`, `64de0f8` fork re-points | — | — | fork-only, and load-bearing: they are what gives skip-ui one location across the graph. They retire with the patches above |
 
 ## Before any PR
 
 - **Draft only.** Repeated because it is the rule most easily read past.
-- **`Ceylo/Defaults`, `Ceylo/Kingfisher` and `Ceylo/skip-web` cannot raise a PR at all.**
-  They are private *and are not GitHub forks* — they were created by push, so `parent` is
-  empty and they sit outside the upstream repository network. GitHub only opens a cross-repo
-  PR inside a network, and making them public does not join one. Create a real fork and push
-  topic branches to it:
-  ```
-  gh repo fork onevcat/Kingfisher --clone=false
-  gh repo fork sindresorhus/Defaults --clone=false
-  git -C ~/Development/SkipForks/Kingfisher remote add pr git@github.com:Ceylo/Kingfisher-fork.git
-  ```
-  `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui` are already public true forks and are PR-ready.
+- **All four PR-raising repositories are real forks and are PR-ready.** `Ceylo/Defaults` and
+  `Ceylo/Kingfisher` were not, until 2026-09-06: created by push rather than forked, they had
+  an empty `parent` and sat outside the upstream repository network, and GitHub opens a
+  cross-repo PR only inside a network — making them public would not have joined one. They
+  were deleted and recreated with `gh repo fork`, then the `android` branch pushed back; URLs
+  and commit SHAs are unchanged, so `Package.resolved` still resolves. If either is ever
+  recreated by push again, the same fix applies.
+  `Ceylo/skip-web` is the one non-fork left, and never needs to raise a PR — see
+  [skip-web](#skip-web).
 - **Never PR the `android` branch.** One topic branch per patch, cut from the current upstream
   default, rebased onto it — not merged. A PR carrying seventeen unrelated commits is the
   single most reliable way to be ignored.
 - **Strip the `Claude-Session:` trailer** from commits that go upstream: those URLs are dead
-  links for a maintainer. Keep `Co-Authored-By`.
+  links for a maintainer. Keep `Co-Authored-By`. As of 2026-09-06 five commits carry one —
+  three in Kingfisher, one in skip-web, one in skip-fuse-ui; skip-ui's seventeen and
+  Defaults' four are clean. Every commit is authored as
+  `451334+Ceylo@users.noreply.github.com`, so no personal address is exposed.
+- **Rewrite the app-specific comments.** The Kingfisher fork names FurAffinity in five
+  places, one of them a public doc comment on `DownloadTask`. A library takes no knowledge of
+  one app; rewrite each to state the general case before the patch goes out.
 - **Search the target's open PRs *and* issues for the same surface first**, and link whatever
   you find. skip-ui #468 was closed as obviated by #471, and Kingfisher #2570 closed as
   covered by #2568 — both authors had written the whole thing first.
@@ -298,7 +302,17 @@ resolved by him shipping his own release). Keep it to one public symbol plus its
 
 ## skip-web
 
-Nothing to upstream. `64de0f8` re-points `Package.swift` at our skip-ui and skip-fuse-ui
-forks and is an artefact of those forks existing; it retires with them. The same is true of
-the duplicate skip-ui declarations in `Ceylo/Kingfisher` and in `FAKit` — see
-[forks.md](forks.md) on why a package can be one declaration too many.
+Nothing to upstream, and this fork never raises a PR — but it is **required**, and it is not
+a scratch repository. `64de0f8` changes dependency locations only, no source: upstream
+skip-web names `source.skip.tools/skip-ui`, and SwiftPM allows a package identity exactly one
+location across the whole graph. Since `Ceylo/skip-fuse-ui` calls fork-only `SkipUI` API
+outside `#if SKIP`, every chain must name `github.com/Ceylo/skip-ui` — which is the whole
+reason this fork exists. See [forks.md § One location per identity](forks.md#one-location-per-identity).
+
+So it retires exactly when the skip-ui and skip-fuse-ui patches land upstream and the graph
+can name upstream skip-ui again — not before. `Ceylo/Kingfisher` and `FAKit` carry the same
+declaration for the same reason.
+
+One thing not to mistake for fork work: the `eval-json` and `inject-function` branches in
+this repository are upstream's own, every commit authored by marcprux, for skip-web PR #28
+(merged) and #34 (closed).
