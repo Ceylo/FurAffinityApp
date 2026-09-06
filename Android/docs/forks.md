@@ -153,6 +153,25 @@ re-records the revision already pinned, so after pushing to a fork's `android` b
 delete its pin (or `swift package update <dep>` at the root) rather than expecting the
 resolve to pick the new head up.
 
+Deleting the pin alone is **not** enough on the Xcode side, and the resolve reports the
+old revision without complaining. SwiftPM keeps a third record —
+`DerivedData/<proj>/SourcePackages/workspace-state.json` — whose `checkoutState` it trusts
+over the branch, and it re-pins from there even when the mirror already has the new head
+and the checkout has been deleted. The symptom is a resolve that keeps printing
+`@ android (<old sha>)` while `git ls-remote` shows a newer one. All three have to go
+together:
+
+```
+DD=$(xcodebuild -showBuildSettings 2>/dev/null | awk -F'= ' '/ BUILD_DIR =/{print $2}' | sed 's|/Build/Products||')
+# 1. the pin, from FurAffinity.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+# 2. the dependency's entry in "$DD/SourcePackages/workspace-state.json"
+rm -rf "$DD/SourcePackages/checkouts/<Dep>"          # 3. the checkout
+xcodebuild -project FurAffinity.xcodeproj -scheme FurAffinity -resolvePackageDependencies
+```
+
+This is how the workspace sat on `4f7ad45` while the root manifest was on `fb0ef04` — one
+commit apart, on the same fork, for the two builds.
+
 ## Why Kingfisher is forked
 
 Android reimplemented, in Swift and Kotlin, what iOS gets from Kingfisher for free: a

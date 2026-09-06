@@ -1,5 +1,5 @@
 {
-  "originHash" : "8598edebc330c9c02e1061332ed472a15ef9bc60c693fb3c41fc34eba6901187",
+  "originHash" : "032f7e4c457fe3bfabbdb0c04796656cc1b4b599e1a649d3a03f743eaf97431d",
   "pins" : [
     {
       "identity" : "amplitude-swift",
@@ -43,7 +43,7 @@
       "location" : "https://github.com/Ceylo/Defaults.git",
       "state" : {
         "branch" : "android",
-        "revision" : "4f7ad452d44470a8f9be759f26a4cce9f159194b"
+        "revision" : "fb0ef04cae83e07a2d3728214a8ddb60c6ff6163"
       }
     },
     {
