@@ -216,7 +216,7 @@ Guards in the fork are `#if os(Android)` / `#if !os(Android)`, never `canImport(
 for the same poisoning reason — Kingfisher's non-Android platforms are all Apple, so the
 platform gate is both safe and correct there.
 
-Three things the port needed beyond the guards:
+Four things the port needed beyond the guards:
 
 - **A public `DownloadTask` initializer.** `ImageDownloader.downloadImage` is `open`, but
   every `DownloadTask` initializer was internal, so an override outside the module had
@@ -236,6 +236,30 @@ Three things the port needed beyond the guards:
   it through `KFImageProtocol`, which the generator does not follow. The symptom to
   recognise: an empty `<Type>_Bridge.swift` under
   `.build/plugins/outputs/…/SkipBridgeGenerated/`.
+- **A synchronous memory-cache read in `body`.** `KFImageRenderer` starts its load from
+  the placeholder's `onAppear`, and SkipUI compiles `onAppear` to a Compose `SideEffect` —
+  which runs *after* the composition it belongs to has been applied. So the load cannot
+  affect the frame being built, and an image already decoded in the memory cache still
+  costs a blank frame; iOS has no such gap, because SwiftUI delivers `onAppear` in time
+  and `CallbackQueueMain.currentOrAsync` completes a memory hit synchronously.
+  **The defect is SkipUI's `onAppear` timing, and it cannot be closed there**: doing so
+  means running arbitrary caller side effects during a composition, which Compose forbids
+  because a composition may be discarded or replayed — and this app's `onAppear`s are
+  exactly the ones that must not double-fire (`RemoteView` starts the page fetch in one,
+  `SubmissionsFeedView` scrolls and launches a refresh `Task` in another). A memory-cache
+  *read*, by contrast, is idempotent and side-effect-free, so it is one of the few things
+  that legally may run during composition — which makes Kingfisher the only layer that can
+  put an already-decoded image on the first frame. That is the whole rule: a cache read
+  may run there, a page fetch may not. `ImageBinder.resolveFromMemoryCache(context:)` does
+  the lookup, guarded exactly as the existing `startLoadingBeforeViewAppear` block that
+  already mutates the binder from `body`; the `onSuccess` it owes is still delivered a hop
+  later, because that is caller code. Same principle as composing a `GeometryReader`'s
+  content on the measure pass — safe precisely because it is pure.
+  What made it necessary: `RemoteView` renders its `.loading` and `.loaded` states in two
+  branches of one `switch`, so the page arriving rebuilds the subtree and every `KFImage`
+  in it gets a **fresh binder**. Measured on the submission screen, the whole image area
+  and the author avatar went blank for one 33 ms frame at that swap even though both
+  images were in the memory cache.
 
 `Sources/Documentation.docc` is deleted in the fork rather than excluded: skipstone walks
 the whole target directory and generates a bridge for every SwiftUI `View` it finds,

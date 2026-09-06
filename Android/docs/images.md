@@ -53,6 +53,15 @@ Rules that are easy to get wrong here:
   only bound, and `configureImageCacheForAndroid()` (from `onInit`) sets it to 64 MB —
   what `FAImageMemoryCache` carried before Kingfisher, so the runs below stay
   comparable. iOS needs none of it: NSCache purges under memory pressure there.
+- **`alsoPrefetchToMemory` stays off**, tempting as it looks. `KFImageRenderer` resolves a
+  memory hit during composition on Android (see [forks.md § Why Kingfisher is
+  forked](forks.md#why-kingfisher-is-forked)), so an image the *memory* cache holds draws on
+  the first frame — but `ImagePrefetcher` leaves a source that is only on disk alone rather
+  than decoding it, so after a cold launch onto a warm disk a feed thumbnail's first
+  appearance still costs a frame. Promoting the prefetch is not the fix: `prefetchThumbnails`
+  prefetches the **whole page** — 48 previews — not a short look-ahead, so it would decode 48
+  `@600` bitmaps of order 1 MB each against the 64 MB ceiling above, filling it with rows the
+  user may never reach and evicting, LRU-first, the ones on screen.
 - **Settings counts and clears `fa-media` as well as the disk cache**, or the row's
   number disagrees with what clearing reclaims. Both halves are blocking file I/O and
   go through `FAImageStore.performingFileIO`, the same gate the fetch and the decode
