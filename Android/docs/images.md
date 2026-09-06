@@ -53,8 +53,8 @@ Rules that are easy to get wrong here:
   only bound, and `configureImageCacheForAndroid()` (from `onInit`) sets it to 64 MB —
   what `FAImageMemoryCache` carried before Kingfisher, so the runs below stay
   comparable. iOS needs none of it: NSCache purges under memory pressure there.
-- **`alsoPrefetchToMemory` stays off**, tempting as it looks. `KFImageRenderer` resolves a
-  memory hit during composition on Android (see [forks.md § Why Kingfisher is
+- **`alsoPrefetchToMemory` stays off**, tempting as it looks. A `KFImage` draws out of an
+  `ImageHolder` on Android (see [forks.md § Why Kingfisher is
   forked](forks.md#why-kingfisher-is-forked)), so an image the *memory* cache holds draws on
   the first frame — but `ImagePrefetcher` leaves a source that is only on disk alone rather
   than decoding it, so after a cold launch onto a warm disk a feed thumbnail's first
