@@ -6,6 +6,7 @@
 | `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
 | `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, and a public `DownloadTask` initializer so a subclass outside the module can replace the transport |
+| `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
 
 Sending any of these patches back to its origin project — the gates each project sets, what
 its own merged and rejected PRs show, and the shape a PR must take — is
@@ -22,9 +23,9 @@ Defaults and Kingfisher, the Xcode project too). While iterating, re-point the r
 then push to the `android` branch before the step's gate.
 
 The root `Package.resolved` **is** committed (`.gitignore` carries a `!/Package.resolved`
-negation; `FAKit/Package.resolved` and the Xcode workspace's copy stay ignored). Four
-deps resolve from mutable `branch: "android"` refs, so without the recorded revisions a
-release APK isn't reproducible. Refreshing a fork is still
+negation), as is the Xcode workspace's copy; only `FAKit/Package.resolved` stays ignored.
+Five deps resolve from mutable `branch: "android"` refs, so without the recorded
+revisions a release APK isn't reproducible. Refreshing a fork is still
 `swift package update <dep>` — now followed by committing the resulting diff.
 
 **Do not run `skip android build` / `skip android test` inside a fork checkout.**
@@ -121,19 +122,36 @@ initializer whose parameter is expressible by a string literal wants
 `@_disfavoredOverload`, as `init<S: StringProtocol>` and
 `init(_ resource: AndroidLocalizedStringResource)` already carry.
 
-**Note:** skip-ui arrives transitively via skip-fuse-ui, so overriding it needs its own
-entry in `Package.swift`'s `dependencies`, not just the fuse-ui one.
+## One location per identity
 
-**Note:** a package can be one declaration too many. `Ceylo/Kingfisher` declares
-`Ceylo/skip-ui` for the same reason FAKit does — it depends on `Ceylo/skip-fuse-ui`,
-whose `SkipSwiftUI` calls fork-only `SkipUI` API, so pairing it with upstream skip-ui
-does not compile. But adding that third declaration of the identity to the Xcode graph
-flipped SwiftPM's tie-break: the first resolve rewrote the workspace pin's *location* to
+SwiftPM allows a package identity exactly one location across the whole graph, and
+`Ceylo/skip-fuse-ui` forces the question: its `SkipSwiftUI.Text.Java_view` calls
+`SkipUI.Text(bridgedHTML:)` and `Text(bridgedSegments:)` outside `#if SKIP`, so pairing
+it with upstream skip-ui does not compile — on Apple either. **Every** manifest in the
+graph therefore names `github.com/Ceylo/skip-ui`: the two skip forks and Kingfisher say
+so themselves, which is the whole reason `Ceylo/skip-web` exists.
+
+The app manifests must **not** re-declare skip-ui. A root declaration used to be how the
+fork won, and it is what SwiftPM reports as *"dependency 'skip-ui' is not used by any
+target"*; the other half of the same problem is *"conflicting identity for skip-ui"*,
+naming whichever chain still points upstream. Both are warnings that SwiftPM says it will
+escalate to errors.
+
+Before the forks agreed, a third declaration of the identity could flip SwiftPM's
+tie-break: the first resolve rewrote the workspace pin's *location* to
 `source.skip.tools/skip-ui` while keeping the fork's revision, which then could not be
 checked out, and left a half-written checkout that failed every later resolve with
-"Package.swift doesn't exist in file system". Recovery is to put the location back by
-hand, `rm -rf` that one directory under `DerivedData/…/SourcePackages/checkouts/`, and
-resolve again; it settles and stays settled.
+"Package.swift doesn't exist in file system" — or, in `DerivedData/…/SourcePackages/`, a
+gutted `checkouts/skip-ui` (only `.git` left) that aborts the resolve before the `skip`
+binary artifact is unpacked, so the build dies on "ArtifactsArchive info.json not found
+… skip.artifactbundle". Recovery, should a stale pin resurrect it: drop the offending
+pins from the workspace `Package.resolved`, `rm -rf` that checkout and
+`artifacts/skip`, and resolve again.
+
+A branch pin is refreshed, not re-resolved: `xcodebuild -resolvePackageDependencies`
+re-records the revision already pinned, so after pushing to a fork's `android` branch,
+delete its pin (or `swift package update <dep>` at the root) rather than expecting the
+resolve to pick the new head up.
 
 ## Why Kingfisher is forked
 

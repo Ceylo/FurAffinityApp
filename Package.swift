@@ -25,11 +25,12 @@ let package = Package(
         // … "must use a 'required' initializer"). Keep this equal to `skip version`.
         .package(url: "https://source.skip.tools/skip.git", exact: "1.9.4"),
         // Forked for `listRowInsets`, `Text(AttributedString)`, `FlowRow` and a few
-        // unavailable-to-passthrough fixes — see Android/docs/forks.md. skip-ui comes
-        // in transitively via skip-fuse-ui, so it must be overridden here too.
+        // unavailable-to-passthrough fixes — see Android/docs/forks.md. skip-web is
+        // forked for its dependency locations alone. One location per package
+        // identity: the forks name Ceylo/skip-ui between them, so this manifest must
+        // not re-declare it.
         .package(url: "https://github.com/Ceylo/skip-fuse-ui.git", branch: "android"),
-        .package(url: "https://github.com/Ceylo/skip-ui.git", branch: "android"),
-        .package(url: "https://source.skip.tools/skip-web.git", from: "0.11.2"),
+        .package(url: "https://github.com/Ceylo/skip-web.git", branch: "android"),
         // Forked to build on Android: platform guards plus a decode seam onto
         // SkipSwiftUI's `UIImage`, and a bridgeable SwiftUI layer — see
         // Android/docs/forks.md.

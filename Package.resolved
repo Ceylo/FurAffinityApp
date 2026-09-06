@@ -1,5 +1,5 @@
 {
-  "originHash" : "dec51cb839d59f9a0b8021a7af49a3251eea860a4cccc3ea415afe65404e02f5",
+  "originHash" : "27c244980c50f1bd07f1b2b42d63114b59e2a72a52515f969fc5e4c0937c836b",
   "pins" : [
     {
       "identity" : "cache",
@@ -79,7 +79,7 @@
       "location" : "https://github.com/Ceylo/skip-fuse-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "9eb2c879837b2e8a6ce7ef9dabab4a41ac20b334"
+        "revision" : "cfa7d82f9a300dccd196853ae78f0dba56d93e8d"
       }
     },
     {
@@ -121,10 +121,10 @@
     {
       "identity" : "skip-web",
       "kind" : "remoteSourceControl",
-      "location" : "https://source.skip.tools/skip-web.git",
+      "location" : "https://github.com/Ceylo/skip-web.git",
       "state" : {
-        "revision" : "f03bcc21db5fcdb079b0c94a54fd424dc8968bdb",
-        "version" : "0.11.3"
+        "branch" : "android",
+        "revision" : "64de0f842e20938e6d978b30c18eaacb5f05a558"
       }
     },
     {
