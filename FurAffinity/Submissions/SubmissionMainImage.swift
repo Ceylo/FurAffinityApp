@@ -84,18 +84,8 @@ struct SubmissionMainImage: View {
     @ViewBuilder
     private func thumbnailPlaceholder(geometry: GeometryProxy) -> some View {
         if let thumbnailUrl = thumbnailImage?.bestThumbnailUrl(for: geometry) {
-            // The preview screen just drew this bucket, so it is already decoded in
-            // memory. Draw it straight rather than through a second `KFImage`, whose
-            // load only starts from a Compose `SideEffect` — a hit still costs a frame
-            // on Android, and measurably more than one under load.
-            if let cached = ImageCache.default.retrieveImageInMemoryCache(forKey: thumbnailUrl.cacheKey) {
-                Image(uiImage: cached)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-            } else {
-                FAImage(thumbnailUrl)
-                    .aspectRatio(contentMode: .fit)
-            }
+            FAImage(thumbnailUrl)
+                .aspectRatio(contentMode: .fit)
         }
     }
 
