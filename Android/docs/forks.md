@@ -139,7 +139,7 @@ Measured at `SubmissionPreviewView` → `SubmissionView`, where the cost was mos
 and a `.background(.red)` probe showed the row fully laid out — header, title, correct
 aspect-ratio height — over a solid red image area. After the patch that gap is 263 ms of
 composition→measure latency, which draws nothing because nothing is drawn before measure
-completes, and no blank frame survives on a 30 fps capture. The one caveat is cost:
+completes. The one caveat is cost:
 `BoxWithConstraints` is a `SubcomposeLayout`, heavier than a `Box`, and `GeometryReader` is
 on the feed-card path.
 
@@ -155,6 +155,19 @@ measure block, so sizing is a layout-phase read too; an unspecified size fills t
 space, as `RenderPainter`'s `fillSize()` branch already did. skip-fuse-ui vends it to native
 Swift as `Image(holder:)`. Kingfisher is the caller — see
 [§ Why Kingfisher is forked](#why-kingfisher-is-forked).
+
+Verified on the emulator with frame boundaries marked by a self-reposting
+`Choreographer.postFrameCallback` — `screenrecord` drops a single frame, so it is not the
+instrument. A memory hit logs `COMPOSE renderable=false` → `setImage` → `DRAW` inside one
+frame, with the recomposition that reports it renderable only in the next; on
+`SubmissionView` the composition that releases the thumbnail and the draw of the
+full-resolution image fall in the same frame.
+
+Moving the *write* instead — running `onAppear` during composition — lands in the same frame
+too, and was measured doing so, but it would run arbitrary caller side effects in a pass
+Compose may discard or replay, and this app's `onAppear`s are exactly the ones that must not
+double-fire (`RemoteView` starts the page fetch in one, `SubmissionsFeedView` a refresh
+`Task` in another). Moving the read costs nobody anything.
 
 ## One location per identity
 
@@ -229,7 +242,7 @@ Guards in the fork are `#if os(Android)` / `#if !os(Android)`, never `canImport(
 for the same poisoning reason — Kingfisher's non-Android platforms are all Apple, so the
 platform gate is both safe and correct there.
 
-Five things the port needed beyond the guards:
+Four things the port needed beyond the guards:
 
 - **A public `DownloadTask` initializer.** `ImageDownloader.downloadImage` is `open`, but
   every `DownloadTask` initializer was internal, so an override outside the module had
@@ -250,41 +263,31 @@ Five things the port needed beyond the guards:
   recognise: an empty `<Type>_Bridge.swift` under
   `.build/plugins/outputs/…/SkipBridgeGenerated/`.
 - **The rendered image comes out of an `ImageHolder`, not out of the view value.** A
-  SwiftUI `Image` is a value, so the bitmap it draws reaches the screen only through a
+  SwiftUI `Image` is a value, so its bitmap reaches the screen only through a
   recomposition — and `KFImageRenderer` starts its load from the placeholder's `onAppear`,
-  which SkipUI compiles to a Compose `SideEffect`, run *after* the composition it belongs
-  to has been applied. An image the memory cache already holds therefore missed its own
-  first frame, and the hand-off from placeholder to image was a node swap that could leave
-  a pass with neither drawn. iOS has neither gap: SwiftUI delivers `onAppear` in time and
-  `CallbackQueueMain.currentOrAsync` completes a memory hit synchronously.
+  which SkipUI compiles to a Compose `SideEffect`, run *after* that composition has been
+  applied. An image the memory cache already held therefore missed its own first frame.
+  iOS has no such gap: SwiftUI delivers `onAppear` in time and
+  `CallbackQueueMain.currentOrAsync` completes a memory hit synchronously. The answer is
+  to read the bitmap in the draw phase instead — see
+  [skip-ui § A draw-phase image](#a-draw-phase-image) for the primitive and the reasoning.
+  `ImageBinder` owns a holder and mirrors every loaded image into it through
+  `setLoadedImage(_:)`, not a `didSet`: the class is `@Observable` on Android and that
+  macro rewrites stored properties.
 
-  Compose's answer is to move the *read*, not the write. A frame is composition → layout →
-  draw, and a write that lands before that frame's traversal is picked up by every phase
-  that has not run yet — so state read in the draw phase is current even when it was
-  written from a `SideEffect`. That is why Coil paints a memory hit on a composition that
-  still reports `State.Empty`: the bitmap lives in `AsyncImagePainter`, read in `onDraw`,
-  and the node is composed once and never swapped. See
-  [skip-ui § A draw-phase image](#a-draw-phase-image) for the primitive; measured, the
-  alternatives are not close — a `SideEffect` write read during composition drew nothing on
-  the first frame, the same write read in the draw phase drew the image.
+  The image's opacity and zero-frame gates go with it, and that is half the fix — both are
+  composition-phase reads, so gating on them is what put the bitmap a frame late. The
+  holder needs no gate, drawing nothing until it is set, and because the image node is
+  already painted underneath, releasing the placeholder cannot expose a frame with neither.
+  The gate survives only for the passes a load transition owns, which `binder.animating`
+  marks and a memory hit never enters.
 
-  `ImageBinder` owns a holder, mirrors every loaded image into it (through
-  `setLoadedImage(_:)`, not a `didSet` — the class is `@Observable` on Android and that
-  macro rewrites stored properties), and `KFImageRenderer` renders it. The opacity and
-  zero-frame gates go with it on Android: both are composition-phase reads, which is
-  precisely what put the bitmap a frame late, and the holder needs no gate to stay
-  invisible. The gate survives only for the passes a load transition owns, which
-  `binder.animating` marks and a memory hit never enters.
-
-  Two earlier workarounds this replaced, so they are not reinvented: a memory-cache read
-  performed during composition, and a `placeholderWasShown`/`imageHadItsOwnPass` pair that
-  held the placeholder one pass past the hand-off. Both worked; both were the wrong layer,
-  and neither reached the avatars.
-
-  What made it urgent: `RemoteView` renders its `.loading` and `.loaded` states in two
-  branches of one `switch`, so the page arriving rebuilds the subtree and every `KFImage`
-  in it gets a **fresh binder**. Before, the whole image area and the author avatar went
-  blank for one 33 ms frame at that swap even though both images were in the memory cache.
+  This replaced two earlier workarounds: a memory-cache read performed during composition,
+  and a `placeholderWasShown`/`imageHadItsOwnPass` pair that held the placeholder one pass
+  past the hand-off. Both worked; both were the wrong layer, and neither reached the
+  avatars — which blank at every `RemoteView` state swap, since it renders `.loading` and
+  `.loaded` in two branches of one `switch`, so the page arriving rebuilds the subtree and
+  every `KFImage` in it gets a **fresh binder**.
 
 `Sources/Documentation.docc` is deleted in the fork rather than excluded: skipstone walks
 the whole target directory and generates a bridge for every SwiftUI `View` it finds,
