@@ -68,12 +68,24 @@ func configureImageCacheForAndroid() {
 extension KingfisherOptionsInfo {
     @MainActor
     static var defaultsForFA: Self {
-        [
+        var options: Self = [
             .downloader(faImageDownloader),
             .requestModifier(FAUserAgentRequestModifier()),
             .diskCacheExpiration(.days((7...14).randomElement()!)),
             .diskCacheAccessExtendingExpiration(.none),
         ]
+
+        #if FA_SKIP_MODULE
+        // Skip's Android UIImage has no animated-image metadata, so
+        // DefaultCacheSerializer cannot re-encode a downloaded GIF: its GIF
+        // representation is always nil. Preserve the original bytes instead so
+        // avatar GIFs use the same Kingfisher disk cache as JPEG/PNG images.
+        var serializer = DefaultCacheSerializer()
+        serializer.preferCacheOriginalData = true
+        options.append(.cacheSerializer(serializer))
+        #endif
+
+        return options
     }
 }
 
@@ -86,6 +98,13 @@ extension KFImageProtocol {
             .requestModifier(FAUserAgentRequestModifier())
             .diskCacheExpiration(.days((7...14).randomElement()!))
             .diskCacheAccessExtending(.none)
+            #if FA_SKIP_MODULE
+            .serialize(by: {
+                var serializer = DefaultCacheSerializer()
+                serializer.preferCacheOriginalData = true
+                return serializer
+            }())
+            #endif
             .onFailure { error in
                 logger.error("\(error)")
             }
