@@ -19,6 +19,7 @@ import FAKit
 struct AndroidRootView: View {
     @State var model = Model()
     @State var navigationStream = NavigationStream()
+    @State var challengeCoordinator = CloudflareChallengeCoordinator.shared
     @State var path = [FATarget]()
     @State var selectedTab: Tab = .submissions
 
@@ -40,23 +41,28 @@ struct AndroidRootView: View {
             // FAWebSessionView).
             FAWebSessionView()
 
-            // Stage 1 of the two-stage flow: a challenge view for the passive
-            // resolution most managed challenges do without a human. Kept below
-            // the opaque background for the same reason as FAWebSessionView — it
-            // has to lay out and render at full size to solve anything — and it
-            // escalates to the sheet only when Cloudflare says the challenge is
-            // interactive, or when the coordinator's safety timeout expires.
-            if CloudflareChallengeCoordinator.shared.backgroundResolutionPending {
-                FAChallengeView(
-                    // Push the fresh clearance into the image layer *before* the
-                    // parked callers are released. Nothing else pushes it, so
-                    // without this every image replays a dead clearance until some
-                    // later page fetch happens to refresh it.
-                    onResolved: { refreshCredentialsThenRelease() },
-                    onInteractionRequired: { CloudflareChallengeCoordinator.shared.markInteractionRequired() }
-                )
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
+            // Stable host for the passive challenge layer. Keeping the conditional
+            // inside this sibling prevents challenge state changes from changing
+            // the root ZStack's child structure and recreating its navigation host.
+            ZStack {
+                // Stage 1 of the two-stage flow: a challenge view for the passive
+                // resolution most managed challenges do without a human. Kept below
+                // the opaque background for the same reason as FAWebSessionView — it
+                // has to lay out and render at full size to solve anything — and it
+                // escalates to the sheet only when Cloudflare says the challenge is
+                // interactive, or when the coordinator's safety timeout expires.
+                if challengeCoordinator.backgroundResolutionPending {
+                    FAChallengeView(
+                        // Push the fresh clearance into the image layer *before* the
+                        // parked callers are released. Nothing else pushes it, so
+                        // without this every image replays a dead clearance until some
+                        // later page fetch happens to refresh it.
+                        onResolved: { refreshCredentialsThenRelease() },
+                        onInteractionRequired: { challengeCoordinator.markInteractionRequired() }
+                    )
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+                }
             }
 
             Color(.systemBackground)
@@ -122,7 +128,7 @@ struct AndroidRootView: View {
         // Says why the app is waiting during stage 1, and is the only way to reach
         // stage 2 on demand — the coordinator otherwise escalates on its own timeout.
         .overlay(alignment: .top) {
-            if CloudflareChallengeCoordinator.shared.backgroundResolutionPending {
+            if challengeCoordinator.backgroundResolutionPending {
                 CloudflareResolutionOverlay()
                     .padding(.top, 8)
             }
@@ -131,10 +137,10 @@ struct AndroidRootView: View {
         // fails the parked request rather than leaving it hanging.
         .sheet(
             isPresented: Binding(
-                get: { CloudflareChallengeCoordinator.shared.pending },
+                get: { challengeCoordinator.pending },
                 set: { isPresented in
-                    if !isPresented && CloudflareChallengeCoordinator.shared.pending {
-                        CloudflareChallengeCoordinator.shared.markFailed()
+                    if !isPresented && challengeCoordinator.pending {
+                        challengeCoordinator.markFailed()
                     }
                 }
             )
