@@ -11,22 +11,23 @@
 #
 # The AVD defaults to $ANDROID_AVD, or to the only installed one. Environment:
 # ANDROID_HOME / ANDROID_SDK_ROOT (SDK location), EMULATOR_BOOT_TIMEOUT (300s),
-# EMULATOR_MEMORY (guest RAM in MB, 3072).
+# EMULATOR_MEMORY (guest RAM in MB, 4096).
 #
-# hw.ramSize in config.ini is ignored below 4096MB — the emulator silently raises
-# it, and `-memory` alone does not override that. Only `-lowram` lifts the floor,
-# and it leaves ro.config.low_ram unset, so the guest is a normal device with less
-# RAM. Both flags are passed together; passing either yourself replaces ours.
+# 4096 is the default because 3072 swaps: zram runs ~1.5GB deep, lmkd kills
+# continuously, and the app ANRs or cold-starts instead of resuming. Anything
+# below 4096 is opt-in and drags `-lowram` in with it — that flag exists only to
+# lift the emulator's 4096MB floor, which `-memory` alone does not override.
+# Passing either flag yourself replaces ours.
 
 set -eo pipefail
 
 TIMEOUT="${EMULATOR_BOOT_TIMEOUT:-300}"
-MEMORY="${EMULATOR_MEMORY:-3072}"
+MEMORY="${EMULATOR_MEMORY:-4096}"
 
 die() { echo "error: $*" >&2; exit 1; }
 
 case "${1:-}" in
-    -h|--help) sed -n '3,19p' "$0" | cut -c3-; exit 0 ;;
+    -h|--help) sed -n '3,20p' "$0" | cut -c3-; exit 0 ;;
 esac
 
 # --- locate the SDK ---------------------------------------------------------
@@ -99,7 +100,9 @@ else
     done
     mem_args=()
     if (( want_memory )); then mem_args+=(-memory "$MEMORY"); fi
-    if (( want_lowram )); then mem_args+=(-lowram); fi
+    # -lowram exists only to lift the 4096MB floor, so pass it only below that —
+    # or whenever the caller set their own -memory, whose value we cannot see.
+    if (( want_lowram && ( !want_memory || MEMORY < 4096 ) )); then mem_args+=(-lowram); fi
 
     if (( want_memory )); then
         echo "booting $AVD with ${MEMORY}MB RAM (log: $LOG)"
