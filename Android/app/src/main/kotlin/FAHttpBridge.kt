@@ -112,7 +112,7 @@ class FAHttpBridge {
                 carried.add(carriedNames!!.getString(i).lowercase())
             }
 
-            val draw = FAHttpClient.draw.get()
+            val draw = FAHttpClient.currentDraw()
             draw.reset()
             // The generation the call is *issued* against, which is what a challenged
             // caller must compare when it asks for an eviction. Read here rather than
@@ -133,7 +133,7 @@ class FAHttpBridge {
                     }
 
                     val file = File(bodyDir, "${UUID.randomUUID()}.body")
-                    response.body?.byteStream()?.use { input ->
+                    response.body.byteStream().use { input ->
                         file.outputStream().use { output -> input.copyTo(output) }
                     }
 

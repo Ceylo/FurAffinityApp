@@ -67,11 +67,16 @@ object FAHttpClient {
         fun suffix() = id?.let { " conn=$it new=$isNew" } ?: ""
     }
 
-    val draw: ThreadLocal<Draw> = ThreadLocal.withInitial { Draw() }
+    private val draw: ThreadLocal<Draw> = ThreadLocal.withInitial { Draw() }
+
+    /// This thread's draw. The `!!` is sound: `withInitial` never yields null, and
+    /// the JDK's `ThreadLocal.get()` is only nullable to Kotlin because it is a
+    /// platform type. One documented assertion instead of one per call site.
+    fun currentDraw(): Draw = draw.get()!!
 
     private val connectionTracer = object : EventListener.Factory {
         override fun create(call: Call): EventListener {
-            val attempt = draw.get()
+            val attempt = currentDraw()
             return object : EventListener() {
                 /// Fires only when no pooled connection was available: this request
                 /// is paying for a handshake, and drawing a fresh CF verdict.

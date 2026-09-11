@@ -111,7 +111,7 @@ class FAImageFetchBridge {
 
             var attempt = 0
             var proto = ""
-            val conn = FAHttpClient.draw.get()
+            val conn = FAHttpClient.currentDraw()
             // Not every failure is worth a fresh draw; see `worthRedrawing`. Anything
             // that is not an HTTP status — a socket error, a cache-editor race — keeps
             // the retry it always had.
@@ -141,7 +141,7 @@ class FAImageFetchBridge {
                             val file = File.createTempFile("img", null, stagingDir())
                             try {
                                 val bytes = file.sink().buffer().use {
-                                    it.writeAll(response.body!!.source())
+                                    it.writeAll(response.body.source())
                                 }
                                 conn.id?.let { json.put("conn", it) }
                                 return json.put("path", file.path)
