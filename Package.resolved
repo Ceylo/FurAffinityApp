@@ -25,7 +25,7 @@
       "location" : "https://github.com/Ceylo/Kingfisher.git",
       "state" : {
         "branch" : "android",
-        "revision" : "ae0b4f07974597fd13190387933a18d4d176d6a0"
+        "revision" : "07f72debddb3ceabd1ff588022baa63ab6b171c6"
       }
     },
     {
@@ -79,7 +79,7 @@
       "location" : "https://github.com/Ceylo/skip-fuse-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "cfa7d82f9a300dccd196853ae78f0dba56d93e8d"
+        "revision" : "c59b1a70e1e5f4fa35946a502d6eb43a9230a0d3"
       }
     },
     {
@@ -106,7 +106,7 @@
       "location" : "https://github.com/Ceylo/skip-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "4b30753d637ea010522f2799ddc86dd3324ee23d"
+        "revision" : "23154a03527aa5c5e93aaf9f288960652e6cf90a"
       }
     },
     {
