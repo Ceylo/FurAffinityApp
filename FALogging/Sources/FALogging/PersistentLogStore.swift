@@ -213,7 +213,9 @@ public final class PersistentLogStore: @unchecked Sendable {
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             if !FileManager.default.fileExists(atPath: activeURL.path) {
-                FileManager.default.createFile(atPath: activeURL.path, contents: nil)
+                // Discarded on purpose: the `FileHandle` init below is what reports
+                // a failure to create it, by throwing into the enclosing catch.
+                _ = FileManager.default.createFile(atPath: activeURL.path, contents: nil)
             }
             let handle = try FileHandle(forWritingTo: activeURL)
             let end = try handle.seekToEnd()
