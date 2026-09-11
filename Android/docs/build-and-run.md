@@ -68,6 +68,42 @@ the end of `Android/settings.gradle.kts` mirrors `sdk.dir` into every included b
 "Included builds are not yet available for this build"). It rewrites on every sync, since
 `.build/` is regularly wiped.
 
+### Known build warnings
+
+A green `Scripts/Android/run.sh` still prints ~2000 warning lines. None of them
+come from this repo's own sources any more — what was ours was fixed — so the
+list below is what stays, and why. Check a *new* warning against it before
+triaging the whole log again.
+
+- **`skip-ui` fork** — `SkipUI/UIKit/UIImage.swift` "Skip is unable to match this
+  API call to determine the correct actor on which to run it", and
+  `SkipUI/Containers/Navigation.swift` "This extension will be moved into its
+  extended type definition when translated to Kotlin". Fork territory; see
+  [forks.md](forks.md).
+- **Gradle 10 deprecations** — the whole "Deprecated Gradle features were used in
+  this build" summary. `--warning-mode all` attributes every one of them to
+  skipstone-*generated* `build.gradle.kts` files (`> Configure project
+  :skipstone:FAKit` and `:skipstone:SkipBridge`): the `by extra` delegate syntax and
+  "Using a Project object as a dependency notation". **None** to
+  `Android/app/build.gradle.kts` or `Android/settings.gradle.kts`, which are ours —
+  that is the check worth repeating if the summary ever grows. The same generated
+  files also carry the Kotlin-level `srcDir` deprecation and "Redundant call of
+  conversion method", and Skip's own generated
+  `.build/Android/skip-gradle/src/main/kotlin/SkipGradlePlugins.kt` a deprecated
+  `task(name:configureAction:)`.
+- **"The Kotlin Gradle plugin was loaded multiple times in different subprojects"**
+  — named subprojects are `:app`, `:FAKit` and `:SkipWeb`; the latter two are Skip's
+  included builds, so the suggested fix (declare the plugin once on a common parent)
+  is not reachable from here.
+- **`clang: warning: using sysroot for 'MacOSX' but targeting 'iPhone'`** ×6 —
+  SwiftPM linking the `.dylib` products during Skip's
+  `swift build --triple arm64-apple-ios` pre-build.
+- **"Detected multiple Kotlin daemon sessions"** — environmental: one daemon per
+  worktree.
+- **`unable to remove entry …/{Border,ButtonBorder}Overlay.colorset/Contents.json`**
+  ×2 — skipstone resolving our committed symlinks; see
+  [assets-and-resources.md](assets-and-resources.md#sharing-asset-catalog-entries).
+
 ## Run
 
 ```

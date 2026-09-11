@@ -24,6 +24,14 @@ ls -R .build/plugins/outputs/*/FurAffinityUI/destination/skipstone/FurAffinityUI
 The path segment after `outputs/` is the **checkout directory's name**, not the word
 `android` — it differs per worktree, hence the glob.
 
+Each build prints two `unable to remove entry
+…/{Border,ButtonBorder}Overlay.colorset/Contents.json` warnings. Both name the
+**committed symlink**, in the source tree: skipstone wants to replace the entry it
+mirrors, and removing it would mean writing to `FurAffinity/Resources/`, which the
+SwiftPM plugin sandbox makes read-only (`NSCocoaErrorDomain Code=513`). The link is
+already there and still resolves, and the colours reach the APK — the warning is the
+sandbox doing its job. The symlinks stay.
+
 ## Reaching a catalog image from shared code
 
 `Bundle.faAssets` is the bundle a shared view names when it draws an asset-catalog
