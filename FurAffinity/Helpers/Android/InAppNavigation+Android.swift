@@ -25,6 +25,7 @@ func view(for target: FATarget) -> some View {
     }
 }
 
+@MainActor
 private var notPortedYet: some View {
     Centered {
         Text("This screen isn't ported to Android yet.")
