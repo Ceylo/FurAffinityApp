@@ -36,6 +36,18 @@ Troubleshooting:
 - **AVD hangs on boot** — `adb emu kill`, then relaunch with `-no-snapshot-load`
   to bypass a corrupt quick-boot snapshot.
 
+### Guest RAM
+
+`EMULATOR_MEMORY` (default **4096**) sets the guest RAM `start-emulator.sh` boots
+with. Do not lower it: at 3072 the guest pages into zram ~1.5GB deep, lmkd kills
+continuously at `oom_score_adj` 965–985, and the app ANRs or cold-starts instead
+of resuming — the `google_apis` image alone idles at ~650MB of Google apps. Below
+4096 the script also passes `-lowram`, which is the only way past the emulator's
+4096MB floor (`hw.ramSize` and `-memory` are both silently raised); check
+`hardware-qemu.ini` in the AVD dir for what was actually used. Guest RAM dominates
+the host footprint — HVF never hands a dirtied page back, so a long-running
+emulator settles around 10GB; restart it rather than shrink it.
+
 ## Build
 
 ```
