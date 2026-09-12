@@ -302,6 +302,83 @@ of `PersistentLogStore.shared`, which is the destructive half) — see
 runtime detects a relapse; `Scripts/Android/check-shared-globals.sh`, which
 `run.sh` runs after the Gradle build, does.
 
+### Attaching a Swift debugger
+
+```
+Scripts/Android/debug.sh    # build with symbols, install, start lldb-server, write .vscode/
+```
+
+Then set a breakpoint in a `.swift` file and press F5 in VS Code (**Swift
+(Android)**). Its `preLaunchTask` reruns the script with `--no-build` — restarting
+`lldb-server`, starting the app if needed, and opening `logs.sh -c` — so rerun the
+script by hand only after a build it did not make: `run.sh` installs stripped
+libraries. The attach is by process name, so an app restart costs one more F5.
+**The attach leaves the app paused; press Continue once** — resuming from
+`postRunCommands` makes lldb-dap abort with "Expected process to be stopped".
+`.vscode/` is generated and git-ignored because the app id carries the worktree
+name.
+
+Android Studio can debug the Kotlin side at the same time (JDWP, not ptrace) if it
+is set to **Java/Kotlin only**: its native/dual mode takes the ptrace slot LLDB
+needs.
+
+What it depends on:
+
+- **`lldb-dap` from a swift.org toolchain, Swift 6.3+.** Xcode's LLDB lacks the
+  Android fixes (module-load deadlock, attach crashes, pointer tagging).
+- **The NDK's `lldb-server`**, copied into the app's data directory with `run-as`
+  so it runs as the app's uid on a non-rooted device.
+- **`-PfaDebugSymbols`.** AGP strips the *debug* variant too
+  (`libFurAffinityUI.so` 13 → 7.3 MB), and LLDB reads modules off the device, so
+  without it there are no line tables. Off by default: symbols for three ABIs slow
+  the everyday build.
+- **`assembleDebug`, then `installDebug -Pandroid.injected.testOnly=true`.**
+  `lldb-server` ignores an APK's last entry
+  ([llvm/llvm-project#173966](https://github.com/llvm/llvm-project/pull/173966),
+  not in NDK 28.2); `assembleDebug` writes a `.so` last, and the re-pack puts a
+  manifest entry there instead.
+
+The generated `launch.json` also carries:
+
+- **`"timeout": 300`.** A cold attach pulls ~400 modules (284 MB) into
+  `~/.lldb/module_cache` and takes minutes; the 30 s default fails with
+  `process failed to stop within 30 s`. Warm attaches take seconds, which makes
+  that failure look intermittent.
+- **`process handle -s false`** for the SIGSEGV/SIGBUS/SIGQUIT/SIGUSR signals ART
+  raises in normal operation. Don't add `SIGPWR`: this LLDB rejects the name and
+  drops the rest of the line.
+
+A session that ends without detaching leaves the app SIGSTOPped (state `T`, pid
+still alive); `debug.sh` resumes it.
+
+#### Inspecting values
+
+LLDB picks the expression SDK from the target triple, finds no `Linux.sdk` and
+falls back to the host macOS SDK, so `p` fails with `could not build C module
+'Dispatch'` and `po` crashes lldb-dap. `debug.sh` adds two settings to
+`initCommands`, both read from the Swift SDK bundle's `swift-sdk.json`:
+
+```
+settings set target.sdk-path <bundle>/ndk-sysroot
+settings append target.swift-module-search-paths <bundle>/swift-resources/usr/lib/swift-<arch>/android
+```
+
+Both are needed: without the SDK path the ClangImporter hits `#error Unsupported
+architecture`. The module path is the `android` directory *below* the
+`swiftResourcesPath` that `swift-sdk.json` names; the parent makes
+`CoreFoundation` collide with the host toolchain's module map.
+
+swift-foundation's `URL` is pure Swift, so LLDB's Foundation formatters miss it;
+a `type summary` on `_url._parseInfo.urlString` shows it as a string in the
+Variables panel. That is a private layout — if it changes, URLs show blank; use
+`p url.absoluteString`. `Data` still shows as `slice`; use `p data.count`.
+
+Verified 2026-09-12 with the generated `launch.json`, on a warm and a wiped module
+cache: stopped in `OkHttpTransport.performBlocking`, `p request.url.absoluteString`
+→ `"https://www.furaffinity.net/view/66303662/"`, `p data.count` → `372`,
+`po response` → the full `FANativeHTTPResponse`, and the panel showed `request`'s
+URL as a string.
+
 ## Test
 
 The parser + logic layer is tested on the emulator via FAKit:
