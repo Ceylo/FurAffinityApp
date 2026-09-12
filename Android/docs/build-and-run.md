@@ -229,130 +229,6 @@ Launched FurAffinity 1.19 on Android 17, debug build debuggable=true
 That line comes from the shared `LaunchLog.swift`, so it matches iOS's word for
 word; only the OS name and the trailing detail differ per platform.
 
-### Attaching a debugger
-
-Kotlin and Swift need two different debuggers on the same process, and they
-coexist: Studio's Java debugger speaks JDWP, LLDB uses ptrace. What does *not*
-coexist is Studio's own native/dual mode, which takes the ptrace slot LLDB
-needs — leave Studio on **Java/Kotlin only**.
-
-For Swift:
-
-```
-Scripts/Android/debug.sh          # build, install, start lldb-server, write .vscode/
-```
-
-Then in VS Code, set a breakpoint in a `.swift` file and pick **Run ▸ Swift
-(Android)** — F5 alone is enough, the config's `preLaunchTask` runs this script
-first so the app and `lldb-server` are up before the attach. **The app is paused
-the moment the attach lands; press Continue once.** That is lldb-dap's behaviour
-for attach and it cannot be automated away: resuming from `postRunCommands`
-makes it abort with "Expected process to be stopped". The script writes `.vscode/settings.json` and `launch.json` rather
-than shipping them, because the app id carries the worktree's directory name;
-`.vscode/` is git-ignored for the same reason. It attaches by process *name*, so
-restarting the app costs another F5 and nothing more — `lldb-server` outlives it.
-
-The two halves of the debugger come from different places, and both matter:
-
-- **Host: `lldb-dap` from a swift.org toolchain**, not Xcode's LLDB. The fixes
-  that make Swift debuggable on Android — a deadlock loading modules, crashes on
-  attach, Android's pointer tagging, `lldb-server`'s zip-entry lookup — landed in
-  **Swift 6.3**. The script requires such a toolchain and refuses Xcode's.
-- **Device: `lldb-server` from the NDK**, copied into the app's data directory
-  with `run-as`, which is the only way to run as the app's uid on a non-rooted
-  device. There is no Swift build of it, and none is needed: the Swift half all
-  lives in the host's LLDB.
-
-Two things about the build had to change for any of this to work:
-
-- **AGP strips the debug variant too.** `stripDebugDebugSymbols` is not
-  release-only, and it takes `.debug_*` and `.symtab` out of libraries SwiftPM
-  compiled with `-g` — measured here, `libFurAffinityUI.so` 13 MB → 7.3 MB.
-  LLDB pulls its modules off the device, so a debugger attached to that gets
-  addresses and no line tables. `-PfaDebugSymbols` keeps them for our four
-  modules; it is off by default because the debug APK carries three ABIs and the
-  everyday inner loop should not pay for it.
-- **`lldb-server` ignores the last entry of an APK**
-  ([llvm/llvm-project#173966](https://github.com/llvm/llvm-project/pull/173966),
-  not in NDK 28.2), and ours is a `.so` — `assembleDebug` writes
-  `lib/<abi>/libSkipUI.so` last. Hence `assembleDebug` followed by
-  `installDebug -Pandroid.injected.testOnly=true`, which re-packs the APK so a
-  manifest entry lands last instead.
-
-The first attach pulls the app's shared objects off the device — about 400
-modules, 284 MB — and on a cold `~/.lldb/module_cache` takes **several minutes**,
-far past lldb-dap's 30-second default attach timeout. That is what
-`"timeout": 300` in the generated config is for; without it the attach is
-abandoned with `process failed to stop within 30 s`, which reads like a
-configuration error and is really just impatience. Later attaches hit the cache
-and take seconds — which is what makes the failure look intermittent.
-
-Two things the generated config handles that are easy to miss when driving LLDB
-by hand:
-
-- **ART raises signals constantly as normal operation** — SIGSEGV for its
-  implicit null checks, SIGQUIT/SIGUSR for GC and ANR dumps — and LLDB stops on
-  every one by default, which makes a session unusable. Hence the
-  `process handle -p true -s false -n false …` in `postRunCommands` (it has to be
-  post-run: there is no process to configure until the attach finishes). Note
-  that `SIGPWR`, which appears in most Android LLDB recipes online, is rejected
-  by name here and takes the rest of the line down with it.
-- **A session that ends without detaching leaves the app SIGSTOPped**, in state
-  `T` with a live pid, so it looks running and is frozen. `debug.sh` checks for
-  that and wakes it.
-- **`logs.sh` goes quiet at a breakpoint** rather than hanging — it filters by the
-  app's tags, and a stopped app logs nothing. The generated task runs it with
-  `-c` so a session starts on a cleared device buffer instead of replaying the
-  previous run.
-
-Verified end to end on 2026-09-12: attached to the running app, set a breakpoint
-in `AndroidRootView.swift` line 84, which resolved to `libFurAffinityUI.so`
-`closure #1 … in AndroidRootView.body.getter at AndroidRootView.swift:84:74`,
-and hit it by tapping "Continue offline (debug)" — LLDB stopped with the local
-source listing around the line.
-
-#### Inspecting values
-
-`p`, `po` and `v` all work, and the Variables panel renders a `URL` as its string.
-None of that came for free: LLDB derives the SDK for a compiled expression from
-the target triple, gets `Linux.sdk`, cannot find it, and falls back to the **host
-macOS SDK** — which compiles nothing for `aarch64-unknown-linux-android`. Every
-`p` died in `could not build C module 'Dispatch'`, and `po` took `lldb-dap` down
-with it. Two settings, emitted into `initCommands` by `debug.sh`, fix it:
-
-```
-settings set target.sdk-path <bundle>/ndk-sysroot
-settings append target.swift-module-search-paths <bundle>/swift-resources/usr/lib/swift-<arch>/android
-```
-
-Both roots come out of the Swift SDK bundle's own `swift-sdk.json`, so they
-follow a toolchain bump instead of being pinned; `debug.sh` prints what it
-resolved. Neither is optional — with only the module path the ClangImporter is
-still pointed at `MacOSX26.5.sdk` and fails on `#error Unsupported architecture`.
-
-The module path is the **platform** directory, `…/swift-<arch>/android`, one level
-*below* the `swiftResourcesPath` that `swift-sdk.json` names. Point LLDB at the
-parent and its `CoreFoundation` headers collide with the host toolchain's own
-module map — `could not build C module 'CoreFoundation'`, and a crashed adapter.
-
-The panel is a separate mechanism: `frame variable` never compiles anything, so
-it was never broken, but swift-foundation's `URL` is pure Swift here and LLDB's
-Foundation formatters do not apply to it — it showed as `{_url:0x…}`. A
-`type summary` walking `_url._parseInfo.urlString` gives back the string. That is
-the internal layout of `FoundationEssentials._SwiftURL`, so a Foundation that
-renames `_parseInfo` will blank every URL in the panel rather than error;
-`p url.absoluteString` is the fallback. `Data` still shows as `slice` — its
-representation is a four-case enum and no single summary path covers it. Use
-`p data.count`.
-
-Verified end to end on 2026-09-12, through `lldb-dap` over DAP with the generated
-`launch.json`, stopped in `OkHttpTransport.performBlocking`, on both a warm and a
-wiped `~/.lldb/module_cache`: `p request.url.absoluteString` →
-`(String) "https://www.furaffinity.net/view/66303662/"`, `p data.count` →
-`(Int) 372`, `po response` → the whole `FANativeHTTPResponse` including its
-headers, and the panel showing `request` as
-`{url:"https://www.furaffinity.net/view/66303662/", …}`.
-
 Open `Android/` in Android Studio to attach a debugger to the Kotlin/JNI side (its
 `.idea/` is git-ignored; `gradle.xml` there caches paths under `.build/` and is
 regenerated on sync — as is `.gradle/config.properties`, whose loss is what makes
@@ -377,6 +253,83 @@ of `PersistentLogStore.shared`, which is the destructive half) — see
 [One module, one image](shared-sources.md#one-module-one-image). Nothing at
 runtime detects a relapse; `Scripts/Android/check-shared-globals.sh`, which
 `run.sh` runs after the Gradle build, does.
+
+### Attaching a Swift debugger
+
+```
+Scripts/Android/debug.sh    # build with symbols, install, start lldb-server, write .vscode/
+```
+
+Then set a breakpoint in a `.swift` file and press F5 in VS Code (**Swift
+(Android)**). Its `preLaunchTask` reruns the script with `--no-build` — restarting
+`lldb-server`, starting the app if needed, and opening `logs.sh -c` — so rerun the
+script by hand only after a build it did not make: `run.sh` installs stripped
+libraries. The attach is by process name, so an app restart costs one more F5.
+**The attach leaves the app paused; press Continue once** — resuming from
+`postRunCommands` makes lldb-dap abort with "Expected process to be stopped".
+`.vscode/` is generated and git-ignored because the app id carries the worktree
+name.
+
+Android Studio can debug the Kotlin side at the same time (JDWP, not ptrace) if it
+is set to **Java/Kotlin only**: its native/dual mode takes the ptrace slot LLDB
+needs.
+
+What it depends on:
+
+- **`lldb-dap` from a swift.org toolchain, Swift 6.3+.** Xcode's LLDB lacks the
+  Android fixes (module-load deadlock, attach crashes, pointer tagging).
+- **The NDK's `lldb-server`**, copied into the app's data directory with `run-as`
+  so it runs as the app's uid on a non-rooted device.
+- **`-PfaDebugSymbols`.** AGP strips the *debug* variant too
+  (`libFurAffinityUI.so` 13 → 7.3 MB), and LLDB reads modules off the device, so
+  without it there are no line tables. Off by default: symbols for three ABIs slow
+  the everyday build.
+- **`assembleDebug`, then `installDebug -Pandroid.injected.testOnly=true`.**
+  `lldb-server` ignores an APK's last entry
+  ([llvm/llvm-project#173966](https://github.com/llvm/llvm-project/pull/173966),
+  not in NDK 28.2); `assembleDebug` writes a `.so` last, and the re-pack puts a
+  manifest entry there instead.
+
+The generated `launch.json` also carries:
+
+- **`"timeout": 300`.** A cold attach pulls ~400 modules (284 MB) into
+  `~/.lldb/module_cache` and takes minutes; the 30 s default fails with
+  `process failed to stop within 30 s`. Warm attaches take seconds, which makes
+  that failure look intermittent.
+- **`process handle -s false`** for the SIGSEGV/SIGBUS/SIGQUIT/SIGUSR signals ART
+  raises in normal operation. Don't add `SIGPWR`: this LLDB rejects the name and
+  drops the rest of the line.
+
+A session that ends without detaching leaves the app SIGSTOPped (state `T`, pid
+still alive); `debug.sh` resumes it.
+
+#### Inspecting values
+
+LLDB picks the expression SDK from the target triple, finds no `Linux.sdk` and
+falls back to the host macOS SDK, so `p` fails with `could not build C module
+'Dispatch'` and `po` crashes lldb-dap. `debug.sh` adds two settings to
+`initCommands`, both read from the Swift SDK bundle's `swift-sdk.json`:
+
+```
+settings set target.sdk-path <bundle>/ndk-sysroot
+settings append target.swift-module-search-paths <bundle>/swift-resources/usr/lib/swift-<arch>/android
+```
+
+Both are needed: without the SDK path the ClangImporter hits `#error Unsupported
+architecture`. The module path is the `android` directory *below* the
+`swiftResourcesPath` that `swift-sdk.json` names; the parent makes
+`CoreFoundation` collide with the host toolchain's module map.
+
+swift-foundation's `URL` is pure Swift, so LLDB's Foundation formatters miss it;
+a `type summary` on `_url._parseInfo.urlString` shows it as a string in the
+Variables panel. That is a private layout — if it changes, URLs show blank; use
+`p url.absoluteString`. `Data` still shows as `slice`; use `p data.count`.
+
+Verified 2026-09-12 with the generated `launch.json`, on a warm and a wiped module
+cache: stopped in `OkHttpTransport.performBlocking`, `p request.url.absoluteString`
+→ `"https://www.furaffinity.net/view/66303662/"`, `p data.count` → `372`,
+`po response` → the full `FANativeHTTPResponse`, and the panel showed `request`'s
+URL as a string.
 
 ## Test
 

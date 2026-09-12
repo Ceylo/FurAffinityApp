@@ -2,10 +2,9 @@
 #
 # Prepare a native Swift debugging session for this worktree's debug app.
 #
-# Installs a build whose Swift .so still carry line tables, starts lldb-server
-# inside the app sandbox, and writes .vscode/{settings,launch}.json pointing at
-# both. Then attach from VS Code: Run ▸ Swift (Android), and the toolchain's
-# Swift-aware LLDB breaks in Swift source.
+# Installs a build that keeps its Swift symbols, starts lldb-server inside the
+# app sandbox, and writes .vscode/ so F5 (Swift (Android)) attaches to it.
+# See Android/docs/build-and-run.md § Attaching a Swift debugger.
 #
 # Usage: Scripts/Android/debug.sh [--no-build] [--restart] [--timeout SECONDS]
 #
@@ -14,16 +13,9 @@
 #   --restart   force-stop the app and start it again before attaching
 #   --timeout   how long to wait for the emulator lock, default 1800s
 #
-# Kotlin is a separate debugger and this script does not touch it: Android
-# Studio, Run ▸ Attach Debugger to Android Process, **Java/Kotlin only**. Both
-# debuggers can sit on the process at once — JDWP and ptrace are different
-# channels — but Studio's own native/dual mode takes the ptrace slot LLDB
-# needs, so leave it on Java.
-#
-# Boot an emulator first with Scripts/Android/start-emulator.sh — this does not
-# start one. Environment: ANDROID_HOME / ANDROID_SDK_ROOT (SDK location),
-# ANDROID_SERIAL (which device, when several are attached), JAVA_HOME (the JDK
-# Gradle runs on), TOOLCHAINS_DIR (where to look for the Swift toolchain).
+# Needs a booted device (Scripts/Android/start-emulator.sh). Environment:
+# ANDROID_HOME / ANDROID_SDK_ROOT (SDK location), ANDROID_SERIAL (which device),
+# JAVA_HOME (Gradle's JDK), TOOLCHAINS_DIR (where to find a swift.org toolchain).
 
 set -eo pipefail
 
@@ -37,7 +29,7 @@ LOCK_ARGS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,26p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,18p' "$0" | cut -c3-; exit 0 ;;
         --no-build)   BUILD=0 ;;
         --restart)    RESTART=1 ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
@@ -71,9 +63,8 @@ fi
 [[ "$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == 1 ]] \
     || die "the device is still booting — Scripts/Android/start-emulator.sh waits for it"
 
-# LLDB's remote-android platform shells out to `adb` itself, and picks the
-# device out of ANDROID_SERIAL. Pin it now so the generated launch.json names
-# the same device this script set up, even if another one appears later.
+# LLDB's remote-android platform picks its device from ANDROID_SERIAL; pin the
+# one set up here into launch.json.
 SERIAL="${ANDROID_SERIAL:-$("$ADB" get-serialno | tr -d '\r')}"
 export ANDROID_SERIAL="$SERIAL"
 
@@ -98,10 +89,8 @@ PKG="$(skip_env ANDROID_PACKAGE_NAME)"
 
 # --- locate the two debugger halves -----------------------------------------
 
-# Host side: lldb-dap from a swift.org toolchain. Xcode's LLDB knows Swift too
-# but not the Android fixes that landed in Swift 6.3 (module-load deadlock,
-# attach crashes, Android pointer tagging), and its Swift support targets Apple
-# platforms — so require the open-source toolchain and say so when it's absent.
+# Host side: lldb-dap from a swift.org toolchain — Xcode's lacks the Android
+# fixes that landed in Swift 6.3.
 TC_DIR="${TOOLCHAINS_DIR:-$HOME/Library/Developer/Toolchains}"
 LLDB_DAP=""
 for tc in "$TC_DIR/swift-latest.xctoolchain" "$TC_DIR"/swift-*.xctoolchain \
@@ -113,13 +102,11 @@ done
 [[ -n "$LLDB_DAP" ]] || die "no swift.org toolchain under $TC_DIR — install one from swift.org
        (Xcode's own LLDB is not enough: the Android fixes are in Swift 6.3+)"
 
-# Device side: lldb-server from the NDK, matching the device's ABI. There is no
-# Swift build of it — the Swift half all lives in the host's LLDB.
+# Device side: the NDK's lldb-server for the device's ABI.
 NDK="$(ls -d "$SDK"/ndk/* 2>/dev/null | sort -V | tail -1)"
 [[ -n "$NDK" ]] || die "no NDK in $SDK/ndk — install one with \`skip android sdk install\`"
 
-# The NDK and the Swift SDK spell the 32-bit arches differently, and the Swift
-# SDK has no 32-bit x86 at all, so one mapping yields both names.
+# NDK and Swift SDK arch names differ; the Swift SDK has no 32-bit x86.
 case "$ABI" in
     arm64-v8a)    SERVER_ARCH=aarch64; SWIFT_ARCH=aarch64 ;;
     armeabi-v7a)  SERVER_ARCH=arm;     SWIFT_ARCH=armv7 ;;
@@ -133,24 +120,10 @@ LLDB_SERVER="$(ls "$NDK"/toolchains/llvm/prebuilt/*/lib/clang/*/lib/linux/"$SERV
 
 # --- the Swift SDK, so expressions compile ----------------------------------
 
-# Without this, `p` and `po` are dead: LLDB derives the expression SDK from the
-# target triple, gets "Linux.sdk", cannot find it, and falls back to the *host*
-# macOS SDK — which of course compiles nothing for aarch64-unknown-linux-android,
-# so every expression ends in "could not build C module 'Dispatch'".
-#
-# Two settings fix it, both taken from the Swift SDK bundle's own swift-sdk.json
-# so they follow a toolchain bump rather than being pinned here:
-#
-#   target.sdk-path                    the NDK sysroot, for the ClangImporter
-#   target.swift-module-search-paths   the .swiftmodules
-#
-# The module path is the *platform* directory, …/swift-<arch>/android, not the
-# resource directory above it that swift-sdk.json names: point LLDB at the parent
-# and its CoreFoundation headers collide with the host toolchain's own module map
-# ("could not build C module 'CoreFoundation'", and a crashed lldb-dap).
-#
-# Additive on purpose — breakpoints, stepping and `frame variable` need none of
-# it — so a bundle that has moved costs expression evaluation and nothing else.
+# Without an SDK path and module path, LLDB compiles expressions against the host
+# macOS SDK and `p`/`po` fail (docs § Inspecting values). Both come from the
+# bundle's swift-sdk.json; the module path is the `android` directory *below* its
+# swiftResourcesPath. Optional: breakpoints and `frame variable` work without.
 SWIFT_SDK_PATH=""
 SWIFT_MODULE_PATH=""
 BUNDLE="$(ls -d "$HOME"/Library/org.swift.swiftpm/swift-sdks/*_android.artifactbundle/swift-android 2>/dev/null | sort -V | tail -1)"
@@ -168,9 +141,8 @@ fi
 
 # --- build and install ------------------------------------------------------
 
-# Everything above is a cheap check, so it runs before queueing for the lock and
-# again on the far side of it; this is the part that must not overlap another
-# worktree's.
+# The checks above are cheap, so they fail fast before queueing for the lock
+# (and rerun once it is held).
 if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
     export FA_EMULATOR_LOCK_HELD=1
     args=()
@@ -181,11 +153,9 @@ if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
 fi
 
 if (( BUILD )); then
-    # Two steps rather than a bare installDebug: lldb-server ignores the last
-    # entry of an APK (llvm/llvm-project#173966), and ours is a .so — the last
-    # thing `assembleDebug` writes is lib/<abi>/libSkipUI.so. Installing with
-    # testOnly re-packs the APK so a manifest entry lands last instead, and the
-    # payload stays reachable.
+    # lldb-server ignores an APK's last entry (llvm/llvm-project#173966), which
+    # assembleDebug makes a .so; installing with testOnly re-packs it so a
+    # manifest entry lands last.
     ( cd "$ROOT/Android" && ./gradlew :app:assembleDebug -PfaDebugSymbols )
     ( cd "$ROOT/Android" && ./gradlew :app:installDebug -PfaDebugSymbols \
         -Pandroid.injected.testOnly=true )
@@ -199,14 +169,13 @@ fi
 
 # --- lldb-server, inside the app sandbox ------------------------------------
 
-# It has to run as the app's uid to ptrace it, which means living in the app's
-# own data directory: `run-as` is the only way in on a non-rooted device.
+# Runs as the app's uid to ptrace it, so it lives in the app's data directory
+# (`run-as` is the only way in on a non-rooted device).
 SOCKET="$APP_ID/lldb.sock"
 
 "$ADB" shell run-as "$APP_ID" pkill -f lldb-server >/dev/null 2>&1 || true
 
-# 44 MB over adb twice per run adds up; the staged copy survives reboots, so
-# only push when it is not already there at the right size.
+# 44 MB: push only when the staged copy (which survives reboots) differs in size.
 STAGED=/data/local/tmp/lldb-server
 want=$(stat -f%z "$LLDB_SERVER")
 have=$("$ADB" shell "stat -c %s $STAGED 2>/dev/null" | tr -d '\r' || true)
@@ -214,18 +183,13 @@ if [[ "$want" != "$have" ]]; then
     echo "pushing lldb-server ($((want / 1024 / 1024)) MB)"
     "$ADB" push "$LLDB_SERVER" "$STAGED" >/dev/null
 fi
-# /data/local/tmp is drwxrwx--x, so an app uid can traverse into it but only
-# reach a world-readable file.
+# /data/local/tmp is drwxrwx--x: the app uid can only reach a world-readable file.
 "$ADB" shell chmod 644 "$STAGED"
 "$ADB" shell run-as "$APP_ID" cp "$STAGED" ./lldb-server
 "$ADB" shell run-as "$APP_ID" chmod 700 ./lldb-server
 
-# Three slashes, not two: the abstract socket name is the URL's *path*, and with
-# `unix-abstract://$SOCKET` the app id parses as the host instead — leaving the
-# server listening on a name that the forward LLDB sets up never reaches.
-#
-# Detached on the device, not just backgrounded on the host: adb shell would
-# otherwise take the server down with it when this script exits.
+# Three slashes: the socket name is the URL's path; with two, the app id parses
+# as the host. setsid/nohup so the server outlives this adb shell.
 "$ADB" shell "run-as $APP_ID setsid nohup ./lldb-server platform --server \
     --listen 'unix-abstract:///$SOCKET' >/dev/null 2>&1 &" || true
 
@@ -238,9 +202,8 @@ done
 
 # --- the app ----------------------------------------------------------------
 
-# A session that ends without detaching cleanly — LLDB killed, VS Code quit mid
-# ---attach — leaves the app SIGSTOPped in state T rather than running. It still
-# has a pid, so nothing below would notice; wake it before anything else.
+# A session that ended without detaching leaves the app SIGSTOPped (state T)
+# with a live pid, which the checks below would take for running.
 STATE="$("$ADB" shell "ps -A -o S,NAME | grep -w $APP_ID" 2>/dev/null | awk '{print $1}' | head -1 | tr -d '\r' || true)"
 if [[ "$STATE" == T ]]; then
     echo "the app was left stopped by an earlier session — resuming it"
@@ -262,30 +225,8 @@ PID="$("$ADB" shell pidof "$APP_ID" | tr -d '\r' | awk '{print $1}' || true)"
 
 # --- the VS Code side -------------------------------------------------------
 
-# Generated rather than committed: the app id carries this worktree's name (see
-# Android/app/build.gradle.kts), so one checked-in launch.json would be wrong in
-# every other worktree. .vscode/ is git-ignored for that reason.
-#
-# The `process handle` line is what makes the session usable: ART raises SIGSEGV
-# for its own implicit null checks and SIGQUIT/SIGUSR for GC and ANR dumps, many
-# times a second, and LLDB halts on every one of them by default. It runs as a
-# postRunCommand because there is no process to configure until the attach is
-# done. (`SIGPWR` is in every Android LLDB recipe online and this LLDB rejects
-# the name outright, taking the rest of the line with it — leave it out.)
-#
-# `timeout` is not optional in practice: lldb-dap gives an attach 30 s to reach a
-# stopped process, and a cold attach here spends longer than that pulling the
-# app's ~400 shared objects off the device. It fails with "process failed to stop
-# within 30 s" — on a *warm* ~/.lldb module cache the same config attaches in
-# seconds, which is what makes this look intermittent.
-#
-# Do NOT add `process continue` here. lldb-dap requires the process to still be
-# stopped when postRunCommands finish — it installs breakpoints and completes its
-# handshake afterwards — and resuming makes it abort the session with "Expected
-# process to be stopped [...] check that any debugger command scripts are not
-# resuming the process". Attaching leaves the app paused; press Continue once.
-# Written only when the content actually changes: the setup task below runs this
-# script, so every F5 rewrites these files while VS Code is reading them.
+# Generated, not committed: the app id carries this worktree's name.
+# Written only on change, since every F5 reruns this script while VS Code reads them.
 write_if_changed() {
     local path="$1" tmp
     tmp="$(mktemp)"
@@ -297,19 +238,15 @@ write_if_changed() {
     fi
 }
 
-# The Swift SDK settings go first: initCommands run before the target exists, so
-# these are debugger defaults the target then inherits.
+# initCommands run before the target exists; it inherits these as defaults.
 INIT_COMMANDS=""
 if [[ -n "$SWIFT_SDK_PATH" && -n "$SWIFT_MODULE_PATH" ]]; then
     INIT_COMMANDS="                \"settings set target.sdk-path $SWIFT_SDK_PATH\",
                 \"settings append target.swift-module-search-paths $SWIFT_MODULE_PATH\",
 "
 fi
-# swift-foundation's URL is pure Swift here, so LLDB's Foundation formatters do
-# not apply and the Variables panel shows a bare `{_url:0x…}`. This walks the one
-# path that holds the string. It is the internal layout of
-# FoundationEssentials._SwiftURL, so a Foundation that renames `_parseInfo` turns
-# every URL in the panel blank — `p url.absoluteString` is then the fallback.
+# LLDB's Foundation formatters miss swift-foundation's pure-Swift URL. This
+# relies on _SwiftURL's private layout; if it changes, use `p url.absoluteString`.
 INIT_COMMANDS="$INIT_COMMANDS                \"type summary add --summary-string \\\"\${var._url._parseInfo.urlString}\\\" FoundationEssentials.URL\",
                 \"platform select remote-android\",
                 \"platform connect unix-abstract-connect:///$SOCKET\""
@@ -322,19 +259,9 @@ write_if_changed "$ROOT/.vscode/settings.json" <<EOF
 }
 EOF
 
-
-# Two tasks and a wrapper, because F5 has to do two things this script owns:
-# make sure the app and lldb-server are up (otherwise the attach fails with
-# "could not find a process"), and bring up the log stream.
-#
-# `logs.sh -c` clears the device buffer first, so a session starts on an empty
-# terminal instead of replaying the previous run.
-#
-# The banner is load-bearing. A background task only releases the debugger once
-# its `endsPattern` matches a line, and logs.sh prints nothing at all until the
-# app logs something — so matching on log output hangs F5 behind "Waiting for
-# preLaunchTask" whenever the app is quiet. Echoing a line we control and
-# matching *that* makes it deterministic.
+# F5 runs setup (app + lldb-server up), then the log stream. A background task
+# only releases F5 once endsPattern matches, and logs.sh is silent while the app
+# is, so match a banner we echo ourselves.
 write_if_changed "$ROOT/.vscode/tasks.json" <<EOF
 {
     "version": "2.0.0",
@@ -382,6 +309,10 @@ write_if_changed "$ROOT/.vscode/tasks.json" <<EOF
 }
 EOF
 
+# timeout: a cold attach pulls ~400 modules and outlasts lldb-dap's 30 s default.
+# postRunCommands: ART raises these signals in normal operation (SIGPWR is
+# rejected by name and drops the whole line). Never `process continue` there:
+# lldb-dap aborts unless the process is still stopped.
 write_if_changed "$ROOT/.vscode/launch.json" <<EOF
 {
     "version": "0.2.0",
@@ -428,12 +359,11 @@ ready — $APP_ID is running as pid $PID
   swift sdk    $SWIFT_SUMMARY
   wrote        .vscode/settings.json, launch.json, tasks.json
 
-In VS Code: open $ROOT, set a breakpoint in a .swift file, then
-Run ▸ Swift (Android). The first attach pulls the app's shared objects off the
-device and takes a minute; later ones hit LLDB's module cache.
+In VS Code: open $ROOT, set a breakpoint in a .swift file, then F5
+(Swift (Android)), and press Continue once attached. A cold first attach takes
+minutes; later ones hit LLDB's module cache.
 
-lldb-server outlives the app and the attach is by name, so restarting the app
-costs you nothing but another F5. Re-run this script after a rebuild, or after
-the emulator restarts. For Kotlin, attach Android Studio separately — see
---help.
+F5 restarts lldb-server and starts the app if needed. Re-run this script after a
+build it did not make (run.sh strips symbols). For Kotlin, attach Android Studio
+in Java/Kotlin mode.
 EOF
