@@ -243,7 +243,11 @@ Scripts/Android/debug.sh          # build, install, start lldb-server, write .vs
 ```
 
 Then in VS Code, set a breakpoint in a `.swift` file and pick **Run ▸ Swift
-(Android)**. The script writes `.vscode/settings.json` and `launch.json` rather
+(Android)** — F5 alone is enough, the config's `preLaunchTask` runs this script
+first so the app and `lldb-server` are up before the attach. **The app is paused
+the moment the attach lands; press Continue once.** That is lldb-dap's behaviour
+for attach and it cannot be automated away: resuming from `postRunCommands`
+makes it abort with "Expected process to be stopped". The script writes `.vscode/settings.json` and `launch.json` rather
 than shipping them, because the app id carries the worktree's directory name;
 `.vscode/` is git-ignored for the same reason. It attaches by process *name*, so
 restarting the app costs another F5 and nothing more — `lldb-server` outlives it.
@@ -276,8 +280,12 @@ Two things about the build had to change for any of this to work:
   manifest entry lands last instead.
 
 The first attach pulls the app's shared objects off the device — about 400
-modules, 280 MB — and takes roughly a minute; later ones hit LLDB's module cache
-under `~/.lldb`.
+modules, 284 MB — and on a cold `~/.lldb/module_cache` takes **several minutes**,
+far past lldb-dap's 30-second default attach timeout. That is what
+`"timeout": 300` in the generated config is for; without it the attach is
+abandoned with `process failed to stop within 30 s`, which reads like a
+configuration error and is really just impatience. Later attaches hit the cache
+and take seconds — which is what makes the failure look intermittent.
 
 Two things the generated config handles that are easy to miss when driving LLDB
 by hand:
@@ -292,6 +300,10 @@ by hand:
 - **A session that ends without detaching leaves the app SIGSTOPped**, in state
   `T` with a live pid, so it looks running and is frozen. `debug.sh` checks for
   that and wakes it.
+- **`logs.sh` goes quiet at a breakpoint** rather than hanging — it filters by the
+  app's tags, and a stopped app logs nothing. The generated task runs it with
+  `-c` so a session starts on a cleared device buffer instead of replaying the
+  previous run.
 
 Verified end to end on 2026-09-12: attached to the running app, set a breakpoint
 in `AndroidRootView.swift` line 84, which resolved to `libFurAffinityUI.so`

@@ -235,15 +235,100 @@ PID="$("$ADB" shell pidof "$APP_ID" | tr -d '\r' | awk '{print $1}' || true)"
 # postRunCommand because there is no process to configure until the attach is
 # done. (`SIGPWR` is in every Android LLDB recipe online and this LLDB rejects
 # the name outright, taking the rest of the line with it — leave it out.)
+#
+# `timeout` is not optional in practice: lldb-dap gives an attach 30 s to reach a
+# stopped process, and a cold attach here spends longer than that pulling the
+# app's ~400 shared objects off the device. It fails with "process failed to stop
+# within 30 s" — on a *warm* ~/.lldb module cache the same config attaches in
+# seconds, which is what makes this look intermittent.
+#
+# Do NOT add `process continue` here. lldb-dap requires the process to still be
+# stopped when postRunCommands finish — it installs breakpoints and completes its
+# handshake afterwards — and resuming makes it abort the session with "Expected
+# process to be stopped [...] check that any debugger command scripts are not
+# resuming the process". Attaching leaves the app paused; press Continue once.
+# Written only when the content actually changes: the setup task below runs this
+# script, so every F5 rewrites these files while VS Code is reading them.
+write_if_changed() {
+    local path="$1" tmp
+    tmp="$(mktemp)"
+    cat > "$tmp"
+    if [[ -f "$path" ]] && cmp -s "$tmp" "$path"; then
+        rm -f "$tmp"
+    else
+        mv "$tmp" "$path"
+    fi
+}
+
 mkdir -p "$ROOT/.vscode"
 
-cat > "$ROOT/.vscode/settings.json" <<EOF
+write_if_changed "$ROOT/.vscode/settings.json" <<EOF
 {
     "lldb-dap.executable-path": "$LLDB_DAP"
 }
 EOF
 
-cat > "$ROOT/.vscode/launch.json" <<EOF
+
+# Two tasks and a wrapper, because F5 has to do two things this script owns:
+# make sure the app and lldb-server are up (otherwise the attach fails with
+# "could not find a process"), and bring up the log stream.
+#
+# `logs.sh -c` clears the device buffer first, so a session starts on an empty
+# terminal instead of replaying the previous run.
+#
+# The banner is load-bearing. A background task only releases the debugger once
+# its `endsPattern` matches a line, and logs.sh prints nothing at all until the
+# app logs something — so matching on log output hangs F5 behind "Waiting for
+# preLaunchTask" whenever the app is quiet. Echoing a line we control and
+# matching *that* makes it deterministic.
+write_if_changed "$ROOT/.vscode/tasks.json" <<EOF
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Android debug session",
+            "dependsOrder": "sequence",
+            "dependsOn": ["Android debug setup", "Android logs"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Android debug setup",
+            "type": "shell",
+            "command": "\${workspaceFolder}/Scripts/Android/debug.sh --no-build",
+            "presentation": {
+                "panel": "dedicated",
+                "reveal": "silent",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Android logs",
+            "type": "shell",
+            "command": "echo '— log stream ready —'; exec \${workspaceFolder}/Scripts/Android/logs.sh -c",
+            "isBackground": true,
+            "presentation": {
+                "panel": "dedicated",
+                "reveal": "always",
+                "focus": false,
+                "clear": true
+            },
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^(?!x)x\$"
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^(?!x)x\$",
+                    "endsPattern": "log stream ready"
+                }
+            }
+        }
+    ]
+}
+EOF
+
+write_if_changed "$ROOT/.vscode/launch.json" <<EOF
 {
     "version": "0.2.0",
     "configurations": [
@@ -251,6 +336,9 @@ cat > "$ROOT/.vscode/launch.json" <<EOF
             "type": "lldb-dap",
             "request": "attach",
             "name": "Swift (Android)",
+            "preLaunchTask": "Android debug session",
+            "enableAutoVariableSummaries": true,
+            "timeout": 300,
             "debugAdapterEnv": {
                 "PATH": "$SDK/platform-tools:/usr/bin:/bin",
                 "ANDROID_SERIAL": "$SERIAL"
@@ -278,7 +366,7 @@ cat <<EOF
 ready — $APP_ID is running as pid $PID
   lldb-dap     $LLDB_DAP
   lldb-server  ${LLDB_SERVER#"$NDK"/} (in the app sandbox)
-  wrote        .vscode/settings.json, .vscode/launch.json
+  wrote        .vscode/settings.json, launch.json, tasks.json
 
 In VS Code: open $ROOT, set a breakpoint in a .swift file, then
 Run ▸ Swift (Android). The first attach pulls the app's shared objects off the
