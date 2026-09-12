@@ -29,7 +29,11 @@
 package fur.affinity.ui
 
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLongArray
 import okhttp3.Request
+import okio.Buffer
+import okio.BufferedSource
 import okio.buffer
 import okio.sink
 import org.json.JSONArray
@@ -45,6 +49,8 @@ class FAImageFetchBridge {
         FAHttpClient.configure(userAgent, cookie)
 
     fun fetchResult(url: String): String = Companion.fetchResult(url)
+
+    fun progress(url: String): String = Companion.progress(url)
 
     companion object {
         // Each attempt is an independent draw: the challenge closes the connection, so
@@ -140,9 +146,10 @@ class FAImageFetchBridge {
                         } else {
                             val file = File.createTempFile("img", null, stagingDir())
                             try {
-                                val bytes = file.sink().buffer().use {
-                                    it.writeAll(response.body.source())
-                                }
+                                val bytes = copyReportingProgress(
+                                    url, response.body.source(), file,
+                                    response.body.contentLength()
+                                )
                                 conn.id?.let { json.put("conn", it) }
                                 return json.put("path", file.path)
                                     .put("attempts", attempt)
@@ -189,6 +196,37 @@ class FAImageFetchBridge {
                 // freeing the permit across it is what let ~80 URLs resume in
                 // lockstep and 403 (Android/docs/images.md).
                 Thread.sleep(RETRY_BACKOFF_MS)
+            }
+        }
+
+        /// (received, total) per URL with a body being copied; total is -1 when the
+        /// response has no length. `FAImageStore` coalesces downloads, so one fetch per URL.
+        private val inFlight = ConcurrentHashMap<String, AtomicLongArray>()
+        private const val COPY_CHUNK = 64L * 1024
+
+        /// `"received,total"` for `url`'s copy in progress, `""` when there is none.
+        /// A map read, so Swift polls it without blocking.
+        fun progress(url: String): String =
+            inFlight[url]?.let { "${it.get(0)},${it.get(1)}" } ?: ""
+
+        private fun copyReportingProgress(
+            url: String, source: BufferedSource, file: File, total: Long
+        ): Long {
+            val entry = AtomicLongArray(longArrayOf(0, total))
+            inFlight[url] = entry
+            try {
+                file.sink().buffer().use { sink ->
+                    val buffer = Buffer()
+                    while (true) {
+                        val read = source.read(buffer, COPY_CHUNK)
+                        if (read == -1L) break
+                        sink.write(buffer, read)
+                        entry.addAndGet(0, read)
+                    }
+                }
+                return entry.get(0)
+            } finally {
+                inFlight.remove(url, entry)
             }
         }
 

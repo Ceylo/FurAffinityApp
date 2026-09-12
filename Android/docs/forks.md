@@ -5,7 +5,7 @@
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
 | `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass; a draw-phase `ImageHolder`; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
-| `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, a rendered image that comes out of an `ImageHolder` rather than out of the view value, and a public `DownloadTask` initializer so a subclass outside the module can replace the transport |
+| `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, a rendered image that comes out of an `ImageHolder` rather than out of the view value, a public `DownloadTask` initializer so a subclass outside the module can replace the transport, and `reportDownloadProgress` so that transport can feed the placeholder's progress |
 | `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
 
 Sending any of these patches back to its origin project — the gates each project sets, what
@@ -242,7 +242,7 @@ Guards in the fork are `#if os(Android)` / `#if !os(Android)`, never `canImport(
 for the same poisoning reason — Kingfisher's non-Android platforms are all Apple, so the
 platform gate is both safe and correct there.
 
-Five things the port needed beyond the guards:
+Six things the port needed beyond the guards:
 
 - **A public `DownloadTask` initializer.** `ImageDownloader.downloadImage` is `open`, but
   every `DownloadTask` initializer was internal, so an override outside the module had
@@ -307,6 +307,15 @@ Five things the port needed beyond the guards:
   markers, opening a submission with a warm memory cache: the transition frame went from
   3 image nodes drawn with an empty holder to 0, **5 blank frames over 5 runs → 0 over 5**,
   and the transition now finishes a frame sooner.
+
+- **A replacement transport can report progress.** Progress reached the placeholder
+  only through `DataReceivingSideEffect.onDataReceived`, which takes a `SessionDataTask`
+  and is internal, so `FAOkHttpDownloader` could not feed it.
+  `KingfisherParsedOptionsInfo.reportDownloadProgress(receivedSize:totalSize:)` forwards
+  to the same `ImageLoadingProgressSideEffect`s, with the same main-queue hop,
+  `onShouldApply` check and unknown-length skip. On Android `ImageBinder.updateProgress`
+  also assigns a new `Progress` instead of mutating the current one: under Observation
+  only a write to the stored property is seen, so the placeholder never recomposed.
 
 `Sources/Documentation.docc` is deleted in the fork rather than excluded: skipstone walks
 the whole target directory and generates a bridge for every SwiftUI `View` it finds,

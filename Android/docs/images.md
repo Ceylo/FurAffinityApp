@@ -73,6 +73,19 @@ Rules that are easy to get wrong here:
   submits to a real `DispatchQueue`. The decode is easy to lose: `FAOkHttpDownloader`
   runs in a plain `Task`, so `options.processor.process(...)` would otherwise decode
   wherever that task resumed.
+- **Download progress is polled, not pushed.** The fetch blocks until the body is on
+  disk, so `FAImageFetchBridge` copies it in 64 KiB chunks into a per-URL
+  `(received, total)` table and `progress(url)` reads it. `FAOkHttpDownloader` waits
+  150 ms, then polls it every 100 ms and hands each reading to
+  `KingfisherParsedOptionsInfo.reportDownloadProgress` (a fork API), which is what feeds
+  `KFImage`'s placeholder and so `SubmissionMainImage`'s bar. The wait spares loads that
+  finish quickly. A load still queued behind the gate does poll, and misses. A polled
+  read is a map lookup, not a blocking call, so the rule above does not apply to it.
+  Measured over alternating arms, 3 cold runs each, in the order B1 A1 B2 A2 B3
+  (2026-09-12). The Kotlin-side fetch median went from ~50 ms to ~250 ms from A1's third
+  run through B2, then back to ~50 ms in A2 and B3. That was drift. B3 was the only arm
+  to lose images: 6, all in one run with a 35% 403 rate and page-path challenges. The
+  poller sends no request, so it has no way to cause that.
 - **No image bytes cross JNI.** The bridge returns a path; Swift reads that file
   natively and unlinks it.
 - **A challenge is reported, not retried into.** `FAImageFetchBridge` hands

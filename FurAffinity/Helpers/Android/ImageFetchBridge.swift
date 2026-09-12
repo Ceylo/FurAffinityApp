@@ -178,6 +178,22 @@ enum ImageFetchBridge {
         #endif
     }
 
+    /// Bytes copied so far for `url`'s fetch, and its length (-1 if the response has
+    /// none); nil when no body is being copied. A map read on the Kotlin side, so it is
+    /// safe to poll while `fetchImageData` blocks another thread.
+    static func progress(of url: URL) -> (received: Int64, total: Int64)? {
+        #if canImport(Android)
+        guard let bridge,
+              let value: String = try? bridge.progress(url.absoluteString) else { return nil }
+        let parts = value.split(separator: ",")
+        guard parts.count == 2,
+              let received = Int64(parts[0]), let total = Int64(parts[1]) else { return nil }
+        return (received, total)
+        #else
+        return nil
+        #endif
+    }
+
     /// The line a lost image logs — an exhausted fetch here, and a challenged one that
     /// `FAImageStore` finally gives up on. One spelling, so `summarize-image-log.py`
     /// counts both as the same thing: an image that never came back.

@@ -84,6 +84,22 @@ final class FAOkHttpDownloader: ImageDownloader, @unchecked Sendable {
             )
         }
 
+        // The OkHttp fetch blocks until the file is written, so progress is polled
+        // from its copy loop. The first wait spares loads that finish quickly; one
+        // still queued behind `FAImageStore`'s gate polls, and misses, a map lookup.
+        let progressPoller = Task {
+            try? await Task.sleep(for: .milliseconds(150))
+            while !Task.isCancelled {
+                if let progress = ImageFetchBridge.progress(of: url) {
+                    options.reportDownloadProgress(
+                        receivedSize: progress.received, totalSize: progress.total
+                    )
+                }
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+        }
+        defer { progressPoller.cancel() }
+
         guard let data = await FAImageStore.shared.bytes(for: url, priority: priority) else {
             return .failure(.responseError(reason: .URLSessionError(error: FAImageError.loadFailed(url))))
         }
