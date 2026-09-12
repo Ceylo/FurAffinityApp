@@ -242,7 +242,7 @@ Guards in the fork are `#if os(Android)` / `#if !os(Android)`, never `canImport(
 for the same poisoning reason — Kingfisher's non-Android platforms are all Apple, so the
 platform gate is both safe and correct there.
 
-Four things the port needed beyond the guards:
+Five things the port needed beyond the guards:
 
 - **A public `DownloadTask` initializer.** `ImageDownloader.downloadImage` is `open`, but
   every `DownloadTask` initializer was internal, so an override outside the module had
@@ -288,6 +288,25 @@ Four things the port needed beyond the guards:
   avatars — which blank at every `RemoteView` state swap, since it renders `.loading` and
   `.loaded` in two branches of one `switch`, so the page arriving rebuilds the subtree and
   every `KFImage` in it gets a **fresh binder**.
+- **A cache hit is delivered in the frame it is asked for**, which the holder alone did not
+  buy. The holder is read in the draw phase, so it only helps an image whose bitmap lands
+  before that frame's traversal — and a memory hit did not. The app sets
+  `preferCacheOriginalData` (Skip's `UIImage` carries no animated-image metadata, so
+  `DefaultCacheSerializer` cannot re-encode a GIF), which makes
+  `originalDataUsed` true, and `KingfisherManager.deliverTargetCacheHit` then re-runs the
+  processor on the *cached* image over the processing queue and returns through the callback
+  queue. That round trip is always a frame: the return hop is a `Handler` post and the frame
+  that posted it is itself one. So the holder was written after the frame that drew it, and
+  the fresh binders above made that a guaranteed blank frame on every `RemoteView` swap.
+
+  On Android the round trip buys nothing —
+  `DefaultImageProcessor.process(item: .image(_:))` returns its input unchanged there,
+  having no `kf.scaled(to:)` counterpart — so with the default processor the reprocessing
+  is skipped and the image is handed over inline. A real processor still runs off the main
+  thread, and the Apple branch keeps the hop it needs. Measured against Choreographer frame
+  markers, opening a submission with a warm memory cache: the transition frame went from
+  3 image nodes drawn with an empty holder to 0, **5 blank frames over 5 runs → 0 over 5**,
+  and the transition now finishes a frame sooner.
 
 `Sources/Documentation.docc` is deleted in the fork rather than excluded: skipstone walks
 the whole target directory and generates a bridge for every SwiftUI `View` it finds,
