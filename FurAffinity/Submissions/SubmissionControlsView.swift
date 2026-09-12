@@ -130,7 +130,7 @@ struct SubmissionControlsView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .padding()
-                    .offset(y: 2)
+                    .symbolOpticalOffset(y: 2)
                     .foregroundStyle(Color.buttonTint)
             }
             .frame(height: buttonsSize)
