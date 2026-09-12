@@ -229,6 +229,76 @@ Launched FurAffinity 1.19 on Android 17, debug build debuggable=true
 That line comes from the shared `LaunchLog.swift`, so it matches iOS's word for
 word; only the OS name and the trailing detail differ per platform.
 
+### Attaching a debugger
+
+Kotlin and Swift need two different debuggers on the same process, and they
+coexist: Studio's Java debugger speaks JDWP, LLDB uses ptrace. What does *not*
+coexist is Studio's own native/dual mode, which takes the ptrace slot LLDB
+needs — leave Studio on **Java/Kotlin only**.
+
+For Swift:
+
+```
+Scripts/Android/debug.sh          # build, install, start lldb-server, write .vscode/
+```
+
+Then in VS Code, set a breakpoint in a `.swift` file and pick **Run ▸ Swift
+(Android)**. The script writes `.vscode/settings.json` and `launch.json` rather
+than shipping them, because the app id carries the worktree's directory name;
+`.vscode/` is git-ignored for the same reason. It attaches by process *name*, so
+restarting the app costs another F5 and nothing more — `lldb-server` outlives it.
+
+The two halves of the debugger come from different places, and both matter:
+
+- **Host: `lldb-dap` from a swift.org toolchain**, not Xcode's LLDB. The fixes
+  that make Swift debuggable on Android — a deadlock loading modules, crashes on
+  attach, Android's pointer tagging, `lldb-server`'s zip-entry lookup — landed in
+  **Swift 6.3**. The script requires such a toolchain and refuses Xcode's.
+- **Device: `lldb-server` from the NDK**, copied into the app's data directory
+  with `run-as`, which is the only way to run as the app's uid on a non-rooted
+  device. There is no Swift build of it, and none is needed: the Swift half all
+  lives in the host's LLDB.
+
+Two things about the build had to change for any of this to work:
+
+- **AGP strips the debug variant too.** `stripDebugDebugSymbols` is not
+  release-only, and it takes `.debug_*` and `.symtab` out of libraries SwiftPM
+  compiled with `-g` — measured here, `libFurAffinityUI.so` 13 MB → 7.3 MB.
+  LLDB pulls its modules off the device, so a debugger attached to that gets
+  addresses and no line tables. `-PfaDebugSymbols` keeps them for our four
+  modules; it is off by default because the debug APK carries three ABIs and the
+  everyday inner loop should not pay for it.
+- **`lldb-server` ignores the last entry of an APK**
+  ([llvm/llvm-project#173966](https://github.com/llvm/llvm-project/pull/173966),
+  not in NDK 28.2), and ours is a `.so` — `assembleDebug` writes
+  `lib/<abi>/libSkipUI.so` last. Hence `assembleDebug` followed by
+  `installDebug -Pandroid.injected.testOnly=true`, which re-packs the APK so a
+  manifest entry lands last instead.
+
+The first attach pulls the app's shared objects off the device — about 400
+modules, 280 MB — and takes roughly a minute; later ones hit LLDB's module cache
+under `~/.lldb`.
+
+Two things the generated config handles that are easy to miss when driving LLDB
+by hand:
+
+- **ART raises signals constantly as normal operation** — SIGSEGV for its
+  implicit null checks, SIGQUIT/SIGUSR for GC and ANR dumps — and LLDB stops on
+  every one by default, which makes a session unusable. Hence the
+  `process handle -p true -s false -n false …` in `postRunCommands` (it has to be
+  post-run: there is no process to configure until the attach finishes). Note
+  that `SIGPWR`, which appears in most Android LLDB recipes online, is rejected
+  by name here and takes the rest of the line down with it.
+- **A session that ends without detaching leaves the app SIGSTOPped**, in state
+  `T` with a live pid, so it looks running and is frozen. `debug.sh` checks for
+  that and wakes it.
+
+Verified end to end on 2026-09-12: attached to the running app, set a breakpoint
+in `AndroidRootView.swift` line 84, which resolved to `libFurAffinityUI.so`
+`closure #1 … in AndroidRootView.body.getter at AndroidRootView.swift:84:74`,
+and hit it by tapping "Continue offline (debug)" — LLDB stopped with the local
+source listing around the line.
+
 Open `Android/` in Android Studio to attach a debugger to the Kotlin/JNI side (its
 `.idea/` is git-ignored; `gradle.xml` there caches paths under `.build/` and is
 regenerated on sync — as is `.gradle/config.properties`, whose loss is what makes

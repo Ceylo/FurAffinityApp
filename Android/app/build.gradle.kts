@@ -39,11 +39,29 @@ android {
     }
     packaging {
         jniLibs {
-            // Nothing to configure: stripping debug symbols out of the .so payload is
-            // AGP's own stripReleaseDebugSymbols and only needs the NDK installed (see
-            // Android/docs/releasing.md). A `pickFirsts` blanket used to sit here
-            // claiming credit for it, while really silencing duplicate-.so conflicts
-            // by picking one arbitrarily — which should fail the build instead.
+            // AGP strips the .so payload of *every* variant, not just release:
+            // stripDebugDebugSymbols runs too, and takes .debug_* and .symtab out of
+            // libraries SwiftPM built with -g. A debugger then has addresses and no
+            // line tables. `-PfaDebugSymbols` keeps ours — LLDB pulls its modules off
+            // the device, so the symbols have to be in the installed APK.
+            //
+            // Off by default because the everyday inner loop pays for it: the debug
+            // APK carries three ABIs, and symbols roughly double each library in each
+            // of them. Scripts/Android/debug.sh passes the flag; nothing else should,
+            // least of all a release build.
+            //
+            // (The NDK still has to be installed for stripping to happen at all — see
+            // Android/docs/releasing.md. A `pickFirsts` blanket used to sit here
+            // claiming credit for that, while really silencing duplicate-.so conflicts
+            // by picking one arbitrarily — which should fail the build instead.)
+            if (providers.gradleProperty("faDebugSymbols").isPresent) {
+                keepDebugSymbols += setOf(
+                    "**/libFurAffinityUI.so",
+                    "**/libFAKit.so",
+                    "**/libFAPages.so",
+                    "**/libFALogging.so",
+                )
+            }
         }
     }
 

@@ -34,7 +34,7 @@ FurAffinity/             ALL app sources — and the Skip target's directory
   iOS/                     iOS-only sources + Info.plist, entitlements, icons
   Resources/               the Android asset catalog Skip mirrors
   Skip/skip.yml            marks this a native Skip module
-Scripts/Android/         emulator, run, logs, derived art, release APK
+Scripts/Android/         emulator, run, debug, logs, derived art, release APK
 Scripts/iOS/             this worktree's simulator device
 FAKit/                   shared Swift package (cross-compiles, see AGENTS.md)
 ```
@@ -78,6 +78,7 @@ Scripts/Android/build-release-apk.sh         # the signed release APK (docs/rele
 
 ```
 Scripts/Android/logs.sh                      # our tags only, live
+Scripts/Android/debug.sh                     # attach a Swift debugger (docs/build-and-run.md)
 cd FAKit && skip android test --testing-library testing
 xcodebuild test -scheme FurAffinity -destination "id=$(Scripts/iOS/simulator.sh --udid)"
 ```

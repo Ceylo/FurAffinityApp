@@ -5,6 +5,9 @@ buildServer.json
 # Skip / Android
 .build/
 .idea/
+# Generated per worktree by Scripts/Android/debug.sh — the app id it names
+# carries this worktree's directory name, so it is wrong in any other one.
+.vscode/
 Android/.gradle/
 Android/.kotlin/
 Android/app/build/
