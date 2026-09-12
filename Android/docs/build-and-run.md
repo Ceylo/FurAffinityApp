@@ -311,6 +311,48 @@ in `AndroidRootView.swift` line 84, which resolved to `libFurAffinityUI.so`
 and hit it by tapping "Continue offline (debug)" — LLDB stopped with the local
 source listing around the line.
 
+#### Inspecting values
+
+`p`, `po` and `v` all work, and the Variables panel renders a `URL` as its string.
+None of that came for free: LLDB derives the SDK for a compiled expression from
+the target triple, gets `Linux.sdk`, cannot find it, and falls back to the **host
+macOS SDK** — which compiles nothing for `aarch64-unknown-linux-android`. Every
+`p` died in `could not build C module 'Dispatch'`, and `po` took `lldb-dap` down
+with it. Two settings, emitted into `initCommands` by `debug.sh`, fix it:
+
+```
+settings set target.sdk-path <bundle>/ndk-sysroot
+settings append target.swift-module-search-paths <bundle>/swift-resources/usr/lib/swift-<arch>/android
+```
+
+Both roots come out of the Swift SDK bundle's own `swift-sdk.json`, so they
+follow a toolchain bump instead of being pinned; `debug.sh` prints what it
+resolved. Neither is optional — with only the module path the ClangImporter is
+still pointed at `MacOSX26.5.sdk` and fails on `#error Unsupported architecture`.
+
+The module path is the **platform** directory, `…/swift-<arch>/android`, one level
+*below* the `swiftResourcesPath` that `swift-sdk.json` names. Point LLDB at the
+parent and its `CoreFoundation` headers collide with the host toolchain's own
+module map — `could not build C module 'CoreFoundation'`, and a crashed adapter.
+
+The panel is a separate mechanism: `frame variable` never compiles anything, so
+it was never broken, but swift-foundation's `URL` is pure Swift here and LLDB's
+Foundation formatters do not apply to it — it showed as `{_url:0x…}`. A
+`type summary` walking `_url._parseInfo.urlString` gives back the string. That is
+the internal layout of `FoundationEssentials._SwiftURL`, so a Foundation that
+renames `_parseInfo` will blank every URL in the panel rather than error;
+`p url.absoluteString` is the fallback. `Data` still shows as `slice` — its
+representation is a four-case enum and no single summary path covers it. Use
+`p data.count`.
+
+Verified end to end on 2026-09-12, through `lldb-dap` over DAP with the generated
+`launch.json`, stopped in `OkHttpTransport.performBlocking`, on both a warm and a
+wiped `~/.lldb/module_cache`: `p request.url.absoluteString` →
+`(String) "https://www.furaffinity.net/view/66303662/"`, `p data.count` →
+`(Int) 372`, `po response` → the whole `FANativeHTTPResponse` including its
+headers, and the panel showing `request` as
+`{url:"https://www.furaffinity.net/view/66303662/", …}`.
+
 Open `Android/` in Android Studio to attach a debugger to the Kotlin/JNI side (its
 `.idea/` is git-ignored; `gradle.xml` there caches paths under `.build/` and is
 regenerated on sync — as is `.gradle/config.properties`, whose loss is what makes

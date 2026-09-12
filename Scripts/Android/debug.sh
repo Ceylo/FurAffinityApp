@@ -118,16 +118,53 @@ done
 NDK="$(ls -d "$SDK"/ndk/* 2>/dev/null | sort -V | tail -1)"
 [[ -n "$NDK" ]] || die "no NDK in $SDK/ndk — install one with \`skip android sdk install\`"
 
+# The NDK and the Swift SDK spell the 32-bit arches differently, and the Swift
+# SDK has no 32-bit x86 at all, so one mapping yields both names.
 case "$ABI" in
-    arm64-v8a)    SERVER_ARCH=aarch64 ;;
-    armeabi-v7a)  SERVER_ARCH=arm ;;
-    x86_64)       SERVER_ARCH=x86_64 ;;
-    x86)          SERVER_ARCH=i386 ;;
+    arm64-v8a)    SERVER_ARCH=aarch64; SWIFT_ARCH=aarch64 ;;
+    armeabi-v7a)  SERVER_ARCH=arm;     SWIFT_ARCH=armv7 ;;
+    x86_64)       SERVER_ARCH=x86_64;  SWIFT_ARCH=x86_64 ;;
+    x86)          SERVER_ARCH=i386;    SWIFT_ARCH= ;;
     *)            die "no lldb-server mapping for ABI $ABI" ;;
 esac
 
 LLDB_SERVER="$(ls "$NDK"/toolchains/llvm/prebuilt/*/lib/clang/*/lib/linux/"$SERVER_ARCH"/lldb-server 2>/dev/null | sort -V | tail -1)"
 [[ -n "$LLDB_SERVER" ]] || die "no $SERVER_ARCH lldb-server under $NDK"
+
+# --- the Swift SDK, so expressions compile ----------------------------------
+
+# Without this, `p` and `po` are dead: LLDB derives the expression SDK from the
+# target triple, gets "Linux.sdk", cannot find it, and falls back to the *host*
+# macOS SDK — which of course compiles nothing for aarch64-unknown-linux-android,
+# so every expression ends in "could not build C module 'Dispatch'".
+#
+# Two settings fix it, both taken from the Swift SDK bundle's own swift-sdk.json
+# so they follow a toolchain bump rather than being pinned here:
+#
+#   target.sdk-path                    the NDK sysroot, for the ClangImporter
+#   target.swift-module-search-paths   the .swiftmodules
+#
+# The module path is the *platform* directory, …/swift-<arch>/android, not the
+# resource directory above it that swift-sdk.json names: point LLDB at the parent
+# and its CoreFoundation headers collide with the host toolchain's own module map
+# ("could not build C module 'CoreFoundation'", and a crashed lldb-dap).
+#
+# Additive on purpose — breakpoints, stepping and `frame variable` need none of
+# it — so a bundle that has moved costs expression evaluation and nothing else.
+SWIFT_SDK_PATH=""
+SWIFT_MODULE_PATH=""
+BUNDLE="$(ls -d "$HOME"/Library/org.swift.swiftpm/swift-sdks/*_android.artifactbundle/swift-android 2>/dev/null | sort -V | tail -1)"
+if [[ -n "$SWIFT_ARCH" && -f "$BUNDLE/swift-sdk.json" ]]; then
+    # Every API level of one arch names the same two roots, so the lowest will do.
+    TRIPLE="$(plutil -extract targetTriples xml1 -o - "$BUNDLE/swift-sdk.json" 2>/dev/null \
+        | sed -n "s@.*<key>\($SWIFT_ARCH-[^<]*\)</key>.*@\1@p" | sort -V | head -1)"
+    if [[ -n "$TRIPLE" ]]; then
+        sdk_root="$(plutil -extract "targetTriples.$TRIPLE.sdkRootPath" raw -o - "$BUNDLE/swift-sdk.json" 2>/dev/null || true)"
+        resources="$(plutil -extract "targetTriples.$TRIPLE.swiftResourcesPath" raw -o - "$BUNDLE/swift-sdk.json" 2>/dev/null || true)"
+        [[ -d "$BUNDLE/$sdk_root" ]] && SWIFT_SDK_PATH="$BUNDLE/$sdk_root"
+        [[ -d "$BUNDLE/$resources/android" ]] && SWIFT_MODULE_PATH="$BUNDLE/$resources/android"
+    fi
+fi
 
 # --- build and install ------------------------------------------------------
 
@@ -260,6 +297,23 @@ write_if_changed() {
     fi
 }
 
+# The Swift SDK settings go first: initCommands run before the target exists, so
+# these are debugger defaults the target then inherits.
+INIT_COMMANDS=""
+if [[ -n "$SWIFT_SDK_PATH" && -n "$SWIFT_MODULE_PATH" ]]; then
+    INIT_COMMANDS="                \"settings set target.sdk-path $SWIFT_SDK_PATH\",
+                \"settings append target.swift-module-search-paths $SWIFT_MODULE_PATH\",
+"
+fi
+# swift-foundation's URL is pure Swift here, so LLDB's Foundation formatters do
+# not apply and the Variables panel shows a bare `{_url:0x…}`. This walks the one
+# path that holds the string. It is the internal layout of
+# FoundationEssentials._SwiftURL, so a Foundation that renames `_parseInfo` turns
+# every URL in the panel blank — `p url.absoluteString` is then the fallback.
+INIT_COMMANDS="$INIT_COMMANDS                \"type summary add --summary-string \\\"\${var._url._parseInfo.urlString}\\\" FoundationEssentials.URL\",
+                \"platform select remote-android\",
+                \"platform connect unix-abstract-connect:///$SOCKET\""
+
 mkdir -p "$ROOT/.vscode"
 
 write_if_changed "$ROOT/.vscode/settings.json" <<EOF
@@ -344,8 +398,7 @@ write_if_changed "$ROOT/.vscode/launch.json" <<EOF
                 "ANDROID_SERIAL": "$SERIAL"
             },
             "initCommands": [
-                "platform select remote-android",
-                "platform connect unix-abstract-connect:///$SOCKET"
+$INIT_COMMANDS
             ],
             "attachCommands": [
                 "process attach --name $APP_ID"
@@ -361,11 +414,18 @@ write_if_changed "$ROOT/.vscode/launch.json" <<EOF
 }
 EOF
 
+if [[ -n "$SWIFT_SDK_PATH" ]]; then
+    SWIFT_SUMMARY="${SWIFT_SDK_PATH#"$BUNDLE"/} + ${SWIFT_MODULE_PATH#"$BUNDLE"/} (in ${BUNDLE##*/swift-sdks/})"
+else
+    SWIFT_SUMMARY="not found — breakpoints still work, \`p\`/\`po\` will not"
+fi
+
 cat <<EOF
 
 ready — $APP_ID is running as pid $PID
   lldb-dap     $LLDB_DAP
   lldb-server  ${LLDB_SERVER#"$NDK"/} (in the app sandbox)
+  swift sdk    $SWIFT_SUMMARY
   wrote        .vscode/settings.json, launch.json, tasks.json
 
 In VS Code: open $ROOT, set a breakpoint in a .swift file, then
