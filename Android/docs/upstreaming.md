@@ -4,10 +4,8 @@
 travels back to its origin project, so the forks shrink instead of drifting.
 
 Four dependencies are forked, plus a fifth that exists only to re-point two of the others.
-One patch is out, as a draft: `b01358ef` as Kingfisher
-[#2576](https://github.com/onevcat/Kingfisher/pull/2576), opened 2026-09-12. See
-[Open drafts](#open-drafts). Everything else below is the process to follow for the next
-one.
+Patches already sent are listed in [Opened PRs](#opened-prs); everything else below is the
+process to follow when one is sent.
 
 **The first rule: every pull request is opened as a draft** — `gh pr create --draft`, on
 every one of these repositories, without exception. Marking one ready for review needs
@@ -20,7 +18,7 @@ is never described as submitted.
 |---|---|---|
 | `Ceylo/skip-ui` | all of it | — |
 | `Ceylo/skip-fuse-ui` | all but one commit | `cfa7d82` — names our forks in `Package.swift` |
-| `Ceylo/Kingfisher` | `b01358ef` (draft #2576); the API half of `47267203`; the Android port only if onevcat wants one | skipstone plugin, the unconditional `SkipFuseUI` edge, the `Documentation.docc` deletion, the dynamic-library manifest |
+| `Ceylo/Kingfisher` | `b01358ef`; the API half of `47267203`; the Android port only if onevcat wants one | skipstone plugin, the unconditional `SkipFuseUI` edge, the `Documentation.docc` deletion, the dynamic-library manifest |
 | `Ceylo/Defaults` | `Defaults.defaultSuite`, pitched on its own merits | dropping `DefaultsMacros` + swift-syntax, the `#if !os(Android)` guards |
 | `Ceylo/skip-web` | nothing | `64de0f8` — dependency locations only; required today, retires when the two above land |
 
@@ -47,7 +45,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `9eb2c87` `@_disfavoredOverload` on `Text(AttributedString)` | skip-fuse-ui | no | belongs with whichever attributed-text PR lands; the trap is worth writing up either way |
 | `5a21355` `GeometryReader` composes on the measure pass | skip-ui | no | fidelity fix (no blank first frame). Before sending, check whether it causes the intrinsic-measurement crash under a scroll: `BoxWithConstraints` is a `SubcomposeLayout` and the old `Box` was not |
 | `23154a0` `ImageHolder`, read in the draw phase | skip-ui + `c59b1a7` | yes | new API; its only caller today is the Kingfisher fork (`07f72deb`), so argue it from Coil's `AsyncImagePainter`, not from Kingfisher |
-| `b01358ef` public `DownloadTask.init(cancelling:)` | Kingfisher | no | **draft [#2576](https://github.com/onevcat/Kingfisher/pull/2576)**. +75 lines with tests; precedent #2107 |
+| `b01358ef` public `DownloadTask.init(cancelling:)` | Kingfisher | no | [#2576](https://github.com/onevcat/Kingfisher/pull/2576); precedent #2107 |
 | `47267203` `reportDownloadProgress(receivedSize:totalSize:)` | Kingfisher | no | the same argument as `b01358ef` (a replacement transport can't feed progress). Send only the `KingfisherOptionsInfo` half, after #2576 is settled; the `ImageBinder` change is Android-only |
 | `2b2dc459` + `66eb74df` + `ae0b4f07` Android port | Kingfisher | no | issue first; large parts can never leave the fork |
 | `058eb5d4`, `2296a263`, `07f72deb`, `731194ee` Android first-frame work | Kingfisher | no | part of the port, and depends on skip-ui `23154a0`. `07f72deb` replaces most of the first two. `731194ee` sits on the cache-hit path that #2572/#2573 rewrote on 2026-09-06: it still applies without a textual conflict, but re-check the behaviour |
@@ -81,7 +79,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
   skip-web 1; Defaults is still clean. The fork commits keep their trailers. Only the
   topic-branch copy loses it (`git commit --amend --reset-author`, message rewritten).
 - **Rewrite the app-specific comments.** The Kingfisher fork's `Sources/` names FurAffinity
-  in two places (2026-09-12): the `DownloadTask` doc comment, rewritten in #2576, and a
+  in two places (2026-09-12): the `DownloadTask` doc comment and a
   `KFImage.swift` comment about cap insets. A library shouldn't know about one app, so
   rewrite each to state the general case before the patch goes out, then check the branch
   diff with `git diff upstream/master | grep -i -e furaffinity -e android`.
@@ -95,11 +93,6 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
   Never review the FurAffinity worktree's current branch, which is what a bare
   `/code-review` reviews. Fix what the review confirms, or say in the PR body (or the
   review reply) why a finding doesn't apply. Nothing is pushed with unaddressed findings.
-  #2576 skipped this step twice: at opening, and for `c317e85d`, which was reviewed only
-  after it had been pushed. Its first review (@onevpaw,
-  `CHANGES_REQUESTED`) found a cancellation bug that shows up when the new API is combined
-  with existing options (`.alternativeSources`). A review pass is the step that looks for
-  that kind of interaction; our own tests had only checked the API on its own.
 
 ## The PR body
 
@@ -169,7 +162,7 @@ For an **access-level** change, a test in the repo proves little: `@testable imp
 reaches the internal symbol. The real before/after is a throwaway SwiftPM package outside
 the repo that depends on the library by `path:`, with no `@testable`. Run `swift build`
 against a `git worktree` of upstream's default branch, then against the topic branch, and
-quote the compiler error. #2576 does this.
+quote the compiler error.
 
 ## skip-ui + skip-fuse-ui
 
@@ -274,9 +267,9 @@ matches upstream's `docs/testing.md` (iPhone 15 / 17.5), which is out of date:
   {macOS, iPhone 17, Apple TV 4K (3rd generation), `-sdk watchsimulator` build}, at OS 26.2 /
   26.5. **Match this one.**
 
-The lanes need Ruby 3.3.6 (`.ruby-version`). The system Ruby here is 2.6.10, so #2576 ran
+The lanes need Ruby 3.3.6 (`.ruby-version`). The system Ruby here is 2.6.10; without it, run
 the lane's own `xcodebuild` arguments directly (`-workspace Kingfisher.xcworkspace -scheme
-Kingfisher SWIFT_VERSION=5.0`) and said so in `Verified`. The tvOS runtime was not installed
+Kingfisher SWIFT_VERSION=5.0`) and say so in `Verified`. The tvOS runtime was not installed
 by default; `xcodebuild -downloadPlatform tvOS` fetched 26.5 (3.8 GB). watchOS needs only
 the SDK.
 
@@ -302,12 +295,9 @@ initializer stayed internal, so that pattern stopped compiling.
   onevcat took the idea and rebuilt it his own way with async cancellation. Anything
   protocol-shaped gets an issue first.
 - **#2570** duplicated #2568.
-- **#2576 (ours) got `CHANGES_REQUESTED` within a day**, from @onevpaw. The reviewer
-  exercised the new API against *existing options* from a separate module:
-  `.alternativeSources` started the fallback after a cancel, because the error our tests
-  reported wasn't one `isTaskCancelled` recognized. Before sending anything that reports
-  errors or cancellation, test it with `.alternativeSources` and a retry strategy too, not
-  only on its own.
+- **Reviews exercise new API against existing options.** Anything that reports errors or
+  cancellation gets tested with `.alternativeSources` and a retry strategy too, not only on
+  its own.
 
 ### Other requirements, and the platform reality
 
@@ -317,10 +307,7 @@ in Android. So:
 - **`b01358ef` stands on its own merits** and must not be framed as Android work:
   `ImageDownloader.downloadImage` is `open`, but every `DownloadTask` initializer is
   internal, so an override outside the module can only return the task of a `super` call. That
-  is a plain API-consistency bug, provable with a test. (An earlier version of this doc said
-  `KingfisherManager` drops the download when the task isn't `isInitialized`. It doesn't:
-  `loadAndCacheImage` still completes, but it hands the caller a `nil` task, which can't be
-  cancelled.)
+  is a plain API-consistency bug, provable with a test.
 - **The Android port gets an issue before any code.** Skip's own docs encourage submitting
   Android-compat PRs to third-party libraries so they earn the Swift Package Index Android
   badge, which is the argument to make — but it is onevcat's call, and the skipstone plugin,
@@ -332,18 +319,18 @@ in Android. So:
 Under ~200 lines, tests included, the issue named, verified across all four Apple platforms,
 and an explicit account of what was and was not checked.
 
-A first-time contributor's workflows don't start on their own. #2576's `test` and `build`
-runs sat at `action_required` until a maintainer approved them, so "no checks reported" is
-not a CI result. Read the state with
+A first-time contributor's workflows don't start on their own: they sit at
+`action_required` until a maintainer approves them, so "no checks reported" is not a CI
+result. Read the state with
 `gh api "repos/onevcat/Kingfisher/actions/runs?branch=<topic-branch>"`.
 
-## Open drafts
+## Opened PRs
 
-None of these is marked ready for review. That needs Ceylo's approval each time.
+State is one of draft / opened / merged / rejected; fetch the PR for anything more.
 
-| PR | Patch | Opened | Branch | State |
-|---|---|---|---|---|
-| Kingfisher [#2576](https://github.com/onevcat/Kingfisher/pull/2576) | `b01358ef` → `ed690565` + `c317e85d` + `cca97c3f` | 2026-09-12 | `Ceylo:feature/public-download-task-init` | draft. 2026-09-13: @onevpaw requested changes (cancellation ignored by `.alternativeSources`); `c317e85d` makes `isTaskCancelled` match `.asyncTaskContextCancelled`, with a regression test, and was answered in [a comment](https://github.com/onevcat/Kingfisher/pull/2576#issuecomment-5652575017). The `.dataProviderCancelled` gap, which existed before the PR, is offered there but not included. Then a `/code-review` of the PR, run after the push, found two nits, fixed in `cca97c3f` (the `asyncTaskContextCancelled` docs, and completing on `callbackQueue` in the test and in the body's example). It also showed that the side effects claimed in that reply were wrong: the async bridge never reaches `failCurrentSource`. The original reply was rewritten in place to fix that and merged with the follow-up, so the PR carries one reply (same link as above). `cca97c3f` was reviewed clean *before* its push. CI still awaiting maintainer approval. Verified locally with Xcode 26.6 on `cca97c3f`: macOS 381, iOS 26.5 420, tvOS 26.5 418 tests, 0 failures; watchsimulator build. Not run: Xcode 26.2, visionOS |
+| PR | Patch | State |
+|---|---|---|
+| Kingfisher [#2576](https://github.com/onevcat/Kingfisher/pull/2576) | `b01358ef` | draft |
 
 ## Defaults
 
