@@ -129,7 +129,30 @@ android {
             isDebuggable = false // can be set to true for debugging release build, but needs to be false when uploading to store
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+
+        // Release code, measurable: installs over this worktree's debug app (same id,
+        // same key) so its login and Cloudflare clearance survive, and stays
+        // profileable for simpleperf/Perfetto. See docs/profiling.md.
+        create("profile") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".$worktreeId"
+            resValue("string", "app_name", worktree)
+            signingConfig = signingConfigs.getByName("debug")
+            isDebuggable = false
+            isProfileable = true
+            // Skip's generated library modules only have debug and release variants.
+            matchingFallbacks += listOf("release")
+            // Readable Kotlin frames in CPU profiles.
+            proguardFiles("proguard-rules-profile.pro")
+        }
     }
+}
+
+dependencies {
+    // Composables as trace sections, once Scripts/Android/profile.sh enables them.
+    // Pinned to the Compose runtime the classpath already resolves.
+    "profileImplementation"("androidx.compose.runtime:runtime-tracing:1.11.2")
+    "profileImplementation"("androidx.tracing:tracing-perfetto-binary:1.0.1")
 }
 
 // Turn the silent debug-key fallback above into a build failure, so a release build
