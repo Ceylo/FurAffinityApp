@@ -88,6 +88,18 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 - **Search the target's open PRs *and* issues for the same surface first**, and link whatever
   you find. skip-ui #468 was closed as obviated by #471, and Kingfisher #2570 closed as
   covered by #2568 — both authors had written the whole thing first.
+- **Run `/code-review` before every push that reaches a PR**: the first push that opens it,
+  and every review-round fix. The order is tests green → review → address findings → push
+  → PR. Review the *patch*: the local topic branch in the upstream clone, against upstream's
+  default branch. A PR URL is the wrong target here, because the commits aren't on it yet.
+  Never review the FurAffinity worktree's current branch, which is what a bare
+  `/code-review` reviews. Fix what the review confirms, or say in the PR body (or the
+  review reply) why a finding doesn't apply. Nothing is pushed with unaddressed findings.
+  #2576 skipped this step twice: at opening, and for `c317e85d`, which was reviewed only
+  after it had been pushed. Its first review (@onevpaw,
+  `CHANGES_REQUESTED`) found a cancellation bug that shows up when the new API is combined
+  with existing options (`.alternativeSources`). A review pass is the step that looks for
+  that kind of interaction; our own tests had only checked the API on its own.
 
 ## The PR body
 
