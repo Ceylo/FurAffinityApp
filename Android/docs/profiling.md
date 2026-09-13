@@ -34,8 +34,8 @@ scripts symbolize from the unstripped copies under
 Scripts/Android/run.sh --profile          # build, install, AOT-compile, start
 Scripts/Android/profile.sh cpu            # 20 s of CPU samples while you use the app
 Scripts/Android/profile.sh cpu --launch   # restart the app under the profiler
-Scripts/Android/profile.sh trace          # 20 s Perfetto trace
-Scripts/Android/profile.sh trace --native-heap
+Scripts/Android/profile.sh trace          # 20 s Perfetto trace + signpost summary
+Scripts/Android/profile.sh trace --native-heap --compose
 Scripts/Android/profile.sh mem            # type a label + Enter to tag a sample
 Scripts/Android/run.sh                    # back to the debug build, same container
 ```
@@ -67,17 +67,33 @@ pipes it through `swift-demangle --simplified`.
 
 ## `trace`
 
-A Perfetto config (`config.pbtxt` next to the trace) with:
+Writes two traces, both for https://ui.perfetto.dev, and prints a summary:
+
+- **`signposts.pftrace` — start here.** `focus-trace.py` cuts the recording down to
+  the app's process: its threads (named), its FAKit/FAPages signposts and its memory
+  counters. Scheduling, other processes, framework and Compose sections, and the
+  frame timeline are gone, so a 17 MB trace becomes a few tracks.
+- **`signposts.txt`**, the summary also printed at the end: per signpost, count,
+  total, median, max and the threads it ran on (wall time, begin to end), then the
+  app's RSS at start, peak and end.
+- **`fa.pftrace`**, the whole device, for when the context matters.
+
+`focus-trace.py` also runs on its own, e.g. to keep Compose's sections:
+`Scripts/Android/focus-trace.py fa.pftrace <app id> --prefix "Compose:" -o compose.pftrace`
+(`--all-sections` keeps every section of the app).
+
+The recording (`config.pbtxt` next to the trace) has:
 
 - **ftrace** scheduling, plus atrace `view gfx am dalvik` and this app's own sections;
 - **`linux.process_stats`** every 250 ms: the `mem.rss.anon`/`file`/`swap` counter
-  tracks under each process;
+  tracks under each process, and thread names;
 - **SurfaceFlinger frame timeline**;
 - with `--native-heap`, **heapprofd** allocation samples for the app.
 
-The profile variant also depends on `androidx.compose.runtime:runtime-tracing`, and the
-script enables it by broadcast before recording, so composables appear as sections.
-That switch is per process: a restart during the trace turns it off.
+The profile variant also depends on `androidx.compose.runtime:runtime-tracing`;
+`--compose` enables it by broadcast before recording, so every composable becomes a
+section — thousands a second, which is why it is opt-in. That switch is per process:
+a restart during the trace turns it off.
 
 Perfetto's "No PTY" warning is harmless: the trace stops on its duration, not on
 Ctrl-C.
@@ -86,8 +102,13 @@ Ctrl-C.
 
 `OSSignposter` on Android is `FALogging/Sources/OSCompat`'s, backed by
 `ATrace_beginSection`/`ATrace_endSection`. Every FAPages parsing interval therefore
-shows up as a slice on the thread that parsed, named like the Instruments interval
-(`Submission Parsing`, `All Submission Previews Parsing`, …).
+shows up as a slice on the thread that parsed, named `<category>: <name>`
+(`FAPages: Submission Parsing`, `FAKit: AttributedString.init(FAHTML:)`, …). The
+category prefix is what `focus-trace.py` filters on.
+
+In `profile.sh cpu`, the parsers are not under `libFAPages.so`: in the release build
+their code, and SwiftSoup's, lands in `libFAKit.so`. Search the call tree for
+`Page.init` rather than by library.
 
 **An interval must not span an `await`.** ATrace sections are a per-thread stack, and
 the continuation after a suspension may run on another thread. An end on a different

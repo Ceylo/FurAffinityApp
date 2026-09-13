@@ -15,10 +15,13 @@
 #       https://profiler.firefox.com, Swift names demangled. --launch restarts the
 #       app under the profiler, to record its startup: a process that starts after
 #       recording begins is otherwise not followed.
-#   trace [--duration S] [--native-heap]
-#       Perfetto: scheduling, signposts and composables as slices, per-process
-#       RSS every 250 ms, frame timeline. --native-heap adds heapprofd allocation
-#       samples. Writes fa.pftrace for https://ui.perfetto.dev.
+#   trace [--duration S] [--native-heap] [--compose]
+#       Perfetto: scheduling, app sections, per-process RSS every 250 ms, frame
+#       timeline — fa.pftrace, the whole device. Also writes signposts.pftrace,
+#       only the app's FAKit/FAPages signposts and memory (focus-trace.py), and
+#       prints their durations. Both open in https://ui.perfetto.dev.
+#       --native-heap adds heapprofd allocation samples; --compose, a section per
+#       composable (thousands of them).
 #   mem [--interval S]
 #       `dumpsys meminfo` into meminfo.csv, S seconds apart (default 2). Type a
 #       label and Enter to tag the next sample; Ctrl-C to stop.
@@ -40,18 +43,20 @@ INTERVAL=2
 CALL_GRAPH="-g"
 NATIVE_HEAP=0
 LAUNCH=0
+COMPOSE=0
 ARGS=()
 LOCK_ARGS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)      sed -n '3,29p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)      sed -n '3,32p' "$0" | cut -c3-; exit 0 ;;
         cpu|trace|mem)  [[ -z "$COMMAND" ]] || die "one command at a time"; COMMAND="$1" ;;
         --duration)     DURATION="$2"; ARGS+=("$1" "$2"); shift ;;
         --interval)     INTERVAL="$2"; ARGS+=("$1" "$2"); shift ;;
         --fp)           CALL_GRAPH="--call-graph fp"; ARGS+=("$1") ;;
         --native-heap)  NATIVE_HEAP=1; ARGS+=("$1") ;;
         --launch)       LAUNCH=1; ARGS+=("$1") ;;
+        --compose)      COMPOSE=1; ARGS+=("$1") ;;
         --timeout)      LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)    LOCK_ARGS+=("$1") ;;
         *)              die "unknown argument: $1 (see --help)" ;;
@@ -61,6 +66,7 @@ done
 
 [[ -n "$COMMAND" ]] || die "which recording? cpu, trace or mem (see --help)"
 (( LAUNCH == 0 )) || [[ "$COMMAND" == cpu ]] || die "--launch is a cpu option"
+(( COMPOSE == 0 )) || [[ "$COMMAND" == trace ]] || die "--compose is a trace option"
 [[ "$DURATION" =~ ^[0-9]+$ ]] || die "--duration takes a number of seconds"
 # Whole seconds: macOS's bash 3.2 `read -t` takes nothing finer.
 [[ "$INTERVAL" =~ ^[1-9][0-9]*$ ]] || die "--interval takes a whole number of seconds"
@@ -185,9 +191,11 @@ record_trace() {
     local device_trace=/data/misc/perfetto-traces/fa.pftrace
 
     # Compose emits a section per composable only once told to, per process.
-    "$ADB" shell am broadcast -a androidx.tracing.perfetto.action.ENABLE_TRACING \
-        "$APP_ID/androidx.tracing.perfetto.TracingReceiver" >/dev/null \
-        || echo "warning: could not enable composition tracing; composables will not show" >&2
+    if (( COMPOSE )); then
+        "$ADB" shell am broadcast -a androidx.tracing.perfetto.action.ENABLE_TRACING \
+            "$APP_ID/androidx.tracing.perfetto.TracingReceiver" >/dev/null \
+            || echo "warning: could not enable composition tracing; composables will not show" >&2
+    fi
 
     {
         cat <<EOF
@@ -219,6 +227,7 @@ data_sources {
     target_buffer: 1
     process_stats_config {
       scan_all_processes_on_start: true
+      record_thread_names: true
       proc_stats_poll_ms: 250
     }
   }
@@ -254,11 +263,18 @@ EOF
     "$ADB" pull "$device_trace" fa.pftrace >/dev/null
     "$ADB" shell rm -f "$device_trace"
 
+    echo
+    python3 "$ROOT/Scripts/Android/focus-trace.py" fa.pftrace "$APP_ID" -o signposts.pftrace \
+        | tee signposts.txt \
+        || echo "warning: could not focus the trace; fa.pftrace is intact" >&2
+
     cat <<EOF
 
-wrote $OUT/fa.pftrace
+wrote $OUT/
+  signposts.pftrace  the app's signposts and memory only — start here
+  fa.pftrace         the whole device: scheduling, every process, frame timeline
 Open https://ui.perfetto.dev, then "Open trace file". Signposts are slices on the
-thread that parsed; memory is the "mem.rss" counters under the app's process.
+thread that ran them; memory is the "mem.rss" counters under the app's process.
 EOF
 }
 

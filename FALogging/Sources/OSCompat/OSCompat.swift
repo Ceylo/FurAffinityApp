@@ -22,7 +22,8 @@
 
 import CAndroidTrace
 
-/// Signposter over ATrace, so intervals show up as slices in a Perfetto trace.
+/// Signposter over ATrace, so intervals show up as slices in a Perfetto trace, named
+/// `<category>: <name>` — the prefix is what Scripts/Android/focus-trace.py keeps.
 /// Mirrors the `OSSignposter` subset used by FAKit/FAPages so call sites compile
 /// unchanged.
 ///
@@ -38,15 +39,22 @@ public struct OSSignposter: Sendable {
     /// The kernel truncates trace markers; cut on a UTF-8 boundary ourselves.
     private static let maxSectionNameBytes = 127
 
-    public init(logger: Logger) {}
-    public init(subsystem: String, category: String) {}
+    private let category: String
+
+    public init(logger: Logger) {
+        category = logger.category
+    }
+
+    public init(subsystem: String, category: String) {
+        self.category = category
+    }
 
     public func beginInterval(_ name: StaticString) -> IntervalState {
-        begin { name.description }
+        begin { "\(category): \(name)" }
     }
 
     public func beginInterval(_ name: StaticString, _ message: String) -> IntervalState {
-        begin { "\(name): \(message)" }
+        begin { "\(category): \(name): \(message)" }
     }
 
     public func endInterval(_ name: StaticString, _ state: IntervalState) {
