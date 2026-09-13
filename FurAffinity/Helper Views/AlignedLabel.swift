@@ -8,11 +8,11 @@
 import SwiftUI
 
 extension View {
-    /// An optical nudge tuned for SF Symbols. Material icons centre their glyph in
-    /// the box, so on Android the nudge only misaligns them.
-    func symbolOpticalOffset(y: CGFloat) -> some View {
+    /// An optical nudge tuned for SF Symbols, and a separate one for the Material icon
+    /// SkipUI draws instead: those centre their glyph in the box, so they rarely need one.
+    func symbolOpticalOffset(y: CGFloat, material: CGFloat = 0) -> some View {
         #if FA_SKIP_MODULE
-        self
+        offset(y: material)
         #else
         offset(y: y)
         #endif
@@ -30,6 +30,7 @@ struct AlignedLabel: View {
     var value: Int
     var systemImage: String
     var imageYOffset = 0.0
+    var materialImageYOffset = 0.0
 
     var body: some View {
         HStack(alignment: labelAlignment, spacing: 5) {
@@ -40,7 +41,7 @@ struct AlignedLabel: View {
             Image(systemName: systemImage)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .symbolOpticalOffset(y: imageYOffset)
+                .symbolOpticalOffset(y: imageYOffset, material: materialImageYOffset)
         }
         .padding()
         .symbolOpticalOffset(y: value > 0 ? 3 : 5.5)
