@@ -31,7 +31,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `5110e81` innermost `listRow*` wins | skip-ui | no | bug fix; SwiftUI-parity argument stands alone |
 | `5eee865` + `80c72b4` SF Symbol mappings | skip-ui | no | same shape as merged #476 |
 | `1b25638` `FlowRow` | skip-ui + `09a3e69` | yes | new container; `Layout` cannot be emulated, so argue the container |
-| `6f06ae4` `.disabled` on menu items | skip-ui | no | fixes skip-ui #246 (filed by marcprux). Topic branch `fix/menu-item-disabled` adds what the fork lacks — the dimming and a Robolectric test — plus showcase `feature/menu-disabled-playground` |
+| `6f06ae4` `.disabled` on menu items | skip-ui | no | fixes skip-ui #246 (filed by marcprux). Topic branch `fix/menu-item-disabled` adds what the fork lacks — the dimming, a disabled nested `Menu` opening with its items disabled (iOS 26.5 parity), and Robolectric tests — plus showcase `feature/menu-disabled-playground`. Port both back to the fork |
 | `23ac3bd` menu body text + visible divider | skip-ui | no | **split into two PRs** — the text/icon size and the `outlineVariant` divider are separate fixes |
 | `ad375fb` `.subheadline` → `bodyMedium` | skip-ui | no | one token; carries a measured screenshot argument |
 | `eaa6abe` resume animation across disposal | skip-ui | no | the recycling-boundary fix; largest single non-text patch |
@@ -77,6 +77,9 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
   `731194ee`, `47267203`), skip-fuse-ui 2 (`cfa7d82`, `c59b1a7`), skip-ui 1 (`23154a0`),
   skip-web 1; Defaults is still clean. The fork commits keep their trailers. Only the
   topic-branch copy loses it (`git commit --amend --reset-author`, message rewritten).
+  **Exception, by Ceylo's decision:** skip-ui #524 and skipapp-showcase #122 carry no
+  `Co-Authored-By` either. For those, AI use is disclosed in the template's checkbox
+  instead, naming Claude Code.
 - **Rewrite the app-specific comments.** The Kingfisher fork's `Sources/` names FurAffinity
   in one place since #2576 replaced the `DownloadTask` doc comment (2026-09-13): a
   `KFImage.swift` comment about cap insets. A library shouldn't know about one app, so
@@ -113,7 +116,13 @@ Behaviour before, behaviour after. Two sentences.
 - <what actually ran>
 ```
 
-Plus the repository's own checklist where it has one.
+Plus the repository's own checklist where it has one. Don't tick a box whose step didn't run.
+skipapp-showcase has no test targets, so its `swift test` box stays unticked, with the reason
+given.
+
+Images go on an orphan `pr-assets/<topic>` branch in the fork, scaled to 400 px wide and
+referenced as `raw.githubusercontent.com` URLs. `gh` cannot upload attachments. Check each
+URL with `curl -sI` for a 200.
 
 The `Verified` list and every screenshot are outputs of [Producing the
 evidence](#producing-the-evidence). None of it is written from memory.
@@ -357,6 +366,8 @@ State is one of draft / opened / merged / rejected; fetch the PR for anything mo
 | PR | Patch | State |
 |---|---|---|
 | Kingfisher [#2576](https://github.com/onevcat/Kingfisher/pull/2576) | `b01358ef` | merged |
+| skip-ui [#524](https://github.com/skiptools/skip-ui/pull/524) | `6f06ae4` | draft |
+| skipapp-showcase [#122](https://github.com/skiptools/skipapp-showcase/pull/122) | playground for skip-ui #524 | draft |
 
 ## Defaults
 
