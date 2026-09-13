@@ -7,7 +7,10 @@ sections are mostly the framework's and Compose's. This keeps only:
 - the app's processes, their threads (named from the scheduler data, which the
   process tree lacks) and their memory counters;
 - the app's sections whose name starts with one of the prefixes — by default
-  our signposts, which OSCompat names `<category>: <name>`.
+  our signposts, which OSCompat names `<category>: <name>`;
+- two counter tracks computed from the scheduler data before it is dropped: how
+  much CPU the app and its main thread used per 100 ms, in % of one core (so up
+  to 400% on a 4-core emulator).
 
 Everything else — scheduling, other processes, the frame timeline — is dropped,
 so the output opens in https://ui.perfetto.dev as one process with a handful of
@@ -17,7 +20,8 @@ tracks. The full trace stays next to it for when the context matters.
     Scripts/Android/focus-trace.py fa.pftrace <app id> --prefix "Compose:" --prefix "FAKit: "
 
 The summary (stdout) lists each signpost's count, total, median and max, and the
-threads it ran on. Durations are wall time from begin to end, not CPU time.
+threads it ran on — durations are wall time from begin to end, not CPU time —
+then the app's CPU and memory over the recording.
 
 Only the fields read here are decoded, straight from the wire format, so this
 needs no protobuf package. Field numbers are from Perfetto's
@@ -27,9 +31,13 @@ protos/perfetto/trace/perfetto_trace.proto.
 import argparse
 import collections
 import statistics
+import struct
 import sys
 
 DEFAULT_PREFIXES = ["FAKit: ", "FAPages: "]
+CPU_BUCKET_NS = 100_000_000
+# Any id the recording's own sequences (small integers) do not use.
+CPU_SEQUENCE_ID = 0x46414350
 
 # TracePacket
 PACKET = 1            # Trace.packet
@@ -37,8 +45,27 @@ FTRACE_EVENTS = 1     # TracePacket.ftrace_events
 PROCESS_TREE = 2
 PROCESS_STATS = 9
 TIMESTAMP = 8
+TRUSTED_SEQUENCE_ID = 10
+TRACK_EVENT = 11
+SEQUENCE_FLAGS = 13
+TRACK_DESCRIPTOR = 60
 FRAME_TIMELINE = 76
+SEQ_INCREMENTAL_STATE_CLEARED = 1
+# TrackDescriptor
+DESCRIPTOR_UUID = 1
+DESCRIPTOR_NAME = 2
+DESCRIPTOR_PROCESS = 3
+DESCRIPTOR_PARENT = 5
+DESCRIPTOR_COUNTER = 8
+PROCESS_DESCRIPTOR_PID = 1
+COUNTER_UNIT_NAME = 6
+# TrackEvent
+TRACK_EVENT_TYPE = 9
+TRACK_EVENT_TRACK = 11
+TRACK_EVENT_DOUBLE_VALUE = 44
+TYPE_COUNTER = 4
 # FtraceEventBundle
+BUNDLE_CPU = 1
 BUNDLE_EVENT = 2
 BUNDLE_COMPACT_SCHED = 4
 # FtraceEvent
@@ -48,6 +75,7 @@ EVENT_PRINT = 3
 PRINT_BUF = 2
 # CompactSched
 SCHED_INTERN_TABLE = 5
+SCHED_SWITCH_TIMESTAMP = 1
 SCHED_SWITCH_NEXT_PID = 3
 SCHED_SWITCH_NEXT_COMM = 6
 SCHED_WAKING_PID = 8
@@ -132,6 +160,14 @@ def length_delimited(field, payload):
     return encode_varint(field << 3 | 2) + encode_varint(len(payload)) + payload
 
 
+def varint_field(field, value):
+    return encode_varint(field << 3) + encode_varint(value)
+
+
+def double_field(field, value):
+    return encode_varint(field << 3 | 1) + struct.pack("<d", value)
+
+
 def text(buf, span):
     return buf[span[0]:span[1]].decode("utf-8", "replace")
 
@@ -149,6 +185,7 @@ def submessage(buf, span):
 def survey(buf, app_id):
     app_pids = set()
     thread_names = {}
+    thread_tgids = {}
     for field, wire, packet, _, _ in fields(buf):
         if field != PACKET or wire != 2:
             continue
@@ -157,6 +194,10 @@ def survey(buf, app_id):
                 continue
             if pfield == PROCESS_TREE:
                 for tfield, twire, tvalue, _, _ in fields(buf, *pvalue):
+                    if tfield == TREE_THREAD and twire == 2:
+                        thread = submessage(buf, tvalue)
+                        if THREAD_TID in thread and THREAD_TGID in thread:
+                            thread_tgids[int32(thread[THREAD_TID][0])] = int32(thread[THREAD_TGID][0])
                     if tfield != TREE_PROCESS or twire != 2:
                         continue
                     process = submessage(buf, tvalue)
@@ -171,7 +212,8 @@ def survey(buf, app_id):
     # ART names the main thread after the package's last 15 bytes: "droid_profiling".
     for pid in app_pids:
         thread_names[pid] = "main"
-    return app_pids, thread_names
+    app_tids = {tid for tid, tgid in thread_tgids.items() if tgid in app_pids} | app_pids
+    return app_pids, app_tids, thread_names
 
 
 def collect_comms(buf, span, names):
@@ -184,6 +226,82 @@ def collect_comms(buf, span, names):
         for pid, comm in zip(pids, comms):
             if comm < len(table):
                 names[pid] = table[comm]
+
+
+def cpu_usage(buf, app_tids, main_tids):
+    """{bucket start ns: [app ns, main thread ns]}, replayed from sched_switch."""
+    buckets = collections.defaultdict(lambda: [0, 0])
+    running = {}   # cpu → (tid, since)
+
+    def charge(tid, start, end):
+        if tid not in app_tids:
+            return
+        is_main = tid in main_tids
+        while start < end:
+            bucket = start - start % CPU_BUCKET_NS
+            chunk = min(end, bucket + CPU_BUCKET_NS) - start
+            buckets[bucket][0] += chunk
+            if is_main:
+                buckets[bucket][1] += chunk
+            start += chunk
+
+    for field, wire, packet, _, _ in fields(buf):
+        if field != PACKET or wire != 2:
+            continue
+        for pfield, pwire, pvalue, _, _ in fields(buf, *packet):
+            if pfield != FTRACE_EVENTS or pwire != 2:
+                continue
+            bundle = submessage(buf, pvalue)
+            if BUNDLE_COMPACT_SCHED not in bundle:
+                continue
+            cpu = bundle.get(BUNDLE_CPU, [0])[0]
+            sched = submessage(buf, bundle[BUNDLE_COMPACT_SCHED][0])
+            deltas = [v for s in sched.get(SCHED_SWITCH_TIMESTAMP, []) for v in packed_varints(buf, s)]
+            next_tids = [int32(v) for s in sched.get(SCHED_SWITCH_NEXT_PID, []) for v in packed_varints(buf, s)]
+            timestamp = 0
+            for delta, tid in zip(deltas, next_tids):
+                timestamp += delta   # the first is absolute
+                if cpu in running:
+                    previous, since = running[cpu]
+                    charge(previous, since, timestamp)
+                running[cpu] = (tid, timestamp)
+    return dict(buckets)
+
+
+def cpu_tracks(usage, app_pid):
+    """Counter tracks for the app process: one packet per 100 ms bucket."""
+    process_uuid, app_uuid, main_uuid = CPU_SEQUENCE_ID << 8 | 1, CPU_SEQUENCE_ID << 8 | 2, CPU_SEQUENCE_ID << 8 | 3
+    out = bytearray()
+
+    def packet(payload, first=False):
+        body = payload + varint_field(TRUSTED_SEQUENCE_ID, CPU_SEQUENCE_ID)
+        if first:
+            body += varint_field(SEQUENCE_FLAGS, SEQ_INCREMENTAL_STATE_CLEARED)
+        return length_delimited(PACKET, body)
+
+    out += packet(length_delimited(TRACK_DESCRIPTOR,
+                                   varint_field(DESCRIPTOR_UUID, process_uuid)
+                                   + length_delimited(DESCRIPTOR_PROCESS,
+                                                      varint_field(PROCESS_DESCRIPTOR_PID, app_pid))),
+                  first=True)
+    for uuid, name in ((app_uuid, "CPU: app"), (main_uuid, "CPU: main thread")):
+        out += packet(length_delimited(TRACK_DESCRIPTOR,
+                                       varint_field(DESCRIPTOR_UUID, uuid)
+                                       + length_delimited(DESCRIPTOR_NAME, name.encode())
+                                       + varint_field(DESCRIPTOR_PARENT, process_uuid)
+                                       + length_delimited(DESCRIPTOR_COUNTER,
+                                                          length_delimited(COUNTER_UNIT_NAME, b"% of a core"))))
+    if not usage:
+        return bytes(out)
+    first, last = min(usage), max(usage)
+    for bucket in range(first, last + CPU_BUCKET_NS, CPU_BUCKET_NS):
+        app_ns, main_ns = usage.get(bucket, (0, 0))
+        for uuid, ns in ((app_uuid, app_ns), (main_uuid, main_ns)):
+            event = (varint_field(TRACK_EVENT_TYPE, TYPE_COUNTER)
+                     + varint_field(TRACK_EVENT_TRACK, uuid)
+                     + double_field(TRACK_EVENT_DOUBLE_VALUE, 100 * ns / CPU_BUCKET_NS))
+            out += packet(varint_field(TIMESTAMP, bucket) + length_delimited(TRACK_EVENT, event))
+    return bytes(out)
 
 
 # --- pass 2: rewrite ------------------------------------------------------------
@@ -336,7 +454,7 @@ def megabytes(kb):
     return f"{kb / 1024:.1f} MB"
 
 
-def report(sections, thread_names, rss, prefixes, out):
+def report(sections, thread_names, rss, usage, prefixes, out):
     rows = sorted(sections.durations.items(), key=lambda item: -sum(item[1]))
     print(f"Sections starting with {', '.join(repr(p) for p in prefixes)} — wall time, begin to end", file=out)
     if not rows:
@@ -353,6 +471,14 @@ def report(sections, thread_names, rss, prefixes, out):
     for name, count in sections.unclosed.items():
         print(f"  {name}: {count} never ended (still open when the trace stopped, or ended on another thread)",
               file=out)
+    if usage:
+        start = min(usage)
+        span = range(start, max(usage) + CPU_BUCKET_NS, CPU_BUCKET_NS)
+        for slot, label in ((0, "App CPU"), (1, "Main thread CPU")):
+            percents = [100 * usage.get(b, (0, 0))[slot] / CPU_BUCKET_NS for b in span]
+            peak = max(range(len(percents)), key=percents.__getitem__)
+            print(f"{label}: {statistics.mean(percents):.0f}% of a core on average, peak "
+                  f"{percents[peak]:.0f}% at +{peak * CPU_BUCKET_NS / 1e9:.1f} s (per 100 ms)", file=out)
     if rss:
         values = [kb for _, _, kb in rss]
         print(f"App RSS: {megabytes(values[0])} at start, {megabytes(max(values))} peak, "
@@ -372,16 +498,19 @@ def main():
     prefixes = [""] if args.all_sections else (args.prefix or DEFAULT_PREFIXES)
     buf = open(args.trace, "rb").read()
 
-    app_pids, thread_names = survey(buf, args.app_id)
+    app_pids, app_tids, thread_names = survey(buf, args.app_id)
     if not app_pids:
         sys.exit(f"error: no process named {args.app_id} in {args.trace} — was the app running?")
 
+    usage = cpu_usage(buf, app_tids, app_pids)
     sections = Sections(app_pids, prefixes)
     focused, rss = rewrite(buf, app_pids, thread_names, sections)
     if args.output:
         with open(args.output, "wb") as f:
             f.write(focused)
-    report(sections, thread_names, rss, prefixes, sys.stdout)
+            # A restarted app has several pids; its counters go under the last one.
+            f.write(cpu_tracks(usage, max(app_pids)))
+    report(sections, thread_names, rss, usage, prefixes, sys.stdout)
 
 
 if __name__ == "__main__":

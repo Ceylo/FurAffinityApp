@@ -70,12 +70,15 @@ pipes it through `swift-demangle --simplified`.
 Writes two traces, both for https://ui.perfetto.dev, and prints a summary:
 
 - **`signposts.pftrace` — start here.** `focus-trace.py` cuts the recording down to
-  the app's process: its threads (named), its FAKit/FAPages signposts and its memory
-  counters. Scheduling, other processes, framework and Compose sections, and the
-  frame timeline are gone, so a 17 MB trace becomes a few tracks.
+  the app's process: its threads (named), its FAKit/FAPages signposts, its memory
+  counters, and two CPU counters — **CPU: app** and **CPU: main thread**, the share
+  of one core each used per 100 ms (up to 400% on the 4-core emulator), computed
+  from the scheduler data. Scheduling itself, other processes, framework and Compose
+  sections, and the frame timeline are gone, so a 17 MB trace becomes a few tracks.
 - **`signposts.txt`**, the summary also printed at the end: per signpost, count,
   total, median, max and the threads it ran on (wall time, begin to end), then the
-  app's RSS at start, peak and end.
+  app's and main thread's average and peak CPU, and the app's RSS at start, peak and
+  end.
 - **`fa.pftrace`**, the whole device, for when the context matters.
 
 `focus-trace.py` also runs on its own, e.g. to keep Compose's sections:

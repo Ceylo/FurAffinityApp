@@ -18,8 +18,8 @@
 #   trace [--duration S] [--native-heap] [--compose]
 #       Perfetto: scheduling, app sections, per-process RSS every 250 ms, frame
 #       timeline — fa.pftrace, the whole device. Also writes signposts.pftrace,
-#       only the app's FAKit/FAPages signposts and memory (focus-trace.py), and
-#       prints their durations. Both open in https://ui.perfetto.dev.
+#       only the app's FAKit/FAPages signposts, CPU use per 100 ms and memory
+#       (focus-trace.py), and prints a summary. Both open in https://ui.perfetto.dev.
 #       --native-heap adds heapprofd allocation samples; --compose, a section per
 #       composable (thousands of them).
 #   mem [--interval S]
