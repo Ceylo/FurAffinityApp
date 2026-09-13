@@ -160,6 +160,11 @@ cd "$OUT"
 # --- cpu --------------------------------------------------------------------
 
 record_cpu() {
+    # Symbol files pulled from the device, keyed by build id, so one cache serves every
+    # recording — a copy each was 200–700 MB.
+    mkdir -p "$ROOT/.build/profiles/binary_cache"
+    ln -s "$ROOT/.build/profiles/binary_cache" binary_cache
+
     echo "recording CPU samples for ${DURATION}s — use the app now"
     # cpu-clock: the emulator exposes no hardware counters.
     local launch=()
@@ -169,6 +174,8 @@ record_cpu() {
         -lib "$LIBS" -o perf.data \
         -r "-e cpu-clock -f 4000 $CALL_GRAPH --duration $DURATION" 2>&1 \
         | sed -l -e '/file pushed/d' -e '/^$/d'
+    # app_profiler.py pulls its recording but leaves the device copy.
+    "$ADB" shell rm -f /data/local/tmp/perf.data
 
     echo "converting to the Firefox Profiler format"
     local mapping=()

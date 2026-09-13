@@ -149,7 +149,7 @@ android {
 }
 
 dependencies {
-    // Composables as trace sections, once Scripts/Android/profile.sh enables them.
+    // Composables as trace sections, with `Scripts/Android/profile.sh trace --compose`.
     // Pinned to the Compose runtime the classpath already resolves.
     "profileImplementation"("androidx.compose.runtime:runtime-tracing:1.11.2")
     "profileImplementation"("androidx.tracing:tracing-perfetto-binary:1.0.1")

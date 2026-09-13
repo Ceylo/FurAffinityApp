@@ -353,17 +353,14 @@ def summary_name(section):
 
 def rewrite(buf, app_pids, thread_names, sections):
     out = bytearray()
-    rss = []   # (timestamp, pid, kb)
+    rss = []   # KB, in recording order
     for field, wire, packet, raw_start, raw_end in fields(buf):
         if field != PACKET or wire != 2:
             out += buf[raw_start:raw_end]
             continue
-        timestamp = None
         body = bytearray()
         drop_packet = False
         for pfield, pwire, pvalue, pstart, pend in fields(buf, *packet):
-            if pfield == TIMESTAMP and pwire == 0:
-                timestamp = pvalue
             if pwire != 2:
                 body += buf[pstart:pend]
             elif pfield == FTRACE_EVENTS:
@@ -372,7 +369,7 @@ def rewrite(buf, app_pids, thread_names, sections):
             elif pfield == PROCESS_TREE:
                 body += length_delimited(PROCESS_TREE, filter_tree(buf, pvalue, app_pids, thread_names))
             elif pfield == PROCESS_STATS:
-                body += length_delimited(PROCESS_STATS, filter_stats(buf, pvalue, app_pids, rss, lambda: timestamp))
+                body += length_delimited(PROCESS_STATS, filter_stats(buf, pvalue, app_pids, rss))
             elif pfield == FRAME_TIMELINE:
                 drop_packet = True
             else:
@@ -429,7 +426,7 @@ def filter_tree(buf, span, app_pids, thread_names):
     return bytes(body)
 
 
-def filter_stats(buf, span, app_pids, rss, timestamp):
+def filter_stats(buf, span, app_pids, rss):
     body = bytearray()
     for field, wire, value, start, end in fields(buf, *span):
         if field != STATS_PROCESS or wire != 2:
@@ -440,7 +437,7 @@ def filter_stats(buf, span, app_pids, rss, timestamp):
         if pid in app_pids:
             body += buf[start:end]
             if STATS_VM_RSS_KB in message:
-                rss.append((timestamp(), pid, message[STATS_VM_RSS_KB][0]))
+                rss.append(message[STATS_VM_RSS_KB][0])
     return bytes(body)
 
 
@@ -480,9 +477,8 @@ def report(sections, thread_names, rss, usage, prefixes, out):
             print(f"{label}: {statistics.mean(percents):.0f}% of a core on average, peak "
                   f"{percents[peak]:.0f}% at +{peak * CPU_BUCKET_NS / 1e9:.1f} s (per 100 ms)", file=out)
     if rss:
-        values = [kb for _, _, kb in rss]
-        print(f"App RSS: {megabytes(values[0])} at start, {megabytes(max(values))} peak, "
-              f"{megabytes(values[-1])} at end", file=out)
+        print(f"App RSS: {megabytes(rss[0])} at start, {megabytes(max(rss))} peak, "
+              f"{megabytes(rss[-1])} at end", file=out)
 
 
 def main():
