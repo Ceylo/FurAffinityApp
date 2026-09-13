@@ -21,6 +21,9 @@
 //  alternatives. Retry outcomes are *reported* to Swift as JSON rather than logged:
 //  android.util.Log never reaches the log file Settings exports.
 //
+//  Download progress goes the other way, pushed from the copy loop into the bridged
+//  Swift `FAImageFetchProgressSink`.
+//
 //  Lives in the app Gradle module (not the FurAffinityUI module) so it compiles
 //  against okhttp declared in Android/app/build.gradle.kts; reflection loads it
 //  by name at runtime from the single APK classloader.
@@ -29,8 +32,6 @@
 package fur.affinity.ui
 
 import java.io.File
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicLongArray
 import okhttp3.Request
 import okio.Buffer
 import okio.BufferedSource
@@ -49,8 +50,6 @@ class FAImageFetchBridge {
         FAHttpClient.configure(userAgent, cookie)
 
     fun fetchResult(url: String): String = Companion.fetchResult(url)
-
-    fun progress(url: String): String = Companion.progress(url)
 
     companion object {
         // Each attempt is an independent draw: the challenge closes the connection, so
@@ -199,35 +198,32 @@ class FAImageFetchBridge {
             }
         }
 
-        /// (received, total) per URL with a body being copied; total is -1 when the
-        /// response has no length. `FAImageStore` coalesces downloads, so one fetch per URL.
-        private val inFlight = ConcurrentHashMap<String, AtomicLongArray>()
         private const val COPY_CHUNK = 64L * 1024
+        private const val PROGRESS_INTERVAL_NS = 100_000_000L
 
-        /// `"received,total"` for `url`'s copy in progress, `""` when there is none.
-        /// A map read, so Swift polls it without blocking.
-        fun progress(url: String): String =
-            inFlight[url]?.let { "${it.get(0)},${it.get(1)}" } ?: ""
-
+        /// Copies the body to `file`, pushing (received, total) to Swift at most every
+        /// 100 ms, the first time only once the copy has run that long: a thumbnail
+        /// that lands sooner pushes nothing. `total` is -1 when the response has no length.
         private fun copyReportingProgress(
             url: String, source: BufferedSource, file: File, total: Long
         ): Long {
-            val entry = AtomicLongArray(longArrayOf(0, total))
-            inFlight[url] = entry
-            try {
-                file.sink().buffer().use { sink ->
-                    val buffer = Buffer()
-                    while (true) {
-                        val read = source.read(buffer, COPY_CHUNK)
-                        if (read == -1L) break
-                        sink.write(buffer, read)
-                        entry.addAndGet(0, read)
+            var received = 0L
+            var lastReport = System.nanoTime()
+            file.sink().buffer().use { sink ->
+                val buffer = Buffer()
+                while (true) {
+                    val read = source.read(buffer, COPY_CHUNK)
+                    if (read == -1L) break
+                    sink.write(buffer, read)
+                    received += read
+                    val now = System.nanoTime()
+                    if (now - lastReport >= PROGRESS_INTERVAL_NS) {
+                        lastReport = now
+                        FAImageFetchProgressSink.shared.didReceive(url, received, total)
                     }
                 }
-                return entry.get(0)
-            } finally {
-                inFlight.remove(url, entry)
             }
+            return received
         }
 
         private fun ms(startNanos: Long) = (System.nanoTime() - startNanos) / 1_000_000

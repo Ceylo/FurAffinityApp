@@ -73,19 +73,25 @@ Rules that are easy to get wrong here:
   submits to a real `DispatchQueue`. The decode is easy to lose: `FAOkHttpDownloader`
   runs in a plain `Task`, so `options.processor.process(...)` would otherwise decode
   wherever that task resumed.
-- **Download progress is polled, not pushed.** The fetch blocks until the body is on
-  disk, so `FAImageFetchBridge` copies it in 64 KiB chunks into a per-URL
-  `(received, total)` table and `progress(url)` reads it. `FAOkHttpDownloader` waits
-  150 ms, then polls it every 100 ms and hands each reading to
-  `KingfisherParsedOptionsInfo.reportDownloadProgress` (a fork API), which is what feeds
-  `KFImage`'s placeholder and so `SubmissionMainImage`'s bar. The wait spares loads that
-  finish quickly. A load still queued behind the gate does poll, and misses. A polled
-  read is a map lookup, not a blocking call, so the rule above does not apply to it.
-  Measured over alternating arms, 3 cold runs each, in the order B1 A1 B2 A2 B3
-  (2026-09-12). The Kotlin-side fetch median went from ~50 ms to ~250 ms from A1's third
-  run through B2, then back to ~50 ms in A2 and B3. That was drift. B3 was the only arm
-  to lose images: 6, all in one run with a 35% 403 rate and page-path challenges. The
-  poller sends no request, so it has no way to cause that.
+- **Download progress is pushed, and throttled in Kotlin.** The fetch blocks until the
+  body is on disk, so `FAImageFetchBridge`'s copy loop reports it as it goes: at most
+  every 100 ms it calls the bridged Swift `FAImageFetchProgressSink.didReceive(url,
+  received, total)`, and only once the copy has run that long, so a thumbnail that lands
+  sooner pushes nothing. The sink fans the numbers out to `ImageFetchBridge.progressUpdates(for:)`,
+  an `AsyncStream` per waiting load (`FAImageStore` coalesces fetches, so one URL can
+  have several). `FAOkHttpDownloader` subscribes before it awaits the bytes, so no early
+  push is missed, and forwards each update to
+  `KingfisherParsedOptionsInfo.reportDownloadProgress` (a fork API), which feeds `KFImage`'s
+  placeholder and so `SubmissionMainImage`'s bar. A load still queued behind the gate
+  costs nothing: it waits on an empty stream. This replaced a 100 ms poller of a Kotlin
+  table (2026-09-13). With the copy loop temporarily slowed, an 895 KB image pushed 167
+  strictly increasing updates 97–208 ms apart. One cold feed burst pushed 2 updates
+  across 80 image fetches, both thumbnails whose copy happened to outlast 100 ms.
+  Measured A-B-A against the poller, 4 kept cold runs per arm, after an emulator reboot:
+  0 images lost in every arm. On the runs whose burst completed, the per-fetch median
+  was 243–268 ms (A1), 184–269 ms (B) and 178–246 ms (A2), and 90% of fetches were done
+  at 8.0–9.5 s, 3.4–7.3 s and 5.4–7.7 s. One run per arm stalled partway through its
+  burst (37, 29 and 0 fetches back), so a stall is not the change either.
 - **No image bytes cross JNI.** The bridge returns a path; Swift reads that file
   natively and unlinks it.
 - **A challenge is reported, not retried into.** `FAImageFetchBridge` hands
