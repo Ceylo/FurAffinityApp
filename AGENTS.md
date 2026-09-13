@@ -34,7 +34,7 @@ bridges that layer needs from the app come back as hooks installed in
 embedded frameworks instead of 1.
 Logging works on both platforms via `#if canImport(os) import os #else import OSCompat`:
 the sibling `FALogging/` package ships an Android-only `OSCompat` target
-(`FALogging/Sources/OSCompat/`) vending `Logger` (→ logcat) and a no-op `OSSignposter`.
+(`FALogging/Sources/OSCompat/`) vending `Logger` (→ logcat) and an `OSSignposter` over ATrace (→ Perfetto).
 It must **not** be named `os` — a module by that name makes `canImport(os)` true for
 the whole Android build; see `Android/docs/build-and-run.md` § Module-name poisoning,
 which is also why FAKit gates SwiftUI on `#if !os(Android)` rather than `canImport`.

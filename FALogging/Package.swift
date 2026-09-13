@@ -40,8 +40,16 @@ let package = Package(
             dependencies: [
                 .product(name: "AndroidLogging", package: "swift-android-native",
                          condition: .when(platforms: [.android])),
+                .target(name: "CAndroidTrace", condition: .when(platforms: [.android])),
             ],
             path: "Sources/OSCompat"
+        ),
+        // <android/trace.h>, which backs OSCompat's OSSignposter.
+        .target(
+            name: "CAndroidTrace",
+            linkerSettings: [
+                .linkedLibrary("android", .when(platforms: [.android])),
+            ]
         ),
         .target(
             name: "FALogging",
