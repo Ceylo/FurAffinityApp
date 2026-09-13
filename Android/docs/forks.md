@@ -5,7 +5,7 @@
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
 | `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
-| `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, a rendered image that comes out of an `ImageHolder` rather than out of the view value, a public `DownloadTask` initializer so a subclass outside the module can replace the transport, and `reportDownloadProgress` so that transport can feed the placeholder's progress |
+| `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, a rendered image that comes out of an `ImageHolder` rather than out of the view value, and `reportDownloadProgress` so a replacement transport can feed the placeholder's progress |
 | `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
 
 Sending any of these patches back to its origin project — the gates each project sets, what
@@ -27,6 +27,11 @@ negation), as is the Xcode workspace's copy; only `FAKit/Package.resolved` stays
 Five deps resolve from mutable `branch: "android"` refs, so without the recorded
 revisions a release APK isn't reproducible. Refreshing a fork is still
 `swift package update <dep>` — now followed by committing the resulting diff.
+
+**`android` is never rebased or force-pushed**: the revisions committed above must stay
+reachable. To pick up upstream — including a fork patch that has since merged there —
+fast-forward the fork's default branch to upstream's, then merge it into `android`,
+resolving the merged patch in upstream's favour. Kingfisher `239c970b` is the example.
 
 **Do not run `skip android build` / `skip android test` inside a fork checkout.**
 A framework package has no `.xcodeproj`, so both build modes share one `.build/`, and the
@@ -270,13 +275,16 @@ Guards in the fork are `#if os(Android)` / `#if !os(Android)`, never `canImport(
 for the same poisoning reason — Kingfisher's non-Android platforms are all Apple, so the
 platform gate is both safe and correct there.
 
-Six things the port needed beyond the guards:
+The port also needs a public `DownloadTask` initializer, and no longer carries one:
+`ImageDownloader.downloadImage` is `open`, but every `DownloadTask` initializer was
+internal, so an override outside the module had nothing valid to return.
+`init(cancelling:)` went upstream as
+[#2576](https://github.com/onevcat/Kingfisher/pull/2576), merged 2026-09-13, together
+with `isTaskCancelled` matching `.asyncTaskContextCancelled` — the reason
+`FAOkHttpDownloader` reports.
 
-- **A public `DownloadTask` initializer.** `ImageDownloader.downloadImage` is `open`, but
-  every `DownloadTask` initializer was internal, so an override outside the module had
-  nothing valid to return — and `KingfisherManager` drops the download entirely when the
-  task it gets back is not `isInitialized`. `init(cancelling:)` exposes the
-  provider-backed one under a name that says what it is for.
+Five things the port needed beyond the guards:
+
 - **`@Observable` instead of `ObservableObject`.** `KFImage.ImageBinder` was Combine's;
   on Android it is `@Observable` and `KFImageRenderer` holds it in a `@State`. And
   `withAnimation` marks the *whole* Compose frame on SkipUI, so the binder records the
@@ -350,7 +358,8 @@ the whole target directory and generates a bridge for every SwiftUI `View` it fi
 including the tutorial snippets, whose repeated `ContentView` steps then collide as
 Kotlin redeclarations. `#if` around them does not help, for the reason above.
 
-Adopting the fork moves iOS from upstream 8.10.0 to a branch based on 8.11.0.
+Adopting the fork moves iOS from upstream 8.10.0 to a branch based on upstream `master`
+past 8.12.0 (`ab1c1de5`, #2576's merge), merged into `android` as `239c970b` on 2026-09-13.
 
 ## The other fork patches
 

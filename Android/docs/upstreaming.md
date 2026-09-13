@@ -4,8 +4,8 @@
 travels back to its origin project, so the forks shrink instead of drifting.
 
 Four dependencies are forked, plus a fifth that exists only to re-point two of the others.
-Nothing here has been submitted yet; everything below is the process to follow when a patch
-is sent.
+Patches already sent are listed in [Opened PRs](#opened-prs); everything else below is the
+process to follow when one is sent.
 
 **The first rule: every pull request is opened as a draft** — `gh pr create --draft`, on
 every one of these repositories, without exception. Marking one ready for review needs
@@ -18,7 +18,7 @@ is never described as submitted.
 |---|---|---|
 | `Ceylo/skip-ui` | all of it | — |
 | `Ceylo/skip-fuse-ui` | all but one commit | `cfa7d82` — names our forks in `Package.swift` |
-| `Ceylo/Kingfisher` | `b01358ef` today; the Android port only if onevcat wants one | skipstone plugin, the unconditional `SkipFuseUI` edge, the `Documentation.docc` deletion, the dynamic-library manifest |
+| `Ceylo/Kingfisher` | the API half of `47267203`; the Android port only if onevcat wants one | skipstone plugin, the unconditional `SkipFuseUI` edge, the `Documentation.docc` deletion, the dynamic-library manifest |
 | `Ceylo/Defaults` | `Defaults.defaultSuite`, pitched on its own merits | dropping `DefaultsMacros` + swift-syntax, the `#if !os(Android)` guards |
 | `Ceylo/skip-web` | nothing | `64de0f8` — dependency locations only; required today, retires when the two above land |
 
@@ -31,7 +31,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `5110e81` innermost `listRow*` wins | skip-ui | no | bug fix; SwiftUI-parity argument stands alone |
 | `5eee865` + `80c72b4` SF Symbol mappings | skip-ui | no | same shape as merged #476 |
 | `1b25638` `FlowRow` | skip-ui + `09a3e69` | yes | new container; `Layout` cannot be emulated, so argue the container |
-| `6f06ae4` `.disabled` on menu items | skip-ui | no | bug fix |
+| `6f06ae4` `.disabled` on menu items | skip-ui | no | fixes skip-ui #246 (filed by marcprux). Topic branch `fix/menu-item-disabled` adds what the fork lacks — the dimming and a Robolectric test — plus showcase `feature/menu-disabled-playground` |
 | `23ac3bd` menu body text + visible divider | skip-ui | no | **split into two PRs** — the text/icon size and the `outlineVariant` divider are separate fixes |
 | `ad375fb` `.subheadline` → `bodyMedium` | skip-ui | no | one token; carries a measured screenshot argument |
 | `eaa6abe` resume animation across disposal | skip-ui | no | the recycling-boundary fix; largest single non-text patch |
@@ -43,8 +43,11 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `bf0c6ad` + `28717f9` HTML via `fromHtml` | skip-ui + `30a2abd` | yes | **collides** with #436 on link handling |
 | `cad81a8` `Text + Text` | skip-ui + `967a19a` | yes | **collides** head-on with #453/#118 |
 | `9eb2c87` `@_disfavoredOverload` on `Text(AttributedString)` | skip-fuse-ui | no | belongs with whichever attributed-text PR lands; the trap is worth writing up either way |
-| `b01358ef` public `DownloadTask.init(cancelling:)` | Kingfisher | no | +11 lines, no platform argument |
+| `5a21355` `GeometryReader` composes on the measure pass | skip-ui | no | fidelity fix (no blank first frame). Before sending, check whether it causes the intrinsic-measurement crash under a scroll: `BoxWithConstraints` is a `SubcomposeLayout` and the old `Box` was not |
+| `23154a0` `ImageHolder`, read in the draw phase | skip-ui + `c59b1a7` | yes | new API; its only caller today is the Kingfisher fork (`07f72deb`), so argue it from Coil's `AsyncImagePainter`, not from Kingfisher |
+| `47267203` `reportDownloadProgress(receivedSize:totalSize:)` | Kingfisher | no | the same argument as #2576 (a replacement transport can't feed progress). Send only the `KingfisherOptionsInfo` half; the `ImageBinder` change is Android-only |
 | `2b2dc459` + `66eb74df` + `ae0b4f07` Android port | Kingfisher | no | issue first; large parts can never leave the fork |
+| `058eb5d4`, `2296a263`, `07f72deb`, `731194ee` Android first-frame work | Kingfisher | no | part of the port, and depends on skip-ui `23154a0`. `07f72deb` replaces most of the first two. `731194ee` sits on the *target*-cache-hit path; #2572/#2573 rewrote the *original*-cache-hit path beside it, and `239c970b` merged them without touching it |
 | `fb0ef04` `Defaults.defaultSuite` | Defaults | no | issue first; re-pitch without the Android rationale |
 | `4c1ad29` drop macros + guards | — | — | fork-only, permanently |
 | `e67bf25` + `4f7ad45` Android `@Default` | — | — | nothing to send: the second commit moved it out of the fork again, so the pair is a no-op against upstream |
@@ -70,12 +73,25 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
   three in Kingfisher, one in skip-web, one in skip-fuse-ui; skip-ui's seventeen and
   Defaults' four are clean. Every commit is authored as
   `451334+Ceylo@users.noreply.github.com`, so no personal address is exposed.
-- **Rewrite the app-specific comments.** The Kingfisher fork names FurAffinity in five
-  places, one of them a public doc comment on `DownloadTask`. A library takes no knowledge of
-  one app; rewrite each to state the general case before the patch goes out.
+  **Recounted 2026-09-12: ten.** Kingfisher 6 (`66eb74df`, `b01358ef`, `ae0b4f07`, `07f72deb`,
+  `731194ee`, `47267203`), skip-fuse-ui 2 (`cfa7d82`, `c59b1a7`), skip-ui 1 (`23154a0`),
+  skip-web 1; Defaults is still clean. The fork commits keep their trailers. Only the
+  topic-branch copy loses it (`git commit --amend --reset-author`, message rewritten).
+- **Rewrite the app-specific comments.** The Kingfisher fork's `Sources/` names FurAffinity
+  in one place since #2576 replaced the `DownloadTask` doc comment (2026-09-13): a
+  `KFImage.swift` comment about cap insets. A library shouldn't know about one app, so
+  rewrite it to state the general case before the patch goes out, then check the branch
+  diff with `git diff upstream/master | grep -i -e furaffinity -e android`.
 - **Search the target's open PRs *and* issues for the same surface first**, and link whatever
   you find. skip-ui #468 was closed as obviated by #471, and Kingfisher #2570 closed as
   covered by #2568 — both authors had written the whole thing first.
+- **Run `/code-review` before every push that reaches a PR**: the first push that opens it,
+  and every review-round fix. The order is tests green → review → address findings → push
+  → PR. Review the *patch*: the local topic branch in the upstream clone, against upstream's
+  default branch. A PR URL is the wrong target here, because the commits aren't on it yet.
+  Never review the FurAffinity worktree's current branch, which is what a bare
+  `/code-review` reviews. Fix what the review confirms, or say in the PR body (or the
+  review reply) why a finding doesn't apply. Nothing is pushed with unaddressed findings.
 
 ## The PR body
 
@@ -107,12 +123,28 @@ evidence](#producing-the-evidence). None of it is written from memory.
 The PR body may only claim what this produced. No line of `Verified` is written before its
 step has run.
 
-**Setup, once.** Clone the three Skip repos as peers — `skip-ui/`, `skip-fuse-ui/`,
-`skipapp-showcase/` — make an Xcode workspace holding both packages plus
-`skipapp-showcase/Darwin/Showcase.xcodeproj`, and run **ShowcaseLite** and **ShowcaseFuse**
-*before touching anything*: a broken baseline is indistinguishable from a broken patch. The
-local packages override the `Package.swift` distributions, which is what makes the workspace
-the harness (<https://skip.dev/docs/contributing/> § Local Skip Libraries).
+**Setup, once — the harness is `~/Development/SkipUpstream/`** (built 2026-09-13). Showcase no
+longer has ShowcaseLite/ShowcaseFuse targets: one app, switched by `SKIP_MODE=lite|fuse`, and
+`SKIP_DEPENDENCY_ROOT=<dir>` repoints *every* `skip*` dependency at `<dir>/<repo>` — so that
+directory holds every Skip repo the graph reaches, not just the patched two. There:
+
+- `skip-ui/`, `skip-fuse-ui/` are `git worktree`s of the `~/Development/SkipForks/` clones at
+  upstream `main`; the rest are shallow clones. Only a missing repo breaks resolution.
+- `build-showcase.sh lite|fuse [build|launch]` — iOS for a simulator plus the Android app
+  through Gradle, one DerivedData per mode (SwiftPM won't re-evaluate a manifest because the
+  environment changed). `launch` installs onto the emulator: wrap it in
+  `with-emulator-lock.sh`.
+- `drive-android.sh` taps by visible text (`scrollto:`, `tapprefix:`, `longpress:`, `dump:`,
+  `shot:`); `menu-item-colors.py` reads a text colour from a screenshot + its dump.
+- Evidence and logs land in `evidence/` and `logs/`.
+
+Build both modes *before touching anything*: a broken baseline is indistinguishable from a
+broken patch. Then grep the build log for `SkipUpstream/skip-ui/Sources` — a stale remote
+checkout sits in DerivedData too, and only the log shows which one compiled. In Fuse, the
+installed APK must contain `libSkipFuseUI.so`. A one-off `CopySwiftLibs … No such file or
+directory` in the iOS half is a race: re-run before reading anything into it.
+
+Take iOS screenshots with the app launched `-AppleLanguages "(en)"`; the simulator is French.
 
 **Per patch:**
 
@@ -136,10 +168,26 @@ the harness (<https://skip.dev/docs/contributing/> § Local Skip Libraries).
 6. **Now** write `Verified`, naming the emulator API level and the simulator device, and
    attach steps 2, 4 and 5.
 
+**Semantics are not appearance.** `6f06ae4` made disabled menu items `enabled=false` and
+untappable, and still drew them at full colour: SkipUI passes an explicit tint that overrides
+the Compose component's own disabled colours. Read a pixel, not the uiautomator tree. And a
+fork patch is not a finished upstream patch — the upstream branch grew the dimming, the fork
+did not.
+
+**Where skip-ui has a Robolectric test for the surface, add one next to it** and prove it with
+a mutation run: revert the source file to `origin/main`, confirm the new test fails *for its
+own assertion* (read the message, not just the count), restore.
+
 **Where there is no visual** — Kingfisher's `init(cancelling:)`, `Defaults.defaultSuite` —
 the before/after pair becomes a failing-then-passing test with its real console output, plus
 the platform matrix that ran. Say that the substitution was made; an empty screenshot
 section reads as a skipped step.
+
+For an **access-level** change, a test in the repo proves little: `@testable import` already
+reaches the internal symbol. The real before/after is a throwaway SwiftPM package outside
+the repo that depends on the library by `path:`, with no `@testable`. Run `swift build`
+against a `git worktree` of upstream's default branch, then against the topic branch, and
+quote the compiler error.
 
 ## skip-ui + skip-fuse-ui
 
@@ -149,12 +197,21 @@ One section: they are always paired.
 
 - <https://skip.dev/docs/contributing/> is canonical, including the worked three-PR example
   (skip-ui #356 / skip-fuse-ui #93 / skipapp-showcase #74).
-- **The CLA blocks review before anything else.** `Ceylo` is absent from
-  [`skiptools/clabot-config`](https://github.com/skiptools/clabot-config)'s `.clabot`. PR the
-  username in first, then `@cla-bot check` on the code PR. It stopped #516, #503 and #478
-  dead.
+- **The CLA is signed.** `Ceylo` was added to
+  [`skiptools/clabot-config`](https://github.com/skiptools/clabot-config)'s `.clabot` by
+  [#98](https://github.com/skiptools/clabot-config/pull/98), merged 2026-09-13 (`23abce5`).
+  Until then it blocked review before anything else, which is why the first draft went to
+  Kingfisher; it stopped #516, #503 and #478 dead. If cla-bot flags a code PR anyway, comment
+  `@cla-bot recheck`.
+- **CLA scope: nothing from the app goes into a Skip PR.** Skip's CLA grants a perpetual,
+  irrevocable, sublicensable licence with no outbound commitment, so Skip may relicense a
+  contribution under any terms. `Ceylo/FurAffinityApp` has no licence and stays all rights
+  reserved, which holds only while none of its code is submitted. Write Showcase playgrounds and
+  patches from scratch rather than lifting app code (e.g. `FAKit/RichText/`), and check the
+  topic branch's diff for anything derived from it before pushing.
 - skip-ui's `.github/pull_request_template.md` is required: CLA signed, `swift test` run, and
-  "does this need a paired skip-fuse-ui PR" answered.
+  "does this need a paired skip-fuse-ui PR" answered. It also asks whether **AI was used**,
+  how, and how the change was verified by hand — Ceylo's to answer.
 - **Any change to API surface — including removing an `@available(*, unavailable)` — needs
   the paired fuse-ui PR** plus a Showcase playground. Cross-link all three bodies.
 - `skip-fuse-ui/ADDING_MODIFIERS.md` fixes branch naming (`feature/<x>-modifier`,
@@ -219,15 +276,40 @@ small ("the bigger the pull request, the longer it will take"), and give the mot
 
 `docs/development.md` is the style contract: the license header on every file, the
 `KFCrossPlatform*` typealias pattern, `Sendable` annotations, the `.kf` namespace wrapper.
-Tests are `bundle exec fastlane tests` across iOS/macOS/tvOS/watchOS, with Nocilla stubbing
-HTTP. The repo carries its own `AGENTS.md`/`CLAUDE.md` — read them; the maintainer works with
-agents himself, and reviews arrive from his assistants (@onevclaw, @onevpaw, @onevtail)
-citing exact commit SHAs. Answer at that level of specificity.
+There is no PR template. The repo carries its own `AGENTS.md` (`CLAUDE.md` is now just a
+pointer to it). Read it: the maintainer works with agents himself, and reviews arrive from
+his assistants (@onevclaw, @onevpaw, @onevtail) citing exact commit SHAs. Answer at that
+level of specificity.
+
+`CHANGELOG.md` is the maintainer's. Its last 20 commits are all onevcat's, so a
+contributor's PR doesn't touch it.
+
+**Tests, as of 2026-09-12.** Nocilla stubs HTTP. Two sets of destinations exist, and neither
+matches upstream's `docs/testing.md` (iPhone 15 / 17.5), which is out of date:
+
+- `bundle exec fastlane tests`: macOS, iPhone 16 / 18.5, Apple TV / 18.5, and a *build*
+  only for Apple Watch Series 10 (42mm) / 11.5.
+- CI (`.github/workflows/test.yaml`, what the PR is judged on): Xcode 26.2 and 26.6 ×
+  {macOS, iPhone 17, Apple TV 4K (3rd generation), `-sdk watchsimulator` build}, at OS 26.2 /
+  26.5. **Match this one.**
+
+The lanes need Ruby 3.3.6 (`.ruby-version`). The system Ruby here is 2.6.10; without it, run
+the lane's own `xcodebuild` arguments directly (`-workspace Kingfisher.xcworkspace -scheme
+Kingfisher SWIFT_VERSION=5.0`) and say so in `Verified`. The tvOS runtime was not installed
+by default; `xcodebuild -downloadPlatform tvOS` fetched 26.5 (3.8 GB). watchOS needs only
+the SDK.
 
 ### What the merged PRs did well
 
 One bug, one mechanism, tests attached, merged in days: #2561, #2556, #2540, #2539. Outside
-contributors merge routinely here — this is not a closed shop.
+contributors merge routinely here — this is not a closed shop (#2572, #2571, #2569, #2565 and
+#2563 in August–September 2026 alone).
+
+[#2107](https://github.com/onevcat/Kingfisher/pull/2107) is the precedent for `b01358ef`: a
+public `ImageDownloadResult` init, merged so that an `ImageDownloader` subclass could build
+its result outside the module. Its own override returned `nil` for the loads it handled
+itself. Kingfisher 8 made `downloadImage` return a non-optional `DownloadTask` while every
+initializer stayed internal, so that pattern stopped compiling.
 
 ### What the rejected PRs missed
 
@@ -239,6 +321,9 @@ contributors merge routinely here — this is not a closed shop.
   onevcat took the idea and rebuilt it his own way with async cancellation. Anything
   protocol-shaped gets an issue first.
 - **#2570** duplicated #2568.
+- **Reviews exercise new API against existing options.** Anything that reports errors or
+  cancellation gets tested with `.alternativeSources` and a retry strategy too, not only on
+  its own.
 
 ### Other requirements, and the platform reality
 
@@ -247,8 +332,7 @@ in Android. So:
 
 - **`b01358ef` stands on its own merits** and must not be framed as Android work:
   `ImageDownloader.downloadImage` is `open`, but every `DownloadTask` initializer is
-  internal, so an override outside the module has nothing valid to return — and
-  `KingfisherManager` silently drops the download when the task is not `isInitialized`. That
+  internal, so an override outside the module can only return the task of a `super` call. That
   is a plain API-consistency bug, provable with a test.
 - **The Android port gets an issue before any code.** Skip's own docs encourage submitting
   Android-compat PRs to third-party libraries so they earn the Swift Package Index Android
@@ -260,6 +344,19 @@ in Android. So:
 
 Under ~200 lines, tests included, the issue named, verified across all four Apple platforms,
 and an explicit account of what was and was not checked.
+
+A first-time contributor's workflows don't start on their own: they sit at
+`action_required` until a maintainer approves them, so "no checks reported" is not a CI
+result. Read the state with
+`gh api "repos/onevcat/Kingfisher/actions/runs?branch=<topic-branch>"`.
+
+## Opened PRs
+
+State is one of draft / opened / merged / rejected; fetch the PR for anything more.
+
+| PR | Patch | State |
+|---|---|---|
+| Kingfisher [#2576](https://github.com/onevcat/Kingfisher/pull/2576) | `b01358ef` | merged |
 
 ## Defaults
 
