@@ -29,7 +29,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 |---|---|---|---|
 | `22e8919` `listRowInsets` | skip-ui + `0d5d47a` | yes | un-`unavailable`s API in both repos |
 | `5110e81` innermost `listRow*` wins | skip-ui | no | bug fix; SwiftUI-parity argument stands alone |
-| `5eee865` + `80c72b4` SF Symbol mappings | skip-ui | no | same shape as merged #476 |
+| `5eee865` + `80c72b4` SF Symbol mappings | skip-ui | no | same shape as merged #476. Sent as #525 (topic branch `feature/sf-symbol-mappings`), remapped by shape rather than by the app's meaning, with showcase `feature/symbol-playground-rows`; the fork took the upstream mapping back in `301cfcc`. `text.badge.star` stays fork-only |
 | `1b25638` `FlowRow` | skip-ui + `09a3e69` | yes | new container; `Layout` cannot be emulated, so argue the container |
 | `6f06ae4` `.disabled` on menu items | skip-ui | no | fixes skip-ui #246 (filed by marcprux). Topic branch `fix/menu-item-disabled` adds what the fork lacks — the dimming, a disabled nested `Menu` opening with its items disabled (iOS 26.5 parity), and Robolectric tests — plus showcase `feature/menu-disabled-playground`. Port both back to the fork |
 | `23ac3bd` menu body text + visible divider | skip-ui | no | **split into two PRs** — the text/icon size and the `outlineVariant` divider are separate fixes |
@@ -145,6 +145,11 @@ directory holds every Skip repo the graph reaches, not just the patched two. The
   `with-emulator-lock.sh`.
 - `drive-android.sh` taps by visible text (`scrollto:`, `tapprefix:`, `longpress:`, `dump:`,
   `shot:`); `menu-item-colors.py` reads a text colour from a screenshot + its dump.
+  `symbol-evidence.py` crops every row of a scrolling playground by its label, so two runs
+  can be compared row by row even when a row's height changes; `ios-symbol-rows.py` does
+  the same on the simulator. For a `//􀀀` glyph comment, match the rendered
+  `NSImage(systemSymbolName:)` against SF Pro's private-use glyphs, and check the match on
+  a comment already known to be right: the fork's guesses were wrong.
 - Evidence and logs land in `evidence/` and `logs/`.
 
 Build both modes *before touching anything*: a broken baseline is indistinguishable from a
@@ -368,6 +373,8 @@ State is one of draft / opened / merged / rejected; fetch the PR for anything mo
 | Kingfisher [#2576](https://github.com/onevcat/Kingfisher/pull/2576) | `b01358ef` | merged |
 | skip-ui [#524](https://github.com/skiptools/skip-ui/pull/524) | `6f06ae4` | draft |
 | skipapp-showcase [#122](https://github.com/skiptools/skipapp-showcase/pull/122) | playground for skip-ui #524 | draft |
+| skip-ui [#525](https://github.com/skiptools/skip-ui/pull/525) | `5eee865` + `80c72b4`, remapped | draft |
+| skipapp-showcase [#123](https://github.com/skiptools/skipapp-showcase/pull/123) | playground rows for skip-ui #525 | draft |
 
 ## Defaults
 

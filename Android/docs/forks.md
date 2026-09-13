@@ -452,9 +452,13 @@ past 8.12.0 (`ab1c1de5`, #2576's merge), merged into `android` as `239c970b` on 
   `unavailable`. `#available(iOS 26, *)` is vacuously true off-Apple, so a shared source
   takes its Liquid Glass branch on Android; making the call unbuildable is worse than
   ignoring an effect Compose can't express.
-- **SF Symbol mappings** for the symbols this app uses (`safari`,
-  `square.and.arrow.down`, `bubble`, `exclamationmark.bubble`, `ellipsis.bubble`,
-  `message`, `text.badge.star`). Unmapped names render as a warning triangle.
+- **SF Symbol mappings** for the symbols this app uses. Unmapped names render as a
+  warning triangle. Six are now the mapping sent as skip-ui #525, picked by the symbol's
+  *shape* rather than by what the app means by it: `bubble` → ChatBubbleOutline,
+  `message` → Chat, `safari` → Explore (was Public), `exclamationmark.bubble` → Feedback
+  (was CommentsDisabled), `ellipsis.bubble` → Sms (was Forum), `square.and.arrow.down` →
+  SaveAlt (was FileDownload). `text.badge.star` → Info stays fork-only: Material has
+  nothing shaped like it.
 - **Text layout parity with iOS.** Four Material defaults that each read as a bug next
   to the iOS build, all measured off screenshots rather than eyeballed:
   - Material's typography **fixes a line height** (`bodyLarge` is 24sp on a 16sp face,
