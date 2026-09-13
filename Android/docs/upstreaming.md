@@ -183,7 +183,14 @@ One section: they are always paired.
   [`skiptools/clabot-config`](https://github.com/skiptools/clabot-config)'s `.clabot`
   (re-checked 2026-09-12). This is why the first draft went to Kingfisher. PR the
   username in first, then `@cla-bot check` on the code PR. It stopped #516, #503 and #478
-  dead.
+  dead. Ceylo decided to sign on 2026-09-13; record the `clabot-config` PR here once it
+  merges.
+- **CLA scope: nothing from the app goes into a Skip PR.** Skip's CLA grants a perpetual,
+  irrevocable, sublicensable licence with no outbound commitment, so Skip may relicense a
+  contribution under any terms. `Ceylo/FurAffinityApp` has no licence and stays all rights
+  reserved, which holds only while none of its code is submitted. Write Showcase playgrounds and
+  patches from scratch rather than lifting app code (e.g. `FAKit/RichText/`), and check the
+  topic branch's diff for anything derived from it before pushing.
 - skip-ui's `.github/pull_request_template.md` is required: CLA signed, `swift test` run, and
   "does this need a paired skip-fuse-ui PR" answered.
 - **Any change to API surface — including removing an `@available(*, unavailable)` — needs
