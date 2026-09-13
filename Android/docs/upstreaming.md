@@ -283,6 +283,12 @@ initializer stayed internal, so that pattern stopped compiling.
   onevcat took the idea and rebuilt it his own way with async cancellation. Anything
   protocol-shaped gets an issue first.
 - **#2570** duplicated #2568.
+- **#2576 (ours) got `CHANGES_REQUESTED` within a day**, from @onevpaw. The reviewer
+  exercised the new API against *existing options* from a separate module:
+  `.alternativeSources` started the fallback after a cancel, because the error our tests
+  reported wasn't one `isTaskCancelled` recognized. Before sending anything that reports
+  errors or cancellation, test it with `.alternativeSources` and a retry strategy too, not
+  only on its own.
 
 ### Other requirements, and the platform reality
 
@@ -318,7 +324,7 @@ None of these is marked ready for review. That needs Ceylo's approval each time.
 
 | PR | Patch | Opened | Branch | State |
 |---|---|---|---|---|
-| Kingfisher [#2576](https://github.com/onevcat/Kingfisher/pull/2576) | `b01358ef` → `ed690565` | 2026-09-12 | `Ceylo:feature/public-download-task-init` | draft; CI awaiting maintainer approval. Verified locally with Xcode 26.6: macOS 380, iOS 26.5 419, tvOS 26.5 417 tests, 0 failures; watchsimulator build. Not run: Xcode 26.2 |
+| Kingfisher [#2576](https://github.com/onevcat/Kingfisher/pull/2576) | `b01358ef` → `ed690565` + `c317e85d` | 2026-09-12 | `Ceylo:feature/public-download-task-init` | draft. 2026-09-13: @onevpaw requested changes (cancellation ignored by `.alternativeSources`); `c317e85d` makes `isTaskCancelled` match `.asyncTaskContextCancelled`, with a regression test, and was answered in [a comment](https://github.com/onevcat/Kingfisher/pull/2576#issuecomment-5652575017). The `.dataProviderCancelled` gap, which existed before the PR, is offered there but not included. CI still awaiting maintainer approval. Verified locally with Xcode 26.6 on `c317e85d`: macOS 381, iOS 26.5 420, tvOS 26.5 418 tests, 0 failures; watchsimulator build. Not run: Xcode 26.2, visionOS |
 
 ## Defaults
 
