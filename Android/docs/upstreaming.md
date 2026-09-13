@@ -31,7 +31,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `5110e81` innermost `listRow*` wins | skip-ui | no | bug fix; SwiftUI-parity argument stands alone |
 | `5eee865` + `80c72b4` SF Symbol mappings | skip-ui | no | same shape as merged #476 |
 | `1b25638` `FlowRow` | skip-ui + `09a3e69` | yes | new container; `Layout` cannot be emulated, so argue the container |
-| `6f06ae4` `.disabled` on menu items | skip-ui | no | bug fix |
+| `6f06ae4` `.disabled` on menu items | skip-ui | no | fixes skip-ui #246 (filed by marcprux). Topic branch `fix/menu-item-disabled` adds what the fork lacks — the dimming and a Robolectric test — plus showcase `feature/menu-disabled-playground` |
 | `23ac3bd` menu body text + visible divider | skip-ui | no | **split into two PRs** — the text/icon size and the `outlineVariant` divider are separate fixes |
 | `ad375fb` `.subheadline` → `bodyMedium` | skip-ui | no | one token; carries a measured screenshot argument |
 | `eaa6abe` resume animation across disposal | skip-ui | no | the recycling-boundary fix; largest single non-text patch |
@@ -124,12 +124,28 @@ evidence](#producing-the-evidence). None of it is written from memory.
 The PR body may only claim what this produced. No line of `Verified` is written before its
 step has run.
 
-**Setup, once.** Clone the three Skip repos as peers — `skip-ui/`, `skip-fuse-ui/`,
-`skipapp-showcase/` — make an Xcode workspace holding both packages plus
-`skipapp-showcase/Darwin/Showcase.xcodeproj`, and run **ShowcaseLite** and **ShowcaseFuse**
-*before touching anything*: a broken baseline is indistinguishable from a broken patch. The
-local packages override the `Package.swift` distributions, which is what makes the workspace
-the harness (<https://skip.dev/docs/contributing/> § Local Skip Libraries).
+**Setup, once — the harness is `~/Development/SkipUpstream/`** (built 2026-09-13). Showcase no
+longer has ShowcaseLite/ShowcaseFuse targets: one app, switched by `SKIP_MODE=lite|fuse`, and
+`SKIP_DEPENDENCY_ROOT=<dir>` repoints *every* `skip*` dependency at `<dir>/<repo>` — so that
+directory holds every Skip repo the graph reaches, not just the patched two. There:
+
+- `skip-ui/`, `skip-fuse-ui/` are `git worktree`s of the `~/Development/SkipForks/` clones at
+  upstream `main`; the rest are shallow clones. Only a missing repo breaks resolution.
+- `build-showcase.sh lite|fuse [build|launch]` — iOS for a simulator plus the Android app
+  through Gradle, one DerivedData per mode (SwiftPM won't re-evaluate a manifest because the
+  environment changed). `launch` installs onto the emulator: wrap it in
+  `with-emulator-lock.sh`.
+- `drive-android.sh` taps by visible text (`scrollto:`, `tapprefix:`, `longpress:`, `dump:`,
+  `shot:`); `menu-item-colors.py` reads a text colour from a screenshot + its dump.
+- Evidence and logs land in `evidence/` and `logs/`.
+
+Build both modes *before touching anything*: a broken baseline is indistinguishable from a
+broken patch. Then grep the build log for `SkipUpstream/skip-ui/Sources` — a stale remote
+checkout sits in DerivedData too, and only the log shows which one compiled. In Fuse, the
+installed APK must contain `libSkipFuseUI.so`. A one-off `CopySwiftLibs … No such file or
+directory` in the iOS half is a race: re-run before reading anything into it.
+
+Take iOS screenshots with the app launched `-AppleLanguages "(en)"`; the simulator is French.
 
 **Per patch:**
 
@@ -152,6 +168,16 @@ the harness (<https://skip.dev/docs/contributing/> § Local Skip Libraries).
    collapse. "No side effects" with nothing behind it is the claim a reviewer tests first.
 6. **Now** write `Verified`, naming the emulator API level and the simulator device, and
    attach steps 2, 4 and 5.
+
+**Semantics are not appearance.** `6f06ae4` made disabled menu items `enabled=false` and
+untappable, and still drew them at full colour: SkipUI passes an explicit tint that overrides
+the Compose component's own disabled colours. Read a pixel, not the uiautomator tree. And a
+fork patch is not a finished upstream patch — the upstream branch grew the dimming, the fork
+did not.
+
+**Where skip-ui has a Robolectric test for the surface, add one next to it** and prove it with
+a mutation run: revert the source file to `origin/main`, confirm the new test fails *for its
+own assertion* (read the message, not just the count), restore.
 
 **Where there is no visual** — Kingfisher's `init(cancelling:)`, `Defaults.defaultSuite` —
 the before/after pair becomes a failing-then-passing test with its real console output, plus
@@ -185,7 +211,8 @@ One section: they are always paired.
   patches from scratch rather than lifting app code (e.g. `FAKit/RichText/`), and check the
   topic branch's diff for anything derived from it before pushing.
 - skip-ui's `.github/pull_request_template.md` is required: CLA signed, `swift test` run, and
-  "does this need a paired skip-fuse-ui PR" answered.
+  "does this need a paired skip-fuse-ui PR" answered. It also asks whether **AI was used**,
+  how, and how the change was verified by hand — Ceylo's to answer.
 - **Any change to API surface — including removing an `@available(*, unavailable)` — needs
   the paired fuse-ui PR** plus a Showcase playground. Cross-link all three bodies.
 - `skip-fuse-ui/ADDING_MODIFIERS.md` fixes branch naming (`feature/<x>-modifier`,
