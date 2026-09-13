@@ -178,6 +178,20 @@ enum ImageFetchBridge {
         #endif
     }
 
+    /// Bytes copied so far by each fetch of `url`, and its length (-1 if the response
+    /// has none), as the Kotlin copy loop pushes them: at most every 100 ms, and never
+    /// for a body copied faster than that. Subscribe before the fetch starts, or its
+    /// first pushes are gone. Ends when the consuming task is cancelled.
+    static func progressUpdates(for url: URL) -> AsyncStream<(received: Int64, total: Int64)> {
+        AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
+            let key = url.absoluteString
+            let id = ImageFetchProgressRegistry.add(key, continuation)
+            continuation.onTermination = { _ in
+                ImageFetchProgressRegistry.remove(key, id)
+            }
+        }
+    }
+
     /// The line a lost image logs — an exhausted fetch here, and a challenged one that
     /// `FAImageStore` finally gives up on. One spelling, so `summarize-image-log.py`
     /// counts both as the same thing: an image that never came back.
@@ -186,4 +200,53 @@ enum ImageFetchBridge {
         logger.error("[IMG] \(url): failed after \(attempts) \(plural) (\(reasons))")
     }
 
+}
+
+/// Sink for `FAImageFetchBridge`'s copy loop, bridged so Kotlin can call it by name.
+/* SKIP @bridge */public final class FAImageFetchProgressSink: Sendable {
+    /* SKIP @bridge */public static let shared = FAImageFetchProgressSink()
+
+    private init() {}
+
+    /* SKIP @bridge */public func didReceive(_ url: String, _ received: Int64, _ total: Int64) {
+        ImageFetchProgressRegistry.didReceive(url, received: received, total: total)
+    }
+}
+
+/// Fans one URL's progress out to every stream watching it: `FAImageStore` coalesces
+/// fetches, so several loads can wait on one copy loop. Locked, since pushes arrive on
+/// the fetching thread.
+private enum ImageFetchProgressRegistry {
+    typealias Continuation = AsyncStream<(received: Int64, total: Int64)>.Continuation
+
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var continuations = [String: [Int: Continuation]]()
+    nonisolated(unsafe) private static var lastID = 0
+
+    static func add(_ url: String, _ continuation: Continuation) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        lastID += 1
+        continuations[url, default: [:]][lastID] = continuation
+        return lastID
+    }
+
+    static func remove(_ url: String, _ id: Int) {
+        lock.lock()
+        defer { lock.unlock() }
+        continuations[url]?[id] = nil
+        if continuations[url]?.isEmpty == true {
+            continuations[url] = nil
+        }
+    }
+
+    static func didReceive(_ url: String, received: Int64, total: Int64) {
+        lock.lock()
+        let watchers = continuations[url].map { Array($0.values) } ?? []
+        lock.unlock()
+
+        for continuation in watchers {
+            continuation.yield((received, total))
+        }
+    }
 }

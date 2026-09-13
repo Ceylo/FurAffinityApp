@@ -5,8 +5,6 @@
 //  Created by Ceylo on 15/06/2024.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 
 struct LinearProgress: View {
@@ -31,6 +29,7 @@ struct LinearProgress: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview {
     @Previewable @State var value: Float = 0.3
     LinearProgress(progress: value)
@@ -43,5 +42,4 @@ struct LinearProgress: View {
             } catch {}
         }
 }
-
 #endif
