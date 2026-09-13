@@ -18,7 +18,7 @@ is never described as submitted.
 |---|---|---|
 | `Ceylo/skip-ui` | all of it | — |
 | `Ceylo/skip-fuse-ui` | all but one commit | `cfa7d82` — names our forks in `Package.swift` |
-| `Ceylo/Kingfisher` | `b01358ef`; the API half of `47267203`; the Android port only if onevcat wants one | skipstone plugin, the unconditional `SkipFuseUI` edge, the `Documentation.docc` deletion, the dynamic-library manifest |
+| `Ceylo/Kingfisher` | the API half of `47267203`; the Android port only if onevcat wants one | skipstone plugin, the unconditional `SkipFuseUI` edge, the `Documentation.docc` deletion, the dynamic-library manifest |
 | `Ceylo/Defaults` | `Defaults.defaultSuite`, pitched on its own merits | dropping `DefaultsMacros` + swift-syntax, the `#if !os(Android)` guards |
 | `Ceylo/skip-web` | nothing | `64de0f8` — dependency locations only; required today, retires when the two above land |
 
@@ -45,10 +45,9 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `9eb2c87` `@_disfavoredOverload` on `Text(AttributedString)` | skip-fuse-ui | no | belongs with whichever attributed-text PR lands; the trap is worth writing up either way |
 | `5a21355` `GeometryReader` composes on the measure pass | skip-ui | no | fidelity fix (no blank first frame). Before sending, check whether it causes the intrinsic-measurement crash under a scroll: `BoxWithConstraints` is a `SubcomposeLayout` and the old `Box` was not |
 | `23154a0` `ImageHolder`, read in the draw phase | skip-ui + `c59b1a7` | yes | new API; its only caller today is the Kingfisher fork (`07f72deb`), so argue it from Coil's `AsyncImagePainter`, not from Kingfisher |
-| `b01358ef` public `DownloadTask.init(cancelling:)` | Kingfisher | no | [#2576](https://github.com/onevcat/Kingfisher/pull/2576); precedent #2107 |
-| `47267203` `reportDownloadProgress(receivedSize:totalSize:)` | Kingfisher | no | the same argument as `b01358ef` (a replacement transport can't feed progress). Send only the `KingfisherOptionsInfo` half, after #2576 is settled; the `ImageBinder` change is Android-only |
+| `47267203` `reportDownloadProgress(receivedSize:totalSize:)` | Kingfisher | no | the same argument as #2576 (a replacement transport can't feed progress). Send only the `KingfisherOptionsInfo` half; the `ImageBinder` change is Android-only |
 | `2b2dc459` + `66eb74df` + `ae0b4f07` Android port | Kingfisher | no | issue first; large parts can never leave the fork |
-| `058eb5d4`, `2296a263`, `07f72deb`, `731194ee` Android first-frame work | Kingfisher | no | part of the port, and depends on skip-ui `23154a0`. `07f72deb` replaces most of the first two. `731194ee` sits on the cache-hit path that #2572/#2573 rewrote on 2026-09-06: it still applies without a textual conflict, but re-check the behaviour |
+| `058eb5d4`, `2296a263`, `07f72deb`, `731194ee` Android first-frame work | Kingfisher | no | part of the port, and depends on skip-ui `23154a0`. `07f72deb` replaces most of the first two. `731194ee` sits on the *target*-cache-hit path; #2572/#2573 rewrote the *original*-cache-hit path beside it, and `239c970b` merged them without touching it |
 | `fb0ef04` `Defaults.defaultSuite` | Defaults | no | issue first; re-pitch without the Android rationale |
 | `4c1ad29` drop macros + guards | — | — | fork-only, permanently |
 | `e67bf25` + `4f7ad45` Android `@Default` | — | — | nothing to send: the second commit moved it out of the fork again, so the pair is a no-op against upstream |
@@ -79,9 +78,9 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
   skip-web 1; Defaults is still clean. The fork commits keep their trailers. Only the
   topic-branch copy loses it (`git commit --amend --reset-author`, message rewritten).
 - **Rewrite the app-specific comments.** The Kingfisher fork's `Sources/` names FurAffinity
-  in two places (2026-09-12): the `DownloadTask` doc comment and a
+  in one place since #2576 replaced the `DownloadTask` doc comment (2026-09-13): a
   `KFImage.swift` comment about cap insets. A library shouldn't know about one app, so
-  rewrite each to state the general case before the patch goes out, then check the branch
+  rewrite it to state the general case before the patch goes out, then check the branch
   diff with `git diff upstream/master | grep -i -e furaffinity -e android`.
 - **Search the target's open PRs *and* issues for the same surface first**, and link whatever
   you find. skip-ui #468 was closed as obviated by #471, and Kingfisher #2570 closed as
@@ -357,7 +356,7 @@ State is one of draft / opened / merged / rejected; fetch the PR for anything mo
 
 | PR | Patch | State |
 |---|---|---|
-| Kingfisher [#2576](https://github.com/onevcat/Kingfisher/pull/2576) | `b01358ef` | draft |
+| Kingfisher [#2576](https://github.com/onevcat/Kingfisher/pull/2576) | `b01358ef` | merged |
 
 ## Defaults
 
