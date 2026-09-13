@@ -179,12 +179,12 @@ One section: they are always paired.
 
 - <https://skip.dev/docs/contributing/> is canonical, including the worked three-PR example
   (skip-ui #356 / skip-fuse-ui #93 / skipapp-showcase #74).
-- **The CLA blocks review before anything else.** `Ceylo` is absent from
-  [`skiptools/clabot-config`](https://github.com/skiptools/clabot-config)'s `.clabot`
-  (re-checked 2026-09-12). This is why the first draft went to Kingfisher. PR the
-  username in first, then `@cla-bot check` on the code PR. It stopped #516, #503 and #478
-  dead. Ceylo decided to sign on 2026-09-13; record the `clabot-config` PR here once it
-  merges.
+- **The CLA is signed.** `Ceylo` was added to
+  [`skiptools/clabot-config`](https://github.com/skiptools/clabot-config)'s `.clabot` by
+  [#98](https://github.com/skiptools/clabot-config/pull/98), merged 2026-09-13 (`23abce5`).
+  Until then it blocked review before anything else, which is why the first draft went to
+  Kingfisher; it stopped #516, #503 and #478 dead. If cla-bot flags a code PR anyway, comment
+  `@cla-bot recheck`.
 - **CLA scope: nothing from the app goes into a Skip PR.** Skip's CLA grants a perpetual,
   irrevocable, sublicensable licence with no outbound commitment, so Skip may relicense a
   contribution under any terms. `Ceylo/FurAffinityApp` has no licence and stays all rights
