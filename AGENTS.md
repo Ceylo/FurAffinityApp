@@ -63,7 +63,8 @@ pool (`FAHttpClient.kt`, reached from FAKit through `FAWebSession.nativeTranspor
 because Cloudflare judges a connection: a challenge on it is repaired — evict, solve
 in the WebView, redial — rather than retried into. HTTP/2 is measured and off; see
 `Android/docs/images.md`. `Android/README.md` orients and indexes the topic docs under
-`Android/docs/`.
+`Android/docs/`. Profile Android with `Scripts/Android/run.sh --profile` then
+`Scripts/Android/profile.sh cpu|trace|mem` — see `Android/docs/profiling.md`.
 
 ## Architecture
 
