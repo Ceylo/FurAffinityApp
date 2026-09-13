@@ -3,7 +3,7 @@
 | Fork | Why |
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
-| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass; a draw-phase `ImageHolder`; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
+| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
 | `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, a rendered image that comes out of an `ImageHolder` rather than out of the view value, a public `DownloadTask` initializer so a subclass outside the module can replace the transport, and `reportDownloadProgress` so that transport can feed the placeholder's progress |
 | `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
@@ -143,6 +143,18 @@ completes. The one caveat is cost:
 `BoxWithConstraints` is a `SubcomposeLayout`, heavier than a `Box`, and `GeometryReader` is
 on the feed-card path.
 
+That patch also introduced a crash, fixed since. Compose throws on any intrinsic query to a
+`SubcomposeLayout` ("Asking for intrinsic measurements of SubcomposeLayout layouts is not
+supported"), and SkipUI does ask: `ComposeFlexibleContainer` gives a height-filling container
+`height(IntrinsicSize.Max)` along an inherited scroll axis, and `ViewThatFits` measures
+intrinsics too. Upstream's `Box` answered from its content. So `SubmissionMainImage`'s
+progress bar, a `GeometryReader` in a `ZStack` over the thumbnail, crashed the app on its
+first full-resolution load. The box now fills a `GeometryReaderLayout`, a plain `Layout`
+that carries the reader's modifiers and answers all four intrinsic queries with 10 dp, without
+measuring content. That matches SwiftUI, where a `GeometryReader` has no ideal size and
+reports 10×10 pt under an unspecified proposal. In that `ZStack` the container comes out as
+tall as the thumbnail and the reader fills it, as on iOS.
+
 A seventh patch adds **a draw-phase image**. <a name="a-draw-phase-image"></a>
 `ImageHolder` is a bridged reference type over a `MutableState<Bitmap?>`;
 `Image(bridgedHolder:)` renders it through an `ImageHolderPainter` that reads the bitmap in
@@ -168,6 +180,22 @@ too, and was measured doing so, but it would run arbitrary caller side effects i
 Compose may discard or replay, and this app's `onAppear`s are exactly the ones that must not
 double-fire (`RemoteView` starts the page fetch in one, `SubmissionsFeedView` a refresh
 `Task` in another). Moving the read costs nobody anything.
+
+An eighth patch, to `Animation/Spring.swift`, makes **springs springs**.
+`Spring(duration:bounce:)`, `Spring(response:dampingRatio:)` and
+`Spring(settlingDuration:…)`, and so `.spring`, `.smooth`, `.snappy`, `.bouncy` and
+`.interactiveSpring`, were all a 500 ms-ish `TweenSpec` eased with `EaseInOutBack`. That
+curve first moves *away* from its target for about a third of its run, and a value
+retargeted faster than that restarts it from wherever it is. The progress bar's width,
+retargeted every ~100 ms, was negative in 290 of 822 frames, and a negative frame draws
+nothing: `.animation(.spring, value:)` looked like it painted nothing at all. Each
+initializer now builds a unit-mass `SpringSpec`, as `Spring(mass:stiffness:damping:)`
+already did. Stiffness is (2π / response)². `duration`/`bounce` use SwiftUI's own
+mapping, and `settlingDuration` solves the decay envelope for ω. `snappy` and `bouncy` get
+their SwiftUI base bounce (0.15, 0.3). `speed(_:)` scales stiffness by speed², and
+`delay(_:)` wraps the spring in a `DelayedAnimationSpec` (`Skip/DelayedAnimationSpec.kt`),
+because Compose's delays exist only on tweens and `StartOffset`. `repeatCount` and
+`repeatForever` still leave a spring alone, since Compose repeats only duration-based specs.
 
 ## One location per identity
 

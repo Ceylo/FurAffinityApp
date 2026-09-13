@@ -134,13 +134,9 @@ Kingfisher's own `onSuccess` publishing the loaded image and the cached file URL
 platforms. One `#if FA_SKIP_MODULE` seam is left, the viewer's content, where iOS's
 pixel sizing is load-bearing for its zoom ratios.
 
-The download-progress bar is shared too. The OkHttp transport polls its own copy loop
-and reports through the Kingfisher fork's `reportDownloadProgress`
-([images.md](images.md)). `LinearProgress` differs in two places on Android. It takes
-its size from `SubmissionMainImage`'s `GeometryReader` instead of its own: inside a
-vertical scroll SkipUI asks a height-filling container for its intrinsic size, and
-Compose throws on a `GeometryReader` (a `SubcomposeLayout`) there. And it animates
-`.linear` instead of `.spring`, because under `.spring` SkipUI draws nothing at all.
+The download-progress bar is shared too, `LinearProgress` included, down to its
+`GeometryReader` and `.spring`. The OkHttp transport polls its own copy loop and reports
+through the Kingfisher fork's `reportDownloadProgress` ([images.md](images.md)).
 
 The submission controls keep one body as well. `AlignedLabel`'s and the metadata
 link's optical nudges are tuned for SF Symbols, so they go through

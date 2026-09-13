@@ -102,10 +102,7 @@ struct SubmissionMainImage: View {
                     thumbnailPlaceholder(geometry: geometry)
 
                     if displayProgress {
-                        LinearProgress(
-                            progress: Float(progress.fractionCompleted),
-                            containerSize: geometry.faSize
-                        )
+                        LinearProgress(progress: Float(progress.fractionCompleted))
                     }
                 }
             }
