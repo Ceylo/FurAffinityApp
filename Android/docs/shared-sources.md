@@ -230,7 +230,7 @@ never the iOS app target — so:
 - **`import os` needs `#if canImport(os)`.** Android's Swift SDK has no `os`
   module, so the `FALogging` package ships `OSCompat`
   (`FALogging/Sources/OSCompat/`), which re-exports `AndroidLogging`'s `Logger` and
-  vends a no-op `OSSignposter`. It is a dependency
+  vends an ATrace-backed `OSSignposter`. It is a dependency
   only `.when(platforms: [.android])`, so Darwin still resolves the system module,
   and the three call sites pick between them:
 

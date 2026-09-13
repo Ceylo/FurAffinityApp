@@ -3,7 +3,7 @@
 # Assert that each module carrying process-global state is defined by exactly
 # one shared object in the APK payload.
 #
-# Usage: Scripts/Android/check-shared-globals.sh [debug|release]
+# Usage: Scripts/Android/check-shared-globals.sh [debug|release|profile]
 #
 # A SwiftPM *product* that is dynamic links its own package's target
 # dependencies statically into itself. So while FALogging was a target inside
@@ -44,10 +44,10 @@ MODULES=(FALogging Kingfisher)
 
 VARIANT="debug"
 case "$1" in
-    -h|--help)      sed -n '3,24p' "$0" | cut -c3-; exit 0 ;;
-    "")             ;;
-    debug|release)  VARIANT="$1" ;;
-    *)              die "unknown variant: $1 (expected debug or release)" ;;
+    -h|--help)              sed -n '3,24p' "$0" | cut -c3-; exit 0 ;;
+    "")                     ;;
+    debug|release|profile)  VARIANT="$1" ;;
+    *)                      die "unknown variant: $1 (expected debug, release or profile)" ;;
 esac
 
 # --- locate llvm-readelf ----------------------------------------------------

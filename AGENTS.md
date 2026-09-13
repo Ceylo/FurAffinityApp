@@ -34,7 +34,8 @@ bridges that layer needs from the app come back as hooks installed in
 embedded frameworks instead of 1.
 Logging works on both platforms via `#if canImport(os) import os #else import OSCompat`:
 the sibling `FALogging/` package ships an Android-only `OSCompat` target
-(`FALogging/Sources/OSCompat/`) vending `Logger` (→ logcat) and a no-op `OSSignposter`.
+(`FALogging/Sources/OSCompat/`) vending `Logger` (→ logcat) and an ATrace-backed
+`OSSignposter` (→ Perfetto).
 It must **not** be named `os` — a module by that name makes `canImport(os)` true for
 the whole Android build; see `Android/docs/build-and-run.md` § Module-name poisoning,
 which is also why FAKit gates SwiftUI on `#if !os(Android)` rather than `canImport`.
@@ -63,7 +64,8 @@ pool (`FAHttpClient.kt`, reached from FAKit through `FAWebSession.nativeTranspor
 because Cloudflare judges a connection: a challenge on it is repaired — evict, solve
 in the WebView, redial — rather than retried into. HTTP/2 is measured and off; see
 `Android/docs/images.md`. `Android/README.md` orients and indexes the topic docs under
-`Android/docs/`.
+`Android/docs/`. Profile Android with `Scripts/Android/run.sh --profile` then
+`Scripts/Android/profile.sh cpu|trace|mem` — see `Android/docs/profiling.md`.
 
 ## Architecture
 

@@ -1,14 +1,17 @@
 #!/bin/bash
 #
-# Build, install and start this worktree's debug app on the emulator.
+# Build, install and start this worktree's debug (or profile) app on the emulator.
 #
 # `skip app launch --android` reads the app id out of Skip.env, so it installs
 # the per-worktree debug app fine and then fails to *start* it — the installed
 # id carries a worktree suffix (see Android/app/build.gradle.kts). This does
 # both against the right id, and holds the shared-emulator lock while it does.
 #
-# Usage: Scripts/Android/run.sh [--timeout SECONDS] [gradle args…]
+# Usage: Scripts/Android/run.sh [--profile] [--timeout SECONDS] [gradle args…]
 #
+#   --profile   install the `profile` build type instead: release code, profileable,
+#               under the debug app's id so it keeps its login. Record it with
+#               Scripts/Android/profile.sh; see Android/docs/profiling.md
 #   --timeout   how long to wait for the emulator lock, default 1800s
 #
 # `./gradlew :app:installDebug` rather than `skip android build` is deliberate:
@@ -26,11 +29,13 @@ die() { echo "error: $*" >&2; exit 1; }
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
+VARIANT=debug
 LOCK_ARGS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,21p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,24p' "$0" | cut -c3-; exit 0 ;;
+        --profile)    VARIANT=profile ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;
         --)           shift; break ;;
@@ -93,16 +98,27 @@ PKG="$(skip_env ANDROID_PACKAGE_NAME)"
 if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
     export FA_EMULATOR_LOCK_HELD=1
     exec "$(dirname "${BASH_SOURCE[0]}")/with-emulator-lock.sh" "${LOCK_ARGS[@]}" \
-        "${BASH_SOURCE[0]}" -- "$@"
+        "${BASH_SOURCE[0]}" $([[ $VARIANT == profile ]] && echo --profile) -- "$@"
 fi
 
-( cd "$ROOT/Android" && ./gradlew :app:installDebug "$@" )
+TASK=":app:install$(tr '[:lower:]' '[:upper:]' <<< "${VARIANT:0:1}")${VARIANT:1}"
+( cd "$ROOT/Android" && ./gradlew "$TASK" "$@" )
 
 # Gradle prints its own errors and still says BUILD SUCCESSFUL, so this gate
 # gets its own exit status: a relapse to one module per consumer is invisible
 # at runtime (see the script's header).
-"$(dirname "${BASH_SOURCE[0]}")/check-shared-globals.sh" debug \
+"$(dirname "${BASH_SOURCE[0]}")/check-shared-globals.sh" "$VARIANT" \
     || die "shared globals are duplicated — the app above was installed anyway"
+
+# Compile the Kotlin ahead of time, so a profile measures the app rather than ART's
+# JIT warming up. On the emulator this takes ~8 minutes and can overrun dex2oat's
+# 570 s limit, which leaves the install-time baseline-profile compile in place.
+if [[ $VARIANT == profile ]]; then
+    echo "compiling $APP_ID ahead of time (several minutes on the emulator)"
+    result="$("$ADB" shell cmd package compile -m speed -f "$APP_ID" | tr -d '\r')"
+    [[ "$result" == Success ]] || echo "warning: AOT compile failed ($result) — still on the" \
+        "install-time filter, so Kotlin is partly JIT; rerun: adb shell cmd package compile -m speed -f $APP_ID" >&2
+fi
 
 echo "starting $APP_ID"
 "$ADB" shell am start -n "$APP_ID/$PKG.MainActivity"
