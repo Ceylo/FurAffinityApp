@@ -29,7 +29,9 @@ struct ReplyButton: View {
             Button {
                 replyAction()
             } label: {
-                AlignedLabel(value: repliesCount, systemImage: "bubble", imageYOffset: -1)
+                // Material's bubble sits its body above the box's centre to make room for
+                // the tail; this puts the body level with the count's digits.
+                AlignedLabel(value: repliesCount, systemImage: "bubble", imageYOffset: -1, materialImageYOffset: 2.67)
                     .tint(Color.buttonTint)
             }
             .frame(height: buttonsSize-4)
@@ -87,7 +89,9 @@ struct SubmissionControlsView: View {
                     AlignedLabel(
                         value: favoritesCount,
                         systemImage: isFavorite ? "heart.fill" : "heart",
-                        imageYOffset: -2
+                        imageYOffset: -2,
+                        // Top of the heart level with the digits' top, as on iOS.
+                        materialImageYOffset: 1.9
                     )
                     .tint(Color.buttonTint)
                 }
@@ -130,7 +134,7 @@ struct SubmissionControlsView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .padding()
-                    .offset(y: 2)
+                    .symbolOpticalOffset(y: 2)
                     .foregroundStyle(Color.buttonTint)
             }
             .frame(height: buttonsSize)

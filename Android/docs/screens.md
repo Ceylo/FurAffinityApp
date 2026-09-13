@@ -131,9 +131,19 @@ and the metadata screen.
 `SubmissionMainImage` itself is *shared*, and since Kingfisher builds for Android the
 loader is shared too: one `configure(_:geometry:)` chain over `KFImageProtocol`, with
 Kingfisher's own `onSuccess` publishing the loaded image and the cached file URL on both
-platforms. Two `#if FA_SKIP_MODULE` seams are left — the download-progress bar, which the
-OkHttp transport cannot feed because no byte progress crosses JNI, and the viewer's
-content, where iOS's pixel sizing is load-bearing for its zoom ratios. The viewer is
+platforms. One `#if FA_SKIP_MODULE` seam is left, the viewer's content, where iOS's
+pixel sizing is load-bearing for its zoom ratios.
+
+The download-progress bar is shared too, `LinearProgress` included, down to its
+`GeometryReader` and `.spring`. The OkHttp transport's copy loop pushes progress, which
+reaches the bar through the Kingfisher fork's `reportDownloadProgress` ([images.md](images.md)).
+
+The submission controls keep one body as well. `AlignedLabel`'s and the metadata
+link's optical nudges are tuned for SF Symbols, so they go through
+`symbolOpticalOffset(y:)`, which does nothing on Android: Material icons centre their
+glyph in the box.
+
+The viewer is
 presented from `fadingSheet` on both platforms, and behaves the same way: **a single
 tap** toggles fill/fit (matching iOS's `numberOfTapsRequired = 1`), and it is dismissed
 by **pulling it down** rather than by a close button. The system Back gesture still

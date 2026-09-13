@@ -17,6 +17,7 @@ still built by `FurAffinity.xcodeproj` and none of its files move.
 | [docs/cloudflare-and-login.md](docs/cloudflare-and-login.md) | login, the long-lived hidden WebView, Cloudflare challenges and how one is repaired |
 | [docs/screens.md](docs/screens.md) | Followed feed, submission screen, animation on SkipUI |
 | [docs/releasing.md](docs/releasing.md) | update check, release signing, handing a build to testers |
+| [docs/profiling.md](docs/profiling.md) | the `profile` build, CPU samples, Perfetto traces with signposts, memory logs |
 
 ## Layout
 
@@ -79,6 +80,7 @@ Scripts/Android/build-release-apk.sh         # the signed release APK (docs/rele
 ```
 Scripts/Android/logs.sh                      # our tags only, live
 Scripts/Android/debug.sh                     # attach a Swift debugger (docs/build-and-run.md)
+Scripts/Android/profile.sh cpu|trace|mem     # after run.sh --profile (docs/profiling.md)
 cd FAKit && skip android test --testing-library testing
 xcodebuild test -scheme FurAffinity -destination "id=$(Scripts/iOS/simulator.sh --udid)"
 ```

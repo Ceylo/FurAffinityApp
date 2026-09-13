@@ -5,8 +5,6 @@
 //  Created by Ceylo on 15/06/2024.
 //
 
-#if !FA_SKIP_MODULE
-
 import Foundation
 
 extension Comparable {
@@ -14,5 +12,3 @@ extension Comparable {
         min(range.upperBound, max(range.lowerBound, self))
     }
 }
-
-#endif

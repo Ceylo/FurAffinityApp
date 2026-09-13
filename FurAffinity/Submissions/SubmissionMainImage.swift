@@ -4,14 +4,11 @@
 //
 //  Created by Ceylo on 22/01/2023.
 //
-//  One file for both platforms. Two seams stay behind `#if FA_SKIP_MODULE`:
-//
-//  - `zoomableViewer`'s content: iOS sizes it in pixels because that is what feeds
-//    `UIHostingController.intrinsicContentSize` and hence every zoom ratio, so unifying
-//    it with Android's aspect ratio would change the meaning of iOS's
-//    `maximumZoomScale = 10` (which `Zoomable+Android` mirrors).
-//  - the download-progress bar, which the OkHttp transport cannot feed: it reports no
-//    byte progress across JNI, so the bar would sit at zero for the whole download.
+//  One file for both platforms. One seam stays behind `#if FA_SKIP_MODULE`:
+//  `zoomableViewer`'s content. iOS sizes it in pixels because that is what feeds
+//  `UIHostingController.intrinsicContentSize` and hence every zoom ratio, so unifying
+//  it with Android's aspect ratio would change the meaning of iOS's
+//  `maximumZoomScale = 10` (which `Zoomable+Android` mirrors).
 //
 
 import SwiftUI
@@ -79,8 +76,7 @@ struct SubmissionMainImage: View {
         .applying { preparingFullResolutionMedia($0) }
     }
 
-    /// What shows until the full-resolution media arrives. Shared: only the progress
-    /// bar iOS draws over it is platform-specific.
+    /// What shows until the full-resolution media arrives, under the progress bar.
     @ViewBuilder
     private func thumbnailPlaceholder(geometry: GeometryProxy) -> some View {
         if let thumbnailUrl = thumbnailImage?.bestThumbnailUrl(for: geometry) {
@@ -105,11 +101,9 @@ struct SubmissionMainImage: View {
                 ZStack {
                     thumbnailPlaceholder(geometry: geometry)
 
-                    #if !FA_SKIP_MODULE
                     if displayProgress {
                         LinearProgress(progress: Float(progress.fractionCompleted))
                     }
-                    #endif
                 }
             }
             .onFailure { error in

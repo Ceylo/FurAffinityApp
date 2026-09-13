@@ -20,20 +20,67 @@
 // Logger over __android_log_write, tagged "<subsystem>/<category>".
 @_exported import AndroidLogging
 
-/// No-op signposter: Android has no Instruments backend. Mirrors the
-/// `OSSignposter` subset used by FAKit/FAPages so call sites compile unchanged.
+import CAndroidTrace
+
+/// Signposter over ATrace, so intervals show up as slices in a Perfetto trace, named
+/// `<category>: <name>` — the prefix is what Scripts/Android/focus-trace.py keeps.
+/// Mirrors the `OSSignposter` subset used by FAKit/FAPages so call sites compile
+/// unchanged.
+///
+/// ATrace sections are a per-thread stack, so an interval must begin and end on the
+/// same thread: never let one span an `await`. An end on another thread is dropped
+/// rather than popping someone else's section. When no trace is recording, the cost
+/// is one `ATrace_isEnabled()` check.
 public struct OSSignposter: Sendable {
-    public struct IntervalState: Sendable {}
+    public struct IntervalState: Sendable {
+        fileprivate let threadID: pid_t?
+    }
 
-    public init(logger: Logger) {}
-    public init(subsystem: String, category: String) {}
+    /// The kernel truncates trace markers; cut on a UTF-8 boundary ourselves.
+    private static let maxSectionNameBytes = 127
 
-    public func beginInterval(_ name: StaticString) -> IntervalState { IntervalState() }
-    public func beginInterval(_ name: StaticString, _ message: String) -> IntervalState { IntervalState() }
-    public func endInterval(_ name: StaticString, _ state: IntervalState) {}
+    private let category: String
+
+    public init(logger: Logger) {
+        category = logger.category
+    }
+
+    public init(subsystem: String, category: String) {
+        self.category = category
+    }
+
+    public func beginInterval(_ name: StaticString) -> IntervalState {
+        begin { "\(category): \(name)" }
+    }
+
+    public func beginInterval(_ name: StaticString, _ message: String) -> IntervalState {
+        begin { "\(category): \(name): \(message)" }
+    }
+
+    public func endInterval(_ name: StaticString, _ state: IntervalState) {
+        guard let threadID = state.threadID, threadID == gettid() else { return }
+        ATrace_endSection()
+    }
 
     public func withIntervalSignpost<T>(_ name: StaticString, _ body: () throws -> T) rethrows -> T {
-        try body()
+        let state = beginInterval(name)
+        defer { endInterval(name, state) }
+        return try body()
+    }
+
+    private func begin(_ sectionName: () -> String) -> IntervalState {
+        guard ATrace_isEnabled() else { return IntervalState(threadID: nil) }
+        var utf8: [UInt8] = []
+        for scalar in sectionName().unicodeScalars {
+            let bytes = UTF8.encode(scalar)!
+            guard utf8.count + bytes.count <= Self.maxSectionNameBytes else { break }
+            utf8.append(contentsOf: bytes)
+        }
+        utf8.append(0)
+        utf8.withUnsafeBufferPointer { buffer in
+            buffer.withMemoryRebound(to: CChar.self) { ATrace_beginSection($0.baseAddress) }
+        }
+        return IntervalState(threadID: gettid())
     }
 }
 

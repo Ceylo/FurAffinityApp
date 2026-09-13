@@ -7,13 +7,33 @@
 
 import SwiftUI
 
+extension View {
+    /// An optical nudge tuned for SF Symbols, and a separate one for the Material icon
+    /// SkipUI draws instead: those centre their glyph in the box, so they rarely need one.
+    func symbolOpticalOffset(y: CGFloat, material: CGFloat = 0) -> some View {
+        #if FA_SKIP_MODULE
+        offset(y: material)
+        #else
+        offset(y: y)
+        #endif
+    }
+}
+
+#if FA_SKIP_MODULE
+/// Material's `title3` line height pads below the digits, so `.bottom` drops them.
+private let labelAlignment = VerticalAlignment.center
+#else
+private let labelAlignment = VerticalAlignment.bottom
+#endif
+
 struct AlignedLabel: View {
     var value: Int
     var systemImage: String
     var imageYOffset = 0.0
-    
+    var materialImageYOffset = 0.0
+
     var body: some View {
-        HStack(alignment: .bottom, spacing: 5) {
+        HStack(alignment: labelAlignment, spacing: 5) {
             if value > 0 {
                 Text("\(value)")
                     .font(.title3)
@@ -21,9 +41,9 @@ struct AlignedLabel: View {
             Image(systemName: systemImage)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .offset(y: imageYOffset)
+                .symbolOpticalOffset(y: imageYOffset, material: materialImageYOffset)
         }
         .padding()
-        .offset(y: value > 0 ? 3 : 5.5)
+        .symbolOpticalOffset(y: value > 0 ? 3 : 5.5)
     }
 }
