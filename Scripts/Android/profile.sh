@@ -264,19 +264,43 @@ EOF
 
 # --- mem --------------------------------------------------------------------
 
-# Columns of `dumpsys meminfo`'s App Summary, in KB.
+# Columns of `dumpsys meminfo`'s App Summary, in KB (1024 bytes).
 MEM_ROWS=("Java Heap" "Native Heap" "Code" "Stack" "Graphics" "Private Other" "System")
 
+# KB → the largest 1024-based unit that keeps the value at least 1: "512 KB", "196.4 MB".
+human_size() {
+    awk -v kb="$1" 'BEGIN {
+        if (kb == "") { print "-"; exit }
+        split("B KB MB GB TB", unit, " ")
+        v = kb * 1024; i = 1
+        while (v >= 1024 && i < 5) { v /= 1024; i++ }
+        printf(i <= 2 ? "%d %s" : "%.1f %s", v, unit[i])
+    }'
+}
+
 record_mem() {
+    # The CSV keeps raw numbers so a spreadsheet can plot them; the unit is in the header.
     local header="time,label" row
-    for row in "${MEM_ROWS[@]}"; do header+=",$row PSS"; done
-    header+=",TOTAL PSS,TOTAL RSS"
+    for row in "${MEM_ROWS[@]}"; do header+=",$row PSS (KB)"; done
+    header+=",TOTAL PSS (KB),TOTAL RSS (KB)"
     echo "$header" > meminfo.csv
 
     trap 'printf "\nwrote %s\n" "$OUT/meminfo.csv"; exit 0' INT
 
-    echo "sampling $APP_ID every ${INTERVAL}s — type a label and Enter to tag the next sample, Ctrl-C to stop"
-    printf '%-8s %9s %9s %9s %9s %9s  %s\n' time java native graphics pss rss label
+    cat <<EOF
+sampling $APP_ID every ${INTERVAL}s — type a label and Enter to tag the next sample, Ctrl-C to stop
+
+  time      when the sample was taken (host clock)
+  java      Java Heap PSS: ART's managed heap, i.e. Kotlin and Java objects
+  native    Native Heap PSS: malloc'd memory, i.e. Swift objects, C/C++ buffers
+  graphics  Graphics PSS: GPU textures and buffers (0 on the emulator)
+  pss       TOTAL PSS: all the app's memory, shared pages split among their users
+  rss       TOTAL RSS: all the app's resident pages, shared ones counted in full
+  label     text typed before this sample
+Sizes are 1024-based; every App Summary row is in $OUT/meminfo.csv, in KB.
+
+EOF
+    printf '%-8s %10s %10s %10s %10s %10s  %s\n' time java native graphics pss rss label
 
     local label=""
     while true; do
@@ -302,8 +326,10 @@ record_mem() {
             local csv_label="${label//\"/\"\"}"
             (IFS=,; echo "$time,\"$csv_label\",${values[*]},$total_pss,$total_rss") >> meminfo.csv
             # values: 0 Java Heap, 1 Native Heap, 4 Graphics.
-            printf '%-8s %9s %9s %9s %9s %9s  %s\n' "$time" "${values[0]}" "${values[1]}" \
-                "${values[4]}" "$total_pss" "$total_rss" "$label"
+            printf '%-8s %10s %10s %10s %10s %10s  %s\n' "$time" \
+                "$(human_size "${values[0]}")" "$(human_size "${values[1]}")" \
+                "$(human_size "${values[4]}")" "$(human_size "$total_pss")" \
+                "$(human_size "$total_rss")" "$label"
         fi
 
         # A timeout returns >128; anything else (stdin closed) would spin, so wait.

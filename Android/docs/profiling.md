@@ -99,9 +99,11 @@ no trace is recording, an interval costs one `ATrace_isEnabled()` call.
 
 Samples `dumpsys meminfo <app>` every `--interval` seconds (default 2) and appends the
 App Summary rows — Java Heap, Native Heap, Code, Stack, Graphics, Private Other,
-System (PSS), TOTAL PSS, TOTAL RSS, all in KB — to `meminfo.csv`. Text typed while it
-runs, then Enter, lands in the next row's `label` column ("opened submission").
-Ctrl-C stops it.
+System (PSS), TOTAL PSS, TOTAL RSS — to `meminfo.csv`, as raw KB (1024 bytes) with the
+unit in each header. The terminal shows a subset, each column defined above the table,
+sized in the largest unit that keeps the value at least 1 ("196.4 MB"). Text typed
+while it runs, then Enter, lands in the next row's `label` column ("opened
+submission"). Ctrl-C stops it.
 
 For a live graph instead, Android Studio's Profiler → **View Live Telemetry** attaches
 to the profileable app as well.
