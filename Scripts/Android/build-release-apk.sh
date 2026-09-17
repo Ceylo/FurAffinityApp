@@ -17,15 +17,15 @@
 # The stash is applied by *message*, never by stash@{0} — the stack is shared
 # with every other worktree and another session may be pushing to it.
 #
-# Environment: ANDROID_HOME / ANDROID_SDK_ROOT, JAVA_HOME, ANDROID_SERIAL, plus
-# both halves of crash reporting, which are required so that a release cannot
-# silently ship unable to report:
-#   SENTRY_DSN          seded into CrashReportingSecrets.swift for the build and
-#                       reverted afterwards, as the iOS workflow does — it stays
-#                       out of the repo and out of the distribution stash
-#   SENTRY_AUTH_TOKEN   the Sentry Gradle plugin uploads the R8 mapping and the
-#                       unstripped Swift .so files during `skip export`; without
-#                       them a crash from this APK cannot be symbolicated
+# Environment: ANDROID_HOME / ANDROID_SDK_ROOT, JAVA_HOME, ANDROID_SERIAL, and
+# SENTRY_AUTH_TOKEN — the Sentry Gradle plugin uploads the R8 mapping and the
+# unstripped Swift .so files during `skip export`, and without them a crash from
+# this APK cannot be symbolicated. Required, so a release cannot silently ship
+# without symbols.
+#
+# The DSN comes from the stash, with the app id and the Amplitude key; the build
+# refuses to start if the placeholder is still there. $SENTRY_DSN overrides it,
+# for a build from a checkout that has no stash.
 
 set -eo pipefail
 
@@ -41,7 +41,7 @@ KEEP_STASH=0
 
 while (( $# )); do
     case "$1" in
-        -h|--help)   sed -n '3,20p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)   sed -n '3,28p' "$0" | cut -c3-; exit 0 ;;
         --out)       OUT="$2"; shift ;;
         --out=*)     OUT="${1#*=}" ;;
         --install)   INSTALL=1 ;;
@@ -148,19 +148,20 @@ APP_ID="$(skip_env ANDROID_APPLICATION_ID)"
 [[ -n "$APP_ID" ]] || APP_ID="$(skip_env PRODUCT_BUNDLE_IDENTIFIER)"
 echo "app id $APP_ID, version $VERSION ($BUILD)"
 
-# Both halves of crash reporting. The DSN is seded in like the iOS workflow does,
-# so it lives in neither the repo nor the stash; `restore` above reverts it with
-# everything else. See Android/docs/crash-reporting.md.
+# Both halves of crash reporting, checked after the stash is applied: it is what
+# carries the DSN. See Android/docs/crash-reporting.md.
 [[ -n "$SENTRY_AUTH_TOKEN" ]] \
     || die "SENTRY_AUTH_TOKEN is not set — the build would upload no symbols, and
     crashes from this APK could not be symbolicated. Export it (the org auth token,
     project:releases scope) and rerun."
-[[ -n "$SENTRY_DSN" ]] \
-    || die "SENTRY_DSN is not set — this APK would report no crashes at all."
-sed -i "" "s#static let dsn = \"Your Sentry DSN\"#static let dsn = \"$SENTRY_DSN\"#" \
-    "$ROOT/FurAffinity/CrashReportingSecrets.swift"
-grep -q "$SENTRY_DSN" "$ROOT/FurAffinity/CrashReportingSecrets.swift" \
-    || die "could not write the DSN into FurAffinity/CrashReportingSecrets.swift"
+SECRETS="$ROOT/FurAffinity/CrashReportingSecrets.swift"
+if [[ -n "$SENTRY_DSN" ]]; then
+    echo "using \$SENTRY_DSN rather than the stash's"
+    sed -i "" "s#static let dsn = \"Your Sentry DSN\"#static let dsn = \"$SENTRY_DSN\"#" "$SECRETS"
+fi
+grep -q 'static let dsn = "Your Sentry DSN"' "$SECRETS" \
+    && die "no Sentry DSN — this APK would report no crashes at all. Add it to
+    \"$STASH_MSG\" (or export \$SENTRY_DSN) and rerun."
 
 # --- build ------------------------------------------------------------------
 
