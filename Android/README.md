@@ -17,6 +17,7 @@ still built by `FurAffinity.xcodeproj` and none of its files move.
 | [docs/cloudflare-and-login.md](docs/cloudflare-and-login.md) | login, the long-lived hidden WebView, Cloudflare challenges and how one is repaired |
 | [docs/screens.md](docs/screens.md) | Followed feed, submission screen, animation on SkipUI |
 | [docs/releasing.md](docs/releasing.md) | update check, release signing, handing a build to testers |
+| [docs/crash-reporting.md](docs/crash-reporting.md) | Sentry on both platforms: symbols, consent, tombstones, and how a crash report is verified |
 | [docs/profiling.md](docs/profiling.md) | the `profile` build, CPU samples, Perfetto traces with signposts, memory logs |
 
 ## Layout

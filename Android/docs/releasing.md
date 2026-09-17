@@ -140,5 +140,8 @@ What to tell a tester:
   and audio submissions, and posting comments. Tapping an author or an avatar shows
   "This screen isn't ported to Android yet."
 - First launch shows Cloudflare's "Verify you are human" and needs a real tap.
-- There is **no crash or ANR reporting on either platform**, so a hang has to be
-  reported by hand — Settings → Export Application Logs is what to ask for.
+- Crashes and ANRs report themselves to Sentry, symbolicated down to the source
+  line (see [crash-reporting.md](crash-reporting.md)); the toggle for that is
+  Settings → Privacy → Send crash reports. The application log is *not* sent, so
+  for anything that is not a crash — a hang that resolves, a wrong-looking screen
+  — Settings → Export Application Logs is still what to ask for.

@@ -3,9 +3,9 @@
 # Build the signed, distributable release APK.
 #
 # Wraps the sequence in Android/docs/releasing.md § Handing a build to testers:
-# apply the distribution stash (real app id + Amplitude key), drop the build dirs
-# the changed applicationId invalidates, `skip export`, then check what the APK
-# actually got signed with.
+# apply the distribution stash (real app id + Amplitude key + Sentry DSN), drop the
+# build dirs the changed applicationId invalidates, `skip export`, then check what
+# the APK actually got signed with.
 #
 # Usage: Scripts/Android/build-release-apk.sh [--out DIR] [--install] [--keep-stash]
 #
@@ -17,7 +17,11 @@
 # The stash is applied by *message*, never by stash@{0} — the stack is shared
 # with every other worktree and another session may be pushing to it.
 #
-# Environment: ANDROID_HOME / ANDROID_SDK_ROOT, JAVA_HOME, ANDROID_SERIAL.
+# Environment: ANDROID_HOME / ANDROID_SDK_ROOT, JAVA_HOME, ANDROID_SERIAL, and
+# SENTRY_AUTH_TOKEN — the Sentry Gradle plugin uploads the R8 mapping and the
+# unstripped Swift .so files during `skip export`, and without them a crash from
+# this APK cannot be symbolicated. Required, so a release cannot silently ship
+# without symbols.
 
 set -eo pipefail
 
@@ -139,6 +143,16 @@ git stash apply "$STASH"
 APP_ID="$(skip_env ANDROID_APPLICATION_ID)"
 [[ -n "$APP_ID" ]] || APP_ID="$(skip_env PRODUCT_BUNDLE_IDENTIFIER)"
 echo "app id $APP_ID, version $VERSION ($BUILD)"
+
+# Both halves of crash reporting, checked after the stash is applied: it is what
+# carries the DSN. See Android/docs/crash-reporting.md.
+[[ -n "$SENTRY_AUTH_TOKEN" ]] \
+    || die "SENTRY_AUTH_TOKEN is not set — the build would upload no symbols, and
+    crashes from this APK could not be symbolicated. Export it (the org auth token,
+    project:releases scope) and rerun."
+grep -q 'static let dsn = "Your Sentry DSN"' "$ROOT/FurAffinity/CrashReportingSecrets.swift" \
+    && die "the distribution stash carries no Sentry DSN — this APK would report no
+    crashes at all. Add it to \"$STASH_MSG\" and rerun."
 
 # --- build ------------------------------------------------------------------
 

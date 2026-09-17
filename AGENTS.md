@@ -67,6 +67,18 @@ in the WebView, redial — rather than retried into. HTTP/2 is measured and off;
 `Android/docs/`. Profile Android with `Scripts/Android/run.sh --profile` then
 `Scripts/Android/profile.sh cpu|trace|mem` — see `Android/docs/profiling.md`.
 
+Crashes and ANRs report to **Sentry** on both platforms, one project split by
+`os.name`: shared config in `FurAffinity/Helpers/CrashReporting.swift`,
+sentry-cocoa on iOS and sentry-android (tombstones on Android 12+, the NDK signal
+handler below) behind `FACrashReportingBridge`. Symbols are uploaded per release —
+dSYMs from `release.yml`, `.so` files and the R8 mapping by the Sentry Gradle
+plugin — and our packages build release with `-disable-cmo`, because Swift's
+cross-module optimization copies functions between modules *without a line table*
+and a crash inside one loses its file and line. Consent is a Settings toggle, on by
+default; the application log is never sent. `Scripts/check-crash-reporting.sh
+ios|android` crashes the app on purpose and asserts the resulting Sentry event has
+the right `File.swift:line`. See `Android/docs/crash-reporting.md`.
+
 ## Architecture
 
 `FurAffinityApp` injects `Model` → `RootView` shows `HomeView` (login/autologin via `FALoginView`) or `LoggedInView` (tabs). SwiftUI views call `Model` methods → `FASession` protocol → `OnlineFASession` (HTTP via `HTTPDataSource`, parsing via `FAPages`) → domain structs.
