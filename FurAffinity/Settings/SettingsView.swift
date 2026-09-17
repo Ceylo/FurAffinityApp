@@ -17,6 +17,7 @@ struct SettingsView: View {
 
     @Default(.animateAvatars) private var animateAvatars: Bool
     @Default(.addMessageToSharedItems) private var addMessageToSharedItems: Bool
+    @Default(.crashReportingEnabled) private var crashReportingEnabled: Bool
 
     @State var cachedFileSize = "unknown"
 
@@ -70,6 +71,17 @@ struct SettingsView: View {
                 Text("When enabled, sharing a link adds a message in order to let the recipient know about this app.")
             }
             
+            Section {
+                Toggle("Send crash reports", isOn: $crashReportingEnabled)
+                    .onChange(of: crashReportingEnabled) { _, enabled in
+                        CrashReporting.settingChanged(enabled: enabled)
+                    }
+            } header: {
+                Text("Privacy")
+            } footer: {
+                Text("Sends the app's call stack, device model, system and app version when it crashes, with no account information. Turning it back on applies from the next launch.")
+            }
+
             if let session = model.session {
                 Section("Account") {
                     Button("Disconnect from \(session.displayUsername)", role: .destructive) {

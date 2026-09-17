@@ -86,6 +86,9 @@ extension Defaults.Keys {
     // MARK: - Privacy
     /// Read once at launch by `CrashReporting.start`.
     static let crashReportingEnabled = Key<Bool>("crashReportingEnabled", default: true)
+    /// When reporting was last switched on (seconds since 1970, 0 = never started).
+    /// Older crashes are never sent, see `CrashReportingConfiguration.reportsSince`.
+    static let crashReportingEnabledSince = Key<Double>("crashReportingEnabledSince", default: 0)
     
     // MARK: - Convenience
     static let all = [

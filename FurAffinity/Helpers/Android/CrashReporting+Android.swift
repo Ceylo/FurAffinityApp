@@ -28,7 +28,8 @@ nonisolated(unsafe) private let crashReportingBridge: AnyDynamicObject? = {
 func startPlatformCrashReporter(_ configuration: CrashReportingConfiguration) {
     #if canImport(Android)
     let started: Bool? = try? crashReportingBridge?.start(
-        configuration.dsn, configuration.release, configuration.environment
+        configuration.dsn, configuration.release, configuration.environment,
+        Int64(configuration.reportsSince.timeIntervalSince1970 * 1000)
     )
     if started != true {
         logger.error("CrashReporting: FACrashReportingBridge.start did not confirm")

@@ -90,6 +90,14 @@ let package = Package(
     ]
 )
 
+// No cross-module optimization out of our own code. With it, a release build copies
+// small public functions (specialized or inlined) into the calling module, and the
+// copies carry no line table: a crash there symbolicates to the right function but
+// `<compiler-generated>:0`. See Android/docs/crash-reporting.md § Line numbers.
+for target in package.targets where ["FAKit", "FAPages"].contains(target.name) {
+    target.swiftSettings = (target.swiftSettings ?? []) + [.unsafeFlags(["-disable-cmo"], .when(configuration: .release))]
+}
+
 // Android build only. Unset in Xcode and in the Darwin bridge pass, so neither sees
 // FA_SKIP_MODULE — the plugin above must stay outside this block.
 if Context.environment["SKIP_BRIDGE"] ?? "0" != "0" {

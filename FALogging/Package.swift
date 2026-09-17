@@ -60,6 +60,14 @@ let package = Package(
     ]
 )
 
+// No cross-module optimization out of our own code. With it, a release build copies
+// small public functions (specialized or inlined) into the calling module, and the
+// copies carry no line table: a crash there symbolicates to the right function but
+// `<compiler-generated>:0`. See Android/docs/crash-reporting.md § Line numbers.
+for target in package.targets where ["FALogging", "OSCompat"].contains(target.name) {
+    target.swiftSettings = (target.swiftSettings ?? []) + [.unsafeFlags(["-disable-cmo"], .when(configuration: .release))]
+}
+
 // Android build only. Unset in Xcode and in the Darwin bridge pass.
 if Context.environment["SKIP_BRIDGE"] ?? "0" != "0" {
     // Dynamic, or a consumer links this statically and gets its own copy of

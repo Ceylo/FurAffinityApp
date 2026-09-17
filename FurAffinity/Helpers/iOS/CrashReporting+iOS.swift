@@ -13,6 +13,10 @@ func startPlatformCrashReporter(_ configuration: CrashReportingConfiguration) {
         options.dsn = configuration.dsn
         options.releaseName = configuration.release
         options.environment = configuration.environment
+        // The app's own frameworks, beside the executable Sentry counts by default.
+        for module in ["FAKit", "FAPages", "FALogging"] {
+            options.add(inAppInclude: module)
+        }
         // Crashes and hangs only: no identifiers, no captured UI, no tracing.
         options.sendDefaultPii = false
         options.attachScreenshot = false
@@ -22,6 +26,10 @@ func startPlatformCrashReporter(_ configuration: CrashReportingConfiguration) {
         options.enableAutoPerformanceTracing = false
         options.enableNetworkBreadcrumbs = false
         options.enableCaptureFailedRequests = false
+        let since = configuration.reportsSince
+        options.beforeSend = { event in
+            (event.timestamp ?? .distantFuture) < since ? nil : event
+        }
     }
 }
 

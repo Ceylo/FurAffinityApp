@@ -77,6 +77,7 @@ import SwiftUI
     /// Lets the script's opt-out control flip the setting without the UI.
     /* SKIP @bridge */public func setCrashReportingEnabled(_ enabled: Bool) {
         Defaults[.crashReportingEnabled] = enabled
+        CrashReporting.settingChanged(enabled: enabled)
     }
 
     /* SKIP @bridge */public func onLaunch() {

@@ -52,6 +52,8 @@ sentry {
     // survives stripping, so they match crashes in the shipped APK.
     uploadNativeSymbols = sentryUploads
     includeNativeSources = true
+    // Kotlin source lines in the report, as native sources are above.
+    includeSourceContext = sentryUploads
 }
 
 // One installable per git worktree, so every branch can sit on the same emulator
