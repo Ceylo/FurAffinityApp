@@ -103,7 +103,7 @@ struct FurAffinityApp: App {
 
     init() {
         // First, so a crash anywhere in launch is reported.
-        CrashReporting.start(appID: Bundle.main.bundleIdentifier, dsn: CrashReportingSecrets.iOSDSN)
+        CrashReporting.start(appID: Bundle.main.bundleIdentifier)
         let device = UIDevice.current
         let appState = UIApplication.shared.applicationState
         logAppLaunch(

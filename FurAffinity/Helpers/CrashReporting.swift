@@ -41,9 +41,9 @@ struct CrashReportingConfiguration: Equatable {
 enum CrashReporting {
     /// Starts the reporter if the build has a DSN and the user hasn't opted out.
     /// On Android, call only after `installDefaultsSuite()`.
-    static func start(appID: String?, dsn: String) {
+    static func start(appID: String?) {
         guard let configuration = CrashReportingConfiguration.make(
-            dsn: dsn,
+            dsn: CrashReportingSecrets.dsn,
             appID: appID,
             version: FAAppVersion.string,
             configuration: buildConfiguration,
