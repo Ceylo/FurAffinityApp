@@ -175,6 +175,7 @@
 		E6B5F7E936DFC3DBE176F2BF /* CrashReportingSecrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD383F780D28E334D60ACB7 /* CrashReportingSecrets.swift */; };
 		AA033C746B0A65D536D8E296 /* CrashReportingConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A264CEDCBC3A6A5E7A2CA5AC /* CrashReportingConfigurationTests.swift */; };
 		6863F20D55CCBA999B4BF92D /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 8A95ED7DF8B078BBE10E20C5 /* Sentry */; };
+		7861E9BBEEAE05821E3E9B5B /* CrashTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CA6CC10C93CFDA14205099B /* CrashTest.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -376,6 +377,7 @@
 		FD256DE747CD74E1E90651F9 /* CrashReporting+iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CrashReporting+iOS.swift"; sourceTree = "<group>"; };
 		BAD383F780D28E334D60ACB7 /* CrashReportingSecrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReportingSecrets.swift; sourceTree = "<group>"; };
 		A264CEDCBC3A6A5E7A2CA5AC /* CrashReportingConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReportingConfigurationTests.swift; sourceTree = "<group>"; };
+		5CA6CC10C93CFDA14205099B /* CrashTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashTest.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -589,6 +591,7 @@
 				58119C7E67EC670409E1D1CC /* GeometryProxy+FASize.swift */,
 				3A24D8C3751477ACBD19CBA9 /* LaunchLog.swift */,
 				DF3D71C0280E404172EB9D4B /* CrashReporting.swift */,
+				5CA6CC10C93CFDA14205099B /* CrashTest.swift */,
 				DE0FE3ECD383602E8F75046C /* InAppLinkConversion.swift */,
 				87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */,
 				E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */,
@@ -956,6 +959,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7861E9BBEEAE05821E3E9B5B /* CrashTest.swift in Sources */,
 				E6B5F7E936DFC3DBE176F2BF /* CrashReportingSecrets.swift in Sources */,
 				39472029AFE82AAE884E8980 /* CrashReporting+iOS.swift in Sources */,
 				9D6D2A76FD5B02CB4A37F1BA /* CrashReporting.swift in Sources */,

@@ -29,4 +29,12 @@ func stopPlatformCrashReporter() {
     SentrySDK.close()
 }
 
+func setPlatformCrashReporterTag(_ key: String, _ value: String) {
+    SentrySDK.configureScope { $0.setTag(value: value, key: key) }
+}
+
+func crashPlatformReporterInKotlin() {
+    logger.error("Crash test kotlinException is Android only")
+}
+
 #endif

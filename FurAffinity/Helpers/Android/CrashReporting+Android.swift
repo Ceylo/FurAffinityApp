@@ -41,3 +41,15 @@ func stopPlatformCrashReporter() {
     let _: Bool? = try? crashReportingBridge?.stop()
     #endif
 }
+
+func setPlatformCrashReporterTag(_ key: String, _ value: String) {
+    #if canImport(Android)
+    let _: Bool? = try? crashReportingBridge?.setTag(key, value)
+    #endif
+}
+
+func crashPlatformReporterInKotlin() {
+    #if canImport(Android)
+    let _: Bool? = try? crashReportingBridge?.crashTest()
+    #endif
+}

@@ -66,6 +66,20 @@ open class MainActivity: AppCompatActivity {
         }
 
         AppDelegate.shared.onLaunch()
+        runCrashTestExtras()
+    }
+
+    /// `--ez faCrashReportingEnabled <bool>` and `--es faCrashTest <case> --es faCrashTestRun <id>`,
+    /// from Scripts/check-crash-reporting.sh. Never in release: this activity is
+    /// exported, so any app could send them.
+    private fun runCrashTestExtras() {
+        if (BuildConfig.BUILD_TYPE == "release") return
+        val extras = intent?.extras ?: return
+        if (extras.containsKey("faCrashReportingEnabled")) {
+            AppDelegate.shared.setCrashReportingEnabled(extras.getBoolean("faCrashReportingEnabled"))
+        }
+        val name = extras.getString("faCrashTest") ?: return
+        AppDelegate.shared.runCrashTest(name, extras.getString("faCrashTestRun") ?: "")
     }
 
     override fun onStart() {

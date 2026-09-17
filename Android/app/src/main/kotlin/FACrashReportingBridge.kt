@@ -13,6 +13,8 @@
 
 package fur.affinity.ui
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import io.sentry.Sentry
 import io.sentry.android.core.SentryAndroid
@@ -42,6 +44,20 @@ class FACrashReportingBridge {
 
     fun stop(): Boolean {
         Sentry.close()
+        return true
+    }
+
+    fun setTag(key: String, value: String): Boolean {
+        Sentry.setTag(key, value)
+        return true
+    }
+
+    /// Throws on the next main-looper turn: thrown here, inside the JNI call, it
+    /// would come back to Swift as an error instead of crashing.
+    fun crashTest(): Boolean {
+        Handler(Looper.getMainLooper()).post {
+            throw IllegalStateException("Crash test") // CRASH-TEST-SITE kotlinException
+        }
         return true
     }
 

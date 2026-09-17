@@ -68,6 +68,17 @@ import SwiftUI
         Defaults.runSettingsMigrations()
     }
 
+    /// From `MainActivity`'s intent extras on a non-release build; see
+    /// Scripts/check-crash-reporting.sh.
+    /* SKIP @bridge */public func runCrashTest(_ name: String, _ runID: String) {
+        CrashTest.run(name, runID: runID)
+    }
+
+    /// Lets the script's opt-out control flip the setting without the UI.
+    /* SKIP @bridge */public func setCrashReportingEnabled(_ enabled: Bool) {
+        Defaults[.crashReportingEnabled] = enabled
+    }
+
     /* SKIP @bridge */public func onLaunch() {
         logger.debug("onLaunch")
     }

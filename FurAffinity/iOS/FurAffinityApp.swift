@@ -104,6 +104,10 @@ struct FurAffinityApp: App {
     init() {
         // First, so a crash anywhere in launch is reported.
         CrashReporting.start(appID: Bundle.main.bundleIdentifier)
+        // `-FACrashTest <case> -FACrashTestRun <id>`, from Scripts/check-crash-reporting.sh.
+        if let name = UserDefaults.standard.string(forKey: "FACrashTest") {
+            CrashTest.run(name, runID: UserDefaults.standard.string(forKey: "FACrashTestRun") ?? "")
+        }
         let device = UIDevice.current
         let appState = UIApplication.shared.applicationState
         logAppLaunch(
