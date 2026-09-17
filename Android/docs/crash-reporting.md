@@ -18,6 +18,11 @@ One shared configuration, two SDKs:
   `FACrashReportingBridge`, which starts **sentry-android**. Manifest auto-init is
   off (`io.sentry.auto-init=false`): Swift decides whether reporting runs at all.
 - Nothing starts on the placeholder DSN, so a development build reports nothing.
+  The real DSN is never committed and is not in the distribution stash either: CI
+  and the Android release script write it in for the build and revert it after.
+  Both need `SENTRY_DSN`; the uploads additionally need `SENTRY_AUTH_TOKEN`, which
+  is the only real secret of the two — the DSN can merely *send* events to this
+  project, while the token reads and administers it.
 - `CrashReporting.start` is the first thing both entry points do — on Android right
   after `installDefaultsSuite()`, since it reads a `Defaults` key.
 
@@ -63,6 +68,7 @@ an invalid one from `release` and the event arrives with an `invalid_data` error
 
 | What | Uploaded by | When |
 |---|---|---|
+| The DSN | `sed` from `$SENTRY_DSN` into `CrashReportingSecrets.swift` — `.github/workflows/{build,release}.yml` on iOS, `Scripts/Android/build-release-apk.sh` on Android, reverted after the build | every distributed build |
 | iOS dSYMs (+ sources) | `sentry-cli debug-files upload --include-sources` in `.github/workflows/release.yml` | every tagged release |
 | Android `.so` (+ sources) and the R8 mapping | the Sentry Gradle plugin, during `skip export` | release and `profile` builds, when `SENTRY_AUTH_TOKEN` is set |
 
@@ -86,7 +92,10 @@ function and `<compiler-generated>:0`, with no file and no line, on both platfor
 
 `FAKit`, `FAPages`, `FALogging` and `OSCompat` therefore build release with
 `-disable-cmo` (their `Package.swift`). Cost: +21 KB on `libFurAffinityUI.so`
-(+1.0 %), ~32 KB over all our libraries. `swiftForceUnwrapFAKit` in the checker is
+(+1.0 %), ~32 KB over all our libraries, and **no measurable parse time** —
+alternating the two APKs on one emulator session, the median
+`FAPages: Submission Preview Parsing` (72+ per feed load) was 0.11/0.11 ms with
+CMO on and 0.16/0.09 ms with it off, i.e. inside the run-to-run spread. `swiftForceUnwrapFAKit` in the checker is
 the regression test — it asserts `CrashTestSite.swift:13`, which only FAKit's own
 copy of that function can produce.
 
