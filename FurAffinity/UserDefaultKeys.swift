@@ -82,6 +82,10 @@ extension Defaults.Keys {
     
     // MARK: - Sharing
     static let addMessageToSharedItems = Key<Bool>("addMessageToSharedItems", default: true)
+
+    // MARK: - Privacy
+    /// Read once at launch by `CrashReporting.start`.
+    static let crashReportingEnabled = Key<Bool>("crashReportingEnabled", default: true)
     
     // MARK: - Convenience
     static let all = [

@@ -170,6 +170,10 @@
 		FA0000000000000000000008 /* SubmissionAudioContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000007 /* SubmissionAudioContent.swift */; };
 		FA000000000000000000000A /* AudioPlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000009 /* AudioPlaybackController.swift */; };
 		FB227FE8FD7642FAD0C63BF7 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E6731320A5B4D6196E99F0F9 /* UserNotifications.framework */; };
+		9D6D2A76FD5B02CB4A37F1BA /* CrashReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF3D71C0280E404172EB9D4B /* CrashReporting.swift */; };
+		39472029AFE82AAE884E8980 /* CrashReporting+iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD256DE747CD74E1E90651F9 /* CrashReporting+iOS.swift */; };
+		E6B5F7E936DFC3DBE176F2BF /* CrashReportingSecrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD383F780D28E334D60ACB7 /* CrashReportingSecrets.swift */; };
+		AA033C746B0A65D536D8E296 /* CrashReportingConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A264CEDCBC3A6A5E7A2CA5AC /* CrashReportingConfigurationTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -367,6 +371,10 @@
 		FA0000000000000000000007 /* SubmissionAudioContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionAudioContent.swift; sourceTree = "<group>"; };
 		FA0000000000000000000009 /* AudioPlaybackController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlaybackController.swift; sourceTree = "<group>"; };
 		FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudflareResolutionOverlay.swift; sourceTree = "<group>"; };
+		DF3D71C0280E404172EB9D4B /* CrashReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReporting.swift; sourceTree = "<group>"; };
+		FD256DE747CD74E1E90651F9 /* CrashReporting+iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CrashReporting+iOS.swift"; sourceTree = "<group>"; };
+		BAD383F780D28E334D60ACB7 /* CrashReportingSecrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReportingSecrets.swift; sourceTree = "<group>"; };
+		A264CEDCBC3A6A5E7A2CA5AC /* CrashReportingConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReportingConfigurationTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -470,6 +478,7 @@
 				8716E7ED271C659C00C0BC4A /* HomeView.swift */,
 				877226B227402F9300245DF0 /* LoggedInView.swift */,
 				87098D392CB2BEF000E7BD94 /* UserDefaultKeys.swift */,
+				BAD383F780D28E334D60ACB7 /* CrashReportingSecrets.swift */,
 				875DD46E2843D1C300F3E5D9 /* Helpers */,
 				878EBC9A2EDB8E11006A68D3 /* View extensions */,
 				87A4CA8B2756D17C009AA219 /* Helper Views */,
@@ -577,6 +586,7 @@
 				8774EE732DFB78B90074E015 /* Replying.swift */,
 				58119C7E67EC670409E1D1CC /* GeometryProxy+FASize.swift */,
 				3A24D8C3751477ACBD19CBA9 /* LaunchLog.swift */,
+				DF3D71C0280E404172EB9D4B /* CrashReporting.swift */,
 				DE0FE3ECD383602E8F75046C /* InAppLinkConversion.swift */,
 				87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */,
 				E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */,
@@ -661,6 +671,7 @@
 			isa = PBXGroup;
 			children = (
 				8791D60229C4D627003FDBBE /* FATargetTests.swift */,
+				A264CEDCBC3A6A5E7A2CA5AC /* CrashReportingConfigurationTests.swift */,
 				87CF0CA100000000000F0C01 /* CommentFocusTargetTests.swift */,
 				87CCD2F72FC4991600768FDB /* BackgroundRefreshNotificationBuilderTests.swift */,
 				87FACE0300000000000DEECF /* NotificationCoordinatorTests.swift */,
@@ -770,6 +781,7 @@
 				87FACE0100000000000DEECF /* NotificationDeepLink.swift */,
 				3DAE7CF11945226ED5F47626 /* LoginCookies.swift */,
 				8791D60C29C4DCE6003FDBBE /* InAppNavigation.swift */,
+				FD256DE747CD74E1E90651F9 /* CrashReporting+iOS.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -940,6 +952,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E6B5F7E936DFC3DBE176F2BF /* CrashReportingSecrets.swift in Sources */,
+				39472029AFE82AAE884E8980 /* CrashReporting+iOS.swift in Sources */,
+				9D6D2A76FD5B02CB4A37F1BA /* CrashReporting.swift in Sources */,
 				8766005829055FBC00C7A998 /* CommentsView.swift in Sources */,
 				87A1859C27459FFE00B10D2A /* SettingsView.swift in Sources */,
 				CE0000010000000000000002 /* NotificationSettingsView.swift in Sources */,
@@ -1082,6 +1097,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA033C746B0A65D536D8E296 /* CrashReportingConfigurationTests.swift in Sources */,
 				87CCD2F92FC49A2000768FDB /* BackgroundRefreshNotificationBuilderTests.swift in Sources */,
 				87FACE0400000000000DEECF /* NotificationCoordinatorTests.swift in Sources */,
 				87FACE0600000000000DEECF /* LoggedInViewTabTests.swift in Sources */,
