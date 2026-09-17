@@ -117,7 +117,8 @@ if [[ $PLATFORM == ios ]]; then
     }
     crash() { # case run-id enabled
         local pid
-        pid="$(launch -FACrashTest "$1" -FACrashTestRun "$2" -crashReportingEnabled "$([[ $3 == 1 ]] && echo YES || echo NO)")"
+        pid="$(launch -FACrashTest "$1" -FACrashTestRun "$2" \
+            -FACrashReportingEnabled "$([[ $3 == 1 ]] && echo YES || echo NO)")"
         wait_exit "$pid"
     }
     wait_exit() {
@@ -125,8 +126,8 @@ if [[ $PLATFORM == ios ]]; then
         die "the app (pid $1) did not crash within 60 s"
     }
     relaunch() { launch >/dev/null; sleep 15; }
-    # iOS reads the setting from the argument domain, so nothing persists.
-    restore_setting() { :; }
+    # The override is written to the setting, so it has to be put back.
+    restore_setting() { launch -FACrashReportingEnabled YES >/dev/null; sleep 10; }
 else
     SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
     ADB="$SDK/platform-tools/adb"

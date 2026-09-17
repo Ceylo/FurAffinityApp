@@ -103,6 +103,8 @@ struct FurAffinityApp: App {
 
     init() {
         // First, so a crash anywhere in launch is reported.
+        // `-FACrashReportingEnabled YES|NO`, the checker's opt-out control.
+        CrashTest.applyReportingOverride(UserDefaults.standard.string(forKey: "FACrashReportingEnabled"))
         CrashReporting.start(appID: Bundle.main.bundleIdentifier)
         // `-FACrashTest <case> -FACrashTestRun <id>`, from Scripts/check-crash-reporting.sh.
         if let name = UserDefaults.standard.string(forKey: "FACrashTest") {

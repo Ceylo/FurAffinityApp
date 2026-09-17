@@ -11,6 +11,7 @@
 //
 
 import Foundation
+import Defaults
 import FAKit
 
 enum CrashTestCase: String, CaseIterable {
@@ -22,6 +23,17 @@ enum CrashTestCase: String, CaseIterable {
 }
 
 enum CrashTest {
+    /// Writes the crash-reporting setting from outside the UI, for the checker's
+    /// opt-out control. A launch argument can't do it: `-crashReportingEnabled NO`
+    /// lands in the argument domain as the *string* "NO", which `Defaults` ignores.
+    /// Call before `CrashReporting.start`, which reads the setting.
+    static func applyReportingOverride(_ value: String?) {
+        guard let value else { return }
+        let enabled = (value as NSString).boolValue
+        Defaults[.crashReportingEnabled] = enabled
+        CrashReporting.settingChanged(enabled: enabled)
+    }
+
     /// Tags the report with `crash_test_run=<runID>` so the script finds this exact
     /// event, then crashes once the reporter has settled.
     static func run(_ name: String, runID: String) {
