@@ -811,6 +811,7 @@
 				8716E7E5271C659C00C0BC4A /* Frameworks */,
 				8716E7E6271C659C00C0BC4A /* Resources */,
 				24D624ECE810BFABCAFC42C8 /* Embed App Extensions */,
+				87C3A1D42EBA4F1000D5E7A1 /* Upload dSYMs to Sentry */,
 			);
 			buildRules = (
 			);
@@ -945,6 +946,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		87C3A1D42EBA4F1000D5E7A1 /* Upload dSYMs to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"$(SRCROOT)/.sentryclirc",
+			);
+			name = "Upload dSYMs to Sentry";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Upload this archive's dSYMs to Sentry, so a crash in the shipped build arrives\n# as File.swift:line rather than a bare address. One mechanism for both iOS\n# distribution channels: the tagged release workflow and a local Xcode archive.\n# See Android/docs/crash-reporting.md.\n#\n# Archive only. Xcode sets ACTION=install for `archive` and for nothing else, so\n# every Debug build and every ordinary Release build stops on the next line.\n[ \"$ACTION\" = install ] || exit 0\n\nexport SENTRY_ORG=ceylo\nexport SENTRY_PROJECT=ceylo-furaffinity-app\n\n# An archive started from the Xcode GUI inherits launchd's PATH, not a shell's.\nfor dir in /opt/homebrew/bin /usr/local/bin; do\n    [ -x \"$dir/sentry-cli\" ] && PATH=\"$dir:$PATH\"\ndone\n\nif ! command -v sentry-cli > /dev/null; then\n    echo \"error: sentry-cli is missing, so this archive would ship with no symbols on the server and its crashes would arrive as bare addresses. brew install getsentry/tools/sentry-cli\"\n    exit 1\nfi\n\n# sentry-cli reads .sentryclirc from the working directory, which Xcode sets to\n# $SRCROOT. $HOME's copy is outside the script sandbox, so the project-local one\n# is how a GUI archive authenticates.\nif [ -z \"$SENTRY_AUTH_TOKEN\" ] && [ ! -f \"$SRCROOT/.sentryclirc\" ]; then\n    echo \"error: no Sentry auth token. Export SENTRY_AUTH_TOKEN, or write one into $SRCROOT/.sentryclirc (git-ignored). See Android/docs/crash-reporting.md.\"\n    exit 1\nfi\n\n# --wait only on CI: it confirms the server finished processing, which a local\n# archive would rather not sit through.\nsentry-cli debug-files upload --include-sources ${CI:+--wait} \"$DWARF_DSYM_FOLDER_PATH\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		1AB8D5B3E810310409ABBAFE /* Sources */ = {

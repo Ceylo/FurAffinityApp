@@ -65,8 +65,20 @@ jobs:
         with:
           action: none
           xcode: ~26.5
-      - name: Archive App
+      - name: Install sentry-cli
         run: |
+          # The archive's "Upload dSYMs to Sentry" build phase needs it, and fails
+          # the archive if it is missing.
+          brew install getsentry/tools/sentry-cli
+      - name: Archive App
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          # A release whose dSYMs never reached Sentry reports crashes as bare
+          # addresses, and the archive is gone by the time anyone notices. The
+          # upload itself is the app target's archive-only build phase, shared
+          # with a local Xcode archive.
+          [ -n "${SENTRY_AUTH_TOKEN}" ] || { echo "::error::SENTRY_AUTH_TOKEN is not set"; exit 1; }
           git_hash=$(git rev-parse --short "$GITHUB_SHA")
           fsfriendly_git_ref=$(echo "${GITHUB_REF_NAME}" | tr '/' '-')
           qualified_app_name="FurAffinity-${fsfriendly_git_ref}-${git_hash}"
@@ -76,20 +88,15 @@ jobs:
           cp -Rp ${archive_path}/Products/Applications/* Payload/
           zip -rq "${qualified_app_name}.ipa" Payload
           zip -rq "${qualified_app_name}.xcarchive.zip" "${qualified_app_name}.xcarchive"
-      - name: Upload debug symbols to Sentry
+      - name: Verify the uploaded debug symbols
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ceylo
           SENTRY_PROJECT: ceylo-furaffinity-app
         run: |
-          # A release whose dSYMs never reached Sentry reports crashes as bare
-          # addresses, and the archive is gone by the time anyone notices.
-          [ -n "${SENTRY_AUTH_TOKEN}" ] || { echo "::error::SENTRY_AUTH_TOKEN is not set"; exit 1; }
-          brew install getsentry/tools/sentry-cli
-          dsyms=$(ls -d ./*.xcarchive/dSYMs)
-          sentry-cli debug-files upload --include-sources --wait "${dsyms}"
           # The app's own dSYM must carry debug info, not just a symbol table.
-          sentry-cli debug-files check "${dsyms}/FurAffinity.app.dSYM"
+          dsyms=$(ls -d ./*.xcarchive/dSYMs)
+          sentry-cli debug-files check "${dsyms}/Fur Affinity.app.dSYM"
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
