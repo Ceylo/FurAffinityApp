@@ -70,9 +70,12 @@ in the WebView, redial — rather than retried into. HTTP/2 is measured and off;
 Crashes and ANRs report to **Sentry** on both platforms, one project split by
 `os.name`: shared config in `FurAffinity/Helpers/CrashReporting.swift`,
 sentry-cocoa on iOS and sentry-android (tombstones on Android 12+, the NDK signal
-handler below) behind `FACrashReportingBridge`. Symbols are uploaded per release —
-dSYMs from `release.yml`, `.so` files and the R8 mapping by the Sentry Gradle
-plugin — and our packages build release with `-disable-cmo`, because Swift's
+handler below) behind `FACrashReportingBridge`. Three distribution channels each
+need a DSN and their symbols on the server: the DSN comes from the distribution
+stash for both local channels and from a CI secret for the IPA workflow, while
+dSYMs go up from an archive-only build phase on the app target (`ACTION=install`)
+and the `.so` files and R8 mapping from the Sentry Gradle plugin. Our packages
+build release with `-disable-cmo`, because Swift's
 cross-module optimization copies functions between modules *without a line table*
 and a crash inside one loses its file and line. Consent is a Settings toggle, on by
 default; the application log is never sent. `Scripts/check-crash-reporting.sh

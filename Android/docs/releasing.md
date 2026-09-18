@@ -67,6 +67,11 @@ apksigner verify --print-certs <apk>      # must NOT say CN=Android Debug
 Scripts/Android/build-release-apk.sh
 ```
 
+It needs `SENTRY_AUTH_TOKEN` in the environment (the Gradle plugin uploads the
+`.so` files and the R8 mapping with it) and a DSN, which comes from the stash;
+it refuses to build without either. See
+[crash-reporting.md](crash-reporting.md) § Three channels.
+
 That is the whole thing: it applies the distribution stash, drops the build dirs
 the changed applicationId invalidates, exports, checks the signing certificate,
 and reverts the working tree on the way out (`--keep-stash` leaves it applied,

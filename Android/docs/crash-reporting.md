@@ -18,11 +18,9 @@ One shared configuration, two SDKs:
   `FACrashReportingBridge`, which starts **sentry-android**. Manifest auto-init is
   off (`io.sentry.auto-init=false`): Swift decides whether reporting runs at all.
 - Nothing starts on the placeholder DSN, so a development build reports nothing.
-  The real DSN is never committed and is not in the distribution stash either: CI
-  and the Android release script write it in for the build and revert it after.
-  Both need `SENTRY_DSN`; the uploads additionally need `SENTRY_AUTH_TOKEN`, which
-  is the only real secret of the two — the DSN can merely *send* events to this
-  project, while the token reads and administers it.
+  The real DSN is never committed; see § Three channels for where each build gets
+  one. It is not much of a secret — it can only *send* events to this project,
+  while `SENTRY_AUTH_TOKEN` reads and administers it.
 - `CrashReporting.start` is the first thing both entry points do — on Android right
   after `installDefaultsSuite()`, since it reads a `Defaults` key.
 
@@ -30,6 +28,54 @@ Collected: stack trace, device model, OS and app version, and the SDK's random
 per-install id. Not collected: `sendDefaultPii` is off, no screenshots, no view
 hierarchy, no tracing, no network breadcrumbs, and no application log (see
 § No breadcrumbs).
+
+## Three channels
+
+The app ships three ways, and each has to arrive at the same two things: a real
+DSN compiled in, and its symbols on the server.
+
+| Channel | Built | DSN from | Symbols uploaded by |
+|---|---|---|---|
+| IPA for AltStore Classic | `.github/workflows/release.yml`, on a tag | `${{ secrets.SENTRY_DSN }}`, `sed` into `CrashReportingSecrets.swift` | the archive's build phase, below |
+| App Store Connect → AltStore PAL | locally, Xcode archive (or `xcodebuild archive`) | the distribution stash | the same build phase |
+| Android APK | locally, `Scripts/Android/build-release-apk.sh` | the distribution stash (`$SENTRY_DSN` overrides) | the Sentry Gradle plugin, during `skip export` |
+
+Both local channels apply `📱For App Store distribution`, so the DSN lives there
+with the app id and the Amplitude key. CI has no stash, which is why the workflow
+still seds its own in. Either way `CrashReportingSecrets.swift` keeps the
+placeholder in git, and both local paths revert the working tree afterwards.
+
+### The archive-only build phase
+
+The `FurAffinity` target's **Upload dSYMs to Sentry** run script phase is the
+whole iOS upload, for both iOS channels. Its first line is
+
+```sh
+[ "$ACTION" = install ] || exit 0
+```
+
+— Xcode sets `ACTION=install` when archiving and at no other time, so Debug and
+ordinary Release builds stop there. The phase then fails the archive, loudly,
+if `sentry-cli` is missing or no token is available; a release that silently
+skips its upload is the failure mode worth paying for.
+
+Script sandboxing stays on. The phase declares two inputs:
+`$DWARF_DSYM_FOLDER_PATH/$DWARF_DSYM_FILE_NAME`, which both grants sandbox access
+to the dSYMs *and* orders the phase after `dsymutil`, and `$SRCROOT/.sentryclirc`.
+That second one is how a **GUI archive** authenticates: it inherits no
+environment, and `~/.sentryclirc` is outside the sandbox. So, once:
+
+```
+printf '[auth]\ntoken=<org auth token>\n' > .sentryclirc   # gitignored
+```
+
+CI passes `SENTRY_AUTH_TOKEN` in the environment instead, and `${CI:+--wait}`
+makes only CI wait for server-side processing.
+
+`$DWARF_DSYM_FOLDER_PATH` holds exactly what the archive's `dSYMs` folder does —
+the app, the extension and the 11 embedded frameworks. FAKit, FAPages and
+FALogging link statically into the app, so their debug info is in
+`Fur Affinity.app.dSYM`.
 
 ## Consent
 
@@ -68,8 +114,8 @@ an invalid one from `release` and the event arrives with an `invalid_data` error
 
 | What | Uploaded by | When |
 |---|---|---|
-| The DSN | `sed` from `$SENTRY_DSN` into `CrashReportingSecrets.swift` — `.github/workflows/{build,release}.yml` on iOS, `Scripts/Android/build-release-apk.sh` on Android, reverted after the build | every distributed build |
-| iOS dSYMs (+ sources) | `sentry-cli debug-files upload --include-sources` in `.github/workflows/release.yml` | every tagged release |
+| The DSN | the distribution stash, or `sed` from `$SENTRY_DSN` — see § Three channels | every distributed build |
+| iOS dSYMs (+ sources) | the `FurAffinity` target's "Upload dSYMs to Sentry" build phase | every archive, CI or local |
 | Android `.so` (+ sources) and the R8 mapping | the Sentry Gradle plugin, during `skip export` | release and `profile` builds, when `SENTRY_AUTH_TOKEN` is set |
 
 The Android upload takes the **unstripped** libraries from
@@ -125,9 +171,37 @@ eagerly (`FALogMessage`) and has no privacy annotations, so forwarding log lines
 would send usernames, submission ids and full URLs along with each crash. The log
 stays where it was: Settings → Export Application Logs, on request.
 
-Kotlin frames have line numbers but **no source text** — the Gradle plugin
-registers no source-bundle task here, so `includeSourceContext` has no effect.
-Swift frames do carry source text, from `--include-sources`.
+Kotlin frames have line numbers but **no source text**, by choice. Swift frames do
+carry source text, from `--include-sources`; see § Kotlin source context for why
+Kotlin's is left off.
+
+### Kotlin source context
+
+`includeSourceContext = sentryUploads` is set and the tasks really do register —
+`sentryCollectSources*`, `sentryBundleSources*`, `sentryUploadSourceBundle*`, all
+present in `:app:tasks --all` once `SENTRY_AUTH_TOKEN` is set, which is what gates
+them. What the bundle does not do is *resolve*. Sentry's layout rule is that the
+package declaration and the file tree must match, and the nine bridges declare
+`package fur.affinity.ui` while sitting flat in `Android/app/src/main/kotlin/`, so
+the bundle comes out keyed on bare filenames:
+
+```
+files/_/_/FACrashReportingBridge.jvm   →  url "~/FACrashReportingBridge.jvm"
+```
+
+A JVM frame is looked up under its package path, so nothing matches and the upload
+is dead weight. Moving the files to `src/main/kotlin/fur/affinity/ui/` fixes the
+keys — measured, the same nine files come out as
+`~/fur/affinity/ui/FACrashReportingBridge.jvm` — and costs almost nothing: **27 ms**
+of build time for the three tasks together (21 ms bundle, 5 ms collect, 1 ms id),
+a **21 KB** upload, and **58 bytes** of APK, one `io.sentry.bundle-ids` line in
+`assets/sentry-debug-meta.properties`.
+
+It is not done, because the price is not the build time: it is nine files leaving
+the one flat directory that `Scripts/Android/logs.sh` globs for bridge `TAG`s and
+that `Scripts/check-crash-reporting.sh` and the docs name by path, in exchange for
+source text on Kotlin frames that already carry file and line — and there are nine
+Kotlin files against a whole app of Swift. Revisit if the Kotlin layer grows.
 
 ## Verifying it
 
