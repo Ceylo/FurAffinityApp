@@ -59,18 +59,44 @@ ordinary Release builds stop there. The phase then fails the archive, loudly,
 if `sentry-cli` is missing or no token is available; a release that silently
 skips its upload is the failure mode worth paying for.
 
-Script sandboxing stays on. The phase declares two inputs:
-`$DWARF_DSYM_FOLDER_PATH/$DWARF_DSYM_FILE_NAME`, which both grants sandbox access
-to the dSYMs *and* orders the phase after `dsymutil`, and `$SRCROOT/.sentryclirc`.
-That second one is how a **GUI archive** authenticates: it inherits no
-environment, and `~/.sentryclirc` is outside the sandbox. So, once:
+The phase declares `$DWARF_DSYM_FOLDER_PATH/$DWARF_DSYM_FILE_NAME` as an input,
+which is what orders it after `dsymutil`: delete `Fur Affinity.app.dSYM` and
+re-archive, and the phase sees the freshly regenerated one rather than nothing.
+
+Authentication is `SENTRY_AUTH_TOKEN` on CI, and a git-ignored `.sentryclirc` in
+the project root for a **GUI archive**, which inherits no environment:
 
 ```
-printf '[auth]\ntoken=<org auth token>\n' > .sentryclirc   # gitignored
+printf '[auth]\ntoken=<org auth token>\n' > .sentryclirc
 ```
 
-CI passes `SENTRY_AUTH_TOKEN` in the environment instead, and `${CI:+--wait}`
-makes only CI wait for server-side processing.
+`${CI:+--wait}` makes only CI wait for server-side processing.
+
+#### Why the script sandbox is off for Release
+
+`ENABLE_USER_SCRIPT_SANDBOXING = NO`, on the **app target's Release configuration
+only** — Debug keeps it, and so does `NotificationContent` in both configurations
+(`xcodebuild -showBuildSettings` confirms all three). The app target has exactly
+one run script phase, this one, so nothing else gives up the protection.
+
+It is off because no declaration can make it work. Xcode's generated profile is
+`(allow default)` with *subpath* denies on the build directories, including the
+one the dSYMs are in:
+
+```
+(deny file-read* file-write* (subpath (param "CONFIGURATION_BUILD_DIR")) …)
+…
+(allow file-read* (literal (param "SCRIPT_INPUT_FILE_0")))
+```
+
+Declared inputs come back as `literal` — the node itself, not what is under it.
+A dSYM is a *bundle*, so `Contents/Resources/DWARF/Fur Affinity` stays denied
+however it is declared; declaring the whole folder instead changes nothing, for
+the same reason. Sandboxed, `sentry-cli` authenticates, reaches
+`chunk-upload/` over the network and then dies on `error: Operation not permitted
+(os error 1)` — with no kernel log entry, since the profile does not report. With
+the setting off the same archive prints `Found 76 debug information files` and
+uploads them.
 
 `$DWARF_DSYM_FOLDER_PATH` holds exactly what the archive's `dSYMs` folder does —
 the app, the extension and the 11 embedded frameworks. FAKit, FAPages and
