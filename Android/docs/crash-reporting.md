@@ -27,7 +27,8 @@ One shared configuration, two SDKs:
 Collected: stack trace, device model, OS and app version, and the SDK's random
 per-install id. Not collected: `sendDefaultPii` is off, no screenshots, no view
 hierarchy, no tracing, no network breadcrumbs, and no application log (see
-§ No breadcrumbs).
+§ No breadcrumbs). Approximate location is the one thing neither SDK controls —
+see § Two required project settings.
 
 ## Three channels
 
@@ -118,6 +119,30 @@ out. Both SDKs get a `beforeSend` that drops any event older than that timestamp
 The legal basis is legitimate interest (GDPR Art. 6(1)(f)), which is why the
 collection is this small; the project also has *Prevent Storing of IP Addresses*
 on. `Privacy Policy.md` names Sentry.
+
+### Two required project settings, not one
+
+*Prevent Storing of IP Addresses* does less than its name suggests. Sentry
+geocodes the address **before** scrubbing it and keeps the result, so an event
+arrives with `user.ip_address: null` and a populated
+`user.geo` — country, region and **city**. Neither SDK sends any of this
+(`sendDefaultPii` is off on both and neither sets a user), so nothing in this
+repo can prevent it: it is added server-side and only a server-side rule removes
+it. That rule is, in Project Settings → Security & Privacy → Advanced Data
+Scrubbing:
+
+```
+[Remove] [Anything] from [$user.geo.**]
+```
+
+Upstream tracks this as getsentry/sentry#92201. Scrubbing applies at ingest, so
+the rule only affects events received after it, and events that already carry a
+location keep it until they are deleted or age out.
+
+`Scripts/check-crash-reporting.sh` asserts both halves on every case — no
+`user.geo` and a null `user.ip_address` — because a project setting is exactly
+the kind of thing that is silently true until someone changes it, and only a
+fresh event can show it is still in force.
 
 ## Android: tombstones, not the NDK signal handler
 

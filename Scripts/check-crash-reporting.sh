@@ -213,6 +213,20 @@ check_event() { # case json function file line
     errors="$(jq -r --argjson bad "$BAD_ERRORS" '[.errors[]?.type | select(. as $t | $bad | index($t))] | join(",")' "$json")"
     [[ -z "$errors" ]] || fail+=("symbolication errors: $errors")
 
+    # No location on the event. "Prevent Storing of IP Addresses" nulls
+    # user.ip_address, but Sentry geocodes the address before scrubbing it and
+    # keeps the result, so city/region/country survive unless the project's
+    # advanced scrubbing rule removes $user.geo.**. Neither SDK ever sends this;
+    # it is added server-side, so only a server-side rule can take it away, and
+    # only a fresh event proves the rule is still in place. See
+    # Android/docs/crash-reporting.md § Consent.
+    local located
+    located="$(jq -r '[(.user.geo // {}) | to_entries[] | select(.value != null)
+                       | "\(.key)=\(.value)"] | join(", ")' "$json")"
+    [[ -z "$located" ]] || fail+=("event carries a location: $located")
+    [[ "$(jq -r '.user.ip_address // "null"' "$json")" == null ]] \
+        || fail+=("event carries an IP address")
+
     # The frame, wherever the event put the crashing stack. Its file and line are
     # also what catches a return of cross-module optimization: a copy of a FAKit
     # function inlined into the app carries no line table at all (Package.swift).
