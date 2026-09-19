@@ -55,7 +55,11 @@ class FACrashReportingBridge {
             // when reporting was off at the time; see CrashReportingConfiguration.
             options.setBeforeSend { event, _ ->
                 if (event.timestamp.time < reportsSinceMillis) null
-                else event.also { keepListedContextOnly(it.contexts) }
+                else event.also {
+                    keepListedContextOnly(it.contexts)
+                    // isSideLoaded, installerStore: how the APK was installed.
+                    it.tags?.keys?.filter { key -> key != CRASH_TEST_TAG }?.forEach(it::removeTag)
+                }
             }
             options.tracesSampleRate = null
         }
@@ -92,6 +96,8 @@ class FACrashReportingBridge {
     companion object {
         private const val TAG = "FACrashReportingBridge"
         private val KEPT_CONTEXTS = setOf("os", "trace", "device", "app")
+        /// Set by CrashTest.swift; the only tag an event keeps.
+        private const val CRASH_TEST_TAG = "crash_test_run"
 
         /// The contexts the privacy policy covers, so nothing an SDK adds ever
         /// leaves: `trace` (random ids) whole, the OS, device and app copied field

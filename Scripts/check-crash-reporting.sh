@@ -192,22 +192,29 @@ fi
 PROJECT_ID="$(curl -sf -H "Authorization: Bearer $READ_TOKEN" "$API/projects/$ORG/$PROJECT/" | jq -r .id)"
 [[ -n "$PROJECT_ID" && "$PROJECT_ID" != null ]] || die "cannot read project $ORG/$PROJECT — check the token's scopes"
 
+# Fails on any API error. Both run inside $(…), where set -e does not reach, and
+# an error read as "no events" would pass optOut.
 event_ids() { # search query
-    curl -sf -G -H "Authorization: Bearer $READ_TOKEN" "$API/organizations/$ORG/events/" \
+    local out
+    out="$(curl -sf -G -H "Authorization: Bearer $READ_TOKEN" "$API/organizations/$ORG/events/" \
         --data-urlencode "field=id" --data-urlencode "dataset=errors" \
         --data-urlencode "project=$PROJECT_ID" --data-urlencode "statsPeriod=1h" \
-        --data-urlencode "query=$1" | jq -r '.data[].id'
+        --data-urlencode "query=$1")" || return 1
+    jq -er '.data | map(.id) | join("\n")' <<< "$out"
 }
 
 # Waits up to 3 minutes for the first event, then 30 s more so a duplicate shows.
 wait_events() { # search query, seconds
     local ids=""
     for _ in $(seq $(( $2 / 10 ))); do
-        ids="$(event_ids "$1")"
+        ids="$(event_ids "$1")" || return 1
         [[ -n "$ids" ]] && break
         sleep 10
     done
-    [[ -n "$ids" ]] && { sleep 30; ids="$(event_ids "$1")"; }
+    if [[ -n "$ids" ]]; then
+        sleep 30
+        ids="$(event_ids "$1")" || return 1
+    fi
     echo "$ids"
 }
 
@@ -243,7 +250,8 @@ check_event() { # case json function file line
 
     # Nothing about the device or app beyond what the privacy policy lists. Both
     # platforms keep an allowlist; this names what the SDKs are known to add, and
-    # any context besides the four kept (the server adds none).
+    # any context besides the four kept (the server adds none). Tags the server
+    # derives from contexts go with them; the SDK's own are named here.
     local unlisted
     unlisted="$(jq -r '[(.contexts // {} | keys[] | select(IN("app", "device", "os", "trace") | not)),
         (.contexts.device // {} | keys[] | select(IN(
@@ -251,7 +259,8 @@ check_event() { # case json function file line
             "battery_temperature", "charging", "boot_time", "free_memory", "usable_memory",
             "free_storage", "low_memory", "low_power_mode", "orientation", "thermal_state")) | "device.\(.)"),
         (.contexts.app // {} | keys[] | select(IN("permissions", "view_names", "device_app_hash")) | "app.\(.)"),
-        (.contexts.os // {} | keys[] | select(IN("rooted")) | "os.\(.)")]
+        (.contexts.os // {} | keys[] | select(IN("rooted")) | "os.\(.)"),
+        (.tags // [] | .[].key | select(IN("isSideLoaded", "installerStore")) | "tag \(.)")]
         | join(", ")' "$json")"
     [[ -z "$unlisted" ]] || fail+=("event carries unlisted context: $unlisted")
 
@@ -315,7 +324,8 @@ for c in "${CASES[@]}"; do
         crash swiftFatalError "$RUN" 0
         relaunch
         restore_setting
-        ids="$(wait_events "release:\"$RELEASE\" timestamp:>=$since" 180)"
+        ids="$(wait_events "release:\"$RELEASE\" timestamp:>=$since" 180)" \
+            || die "the Sentry event search failed — optOut cannot tell silence from an error"
         if [[ -z "$ids" ]]; then
             RESULTS+=("PASS  $c: no event in 3 min")
         else
@@ -333,7 +343,7 @@ for c in "${CASES[@]}"; do
         crash "$c" "$RUN" 1
         relaunch
     fi
-    ids="$(wait_events "crash_test_run:$RUN" 180)"
+    ids="$(wait_events "crash_test_run:$RUN" 180)" || die "the Sentry event search failed"
     count="$(grep -c . <<< "$ids" || true)"
     if (( count == 0 )); then
         RESULTS+=("FAIL  $c: no event within 3 min"); FAILED=1

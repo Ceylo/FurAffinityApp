@@ -189,9 +189,9 @@ on. `Privacy Policy.md` names Sentry.
 geocodes the address **before** scrubbing it and keeps the result, so an event
 arrives with `user.ip_address: null` and a populated
 `user.geo` — country, region and **city**. Neither SDK sends any of this
-(`sendDefaultPii` is off on both and neither sets a user), so nothing in this
-repo can prevent it: it is added server-side and only a server-side rule removes
-it. That rule is, in Project Settings → Security & Privacy → Advanced Data
+(`sendDefaultPii` is off on both, and the only user either sets is its random
+install id), so nothing in this repo can prevent it: it is added server-side and
+only a server-side rule removes it. That rule is, in Project Settings → Security & Privacy → Advanced Data
 Scrubbing:
 
 ```

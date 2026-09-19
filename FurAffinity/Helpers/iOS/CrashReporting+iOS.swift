@@ -35,6 +35,8 @@ func startPlatformCrashReporter(_ configuration: CrashReportingConfiguration) {
         options.beforeSend = { event in
             guard (event.timestamp ?? .distantFuture) >= since else { return nil }
             event.context = keepingListedContextOnly(event.context)
+            // The checker's run id is the one tag set on purpose.
+            event.tags = event.tags?.filter { $0.key == "crash_test_run" }
             return event
         }
     }
