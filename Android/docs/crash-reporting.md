@@ -144,6 +144,10 @@ location keep it until they are deleted or age out.
 the kind of thing that is silently true until someone changes it, and only a
 fresh event can show it is still in force.
 
+The rule went on 2026-09-19. Before it, every event carried
+`country_code=FR, city=Angoulême, region=France`; after it, all seven cases of the
+run below come back `"geo": {}`.
+
 ## Android: tombstones, not the NDK signal handler
 
 A Swift crash on Android is a native signal (`fatalError` traps with `SIGTRAP`).
@@ -288,13 +292,14 @@ The crash cases live in `FurAffinity/Helpers/CrashTest.swift` (and
 force unwrap inside FAKit, an out-of-range index on a detached thread, and, on
 Android, a Kotlin exception.
 
-Last full run (2026-09-17, one event per crash, no symbolication errors). The
-lines are each run's markers, which move as the files change:
+Last full run (2026-09-19, one event per crash, no symbolication errors, no
+location on any of them). The lines are each run's markers, which move as the
+files change:
 
 | Case | Android | iOS |
 |---|---|---|
-| `swiftFatalError` | `CrashTest.swift:50` | `CrashTest.swift:62` |
+| `swiftFatalError` | `CrashTest.swift:62` | `CrashTest.swift:62` |
 | `swiftForceUnwrapFAKit` | `CrashTestSite.swift:13` | `CrashTestSite.swift:13` |
-| `swiftBackgroundThread` | `CrashTest.swift:56`, non-main | `CrashTest.swift:56`, non-main |
+| `swiftBackgroundThread` | `CrashTest.swift:68`, non-main | `CrashTest.swift:68`, non-main |
 | `kotlinException` | `FACrashReportingBridge.kt:75` | — |
 | `optOut` | nothing reported | nothing reported |
