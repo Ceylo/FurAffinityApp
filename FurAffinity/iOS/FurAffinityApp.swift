@@ -98,7 +98,9 @@ struct RootView: View {
 
 @main
 struct FurAffinityApp: App {
-    @State private var model = Model()
+    // Assigned in init, after the crash reporter starts: an inline initializer
+    // would run before init's body, and a crash in Model.init go unreported.
+    @State private var model: Model
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() {
@@ -110,6 +112,7 @@ struct FurAffinityApp: App {
         if let name = UserDefaults.standard.string(forKey: "FACrashTest") {
             CrashTest.run(name, runID: UserDefaults.standard.string(forKey: "FACrashTestRun") ?? "")
         }
+        _model = State(initialValue: Model())
         let device = UIDevice.current
         let appState = UIApplication.shared.applicationState
         logAppLaunch(
