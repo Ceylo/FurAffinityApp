@@ -28,7 +28,7 @@ import skip.foundation.ProcessInfo
 
 class FACrashReportingBridge {
     // Boolean, not Unit: AnyDynamicObject can't resolve the void overload.
-    fun start(dsn: String, release: String, environment: String, reportsSinceMillis: Long): Boolean = try {
+    fun start(dsn: String, release: String, environment: String, commit: String, reportsSinceMillis: Long): Boolean = try {
         SentryAndroid.init(ProcessInfo.processInfo.androidContext) { options ->
             options.dsn = dsn
             options.release = release
@@ -51,6 +51,9 @@ class FACrashReportingBridge {
             options.isTombstoneEnabled = hasTombstones
             options.isEnableNdk = !hasTombstones
             options.addInAppInclude("fur.affinity.ui")
+            // A tombstone or ANR read back after an update gets the new build's tag,
+            // as it gets its release.
+            if (commit.isNotEmpty()) options.setTag(COMMIT_TAG, commit)
             // The last tombstone and ANR are read back from the OS at start, even
             // when reporting was off at the time; see CrashReportingConfiguration.
             options.setBeforeSend { event, _ ->
@@ -58,7 +61,7 @@ class FACrashReportingBridge {
                 else event.also {
                     keepListedContextOnly(it.contexts)
                     // isSideLoaded, installerStore: how the APK was installed.
-                    it.tags?.keys?.filter { key -> key != CRASH_TEST_TAG }?.forEach(it::removeTag)
+                    it.tags?.keys?.filter { key -> key !in KEPT_TAGS }?.forEach(it::removeTag)
                 }
             }
             options.tracesSampleRate = null
@@ -96,8 +99,10 @@ class FACrashReportingBridge {
     companion object {
         private const val TAG = "FACrashReportingBridge"
         private val KEPT_CONTEXTS = setOf("os", "trace", "device", "app")
-        /// Set by CrashTest.swift; the only tag an event keeps.
-        private const val CRASH_TEST_TAG = "crash_test_run"
+        private const val COMMIT_TAG = "commit"
+        /// The tags set on purpose, the only ones an event keeps: the build's commit,
+        /// and the checker's run id (set by CrashTest.swift).
+        private val KEPT_TAGS = setOf(COMMIT_TAG, "crash_test_run")
 
         /// The contexts the privacy policy covers, so nothing an SDK adds ever
         /// leaves: `trace` (random ids) whole, the OS, device and app copied field

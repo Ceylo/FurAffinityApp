@@ -3,7 +3,7 @@
 //  FurAffinityUI (Android)
 //
 //  Native-Swift driver for the Kotlin `FAAppInfoBridge`: the package name, the app
-//  version, whether this build is debuggable, and the stock WebView User-Agent. Same
+//  version and commit, whether this build is debuggable, and the stock WebView User-Agent. Same
 //  `AnyDynamicObject` reflection as `ImageFetchBridge` — FurAffinityUI is a native
 //  Skip module and can't `import android.*`.
 //
@@ -60,6 +60,23 @@ enum AndroidAppInfo {
             return (name?.isEmpty ?? true) ? nil : name
         } catch {
             logger.error("AndroidAppInfo.versionName threw: \(error)")
+            return nil
+        }
+        #else
+        return nil
+        #endif
+    }()
+
+    /// The short git hash the APK was built from, or nil when the build couldn't read
+    /// it or off Android.
+    static let commit: String? = {
+        #if canImport(Android)
+        guard let bridge else { return nil }
+        do {
+            let commit: String? = try bridge.commit()
+            return (commit?.isEmpty ?? true) ? nil : commit
+        } catch {
+            logger.error("AndroidAppInfo.commit threw: \(error)")
             return nil
         }
         #else

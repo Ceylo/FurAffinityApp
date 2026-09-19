@@ -29,6 +29,7 @@ func startPlatformCrashReporter(_ configuration: CrashReportingConfiguration) {
     #if canImport(Android)
     let started: Bool? = try? crashReportingBridge?.start(
         configuration.dsn, configuration.release, configuration.environment,
+        configuration.commit ?? "",
         Int64(configuration.reportsSince.timeIntervalSince1970 * 1000)
     )
     if started != true {

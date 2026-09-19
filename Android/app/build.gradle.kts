@@ -98,6 +98,15 @@ android {
         // The launcher label. Skip's template used ${PRODUCT_NAME}, which has to stay
         // equal to the Swift module name (FurAffinityUI) and so can't be the app's name.
         resValue("string", "app_name", "Fur Affinity")
+
+        // The short hash of HEAD, sent as every crash report's `commit` tag; empty when
+        // git can't answer. No -dirty suffix: every shipped build is dirty on purpose.
+        val commit = providers.exec {
+            commandLine("git", "rev-parse", "--short", "HEAD")
+            workingDir = rootDir
+            isIgnoreExitValue = true
+        }.standardOutput.asText.get().trim()
+        buildConfigField("String", "GIT_COMMIT", "\"$commit\"")
     }
 
     buildFeatures {

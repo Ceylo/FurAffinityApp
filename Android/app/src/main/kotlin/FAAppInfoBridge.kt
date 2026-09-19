@@ -33,6 +33,9 @@ class FAAppInfoBridge {
         ""
     }
 
+    /// The short git hash the APK was built from, or "" when the build couldn't read it.
+    fun commit(): String = BuildConfig.GIT_COMMIT
+
     /// Whether this build is debuggable. Broader than BuildConfig.DEBUG: it also
     /// covers a release build deliberately marked debuggable.
     fun isDebuggable(): Boolean =
