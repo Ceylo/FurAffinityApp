@@ -233,6 +233,17 @@ check_event() { # case json function file line
     crumbs="$(jq '[.entries[] | select(.type == "breadcrumbs") | .data.values[]?] | length' "$json")"
     [[ "$crumbs" == 0 ]] || fail+=("event carries $crumbs breadcrumbs")
 
+    # Nothing about the device or app beyond what the privacy policy lists. Both
+    # platforms keep an allowlist; this names what the SDKs are known to add.
+    local unlisted
+    unlisted="$(jq -r '[(.contexts.device // {} | keys[] | select(IN(
+            "name", "timezone", "locale", "connection_type", "online", "battery_level",
+            "battery_temperature", "charging", "boot_time", "free_memory", "usable_memory",
+            "free_storage", "low_memory", "low_power_mode", "orientation", "thermal_state")) | "device.\(.)"),
+        (.contexts.app // {} | keys[] | select(IN("permissions", "view_names", "device_app_hash")) | "app.\(.)")]
+        | join(", ")' "$json")"
+    [[ -z "$unlisted" ]] || fail+=("event carries unlisted context: $unlisted")
+
     # The frame, wherever the event put the crashing stack. Its file and line are
     # also what catches a return of cross-module optimization: a copy of a FAKit
     # function inlined into the app carries no line table at all (Package.swift).

@@ -33,7 +33,31 @@ func startPlatformCrashReporter(_ configuration: CrashReportingConfiguration) {
         options.maxBreadcrumbs = 0
         let since = configuration.reportsSince
         options.beforeSend = { event in
-            (event.timestamp ?? .distantFuture) < since ? nil : event
+            guard (event.timestamp ?? .distantFuture) >= since else { return nil }
+            event.context = keepingListedContextOnly(event.context)
+            return event
+        }
+    }
+}
+
+/// The device and app as the privacy policy lists them — model, versions — so
+/// nothing an SDK adds ever leaves. Dropped: locale, free memory, low-power mode,
+/// and `device_app_hash`, which derives from `identifierForVendor`.
+private let listedContextKeys: [String: Set<String>] = [
+    "device": ["type", "family", "model", "model_id", "arch", "simulator", "memory_size",
+               "storage_size", "processor_count", "cpu_description"],
+    "app": ["type", "app_identifier", "app_name", "app_version", "app_build", "app_id",
+            "build_type", "app_start_time", "start_type", "in_foreground", "is_active"],
+]
+
+private func keepingListedContextOnly(_ context: [String: [String: Any]]?) -> [String: [String: Any]]? {
+    context.map { context in
+        context.reduce(into: [:]) { kept, entry in
+            guard let listed = listedContextKeys[entry.key] else {
+                kept[entry.key] = entry.value
+                return
+            }
+            kept[entry.key] = entry.value.filter { listed.contains($0.key) }
         }
     }
 }

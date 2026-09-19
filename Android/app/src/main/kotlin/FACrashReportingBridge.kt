@@ -20,6 +20,9 @@ import android.os.Looper
 import android.util.Log
 import io.sentry.Sentry
 import io.sentry.android.core.SentryAndroid
+import io.sentry.protocol.App
+import io.sentry.protocol.Contexts
+import io.sentry.protocol.Device
 import skip.foundation.ProcessInfo
 
 class FACrashReportingBridge {
@@ -48,7 +51,8 @@ class FACrashReportingBridge {
             // The last tombstone and ANR are read back from the OS at start, even
             // when reporting was off at the time; see CrashReportingConfiguration.
             options.setBeforeSend { event, _ ->
-                if (event.timestamp.time < reportsSinceMillis) null else event
+                if (event.timestamp.time < reportsSinceMillis) null
+                else event.also { keepListedContextOnly(it.contexts) }
             }
             options.tracesSampleRate = null
         }
@@ -84,5 +88,48 @@ class FACrashReportingBridge {
 
     companion object {
         private const val TAG = "FACrashReportingBridge"
+
+        /// The device and app as the privacy policy lists them — model, versions,
+        /// the install id — copied field by field, so nothing an SDK adds ever
+        /// leaves. Dropped: timezone, locale, connectivity, battery, free memory and
+        /// storage, boot time, granted permissions, screen names.
+        private fun keepListedContextOnly(contexts: Contexts) {
+            contexts.device?.let { d ->
+                contexts.setDevice(Device().also {
+                    it.id = d.id
+                    it.manufacturer = d.manufacturer
+                    it.brand = d.brand
+                    it.family = d.family
+                    it.model = d.model
+                    it.modelId = d.modelId
+                    it.archs = d.archs
+                    it.isSimulator = d.isSimulator
+                    it.chipset = d.chipset
+                    it.cpuDescription = d.cpuDescription
+                    it.processorCount = d.processorCount
+                    it.processorFrequency = d.processorFrequency
+                    it.memorySize = d.memorySize
+                    it.storageSize = d.storageSize
+                    it.screenWidthPixels = d.screenWidthPixels
+                    it.screenHeightPixels = d.screenHeightPixels
+                    it.screenDensity = d.screenDensity
+                    it.screenDpi = d.screenDpi
+                })
+            }
+            contexts.app?.let { a ->
+                contexts.setApp(App().also {
+                    it.appIdentifier = a.appIdentifier
+                    it.appName = a.appName
+                    it.appVersion = a.appVersion
+                    it.appBuild = a.appBuild
+                    it.buildType = a.buildType
+                    it.appStartTime = a.appStartTime
+                    it.startType = a.startType
+                    it.inForeground = a.inForeground
+                    it.splitApks = a.splitApks
+                    it.splitNames = a.splitNames
+                })
+            }
+        }
     }
 }
