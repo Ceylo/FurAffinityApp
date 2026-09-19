@@ -250,7 +250,8 @@ check_event() { # case json function file line
             "name", "timezone", "locale", "connection_type", "online", "battery_level",
             "battery_temperature", "charging", "boot_time", "free_memory", "usable_memory",
             "free_storage", "low_memory", "low_power_mode", "orientation", "thermal_state")) | "device.\(.)"),
-        (.contexts.app // {} | keys[] | select(IN("permissions", "view_names", "device_app_hash")) | "app.\(.)")]
+        (.contexts.app // {} | keys[] | select(IN("permissions", "view_names", "device_app_hash")) | "app.\(.)"),
+        (.contexts.os // {} | keys[] | select(IN("rooted")) | "os.\(.)")]
         | join(", ")' "$json")"
     [[ -z "$unlisted" ]] || fail+=("event carries unlisted context: $unlisted")
 

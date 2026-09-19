@@ -41,12 +41,13 @@ func startPlatformCrashReporter(_ configuration: CrashReportingConfiguration) {
 }
 
 /// The contexts the privacy policy covers, so nothing an SDK adds ever leaves:
-/// `os` (name, version, build) and `trace` (random ids) whole, the device and app
-/// cut to the fields it lists. Dropped among others: `culture`, which non-fatal
-/// events (a hang) carry with the timezone and locale; the device's locale, free
-/// memory and low-power mode; `device_app_hash`, derived from `identifierForVendor`.
-private let wholeContexts: Set<String> = ["os", "trace"]
+/// `trace` (random ids) whole, the OS, device and app cut to the fields it lists.
+/// Dropped among others: `culture`, which non-fatal events (a hang) carry with
+/// the timezone and locale; the device's locale, free memory and low-power mode;
+/// `device_app_hash`, derived from `identifierForVendor`; the jailbreak check.
+private let wholeContexts: Set<String> = ["trace"]
 private let listedContextKeys: [String: Set<String>] = [
+    "os": ["type", "name", "version", "build", "kernel_version"],
     "device": ["type", "family", "model", "model_id", "arch", "simulator", "memory_size",
                "storage_size", "processor_count", "cpu_description"],
     "app": ["type", "app_identifier", "app_name", "app_version", "app_build", "app_id",

@@ -26,19 +26,20 @@ One shared configuration, two SDKs:
 
 Collected: stack trace, device model (with its fixed hardware: CPU, total memory
 and storage, screen), OS and app version, and the SDK's random per-install id.
-`beforeSend` keeps the contexts to an **allowlist** on both platforms — `os` and
-`trace` whole, `device` and `app` field by field, every other context dropped —
-so whatever else an SDK collects, now or after an upgrade, never leaves. By
-default they add the timezone, locale, connectivity, battery, free memory and
-storage, boot time, granted permissions, screen names, on iOS a hash derived from
-`identifierForVendor`, and on iOS non-fatal events (a hang) a whole `culture`
-context with the timezone and locale. `check-crash-reporting.sh` fails an event
-that carries any of those. Not collected either: `sendDefaultPii` is off, no
-screenshots, no view hierarchy, no tracing, no breadcrumbs of any kind and no
-application log (see § No breadcrumbs). Nothing is sent without a crash either:
-automatic session tracking, which would send a session envelope on every launch,
-is off, so Sentry's release-health numbers stay empty. Approximate location is the one
-thing neither SDK controls — see § Two required project settings.
+`beforeSend` keeps the contexts to an **allowlist** on both platforms — `trace`
+whole, `os`, `device` and `app` field by field, every other context dropped — so
+whatever else an SDK collects, now or after an upgrade, never leaves. By default
+they add the timezone, locale, connectivity, battery, free memory and storage,
+boot time, granted permissions, screen names, root/jailbreak status (the Android
+probe is off too), on iOS a hash derived from `identifierForVendor`, and on iOS
+non-fatal events (a hang) a whole `culture` context with the timezone and locale.
+`check-crash-reporting.sh` fails an event that carries any of those. Not collected
+either: `sendDefaultPii` is off, no screenshots, no view hierarchy, no tracing, no
+breadcrumbs of any kind and no application log (see § No breadcrumbs). Nothing is
+sent without a crash either: automatic session tracking, which would send a
+session envelope on every launch, is off, so Sentry's release-health numbers stay
+empty. Approximate location is the one thing neither SDK controls — see § Two
+required project settings.
 
 ## Three channels
 

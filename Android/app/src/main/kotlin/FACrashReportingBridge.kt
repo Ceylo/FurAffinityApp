@@ -23,6 +23,7 @@ import io.sentry.android.core.SentryAndroid
 import io.sentry.protocol.App
 import io.sentry.protocol.Contexts
 import io.sentry.protocol.Device
+import io.sentry.protocol.OperatingSystem
 import skip.foundation.ProcessInfo
 
 class FACrashReportingBridge {
@@ -38,6 +39,8 @@ class FACrashReportingBridge {
             options.isSendDefaultPii = false
             options.isAttachScreenshot = false
             options.isAttachViewHierarchy = false
+            // Its answer would be dropped in beforeSend anyway; don't probe for su.
+            options.isEnableRootCheck = false
             // Nothing sent without a crash, and nothing in a report but the crash:
             // no session per launch, no breadcrumbs (UI, lifecycle, system, network).
             options.isEnableAutoSessionTracking = false
@@ -91,14 +94,21 @@ class FACrashReportingBridge {
         private val KEPT_CONTEXTS = setOf("os", "trace", "device", "app")
 
         /// The contexts the privacy policy covers, so nothing an SDK adds ever
-        /// leaves: `os` (name, version, build) and `trace` (random ids) whole, the
-        /// device and app copied field by field — model, versions, the install id.
-        /// Dropped: any other context, and the device's timezone, locale,
-        /// connectivity, battery, free memory and storage, boot time, granted
-        /// permissions, screen names.
+        /// leaves: `trace` (random ids) whole, the OS, device and app copied field
+        /// by field — versions, model, the install id. Dropped: any other context,
+        /// root status, and the device's timezone, locale, connectivity, battery,
+        /// free memory and storage, boot time, granted permissions, screen names.
         private fun keepListedContextOnly(contexts: Contexts) {
             for (key in java.util.Collections.list(contexts.keys())) {
                 if (key !in KEPT_CONTEXTS) contexts.remove(key)
+            }
+            contexts.operatingSystem?.let { os ->
+                contexts.setOperatingSystem(OperatingSystem().also {
+                    it.name = os.name
+                    it.version = os.version
+                    it.build = os.build
+                    it.kernelVersion = os.kernelVersion
+                })
             }
             contexts.device?.let { d ->
                 contexts.setDevice(Device().also {
