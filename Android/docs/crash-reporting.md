@@ -26,9 +26,11 @@ One shared configuration, two SDKs:
 
 Collected: stack trace, device model, OS and app version, and the SDK's random
 per-install id. Not collected: `sendDefaultPii` is off, no screenshots, no view
-hierarchy, no tracing, no network breadcrumbs, and no application log (see
-§ No breadcrumbs). Approximate location is the one thing neither SDK controls —
-see § Two required project settings.
+hierarchy, no tracing, no breadcrumbs of any kind and no application log (see
+§ No breadcrumbs). Nothing is sent without a crash either: automatic session
+tracking, which would send a session envelope on every launch, is off, so
+Sentry's release-health numbers stay empty. Approximate location is the one
+thing neither SDK controls — see § Two required project settings.
 
 ## Three channels
 
@@ -266,10 +268,17 @@ FALogging frameworks named in `inAppIncludes`.
 
 ## No breadcrumbs
 
-Neither SDK receives the application log. `FALogging` renders every interpolation
-eagerly (`FALogMessage`) and has no privacy annotations, so forwarding log lines
-would send usernames, submission ids and full URLs along with each crash. The log
-stays where it was: Settings → Export Application Logs, on request.
+Both SDKs collect breadcrumbs by default — touches, screen and lifecycle changes,
+battery and connectivity events, network requests — and attach the last hundred
+to each event. The privacy policy lists what a report contains and none of that
+is on it, so automatic breadcrumbs are off and `maxBreadcrumbs` is 0 as the
+backstop.
+
+Neither SDK receives the application log either. `FALogging` renders every
+interpolation eagerly (`FALogMessage`) and has no privacy annotations, so
+forwarding log lines would send usernames, submission ids and full URLs along
+with each crash. The log stays where it was: Settings → Export Application Logs,
+on request.
 
 Kotlin frames have line numbers but **no source text**, by choice. Swift frames do
 carry source text, from `--include-sources`; see § Kotlin source context for why

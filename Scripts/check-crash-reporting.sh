@@ -227,6 +227,12 @@ check_event() { # case json function file line
     [[ "$(jq -r '.user.ip_address // "null"' "$json")" == null ]] \
         || fail+=("event carries an IP address")
 
+    # Nothing but the crash: both SDKs attach breadcrumbs by default. See
+    # Android/docs/crash-reporting.md § No breadcrumbs.
+    local crumbs
+    crumbs="$(jq '[.entries[] | select(.type == "breadcrumbs") | .data.values[]?] | length' "$json")"
+    [[ "$crumbs" == 0 ]] || fail+=("event carries $crumbs breadcrumbs")
+
     # The frame, wherever the event put the crashing stack. Its file and line are
     # also what catches a return of cross-module optimization: a copy of a FAKit
     # function inlined into the app carries no line table at all (Package.swift).

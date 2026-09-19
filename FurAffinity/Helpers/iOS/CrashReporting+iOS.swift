@@ -24,8 +24,13 @@ func startPlatformCrashReporter(_ configuration: CrashReportingConfiguration) {
         options.enableAppHangTracking = true
         options.tracesSampleRate = nil
         options.enableAutoPerformanceTracing = false
-        options.enableNetworkBreadcrumbs = false
         options.enableCaptureFailedRequests = false
+        // Nothing sent without a crash, and nothing in a report but the crash: no
+        // session per launch, no breadcrumbs (UI, lifecycle, system, network).
+        options.enableAutoSessionTracking = false
+        options.enableAutoBreadcrumbTracking = false
+        options.enableNetworkBreadcrumbs = false
+        options.maxBreadcrumbs = 0
         let since = configuration.reportsSince
         options.beforeSend = { event in
             (event.timestamp ?? .distantFuture) < since ? nil : event

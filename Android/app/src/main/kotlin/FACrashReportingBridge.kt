@@ -35,6 +35,11 @@ class FACrashReportingBridge {
             options.isSendDefaultPii = false
             options.isAttachScreenshot = false
             options.isAttachViewHierarchy = false
+            // Nothing sent without a crash, and nothing in a report but the crash:
+            // no session per launch, no breadcrumbs (UI, lifecycle, system, network).
+            options.isEnableAutoSessionTracking = false
+            options.enableAllAutoBreadcrumbs(false)
+            options.maxBreadcrumbs = 0
             options.isAnrEnabled = true
             val hasTombstones = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
             options.isTombstoneEnabled = hasTombstones
