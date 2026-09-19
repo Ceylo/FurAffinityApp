@@ -37,7 +37,7 @@ We will only collect and process personal data where we have lawful bases. Lawfu
 
 - Up to version « 1.8 » of the application, the anonymous data collected by the application is processed by Microsoft (appcenter.ms).
 - In version « 1.9 » and later of the application, the anonymous data collected by the application is processed by Amplitude (amplitude.com, https://amplitude.com/privacy).
-- In version « 1.20 » and later of the application, crash reports are processed by Sentry (sentry.io, https://sentry.io/privacy/), stored in the European Union. IP address storage is disabled on our Sentry project.
+- In version « 1.19 » and later of the application, crash reports are processed by Sentry (sentry.io, https://sentry.io/privacy/), stored in the European Union. IP address storage is disabled on our Sentry project, and no location is derived from it.
 
 ## Where the application stores your information
 

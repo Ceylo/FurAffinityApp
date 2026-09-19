@@ -84,10 +84,9 @@ script, and it refuses to start without either half.
 
 ### Before the first release that reports
 
-- **The version must be ≥ 1.20.** `Privacy Policy.md` dates Sentry from
-  version 1.20; `Skip.env` and `project.pbxproj` both still say 1.19, so shipping
-  crash reporting as 1.19 would contradict the policy. Bump both (and
-  `CURRENT_PROJECT_VERSION` to 12000, which `MARKETING_VERSION` derives).
+- Nothing about the version. `Privacy Policy.md` names **1.19**, the release this
+  ships in — the last public tag is 1.18. Keep the two in step if crash reporting
+  slips to a later version.
 - `release.yml` has not run since 1.18, i.e. never with the upload build phase.
   The first tagged release is also its first exercise; the "Verify the uploaded
   debug symbols" step is what catches a miss.
