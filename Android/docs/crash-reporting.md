@@ -46,6 +46,52 @@ with the app id and the Amplitude key. CI has no stash, which is why the workflo
 still seds its own in. Either way `CrashReportingSecrets.swift` keeps the
 placeholder in git, and both local paths revert the working tree afterwards.
 
+### What each channel needs from you
+
+Two of the three are one command. The middle one is the only manual procedure,
+and the only one where a mistake used to be silent.
+
+**1 · IPA, on a tag.** Push the tag. The workflow seds the DSN from
+`secrets.SENTRY_DSN`, installs `sentry-cli`, and the archive's build phase
+uploads with `secrets.SENTRY_AUTH_TOKEN`. Nothing to remember.
+
+**2 · Xcode archive → App Store Connect.** From a **clean** tree:
+
+```
+git stash list --format='%H %gs'                 # find the distribution stash
+git stash apply <sha>                            # app id + Amplitude key + DSN
+# Product > Archive, or:
+xcodebuild -scheme FurAffinity -configuration Release \
+    -destination generic/platform=iOS archive -archivePath <path>
+git checkout -- .                                # revert, always
+```
+
+The upload happens inside the archive; you do not run `sentry-cli` yourself. Two
+things have to be true in **the checkout you archive from**:
+
+- the distribution stash is applied — otherwise the archive stops with
+  `error: CrashReportingSecrets.swift still holds the placeholder DSN`, which is
+  there because the alternative is an archive that uploads its symbols, validates,
+  ships, and reports nothing;
+- `.sentryclirc` exists at the project root, holding the org auth token. It is
+  gitignored, so it does **not** travel between worktrees or clones — a fresh
+  checkout needs its own. A GUI archive has no environment and cannot see
+  `$SENTRY_AUTH_TOKEN`; from a terminal, exporting that works instead.
+
+**3 · Android APK.** `SENTRY_AUTH_TOKEN=… Scripts/Android/build-release-apk.sh`.
+The stash, the build dirs, the export and the signature check are all in the
+script, and it refuses to start without either half.
+
+### Before the first release that reports
+
+- **The version must be ≥ 1.20.** `Privacy Policy.md` dates Sentry from
+  version 1.20; `Skip.env` and `project.pbxproj` both still say 1.19, so shipping
+  crash reporting as 1.19 would contradict the policy. Bump both (and
+  `CURRENT_PROJECT_VERSION` to 12000, which `MARKETING_VERSION` derives).
+- `release.yml` has not run since 1.18, i.e. never with the upload build phase.
+  The first tagged release is also its first exercise; the "Verify the uploaded
+  debug symbols" step is what catches a miss.
+
 ### The archive-only build phase
 
 The `FurAffinity` target's **Upload dSYMs to Sentry** run script phase is the
