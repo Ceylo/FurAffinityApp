@@ -16,8 +16,19 @@ the placeholder DSN it does not, and a development build reports nothing. On
 Android `CrashReporting.start` must follow `installDefaultsSuite()`, since it
 reads a `Defaults` key.
 
+Every event carries a **`commit` tag**, the short hash of the HEAD it was built
+from, searchable as `commit:abc1234`. Many builds share one release, and
+`release`/`dist` stay what the symbol and mapping uploads are matched against. iOS
+stamps it through the `Commit Stamp` target, which writes a prefix header that the
+app's preprocessed `Info.plist` expands into `FACommit`; Android through
+`BuildConfig.GIT_COMMIT`. Both reach `FAAppVersion.commit`. There is no `-dirty`
+suffix, since every shipped build is dirty on purpose (the stash, CI's DSN `sed`).
+iOS sets it on the initial scope, so a crash report names the build that crashed;
+an Android tombstone or ANR read back after an update gets the new build's tag, as
+it gets its release.
+
 What leaves the device is a stack trace, the device's fixed hardware, OS and app
-version, and the SDK's random per-install id. `beforeSend` enforces that as an
+version, the build's commit, and the SDK's random per-install id. `beforeSend` enforces that as an
 **allowlist** of contexts rather than a list of things to strip, so whatever an
 SDK starts collecting after an upgrade never leaves. That matters because the
 defaults are wide — timezone, locale, connectivity, battery, free memory, granted
@@ -38,13 +49,13 @@ production.
 
 | Channel | What you do | Symbols |
 |---|---|---|
-| IPA for AltStore Classic | push a tag | the archive build phase, `secrets.SENTRY_AUTH_TOKEN` |
-| App Store Connect → AltStore PAL | the procedure below | the same build phase |
+| IPA for AltStore Classic | push a tag | the Upload dSYMs target, `secrets.SENTRY_AUTH_TOKEN` |
+| App Store Connect → AltStore PAL | the procedure below | the same target |
 | Android APK | `SENTRY_AUTH_TOKEN=… Scripts/Android/build-release-apk.sh` | the Sentry Gradle plugin, during `skip export` |
 
 The Android script and the CI workflow need nothing remembered: each refuses to
 produce an unreportable build, CI included, where a missing secret seds in an
-empty DSN that the build phase rejects like the placeholder.
+empty DSN that the upload target rejects like the placeholder.
 
 The **local iOS archive** is the one manual procedure. From a clean tree:
 
@@ -67,29 +78,33 @@ must hold **in the checkout you archive from**:
   the token works instead.
 
 `release.yml` has not run since 1.18, so the first tagged release is also the
-first exercise of the upload build phase. A failed upload fails the archive step,
+first exercise of the Upload dSYMs target. A failed upload fails the archive step,
 and "Check the app's dSYM carries debug info" catches a dSYM that uploaded fine
 with nothing in it.
 
-### The archive-only build phase
+### The archive-only target
 
-The `FurAffinity` target's **Upload dSYMs to Sentry** phase is the whole iOS
-upload, for both iOS channels. It exits immediately unless `ACTION=install`, which
+The **Upload dSYMs** aggregate target is the whole iOS upload, for both iOS
+channels. It depends on `FurAffinity`, and the scheme builds it for archiving only,
+so Product > Archive and CI's `xcodebuild … archive` run it and nothing else does. It exits immediately unless `ACTION=install`, which
 Xcode sets when archiving and at no other time, so Debug and ordinary Release
 builds skip it. It then fails the archive loudly rather than skip an upload
 silently. `${CI:+--wait}` makes only CI wait for server-side processing.
 
-Its declared input `$DWARF_DSYM_FOLDER_PATH/$DWARF_DSYM_FILE_NAME` is what orders
-it after `dsymutil`. That folder holds what the archive's `dSYMs` folder does —
+Its declared input `$(DWARF_DSYM_FOLDER_PATH)/Fur Affinity.app.dSYM` is what
+orders it after `dsymutil`. That folder holds what the archive's `dSYMs` folder does —
 the app, the extension and the embedded frameworks; FAKit, FAPages and FALogging
 link statically, so their debug info is inside `Fur Affinity.app.dSYM`.
 
-**`ENABLE_USER_SCRIPT_SANDBOXING = NO`** on the app target's Release
-configuration alone (Debug keeps it, as does `NotificationContent`). The target
-has exactly one script phase, so nothing else gives up the protection. It is off
-because no declaration can make it work: Xcode's profile denies the build
-directories by *subpath* while granting declared inputs as `literal`, the node
-itself and not what is under it —
+### Why two targets have the script sandbox off
+
+`ENABLE_USER_SCRIPT_SANDBOXING` is a per-target setting; Xcode has no per-phase
+switch. So the app target is sandboxed in both configurations, as is
+`NotificationContent`, and the two steps that cannot run sandboxed each live in an
+aggregate target of their own with it off: **Upload dSYMs** and **Commit Stamp**.
+No declaration can make either work: Xcode's profile denies `SRCROOT` and the
+build directories by *subpath* while granting declared inputs as `literal`, the
+node itself and not what is under it —
 
 ```
 (deny file-read* file-write* (subpath (param "CONFIGURATION_BUILD_DIR")) …)
@@ -97,9 +112,14 @@ itself and not what is under it —
 ```
 
 — and a dSYM is a bundle, so the DWARF file inside stays denied however it is
-declared, the whole folder included. Sandboxed, `sentry-cli` authenticates,
-reaches `chunk-upload/` and dies on `error: Operation not permitted (os error 1)`,
-with no kernel log entry because the profile denies without reporting.
+declared, the whole folder included; `--include-sources` reads every source file
+under `SRCROOT` besides. Sandboxed, `sentry-cli` authenticates, reaches
+`chunk-upload/` and dies on `error: Operation not permitted (os error 1)`, with no
+kernel log entry because the profile denies without reporting. `git rev-parse`
+reads many files under `.git`, which no list of literals names ahead of time.
+
+The stamp rewrites its header only when the hash changes and is always out of
+date, since HEAD moves without any declared input changing.
 
 ## Consent
 

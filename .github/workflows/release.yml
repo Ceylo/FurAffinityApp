@@ -67,7 +67,7 @@ jobs:
           xcode: ~26.5
       - name: Install sentry-cli
         run: |
-          # The archive's "Upload dSYMs to Sentry" build phase needs it, and fails
+          # The archive's "Upload dSYMs" target needs it, and fails
           # the archive if it is missing.
           brew install getsentry/tools/sentry-cli
       - name: Archive App
@@ -76,7 +76,7 @@ jobs:
         run: |
           # A release whose dSYMs never reached Sentry reports crashes as bare
           # addresses, and the archive is gone by the time anyone notices. The
-          # upload itself is the app target's archive-only build phase, shared
+          # upload itself is the archive-only "Upload dSYMs" target, shared
           # with a local Xcode archive.
           [ -n "${SENTRY_AUTH_TOKEN}" ] || { echo "::error::SENTRY_AUTH_TOKEN is not set"; exit 1; }
           git_hash=$(git rev-parse --short "$GITHUB_SHA")
@@ -90,8 +90,8 @@ jobs:
           zip -rq "${qualified_app_name}.xcarchive.zip" "${qualified_app_name}.xcarchive"
       - name: Check the app's dSYM carries debug info
         run: |
-          # Local only: whether the upload reached Sentry is the archive's build
-          # phase's exit status. This catches a dSYM with just a symbol table.
+          # Local only: whether the upload reached Sentry is the archive's upload
+          # target's exit status. This catches a dSYM with just a symbol table.
           dsyms=$(ls -d ./*.xcarchive/dSYMs)
           sentry-cli debug-files check "${dsyms}/Fur Affinity.app.dSYM"
       - name: Upload IPA

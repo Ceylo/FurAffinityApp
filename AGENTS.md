@@ -73,11 +73,14 @@ sentry-cocoa on iOS and sentry-android (tombstones on Android 12+, the NDK signa
 handler below) behind `FACrashReportingBridge`. Three distribution channels each
 need a DSN and their symbols on the server: the DSN comes from the distribution
 stash for both local channels and from a CI secret for the IPA workflow, while
-dSYMs go up from an archive-only build phase on the app target (`ACTION=install`)
+dSYMs go up from an archive-only `Upload dSYMs` aggregate target (`ACTION=install`)
 and the `.so` files and R8 mapping from the Sentry Gradle plugin. Our packages
 build release with `-disable-cmo`, because Swift's
 cross-module optimization copies functions between modules *without a line table*
-and a crash inside one loses its file and line. Consent is a Settings toggle, on by
+and a crash inside one loses its file and line. Every event carries a `commit` tag,
+HEAD's short hash, stamped by the unsandboxed `Commit Stamp` target into
+`Info.plist` on iOS and by `BuildConfig.GIT_COMMIT` on Android; the app target itself
+keeps the script sandbox. Consent is a Settings toggle, on by
 default; the application log is never sent. `Scripts/check-crash-reporting.sh
 ios|android` crashes the app on purpose and asserts the resulting Sentry event has
 the right `File.swift:line`. See `Android/docs/crash-reporting.md`.

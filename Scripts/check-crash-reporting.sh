@@ -34,6 +34,8 @@ ORG=ceylo
 PROJECT=ceylo-furaffinity-app
 API=https://de.sentry.io/api/0
 SECRETS="$ROOT/FurAffinity/CrashReportingSecrets.swift"
+# What the build stamps into every event's `commit` tag.
+COMMIT="$(git -C "$ROOT" rev-parse --short HEAD)"
 
 PLATFORM="$1"; shift || true
 [[ "$PLATFORM" == ios || "$PLATFORM" == android ]] || { sed -n '3,25p' "$0" | cut -c3-; exit 2; }
@@ -189,7 +191,8 @@ fi
 
 # --- Sentry -------------------------------------------------------------------
 
-PROJECT_ID="$(curl -sf -H "Authorization: Bearer $READ_TOKEN" "$API/projects/$ORG/$PROJECT/" | jq -r .id)"
+# `|| true`: under set -e a failed read would exit here, before the message below.
+PROJECT_ID="$(curl -sf -H "Authorization: Bearer $READ_TOKEN" "$API/projects/$ORG/$PROJECT/" | jq -r .id)" || true
 [[ -n "$PROJECT_ID" && "$PROJECT_ID" != null ]] || die "cannot read project $ORG/$PROJECT — check the token's scopes"
 
 # Fails on any API error. Both run inside $(…), where set -e does not reach, and
@@ -263,6 +266,11 @@ check_event() { # case json function file line
         (.tags // [] | .[].key | select(IN("isSideLoaded", "installerStore")) | "tag \(.)")]
         | join(", ")' "$json")"
     [[ -z "$unlisted" ]] || fail+=("event carries unlisted context: $unlisted")
+
+    # The build it came from: both platforms stamp HEAD's short hash at build time.
+    local commit
+    commit="$(jq -r '[.tags[]? | select(.key == "commit") | .value] | first // ""' "$json")"
+    [[ "$commit" == "$COMMIT" ]] || fail+=("commit tag '$commit', expected $COMMIT")
 
     # The frame, wherever the event put the crashing stack. Its file and line are
     # also what catches a return of cross-module optimization: a copy of a FAKit
