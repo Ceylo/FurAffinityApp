@@ -123,7 +123,7 @@ date, since HEAD moves without any declared input changing.
 
 ## Consent
 
-On by default, with a "Send crash reports" toggle in Settings → Privacy. Turning
+On by default, with a "Send crash reports" toggle in Settings → Advanced. Turning
 it off closes the SDK at once; turning it on applies at the next launch.
 
 `Defaults[.crashReportingEnabledSince]` is the second half of that promise.

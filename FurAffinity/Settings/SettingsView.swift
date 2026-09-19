@@ -71,17 +71,6 @@ struct SettingsView: View {
                 Text("When enabled, sharing a link adds a message in order to let the recipient know about this app.")
             }
             
-            Section {
-                Toggle("Send crash reports", isOn: $crashReportingEnabled)
-                    .onChange(of: crashReportingEnabled) { _, enabled in
-                        CrashReporting.settingChanged(enabled: enabled)
-                    }
-            } header: {
-                Text("Privacy")
-            } footer: {
-                Text("Sends the app's call stack, device model, system and app version when it crashes, with no account information. Turning it back on applies from the next launch.")
-            }
-
             if let session = model.session {
                 Section("Account") {
                     Button("Disconnect from \(session.displayUsername)", role: .destructive) {
@@ -90,6 +79,17 @@ struct SettingsView: View {
                 }
             }
             
+            Section {
+                Toggle("Send crash reports", isOn: $crashReportingEnabled)
+                    .onChange(of: crashReportingEnabled) { _, enabled in
+                        CrashReporting.settingChanged(enabled: enabled)
+                    }
+            } header: {
+                Text("Advanced")
+            } footer: {
+                Text("Sends the app's call stack, device model, system and app version when it crashes, with no account information. Turning it back on applies from the next launch.")
+            }
+
             Section {
                 Menu {
                     Button("Last hour") { exportLogs(range: .lastHour) }
@@ -120,8 +120,6 @@ struct SettingsView: View {
                     }
                 }
                 .disabled(cleaningCache)
-            } header: {
-                Text("Advanced")
             } footer: {
                 Text("This cache allows faster contents display. Clearing it will cause images to be downloaded again from furaffinity.net when needed.")
             }

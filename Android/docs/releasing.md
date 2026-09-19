@@ -148,6 +148,6 @@ What to tell a tester:
 - First launch shows Cloudflare's "Verify you are human" and needs a real tap.
 - Crashes and ANRs report themselves to Sentry, symbolicated down to the source
   line (see [crash-reporting.md](crash-reporting.md)); the toggle for that is
-  Settings → Privacy → Send crash reports. The application log is *not* sent, so
+  Settings → Advanced → Send crash reports. The application log is *not* sent, so
   for anything that is not a crash — a hang that resolves, a wrong-looking screen
   — Settings → Export Application Logs is still what to ask for.
