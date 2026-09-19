@@ -21,6 +21,20 @@
                ReferencedContainer = "container:FurAffinity.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "NO"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "EFA2FFB4C04E4E94C55CC3A3"
+               BuildableName = "Upload dSYMs"
+               BlueprintName = "Upload dSYMs"
+               ReferencedContainer = "container:FurAffinity.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction

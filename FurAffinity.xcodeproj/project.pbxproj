@@ -6,6 +6,21 @@
 	objectVersion = 60;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		EFA2FFB4C04E4E94C55CC3A3 /* Upload dSYMs */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 128715CB87902AE94D1629C6 /* Build configuration list for PBXAggregateTarget "Upload dSYMs" */;
+			buildPhases = (
+				0555D8CFB0E91680C6198475 /* Upload dSYMs to Sentry */,
+			);
+			dependencies = (
+				BC8D38E77B3B804489C8A4F5 /* PBXTargetDependency */,
+			);
+			name = "Upload dSYMs";
+			productName = "Upload dSYMs";
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
 		0E06AEA6028467B9110C67E9 /* NotificationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99B6D6EA7F946B29E403A1C9 /* NotificationViewController.swift */; };
 		2EDFB020CB332BCD78AAAC83 /* LoginCookies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DAE7CF11945226ED5F47626 /* LoginCookies.swift */; };
@@ -187,6 +202,13 @@
 			remoteInfo = NotificationContent;
 		};
 		8791D60429C4D627003FDBBE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8716E7E0271C659C00C0BC4A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8716E7E7271C659C00C0BC4A;
+			remoteInfo = FurAffinity;
+		};
+		3160E9004526841748D5FF58 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 8716E7E0271C659C00C0BC4A /* Project object */;
 			proxyType = 1;
@@ -811,7 +833,6 @@
 				8716E7E5271C659C00C0BC4A /* Frameworks */,
 				8716E7E6271C659C00C0BC4A /* Resources */,
 				24D624ECE810BFABCAFC42C8 /* Embed App Extensions */,
-				87C3A1D42EBA4F1000D5E7A1 /* Upload dSYMs to Sentry */,
 			);
 			buildRules = (
 			);
@@ -915,6 +936,7 @@
 				8716E7E7271C659C00C0BC4A /* FurAffinity */,
 				8791D5FF29C4D627003FDBBE /* FurAffinityTests */,
 				ED8A6DFCA49B4E86C9B5B80B /* NotificationContent */,
+				EFA2FFB4C04E4E94C55CC3A3 /* Upload dSYMs */,
 			);
 		};
 /* End PBXProject section */
@@ -948,16 +970,20 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		87C3A1D42EBA4F1000D5E7A1 /* Upload dSYMs to Sentry */ = {
+		0555D8CFB0E91680C6198475 /* Upload dSYMs to Sentry */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+			);
 			inputPaths = (
-				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"$(DWARF_DSYM_FOLDER_PATH)/Fur Affinity.app.dSYM",
 			);
 			name = "Upload dSYMs to Sentry";
+			outputFileListPaths = (
+			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1153,6 +1179,11 @@
 			name = NotificationContent;
 			target = ED8A6DFCA49B4E86C9B5B80B /* NotificationContent */;
 			targetProxy = 378942C122599D213A1E4A34 /* PBXContainerItemProxy */;
+		};
+		BC8D38E77B3B804489C8A4F5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8716E7E7271C659C00C0BC4A /* FurAffinity */;
+			targetProxy = 3160E9004526841748D5FF58 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1367,7 +1398,6 @@
 				CODE_SIGN_ENTITLEMENTS = FurAffinity/iOS/FurAffinity.entitlements;
 				DEVELOPMENT_ASSET_PATHS = "\"FurAffinity/iOS/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FurAffinity/iOS/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
@@ -1420,6 +1450,22 @@
 			};
 			name = Release;
 		};
+		87D3BB13F83F69CFEEF8813C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		265F9E4D362209D06EF1DB8F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1455,6 +1501,15 @@
 			buildConfigurations = (
 				29BA4F8745BA480963FE0756 /* Release */,
 				2B4465CE590FD9B088BE17A8 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		128715CB87902AE94D1629C6 /* Build configuration list for PBXAggregateTarget "Upload dSYMs" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				87D3BB13F83F69CFEEF8813C /* Debug */,
+				265F9E4D362209D06EF1DB8F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
