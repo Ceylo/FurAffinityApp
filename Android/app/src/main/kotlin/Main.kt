@@ -66,15 +66,19 @@ open class MainActivity: AppCompatActivity {
         }
 
         AppDelegate.shared.onLaunch()
-        runCrashTestExtras()
+        runCrashTestExtras(savedInstanceState)
     }
 
     /// `--ez faCrashReportingEnabled <bool>` and `--es faCrashTest <case> --es faCrashTestRun <id>`,
     /// from Scripts/check-crash-reporting.sh. Never in release: this activity is
-    /// exported, so any app could send them.
-    private fun runCrashTestExtras() {
+    /// exported, so any app could send them. Only on the launch that carried them:
+    /// a recreation or a relaunch from Recents replays the same intent.
+    private fun runCrashTestExtras(savedInstanceState: android.os.Bundle?) {
         if (BuildConfig.BUILD_TYPE == "release") return
-        val extras = intent?.extras ?: return
+        val intent = intent ?: return
+        if (savedInstanceState != null) return
+        if (intent.flags and android.content.Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
+        val extras = intent.extras ?: return
         if (extras.containsKey("faCrashReportingEnabled")) {
             AppDelegate.shared.setCrashReportingEnabled(extras.getBoolean("faCrashReportingEnabled"))
         }
