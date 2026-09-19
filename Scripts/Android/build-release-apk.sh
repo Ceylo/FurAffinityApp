@@ -24,8 +24,7 @@
 # without symbols.
 #
 # The DSN comes from the stash, with the app id and the Amplitude key; the build
-# refuses to start if the placeholder is still there. $SENTRY_DSN overrides it,
-# for a build from a checkout that has no stash.
+# refuses to start if the placeholder is still there.
 
 set -eo pipefail
 
@@ -154,14 +153,9 @@ echo "app id $APP_ID, version $VERSION ($BUILD)"
     || die "SENTRY_AUTH_TOKEN is not set — the build would upload no symbols, and
     crashes from this APK could not be symbolicated. Export it (the org auth token,
     project:releases scope) and rerun."
-SECRETS="$ROOT/FurAffinity/CrashReportingSecrets.swift"
-if [[ -n "$SENTRY_DSN" ]]; then
-    echo "using \$SENTRY_DSN rather than the stash's"
-    sed -i "" "s#static let dsn = \"Your Sentry DSN\"#static let dsn = \"$SENTRY_DSN\"#" "$SECRETS"
-fi
-grep -q 'static let dsn = "Your Sentry DSN"' "$SECRETS" \
+grep -qE 'static let dsn = "(Your Sentry DSN)?"' "$ROOT/FurAffinity/CrashReportingSecrets.swift" \
     && die "no Sentry DSN — this APK would report no crashes at all. Add it to
-    \"$STASH_MSG\" (or export \$SENTRY_DSN) and rerun."
+    \"$STASH_MSG\" and rerun."
 
 # --- build ------------------------------------------------------------------
 

@@ -41,11 +41,12 @@ DSN compiled in, and its symbols on the server.
 |---|---|---|---|
 | IPA for AltStore Classic | `.github/workflows/release.yml`, on a tag | `${{ secrets.SENTRY_DSN }}`, `sed` into `CrashReportingSecrets.swift` | the archive's build phase, below |
 | App Store Connect → AltStore PAL | locally, Xcode archive (or `xcodebuild archive`) | the distribution stash | the same build phase |
-| Android APK | locally, `Scripts/Android/build-release-apk.sh` | the distribution stash (`$SENTRY_DSN` overrides) | the Sentry Gradle plugin, during `skip export` |
+| Android APK | locally, `Scripts/Android/build-release-apk.sh` | the distribution stash | the Sentry Gradle plugin, during `skip export` |
 
 Both local channels apply `📱For App Store distribution`, so the DSN lives there
-with the app id and the Amplitude key. CI has no stash, which is why the workflow
-still seds its own in. Either way `CrashReportingSecrets.swift` keeps the
+with the app id and the Amplitude key. CI has no stash, which is why the release
+workflow still seds its own in; `build.yml` does not, since nothing it builds is
+distributed and a DSN there would only report CI's test runs to production. Either way `CrashReportingSecrets.swift` keeps the
 placeholder in git, and both local paths revert the working tree afterwards.
 
 ### What each channel needs from you
@@ -55,7 +56,8 @@ and the only one where a mistake used to be silent.
 
 **1 · IPA, on a tag.** Push the tag. The workflow seds the DSN from
 `secrets.SENTRY_DSN`, installs `sentry-cli`, and the archive's build phase
-uploads with `secrets.SENTRY_AUTH_TOKEN`. Nothing to remember.
+uploads with `secrets.SENTRY_AUTH_TOKEN`. Nothing to remember: a missing secret
+seds in an empty DSN, which the build phase rejects like the placeholder.
 
 **2 · Xcode archive → App Store Connect.** From a **clean** tree:
 
@@ -72,7 +74,7 @@ The upload happens inside the archive; you do not run `sentry-cli` yourself. Two
 things have to be true in **the checkout you archive from**:
 
 - the distribution stash is applied — otherwise the archive stops with
-  `error: CrashReportingSecrets.swift still holds the placeholder DSN`, which is
+  `error: CrashReportingSecrets.swift holds no DSN`, which is
   there because the alternative is an archive that uploads its symbols, validates,
   ships, and reports nothing;
 - `.sentryclirc` exists at the project root, holding the org auth token. It is
@@ -216,7 +218,7 @@ an invalid one from `release` and the event arrives with an `invalid_data` error
 
 | What | Uploaded by | When |
 |---|---|---|
-| The DSN | the distribution stash, or `sed` from `$SENTRY_DSN` — see § Three channels | every distributed build |
+| The DSN | the distribution stash, or `sed` from `secrets.SENTRY_DSN` — see § Three channels | every distributed build |
 | iOS dSYMs (+ sources) | the `FurAffinity` target's "Upload dSYMs to Sentry" build phase | every archive, CI or local |
 | Android `.so` (+ sources) and the R8 mapping | the Sentry Gradle plugin, during `skip export` | release and `profile` builds, when `SENTRY_AUTH_TOKEN` is set |
 
