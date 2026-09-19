@@ -19,6 +19,17 @@
 			name = "Upload dSYMs";
 			productName = "Upload dSYMs";
 		};
+		B6BA9B87346CA4D6D5A6E9B3 /* Commit Stamp */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = B89C85E4D9C46CF66421B073 /* Build configuration list for PBXAggregateTarget "Commit Stamp" */;
+			buildPhases = (
+				15B6570A18A15CF514B8AD23 /* Write FACommit.h */,
+			);
+			dependencies = (
+			);
+			name = "Commit Stamp";
+			productName = "Commit Stamp";
+		};
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
@@ -214,6 +225,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 8716E7E7271C659C00C0BC4A;
 			remoteInfo = FurAffinity;
+		};
+		27C0EE7961636EDE64ACFD0C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8716E7E0271C659C00C0BC4A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B6BA9B87346CA4D6D5A6E9B3;
+			remoteInfo = "Commit Stamp";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -838,6 +856,7 @@
 			);
 			dependencies = (
 				F48539DEA404F48156AED323 /* PBXTargetDependency */,
+				E79DA09390FABA9D09BE59A2 /* PBXTargetDependency */,
 			);
 			name = FurAffinity;
 			packageProductDependencies = (
@@ -937,6 +956,7 @@
 				8791D5FF29C4D627003FDBBE /* FurAffinityTests */,
 				ED8A6DFCA49B4E86C9B5B80B /* NotificationContent */,
 				EFA2FFB4C04E4E94C55CC3A3 /* Upload dSYMs */,
+				B6BA9B87346CA4D6D5A6E9B3 /* Commit Stamp */,
 			);
 		};
 /* End PBXProject section */
@@ -989,6 +1009,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "# Upload this archive's dSYMs to Sentry, so a crash in the shipped build arrives\n# as File.swift:line rather than a bare address. One mechanism for both iOS\n# distribution channels: the tagged release workflow and a local Xcode archive.\n# See Android/docs/crash-reporting.md.\n#\n# Archive only. Xcode sets ACTION=install for `archive` and for nothing else, so\n# every Debug build and every ordinary Release build stops on the next line.\n[ \"$ACTION\" = install ] || exit 0\n\n# A release that cannot report is worse than no release, and this is the silent\n# way to get one: without the distribution stash the archive uploads its symbols\n# perfectly well and then reports nothing at all. CI seds the DSN in before\n# archiving (empty if the secret is missing); a local archive gets it from the stash.\nif grep -qE 'static let dsn = \"(Your Sentry DSN)?\"' \"$SRCROOT/FurAffinity/CrashReportingSecrets.swift\"; then\n    echo \"error: CrashReportingSecrets.swift holds no DSN (the placeholder, or empty), so this archive would report no crashes. Apply the distribution stash before archiving, or on CI set the SENTRY_DSN secret; see Android/docs/crash-reporting.md.\"\n    exit 1\nfi\n\nexport SENTRY_ORG=ceylo\nexport SENTRY_PROJECT=ceylo-furaffinity-app\n\n# An archive started from the Xcode GUI inherits launchd's PATH, not a shell's.\nfor dir in /opt/homebrew/bin /usr/local/bin; do\n    [ -x \"$dir/sentry-cli\" ] && PATH=\"$dir:$PATH\"\ndone\n\nif ! command -v sentry-cli > /dev/null; then\n    echo \"error: sentry-cli is missing, so this archive would ship with no symbols on the server and its crashes would arrive as bare addresses. brew install getsentry/tools/sentry-cli\"\n    exit 1\nfi\n\n# sentry-cli reads .sentryclirc from the working directory, which Xcode sets to\n# $SRCROOT, and from $HOME. A GUI archive has no environment, so one of those is\n# how it authenticates.\nif [ -z \"$SENTRY_AUTH_TOKEN\" ] && [ ! -f \"$SRCROOT/.sentryclirc\" ] && [ ! -f \"$HOME/.sentryclirc\" ]; then\n    echo \"error: no Sentry auth token. Export SENTRY_AUTH_TOKEN, or write one into $SRCROOT/.sentryclirc (git-ignored) or ~/.sentryclirc. See Android/docs/crash-reporting.md.\"\n    exit 1\nfi\n\n# --wait only on CI: it confirms the server finished processing, which a local\n# archive would rather not sit through.\nsentry-cli debug-files upload --include-sources ${CI:+--wait} \"$DWARF_DSYM_FOLDER_PATH\"\n";
+		};
+		15B6570A18A15CF514B8AD23 /* Write FACommit.h */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Write FACommit.h";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(PROJECT_TEMP_DIR)/FACommit.h",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Stamps the build's short commit hash into the app's Info.plist (FACommit), so a\n# crash report names the exact source it came from; see\n# Android/docs/crash-reporting.md. Its own target because git reads under .git,\n# which the user-script sandbox denies, and the sandbox is per target.\nheader=\"$PROJECT_TEMP_DIR/FACommit.h\"\nif ! commit=$(git -C \"$SRCROOT\" rev-parse --short HEAD); then\n    echo \"warning: git rev-parse failed, so this build carries no commit hash\"\n    commit=\nfi\nline=\"#define FA_COMMIT $commit\"\n# Rewritten only on change, so an unmoved HEAD leaves the Info.plist alone.\nif [ \"$(cat \"$header\" 2>/dev/null)\" != \"$line\" ]; then\n    mkdir -p \"$PROJECT_TEMP_DIR\"\n    echo \"$line\" > \"$header\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -1185,6 +1225,11 @@
 			target = 8716E7E7271C659C00C0BC4A /* FurAffinity */;
 			targetProxy = 3160E9004526841748D5FF58 /* PBXContainerItemProxy */;
 		};
+		E79DA09390FABA9D09BE59A2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B6BA9B87346CA4D6D5A6E9B3 /* Commit Stamp */;
+			targetProxy = 27C0EE7961636EDE64ACFD0C /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -1369,6 +1414,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FurAffinity/iOS/Info.plist;
+				INFOPLIST_PREFIX_HEADER = "$(PROJECT_TEMP_DIR)/FACommit.h";
+				INFOPLIST_PREPROCESS = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Chosen images will be saved to the Photo Library.";
@@ -1400,6 +1447,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FurAffinity/iOS/Info.plist;
+				INFOPLIST_PREFIX_HEADER = "$(PROJECT_TEMP_DIR)/FACommit.h";
+				INFOPLIST_PREPROCESS = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Chosen images will be saved to the Photo Library.";
@@ -1466,6 +1515,22 @@
 			};
 			name = Release;
 		};
+		C3AAD718D6F5F23EB653333D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		06F7AAD50206C502F1669B39 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1510,6 +1575,15 @@
 			buildConfigurations = (
 				87D3BB13F83F69CFEEF8813C /* Debug */,
 				265F9E4D362209D06EF1DB8F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B89C85E4D9C46CF66421B073 /* Build configuration list for PBXAggregateTarget "Commit Stamp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C3AAD718D6F5F23EB653333D /* Debug */,
+				06F7AAD50206C502F1669B39 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

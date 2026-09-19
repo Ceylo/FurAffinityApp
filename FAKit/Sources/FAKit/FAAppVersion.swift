@@ -22,4 +22,15 @@ public enum FAAppVersion {
     public static var string: String {
         (override ?? Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String)!
     }
+
+    /// Set once at startup on Android, like `override`.
+    nonisolated(unsafe) public static var commitOverride: String?
+
+    /// The short git hash the app was built from (`FACommit` on Apple platforms,
+    /// `BuildConfig.GIT_COMMIT` on Android), or nil when the build couldn't read it.
+    public static var commit: String? {
+        let commit = (commitOverride ?? Bundle.main.infoDictionary?["FACommit"] as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return commit?.isEmpty == false ? commit : nil
+    }
 }

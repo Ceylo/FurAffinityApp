@@ -17,6 +17,9 @@ struct CrashReportingConfiguration: Equatable {
     /// `<app id>@<version>`, the release the uploaded symbols are matched against.
     var release: String
     var environment: String
+    /// The short git hash of the build, sent as the `commit` tag: many builds share
+    /// one release.
+    var commit: String?
     /// Events from before this are dropped. Android reports the OS's record of the
     /// last native crash (its tombstone) and of the last ANR at the next start,
     /// whether or not reporting was on when they happened.
@@ -28,6 +31,7 @@ struct CrashReportingConfiguration: Equatable {
         dsn: String,
         appID: String?,
         version: String,
+        commit: String?,
         configuration: BuildConfiguration,
         enabled: Bool,
         enabledSince: Date
@@ -39,6 +43,7 @@ struct CrashReportingConfiguration: Equatable {
             dsn: dsn,
             release: "\(appID ?? "FurAffinity")@\(version)",
             environment: configuration.description,
+            commit: commit,
             reportsSince: enabledSince
         )
     }
@@ -56,6 +61,7 @@ enum CrashReporting {
             dsn: CrashReportingSecrets.dsn,
             appID: appID,
             version: FAAppVersion.string,
+            commit: FAAppVersion.commit,
             configuration: buildConfiguration,
             enabled: Defaults[.crashReportingEnabled],
             enabledSince: Date(timeIntervalSince1970: Defaults[.crashReportingEnabledSince])
@@ -64,7 +70,7 @@ enum CrashReporting {
             return
         }
         startPlatformCrashReporter(configuration)
-        logger.info("Crash reporting started for \(configuration.release) (\(configuration.environment))")
+        logger.info("Crash reporting started for \(configuration.release) (\(configuration.environment), commit \(configuration.commit ?? "unknown"))")
     }
 
     /// Applies a change of the setting, already written. Turning it off stops

@@ -12,33 +12,35 @@ struct CrashReportingConfigurationTests {
 
     @Test func realDSN_buildsReleaseAndEnvironment() throws {
         let configuration = try #require(CrashReportingConfiguration.make(
-            dsn: dsn, appID: "com.example.fa", version: "1.19.0",
+            dsn: dsn, appID: "com.example.fa", version: "1.19.0", commit: "545c4aa",
             configuration: .release, enabled: true, enabledSince: .distantPast
         ))
         #expect(configuration.dsn == dsn)
         #expect(configuration.release == "com.example.fa@1.19.0")
         #expect(configuration.environment == "release")
+        #expect(configuration.commit == "545c4aa")
         #expect(configuration.reportsSince == .distantPast)
     }
 
     @Test func missingAppID_fallsBackToAppName() throws {
         let configuration = try #require(CrashReportingConfiguration.make(
-            dsn: dsn, appID: nil, version: "1.0", configuration: .debug, enabled: true, enabledSince: .distantPast
+            dsn: dsn, appID: nil, version: "1.0", commit: nil, configuration: .debug, enabled: true, enabledSince: .distantPast
         ))
         #expect(configuration.release == "FurAffinity@1.0")
         #expect(configuration.environment == "debug")
+        #expect(configuration.commit == nil)
     }
 
     @Test func placeholderDSN_startsNothing() {
         #expect(CrashReportingConfiguration.make(
-            dsn: CrashReportingSecrets.placeholderDSN, appID: "id", version: "1.0",
+            dsn: CrashReportingSecrets.placeholderDSN, appID: "id", version: "1.0", commit: nil,
             configuration: .release, enabled: true, enabledSince: .distantPast
         ) == nil)
     }
 
     @Test func optedOut_startsNothing() {
         #expect(CrashReportingConfiguration.make(
-            dsn: dsn, appID: "id", version: "1.0", configuration: .release, enabled: false, enabledSince: .distantPast
+            dsn: dsn, appID: "id", version: "1.0", commit: nil, configuration: .release, enabled: false, enabledSince: .distantPast
         ) == nil)
     }
 }

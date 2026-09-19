@@ -31,16 +31,26 @@ func startPlatformCrashReporter(_ configuration: CrashReportingConfiguration) {
         options.enableAutoBreadcrumbTracking = false
         options.enableNetworkBreadcrumbs = false
         options.maxBreadcrumbs = 0
+        // On the initial scope, so a crash report carries the tag of the build that
+        // crashed rather than of the one that sends it.
+        if let commit = configuration.commit {
+            options.initialScope = { scope in
+                scope.setTag(value: commit, key: "commit")
+                return scope
+            }
+        }
         let since = configuration.reportsSince
         options.beforeSend = { event in
             guard (event.timestamp ?? .distantFuture) >= since else { return nil }
             event.context = keepingListedContextOnly(event.context)
-            // The checker's run id is the one tag set on purpose.
-            event.tags = event.tags?.filter { $0.key == "crash_test_run" }
+            // The build's commit and the checker's run id are the tags set on purpose.
+            event.tags = event.tags?.filter { keptTags.contains($0.key) }
             return event
         }
     }
 }
+
+private let keptTags: Set<String> = ["commit", "crash_test_run"]
 
 /// The contexts the privacy policy covers, so nothing an SDK adds ever leaves:
 /// `trace` (random ids) whole, the OS, device and app cut to the fields it lists.
