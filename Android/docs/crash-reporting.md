@@ -80,7 +80,12 @@ must hold **in the checkout you archive from**:
 `release.yml` has not run since 1.18, so the first tagged release is also the
 first exercise of the Upload dSYMs target. A failed upload fails the archive step,
 and "Check the app's dSYM carries debug info" catches a dSYM that uploaded fine
-with nothing in it.
+with nothing in it. That step names the **DWARF file** inside the bundle —
+`…/Fur Affinity.app.dSYM/Contents/Resources/DWARF/Fur Affinity` — because
+`sentry-cli debug-files check` refuses a directory, and asserts the feature
+rather than the exit status: `is_usable()` is `has_ids() && features().has_some()`,
+so plain `check` calls a symtab-only dSYM "Usable: yes". What it asserts is
+`--json … | jq -e '.features | contains("debug")'`.
 
 ### The archive-only target
 
@@ -169,6 +174,30 @@ crash into two issues. `FACrashReportingBridge` picks by API level.
 
 `dist` is set explicitly to the version code: the tombstone path otherwise derives
 an invalid one from `release` and the event arrives with an `invalid_data` error.
+
+### Repairing the debug image bases
+
+`TombstoneParser.createDebugMeta` (sentry-android 8.57.0) starts a module at the
+**first** mapping carrying a build id and extends it over every later mapping with
+the same name and id. On Android every library is mapped out of `base.apk`, and a
+large `base.apk` mapping below the real ELF carries our build id — so the module
+begins tens of MB below the library it describes, ends up covering addresses it
+does not own, and every frame in it symbolicates to nothing.
+
+Frames themselves are right: the parser sets each one's image address to
+`pc - rel_pc`. In the run that found this, `libFurAffinityUI.so` had frame #00 at
+`pc 0x79822453a7dc`, `rel_pc 0x10e7dc` — base `0x79822442c000` — while its debug
+image claimed `image_addr 0x79822291c000`, **27 MB lower**. `beforeSend` therefore
+raises each image to the highest frame base it contains and shrinks `image_size`
+by as much, leaving the end where it was. Images no frame refers to are left
+alone. The parser still inflates it — the repaired event carries the same build
+id with `image_size` 2228224 instead of 30605312, the library's real extent, and
+the frame's `rel_pc 0x10e7dc` intact.
+
+Which library gets inflated moves between runs — the same run symbolicated
+`swiftFatalError` fine and lost `swiftBackgroundThread` — so the repair trusts no
+image. 8.57.0 is the latest release and `main` carries the identical parser, so
+there is nothing to upgrade to.
 
 ## Symbols
 
@@ -276,15 +305,16 @@ The cases live in `FurAffinity/Helpers/CrashTest.swift` and
 main-thread hang, there because non-fatal events take a path crashes do not — it
 is how the `culture` context was found.
 
-Last full run (2026-09-19, one event per crash, no symbolication errors, no
-location on any of them). The lines are each run's markers, which move as the
-files change:
+Last full run (iOS 2026-09-19, Android 2026-09-20: one event per crash, no
+symbolication errors, no location on any of them, and every event carrying the
+right `commit` tag). The lines are each run's markers, which move as the files
+change:
 
 | Case | Android | iOS |
 |---|---|---|
-| `swiftFatalError` | `CrashTest.swift:62` | `CrashTest.swift:62` |
+| `swiftFatalError` | `CrashTest.swift:67` | `CrashTest.swift:67` |
 | `swiftForceUnwrapFAKit` | `CrashTestSite.swift:13` | `CrashTestSite.swift:13` |
-| `swiftBackgroundThread` | `CrashTest.swift:68`, non-main | `CrashTest.swift:68`, non-main |
-| `kotlinException` | `FACrashReportingBridge.kt:75` | — |
-| `appHang` | — | added after this run; not yet run against the server |
+| `swiftBackgroundThread` | `CrashTest.swift:80`, non-main | `CrashTest.swift:80`, non-main |
+| `kotlinException` | `FACrashReportingBridge.kt:96` | — |
+| `appHang` | — | `CrashTest.swift:73` |
 | `optOut` | nothing reported | nothing reported |

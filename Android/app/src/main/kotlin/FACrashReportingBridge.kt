@@ -19,6 +19,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import io.sentry.Sentry
+import io.sentry.SentryEvent
 import io.sentry.android.core.SentryAndroid
 import io.sentry.protocol.App
 import io.sentry.protocol.Contexts
@@ -60,6 +61,7 @@ class FACrashReportingBridge {
                 if (event.timestamp.time < reportsSinceMillis) null
                 else event.also {
                     keepListedContextOnly(it.contexts)
+                    repairDebugImageBases(it)
                     // isSideLoaded, installerStore: how the APK was installed.
                     it.tags?.keys?.filter { key -> key !in KEPT_TAGS }?.forEach(it::removeTag)
                 }
@@ -103,6 +105,52 @@ class FACrashReportingBridge {
         /// The tags set on purpose, the only ones an event keeps: the build's commit,
         /// and the checker's run id (set by CrashTest.swift).
         private val KEPT_TAGS = setOf(COMMIT_TAG, "crash_test_run")
+
+        /// Workaround for sentry-android 8.57.0: `TombstoneParser.createDebugMeta`
+        /// starts a module at the *first* mapping carrying its build id, and a large
+        /// `base.apk` mapping below the real ELF carries ours — so the image base lands
+        /// tens of MB too low, the module ends up covering addresses it does not own,
+        /// and its frames symbolicate to nothing. Each frame carries the right base
+        /// (the parser sets `pc - rel_pc` per frame), so raise the image to the highest
+        /// frame base it contains and shrink it by as much, leaving its end where it is.
+        /// Which library it hits moves between runs, so no image is trusted.
+        private fun repairDebugImageBases(event: SentryEvent) {
+            val images = event.debugMeta?.images ?: return
+            val stacktraces = (event.exceptions ?: emptyList()).mapNotNull { it.stacktrace } +
+                (event.threads ?: emptyList()).mapNotNull { it.stacktrace }
+            // Frames that name both an address and the image they belong to, as (pc, base).
+            val frames = stacktraces
+                .flatMap { it.frames ?: emptyList() }
+                .mapNotNull { frame ->
+                    val pc = frame.instructionAddr?.toAddressOrNull() ?: return@mapNotNull null
+                    val base = frame.imageAddr?.toAddressOrNull() ?: return@mapNotNull null
+                    pc to base
+                }
+            if (frames.isEmpty()) return
+
+            for (image in images) {
+                val base = image.imageAddr?.toAddressOrNull() ?: continue
+                val size = image.imageSize ?: continue
+                var repaired = base
+                for ((pc, frameBase) in frames) {
+                    if (!contains(base, size, pc) || !contains(base, size, frameBase)) continue
+                    if (java.lang.Long.compareUnsigned(frameBase, repaired) > 0) repaired = frameBase
+                }
+                if (repaired == base) continue
+                image.imageAddr = "0x" + java.lang.Long.toHexString(repaired)
+                image.setImageSize(size - (repaired - base))
+            }
+        }
+
+        private fun contains(base: Long, size: Long, address: Long): Boolean =
+            java.lang.Long.compareUnsigned(address, base) >= 0 &&
+                java.lang.Long.compareUnsigned(address, base + size) < 0
+
+        private fun String.toAddressOrNull(): Long? = try {
+            java.lang.Long.parseUnsignedLong(removePrefix("0x"), 16)
+        } catch (e: NumberFormatException) {
+            null
+        }
 
         /// The contexts the privacy policy covers, so nothing an SDK adds ever
         /// leaves: `trace` (random ids) whole, the OS, device and app copied field
