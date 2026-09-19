@@ -8,269 +8,176 @@ DWARF, and demangles Swift.
 
 ## Shape
 
-One shared configuration, two SDKs:
+`FurAffinity/Helpers/CrashReporting.swift` builds the configuration and calls
+`startPlatformCrashReporter(_:)`: sentry-cocoa in `Helpers/iOS/`, the Kotlin
+`FACrashReportingBridge` in `Helpers/Android/`. Manifest auto-init is off
+(`io.sentry.auto-init=false`), so Swift decides whether reporting runs at all; on
+the placeholder DSN it does not, and a development build reports nothing. On
+Android `CrashReporting.start` must follow `installDefaultsSuite()`, since it
+reads a `Defaults` key.
 
-- `FurAffinity/Helpers/CrashReporting.swift` builds `CrashReportingConfiguration` —
-  DSN, `release` (`<app id>@<version>`), `environment` (`debug`/`release`), and
-  `reportsSince` — then calls `startPlatformCrashReporter(_:)`.
-- `Helpers/iOS/CrashReporting+iOS.swift` starts **sentry-cocoa**;
-  `Helpers/Android/CrashReporting+Android.swift` drives the Kotlin
-  `FACrashReportingBridge`, which starts **sentry-android**. Manifest auto-init is
-  off (`io.sentry.auto-init=false`): Swift decides whether reporting runs at all.
-- Nothing starts on the placeholder DSN, so a development build reports nothing.
-  The real DSN is never committed; see § Three channels for where each build gets
-  one. It is not much of a secret — it can only *send* events to this project,
-  while `SENTRY_AUTH_TOKEN` reads and administers it.
-- `CrashReporting.start` is the first thing both entry points do — on Android right
-  after `installDefaultsSuite()`, since it reads a `Defaults` key.
+What leaves the device is a stack trace, the device's fixed hardware, OS and app
+version, and the SDK's random per-install id. `beforeSend` enforces that as an
+**allowlist** of contexts rather than a list of things to strip, so whatever an
+SDK starts collecting after an upgrade never leaves. That matters because the
+defaults are wide — timezone, locale, connectivity, battery, free memory, granted
+permissions, root/jailbreak status, on iOS a hash derived from
+`identifierForVendor` — and because non-fatal events take a different path and
+arrive with contexts crashes never carry (`culture`, holding timezone and locale,
+is how that was found). Approximate location is the one thing neither SDK
+controls; see § Project settings.
 
-Collected: stack trace, device model (with its fixed hardware: CPU, total memory
-and storage, screen), OS and app version, and the SDK's random per-install id.
-`beforeSend` keeps the contexts to an **allowlist** on both platforms — `trace`
-whole, `os`, `device` and `app` field by field, every other context dropped — so
-whatever else an SDK collects, now or after an upgrade, never leaves. By default
-they add the timezone, locale, connectivity, battery, free memory and storage,
-boot time, granted permissions, screen names, root/jailbreak status (the Android
-probe is off too), on iOS a hash derived from `identifierForVendor`, and on iOS
-non-fatal events (a hang) a whole `culture` context with the timezone and locale.
-`check-crash-reporting.sh` fails an event that carries any of those. Not collected
-either: `sendDefaultPii` is off, no screenshots, no view hierarchy, no tracing, no
-breadcrumbs of any kind and no application log (see § No breadcrumbs). Nothing is
-sent without a crash either: automatic session tracking, which would send a
-session envelope on every launch, is off, so Sentry's release-health numbers stay
-empty. Approximate location is the one thing neither SDK controls — see § Two
-required project settings.
+## Releasing
 
-## Three channels
+Three channels, each needing the same two things: a real DSN compiled in, and its
+symbols on the server. Both local channels apply the `📱For App Store
+distribution` stash, which is where the DSN lives beside the app id and the
+Amplitude key; CI has no stash and seds its own in. `build.yml` gets no DSN —
+nothing it builds is distributed, and one there would report CI's test runs to
+production.
 
-The app ships three ways, and each has to arrive at the same two things: a real
-DSN compiled in, and its symbols on the server.
+| Channel | What you do | Symbols |
+|---|---|---|
+| IPA for AltStore Classic | push a tag | the archive build phase, `secrets.SENTRY_AUTH_TOKEN` |
+| App Store Connect → AltStore PAL | the procedure below | the same build phase |
+| Android APK | `SENTRY_AUTH_TOKEN=… Scripts/Android/build-release-apk.sh` | the Sentry Gradle plugin, during `skip export` |
 
-| Channel | Built | DSN from | Symbols uploaded by |
-|---|---|---|---|
-| IPA for AltStore Classic | `.github/workflows/release.yml`, on a tag | `${{ secrets.SENTRY_DSN }}`, `sed` into `CrashReportingSecrets.swift` | the archive's build phase, below |
-| App Store Connect → AltStore PAL | locally, Xcode archive (or `xcodebuild archive`) | the distribution stash | the same build phase |
-| Android APK | locally, `Scripts/Android/build-release-apk.sh` | the distribution stash | the Sentry Gradle plugin, during `skip export` |
+The Android script and the CI workflow need nothing remembered: each refuses to
+produce an unreportable build, CI included, where a missing secret seds in an
+empty DSN that the build phase rejects like the placeholder.
 
-Both local channels apply `📱For App Store distribution`, so the DSN lives there
-with the app id and the Amplitude key. CI has no stash, which is why the release
-workflow still seds its own in; `build.yml` does not, since nothing it builds is
-distributed and a DSN there would only report CI's test runs to production. Either way `CrashReportingSecrets.swift` keeps the
-placeholder in git, and both local paths revert the working tree afterwards.
-
-### What each channel needs from you
-
-Two of the three are one command. The middle one is the only manual procedure,
-and the only one where a mistake used to be silent.
-
-**1 · IPA, on a tag.** Push the tag. The workflow seds the DSN from
-`secrets.SENTRY_DSN`, installs `sentry-cli`, and the archive's build phase
-uploads with `secrets.SENTRY_AUTH_TOKEN`. Nothing to remember: a missing secret
-seds in an empty DSN, which the build phase rejects like the placeholder.
-
-**2 · Xcode archive → App Store Connect.** From a **clean** tree:
+The **local iOS archive** is the one manual procedure. From a clean tree:
 
 ```
-git stash list --format='%H %gs'                 # find the distribution stash
-git stash apply <sha>                            # app id + Amplitude key + DSN
-# Product > Archive, or:
-xcodebuild -scheme FurAffinity -configuration Release \
-    -destination generic/platform=iOS archive -archivePath <path>
-git checkout -- .                                # revert, always
+git stash apply <sha of the distribution stash>   # app id + Amplitude key + DSN
+# Product > Archive, or `xcodebuild … archive`
+git checkout -- .                                 # revert, always
 ```
 
-The upload happens inside the archive; you do not run `sentry-cli` yourself. Two
-things have to be true in **the checkout you archive from**:
+You never run `sentry-cli` yourself; the upload is inside the archive. Two things
+must hold **in the checkout you archive from**:
 
-- the distribution stash is applied — otherwise the archive stops with
-  `error: CrashReportingSecrets.swift holds no DSN`, which is
-  there because the alternative is an archive that uploads its symbols, validates,
-  ships, and reports nothing;
-- `.sentryclirc` exists at the project root or in `~`, holding the org auth
-  token. The project one is gitignored, so it does **not** travel between
-  worktrees or clones — a fresh checkout needs its own, or `~/.sentryclirc`
-  (what `sentry-cli login` writes) covers all of them. A GUI archive has no
-  environment and cannot see `$SENTRY_AUTH_TOKEN`; from a terminal, exporting
-  that works instead.
+- the stash is applied, or the archive stops with `error:
+  CrashReportingSecrets.swift holds no DSN`. Without that check the archive would
+  upload its symbols, validate, ship, and report nothing;
+- a `.sentryclirc` holds the org auth token, since a GUI archive inherits no
+  environment and cannot see `$SENTRY_AUTH_TOKEN`. The project-root one is
+  gitignored and so does not travel between worktrees or clones; `~/.sentryclirc`,
+  what `sentry-cli login` writes, covers all of them. From a terminal, exporting
+  the token works instead.
 
-**3 · Android APK.** `SENTRY_AUTH_TOKEN=… Scripts/Android/build-release-apk.sh`.
-The stash, the build dirs, the export and the signature check are all in the
-script, and it refuses to start without either half.
-
-### Before the first release that reports
-
-- Nothing about the version. `Privacy Policy.md` names **1.19**, the release this
-  ships in — the last public tag is 1.18. Keep the two in step if crash reporting
-  slips to a later version.
-- `release.yml` has not run since 1.18, i.e. never with the upload build phase.
-  The first tagged release is also its first exercise: a failed upload fails the
-  archive step, and "Check the app's dSYM carries debug info" catches a dSYM
-  that uploaded fine but has nothing in it.
+`release.yml` has not run since 1.18, so the first tagged release is also the
+first exercise of the upload build phase. A failed upload fails the archive step,
+and "Check the app's dSYM carries debug info" catches a dSYM that uploaded fine
+with nothing in it.
 
 ### The archive-only build phase
 
-The `FurAffinity` target's **Upload dSYMs to Sentry** run script phase is the
-whole iOS upload, for both iOS channels. Its first line is
+The `FurAffinity` target's **Upload dSYMs to Sentry** phase is the whole iOS
+upload, for both iOS channels. It exits immediately unless `ACTION=install`, which
+Xcode sets when archiving and at no other time, so Debug and ordinary Release
+builds skip it. It then fails the archive loudly rather than skip an upload
+silently. `${CI:+--wait}` makes only CI wait for server-side processing.
 
-```sh
-[ "$ACTION" = install ] || exit 0
-```
+Its declared input `$DWARF_DSYM_FOLDER_PATH/$DWARF_DSYM_FILE_NAME` is what orders
+it after `dsymutil`. That folder holds what the archive's `dSYMs` folder does —
+the app, the extension and the embedded frameworks; FAKit, FAPages and FALogging
+link statically, so their debug info is inside `Fur Affinity.app.dSYM`.
 
-— Xcode sets `ACTION=install` when archiving and at no other time, so Debug and
-ordinary Release builds stop there. The phase then fails the archive, loudly,
-if `sentry-cli` is missing or no token is available; a release that silently
-skips its upload is the failure mode worth paying for.
-
-The phase declares `$DWARF_DSYM_FOLDER_PATH/$DWARF_DSYM_FILE_NAME` as an input,
-which is what orders it after `dsymutil`: delete `Fur Affinity.app.dSYM` and
-re-archive, and the phase sees the freshly regenerated one rather than nothing.
-
-Authentication is `SENTRY_AUTH_TOKEN` on CI, and for a **GUI archive**, which
-inherits no environment, a `.sentryclirc` — git-ignored in the project root, or
-`~/.sentryclirc` (readable because the script sandbox is off for Release; see
-below):
-
-```
-printf '[auth]\ntoken=<org auth token>\n' > .sentryclirc
-```
-
-`${CI:+--wait}` makes only CI wait for server-side processing.
-
-#### Why the script sandbox is off for Release
-
-`ENABLE_USER_SCRIPT_SANDBOXING = NO`, on the **app target's Release configuration
-only** — Debug keeps it, and so does `NotificationContent` in both configurations
-(`xcodebuild -showBuildSettings` confirms all three). The app target has exactly
-one run script phase, this one, so nothing else gives up the protection.
-
-It is off because no declaration can make it work. Xcode's generated profile is
-`(allow default)` with *subpath* denies on the build directories, including the
-one the dSYMs are in:
+**`ENABLE_USER_SCRIPT_SANDBOXING = NO`** on the app target's Release
+configuration alone (Debug keeps it, as does `NotificationContent`). The target
+has exactly one script phase, so nothing else gives up the protection. It is off
+because no declaration can make it work: Xcode's profile denies the build
+directories by *subpath* while granting declared inputs as `literal`, the node
+itself and not what is under it —
 
 ```
 (deny file-read* file-write* (subpath (param "CONFIGURATION_BUILD_DIR")) …)
-…
 (allow file-read* (literal (param "SCRIPT_INPUT_FILE_0")))
 ```
 
-Declared inputs come back as `literal` — the node itself, not what is under it.
-A dSYM is a *bundle*, so `Contents/Resources/DWARF/Fur Affinity` stays denied
-however it is declared; declaring the whole folder instead changes nothing, for
-the same reason. Sandboxed, `sentry-cli` authenticates, reaches
-`chunk-upload/` over the network and then dies on `error: Operation not permitted
-(os error 1)` — with no kernel log entry, since the profile does not report. With
-the setting off the same archive prints `Found 76 debug information files` and
-uploads them.
-
-`$DWARF_DSYM_FOLDER_PATH` holds exactly what the archive's `dSYMs` folder does —
-the app, the extension and the 11 embedded frameworks. FAKit, FAPages and
-FALogging link statically into the app, so their debug info is in
-`Fur Affinity.app.dSYM`.
+— and a dSYM is a bundle, so the DWARF file inside stays denied however it is
+declared, the whole folder included. Sandboxed, `sentry-cli` authenticates,
+reaches `chunk-upload/` and dies on `error: Operation not permitted (os error 1)`,
+with no kernel log entry because the profile denies without reporting.
 
 ## Consent
 
-On by default, with a "Send crash reports" toggle in Settings → Privacy, backed by
-`Defaults[.crashReportingEnabled]`. Turning it off calls `SentrySDK.close()` /
-`Sentry.close()` at once; turning it on applies at the next launch.
+On by default, with a "Send crash reports" toggle in Settings → Privacy. Turning
+it off closes the SDK at once; turning it on applies at the next launch.
 
-`Defaults[.crashReportingEnabledSince]` is the second half of that promise. Android
-reads the OS's record of the **last native crash (its tombstone) and the last ANR**
-at startup, whether or not reporting was on when they happened — so switching the
-toggle back on would otherwise send the crash captured while the user had opted
-out. Both SDKs get a `beforeSend` that drops any event older than that timestamp.
+`Defaults[.crashReportingEnabledSince]` is the second half of that promise.
+Android reads the OS's record of the **last tombstone and the last ANR** at
+startup whether or not reporting was on when they happened, so switching the
+toggle back on would otherwise send a crash captured while the user had opted out.
+Both `beforeSend`s drop events older than that timestamp.
 
 The legal basis is legitimate interest (GDPR Art. 6(1)(f)), which is why the
-collection is this small; the project also has *Prevent Storing of IP Addresses*
-on. `Privacy Policy.md` names Sentry.
+collection is this small. `Privacy Policy.md` names Sentry from 1.19.
 
-### Two required project settings, not one
+### Project settings
 
-*Prevent Storing of IP Addresses* does less than its name suggests. Sentry
-geocodes the address **before** scrubbing it and keeps the result, so an event
-arrives with `user.ip_address: null` and a populated
-`user.geo` — country, region and **city**. Neither SDK sends any of this
-(`sendDefaultPii` is off on both, and the only user either sets is its random
-install id), so nothing in this repo can prevent it: it is added server-side and
-only a server-side rule removes it. That rule is, in Project Settings → Security & Privacy → Advanced Data
-Scrubbing:
+Two of them, and the second is not optional.
+
+*Prevent Storing of IP Addresses* does less than its name suggests: Sentry
+geocodes the address **before** scrubbing it and keeps the result, so events
+arrive with `user.ip_address: null` and a populated `user.geo` — country, region
+and **city**. Neither SDK sends any of it, so nothing in this repo can prevent it.
+Only a server-side rule can, in Project Settings → Security & Privacy → Advanced
+Data Scrubbing:
 
 ```
 [Remove] [Anything] from [$user.geo.**]
 ```
 
-Upstream tracks this as getsentry/sentry#92201. Scrubbing applies at ingest, so
-the rule only affects events received after it, and events that already carry a
-location keep it until they are deleted or age out.
+Upstream tracks this as getsentry/sentry#92201. It went on 2026-09-19; before it
+every event carried `city=Angoulême`, after it `"geo": {}`. Scrubbing applies at
+ingest, so it only affects events received after it.
 
-`Scripts/check-crash-reporting.sh` asserts both halves on every case — no
-`user.geo` and a null `user.ip_address` — because a project setting is exactly
-the kind of thing that is silently true until someone changes it, and only a
-fresh event can show it is still in force.
-
-The rule went on 2026-09-19. Before it, every event carried
-`country_code=FR, city=Angoulême, region=France`; after it, all seven cases of the
-run below come back `"geo": {}`.
+The checker asserts both halves on every case, because a project setting is
+silently true until someone changes it and only a fresh event shows otherwise.
 
 ## Android: tombstones, not the NDK signal handler
 
 A Swift crash on Android is a native signal (`fatalError` traps with `SIGTRAP`).
-Two integrations can catch it, and **only one may be on**:
-
-- **Tombstones** (`isTombstoneEnabled`), Android 12+: the OS collects the crash out
-  of process and the SDK reads it at the next start. Richer — every thread's stack,
-  client-side symbolication of system libraries — and safer.
-- **The NDK signal handler** (`isEnableNdk`), below Android 12 (minSdk is 28).
-
-With both on, each sends its own report of the same crash and the SDK's merge step
-fails (`No matching native event found for tombstone`), so one crash becomes two
-issues. `FACrashReportingBridge` picks by API level.
+Two integrations can catch it and **only one may be on**: tombstones
+(`isTombstoneEnabled`, Android 12+), where the OS collects the crash out of
+process and the SDK reads it at the next start — richer and safer — or the NDK
+signal handler (`isEnableNdk`) below that. With both on, each sends its own report
+and the merge fails (`No matching native event found for tombstone`), turning one
+crash into two issues. `FACrashReportingBridge` picks by API level.
 
 `dist` is set explicitly to the version code: the tombstone path otherwise derives
 an invalid one from `release` and the event arrives with an `invalid_data` error.
 
 ## Symbols
 
-| What | Uploaded by | When |
-|---|---|---|
-| The DSN | the distribution stash, or `sed` from `secrets.SENTRY_DSN` — see § Three channels | every distributed build |
-| iOS dSYMs (+ sources) | the `FurAffinity` target's "Upload dSYMs to Sentry" build phase | every archive, CI or local |
-| Android `.so` (+ sources) and the R8 mapping | the Sentry Gradle plugin, during `skip export` | release and `profile` builds, when `SENTRY_AUTH_TOKEN` is set |
-
-The Android upload takes the **unstripped** libraries from
-`merged_native_libs/…`, while the APK ships stripped ones. That works because
-stripping preserves the GNU BuildID, which is what Sentry matches on.
-`Scripts/Android/build-release-apk.sh` refuses to build without
-`SENTRY_AUTH_TOKEN` or without a DSN in the distribution stash: a release that
-cannot be symbolicated is worse than no release.
-
-The plugin uploads every ABI's libraries, not just `arm64-v8a`, because the merge
-step runs before the ABI filter.
+The Android upload takes the **unstripped** libraries from `merged_native_libs/…`
+while the APK ships stripped ones, which works because stripping preserves the GNU
+BuildID that Sentry matches on. It covers every ABI, not just `arm64-v8a`, because
+the merge step runs before the ABI filter.
 
 ### Line numbers, and why `-disable-cmo`
 
 Swift's **cross-module optimization** is on by default for `-O` whole-module
-builds. It copies small public functions into the module that calls them — and the
-copies carry **no line table at all**. A crash inside one symbolicates to the right
-function and `<compiler-generated>:0`, with no file and no line, on both platforms.
-`llvm-symbolizer` reads the shipped library the same way, so no upload can fix it.
+builds. It copies small public functions into the module that calls them, and the
+copies carry **no line table at all** — a crash inside one symbolicates to the
+right function and `<compiler-generated>:0`, on both platforms. `llvm-symbolizer`
+reads the shipped library the same way, so no upload can fix it.
 
 `FAKit`, `FAPages`, `FALogging` and `OSCompat` therefore build release with
-`-disable-cmo` (their `Package.swift`). Cost: +21 KB on `libFurAffinityUI.so`
-(+1.0 %), ~32 KB over all our libraries, and **no measurable parse time** —
-alternating the two APKs on one emulator session, the median
-`FAPages: Submission Preview Parsing` (72+ per feed load) was 0.11/0.11 ms with
-CMO on and 0.16/0.09 ms with it off, i.e. inside the run-to-run spread. `swiftForceUnwrapFAKit` in the checker is
-the regression test — it asserts `CrashTestSite.swift:13`, which only FAKit's own
-copy of that function can produce.
-
-`unsafeFlags` is allowed here because all three are local packages; a remote
-dependency on them would refuse to resolve.
+`-disable-cmo` (`unsafeFlags` is allowed only because they are local packages).
+Cost: ~32 KB over all our libraries and **no measurable parse time** — alternating
+the two APKs on one emulator session, the median `FAPages: Submission Preview
+Parsing` was 0.11/0.11 ms with CMO on and 0.16/0.09 ms with it off, inside the
+run-to-run spread. `swiftForceUnwrapFAKit` is the regression test: it asserts
+`CrashTestSite.swift:13`, which only FAKit's own copy of that function produces.
 
 ### In-app frames
 
-On Android every library is loaded out of `base.apk`, so Sentry cannot tell app
-code from library code by path. The project's **Stack Trace Rules** (Project
-Settings → Issue Grouping) do it:
+On Android every library loads out of `base.apk`, so Sentry cannot tell app code
+from library code by path. The project's **Stack Trace Rules** (Project Settings →
+Issue Grouping) do it:
 
 ```
 stack.abs_path:**/FurAffinity/** +app
@@ -278,72 +185,57 @@ stack.abs_path:**/FAKit/Sources/** +app
 stack.abs_path:**/FALogging/Sources/** +app
 ```
 
-Kotlin frames come from `options.addInAppInclude("fur.affinity.ui")`. iOS needs
-none of this: sentry-cocoa marks the app's own images, plus the FAKit / FAPages /
-FALogging frameworks named in `inAppIncludes`.
+Kotlin frames come from `addInAppInclude`. iOS needs none of this: sentry-cocoa
+marks the app's own images plus the frameworks in `inAppIncludes`.
 
-## No breadcrumbs
+## No breadcrumbs, no log
 
 Both SDKs collect breadcrumbs by default — touches, screen and lifecycle changes,
-battery and connectivity events, network requests — and attach the last hundred
-to each event. The privacy policy lists what a report contains and none of that
-is on it, so automatic breadcrumbs are off and `maxBreadcrumbs` is 0 as the
-backstop.
+battery and connectivity, network requests — and attach the last hundred to each
+event. None of that is on the privacy policy's list, so automatic collection is
+off with `maxBreadcrumbs = 0` as the backstop. Session tracking is off for the
+same reason: it would send an envelope on every launch, so release-health numbers
+stay empty.
 
 Neither SDK receives the application log either. `FALogging` renders every
-interpolation eagerly (`FALogMessage`) and has no privacy annotations, so
-forwarding log lines would send usernames, submission ids and full URLs along
-with each crash. The log stays where it was: Settings → Export Application Logs,
-on request.
-
-Kotlin frames have line numbers but **no source text**, by choice. Swift frames do
-carry source text, from `--include-sources`; see § Kotlin source context for why
-Kotlin's is left off.
+interpolation eagerly and has no privacy annotations, so forwarding lines would
+send usernames, submission ids and full URLs with each crash. The log stays at
+Settings → Export Application Logs, on request.
 
 ### Kotlin source context
 
-`includeSourceContext = sentryUploads` is set and the tasks really do register —
-`sentryCollectSources*`, `sentryBundleSources*`, `sentryUploadSourceBundle*`, all
-present in `:app:tasks --all` once `SENTRY_AUTH_TOKEN` is set, which is what gates
-them. What the bundle does not do is *resolve*. Sentry's layout rule is that the
-package declaration and the file tree must match, and the nine bridges declare
-`package fur.affinity.ui` while sitting flat in `Android/app/src/main/kotlin/`, so
-the bundle comes out keyed on bare filenames:
+Swift frames carry source text from `--include-sources`. Kotlin frames have line
+numbers but no text, by choice.
 
-```
-files/_/_/FACrashReportingBridge.jvm   →  url "~/FACrashReportingBridge.jvm"
-```
+The `sentryBundleSources*` tasks do register — they are gated on
+`SENTRY_AUTH_TOKEN`, which is why they had never been seen. What the bundle does
+not do is *resolve*: Sentry requires the package declaration and the file tree to
+match, and the bridges declare `package fur.affinity.ui` while sitting flat in
+`Android/app/src/main/kotlin/`, so the bundle is keyed on bare filenames —
+`~/FACrashReportingBridge.jvm`, where a JVM frame is looked up under its package
+path. Moving them to `src/main/kotlin/fur/affinity/ui/` fixes the keys (measured:
+it does, for 27 ms of build time, a 21 KB upload and 58 bytes of APK).
 
-A JVM frame is looked up under its package path, so nothing matches and the upload
-is dead weight. Moving the files to `src/main/kotlin/fur/affinity/ui/` fixes the
-keys — measured, the same nine files come out as
-`~/fur/affinity/ui/FACrashReportingBridge.jvm` — and costs almost nothing: **27 ms**
-of build time for the three tasks together (21 ms bundle, 5 ms collect, 1 ms id),
-a **21 KB** upload, and **58 bytes** of APK, one `io.sentry.bundle-ids` line in
-`assets/sentry-debug-meta.properties`.
-
-It is not done, because the price is not the build time: it is nine files leaving
-the one flat directory that `Scripts/Android/logs.sh` globs for bridge `TAG`s and
-that `Scripts/check-crash-reporting.sh` and the docs name by path, in exchange for
-source text on Kotlin frames that already carry file and line — and there are nine
-Kotlin files against a whole app of Swift. Revisit if the Kotlin layer grows.
+It is not done because the cost is not the build time: it is nine files leaving
+the flat directory that `Scripts/Android/logs.sh` globs for bridge `TAG`s and that
+`check-crash-reporting.sh` names by path, bought for source text on frames that
+already carry file and line. Revisit if the Kotlin layer grows.
 
 ## Verifying it
 
 `Scripts/check-crash-reporting.sh ios|android [--no-build] [case…]` is the proof,
-not a claim in a commit message. Per case it builds the way shipping does (symbols
-uploaded), crashes the app, relaunches so the SDK sends the stored report, fetches
-that exact event from the Sentry API and asserts on it:
+not a claim in a commit message. Per case it builds the way shipping does, crashes
+the app, relaunches so the SDK sends the stored report, fetches that exact event
+from the API and asserts on it:
 
-- no `native_missing_dsym` / `native_bad_dsym` / `proguard_missing_mapping` / … ;
+- no `native_missing_dsym` / `proguard_missing_mapping` / … ;
 - a frame whose function, file and **line** match the `// CRASH-TEST-SITE <case>`
-  marker in the source — grepped, so it cannot drift — plus `in_app` and, for
+  marker — grepped from the source, so it cannot drift — plus `in_app` and, for
   Swift, the source line itself;
-- exactly one event per crash (this is what caught the tombstone/NDK duplicate);
-- no breadcrumbs, no context but the four kept, and none of the device and app
-  fields named in § Shape;
-- `optOut`: crash with the setting off, then turn it back on, and require that
-  **nothing** is reported.
+- exactly one event per crash (this caught the tombstone/NDK duplicate);
+- no location, no IP, no breadcrumbs, and no context outside the allowlist;
+- `optOut`: crash with the setting off, turn it back on, require that **nothing**
+  is reported.
 
 Each event's JSON lands in `.build/crash-reporting/` as the evidence.
 
@@ -353,19 +245,16 @@ Scripts/check-crash-reporting.sh android
 Scripts/check-crash-reporting.sh ios
 ```
 
-Android runs the **`profile`** variant: release code, R8'd and stripped, but signed
-with the debug key and — unlike a release build — it honours the crash-test intent
-extras. `MainActivity` is exported, so any app could send them; a release build
-ignores them (`BuildConfig.BUILD_TYPE == "release"`). iOS uses launch arguments,
-which only `simctl`/`devicectl`/Xcode can pass, so they stay live in Release.
+Android runs the **`profile`** variant: release code, R8'd and stripped, signed
+with the debug key, and — unlike a release build — it honours the crash-test
+intent extras. `MainActivity` is exported, so any app could send them; a release
+build ignores them. iOS uses launch arguments, which only
+`simctl`/`devicectl`/Xcode can pass, so they stay live in Release.
 
-The crash cases live in `FurAffinity/Helpers/CrashTest.swift` (and
-`FAKit/Sources/FAKit/CrashTestSite.swift`): `fatalError` on the main thread, a
-force unwrap inside FAKit, an out-of-range index on a detached thread, on
-Android a Kotlin exception, and on iOS `appHang` — not a crash but a 5 s
-main-thread hang, which sentry-cocoa sends as a non-fatal event from the app that
-hung. It is there because non-fatal events take a path crashes do not, and
-picked up the `culture` context that way.
+The cases live in `FurAffinity/Helpers/CrashTest.swift` and
+`FAKit/Sources/FAKit/CrashTestSite.swift`. `appHang` is not a crash but a 5 s
+main-thread hang, there because non-fatal events take a path crashes do not — it
+is how the `culture` context was found.
 
 Last full run (2026-09-19, one event per crash, no symbolication errors, no
 location on any of them). The lines are each run's markers, which move as the

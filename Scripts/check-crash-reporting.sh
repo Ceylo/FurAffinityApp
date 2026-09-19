@@ -234,7 +234,7 @@ check_event() { # case json function file line
     # advanced scrubbing rule removes $user.geo.**. Neither SDK ever sends this;
     # it is added server-side, so only a server-side rule can take it away, and
     # only a fresh event proves the rule is still in place. See
-    # Android/docs/crash-reporting.md § Consent.
+    # Android/docs/crash-reporting.md § Project settings.
     local located
     located="$(jq -r '[(.user.geo // {}) | to_entries[] | select(.value != null)
                        | "\(.key)=\(.value)"] | join(", ")' "$json")"
@@ -243,7 +243,7 @@ check_event() { # case json function file line
         || fail+=("event carries an IP address")
 
     # Nothing but the crash: both SDKs attach breadcrumbs by default. See
-    # Android/docs/crash-reporting.md § No breadcrumbs.
+    # Android/docs/crash-reporting.md § No breadcrumbs, no log.
     local crumbs
     crumbs="$(jq '[.entries[] | select(.type == "breadcrumbs") | .data.values[]?] | length' "$json")"
     [[ "$crumbs" == 0 ]] || fail+=("event carries $crumbs breadcrumbs")

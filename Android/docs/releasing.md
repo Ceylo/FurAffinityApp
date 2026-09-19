@@ -70,9 +70,8 @@ Scripts/Android/build-release-apk.sh
 It needs `SENTRY_AUTH_TOKEN` in the environment (the Gradle plugin uploads the
 `.so` files and the R8 mapping with it) and a DSN, which comes from the stash;
 it refuses to build without either. See
-[crash-reporting.md](crash-reporting.md) § What each channel needs from you,
-which also covers the two iOS channels and the version floor the privacy policy
-sets.
+[crash-reporting.md](crash-reporting.md) § Releasing, which also covers the two
+iOS channels.
 
 That is the whole thing: it applies the distribution stash, drops the build dirs
 the changed applicationId invalidates, exports, checks the signing certificate,
