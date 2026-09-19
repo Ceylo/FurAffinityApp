@@ -88,13 +88,10 @@ jobs:
           cp -Rp ${archive_path}/Products/Applications/* Payload/
           zip -rq "${qualified_app_name}.ipa" Payload
           zip -rq "${qualified_app_name}.xcarchive.zip" "${qualified_app_name}.xcarchive"
-      - name: Verify the uploaded debug symbols
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ceylo
-          SENTRY_PROJECT: ceylo-furaffinity-app
+      - name: Check the app's dSYM carries debug info
         run: |
-          # The app's own dSYM must carry debug info, not just a symbol table.
+          # Local only: whether the upload reached Sentry is the archive's build
+          # phase's exit status. This catches a dSYM with just a symbol table.
           dsyms=$(ls -d ./*.xcarchive/dSYMs)
           sentry-cli debug-files check "${dsyms}/Fur Affinity.app.dSYM"
       - name: Upload IPA

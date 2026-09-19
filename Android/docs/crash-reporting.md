@@ -77,10 +77,12 @@ things have to be true in **the checkout you archive from**:
   `error: CrashReportingSecrets.swift holds no DSN`, which is
   there because the alternative is an archive that uploads its symbols, validates,
   ships, and reports nothing;
-- `.sentryclirc` exists at the project root, holding the org auth token. It is
-  gitignored, so it does **not** travel between worktrees or clones — a fresh
-  checkout needs its own. A GUI archive has no environment and cannot see
-  `$SENTRY_AUTH_TOKEN`; from a terminal, exporting that works instead.
+- `.sentryclirc` exists at the project root or in `~`, holding the org auth
+  token. The project one is gitignored, so it does **not** travel between
+  worktrees or clones — a fresh checkout needs its own, or `~/.sentryclirc`
+  (what `sentry-cli login` writes) covers all of them. A GUI archive has no
+  environment and cannot see `$SENTRY_AUTH_TOKEN`; from a terminal, exporting
+  that works instead.
 
 **3 · Android APK.** `SENTRY_AUTH_TOKEN=… Scripts/Android/build-release-apk.sh`.
 The stash, the build dirs, the export and the signature check are all in the
@@ -92,8 +94,9 @@ script, and it refuses to start without either half.
   ships in — the last public tag is 1.18. Keep the two in step if crash reporting
   slips to a later version.
 - `release.yml` has not run since 1.18, i.e. never with the upload build phase.
-  The first tagged release is also its first exercise; the "Verify the uploaded
-  debug symbols" step is what catches a miss.
+  The first tagged release is also its first exercise: a failed upload fails the
+  archive step, and "Check the app's dSYM carries debug info" catches a dSYM
+  that uploaded fine but has nothing in it.
 
 ### The archive-only build phase
 
@@ -113,8 +116,10 @@ The phase declares `$DWARF_DSYM_FOLDER_PATH/$DWARF_DSYM_FILE_NAME` as an input,
 which is what orders it after `dsymutil`: delete `Fur Affinity.app.dSYM` and
 re-archive, and the phase sees the freshly regenerated one rather than nothing.
 
-Authentication is `SENTRY_AUTH_TOKEN` on CI, and a git-ignored `.sentryclirc` in
-the project root for a **GUI archive**, which inherits no environment:
+Authentication is `SENTRY_AUTH_TOKEN` on CI, and for a **GUI archive**, which
+inherits no environment, a `.sentryclirc` — git-ignored in the project root, or
+`~/.sentryclirc` (readable because the script sandbox is off for Release; see
+below):
 
 ```
 printf '[auth]\ntoken=<org auth token>\n' > .sentryclirc
