@@ -91,9 +91,13 @@ jobs:
       - name: Check the app's dSYM carries debug info
         run: |
           # Local only: whether the upload reached Sentry is the archive's upload
-          # target's exit status. This catches a dSYM with just a symbol table.
-          dsyms=$(ls -d ./*.xcarchive/dSYMs)
-          sentry-cli debug-files check "${dsyms}/Fur Affinity.app.dSYM"
+          # target's exit status. `check` wants the DWARF file, not the bundle
+          # around it, and passes anything it can read — a dSYM holding just a
+          # symbol table included — so assert the `debug` feature itself.
+          set -o pipefail
+          dwarf=$(ls -d ./*.xcarchive)/"dSYMs/Fur Affinity.app.dSYM/Contents/Resources/DWARF/Fur Affinity"
+          sentry-cli debug-files check --json "${dwarf}" | jq -e '.features | contains("debug")' > /dev/null \
+            || { echo "::error::the app's dSYM carries no debug info"; exit 1; }
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
