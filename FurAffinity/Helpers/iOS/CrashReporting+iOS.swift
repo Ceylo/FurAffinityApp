@@ -40,9 +40,12 @@ func startPlatformCrashReporter(_ configuration: CrashReportingConfiguration) {
     }
 }
 
-/// The device and app as the privacy policy lists them — model, versions — so
-/// nothing an SDK adds ever leaves. Dropped: locale, free memory, low-power mode,
-/// and `device_app_hash`, which derives from `identifierForVendor`.
+/// The contexts the privacy policy covers, so nothing an SDK adds ever leaves:
+/// `os` (name, version, build) and `trace` (random ids) whole, the device and app
+/// cut to the fields it lists. Dropped among others: `culture`, which non-fatal
+/// events (a hang) carry with the timezone and locale; the device's locale, free
+/// memory and low-power mode; `device_app_hash`, derived from `identifierForVendor`.
+private let wholeContexts: Set<String> = ["os", "trace"]
 private let listedContextKeys: [String: Set<String>] = [
     "device": ["type", "family", "model", "model_id", "arch", "simulator", "memory_size",
                "storage_size", "processor_count", "cpu_description"],
@@ -53,11 +56,11 @@ private let listedContextKeys: [String: Set<String>] = [
 private func keepingListedContextOnly(_ context: [String: [String: Any]]?) -> [String: [String: Any]]? {
     context.map { context in
         context.reduce(into: [:]) { kept, entry in
-            guard let listed = listedContextKeys[entry.key] else {
+            if wholeContexts.contains(entry.key) {
                 kept[entry.key] = entry.value
-                return
+            } else if let listed = listedContextKeys[entry.key] {
+                kept[entry.key] = entry.value.filter { listed.contains($0.key) }
             }
-            kept[entry.key] = entry.value.filter { listed.contains($0.key) }
         }
     }
 }

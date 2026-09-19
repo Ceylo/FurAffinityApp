@@ -8,6 +8,7 @@
 #
 #   case         CrashTestCase names (FurAffinity/Helpers/CrashTest.swift), or
 #                `optOut`: crash with the setting off and expect no event.
+#                `appHang` is not a crash: the app stays up and reports the hang.
 #                Default: every case the platform has, then optOut.
 #   --no-build   reuse the installed build (its symbols must already be uploaded)
 #   --out DIR    where each event's JSON lands, default .build/crash-reporting
@@ -52,6 +53,7 @@ done
 if (( ${#CASES[@]} == 0 )); then
     CASES=(swiftFatalError swiftForceUnwrapFAKit swiftBackgroundThread)
     [[ $PLATFORM == android ]] && CASES+=(kotlinException)
+    [[ $PLATFORM == ios ]] && CASES+=(appHang)
     CASES+=(optOut)
 fi
 
@@ -69,6 +71,7 @@ expectation() {
         swiftForceUnwrapFAKit) echo "CrashTestSite.forceUnwrapNil|CrashTestSite.swift|FAKit/Sources/FAKit/CrashTestSite.swift" ;;
         swiftBackgroundThread) echo "CrashTest.swiftBackgroundThread|CrashTest.swift|FurAffinity/Helpers/CrashTest.swift" ;;
         kotlinException)       echo "crashTest|FACrashReportingBridge.kt|Android/app/src/main/kotlin/FACrashReportingBridge.kt" ;;
+        appHang)               echo "CrashTest.appHang|CrashTest.swift|FurAffinity/Helpers/CrashTest.swift" ;;
         optOut)                echo "||" ;;
         *)                     die "unknown case $1" ;;
     esac
@@ -126,6 +129,11 @@ if [[ $PLATFORM == ios ]]; then
         die "the app (pid $1) did not crash within 60 s"
     }
     relaunch() { launch >/dev/null; sleep 15; }
+    # A hang is sent as it ends, by the app that hung.
+    hang() { # case run-id
+        launch -FACrashTest "$1" -FACrashTestRun "$2" -FACrashReportingEnabled YES >/dev/null
+        sleep 15
+    }
     # The override is written to the setting, so it has to be put back.
     restore_setting() { launch -FACrashReportingEnabled YES >/dev/null; sleep 10; }
 else
@@ -234,9 +242,11 @@ check_event() { # case json function file line
     [[ "$crumbs" == 0 ]] || fail+=("event carries $crumbs breadcrumbs")
 
     # Nothing about the device or app beyond what the privacy policy lists. Both
-    # platforms keep an allowlist; this names what the SDKs are known to add.
+    # platforms keep an allowlist; this names what the SDKs are known to add, and
+    # any context besides the four kept (the server adds none).
     local unlisted
-    unlisted="$(jq -r '[(.contexts.device // {} | keys[] | select(IN(
+    unlisted="$(jq -r '[(.contexts // {} | keys[] | select(IN("app", "device", "os", "trace") | not)),
+        (.contexts.device // {} | keys[] | select(IN(
             "name", "timezone", "locale", "connection_type", "online", "battery_level",
             "battery_temperature", "charging", "boot_time", "free_memory", "usable_memory",
             "free_storage", "low_memory", "low_power_mode", "orientation", "thermal_state")) | "device.\(.)"),
@@ -315,8 +325,13 @@ for c in "${CASES[@]}"; do
 
     line="$(marker_line "$c" "$marker")"
     [[ -n "$line" ]] || die "no CRASH-TEST-SITE $c marker in $marker"
-    crash "$c" "$RUN" 1
-    relaunch
+    if [[ $c == appHang ]]; then
+        [[ $PLATFORM == ios ]] || die "appHang is iOS only"
+        hang "$c" "$RUN"
+    else
+        crash "$c" "$RUN" 1
+        relaunch
+    fi
     ids="$(wait_events "crash_test_run:$RUN" 180)"
     count="$(grep -c . <<< "$ids" || true)"
     if (( count == 0 )); then

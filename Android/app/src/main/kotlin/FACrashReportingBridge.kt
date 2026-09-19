@@ -88,12 +88,18 @@ class FACrashReportingBridge {
 
     companion object {
         private const val TAG = "FACrashReportingBridge"
+        private val KEPT_CONTEXTS = setOf("os", "trace", "device", "app")
 
-        /// The device and app as the privacy policy lists them — model, versions,
-        /// the install id — copied field by field, so nothing an SDK adds ever
-        /// leaves. Dropped: timezone, locale, connectivity, battery, free memory and
-        /// storage, boot time, granted permissions, screen names.
+        /// The contexts the privacy policy covers, so nothing an SDK adds ever
+        /// leaves: `os` (name, version, build) and `trace` (random ids) whole, the
+        /// device and app copied field by field — model, versions, the install id.
+        /// Dropped: any other context, and the device's timezone, locale,
+        /// connectivity, battery, free memory and storage, boot time, granted
+        /// permissions, screen names.
         private fun keepListedContextOnly(contexts: Contexts) {
+            for (key in java.util.Collections.list(contexts.keys())) {
+                if (key !in KEPT_CONTEXTS) contexts.remove(key)
+            }
             contexts.device?.let { d ->
                 contexts.setDevice(Device().also {
                     it.id = d.id

@@ -20,6 +20,9 @@ enum CrashTestCase: String, CaseIterable {
     case swiftBackgroundThread
     /// Android only: a Kotlin exception, which proves the R8 mapping upload.
     case kotlinException
+    /// iOS only: a 5 s main-thread hang, reported as a non-fatal event — the path
+    /// that picks up contexts a crash does not.
+    case appHang
 }
 
 enum CrashTest {
@@ -53,6 +56,8 @@ enum CrashTest {
                 Thread.detachNewThread { swiftBackgroundThread(runID.count) }
             case .kotlinException:
                 crashPlatformReporterInKotlin()
+            case .appHang:
+                appHang()
             }
         }
     }
@@ -60,6 +65,13 @@ enum CrashTest {
     @inline(never)
     static func swiftFatalError() {
         fatalError("Crash test") // CRASH-TEST-SITE swiftFatalError
+    }
+
+    /// Logs after sleeping: a sleep in tail position leaves no frame of its own.
+    @inline(never)
+    static func appHang() {
+        Thread.sleep(forTimeInterval: 5) // CRASH-TEST-SITE appHang
+        logger.info("Crash test appHang is over")
     }
 
     @inline(never)

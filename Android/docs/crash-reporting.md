@@ -26,16 +26,18 @@ One shared configuration, two SDKs:
 
 Collected: stack trace, device model (with its fixed hardware: CPU, total memory
 and storage, screen), OS and app version, and the SDK's random per-install id.
-`beforeSend` keeps the `device` and `app` contexts to an **allowlist** on both
-platforms, so whatever else an SDK collects, now or after an upgrade, never
-leaves: by default they add the timezone, locale, connectivity, battery, free
-memory and storage, boot time, granted permissions, screen names, and on iOS a
-hash derived from `identifierForVendor`. `check-crash-reporting.sh` fails an
-event that carries any of those. Not collected either: `sendDefaultPii` is off,
-no screenshots, no view hierarchy, no tracing, no breadcrumbs of any kind and no
-application log (see § No breadcrumbs). Nothing is sent without a crash either: automatic session
-tracking, which would send a session envelope on every launch, is off, so
-Sentry's release-health numbers stay empty. Approximate location is the one
+`beforeSend` keeps the contexts to an **allowlist** on both platforms — `os` and
+`trace` whole, `device` and `app` field by field, every other context dropped —
+so whatever else an SDK collects, now or after an upgrade, never leaves. By
+default they add the timezone, locale, connectivity, battery, free memory and
+storage, boot time, granted permissions, screen names, on iOS a hash derived from
+`identifierForVendor`, and on iOS non-fatal events (a hang) a whole `culture`
+context with the timezone and locale. `check-crash-reporting.sh` fails an event
+that carries any of those. Not collected either: `sendDefaultPii` is off, no
+screenshots, no view hierarchy, no tracing, no breadcrumbs of any kind and no
+application log (see § No breadcrumbs). Nothing is sent without a crash either:
+automatic session tracking, which would send a session envelope on every launch,
+is off, so Sentry's release-health numbers stay empty. Approximate location is the one
 thing neither SDK controls — see § Two required project settings.
 
 ## Three channels
@@ -337,6 +339,8 @@ that exact event from the Sentry API and asserts on it:
   marker in the source — grepped, so it cannot drift — plus `in_app` and, for
   Swift, the source line itself;
 - exactly one event per crash (this is what caught the tombstone/NDK duplicate);
+- no breadcrumbs, no context but the four kept, and none of the device and app
+  fields named in § Shape;
 - `optOut`: crash with the setting off, then turn it back on, and require that
   **nothing** is reported.
 
@@ -356,8 +360,11 @@ which only `simctl`/`devicectl`/Xcode can pass, so they stay live in Release.
 
 The crash cases live in `FurAffinity/Helpers/CrashTest.swift` (and
 `FAKit/Sources/FAKit/CrashTestSite.swift`): `fatalError` on the main thread, a
-force unwrap inside FAKit, an out-of-range index on a detached thread, and, on
-Android, a Kotlin exception.
+force unwrap inside FAKit, an out-of-range index on a detached thread, on
+Android a Kotlin exception, and on iOS `appHang` — not a crash but a 5 s
+main-thread hang, which sentry-cocoa sends as a non-fatal event from the app that
+hung. It is there because non-fatal events take a path crashes do not, and
+picked up the `culture` context that way.
 
 Last full run (2026-09-19, one event per crash, no symbolication errors, no
 location on any of them). The lines are each run's markers, which move as the
@@ -369,4 +376,5 @@ files change:
 | `swiftForceUnwrapFAKit` | `CrashTestSite.swift:13` | `CrashTestSite.swift:13` |
 | `swiftBackgroundThread` | `CrashTest.swift:68`, non-main | `CrashTest.swift:68`, non-main |
 | `kotlinException` | `FACrashReportingBridge.kt:75` | — |
+| `appHang` | — | added after this run; not yet run against the server |
 | `optOut` | nothing reported | nothing reported |
