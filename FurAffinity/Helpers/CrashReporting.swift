@@ -36,7 +36,7 @@ struct CrashReportingConfiguration: Equatable {
         enabled: Bool,
         enabledSince: Date
     ) -> CrashReportingConfiguration? {
-        guard enabled, dsn != CrashReportingSecrets.placeholderDSN, !dsn.isEmpty else {
+        guard enabled, dsn != Secrets.placeholderSentryDSN, !dsn.isEmpty else {
             return nil
         }
         return CrashReportingConfiguration(
@@ -58,7 +58,7 @@ enum CrashReporting {
             Defaults[.crashReportingEnabledSince] = Date().timeIntervalSince1970
         }
         guard let configuration = CrashReportingConfiguration.make(
-            dsn: CrashReportingSecrets.dsn,
+            dsn: Secrets.sentryDSN,
             appID: appID,
             version: FAAppVersion.string,
             commit: FAAppVersion.commit,

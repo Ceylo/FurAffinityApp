@@ -121,8 +121,7 @@ STASH="$(git stash list --format='%H %gs' | awk -v m="$STASH_MSG" 'f { next } in
 
 # The stash is applied into the working tree and reverted afterwards, so the
 # tree has to start clean: that is what makes `git checkout -- .` the exact
-# inverse. Matching the stash's own paths instead would not be — it still names
-# FurAffinity/Secrets.swift, and rename detection lands it on FurAffinity/iOS/.
+# inverse.
 DIRTY="$(git status --porcelain --untracked-files=no)"
 [[ -z "$DIRTY" ]] || die "the working tree has uncommitted changes — commit them first.
 $DIRTY"
@@ -153,7 +152,7 @@ echo "app id $APP_ID, version $VERSION ($BUILD)"
     || die "SENTRY_AUTH_TOKEN is not set — the build would upload no symbols, and
     crashes from this APK could not be symbolicated. Export it (the org auth token,
     project:releases scope) and rerun."
-grep -qE 'static let dsn = "(Your Sentry DSN)?"' "$ROOT/FurAffinity/CrashReportingSecrets.swift" \
+grep -qE 'static let sentryDSN = "(Your Sentry DSN)?"' "$ROOT/FurAffinity/Secrets.swift" \
     && die "no Sentry DSN — this APK would report no crashes at all. Add it to
     \"$STASH_MSG\" and rerun."
 

@@ -33,7 +33,7 @@ struct CrashReportingConfigurationTests {
 
     @Test func placeholderDSN_startsNothing() {
         #expect(CrashReportingConfiguration.make(
-            dsn: CrashReportingSecrets.placeholderDSN, appID: "id", version: "1.0", commit: nil,
+            dsn: Secrets.placeholderSentryDSN, appID: "id", version: "1.0", commit: nil,
             configuration: .release, enabled: true, enabledSince: .distantPast
         ) == nil)
     }

@@ -33,7 +33,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ORG=ceylo
 PROJECT=ceylo-furaffinity-app
 API=https://de.sentry.io/api/0
-SECRETS="$ROOT/FurAffinity/CrashReportingSecrets.swift"
+SECRETS="$ROOT/FurAffinity/Secrets.swift"
 # What the build stamps into every event's `commit` tag.
 COMMIT="$(git -C "$ROOT" rev-parse --short HEAD)"
 
@@ -92,7 +92,7 @@ if (( BUILD )); then
     git -C "$ROOT" diff --quiet -- "$SECRETS" || die "$SECRETS has local changes"
     trap 'git -C "$ROOT" checkout -- "$SECRETS"' EXIT
     trap 'exit 130' INT
-    sed -i '' "s#static let dsn = \"Your Sentry DSN\"#static let dsn = \"$SENTRY_DSN\"#" "$SECRETS"
+    sed -i '' "s#static let sentryDSN = \"Your Sentry DSN\"#static let sentryDSN = \"$SENTRY_DSN\"#" "$SECRETS"
 fi
 
 # --- platform drivers -------------------------------------------------------

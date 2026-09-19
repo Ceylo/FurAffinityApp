@@ -69,7 +69,7 @@ You never run `sentry-cli` yourself; the upload is inside the archive. Two thing
 must hold **in the checkout you archive from**:
 
 - the stash is applied, or the archive stops with `error:
-  CrashReportingSecrets.swift holds no DSN`. Without that check the archive would
+  Secrets.swift holds no Sentry DSN`. Without that check the archive would
   upload its symbols, validate, ship, and report nothing;
 - a `.sentryclirc` holds the org auth token, since a GUI archive inherits no
   environment and cannot see `$SENTRY_AUTH_TOKEN`. The project-root one is
