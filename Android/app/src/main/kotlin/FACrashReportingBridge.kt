@@ -1,0 +1,210 @@
+//
+//  FACrashReportingBridge.kt
+//  FurAffinity (Android)
+//
+//  Starts sentry-android for CrashReporting+Android.swift, reached by class name
+//  through AnyDynamicObject like FAImageFetchBridge. Manifest auto-init is off:
+//  Swift decides whether reporting runs (DSN present, setting on).
+//
+//  Swift crashes are native signals in the app's .so files. Tombstones (collected
+//  by the OS out of process) catch them on Android 12+, the NDK signal handler
+//  below that. Never both: the SDK fails to merge their two reports of one crash
+//  and sends it twice. See docs/crash-reporting.md.
+//
+
+package fur.affinity.ui
+
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import io.sentry.Sentry
+import io.sentry.SentryEvent
+import io.sentry.android.core.SentryAndroid
+import io.sentry.protocol.App
+import io.sentry.protocol.Contexts
+import io.sentry.protocol.Device
+import io.sentry.protocol.OperatingSystem
+import skip.foundation.ProcessInfo
+
+class FACrashReportingBridge {
+    // Boolean, not Unit: AnyDynamicObject can't resolve the void overload.
+    fun start(dsn: String, release: String, environment: String, commit: String, reportsSinceMillis: Long): Boolean = try {
+        SentryAndroid.init(ProcessInfo.processInfo.androidContext) { options ->
+            options.dsn = dsn
+            options.release = release
+            options.environment = environment
+            // Without it the tombstone path derives an invalid dist from `release`.
+            options.dist = versionCode()
+            // Crashes and ANRs only: no identifiers, no captured UI, no tracing.
+            options.isSendDefaultPii = false
+            options.isAttachScreenshot = false
+            options.isAttachViewHierarchy = false
+            // Its answer would be dropped in beforeSend anyway; don't probe for su.
+            options.isEnableRootCheck = false
+            // Nothing sent without a crash, and nothing in a report but the crash:
+            // no session per launch, no breadcrumbs (UI, lifecycle, system, network).
+            options.isEnableAutoSessionTracking = false
+            options.enableAllAutoBreadcrumbs(false)
+            options.maxBreadcrumbs = 0
+            options.isAnrEnabled = true
+            val hasTombstones = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+            options.isTombstoneEnabled = hasTombstones
+            options.isEnableNdk = !hasTombstones
+            options.addInAppInclude("fur.affinity.ui")
+            // A tombstone or ANR read back after an update gets the new build's tag,
+            // as it gets its release.
+            if (commit.isNotEmpty()) options.setTag(COMMIT_TAG, commit)
+            // The last tombstone and ANR are read back from the OS at start, even
+            // when reporting was off at the time; see CrashReportingConfiguration.
+            options.setBeforeSend { event, _ ->
+                if (event.timestamp.time < reportsSinceMillis) null
+                else event.also {
+                    keepListedContextOnly(it.contexts)
+                    repairDebugImageBases(it)
+                    // isSideLoaded, installerStore: how the APK was installed.
+                    it.tags?.keys?.filter { key -> key !in KEPT_TAGS }?.forEach(it::removeTag)
+                }
+            }
+            options.tracesSampleRate = null
+        }
+        true
+    } catch (e: Exception) {
+        Log.e(TAG, "could not start Sentry", e)
+        false
+    }
+
+    private fun versionCode(): String {
+        val context = ProcessInfo.processInfo.androidContext
+        return context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode.toString()
+    }
+
+    fun stop(): Boolean {
+        Sentry.close()
+        return true
+    }
+
+    fun setTag(key: String, value: String): Boolean {
+        Sentry.setTag(key, value)
+        return true
+    }
+
+    /// Throws on the next main-looper turn: thrown here, inside the JNI call, it
+    /// would come back to Swift as an error instead of crashing.
+    fun crashTest(): Boolean {
+        Handler(Looper.getMainLooper()).post {
+            throw IllegalStateException("Crash test") // CRASH-TEST-SITE kotlinException
+        }
+        return true
+    }
+
+    companion object {
+        private const val TAG = "FACrashReportingBridge"
+        private val KEPT_CONTEXTS = setOf("os", "trace", "device", "app")
+        private const val COMMIT_TAG = "commit"
+        /// The tags set on purpose, the only ones an event keeps: the build's commit,
+        /// and the checker's run id (set by CrashTest.swift).
+        private val KEPT_TAGS = setOf(COMMIT_TAG, "crash_test_run")
+
+        /// Workaround for sentry-android 8.57.0: `TombstoneParser.createDebugMeta`
+        /// starts a module at the *first* mapping carrying its build id, and a large
+        /// `base.apk` mapping below the real ELF carries ours — so the image base lands
+        /// tens of MB too low, the module ends up covering addresses it does not own,
+        /// and its frames symbolicate to nothing. Each frame carries the right base
+        /// (the parser sets `pc - rel_pc` per frame), so raise the image to the highest
+        /// frame base it contains and shrink it by as much, leaving its end where it is.
+        /// Which library it hits moves between runs, so no image is trusted.
+        private fun repairDebugImageBases(event: SentryEvent) {
+            val images = event.debugMeta?.images ?: return
+            val stacktraces = (event.exceptions ?: emptyList()).mapNotNull { it.stacktrace } +
+                (event.threads ?: emptyList()).mapNotNull { it.stacktrace }
+            // Frames that name both an address and the image they belong to, as (pc, base).
+            val frames = stacktraces
+                .flatMap { it.frames ?: emptyList() }
+                .mapNotNull { frame ->
+                    val pc = frame.instructionAddr?.toAddressOrNull() ?: return@mapNotNull null
+                    val base = frame.imageAddr?.toAddressOrNull() ?: return@mapNotNull null
+                    pc to base
+                }
+            if (frames.isEmpty()) return
+
+            for (image in images) {
+                val base = image.imageAddr?.toAddressOrNull() ?: continue
+                val size = image.imageSize ?: continue
+                var repaired = base
+                for ((pc, frameBase) in frames) {
+                    if (!contains(base, size, pc) || !contains(base, size, frameBase)) continue
+                    if (java.lang.Long.compareUnsigned(frameBase, repaired) > 0) repaired = frameBase
+                }
+                if (repaired == base) continue
+                image.imageAddr = "0x" + java.lang.Long.toHexString(repaired)
+                image.setImageSize(size - (repaired - base))
+            }
+        }
+
+        private fun contains(base: Long, size: Long, address: Long): Boolean =
+            java.lang.Long.compareUnsigned(address, base) >= 0 &&
+                java.lang.Long.compareUnsigned(address, base + size) < 0
+
+        private fun String.toAddressOrNull(): Long? = try {
+            java.lang.Long.parseUnsignedLong(removePrefix("0x"), 16)
+        } catch (e: NumberFormatException) {
+            null
+        }
+
+        /// The contexts the privacy policy covers, so nothing an SDK adds ever
+        /// leaves: `trace` (random ids) whole, the OS, device and app copied field
+        /// by field — versions, model, the install id. Dropped: any other context,
+        /// root status, and the device's timezone, locale, connectivity, battery,
+        /// free memory and storage, boot time, granted permissions, screen names.
+        private fun keepListedContextOnly(contexts: Contexts) {
+            for (key in java.util.Collections.list(contexts.keys())) {
+                if (key !in KEPT_CONTEXTS) contexts.remove(key)
+            }
+            contexts.operatingSystem?.let { os ->
+                contexts.setOperatingSystem(OperatingSystem().also {
+                    it.name = os.name
+                    it.version = os.version
+                    it.build = os.build
+                    it.kernelVersion = os.kernelVersion
+                })
+            }
+            contexts.device?.let { d ->
+                contexts.setDevice(Device().also {
+                    it.id = d.id
+                    it.manufacturer = d.manufacturer
+                    it.brand = d.brand
+                    it.family = d.family
+                    it.model = d.model
+                    it.modelId = d.modelId
+                    it.archs = d.archs
+                    it.isSimulator = d.isSimulator
+                    it.chipset = d.chipset
+                    it.cpuDescription = d.cpuDescription
+                    it.processorCount = d.processorCount
+                    it.processorFrequency = d.processorFrequency
+                    it.memorySize = d.memorySize
+                    it.storageSize = d.storageSize
+                    it.screenWidthPixels = d.screenWidthPixels
+                    it.screenHeightPixels = d.screenHeightPixels
+                    it.screenDensity = d.screenDensity
+                    it.screenDpi = d.screenDpi
+                })
+            }
+            contexts.app?.let { a ->
+                contexts.setApp(App().also {
+                    it.appIdentifier = a.appIdentifier
+                    it.appName = a.appName
+                    it.appVersion = a.appVersion
+                    it.appBuild = a.appBuild
+                    it.buildType = a.buildType
+                    it.appStartTime = a.appStartTime
+                    it.startType = a.startType
+                    it.inForeground = a.inForeground
+                    it.splitApks = a.splitApks
+                    it.splitNames = a.splitNames
+                })
+            }
+        }
+    }
+}

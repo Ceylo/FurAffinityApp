@@ -17,6 +17,7 @@ struct SettingsView: View {
 
     @Default(.animateAvatars) private var animateAvatars: Bool
     @Default(.addMessageToSharedItems) private var addMessageToSharedItems: Bool
+    @Default(.crashReportingEnabled) private var crashReportingEnabled: Bool
 
     @State var cachedFileSize = "unknown"
 
@@ -79,6 +80,17 @@ struct SettingsView: View {
             }
             
             Section {
+                Toggle("Send crash reports", isOn: $crashReportingEnabled)
+                    .onChange(of: crashReportingEnabled) { _, enabled in
+                        CrashReporting.settingChanged(enabled: enabled)
+                    }
+            } header: {
+                Text("Advanced")
+            } footer: {
+                Text("Sends the app's call stack, device model, system and app version when it crashes, with no account information. Turning it back on applies from the next launch.")
+            }
+
+            Section {
                 Menu {
                     Button("Last hour") { exportLogs(range: .lastHour) }
                     Button("Last 24 hours") { exportLogs(range: .last24Hours) }
@@ -108,8 +120,6 @@ struct SettingsView: View {
                     }
                 }
                 .disabled(cleaningCache)
-            } header: {
-                Text("Advanced")
             } footer: {
                 Text("This cache allows faster contents display. Clearing it will cause images to be downloaded again from furaffinity.net when needed.")
             }

@@ -30,3 +30,6 @@ out/
 # every installed user, so keep an off-machine backup — it is not in git.
 Android/app/keystore.jks
 Android/app/keystore.properties
+
+# sentry-cli auth for a local archive; see Android/docs/crash-reporting.md.
+.sentryclirc

@@ -67,6 +67,12 @@ apksigner verify --print-certs <apk>      # must NOT say CN=Android Debug
 Scripts/Android/build-release-apk.sh
 ```
 
+It needs `SENTRY_AUTH_TOKEN` in the environment (the Gradle plugin uploads the
+`.so` files and the R8 mapping with it) and a DSN, which comes from the stash;
+it refuses to build without either. See
+[crash-reporting.md](crash-reporting.md) § Releasing, which also covers the two
+iOS channels.
+
 That is the whole thing: it applies the distribution stash, drops the build dirs
 the changed applicationId invalidates, exports, checks the signing certificate,
 and reverts the working tree on the way out (`--keep-stash` leaves it applied,
@@ -140,5 +146,8 @@ What to tell a tester:
   and audio submissions, and posting comments. Tapping an author or an avatar shows
   "This screen isn't ported to Android yet."
 - First launch shows Cloudflare's "Verify you are human" and needs a real tap.
-- There is **no crash or ANR reporting on either platform**, so a hang has to be
-  reported by hand — Settings → Export Application Logs is what to ask for.
+- Crashes and ANRs report themselves to Sentry, symbolicated down to the source
+  line (see [crash-reporting.md](crash-reporting.md)); the toggle for that is
+  Settings → Advanced → Send crash reports. The application log is *not* sent, so
+  for anything that is not a crash — a hang that resolves, a wrong-looking screen
+  — Settings → Export Application Logs is still what to ask for.

@@ -6,6 +6,32 @@
 	objectVersion = 60;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		EFA2FFB4C04E4E94C55CC3A3 /* Upload dSYMs */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 128715CB87902AE94D1629C6 /* Build configuration list for PBXAggregateTarget "Upload dSYMs" */;
+			buildPhases = (
+				0555D8CFB0E91680C6198475 /* Upload dSYMs to Sentry */,
+			);
+			dependencies = (
+				BC8D38E77B3B804489C8A4F5 /* PBXTargetDependency */,
+			);
+			name = "Upload dSYMs";
+			productName = "Upload dSYMs";
+		};
+		B6BA9B87346CA4D6D5A6E9B3 /* Commit Stamp */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = B89C85E4D9C46CF66421B073 /* Build configuration list for PBXAggregateTarget "Commit Stamp" */;
+			buildPhases = (
+				15B6570A18A15CF514B8AD23 /* Write FACommit.h */,
+			);
+			dependencies = (
+			);
+			name = "Commit Stamp";
+			productName = "Commit Stamp";
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
 		0E06AEA6028467B9110C67E9 /* NotificationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99B6D6EA7F946B29E403A1C9 /* NotificationViewController.swift */; };
 		2EDFB020CB332BCD78AAAC83 /* LoginCookies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DAE7CF11945226ED5F47626 /* LoginCookies.swift */; };
@@ -170,6 +196,11 @@
 		FA0000000000000000000008 /* SubmissionAudioContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000007 /* SubmissionAudioContent.swift */; };
 		FA000000000000000000000A /* AudioPlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000009 /* AudioPlaybackController.swift */; };
 		FB227FE8FD7642FAD0C63BF7 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E6731320A5B4D6196E99F0F9 /* UserNotifications.framework */; };
+		9D6D2A76FD5B02CB4A37F1BA /* CrashReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF3D71C0280E404172EB9D4B /* CrashReporting.swift */; };
+		39472029AFE82AAE884E8980 /* CrashReporting+iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD256DE747CD74E1E90651F9 /* CrashReporting+iOS.swift */; };
+		AA033C746B0A65D536D8E296 /* CrashReportingConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A264CEDCBC3A6A5E7A2CA5AC /* CrashReportingConfigurationTests.swift */; };
+		6863F20D55CCBA999B4BF92D /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 8A95ED7DF8B078BBE10E20C5 /* Sentry */; };
+		7861E9BBEEAE05821E3E9B5B /* CrashTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CA6CC10C93CFDA14205099B /* CrashTest.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -186,6 +217,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = 8716E7E7271C659C00C0BC4A;
 			remoteInfo = FurAffinity;
+		};
+		3160E9004526841748D5FF58 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8716E7E0271C659C00C0BC4A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8716E7E7271C659C00C0BC4A;
+			remoteInfo = FurAffinity;
+		};
+		27C0EE7961636EDE64ACFD0C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8716E7E0271C659C00C0BC4A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B6BA9B87346CA4D6D5A6E9B3;
+			remoteInfo = "Commit Stamp";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -367,6 +412,10 @@
 		FA0000000000000000000007 /* SubmissionAudioContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionAudioContent.swift; sourceTree = "<group>"; };
 		FA0000000000000000000009 /* AudioPlaybackController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlaybackController.swift; sourceTree = "<group>"; };
 		FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudflareResolutionOverlay.swift; sourceTree = "<group>"; };
+		DF3D71C0280E404172EB9D4B /* CrashReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReporting.swift; sourceTree = "<group>"; };
+		FD256DE747CD74E1E90651F9 /* CrashReporting+iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CrashReporting+iOS.swift"; sourceTree = "<group>"; };
+		A264CEDCBC3A6A5E7A2CA5AC /* CrashReportingConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReportingConfigurationTests.swift; sourceTree = "<group>"; };
+		5CA6CC10C93CFDA14205099B /* CrashTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashTest.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -384,6 +433,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6863F20D55CCBA999B4BF92D /* Sentry in Frameworks */,
 				87E796172C99994D0020EACD /* SwiftUIIntrospect in Frameworks */,
 				87C1A0AD284B6E5400529F8C /* Version in Frameworks */,
 				871034822E8F12A80030F36E /* Collections in Frameworks */,
@@ -430,7 +480,6 @@
 				87CCD2F52FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift */,
 				871C66DE29B8C36700A2B2C2 /* Info.plist */,
 				87874B802FD0A3E90027CE46 /* FurAffinity.entitlements */,
-				878B0B902970B18C00A08685 /* Secrets.swift */,
 				87546E622EAE70430098BAA1 /* AppIconLG.icon */,
 				87546E632EAE70430098BAA1 /* AppIconLG-debug.icon */,
 				8716E7F1271C659D00C0BC4A /* Preview Content */,
@@ -470,6 +519,7 @@
 				8716E7ED271C659C00C0BC4A /* HomeView.swift */,
 				877226B227402F9300245DF0 /* LoggedInView.swift */,
 				87098D392CB2BEF000E7BD94 /* UserDefaultKeys.swift */,
+				878B0B902970B18C00A08685 /* Secrets.swift */,
 				875DD46E2843D1C300F3E5D9 /* Helpers */,
 				878EBC9A2EDB8E11006A68D3 /* View extensions */,
 				87A4CA8B2756D17C009AA219 /* Helper Views */,
@@ -577,6 +627,8 @@
 				8774EE732DFB78B90074E015 /* Replying.swift */,
 				58119C7E67EC670409E1D1CC /* GeometryProxy+FASize.swift */,
 				3A24D8C3751477ACBD19CBA9 /* LaunchLog.swift */,
+				DF3D71C0280E404172EB9D4B /* CrashReporting.swift */,
+				5CA6CC10C93CFDA14205099B /* CrashTest.swift */,
 				DE0FE3ECD383602E8F75046C /* InAppLinkConversion.swift */,
 				87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */,
 				E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */,
@@ -661,6 +713,7 @@
 			isa = PBXGroup;
 			children = (
 				8791D60229C4D627003FDBBE /* FATargetTests.swift */,
+				A264CEDCBC3A6A5E7A2CA5AC /* CrashReportingConfigurationTests.swift */,
 				87CF0CA100000000000F0C01 /* CommentFocusTargetTests.swift */,
 				87CCD2F72FC4991600768FDB /* BackgroundRefreshNotificationBuilderTests.swift */,
 				87FACE0300000000000DEECF /* NotificationCoordinatorTests.swift */,
@@ -770,6 +823,7 @@
 				87FACE0100000000000DEECF /* NotificationDeepLink.swift */,
 				3DAE7CF11945226ED5F47626 /* LoginCookies.swift */,
 				8791D60C29C4DCE6003FDBBE /* InAppNavigation.swift */,
+				FD256DE747CD74E1E90651F9 /* CrashReporting+iOS.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -799,9 +853,11 @@
 			);
 			dependencies = (
 				F48539DEA404F48156AED323 /* PBXTargetDependency */,
+				E79DA09390FABA9D09BE59A2 /* PBXTargetDependency */,
 			);
 			name = FurAffinity;
 			packageProductDependencies = (
+				8A95ED7DF8B078BBE10E20C5 /* Sentry */,
 				8761834D271F5E570021A051 /* FAKit */,
 				87FA100B271F5E570021A051 /* FALogging */,
 				87C1A0AC284B6E5400529F8C /* Version */,
@@ -880,6 +936,7 @@
 			);
 			mainGroup = 8716E7DF271C659C00C0BC4A;
 			packageReferences = (
+				981394E485382A497F1710C5 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 				599D1B3400000000AFFCC434 /* XCLocalSwiftPackageReference "FALogging" */,
 				87C1A0AB284B6E5400529F8C /* XCRemoteSwiftPackageReference "Version" */,
 				879BFAB728D5E97800BDFB43 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
@@ -895,6 +952,8 @@
 				8716E7E7271C659C00C0BC4A /* FurAffinity */,
 				8791D5FF29C4D627003FDBBE /* FurAffinityTests */,
 				ED8A6DFCA49B4E86C9B5B80B /* NotificationContent */,
+				EFA2FFB4C04E4E94C55CC3A3 /* Upload dSYMs */,
+				B6BA9B87346CA4D6D5A6E9B3 /* Commit Stamp */,
 			);
 		};
 /* End PBXProject section */
@@ -927,6 +986,49 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		0555D8CFB0E91680C6198475 /* Upload dSYMs to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(DWARF_DSYM_FOLDER_PATH)/Fur Affinity.app.dSYM",
+			);
+			name = "Upload dSYMs to Sentry";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Upload this archive's dSYMs to Sentry, so a crash in the shipped build arrives\n# as File.swift:line rather than a bare address. One mechanism for both iOS\n# distribution channels: the tagged release workflow and a local Xcode archive.\n# See Android/docs/crash-reporting.md.\n#\n# Archive only. Xcode sets ACTION=install for `archive` and for nothing else, so\n# every Debug build and every ordinary Release build stops on the next line.\n[ \"$ACTION\" = install ] || exit 0\n\n# A release that cannot report is worse than no release, and this is the silent\n# way to get one: without the distribution stash the archive uploads its symbols\n# perfectly well and then reports nothing at all. CI seds the DSN in before\n# archiving (empty if the secret is missing); a local archive gets it from the stash.\nif grep -qE 'static let sentryDSN = \"(Your Sentry DSN)?\"' \"$SRCROOT/FurAffinity/Secrets.swift\"; then\n    echo \"error: Secrets.swift holds no Sentry DSN (the placeholder, or empty), so this archive would report no crashes. Apply the distribution stash before archiving, or on CI set the SENTRY_DSN secret; see Android/docs/crash-reporting.md.\"\n    exit 1\nfi\n\nexport SENTRY_ORG=ceylo\nexport SENTRY_PROJECT=ceylo-furaffinity-app\n\n# An archive started from the Xcode GUI inherits launchd's PATH, not a shell's.\nfor dir in /opt/homebrew/bin /usr/local/bin; do\n    [ -x \"$dir/sentry-cli\" ] && PATH=\"$dir:$PATH\"\ndone\n\nif ! command -v sentry-cli > /dev/null; then\n    echo \"error: sentry-cli is missing, so this archive would ship with no symbols on the server and its crashes would arrive as bare addresses. brew install getsentry/tools/sentry-cli\"\n    exit 1\nfi\n\n# sentry-cli reads .sentryclirc from the working directory, which Xcode sets to\n# $SRCROOT, and from $HOME. A GUI archive has no environment, so one of those is\n# how it authenticates.\nif [ -z \"$SENTRY_AUTH_TOKEN\" ] && [ ! -f \"$SRCROOT/.sentryclirc\" ] && [ ! -f \"$HOME/.sentryclirc\" ]; then\n    echo \"error: no Sentry auth token. Export SENTRY_AUTH_TOKEN, or write one into $SRCROOT/.sentryclirc (git-ignored) or ~/.sentryclirc. See Android/docs/crash-reporting.md.\"\n    exit 1\nfi\n\n# --wait only on CI: it confirms the server finished processing, which a local\n# archive would rather not sit through.\nsentry-cli debug-files upload --include-sources ${CI:+--wait} \"$DWARF_DSYM_FOLDER_PATH\"\n";
+		};
+		15B6570A18A15CF514B8AD23 /* Write FACommit.h */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Write FACommit.h";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(PROJECT_TEMP_DIR)/FACommit.h",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Stamps the build's short commit hash into the app's Info.plist (FACommit), so a\n# crash report names the exact source it came from; see\n# Android/docs/crash-reporting.md. Its own target because git reads under .git,\n# which the user-script sandbox denies, and the sandbox is per target.\nheader=\"$PROJECT_TEMP_DIR/FACommit.h\"\nif ! commit=$(git -C \"$SRCROOT\" rev-parse --short HEAD); then\n    echo \"warning: git rev-parse failed, so this build carries no commit hash\"\n    commit=\nfi\nline=\"#define FA_COMMIT $commit\"\n# Rewritten only on change, so an unmoved HEAD leaves the Info.plist alone.\nif [ \"$(cat \"$header\" 2>/dev/null)\" != \"$line\" ]; then\n    mkdir -p \"$PROJECT_TEMP_DIR\"\n    echo \"$line\" > \"$header\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		1AB8D5B3E810310409ABBAFE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -940,6 +1042,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7861E9BBEEAE05821E3E9B5B /* CrashTest.swift in Sources */,
+				39472029AFE82AAE884E8980 /* CrashReporting+iOS.swift in Sources */,
+				9D6D2A76FD5B02CB4A37F1BA /* CrashReporting.swift in Sources */,
 				8766005829055FBC00C7A998 /* CommentsView.swift in Sources */,
 				87A1859C27459FFE00B10D2A /* SettingsView.swift in Sources */,
 				CE0000010000000000000002 /* NotificationSettingsView.swift in Sources */,
@@ -1082,6 +1187,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA033C746B0A65D536D8E296 /* CrashReportingConfigurationTests.swift in Sources */,
 				87CCD2F92FC49A2000768FDB /* BackgroundRefreshNotificationBuilderTests.swift in Sources */,
 				87FACE0400000000000DEECF /* NotificationCoordinatorTests.swift in Sources */,
 				87FACE0600000000000DEECF /* LoggedInViewTabTests.swift in Sources */,
@@ -1109,6 +1215,16 @@
 			name = NotificationContent;
 			target = ED8A6DFCA49B4E86C9B5B80B /* NotificationContent */;
 			targetProxy = 378942C122599D213A1E4A34 /* PBXContainerItemProxy */;
+		};
+		BC8D38E77B3B804489C8A4F5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8716E7E7271C659C00C0BC4A /* FurAffinity */;
+			targetProxy = 3160E9004526841748D5FF58 /* PBXContainerItemProxy */;
+		};
+		E79DA09390FABA9D09BE59A2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B6BA9B87346CA4D6D5A6E9B3 /* Commit Stamp */;
+			targetProxy = 27C0EE7961636EDE64ACFD0C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1294,6 +1410,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FurAffinity/iOS/Info.plist;
+				INFOPLIST_PREFIX_HEADER = "$(PROJECT_TEMP_DIR)/FACommit.h";
+				INFOPLIST_PREPROCESS = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Chosen images will be saved to the Photo Library.";
@@ -1325,6 +1443,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FurAffinity/iOS/Info.plist;
+				INFOPLIST_PREFIX_HEADER = "$(PROJECT_TEMP_DIR)/FACommit.h";
+				INFOPLIST_PREPROCESS = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Chosen images will be saved to the Photo Library.";
@@ -1375,6 +1495,38 @@
 			};
 			name = Release;
 		};
+		87D3BB13F83F69CFEEF8813C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		265F9E4D362209D06EF1DB8F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		C3AAD718D6F5F23EB653333D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		06F7AAD50206C502F1669B39 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1410,6 +1562,24 @@
 			buildConfigurations = (
 				29BA4F8745BA480963FE0756 /* Release */,
 				2B4465CE590FD9B088BE17A8 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		128715CB87902AE94D1629C6 /* Build configuration list for PBXAggregateTarget "Upload dSYMs" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				87D3BB13F83F69CFEEF8813C /* Debug */,
+				265F9E4D362209D06EF1DB8F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B89C85E4D9C46CF66421B073 /* Build configuration list for PBXAggregateTarget "Commit Stamp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C3AAD718D6F5F23EB653333D /* Debug */,
+				06F7AAD50206C502F1669B39 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -1472,6 +1642,14 @@
 				minimumVersion = 2.1.0;
 			};
 		};
+		981394E485382A497F1710C5 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.29.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1512,6 +1690,11 @@
 		87FA100B271F5E570021A051 /* FALogging */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = FALogging;
+		};
+		8A95ED7DF8B078BBE10E20C5 /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 981394E485382A497F1710C5 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

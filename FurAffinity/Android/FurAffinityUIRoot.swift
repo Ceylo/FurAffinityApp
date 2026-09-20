@@ -34,12 +34,13 @@ import SwiftUI
     }
 
     /* SKIP @bridge */public func onInit() {
-        // Both must land before anything reads them, and the loggers freeze their
+        // These must land before anything reads them, and the loggers freeze their
         // subsystem on first use — so this is the very first thing the app does.
         // `Bundle.main` has no Info.plist behind it in a native Skip module, and its
         // bundleIdentifier names the Skip module rather than the install.
         FALogSubsystem.override = AndroidAppInfo.packageName
         FAAppVersion.override = AndroidAppInfo.versionName
+        FAAppVersion.commitOverride = AndroidAppInfo.commit
         // FAKit owns the web layer but not the two Kotlin bridges behind it. Here
         // rather than in a `.task`: both are read as a view is *constructed*.
         FAWebViewUserAgent.platformProvider = { AndroidAppInfo.webViewDefaultUserAgent }
@@ -60,10 +61,24 @@ import SwiftUI
         // its default value at construction, so one touched earlier lands in the orphan
         // store.
         installDefaultsSuite()
+        // As early as it can be: it reads a Defaults key, so not before the suite.
+        CrashReporting.start(appID: AndroidAppInfo.packageName)
         // Matches FurAffinityApp.init() on iOS. A no-op on a fresh Android install
         // (see Defaults.startingSchemaVersion), but it stamps the schema version so a
         // later migration knows where to resume.
         Defaults.runSettingsMigrations()
+    }
+
+    /// From `MainActivity`'s intent extras on a non-release build; see
+    /// Scripts/check-crash-reporting.sh.
+    /* SKIP @bridge */public func runCrashTest(_ name: String, _ runID: String) {
+        CrashTest.run(name, runID: runID)
+    }
+
+    /// Lets the script's opt-out control flip the setting without the UI.
+    /* SKIP @bridge */public func setCrashReportingEnabled(_ enabled: Bool) {
+        Defaults[.crashReportingEnabled] = enabled
+        CrashReporting.settingChanged(enabled: enabled)
     }
 
     /* SKIP @bridge */public func onLaunch() {

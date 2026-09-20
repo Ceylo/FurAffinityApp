@@ -23,6 +23,10 @@
         android:supportsRtl="true"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher">
+        <!-- Sentry starts from Swift (CrashReporting.start), once it knows there is a
+             DSN and the user hasn't opted out. -->
+        <meta-data android:name="io.sentry.auto-init" android:value="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

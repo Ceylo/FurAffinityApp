@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.android.application)
     id("skip-build-plugin")
+    id("io.sentry.android.gradle") version "6.22.0"
 }
 
 skip {
@@ -22,6 +23,37 @@ dependencies {
     // okhttp-bom) — a higher pin would drag coil's okhttp onto a different version.
     implementation("com.squareup.okhttp3:okhttp:5.3.2")
     implementation("com.squareup.okio:okio:3.16.4")
+    // Explicit rather than the plugin's autoInstallation, which would also add its
+    // OkHttp/Compose/Fragment integrations. See docs/crash-reporting.md.
+    implementation("io.sentry:sentry-android-core:8.57.0")
+    implementation("io.sentry:sentry-android-ndk:8.57.0")
+}
+
+// Symbol and mapping uploads happen only when SENTRY_AUTH_TOKEN is set (release and
+// profile builds), so a debug build or a CI configure never needs it. A release
+// without its uploaded .so files and R8 mapping can't be symbolicated — see
+// Scripts/Android/build-release-apk.sh, which insists on the token.
+val sentryUploads = System.getenv("SENTRY_AUTH_TOKEN").isNullOrEmpty().not()
+
+sentry {
+    org = "ceylo"
+    projectName = "ceylo-furaffinity-app"
+    authToken = System.getenv("SENTRY_AUTH_TOKEN")
+    ignoredBuildTypes = setOf("debug")
+
+    autoInstallation { enabled = false }
+    tracingInstrumentation { enabled = false }
+    includeDependenciesReport = false
+    telemetry = false
+
+    includeProguardMapping = true
+    autoUploadProguardMapping = sentryUploads
+    // The unstripped Swift .so files from merged_native_libs; their GNU BuildID
+    // survives stripping, so they match crashes in the shipped APK.
+    uploadNativeSymbols = sentryUploads
+    includeNativeSources = true
+    // Kotlin source lines in the report, as native sources are above.
+    includeSourceContext = sentryUploads
 }
 
 // One installable per git worktree, so every branch can sit on the same emulator
@@ -66,6 +98,15 @@ android {
         // The launcher label. Skip's template used ${PRODUCT_NAME}, which has to stay
         // equal to the Swift module name (FurAffinityUI) and so can't be the app's name.
         resValue("string", "app_name", "Fur Affinity")
+
+        // The short hash of HEAD, sent as every crash report's `commit` tag; empty when
+        // git can't answer. No -dirty suffix: every shipped build is dirty on purpose.
+        val commit = providers.exec {
+            commandLine("git", "rev-parse", "--short", "HEAD")
+            workingDir = rootDir
+            isIgnoreExitValue = true
+        }.standardOutput.asText.get().trim()
+        buildConfigField("String", "GIT_COMMIT", "\"$commit\"")
     }
 
     buildFeatures {
