@@ -70,6 +70,8 @@ jobs:
           # The archive's "Upload dSYMs" target needs it, and fails
           # the archive if it is missing.
           brew install getsentry/tools/sentry-cli
+      - name: Trust package plugins and macros
+        run: Scripts/iOS/trust-swiftpm-extensions.sh
       - name: Archive App
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
