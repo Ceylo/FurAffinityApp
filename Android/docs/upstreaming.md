@@ -18,7 +18,7 @@ is never described as submitted.
 |---|---|---|
 | `Ceylo/skip-ui` | all of it | — |
 | `Ceylo/skip-fuse-ui` | all but one commit | `cfa7d82` — names our forks in `Package.swift` |
-| `Ceylo/Kingfisher` | the API half of `47267203`; the Android port only if onevcat wants one | skipstone plugin, the unconditional `SkipFuseUI` edge, the `Documentation.docc` deletion, the dynamic-library manifest |
+| `Ceylo/Kingfisher` | the Android port, only if onevcat wants one | skipstone plugin, the unconditional `SkipFuseUI` edge, the `Documentation.docc` deletion, the dynamic-library manifest |
 | `Ceylo/Defaults` | `Defaults.defaultSuite`, pitched on its own merits | dropping `DefaultsMacros` + swift-syntax, the `#if !os(Android)` guards |
 | `Ceylo/skip-web` | nothing | `64de0f8` — dependency locations only; required today, retires when the two above land |
 
@@ -45,7 +45,6 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `9eb2c87` `@_disfavoredOverload` on `Text(AttributedString)` | skip-fuse-ui | no | belongs with whichever attributed-text PR lands; the trap is worth writing up either way |
 | `5a21355` `GeometryReader` composes on the measure pass | skip-ui | no | fidelity fix (no blank first frame). Before sending, check whether it causes the intrinsic-measurement crash under a scroll: `BoxWithConstraints` is a `SubcomposeLayout` and the old `Box` was not |
 | `23154a0` `ImageHolder`, read in the draw phase | skip-ui + `c59b1a7` | yes | new API; its only caller today is the Kingfisher fork (`07f72deb`), so argue it from Coil's `AsyncImagePainter`, not from Kingfisher |
-| `47267203` `reportDownloadProgress(receivedSize:totalSize:)` | Kingfisher | no | the same argument as #2576 (a replacement transport can't feed progress). Sent as #2579 (topic branch `feature/custom-downloader-progress`), the `KingfisherOptionsInfo` half only, with tests; the `ImageBinder` change is Android-only and stays. Rebase the fork's `android` branch onto the merged API once it lands. One upstream tvOS flake, `testRetrieveImageWithAsyncCacheTypeCheckUsesOriginalCacheFallback`, times out 2 in 20 on `master` too: re-run it before reading a failure into it |
 | `2b2dc459` + `66eb74df` + `ae0b4f07` Android port | Kingfisher | no | issue first; large parts can never leave the fork |
 | `058eb5d4`, `2296a263`, `07f72deb`, `731194ee` Android first-frame work | Kingfisher | no | part of the port, and depends on skip-ui `23154a0`. `07f72deb` replaces most of the first two. `731194ee` sits on the *target*-cache-hit path; #2572/#2573 rewrote the *original*-cache-hit path beside it, and `239c970b` merged them without touching it |
 | `fb0ef04` `Defaults.defaultSuite` | Defaults | no | issue first; re-pitch without the Android rationale |
@@ -312,6 +311,8 @@ the lane's own `xcodebuild` arguments directly (`-workspace Kingfisher.xcworkspa
 Kingfisher SWIFT_VERSION=5.0`) and say so in `Verified`. The tvOS runtime was not installed
 by default; `xcodebuild -downloadPlatform tvOS` fetched 26.5 (3.8 GB). watchOS needs only
 the SDK.
+One upstream tvOS test, `testRetrieveImageWithAsyncCacheTypeCheckUsesOriginalCacheFallback`,
+times out 2 runs in 20 on `master` too: re-run it before reading a failure into it.
 
 ### What the merged PRs did well
 
@@ -371,7 +372,7 @@ State is one of draft / opened / merged / rejected; fetch the PR for anything mo
 | PR | Patch | State |
 |---|---|---|
 | Kingfisher [#2576](https://github.com/onevcat/Kingfisher/pull/2576) | `b01358ef` | merged |
-| Kingfisher [#2579](https://github.com/onevcat/Kingfisher/pull/2579) | `47267203`, API half | draft |
+| Kingfisher [#2579](https://github.com/onevcat/Kingfisher/pull/2579) | `47267203`, API half | merged |
 | skip-ui [#524](https://github.com/skiptools/skip-ui/pull/524) | `6f06ae4` | draft |
 | skipapp-showcase [#122](https://github.com/skiptools/skipapp-showcase/pull/122) | playground for skip-ui #524 | draft |
 | skip-ui [#525](https://github.com/skiptools/skip-ui/pull/525) | `5eee865` + `80c72b4`, remapped | draft |

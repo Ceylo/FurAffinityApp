@@ -136,7 +136,7 @@ pixel sizing is load-bearing for its zoom ratios.
 
 The download-progress bar is shared too, `LinearProgress` included, down to its
 `GeometryReader` and `.spring`. The OkHttp transport's copy loop pushes progress, which
-reaches the bar through the Kingfisher fork's `reportDownloadProgress` ([images.md](images.md)).
+reaches the bar through Kingfisher's `reportDownloadProgress` ([images.md](images.md)).
 
 The submission controls keep one body as well. `AlignedLabel`'s and the metadata
 link's optical nudges are tuned for SF Symbols, so they go through

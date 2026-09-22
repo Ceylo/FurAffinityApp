@@ -81,7 +81,7 @@ Rules that are easy to get wrong here:
   an `AsyncStream` per waiting load (`FAImageStore` coalesces fetches, so one URL can
   have several). `FAOkHttpDownloader` subscribes before it awaits the bytes, so no early
   push is missed, and forwards each update to
-  `KingfisherParsedOptionsInfo.reportDownloadProgress` (a fork API), which feeds `KFImage`'s
+  `KingfisherParsedOptionsInfo.reportDownloadProgress` (upstream since #2579), which feeds `KFImage`'s
   placeholder and so `SubmissionMainImage`'s bar. A load still queued behind the gate
   costs nothing: it waits on an empty stream. This replaced a 100 ms poller of a Kotlin
   table (2026-09-13). With the copy loop temporarily slowed, an 895 KB image pushed 167
