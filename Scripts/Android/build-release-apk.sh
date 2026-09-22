@@ -9,7 +9,9 @@
 #
 # Usage: Scripts/Android/build-release-apk.sh [--out DIR] [--install] [--keep-stash]
 #
-#   --out         export directory, default <worktree>/out (wiped first)
+#   --out         directory the APK is added to, default <worktree>/out (never
+#                 wiped); it is named FurAffinity-<version>-<commit>.apk, and an
+#                 existing one is never overwritten
 #   --install     adb install -r -d the result on the running device
 #   --keep-stash  leave the distribution stash applied in the working tree
 #                 (default: revert the working tree to HEAD on exit)
@@ -40,7 +42,7 @@ KEEP_STASH=0
 
 while (( $# )); do
     case "$1" in
-        -h|--help)   sed -n '3,28p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)   sed -n '3,30p' "$0" | cut -c3-; exit 0 ;;
         --out)       OUT="$2"; shift ;;
         --out=*)     OUT="${1#*=}" ;;
         --install)   INSTALL=1 ;;
@@ -113,6 +115,11 @@ XCODE_VERSION="$(sed -nE 's@^[[:space:]]*MARKETING_VERSION = ([^;]+);@\1@p' \
 [[ "$XCODE_VERSION" == "$VERSION" ]] \
     || die "version mismatch: Skip.env says $VERSION, project.pbxproj says $XCODE_VERSION"
 
+# HEAD, as in the `commit` tag Sentry events carry; `stash apply` does not move it.
+COMMIT="$(git rev-parse --short HEAD)"
+APK="$OUT/FurAffinity-$VERSION-$COMMIT.apk"
+[[ -e "$APK" ]] && die "$APK already exists — move it away or pass another --out"
+
 # --- the distribution stash -------------------------------------------------
 
 STASH="$(git stash list --format='%H %gs' | awk -v m="$STASH_MSG" 'f { next } index($0, m) { print $1; f = 1 }')"
@@ -158,18 +165,25 @@ grep -qE 'static let sentryDSN = "(Your Sentry DSN)?"' "$ROOT/FurAffinity/Secret
 
 # --- build ------------------------------------------------------------------
 
-# The applicationId just changed, and these three cache it.
-step "Clearing .build/{plugins/outputs,Darwin,Android} and $OUT"
-rm -rf .build/plugins/outputs .build/Darwin .build/Android "$OUT"
+# skip export writes fixed file names, so it gets a scratch directory of its own
+# and only the APK is moved to $OUT, under its versioned name.
+STAGE="$ROOT/.build/release-export"
+
+# The applicationId just changed, and the first three cache it.
+step "Clearing .build/{plugins/outputs,Darwin,Android,release-export}"
+rm -rf .build/plugins/outputs .build/Darwin .build/Android "$STAGE"
 
 # --no-ios: the Skip-generated iOS shell is not this app's iOS release path.
 # --no-export-project: the source-archive step walks the project directory, and
 # with the output folder inside it that recurses until the zip is >1 GB and fails.
 step "skip export"
-skip export -d "$OUT" --release --android --no-ios --no-export-project
+skip export -d "$STAGE" --release --android --no-ios --no-export-project
 
-APK="$OUT/FurAffinityUI-release.apk"
-[[ -f "$APK" ]] || die "skip export produced no $APK"
+EXPORTED="$STAGE/FurAffinityUI-release.apk"
+[[ -f "$EXPORTED" ]] || die "skip export produced no $EXPORTED"
+mkdir -p "$OUT"
+mv -n "$EXPORTED" "$APK"
+[[ -f "$APK" && ! -e "$EXPORTED" ]] || die "could not move $EXPORTED to $APK"
 
 # --- verify the signature ---------------------------------------------------
 

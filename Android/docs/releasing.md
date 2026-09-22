@@ -91,15 +91,20 @@ What it runs:
 ```
 git stash apply <the distribution stash>   # pbxproj id + Amplitude key + Skip.env id
 rm -rf .build/plugins/outputs .build/Darwin .build/Android    # applicationId changed
-skip export -d out --release --android --no-ios --no-export-project
+skip export -d .build/release-export --release --android --no-ios --no-export-project
+mv .build/release-export/FurAffinityUI-release.apk out/FurAffinity-<version>-<commit>.apk
 ```
 
 `--no-ios` because the Skip-generated iOS shell is not this app's iOS release path.
 **`--no-export-project` is not optional**: the source-archive step walks the project
-directory, and with `-d out` inside it that includes its own output — it recurses
-until the zip is 1.37 GB and then fails. You do not want the archive anyway; the
-Android source is private. Output is `out/FurAffinityUI-release.apk` (send this) plus
-an `.aab`, which nothing here uses since Play is out.
+directory, and with the export directory inside it that includes its own output —
+it recurses until the zip is 1.37 GB and then fails. You do not want the archive
+anyway; the Android source is private. `skip export` writes fixed names, so it
+exports into `.build/release-export` and only the APK is moved to
+`out/FurAffinity-<version>-<commit>.apk` (send this; `<commit>` is HEAD's short
+hash, the same as Sentry's `commit` tag). `out/` is never wiped, so earlier APKs
+stay, and the script refuses to start if that exact file already exists. The
+`.aab` stays behind in `.build/release-export`, since Play is out.
 
 `assembleRelease` puts the same APK at
 `.build/Android/app/outputs/apk/release/app-release.apk` — note `.build/`, not
@@ -109,7 +114,7 @@ an `.aab`, which nothing here uses since Play is out.
 on a running emulator or device, install it by hand and launch it from the icon:
 
 ```
-adb install -r -d out/FurAffinityUI-release.apk     # or: build-release-apk.sh --install
+adb install -r -d out/FurAffinity-<version>-<commit>.apk   # or: build-release-apk.sh --install
 ```
 
 `-d` (allow downgrade) in case an install with a higher versionCode is already
