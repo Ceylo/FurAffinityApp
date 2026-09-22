@@ -3,7 +3,7 @@
 | Fork | Why |
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
-| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
+| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
 | `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, a rendered image that comes out of an `ImageHolder` rather than out of the view value, and `reportDownloadProgress` so a replacement transport can feed the placeholder's progress |
 | `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
@@ -254,9 +254,10 @@ scrolling could not move the id there, and 60 fling cycles logged zero id change
 S25 is 1080 px at 480 dpi, i.e. **360 dp**, and at 360 the floor no longer swallows the
 height: a row measuring 400 dp or less picks `s400`, a taller one `s600`.
 
-Clipped is the operative word. SkipUI reports a partially-visible `LazyColumn` row's
-*clipped* size to its `GeometryReader`, the same truncation that pins a clipped row's `minY`
-to 0 (see [screens.md](screens.md) `scrollViewIsAtTop`). A feed row whose aspect ratio asks
+Clipped is the operative word. SkipUI reported a partially-visible `LazyColumn` row's
+*clipped* size to its `GeometryReader`, the same truncation that pinned a clipped row's `minY`
+to 0 — both since fixed by the [tenth patch](#a-tenth-patch-laid-out-frames), which is
+why plain scrolling no longer moves the id at all. A feed row whose aspect ratio asks
 for 360x505 dp logged 360x415 dp, then 360x351 dp, then 360x45 dp as it left the viewport —
 so at 360 dp **plain scrolling** walks its id back and forth across a bucket boundary,
 several times per fling. Setting the emulator to `wm density 480` and flinging reproduced
@@ -282,6 +283,38 @@ this app's scale — measured over 60 fling cycles, the Java heap grew **less** 
 heavy-churn arm (34.1 → 29.2 MB at 480 dpi, ~2 id changes per fling) than in a no-churn one
 (29.7 → 38.8 MB at 420 dpi, zero) — but `ComposeStateSaver.state` is never pruned at all
 today, which is the larger version of the same question.
+
+### A tenth patch: laid-out frames <a name="a-tenth-patch-laid-out-frames"></a>
+
+The ninth patch removed the crash; the tenth removes its trigger. `GeometryProxy` holds one
+rect and derives `size` and `frame(in:)` from it, and that rect — like every
+`onGeometryChange` value — came from `onGloballyPositionedInRoot` in
+`Compose/ComposeExtensions.swift`, which read `boundsInRoot()`. Compose defines that as
+`findRootCoordinates().localBoundingBoxOf(this)`, and `localBoundingBoxOf`'s `clipBounds`
+defaults to `true`: the rect is intersected with every clipping ancestor. It was in
+SkipUI's first `GeometryReader` and never revisited — a default, not a decision. The patch
+builds the rect from the node's own `size` and `positionInRoot()`, as SwiftUI reports the
+laid-out frame whatever is scrolled over it. The zero-rect guard now means "not yet
+measured", so an off-screen node reports its real off-screen frame instead of nothing.
+`onGloballyPositionedInWindow` is left alone: its callers (safe area, tab and navigation bar
+metrics) are full-screen nodes never inside a clipping scroll parent.
+
+Real SwiftUI was checked first with the same probe: a `List` row's size stays constant
+and its `minY` goes negative (down to −1368 pt). Then on Android, at `wm density 480` (360 dp):
+
+| | before | after |
+|---|---|---|
+| rows reporting more than one size in a fling | 47 of 48 | 0 of 45 |
+| `.id` changes after first appearance, 3×40 fling cycles | 1671 | 0 |
+| extra-bucket thumbnail fetches, 40 flings down a cold feed | 10 (48 rows) | 0 |
+| prefetched URLs no row used | 0 | 0 |
+
+So the win is parity and the trigger, plus about one wasted thumbnail fetch per five rows
+first scrolled into view. Prefetching was never void, and a frame-by-frame scan of a
+warm-cache fling found no placeholder flash before the patch either. The app's two readers
+of list-row geometry, `trackFirstItemTop` and `followItem` ([screens.md](screens.md)), now
+see a negative `minY` like iOS; both kept their behaviour. `CommentsWidthMeasuring` and the
+zoomable viewer ride the same helper and render as before.
 
 ## One location per identity
 
