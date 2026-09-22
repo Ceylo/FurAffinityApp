@@ -113,12 +113,12 @@ struct SubmissionsFeedView: View {
     }
     
     /// Skip's stand-in for the scroll position, from the frame reports `followItem`
-    /// already receives. SkipUI reports an item's *clipped* frame, so the first row's
-    /// `minY` is the 10 pt `listRowInsets` gap at rest and pins to exactly 0 as soon
-    /// as the row's top goes under the list — never negative, and no report at all
-    /// once the row is recycled, which is why the last value must stay meaningful.
-    /// Hence "at top" is `minY > 0`, with 10 pt of harmless slack. Only Skip reads it;
-    /// on iOS the write would invalidate the feed on every scroll tick for nothing.
+    /// already receives. The first row's `minY` is the 10 pt `listRowInsets` gap at
+    /// rest and goes negative once its top is under the list; the report turns nil when
+    /// the row leaves the list and stops once it is recycled, so the last value must
+    /// stay meaningful. Hence "at top" is `minY > 0`, with 10 pt of harmless slack.
+    /// Only Skip reads it; on iOS the write would invalidate the feed on every scroll
+    /// tick for nothing.
     ///
     /// The first row is resolved live rather than captured per row: a refresh moves
     /// rows without rebuilding them, so a captured flag can end up on the wrong one.

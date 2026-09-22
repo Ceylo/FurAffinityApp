@@ -3,7 +3,7 @@
 | Fork | Why |
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
-| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
+| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
 | `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, and a rendered image that comes out of an `ImageHolder` rather than out of the view value |
 | `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
@@ -201,6 +201,120 @@ their SwiftUI base bounce (0.15, 0.3). `speed(_:)` scales stiffness by speed², 
 `delay(_:)` wraps the spring in a `DelayedAnimationSpec` (`Skip/DelayedAnimationSpec.kt`),
 because Compose's delays exist only on tweens and `StartOffset`. `repeatCount` and
 `repeatForever` still leave a spring alone, since Compose repeats only duration-based specs.
+
+A ninth patch, to `View/AdditionalViewModifiers.swift`, is the *third* patch's subject seen
+from the other side: the same `LazyColumn` recycling boundary, but the state that **does**
+survive it. `TagModifier` handed a `.id` subtree a brand new, empty `ComposeStateSaver`
+whenever the id value changed (upstream `4ed8380`, "Fix .id to reset state when it
+changes", #330). A `ComposeStateSaver.Key` is nothing but a lookup token into the `state`
+map of the saver that minted it, so a descendant's saved entry stops resolving the moment
+the saver is replaced. `restore` returns nil, and Compose's `mutableStateSaver` wraps an
+inner nil in a *non-null* `MutableState`, so `rememberSaveable`'s `restored ?: init()`
+never fires and the nil escapes into the subtree. For a bridged `@State` that is fatal:
+skipstone generates `Swift_syncState_x(peer, remembered.value)` with no null check and
+`StateSupport.fromJavaObject` force-unwraps, so the process aborts on
+`StateSupport_Bridge.swift:11`.
+
+Kingfisher is the caller that hit it, because `KFImageProtocol.body` is
+`ZStack { KFImageRenderer(context:).id(context) }` and `KFImage.Context` is `Hashable` over
+`(source, processor.identifier)` — **the image URL is the `.id`**.
+`SubmissionFeedItemView` derives that URL from the live `GeometryReader` size through
+`DynamicThumbnail`'s buckets (200/300/320/400/600 dp), so anything that moves the measured
+size across a boundary moves the id.
+
+Three ways an entry reaches the wrong saver, only the first of which needs the id to
+return: an id going back to an earlier value reproduces that value's composite key hash and
+consumes an entry `SaveableStateRegistryImpl.performSave` has been re-emitting since an
+earlier incarnation; an id going A→B where B was used before does the same; and a row
+disposed right after a reset pass saves *through* the fresh saver — `SaveableHolder.update`
+is a `SideEffect`, so descendants keep it as their save-provider until the next
+composition — into a saver that is then garbage.
+
+The swap was never needed for the reset it was added for.
+`GapComposer.updateCompositeKeyWhenWeEnterGroup` folds a movable group's `dataKey.hashCode()`
+into `currentCompositeKeyHashCode`, which is exactly what `rememberSaveable` keys on, so the
+`key(idValue)` already in `TagModifier` resets saved state as well as remembered state. What
+it does not do is separate one incarnation of an id from the next. So the patch drops the
+swap — every descendant now sees the one long-lived ancestor saver that minted its keys —
+and keys on an id *generation* alongside the value: a counter, itself `rememberSaveable` and
+living outside the `key()`, bumped whenever the remembered id differs from the current one.
+An `Int` passes through `ComposeStateSaver.save` verbatim, so it is genuinely Bundle-safe,
+and the remembered id is typed `Any?` so that a restore returning nil counts as a change
+instead of failing an unwrap. `role == .id` guards all of it, so `.tag` (`Picker`,
+`TabView`, `Menu`) is untouched.
+
+### Why the emulator hid it, and a Galaxy S25 did not
+
+The crash arrived from a tester who reported nothing but scrolling — no zoom setting, no
+split screen, no rotation. The first repro needed `wm density` flips while flinging, which
+looked like a different bug, and it is not: `bestThumbnailUrl` buckets on `maxDimension`
+*after* fitting into 600x600, so the row's **width in dp** sets a floor. The emulator's
+1080 px at 420 dpi is 411 dp, and 411 selects `s600` for every row whatever its height — so
+scrolling could not move the id there, and 60 fling cycles logged zero id changes. A Galaxy
+S25 is 1080 px at 480 dpi, i.e. **360 dp**, and at 360 the floor no longer swallows the
+height: a row measuring 400 dp or less picks `s400`, a taller one `s600`.
+
+Clipped is the operative word. SkipUI reported a partially-visible `LazyColumn` row's
+*clipped* size to its `GeometryReader`, the same truncation that pinned a clipped row's `minY`
+to 0 — both since fixed by the [tenth patch](#a-tenth-patch-laid-out-frames), which is
+why plain scrolling no longer moves the id at all. A feed row whose aspect ratio asks
+for 360x505 dp logged 360x415 dp, then 360x351 dp, then 360x45 dp as it left the viewport —
+so at 360 dp **plain scrolling** walks its id back and forth across a bucket boundary,
+several times per fling. Setting the emulator to `wm density 480` and flinging reproduced
+the tester's crash with no density change at all, 3/3 inside the first scroll cycle — every
+`restore` miss followed on the next log line by the abort. Nothing about the fix depends on
+that, but it is the regression test: the density flip was only ever the cheapest way to
+fake it. After the patch, 3/3 runs survived 40 scroll cycles with 1671 id changes, 5886
+restore hits and 0 misses, over 3 saver instances rather than one per change.
+
+### What this does not fix
+
+**Process death and restore.** The Bundle returns the `Key`; the in-memory map does not, so
+`restore` must return nil, and `mutableStateOf(null)` defeats `restored ?: init()` the same
+way. That is not `.id`-specific and cannot be fixed from this fork — it wants a null check
+in skipstone's generated `syncState` call,
+`Swift_syncState_x(peer, remembered.value ?: Swift_initState_x(peer))`. The app dodges it in
+practice: a killed process cold-starts through `RootView`/autologin, so the feed's slots
+never restore.
+
+One thing to watch: an A→B→A toggle reused `hash(A)`'s registry entry before and now writes
+a new one per id change, so the registry grows where it used to alias. It is not visible at
+this app's scale — measured over 60 fling cycles, the Java heap grew **less** in the
+heavy-churn arm (34.1 → 29.2 MB at 480 dpi, ~2 id changes per fling) than in a no-churn one
+(29.7 → 38.8 MB at 420 dpi, zero) — but `ComposeStateSaver.state` is never pruned at all
+today, which is the larger version of the same question.
+
+### A tenth patch: laid-out frames <a name="a-tenth-patch-laid-out-frames"></a>
+
+The ninth patch removed the crash; the tenth removes its trigger. `GeometryProxy` holds one
+rect and derives `size` and `frame(in:)` from it, and that rect — like every
+`onGeometryChange` value — came from `onGloballyPositionedInRoot` in
+`Compose/ComposeExtensions.swift`, which read `boundsInRoot()`. Compose defines that as
+`findRootCoordinates().localBoundingBoxOf(this)`, and `localBoundingBoxOf`'s `clipBounds`
+defaults to `true`: the rect is intersected with every clipping ancestor. It was in
+SkipUI's first `GeometryReader` and never revisited — a default, not a decision. The patch
+builds the rect from the node's own `size` and `positionInRoot()`, as SwiftUI reports the
+laid-out frame whatever is scrolled over it. The zero-rect guard now means "not yet
+measured", so an off-screen node reports its real off-screen frame instead of nothing.
+`onGloballyPositionedInWindow` is left alone: its callers (safe area, tab and navigation bar
+metrics) are full-screen nodes never inside a clipping scroll parent.
+
+Real SwiftUI was checked first with the same probe: a `List` row's size stays constant
+and its `minY` goes negative (down to −1368 pt). Then on Android, at `wm density 480` (360 dp):
+
+| | before | after |
+|---|---|---|
+| rows reporting more than one size in a fling | 47 of 48 | 0 of 45 |
+| `.id` changes after first appearance, 3×40 fling cycles | 1671 | 0 |
+| extra-bucket thumbnail fetches, 40 flings down a cold feed | 10 (48 rows) | 0 |
+| prefetched URLs no row used | 0 | 0 |
+
+So the win is parity and the trigger, plus about one wasted thumbnail fetch per five rows
+first scrolled into view. Prefetching was never void, and a frame-by-frame scan of a
+warm-cache fling found no placeholder flash before the patch either. The app's two readers
+of list-row geometry, `trackFirstItemTop` and `followItem` ([screens.md](screens.md)), now
+see a negative `minY` like iOS; both kept their behaviour. `CommentsWidthMeasuring` and the
+zoomable viewer ride the same helper and render as before.
 
 ## One location per identity
 

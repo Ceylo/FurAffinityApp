@@ -26,10 +26,15 @@ It briefly was a no-op here, fenced because `onItemFrameChanged` measured the it
 `coordinateSpace(.named:)`, which SkipUI does not have. The named space was never
 needed: the item rect is immediately made list-relative by subtracting a `.global` list
 origin, so measuring the item in `.global` too gives the same rect from two APIs Skip
-fully implements (`onGeometryChange` → `onGloballyPositionedInRoot`, `frame(in: .global)`
-→ `boundsInRoot()`). Measured on the emulator: `boundsInRoot()` is stable for recycled
-`LazyColumn` rows, the tracked title follows the 30% line with the same ratios iOS
+fully implements (`onGeometryChange` and `frame(in: .global)`, both through
+`onGloballyPositionedInRoot`). Measured on the emulator: the reported frame is stable for
+recycled `LazyColumn` rows, the tracked title follows the 30% line with the same ratios iOS
 reports, and after a force-stop the next cold launch fetched `new~<the tracked sid>@72`.
+Re-measured after SkipUI stopped clipping those frames
+([forks.md § A tenth patch](forks.md#a-tenth-patch-laid-out-frames)), 2026-09-22: a row's
+`minY` now goes negative as it passes the top, three slow drags moved the anchor to a row
+whose image spanned −115…370 dp at the stop, and the cold launch fetched
+`new~<that sid>@72` and put the row back at the top of the list.
 
 Keep the named coordinate space in mind as its own gotcha: `View.coordinateSpace(.named:)`
 is **absent from the SkipSwiftUI façade**, so it fails to compile, while
@@ -44,7 +49,7 @@ What Android gives up, and why:
 |---|---|
 | `@Weak var scrollView: UIScrollView?` + `.introspect(.scrollView…)` | Fenced `#if !FA_SKIP_MODULE` — SwiftUIIntrospect isn't a dependency of this module, and the Darwin bridge lacks it too, so `os(Android)` would be the wrong flag. The two reads of it sit behind `waitForPullToSettle()` and `scrollViewIsAtTop` so no `#if` reaches the refresh logic. |
 | `waitForPullToSettle()` | Returns immediately. Compose retracts its own indicator, and a blind 1 s sleep would just be a dead second before the fetch. The visible consequence: the pull spinner retracts *before* the fetch finishes (iOS's `refresh(pulled:)` is fire-and-forget) — the badge is the completion feedback. |
-| `scrollViewIsAtTop` | Backed by `firstItemIsAtTop`, which `trackFirstItemTop` derives from the first row's clipped `minY` in the `onItemFrameChanged` reports the feed already receives — `> 0` while its top edge is visible, pinned to `0` once it goes under the list. So foreground autorefresh *does* skip on scroll position, as on iOS. |
+| `scrollViewIsAtTop` | Backed by `firstItemIsAtTop`, which `trackFirstItemTop` derives from the first row's `minY` in the `onItemFrameChanged` reports the feed already receives — `> 0` while its top edge is visible, negative once it goes under the list, nil once it leaves it. So foreground autorefresh *does* skip on scroll position, as on iOS: measured, a drag of ~9 dp stays at top (the 10 pt inset is the slack), two flings down read `minY` −134 and the next foreground logged `atTop=false`, and scrolling back read `true` again. One gap, older than any of this: after a cold-launch restore the rows prepended above the anchor are never composed, so the first row never reports and the flag keeps its initial `true` until one does. |
 
 `.onDelete` **works** on SkipUI, with one difference worth knowing: iOS reveals a Delete
 button that must then be tapped, whereas Compose commits the delete at the end of the
