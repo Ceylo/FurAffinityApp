@@ -23,7 +23,8 @@
 # SENTRY_AUTH_TOKEN — the Sentry Gradle plugin uploads the R8 mapping and the
 # unstripped Swift .so files during `skip export`, and without them a crash from
 # this APK cannot be symbolicated. Required, so a release cannot silently ship
-# without symbols.
+# without symbols; unset, it is read from `[auth] token=` in <worktree>/.sentryclirc
+# or ~/.sentryclirc (what `sentry-cli login` writes, shared by every worktree).
 #
 # The DSN comes from the stash, with the app id and the Amplitude key; the build
 # refuses to start if the placeholder is still there.
@@ -42,7 +43,7 @@ KEEP_STASH=0
 
 while (( $# )); do
     case "$1" in
-        -h|--help)   sed -n '3,30p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)   sed -n '3,31p' "$0" | cut -c3-; exit 0 ;;
         --out)       OUT="$2"; shift ;;
         --out=*)     OUT="${1#*=}" ;;
         --install)   INSTALL=1 ;;
@@ -155,10 +156,29 @@ echo "app id $APP_ID, version $VERSION ($BUILD)"
 
 # Both halves of crash reporting, checked after the stash is applied: it is what
 # carries the DSN. See Android/docs/crash-reporting.md.
+# Unset, the token comes from sentry-cli's own config — the checkout's gitignored
+# .sentryclirc, then ~/.sentryclirc — as for the iOS archive's upload. The Gradle
+# plugin reads only the environment, hence the export.
+sentryclirc_token() {
+    awk -F= '
+        /^[[:space:]]*\[/ { auth = ($0 ~ /^[[:space:]]*\[auth\][[:space:]]*$/) }
+        auth && $1 ~ /^[[:space:]]*token[[:space:]]*$/ {
+            sub(/^[^=]*=[[:space:]]*/, ""); sub(/[[:space:]]*$/, ""); print; exit
+        }' "$1"
+}
+if [[ -z "$SENTRY_AUTH_TOKEN" ]]; then
+    for rc in "$ROOT/.sentryclirc" "$HOME/.sentryclirc"; do
+        [[ -f "$rc" ]] || continue
+        SENTRY_AUTH_TOKEN="$(sentryclirc_token "$rc")"
+        [[ -n "$SENTRY_AUTH_TOKEN" ]] && { echo "Sentry auth token from $rc"; break; }
+    done
+    export SENTRY_AUTH_TOKEN
+fi
 [[ -n "$SENTRY_AUTH_TOKEN" ]] \
-    || die "SENTRY_AUTH_TOKEN is not set — the build would upload no symbols, and
-    crashes from this APK could not be symbolicated. Export it (the org auth token,
-    project:releases scope) and rerun."
+    || die "no Sentry auth token — the build would upload no symbols, and crashes
+    from this APK could not be symbolicated. Put the org auth token (project:releases
+    scope) in ~/.sentryclirc as \`[auth]\` / \`token=…\` (or run \`sentry-cli login\`),
+    or export SENTRY_AUTH_TOKEN, and rerun."
 grep -qE 'static let sentryDSN = "(Your Sentry DSN)?"' "$ROOT/FurAffinity/Secrets.swift" \
     && die "no Sentry DSN — this APK would report no crashes at all. Add it to
     \"$STASH_MSG\" and rerun."

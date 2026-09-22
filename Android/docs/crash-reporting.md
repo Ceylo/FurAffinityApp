@@ -51,7 +51,7 @@ production.
 |---|---|---|
 | IPA for AltStore Classic | push a tag | the Upload dSYMs target, `secrets.SENTRY_AUTH_TOKEN` |
 | App Store Connect → AltStore PAL | the procedure below | the same target |
-| Android APK | `SENTRY_AUTH_TOKEN=… Scripts/Android/build-release-apk.sh` | the Sentry Gradle plugin, during `skip export` |
+| Android APK | `Scripts/Android/build-release-apk.sh` | the Sentry Gradle plugin, during `skip export` |
 
 The Android script and the CI workflow need nothing remembered: each refuses to
 produce an unreportable build, CI included, where a missing secret seds in an
@@ -75,7 +75,13 @@ must hold **in the checkout you archive from**:
   environment and cannot see `$SENTRY_AUTH_TOKEN`. The project-root one is
   gitignored and so does not travel between worktrees or clones; `~/.sentryclirc`,
   what `sentry-cli login` writes, covers all of them. From a terminal, exporting
-  the token works instead.
+  the token works instead. `build-release-apk.sh` reads the same two files when
+  `SENTRY_AUTH_TOKEN` is unset, so one `~/.sentryclirc` serves both platforms:
+
+  ```ini
+  [auth]
+  token=sntrys_…
+  ```
 
 `release.yml` has not run since 1.18, so the first tagged release is also the
 first exercise of the Upload dSYMs target. A failed upload fails the archive step,

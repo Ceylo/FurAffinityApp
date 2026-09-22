@@ -67,8 +67,9 @@ apksigner verify --print-certs <apk>      # must NOT say CN=Android Debug
 Scripts/Android/build-release-apk.sh
 ```
 
-It needs `SENTRY_AUTH_TOKEN` in the environment (the Gradle plugin uploads the
-`.so` files and the R8 mapping with it) and a DSN, which comes from the stash;
+It needs a Sentry auth token (the Gradle plugin uploads the `.so` files and the
+R8 mapping with it) — `SENTRY_AUTH_TOKEN`, or else `token=` under `[auth]` in the
+checkout's `.sentryclirc` or `~/.sentryclirc` — and a DSN, which comes from the stash;
 it refuses to build without either. See
 [crash-reporting.md](crash-reporting.md) § Releasing, which also covers the two
 iOS channels.
