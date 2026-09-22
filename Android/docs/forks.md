@@ -5,7 +5,7 @@
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
 | `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
-| `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, a rendered image that comes out of an `ImageHolder` rather than out of the view value, and `reportDownloadProgress` so a replacement transport can feed the placeholder's progress |
+| `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, and a rendered image that comes out of an `ImageHolder` rather than out of the view value |
 | `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
 
 Sending any of these patches back to its origin project — the gates each project sets, what
@@ -281,7 +281,11 @@ internal, so an override outside the module had nothing valid to return.
 `init(cancelling:)` went upstream as
 [#2576](https://github.com/onevcat/Kingfisher/pull/2576), merged 2026-09-13, together
 with `isTaskCancelled` matching `.asyncTaskContextCancelled` — the reason
-`FAOkHttpDownloader` reports.
+`FAOkHttpDownloader` reports. So did a way for that transport to feed progress:
+progress reached the placeholder only through `DataReceivingSideEffect.onDataReceived`,
+which takes a `SessionDataTask` and is internal.
+`KingfisherParsedOptionsInfo.reportDownloadProgress(receivedSize:totalSize:)` went
+upstream as [#2579](https://github.com/onevcat/Kingfisher/pull/2579), merged 2026-09-22.
 
 Five things the port needed beyond the guards:
 
@@ -344,14 +348,10 @@ Five things the port needed beyond the guards:
   3 image nodes drawn with an empty holder to 0, **5 blank frames over 5 runs → 0 over 5**,
   and the transition now finishes a frame sooner.
 
-- **A replacement transport can report progress.** Progress reached the placeholder
-  only through `DataReceivingSideEffect.onDataReceived`, which takes a `SessionDataTask`
-  and is internal, so `FAOkHttpDownloader` could not feed it.
-  `KingfisherParsedOptionsInfo.reportDownloadProgress(receivedSize:totalSize:)` forwards
-  to the same `ImageLoadingProgressSideEffect`s, with the same main-queue hop,
-  `onShouldApply` check and unknown-length skip. On Android `ImageBinder.updateProgress`
-  also assigns a new `Progress` instead of mutating the current one: under Observation
-  only a write to the stored property is seen, so the placeholder never recomposed.
+- **A progress write Observation can see.** On Android `ImageBinder.updateProgress`
+  assigns a new `Progress` instead of mutating the current one: under Observation only a
+  write to the stored property is seen, so the placeholder fed by upstream's
+  `reportDownloadProgress` never recomposed.
 
 `Sources/Documentation.docc` is deleted in the fork rather than excluded: skipstone walks
 the whole target directory and generates a bridge for every SwiftUI `View` it finds,
@@ -359,7 +359,7 @@ including the tutorial snippets, whose repeated `ContentView` steps then collide
 Kotlin redeclarations. `#if` around them does not help, for the reason above.
 
 Adopting the fork moves iOS from upstream 8.10.0 to a branch based on upstream `master`
-past 8.12.0 (`ab1c1de5`, #2576's merge), merged into `android` as `239c970b` on 2026-09-13.
+past 8.12.0 (`2fd07d84`, which includes #2579), merged into `android` as `c2cacbaa` on 2026-09-22.
 
 ## The other fork patches
 
@@ -452,9 +452,13 @@ past 8.12.0 (`ab1c1de5`, #2576's merge), merged into `android` as `239c970b` on 
   `unavailable`. `#available(iOS 26, *)` is vacuously true off-Apple, so a shared source
   takes its Liquid Glass branch on Android; making the call unbuildable is worse than
   ignoring an effect Compose can't express.
-- **SF Symbol mappings** for the symbols this app uses (`safari`,
-  `square.and.arrow.down`, `bubble`, `exclamationmark.bubble`, `ellipsis.bubble`,
-  `message`, `text.badge.star`). Unmapped names render as a warning triangle.
+- **SF Symbol mappings** for the symbols this app uses. Unmapped names render as a
+  warning triangle. Six are now the mapping sent as skip-ui #525, picked by the symbol's
+  *shape* rather than by what the app means by it: `bubble` → ChatBubbleOutline,
+  `message` → Chat, `safari` → Explore (was Public), `exclamationmark.bubble` → Feedback
+  (was CommentsDisabled), `ellipsis.bubble` → Sms (was Forum), `square.and.arrow.down` →
+  SaveAlt (was FileDownload). `text.badge.star` → Info stays fork-only: Material has
+  nothing shaped like it.
 - **Text layout parity with iOS.** Four Material defaults that each read as a bug next
   to the iOS build, all measured off screenshots rather than eyeballed:
   - Material's typography **fixes a line height** (`bodyLarge` is 24sp on a 16sp face,

@@ -18,7 +18,7 @@ is never described as submitted.
 |---|---|---|
 | `Ceylo/skip-ui` | all of it | — |
 | `Ceylo/skip-fuse-ui` | all but one commit | `cfa7d82` — names our forks in `Package.swift` |
-| `Ceylo/Kingfisher` | the API half of `47267203`; the Android port only if onevcat wants one | skipstone plugin, the unconditional `SkipFuseUI` edge, the `Documentation.docc` deletion, the dynamic-library manifest |
+| `Ceylo/Kingfisher` | the Android port, only if onevcat wants one | skipstone plugin, the unconditional `SkipFuseUI` edge, the `Documentation.docc` deletion, the dynamic-library manifest |
 | `Ceylo/Defaults` | `Defaults.defaultSuite`, pitched on its own merits | dropping `DefaultsMacros` + swift-syntax, the `#if !os(Android)` guards |
 | `Ceylo/skip-web` | nothing | `64de0f8` — dependency locations only; required today, retires when the two above land |
 
@@ -29,9 +29,9 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 |---|---|---|---|
 | `22e8919` `listRowInsets` | skip-ui + `0d5d47a` | yes | un-`unavailable`s API in both repos |
 | `5110e81` innermost `listRow*` wins | skip-ui | no | bug fix; SwiftUI-parity argument stands alone |
-| `5eee865` + `80c72b4` SF Symbol mappings | skip-ui | no | same shape as merged #476 |
+| `5eee865` + `80c72b4` SF Symbol mappings | skip-ui | no | same shape as merged #476. Sent as #525 (topic branch `feature/sf-symbol-mappings`), remapped by shape rather than by the app's meaning, with showcase `feature/symbol-playground-rows`; the fork took the upstream mapping back in `301cfcc`. `text.badge.star` stays fork-only |
 | `1b25638` `FlowRow` | skip-ui + `09a3e69` | yes | new container; `Layout` cannot be emulated, so argue the container |
-| `6f06ae4` `.disabled` on menu items | skip-ui | no | fixes skip-ui #246 (filed by marcprux). Topic branch `fix/menu-item-disabled` adds what the fork lacks — the dimming and a Robolectric test — plus showcase `feature/menu-disabled-playground` |
+| `6f06ae4` `.disabled` on menu items | skip-ui | no | fixes skip-ui #246 (filed by marcprux). Topic branch `fix/menu-item-disabled` adds what the fork lacks — the dimming, a disabled nested `Menu` opening with its items disabled (iOS 26.5 parity), and Robolectric tests — plus showcase `feature/menu-disabled-playground`. Port both back to the fork |
 | `23ac3bd` menu body text + visible divider | skip-ui | no | **split into two PRs** — the text/icon size and the `outlineVariant` divider are separate fixes |
 | `ad375fb` `.subheadline` → `bodyMedium` | skip-ui | no | one token; carries a measured screenshot argument |
 | `eaa6abe` resume animation across disposal | skip-ui | no | the recycling-boundary fix; largest single non-text patch |
@@ -45,7 +45,6 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `9eb2c87` `@_disfavoredOverload` on `Text(AttributedString)` | skip-fuse-ui | no | belongs with whichever attributed-text PR lands; the trap is worth writing up either way |
 | `5a21355` `GeometryReader` composes on the measure pass | skip-ui | no | fidelity fix (no blank first frame). Before sending, check whether it causes the intrinsic-measurement crash under a scroll: `BoxWithConstraints` is a `SubcomposeLayout` and the old `Box` was not |
 | `23154a0` `ImageHolder`, read in the draw phase | skip-ui + `c59b1a7` | yes | new API; its only caller today is the Kingfisher fork (`07f72deb`), so argue it from Coil's `AsyncImagePainter`, not from Kingfisher |
-| `47267203` `reportDownloadProgress(receivedSize:totalSize:)` | Kingfisher | no | the same argument as #2576 (a replacement transport can't feed progress). Send only the `KingfisherOptionsInfo` half; the `ImageBinder` change is Android-only |
 | `2b2dc459` + `66eb74df` + `ae0b4f07` Android port | Kingfisher | no | issue first; large parts can never leave the fork |
 | `058eb5d4`, `2296a263`, `07f72deb`, `731194ee` Android first-frame work | Kingfisher | no | part of the port, and depends on skip-ui `23154a0`. `07f72deb` replaces most of the first two. `731194ee` sits on the *target*-cache-hit path; #2572/#2573 rewrote the *original*-cache-hit path beside it, and `239c970b` merged them without touching it |
 | `fb0ef04` `Defaults.defaultSuite` | Defaults | no | issue first; re-pitch without the Android rationale |
@@ -77,6 +76,9 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
   `731194ee`, `47267203`), skip-fuse-ui 2 (`cfa7d82`, `c59b1a7`), skip-ui 1 (`23154a0`),
   skip-web 1; Defaults is still clean. The fork commits keep their trailers. Only the
   topic-branch copy loses it (`git commit --amend --reset-author`, message rewritten).
+  **Exception, by Ceylo's decision:** skip-ui #524 and skipapp-showcase #122 carry no
+  `Co-Authored-By` either. For those, AI use is disclosed in the template's checkbox
+  instead, naming Claude Code.
 - **Rewrite the app-specific comments.** The Kingfisher fork's `Sources/` names FurAffinity
   in one place since #2576 replaced the `DownloadTask` doc comment (2026-09-13): a
   `KFImage.swift` comment about cap insets. A library shouldn't know about one app, so
@@ -113,7 +115,13 @@ Behaviour before, behaviour after. Two sentences.
 - <what actually ran>
 ```
 
-Plus the repository's own checklist where it has one.
+Plus the repository's own checklist where it has one. Don't tick a box whose step didn't run.
+skipapp-showcase has no test targets, so its `swift test` box stays unticked, with the reason
+given.
+
+Images go on an orphan `pr-assets/<topic>` branch in the fork, scaled to 400 px wide and
+referenced as `raw.githubusercontent.com` URLs. `gh` cannot upload attachments. Check each
+URL with `curl -sI` for a 200.
 
 The `Verified` list and every screenshot are outputs of [Producing the
 evidence](#producing-the-evidence). None of it is written from memory.
@@ -136,6 +144,11 @@ directory holds every Skip repo the graph reaches, not just the patched two. The
   `with-emulator-lock.sh`.
 - `drive-android.sh` taps by visible text (`scrollto:`, `tapprefix:`, `longpress:`, `dump:`,
   `shot:`); `menu-item-colors.py` reads a text colour from a screenshot + its dump.
+  `symbol-evidence.py` crops every row of a scrolling playground by its label, so two runs
+  can be compared row by row even when a row's height changes; `ios-symbol-rows.py` does
+  the same on the simulator. For a `//􀀀` glyph comment, match the rendered
+  `NSImage(systemSymbolName:)` against SF Pro's private-use glyphs, and check the match on
+  a comment already known to be right: the fork's guesses were wrong.
 - Evidence and logs land in `evidence/` and `logs/`.
 
 Build both modes *before touching anything*: a broken baseline is indistinguishable from a
@@ -298,6 +311,8 @@ the lane's own `xcodebuild` arguments directly (`-workspace Kingfisher.xcworkspa
 Kingfisher SWIFT_VERSION=5.0`) and say so in `Verified`. The tvOS runtime was not installed
 by default; `xcodebuild -downloadPlatform tvOS` fetched 26.5 (3.8 GB). watchOS needs only
 the SDK.
+One upstream tvOS test, `testRetrieveImageWithAsyncCacheTypeCheckUsesOriginalCacheFallback`,
+times out 2 runs in 20 on `master` too: re-run it before reading a failure into it.
 
 ### What the merged PRs did well
 
@@ -357,6 +372,11 @@ State is one of draft / opened / merged / rejected; fetch the PR for anything mo
 | PR | Patch | State |
 |---|---|---|
 | Kingfisher [#2576](https://github.com/onevcat/Kingfisher/pull/2576) | `b01358ef` | merged |
+| Kingfisher [#2579](https://github.com/onevcat/Kingfisher/pull/2579) | `47267203`, API half | merged |
+| skip-ui [#524](https://github.com/skiptools/skip-ui/pull/524) | `6f06ae4` | draft |
+| skipapp-showcase [#122](https://github.com/skiptools/skipapp-showcase/pull/122) | playground for skip-ui #524 | draft |
+| skip-ui [#525](https://github.com/skiptools/skip-ui/pull/525) | `5eee865` + `80c72b4`, remapped | draft |
+| skipapp-showcase [#123](https://github.com/skiptools/skipapp-showcase/pull/123) | playground rows for skip-ui #525 | draft |
 
 ## Defaults
 

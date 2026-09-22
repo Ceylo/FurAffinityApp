@@ -39,7 +39,8 @@ struct ReplyButton: View {
             Menu {
                 Text("Comment posting has been disabled")
             } label: {
-                AlignedLabel(value: repliesCount, systemImage: "exclamationmark.bubble", imageYOffset: -1)
+                // Feedback, its Material icon, is the same bubble as above.
+                AlignedLabel(value: repliesCount, systemImage: "exclamationmark.bubble", imageYOffset: -1, materialImageYOffset: 2.67)
                     .tint(.orange)
             }
             .frame(height: buttonsSize-3)
