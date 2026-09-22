@@ -75,7 +75,7 @@ it refuses to build without either. See
 iOS channels.
 
 That is the whole thing: it applies the distribution stash, drops the build dirs
-the changed applicationId invalidates, exports, checks the signing certificate,
+the changed applicationId invalidates, builds, checks the signing certificate,
 and reverts the working tree on the way out (`--keep-stash` leaves it applied,
 `--install` pushes the APK to the running device). It refuses to start on a dirty
 tree — reverting is `git checkout -- .`, which is only the exact inverse from a
@@ -92,26 +92,28 @@ What it runs:
 ```
 git stash apply <the distribution stash>   # pbxproj id + Amplitude key + Skip.env id
 rm -rf .build/plugins/outputs .build/Darwin .build/Android    # applicationId changed
-skip export -d .build/release-export --release --android --no-ios --no-export-project --arch aarch64
-mv .build/release-export/FurAffinityUI-release.apk out/FurAffinity-<version>-<commit>.apk
+(cd Android && SKIP_EXPORT_ARCHS=aarch64 ./gradlew :app:assembleRelease)
+mv .build/Android/app/outputs/apk/release/app-release.apk out/FurAffinity-<version>-<commit>.apk
 ```
 
-`--no-ios` because the Skip-generated iOS shell is not this app's iOS release path.
-**`--no-export-project` is not optional**: the source-archive step walks the project
-directory, and with the export directory inside it that includes its own output —
-it recurses until the zip is 1.37 GB and then fails. You do not want the archive
-anyway; the Android source is private. `skip export` writes fixed names, so it
-exports into `.build/release-export` and only the APK is moved to
-`out/FurAffinity-<version>-<commit>.apk` (send this; `<commit>` is HEAD's short
-hash, the same as Sentry's `commit` tag). `out/` is never wiped, so earlier APKs
-stay, and the script refuses to start if that exact file already exists. The
-`.aab` stays behind in `.build/release-export`, since Play is out.
+Why not `skip export`, which this used to be: it runs a bare `assembleRelease`,
+and Skip's settings plugin both `include`s every transpiled module as a root
+project and `includeBuild`s the same directory, so everything — the Swift package
+and the SkipUI Kotlin compile included — is built twice, in parallel, plus an
+`.aab` nothing uses since Play is out. `:app:assembleRelease` builds only what the
+app needs: 275 s against 339 s, byte-identical file list. `SKIP_EXPORT_ARCHS` is
+what `skip export --arch` sets; without it Skip's `--arch automatic` compiles a
+release for all three ABIs, and the release `abiFilters` keeps only `arm64-v8a`
+(that alone took `skip export` from 703 s to 339 s).
 
-`assembleRelease` puts the same APK at
-`.build/Android/app/outputs/apk/release/app-release.apk` — note `.build/`, not
-`Android/app/build/`; Skip redirects `buildDir`.
+`assembleRelease` writes `.build/Android/app/outputs/apk/release/app-release.apk`
+— note `.build/`, not `Android/app/build/`; Skip redirects `buildDir` — and the
+script moves it to `out/FurAffinity-<version>-<commit>.apk` (send this;
+`<commit>` is HEAD's short hash, the same as Sentry's `commit` tag). `out/` is
+never wiped, so earlier APKs stay, and the script refuses to start if that exact
+file already exists.
 
-`skip export` never touches adb — it only writes artifacts. To try the exported APK
+The build never touches adb — it only writes artifacts. To try the APK
 on a running emulator or device, install it by hand and launch it from the icon:
 
 ```

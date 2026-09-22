@@ -4,8 +4,8 @@
 #
 # Wraps the sequence in Android/docs/releasing.md § Handing a build to testers:
 # apply the distribution stash (real app id + Amplitude key + Sentry DSN), drop the
-# build dirs the changed applicationId invalidates, `skip export`, then check what
-# the APK actually got signed with.
+# build dirs the changed applicationId invalidates, `gradlew :app:assembleRelease`,
+# then check what the APK actually got signed with.
 #
 # Usage: Scripts/Android/build-release-apk.sh [--out DIR] [--install] [--keep-stash]
 #
@@ -21,7 +21,7 @@
 #
 # Environment: ANDROID_HOME / ANDROID_SDK_ROOT, JAVA_HOME, ANDROID_SERIAL, and
 # SENTRY_AUTH_TOKEN — the Sentry Gradle plugin uploads the R8 mapping and the
-# unstripped Swift .so files during `skip export`, and without them a crash from
+# unstripped Swift .so files during the build, and without them a crash from
 # this APK cannot be symbolicated. Required, so a release cannot silently ship
 # without symbols; unset, it is read from `[auth] token=` in <worktree>/.sentryclirc
 # or ~/.sentryclirc (what `sentry-cli login` writes, shared by every worktree).
@@ -185,24 +185,20 @@ grep -qE 'static let sentryDSN = "(Your Sentry DSN)?"' "$ROOT/FurAffinity/Secret
 
 # --- build ------------------------------------------------------------------
 
-# skip export writes fixed file names, so it gets a scratch directory of its own
-# and only the APK is moved to $OUT, under its versioned name.
-STAGE="$ROOT/.build/release-export"
+# The applicationId just changed, and these three cache it.
+step "Clearing .build/{plugins/outputs,Darwin,Android}"
+rm -rf .build/plugins/outputs .build/Darwin .build/Android
 
-# The applicationId just changed, and the first three cache it.
-step "Clearing .build/{plugins/outputs,Darwin,Android,release-export}"
-rm -rf .build/plugins/outputs .build/Darwin .build/Android "$STAGE"
+# Not `skip export`: its bare `assembleRelease` also builds every transpiled
+# module a second time as a root project (Skip's settings plugin both includes
+# them and includeBuild()s them), plus an .aab nothing uses — 339s against 275s.
+# SKIP_EXPORT_ARCHS: a release otherwise compiles the Swift for all three ABIs,
+# and the release abiFilters (Android/app/build.gradle.kts) ships only arm64-v8a.
+step "gradlew :app:assembleRelease"
+( cd Android && SKIP_EXPORT_ARCHS=aarch64 ./gradlew :app:assembleRelease )
 
-# --no-ios: the Skip-generated iOS shell is not this app's iOS release path.
-# --no-export-project: the source-archive step walks the project directory, and
-# with the output folder inside it that recurses until the zip is >1 GB and fails.
-# --arch aarch64: a release otherwise compiles the Swift for all three ABIs, and
-# the release abiFilters (Android/app/build.gradle.kts) ships only arm64-v8a.
-step "skip export"
-skip export -d "$STAGE" --release --android --no-ios --no-export-project --arch aarch64
-
-EXPORTED="$STAGE/FurAffinityUI-release.apk"
-[[ -f "$EXPORTED" ]] || die "skip export produced no $EXPORTED"
+EXPORTED="$ROOT/.build/Android/app/outputs/apk/release/app-release.apk"
+[[ -f "$EXPORTED" ]] || die "the build produced no $EXPORTED"
 mkdir -p "$OUT"
 mv -n "$EXPORTED" "$APK"
 [[ -f "$APK" && ! -e "$EXPORTED" ]] || die "could not move $EXPORTED to $APK"
