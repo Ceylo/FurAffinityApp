@@ -92,7 +92,7 @@ What it runs:
 ```
 git stash apply <the distribution stash>   # pbxproj id + Amplitude key + Skip.env id
 rm -rf .build/plugins/outputs .build/Darwin .build/Android    # applicationId changed
-skip export -d .build/release-export --release --android --no-ios --no-export-project
+skip export -d .build/release-export --release --android --no-ios --no-export-project --arch aarch64
 mv .build/release-export/FurAffinityUI-release.apk out/FurAffinity-<version>-<commit>.apk
 ```
 

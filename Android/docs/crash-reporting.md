@@ -209,8 +209,9 @@ there is nothing to upgrade to.
 
 The Android upload takes the **unstripped** libraries from `merged_native_libs/…`
 while the APK ships stripped ones, which works because stripping preserves the GNU
-BuildID that Sentry matches on. It covers every ABI, not just `arm64-v8a`, because
-the merge step runs before the ABI filter.
+BuildID that Sentry matches on. Only `arm64-v8a` is uploaded: `build-release-apk.sh`
+passes `--arch aarch64`, so the other two ABIs, which the release `abiFilters`
+would drop anyway, are never compiled.
 
 ### Line numbers, and why `-disable-cmo`
 

@@ -196,8 +196,10 @@ rm -rf .build/plugins/outputs .build/Darwin .build/Android "$STAGE"
 # --no-ios: the Skip-generated iOS shell is not this app's iOS release path.
 # --no-export-project: the source-archive step walks the project directory, and
 # with the output folder inside it that recurses until the zip is >1 GB and fails.
+# --arch aarch64: a release otherwise compiles the Swift for all three ABIs, and
+# the release abiFilters (Android/app/build.gradle.kts) ships only arm64-v8a.
 step "skip export"
-skip export -d "$STAGE" --release --android --no-ios --no-export-project
+skip export -d "$STAGE" --release --android --no-ios --no-export-project --arch aarch64
 
 EXPORTED="$STAGE/FurAffinityUI-release.apk"
 [[ -f "$EXPORTED" ]] || die "skip export produced no $EXPORTED"
