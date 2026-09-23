@@ -422,8 +422,8 @@ resolved by him shipping his own release). Keep it to one public symbol plus its
 ## skip-web
 
 Nothing to upstream, and this fork never raises a PR — but it is **required**, and it is not
-a scratch repository. `64de0f8` changes dependency locations only, no source: upstream
-skip-web names `source.skip.tools/skip-ui`, and SwiftPM allows a package identity exactly one
+a scratch repository. Its `android` branch is upstream plus dependency locations, no
+source: upstream skip-web names `github.com/skiptools/skip-ui`, and SwiftPM allows a package identity exactly one
 location across the whole graph. Since `Ceylo/skip-fuse-ui` calls fork-only `SkipUI` API
 outside `#if SKIP`, every chain must name `github.com/Ceylo/skip-ui` — which is the whole
 reason this fork exists. See [forks.md § One location per identity](forks.md#one-location-per-identity).

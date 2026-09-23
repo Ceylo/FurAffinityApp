@@ -158,6 +158,19 @@ installed CLI and the build fails *inside a dependency* (`AndroidUserDefaults` �
 "must use a 'required' initializer"). The pin is `exact:` for that reason — keep it
 equal to `skip version`.
 
+Upgrading Skip therefore moves several things in one commit: `brew upgrade skip`
+(machine-wide, so every other worktree now runs the newer CLI), the `exact:` pin in
+`Package.swift` **and** `FAKit/Package.swift` **and** `Ceylo/Kingfisher`, and the
+upstream merges into the skip-ui / skip-fuse-ui / skip-web forks. All of them must
+name one location per Skip package — `github.com/skiptools/*` since Skip 1.9.6, the
+old `source.skip.tools/*` is gone from the graph (see
+[forks.md § One location per identity](forks.md#one-location-per-identity)). Then
+`swift package update` (put non-Skip pins back if they drift), re-resolve the Xcode
+project's `Package.resolved` the same way, and build from a clean `.build`. The
+generated `SkipBridgeGenerated/*_Bridge.swift` for FurAffinityUI, FAKit and
+Kingfisher are worth diffing against the previous build: a skipstone codegen change
+shows up there first.
+
 The root `Package.resolved` **is** committed, so a branch-pinned fork needs its
 refresh committed too — see [Forks](forks.md).
 
