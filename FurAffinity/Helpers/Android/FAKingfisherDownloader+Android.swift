@@ -14,7 +14,7 @@
 //
 //  Coalescing is the one thing that does not come with it: Kingfisher dedupes inside
 //  `SessionDataTask`/`SessionDelegate`, which this never reaches. Hence
-//  `FAImageStore.bytes(for:)` for the download and `DecodeCoalescer` for the decode.
+//  `loads`, which covers the download and the decode as one unit.
 //
 //  Unguarded on purpose — an Android substitution file must be, see
 //  Android/docs/shared-sources.md § Rules for shared sources. The JNI it reaches is
@@ -97,31 +97,45 @@ final class FAOkHttpDownloader: ImageDownloader, @unchecked Sendable {
         }
         defer { progressForwarder.cancel() }
 
-        guard let data = await FAImageStore.shared.bytes(for: url, priority: priority) else {
-            return .failure(.responseError(reason: .URLSessionError(error: FAImageError.loadFailed(url))))
-        }
-
-        // Through the gate, not straight here: the processor decodes, and a decode is
-        // another blocking JNI call on a thread Swift concurrency owns. And through
-        // the coalescer, since `bytes(for:)` only coalesces the *download*: N views of
-        // one avatar would run one fetch and N decodes, one permit each. The processor
-        // is in the key because what is shared is the *processed* image.
+        // Download and decode coalesce as one unit: `bytes(for:)` alone only covers the
+        // download, and its entry clears while the decode still waits for a permit
+        // behind every queued prefetch — seconds in which a URL is neither in flight
+        // nor cached, so a second prefetch pass redialled it (up to ~70 GETs per cold
+        // launch). The processor is in the key because what is shared is the
+        // *processed* image.
         let key = "\(url.absoluteString)|\(options.processor.identifier)"
-        let image = await decodes.run(key) {
-            await FAImageStore.shared.decoding(priority) {
+        let loaded = await loads.run(key, priority: priority.taskPriority) {
+            guard let data = await FAImageStore.shared.bytes(for: url, priority: priority) else {
+                return Loaded.noBytes
+            }
+            // Through the gate, not straight here: the processor decodes, and a
+            // decode is another blocking JNI call on a thread Swift concurrency owns.
+            let image = await FAImageStore.shared.decoding(priority) {
                 options.processor.process(item: .data(data), options: options)
             }
+            return image.map { .image($0, data) } ?? .undecodable(data)
         }
-        guard let image else {
+
+        switch loaded {
+        case .noBytes:
+            return .failure(.responseError(reason: .URLSessionError(error: FAImageError.loadFailed(url))))
+        case let .undecodable(data):
             return .failure(.processorError(
                 reason: .processingFailed(processor: options.processor, item: .data(data))
             ))
+        case let .image(image, data):
+            return .success(ImageLoadingResult(image: image, url: url, originalData: data))
         }
-        return .success(ImageLoadingResult(image: image, url: url, originalData: data))
     }
 }
 
-private let decodes = InFlightCoalescer<String, KFCrossPlatformImage?>()
+private enum Loaded: Sendable {
+    case noBytes
+    case undecodable(Data)
+    case image(KFCrossPlatformImage, Data)
+}
+
+private let loads = InFlightCoalescer<String, Loaded>()
 
 enum FAImageError: LocalizedError {
     case loadFailed(URL)
