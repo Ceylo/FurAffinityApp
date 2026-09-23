@@ -23,7 +23,7 @@ let package = Package(
         // Exact, not `from:`: a floating pin silently drifts past the installed
         // `skip` CLI and the build fails inside a dependency (`AndroidUserDefaults`
         // … "must use a 'required' initializer"). Keep this equal to `skip version`.
-        .package(url: "https://source.skip.tools/skip.git", exact: "1.9.4"),
+        .package(url: "https://github.com/skiptools/skip.git", exact: "1.9.11"),
         // Forked for `listRowInsets`, `Text(AttributedString)`, `FlowRow` and a few
         // unavailable-to-passthrough fixes — see Android/docs/forks.md. skip-web is
         // forked for its dependency locations alone. One location per package
