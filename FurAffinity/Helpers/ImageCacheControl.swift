@@ -31,6 +31,7 @@ enum ImageCacheControl {
         #if os(Android)
         // Blocking file I/O, so through the image store's gate.
         await FAImageStore.shared.performingFileIO { clearMediaCopies() }
+        await FAImageStore.shared.forgetNotFound()
         #endif
     }
 
