@@ -27,7 +27,8 @@
 # other. Its fork's manifest makes the library `.dynamic` under SKIP_BRIDGE for that
 # reason.
 #
-# Environment: ANDROID_HOME / ANDROID_SDK_ROOT (for the NDK's llvm-readelf).
+# Environment: ANDROID_HOME / ANDROID_SDK_ROOT (for the NDK's llvm-readelf), and
+# ABI (default arm64-v8a) — CI builds its debug APK for the x86_64 emulator only.
 
 set -eo pipefail
 
@@ -63,8 +64,9 @@ READELF="$(ls "$NDK"/toolchains/llvm/prebuilt/*/bin/llvm-readelf 2>/dev/null | h
 # --- the payload ------------------------------------------------------------
 
 LIBS="$ROOT/.build/Android/app/intermediates/merged_native_libs/$VARIANT"
-LIBS="$(ls -d "$LIBS"/*/out/lib/arm64-v8a 2>/dev/null | head -1)"
-[[ -n "$LIBS" ]] || die "no merged $VARIANT native libs — build the app first"
+ABI="${ABI:-arm64-v8a}"
+LIBS="$(ls -d "$LIBS"/*/out/lib/"$ABI" 2>/dev/null | head -1)"
+[[ -n "$LIBS" ]] || die "no merged $VARIANT $ABI native libs — build the app first"
 
 # --- one definer per module -------------------------------------------------
 
