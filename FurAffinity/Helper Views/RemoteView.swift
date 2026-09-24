@@ -221,7 +221,6 @@ func RemoteView<Data: Sendable & Equatable, ContentsView: View>(
     )
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     @Previewable @State var url = URL(string: "https://www.furaffinity.net/")!
     @Previewable @State var errorStorage = ErrorStorage()
@@ -242,4 +241,3 @@ func RemoteView<Data: Sendable & Equatable, ContentsView: View>(
         .environment(errorStorage)
     }
 }
-#endif

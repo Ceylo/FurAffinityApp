@@ -359,7 +359,6 @@ extension SubmissionsFeedView {
 }
 
 // MARK: - Previews
-#if !FA_SKIP_MODULE
 #Preview {
     withAsync({ try await Model.demo }) {
         NavigationStack {
@@ -380,5 +379,4 @@ extension SubmissionsFeedView {
         .preferredColorScheme(.dark)
     }
 }
-#endif
 

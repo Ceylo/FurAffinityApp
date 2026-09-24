@@ -4,7 +4,7 @@
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
 | `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
-| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d |
+| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, plus `glassEffect`/`AnyTransition.animation` un-`unavailable`d; `#Preview` / `@Previewable` stubs (skiptools/skip#439) |
 | `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, and a rendered image that comes out of an `ImageHolder` rather than out of the view value |
 | `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
 
@@ -25,8 +25,16 @@ then push to the `android` branch before the step's gate.
 The root `Package.resolved` **is** committed (`.gitignore` carries a `!/Package.resolved`
 negation), as is the Xcode workspace's copy; only `FAKit/Package.resolved` stays ignored.
 Five deps resolve from mutable `branch: "android"` refs, so without the recorded
-revisions a release APK isn't reproducible. Refreshing a fork is still
-`swift package update <dep>` — now followed by committing the resulting diff.
+revisions a release APK isn't reproducible. Refreshing a fork is
+`TARGET_OS_ANDROID=1 swift package update <dep>`, followed by committing the resulting
+diff. The variable matters: swift-syntax is only used by skip-fuse-ui's Android-only
+`#Preview` macro target, and an `update` without it prunes the swift-syntax pin, which
+the next Android build then writes back. A plain `resolve` keeps it either way.
+
+A local clone stands in for a fork only if its directory carries the fork's name:
+the path's last component is the package identity, so
+`../wt/preview-int/skip-fuse-ui` works where `../wt/skip-fuse-ui-preview` collides with
+the URL every other package names.
 
 **`android` is never rebased or force-pushed**: the revisions committed above must stay
 reachable. To pick up upstream — including a fork patch that has since merged there —

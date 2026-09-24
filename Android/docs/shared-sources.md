@@ -183,9 +183,14 @@ compiles it: once for Android (`os(Android)` true) and once for the module's Dar
 bridge (`os(Android)` **false**, UIKit importable). Both compiles see only this module —
 never the iOS app target — so:
 
-- Guard anything that exists only in the Xcode target (SwiftUI `#Preview`s and their
-  demo data) with `#if !FA_SKIP_MODULE`. That flag is defined by `Package.swift` for
-  both Skip compiles; `os(Android)` cannot express it.
+- Guard anything that exists only in the Xcode target with `#if !FA_SKIP_MODULE`. That
+  flag is defined by `Package.swift` for both Skip compiles; `os(Android)` cannot
+  express it.
+- Leave `#Preview`s unguarded. On Android `#Preview` and `@Previewable` come from the
+  skip-fuse-ui fork's `SwiftUI` shim and expand to nothing, but the preview body is
+  still type-checked — so a preview that goes stale fails the Android build too. A
+  preview that calls API SkipSwiftUI lacks (`GlassEffectContainer`, `.tertiary`)
+  keeps its guard, with a comment naming the API.
 - Guard Darwin-only frameworks and APIs (Kingfisher, Liquid Glass, `UIKit` types) with
   `#if !os(Android)` / `#if canImport(…)`; those are genuinely per-platform. Reach for
   it last, though — `Model.swift` was fenced twice and now carries no conditional at

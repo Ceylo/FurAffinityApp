@@ -29,7 +29,6 @@ struct LinearProgress: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     @Previewable @State var value: Float = 0.3
     LinearProgress(progress: value)
@@ -42,4 +41,3 @@ struct LinearProgress: View {
             } catch {}
         }
 }
-#endif

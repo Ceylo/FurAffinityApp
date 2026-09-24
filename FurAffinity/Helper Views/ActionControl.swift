@@ -52,6 +52,7 @@ struct ActionControl: View {
     }
 }
 
+// SkipSwiftUI has no GlassEffectContainer.
 #if !FA_SKIP_MODULE
 #Preview {
     NavigationStack {

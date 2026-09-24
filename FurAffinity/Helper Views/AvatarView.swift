@@ -72,7 +72,6 @@ struct AvatarView: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview("With URL", traits: .sizeThatFitsLayout) {
     AvatarView(avatarUrl: URL(string: "https://a.furaffinity.net/terriniss.gif")!)
         .frame(width: 32, height: 32)
@@ -86,4 +85,3 @@ struct AvatarView: View {
         .padding()
         .preferredColorScheme(.dark)
 }
-#endif

@@ -112,6 +112,7 @@ struct UserNameView: View {
     }
 }
 
+// SkipSwiftUI has no HierarchicalShapeStyle (`.tertiary`).
 #if !FA_SKIP_MODULE
 #Preview {
     List {

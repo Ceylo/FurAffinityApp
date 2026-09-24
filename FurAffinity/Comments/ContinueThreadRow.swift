@@ -70,7 +70,6 @@ struct ContinueThreadRow: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     NavigationStack {
         List {
@@ -83,4 +82,3 @@ struct ContinueThreadRow: View {
         .listStyle(.plain)
     }
 }
-#endif

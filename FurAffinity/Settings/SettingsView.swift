@@ -169,11 +169,9 @@ struct SettingsView: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     withAsync({ try await Model.demo }) {
         SettingsView()
             .environment($0)
     }
 }
-#endif

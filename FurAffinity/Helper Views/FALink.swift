@@ -86,7 +86,6 @@ struct FALink<ContentView: View>: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     withAsync({ try await Model.demo }) {
         NavigationStack {
@@ -109,4 +108,3 @@ struct FALink<ContentView: View>: View {
         .environment($0)
     }
 }
-#endif

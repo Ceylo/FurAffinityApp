@@ -50,8 +50,8 @@ which is why `FALoggingTests` is declared in `FAKit/Package.swift` — same doc,
 § What the split costs the Xcode project. Five dependencies are forked on
 `Ceylo/<repo>` `android` branches — `Defaults`, `skip-ui`/`skip-fuse-ui`
 (the latter two for `listRowInsets`, `Text(html:)`, `Text(AttributedString)` /
-`Text(_:inlineViews:)`, `Text + Text` and `FlowRow`, all unavailable or absent
-upstream), `skip-web` (dependency identity only: SwiftPM allows one location per
+`Text(_:inlineViews:)`, `Text + Text`, `FlowRow` and `#Preview`, all unavailable or
+absent upstream), `skip-web` (dependency identity only: SwiftPM allows one location per
 package identity, so every chain must name `Ceylo/skip-ui` — see
 `Android/docs/forks.md` § One location per identity) and `Kingfisher`, which now
 builds for Android: its decoding is substituted onto SkipSwiftUI's `UIImage`

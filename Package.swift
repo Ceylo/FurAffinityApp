@@ -73,8 +73,8 @@ let package = Package(
             resources: [.process("Resources")],
             // Marks a compile of *this* module — the Android cross-compile and the
             // host build alike. Everything the Android build does not compile carries
-            // `#if !FA_SKIP_MODULE`: unported screens, iOS-only files, and the SwiftUI
-            // previews and demo data that exist only in the Xcode target.
+            // `#if !FA_SKIP_MODULE`: unported screens and iOS-only files. `#Preview`s
+            // stay unguarded — the skip-fuse-ui fork stubs the macro for Android.
             // `os(Android)` cannot do that job — it is false for the host build, which
             // would then have to resolve UIKit, Kingfisher and friends.
             swiftSettings: [.define("FA_SKIP_MODULE")],
