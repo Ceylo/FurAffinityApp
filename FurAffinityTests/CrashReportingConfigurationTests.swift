@@ -5,7 +5,11 @@
 
 import Testing
 
+#if FA_SKIP_MODULE
+@testable import FurAffinityUI
+#else
 @testable import Fur_Affinity
+#endif
 
 struct CrashReportingConfigurationTests {
     private let dsn = "https://key@o1.ingest.de.sentry.io/2"

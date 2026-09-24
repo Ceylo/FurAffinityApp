@@ -4,6 +4,7 @@
 # single source of truth:
 #
 #   - FurAffinity/Resources/Assets.xcassets/AppIcon.imageset — the in-app icon
+#   - FurAffinity/Resources/Assets.xcassets/*.colorset — copies of the shared colours
 #   - Android/app/src/main/res/mipmap-* — the launcher icon
 #
 # Nothing this script writes is committed — the outputs are git-ignored.
@@ -97,6 +98,16 @@ write_if_changed "$dst_iconset/Contents.json" <<'JSON'
   }
 }
 JSON
+
+# MARK: - Colours
+
+# Copies, not symlinks: `skip android test` pushes the module's resource bundle with
+# `adb push`, which cannot create a symlink on the device.
+for colorset in BorderOverlay ButtonBorderOverlay; do
+    mkdir -p "$dst_catalog/$colorset.colorset"
+    write_if_changed "$dst_catalog/$colorset.colorset/Contents.json" \
+        < "$src_catalog/$colorset.colorset/Contents.json"
+done
 
 # MARK: - Launcher icon
 

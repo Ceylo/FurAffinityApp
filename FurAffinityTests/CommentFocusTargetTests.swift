@@ -8,7 +8,11 @@
 import Testing
 import Foundation
 import FAKit
+#if FA_SKIP_MODULE
+@testable import FurAffinityUI
+#else
 @testable import Fur_Affinity
+#endif
 
 struct CommentFocusTargetTests {
     /// root(0) → a(1) → b(2) → c(3) → d(4) → e(5): a single chain so each cid sits at a

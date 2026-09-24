@@ -112,9 +112,6 @@ triaging the whole log again.
   `swift build --triple arm64-apple-ios` pre-build.
 - **"Detected multiple Kotlin daemon sessions"** — environmental: one daemon per
   worktree.
-- **`unable to remove entry …/{Border,ButtonBorder}Overlay.colorset/Contents.json`**
-  ×2 — skipstone resolving our committed symlinks; see
-  [assets-and-resources.md](assets-and-resources.md#sharing-asset-catalog-entries).
 
 ## Run
 
@@ -394,15 +391,43 @@ URL as a string.
 
 ## Test
 
-The parser + logic layer is tested on the emulator via FAKit:
-
 ```
-cd FAKit && skip android test --testing-library testing
+Scripts/Android/test.sh
 ```
 
-From a second worktree, wrap that in
-`Scripts/Android/with-emulator-lock.sh` (see [the shared
-emulator](#the-shared-emulator)).
+It runs both Android test packages on the running emulator, under
+[the emulator lock](#the-shared-emulator), and fails if either reports fewer cases
+than its floor in the script — a run that silently finds no tests must not pass:
+
+- **FAKit** (FAPages, FAKit, FALogging): 183 cases, from `FAKit/`.
+- **FurAffinityUITests** (the root package): 40 cases. It is the Xcode
+  `FurAffinityTests` directory, compiled against `FurAffinityUI` with
+  `FA_SKIP_MODULE` defined — each file picks its `@testable import` on that define.
+  The target has no skipstone plugin, so SwiftPM honours its `exclude:`.
+
+Left out of the root package, with the reason:
+
+| iOS-only | Why |
+|---|---|
+| `BackgroundRefreshNotificationBuilderTests`, `NotificationCoordinatorTests` | BackgroundTasks, UserNotifications |
+| `LoggedInViewTabTests` | the UIKit tab bar; Android has `AndroidRootView.Tab` |
+| `ModelTests` (+ `MockFASession`) | `Model.init` observes `Defaults`, which on Android is a Kotlin SharedPreferences listener: it needs a JVM, and a native test executable has none |
+| `SettingsMigrationTests.legacyUnmigrated…` | no pre-versioning Android install exists |
+
+`skip android test --apk` would supply the JVM, but its harness (Skip 1.9.11) crashes
+on **any** `@MainActor` test — a trap in libdispatch's main-queue drain, which it
+drives from the Looper — so `ModelTests` waits on that.
+
+The root package tests build in **their own scratch path**, `.build/android-test`.
+In the shared `.build` they rewrite the skipstone plugin outputs the Gradle build
+reads, and the next `run.sh` fails in Kotlin (`Unresolved reference 'ProcessInfo'`)
+until `.build/plugins/outputs`, `.build/Darwin` and `.build/Android` are wiped.
+
+A native test is an `adb shell` process, not an app: it has no `context.cacheDir`,
+so the script sets `XDG_CACHE_HOME` for Kingfisher's disk cache. And `UserDefaults`
+in a test file means SkipAndroidBridge's JNI-backed store (skipstone's typealias
+arrives through `@testable import`) — reach the Foundation one `Defaults` uses as
+`key.suite`.
 
 The iOS build must stay green at every step:
 

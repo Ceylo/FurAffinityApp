@@ -9,7 +9,11 @@
 
 import Foundation
 import Testing
+#if FA_SKIP_MODULE
+@testable import FurAffinityUI
+#else
 @testable import Fur_Affinity
+#endif
 
 private actor Counter {
     private(set) var count = 0
