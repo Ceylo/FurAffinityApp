@@ -5,8 +5,6 @@
 //  Created by Ceylo on 22/01/2023.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
@@ -15,10 +13,11 @@ struct NoteEditor: View {
     var defaultContents: NoteReplySession.DefaultContents
     var handler: (_ action: ReplyEditorAction) async -> Void
     
-    @FocusState private var destinationUserHasFocus: Bool
-    @FocusState private var subjectHasFocus: Bool
-    @FocusState private var textEditorHasFocus: Bool
-    @State private var actionInProgress: ReplyEditorAction?
+    // Not private: skipstone can't bridge a private @State/@FocusState.
+    @FocusState var destinationUserHasFocus: Bool
+    @FocusState var subjectHasFocus: Bool
+    @FocusState var textEditorHasFocus: Bool
+    @State var actionInProgress: ReplyEditorAction?
 
     var canCancel: Bool { actionInProgress == nil }
     var canSubmit: Bool {
@@ -154,6 +153,7 @@ struct NoteEditor: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview("New note") {
     @Previewable
     @State var reply = NoteReply()
@@ -166,5 +166,4 @@ struct NoteEditor: View {
         print(action as Any)
     }
 }
-
 #endif

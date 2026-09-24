@@ -8,7 +8,6 @@
 //
 //  - `NSUserActivity` / `defaultScrollAnchor`: no Android equivalent, and neither
 //    affects what is drawn.
-//  - Note sending isn't ported yet: its sheet is a no-op and its session is never set.
 //  - `share` / `exportToFiles` go through FAMediaBridge. This is also the only
 //    `share(_:)` on Android, so Settings' log export uses it too.
 //
@@ -52,42 +51,6 @@ extension View {
     /// frame reference". Any modifier that defers use of `content` into an escaping
     /// closure hits this.
     func scrollToItem(id: (some Hashable)?) -> some View { self }
-}
-
-// MARK: - Note replying (not ported)
-
-/// Kept so `SubmissionView`'s `@State` and its `.init(defaultContents:)` call site
-/// compile; nothing sets it, because no editor can be presented.
-struct NoteReplySession {
-    struct DefaultContents {
-        let destinationUser: String
-        let subject: String
-        let text: String
-
-        init(destinationUser: String = "", subject: String = "", text: String = "") {
-            self.destinationUser = destinationUser
-            self.subject = subject
-            self.text = text
-        }
-    }
-
-    let defaultContents: DefaultContents
-}
-
-/// The reply payload `SubmissionView`'s note action is typed against.
-struct NoteReply {
-    var destinationUser = ""
-    var subject = ""
-    var text = ""
-}
-
-extension View {
-    func noteReplySheet(
-        on replySession: Binding<NoteReplySession?>,
-        _ replyAction: @MainActor @escaping (_ reply: NoteReply) async throws -> Void
-    ) -> some View {
-        self
-    }
 }
 
 // MARK: - Sharing

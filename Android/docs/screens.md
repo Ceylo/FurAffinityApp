@@ -132,7 +132,8 @@ Ported: the image, the zoomable full-screen viewer, favorite (with the optimisti
 `UpdateHandler` rollback), Save to gallery, Share, the description with in-app link
 routing, threaded comments including the deep-linked one's highlight pulse, comment
 posting (the shared `Replying` / `CommentEditor` sheet, reached from the controls, the
-toolbar and each comment's Reply action), and the metadata screen.
+toolbar and each comment's Reply action), "Send a Note" (the shared `NoteEditor`, its
+recipient pre-filled), and the metadata screen.
 
 Comment posting needed two things from the forks. `.glass` / `.glassProminent` and
 `buttonBorderShape` now exist, drawn as their bordered counterparts and a Material
@@ -219,7 +220,6 @@ Deferred, with the reason:
 
 | Not ported | Why |
 |---|---|
-| Note sending | The `NoteEditor` UI isn't ported, so "Send a Note" does nothing. |
 | Story (`.text`) and music (`.audio`) submissions | `StoryDocument` (PDFKit reflow, DOCX, QuickLook) and AVPlayer + `MPNowPlayingInfoCenter` are Apple-only stacks. Both render a placeholder with a link to the file. |
 | `scrollToItem` (scroll a deep-linked comment into view) | see below |
 
