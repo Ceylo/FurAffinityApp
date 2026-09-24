@@ -316,6 +316,26 @@ of list-row geometry, `trackFirstItemTop` and `followItem` ([screens.md](screens
 see a negative `minY` like iOS; both kept their behaviour. `CommentsWidthMeasuring` and the
 zoomable viewer ride the same helper and render as before.
 
+### After upstream #500 <a name="after-upstream-500"></a>
+
+Upstream #500 rewrote `GeometryReader` around a `GeometryReaderState` whose proxy observes
+per property, so size-only content no longer recomposes when the reader moves. It took the
+size from the measured `$0.size`, which fixes the clipped *size* its own way, but kept
+`boundsInRoot()` for the frame (its `globalFrameReaderObservesMovementAndClipping` asserts
+the clip) and went back to waiting for placement. The merge (`0a6d781`) keeps #500's state
+and proxy, feeds the state the laid-out frame (`positionInRoot()` + `size`), and keeps the
+measure-pass `BoxWithConstraints` inside `GeometryReaderLayout`: until the state is
+positioned, content gets a fixed proxy seeded from the constraints, so nothing is written to
+state during composition. `actualReaderReportsUnclippedGlobalFrame` pins the frame.
+
+The same merge brought in one regression, undone in `7111bfa`. #500 renders a `.resizable()`
+asset image whose Coil painter has no intrinsic size yet through `RenderPainter`, to spare a
+cached icon its one-frame 0×0 placeholder. Without an intrinsic, `RenderPainter` fills, and the
+layout outlives the load. `HomeView`'s `AppIcon` (`.resizable().aspectRatio(contentMode: .fit)
+.frame(width: 100)`) took the whole height of its `VStack` and pushed the login buttons 646 px
+down, over the footer. With that branch removed, the button bounds are back to the pre-merge
+`[306,1324]` / `[459,1504]`.
+
 ## One location per identity
 
 SwiftPM allows a package identity exactly one location across the whole graph, and
