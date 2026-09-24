@@ -8,10 +8,7 @@
 //
 //  - `NSUserActivity` / `defaultScrollAnchor`: no Android equivalent, and neither
 //    affects what is drawn.
-//  - Comment posting and note sending are out of scope for the port: their editor UI
-//    isn't ported, so the sheets are no-ops and their sessions are never set. (The
-//    `ObservableObject` that used to block sharing the machinery is gone — iOS moved
-//    `ReplyStorage` to `@Observable` — so only the editors themselves are left.)
+//  - Note sending isn't ported yet: its sheet is a no-op and its session is never set.
 //  - `share` / `exportToFiles` go through FAMediaBridge. This is also the only
 //    `share(_:)` on Android, so Settings' log export uses it too.
 //
@@ -57,18 +54,10 @@ extension View {
     func scrollToItem(id: (some Hashable)?) -> some View { self }
 }
 
-// MARK: - Replying (not ported)
+// MARK: - Note replying (not ported)
 
-/// Kept so `SubmissionView`'s `@State` and its `.init(parentCid:among:)` call sites
+/// Kept so `SubmissionView`'s `@State` and its `.init(defaultContents:)` call site
 /// compile; nothing sets it, because no editor can be presented.
-struct CommentReplySession {
-    let parentCid: Int?
-
-    init(parentCid: Int?, among comments: [FAComment]) {
-        self.parentCid = parentCid
-    }
-}
-
 struct NoteReplySession {
     struct DefaultContents {
         let destinationUser: String
@@ -85,11 +74,7 @@ struct NoteReplySession {
     let defaultContents: DefaultContents
 }
 
-/// The reply payload `SubmissionView.replyAction` is typed against.
-final class CommentReply {
-    var commentText: String = ""
-}
-
+/// The reply payload `SubmissionView`'s note action is typed against.
 struct NoteReply {
     var destinationUser = ""
     var subject = ""
@@ -97,13 +82,6 @@ struct NoteReply {
 }
 
 extension View {
-    func commentSheet(
-        on replySession: Binding<CommentReplySession?>,
-        _ replyAction: @MainActor @escaping (_ parentCid: Int?, _ reply: CommentReply) async throws -> Void
-    ) -> some View {
-        self
-    }
-
     func noteReplySheet(
         on replySession: Binding<NoteReplySession?>,
         _ replyAction: @MainActor @escaping (_ reply: NoteReply) async throws -> Void

@@ -5,8 +5,6 @@
 //  Created by Ceylo on 22/01/2023.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
@@ -33,8 +31,9 @@ struct CommentEditor: View {
     @Bindable var reply: CommentReply
     var parentComment: FAComment?
     var handler: (_ action: ReplyEditorAction) async -> Void
-    @FocusState private var editorHasFocus: Bool
-    @State private var actionInProgress: ReplyEditorAction?
+    // Not private: skipstone can't bridge a private @State/@FocusState.
+    @FocusState var editorHasFocus: Bool
+    @State var actionInProgress: ReplyEditorAction?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -109,6 +108,7 @@ struct CommentEditor: View {
     }
 }
 
+#if !FA_SKIP_MODULE
 #Preview("Reply to journal/submission") {
     @Previewable
     @State var reply = CommentReply()
@@ -120,5 +120,4 @@ struct CommentEditor: View {
         }
     }
 }
-
 #endif

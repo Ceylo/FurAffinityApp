@@ -130,8 +130,17 @@ draws. Those, and `RemoteView`, `SubmissionPreviewView`, `SubmissionControlsView
 
 Ported: the image, the zoomable full-screen viewer, favorite (with the optimistic
 `UpdateHandler` rollback), Save to gallery, Share, the description with in-app link
-routing, read-only threaded comments including the deep-linked one's highlight pulse,
-and the metadata screen.
+routing, threaded comments including the deep-linked one's highlight pulse, comment
+posting (the shared `Replying` / `CommentEditor` sheet, reached from the controls, the
+toolbar and each comment's Reply action), and the metadata screen.
+
+Comment posting needed two things from the forks. `.glass` / `.glassProminent` and
+`buttonBorderShape` now exist, drawn as their bordered counterparts and a Material
+shape, so the editor's `#available(iOS 26, *)` branch compiles as-is. And a sheet's
+`content` is now only called while it is presented, as in SwiftUI. skip-fuse-ui used to
+call the builder on every body evaluation, and SkipUI called it again while the sheet
+animated away. `Replying` unwraps its session with a `fatalError()` guard, so both
+calls crashed.
 
 `SubmissionMainImage` itself is *shared*, and since Kingfisher builds for Android the
 loader is shared too: one `configure(_:geometry:)` chain over `KFImageProtocol`, with
@@ -210,7 +219,7 @@ Deferred, with the reason:
 
 | Not ported | Why |
 |---|---|
-| Comment posting, note sending | The `CommentEditor`/`NoteEditor` UI isn't ported. Android passes `replyAction: nil` / `acceptsNewReplies: false`, so the swipe/context reply paths are inert. (`Replying`'s storage is now `@Observable`, not `ObservableObject`, so the machinery around the editors is no longer the blocker.) |
+| Note sending | The `NoteEditor` UI isn't ported, so "Send a Note" does nothing. |
 | Story (`.text`) and music (`.audio`) submissions | `StoryDocument` (PDFKit reflow, DOCX, QuickLook) and AVPlayer + `MPNowPlayingInfoCenter` are Apple-only stacks. Both render a placeholder with a link to the file. |
 | `scrollToItem` (scroll a deep-linked comment into view) | see below |
 
