@@ -7,7 +7,7 @@
 # build dirs the changed applicationId invalidates, `gradlew :app:assembleRelease`,
 # then check what the APK actually got signed with.
 #
-# Usage: Scripts/Android/build-release-apk.sh [--out DIR] [--install] [--keep-stash]
+# Usage: Scripts/Android/build-release-apk.sh [--out DIR] [--install] [--keep-stash] [--ci]
 #
 #   --out         directory the APK is added to, default <worktree>/out (never
 #                 wiped); it is named FurAffinity-<version>-<commit>.apk, and an
@@ -15,6 +15,10 @@
 #   --install     adb install -r -d the result on the running device
 #   --keep-stash  leave the distribution stash applied in the working tree
 #                 (default: revert the working tree to HEAD on exit)
+#   --ci          the working tree already carries the distribution values (the
+#                 release workflow seds them in, as for the IPA): no stash, no
+#                 clean-tree check, nothing reverted; keystore.properties must be
+#                 in this checkout, and a missing NDK is an error
 #
 # The stash is applied by *message*, never by stash@{0} — the stack is shared
 # with every other worktree and another session may be pushing to it.
@@ -26,8 +30,9 @@
 # without symbols; unset, it is read from `[auth] token=` in <worktree>/.sentryclirc
 # or ~/.sentryclirc (what `sentry-cli login` writes, shared by every worktree).
 #
-# The DSN comes from the stash, with the app id and the Amplitude key; the build
-# refuses to start if the placeholder is still there.
+# The DSN comes from the stash (or, with --ci, the SENTRY_DSN secret), with the
+# app id and the Amplitude key; the build refuses to start if the placeholder
+# app id or DSN is still there.
 
 set -eo pipefail
 
@@ -40,14 +45,16 @@ STASH_MSG="📱For App Store distribution"
 OUT="$ROOT/out"
 INSTALL=0
 KEEP_STASH=0
+CI=0
 
 while (( $# )); do
     case "$1" in
-        -h|--help)   sed -n '3,31p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)   sed -n '3,36p' "$0" | cut -c3-; exit 0 ;;
         --out)       OUT="$2"; shift ;;
         --out=*)     OUT="${1#*=}" ;;
         --install)   INSTALL=1 ;;
         --keep-stash) KEEP_STASH=1 ;;
+        --ci)        CI=1 ;;
         *)           die "unknown argument: $1" ;;
     esac
     shift
@@ -71,14 +78,19 @@ if [[ -z "$JAVA_HOME" ]] && ! java -version >/dev/null 2>&1; then
 fi
 
 # Without the NDK, AGP's stripReleaseDebugSymbols silently copies the .so files
-# through and the APK comes out ~2.5x too big. Warn rather than fail.
-[[ -d "$SDK/ndk" ]] || echo "warning: no NDK in $SDK/ndk — debug symbols will not be stripped" >&2
+# through and the APK comes out ~2.5x too big. Warn locally; CI ships the result.
+if [[ ! -d "$SDK/ndk" ]]; then
+    (( CI )) && die "no NDK in $SDK/ndk — debug symbols would not be stripped"
+    echo "warning: no NDK in $SDK/ndk — debug symbols will not be stripped" >&2
+fi
 
 # --- signing key ------------------------------------------------------------
 
 # Gitignored, so it exists in whichever checkout it was generated in. Link it
 # rather than making the user copy the one irreplaceable file in the project.
 if [[ ! -f Android/app/keystore.properties ]]; then
+    (( CI )) && die "Android/app/keystore.properties is missing — a release build without it
+    would be signed with the DEBUG key. Decode it from the ANDROID_KEYSTORE_* secrets."
     found=""
     while read -r wt; do
         [[ "$wt" == "$ROOT" ]] && continue
@@ -123,36 +135,42 @@ APK="$OUT/FurAffinity-$VERSION-$COMMIT.apk"
 
 # --- the distribution stash -------------------------------------------------
 
-STASH="$(git stash list --format='%H %gs' | awk -v m="$STASH_MSG" 'f { next } index($0, m) { print $1; f = 1 }')"
-[[ -n "$STASH" ]] || die "no stash whose message contains \"$STASH_MSG\" — it carries the
+if (( CI )); then
+    step "Using the distribution values already in the working tree (--ci)"
+else
+    STASH="$(git stash list --format='%H %gs' | awk -v m="$STASH_MSG" 'f { next } index($0, m) { print $1; f = 1 }')"
+    [[ -n "$STASH" ]] || die "no stash whose message contains \"$STASH_MSG\" — it carries the
     real app id and the Amplitude key, and without it this builds com.example.id1234."
 
-# The stash is applied into the working tree and reverted afterwards, so the
-# tree has to start clean: that is what makes `git checkout -- .` the exact
-# inverse.
-DIRTY="$(git status --porcelain --untracked-files=no)"
-[[ -z "$DIRTY" ]] || die "the working tree has uncommitted changes — commit them first.
+    # The stash is applied into the working tree and reverted afterwards, so the
+    # tree has to start clean: that is what makes `git checkout -- .` the exact
+    # inverse.
+    DIRTY="$(git status --porcelain --untracked-files=no)"
+    [[ -z "$DIRTY" ]] || die "the working tree has uncommitted changes — commit them first.
 $DIRTY"
 
-restore() {
-    if (( KEEP_STASH )); then
-        echo; echo "distribution stash left applied (--keep-stash)"
-    else
-        git -C "$ROOT" checkout -- .
-    fi
-}
-# EXIT alone would not fire on a Ctrl-C or a kill, leaving the Amplitude key in
-# the working tree.
-trap restore EXIT
-trap 'exit 130' INT
-trap 'exit 143' TERM
+    restore() {
+        if (( KEEP_STASH )); then
+            echo; echo "distribution stash left applied (--keep-stash)"
+        else
+            git -C "$ROOT" checkout -- .
+        fi
+    }
+    # EXIT alone would not fire on a Ctrl-C or a kill, leaving the Amplitude key in
+    # the working tree.
+    trap restore EXIT
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
 
-step "Applying \"$STASH_MSG\" ($(git rev-parse --short "$STASH"))"
-git stash apply "$STASH"
+    step "Applying \"$STASH_MSG\" ($(git rev-parse --short "$STASH"))"
+    git stash apply "$STASH"
+fi
 
 APP_ID="$(skip_env ANDROID_APPLICATION_ID)"
 [[ -n "$APP_ID" ]] || APP_ID="$(skip_env PRODUCT_BUNDLE_IDENTIFIER)"
 echo "app id $APP_ID, version $VERSION ($BUILD)"
+[[ "$APP_ID" == com.example.* ]] \
+    && die "the app id is still the placeholder $APP_ID — this would not update the shipped app"
 
 # Both halves of crash reporting, checked after the stash is applied: it is what
 # carries the DSN. See Android/docs/crash-reporting.md.
