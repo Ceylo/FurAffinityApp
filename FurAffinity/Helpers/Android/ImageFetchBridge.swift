@@ -74,6 +74,8 @@ enum ImageFetchBridge {
         /// is the causal variable — see Android/docs/images.md.
         var conn: Int?
         var newConn: Bool?
+        /// The last attempt was a 404.
+        var notFound: Bool?
         var failures: [String]
     }
 
@@ -107,6 +109,8 @@ enum ImageFetchBridge {
         /// `summarize-image-log.py` — and "images lost" is the number every
         /// measurement here turns on.
         case challenged(epoch: UInt64, attempts: Int, reasons: String)
+        /// The origin's own 404, e.g. an author with no avatar: not worth asking again.
+        case notFound
         case failed(epoch: UInt64)
 
     }
@@ -168,7 +172,7 @@ enum ImageFetchBridge {
                 return .challenged(epoch: epoch, attempts: result.attempts, reasons: reasons)
             }
             logAbandoned(url, attempts: result.attempts, reasons: reasons)
-            return .failed(epoch: epoch)
+            return result.notFound == true ? .notFound : .failed(epoch: epoch)
         } catch {
             logger.error("[IMG] \(url): fetch threw: \(error)")
             return .failed(epoch: 0)

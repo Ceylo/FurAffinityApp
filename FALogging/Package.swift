@@ -29,7 +29,7 @@ let package = Package(
     dependencies: [
         // Android-only: AndroidLogging backs the `os` compatibility module.
         // Matches skip-android-bridge's constraint so both unify on one version.
-        .package(url: "https://source.skip.tools/swift-android-native.git", from: "1.4.1"),
+        .package(url: "https://github.com/skiptools/swift-android-native.git", from: "1.5.2"),
     ],
     targets: [
         // Compatibility module: Android has no `os`, so this vends the Logger /

@@ -107,6 +107,9 @@ class FAImageFetchBridge {
         /// five times. Reported instead of retried under h2 immediately (the retry
         /// rides the same connection) and under h1 only once the attempts are spent,
         /// so h1 keeps the redraws `Connection: close` makes genuine.
+        ///
+        /// `"notFound":true` means the last attempt was a 404, which Swift remembers
+        /// so the URL is not asked for again.
         fun fetchResult(url: String): String {
             val start = System.nanoTime()
             val failures = JSONArray()
@@ -122,11 +125,13 @@ class FAImageFetchBridge {
             // the retry it always had.
             var redraw = true
             var challenged = false
+            var status = 0
             while (true) {
                 attempt++
                 conn.reset()
                 redraw = true
                 challenged = false
+                status = 0
                 val failure = try {
                     FAHttpClient.shared().newCall(request).execute().use { response ->
                         proto = response.protocol.toString()
@@ -138,6 +143,7 @@ class FAImageFetchBridge {
                             val mitigated = response.header("cf-mitigated")
                                 ?.let { " cf-mitigated=$it" } ?: ""
                             val ray = response.header("cf-ray")?.let { " ray=$it" } ?: ""
+                            status = response.code
                             redraw = worthRedrawing(response.code)
                             challenged = response.code == 403 &&
                                 response.header("cf-mitigated") == "challenge"
@@ -185,6 +191,7 @@ class FAImageFetchBridge {
                         .toString()
                 }
                 if (attempt >= MAX_ATTEMPTS || !redraw) {
+                    if (status == 404) json.put("notFound", true)
                     return json.put("attempts", attempt)
                         .put("proto", proto)
                         .put("ms", ms(start))

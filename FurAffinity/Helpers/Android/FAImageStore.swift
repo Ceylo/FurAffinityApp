@@ -57,6 +57,12 @@ actor FAImageStore {
 
     private let fetches = InFlightCoalescer<URL, Data?>()
 
+    /// URLs that answered 404, so every later pass and row fails fast instead of
+    /// issuing another GET — Kingfisher caches nothing on failure. In memory only, so a
+    /// newly added avatar shows up on the next launch; the value records whether the
+    /// saving has been logged.
+    private var notFound = [URL: Bool]()
+
     /// The pool generation an unresolved challenge was seen on, or nil when there
     /// isn't one. A fetch starting while this is set would be challenged too, so it
     /// parks *before* issuing rather than spending a permit on a doomed request.
@@ -72,9 +78,15 @@ actor FAImageStore {
     /// The encoded bytes behind `url`, downloading them now. Concurrent callers for
     /// the same URL share one fetch.
     func bytes(for url: URL, priority: FAImagePriority) async -> Data? {
-        // The fetch task is created on the coalescer rather than here; nothing before
-        // the `await` needs this actor's isolation.
-        await fetches.run(url, priority: priority.taskPriority) { [self] in
+        if let logged = notFound[url] {
+            if !logged {
+                notFound[url] = true
+                logger.info("[IMG] \(url): 404 remembered")
+            }
+            return nil
+        }
+        // The fetch task is created on the coalescer rather than here.
+        return await fetches.run(url, priority: priority.taskPriority) { [self] in
             await fetchWithRepair(url, priority: priority)
         }
     }
@@ -99,12 +111,17 @@ actor FAImageStore {
         await gated(.low, work)
     }
 
+    /// Forgets the remembered 404s, alongside a Settings cache clear.
+    func forgetNotFound() {
+        notFound.removeAll()
+    }
+
     // MARK: - Fetch
 
     private func fetchWithRepair(_ url: URL, priority: FAImagePriority) async -> Data? {
         let epochBefore = lastFailureEpoch
         var fetched = await fetchHoldingPermit(url, priority: priority)
-        if fetched == nil, priority == .high {
+        if fetched == nil, priority == .high, notFound[url] == nil {
             // Coalescing means a visible row may have been sharing a *prefetch's*
             // exhausted attempts, so it used to get an unconditional second try. It
             // now gets one only when the pool has actually been repaired underneath
@@ -152,6 +169,9 @@ actor FAImageStore {
         case let .failed(epoch):
             lastFailureEpoch = epoch
             return nil
+        case .notFound:
+            notFound[url] = false
+            return nil
         case let .challenged(epoch, attempts, reasons):
             challengeEpoch = epoch
             lastFailureEpoch = epoch
@@ -181,6 +201,8 @@ actor FAImageStore {
             case let .failed(retryEpoch):
                 lastFailureEpoch = retryEpoch
                 ImageFetchBridge.logAbandoned(url, attempts: attempts, reasons: reasons)
+            case .notFound:
+                notFound[url] = false
             case .bytes:
                 break // handled above
             }
