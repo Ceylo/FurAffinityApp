@@ -2,7 +2,7 @@
 //  FAMediaBridge.kt
 //  FurAffinity (Android)
 //
-//  Kotlin helper backing Save-to-gallery and Share. Same rationale and shape as
+//  Kotlin helper backing Save-to-gallery, Share and Open in another app. Same rationale and shape as
 //  FAImageFetchBridge: FurAffinityUI is a *native* Skip module, so it cannot touch Android
 //  framework classes directly and reaches this one by name through SkipBridge's
 //  AnyDynamicObject — see MediaBridge.swift.
@@ -12,7 +12,7 @@
 //  insert works but requires WRITE_EXTERNAL_STORAGE, which the manifest declares with
 //  maxSdkVersion="28".
 //
-//  Share hands out a content:// URI from the app's FileProvider rather than a file
+//  Share and Open hand out a content:// URI from the app's FileProvider rather than a file
 //  path: the source file lives in a staging directory inside the app's cache, which no
 //  other app may read. res/xml/file_paths.xml exposes exactly that directory.
 //
@@ -33,6 +33,8 @@ class FAMediaBridge {
     fun saveImage(path: String, displayName: String): Boolean = Companion.saveImage(path, displayName)
 
     fun share(path: String, displayName: String): Boolean = Companion.share(path, displayName)
+
+    fun open(path: String, displayName: String): Boolean = Companion.open(path, displayName)
 
     companion object {
         private const val TAG = "FAMediaBridge"
@@ -105,20 +107,39 @@ class FAMediaBridge {
             }
         }
 
-        /// Presents the system chooser for `path`. The file is copied into a
-        /// FileProvider-exposed subdirectory first, under its display name, so the
-        /// receiving app sees a sensible filename rather than the cache's hashed one.
-        fun share(path: String, displayName: String): Boolean {
+        /// Presents the system chooser to send `path` to another app.
+        fun share(path: String, displayName: String): Boolean =
+            startChooser("share", path, displayName, Intent.ACTION_SEND) { uri ->
+                putExtra(Intent.EXTRA_STREAM, uri)
+            }
+
+        /// Presents the system chooser to open `path` in another app, for formats this
+        /// one can't show.
+        fun open(path: String, displayName: String): Boolean =
+            startChooser("open", path, displayName, Intent.ACTION_VIEW) { uri ->
+                setDataAndType(uri, type)
+            }
+
+        /// The file is copied into a FileProvider-exposed subdirectory first, under its
+        /// display name, so the receiving app sees a sensible filename rather than the
+        /// cache's hashed one.
+        private fun startChooser(
+            label: String,
+            path: String,
+            displayName: String,
+            action: String,
+            attach: Intent.(android.net.Uri) -> Unit
+        ): Boolean {
             val source = File(path)
             if (!source.isFile) {
-                Log.e(TAG, "share: no file at $path")
+                Log.e(TAG, "$label: no file at $path")
                 return false
             }
 
             return try {
                 val context = context()
                 val shared = File(context.cacheDir, "shared")
-                // One share at a time: clearing first bounds this directory, and avoids
+                // One hand-off at a time: clearing first bounds this directory, and avoids
                 // rewriting a file under a receiving app still reading the URI we
                 // granted it for the same name a moment ago.
                 shared.deleteRecursively()
@@ -131,11 +152,11 @@ class FAMediaBridge {
                     "${context.packageName}.fileprovider",
                     staged
                 )
-                val intent = Intent(Intent.ACTION_SEND).apply {
+                val intent = Intent(action).apply {
                     // A wildcard is acceptable here, unlike for a MediaStore insert:
                     // the chooser only uses it to pick candidate apps.
                     type = mimeType(displayName) ?: "*/*"
-                    putExtra(Intent.EXTRA_STREAM, uri)
+                    attach(uri)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
                 // Started from outside an Activity context, so the chooser needs its own task.
@@ -145,7 +166,7 @@ class FAMediaBridge {
                 context.startActivity(chooser)
                 true
             } catch (e: Exception) {
-                Log.e(TAG, "share failed for $path", e)
+                Log.e(TAG, "$label failed for $path", e)
                 false
             }
         }

@@ -666,7 +666,6 @@
 		877D54812FF036E100BA9802 /* Text Submissions */ = {
 			isa = PBXGroup;
 			children = (
-				877D547F2FF036E100BA9802 /* StoryReaderView.swift */,
 				877D54802FF036E100BA9802 /* SubmissionTextContent.swift */,
 				C234CCE81EF8D3751004229E /* iOS */,
 			);
@@ -809,6 +808,7 @@
 			isa = PBXGroup;
 			children = (
 				877D547E2FF036E100BA9802 /* QuickLookPreview.swift */,
+				877D547F2FF036E100BA9802 /* StoryReaderView.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";

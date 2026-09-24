@@ -9,6 +9,7 @@
 
 import SwiftUI
 import Defaults
+import FAKit
 
 /// Reads a story submission. When we can extract its text it is rendered as native,
 /// reflowing text at the same size as the submission description, with a nav-bar menu
@@ -22,6 +23,15 @@ struct StoryReaderView: View {
         var documentUrl: URL
 
         var id: String { documentUrl.absoluteString }
+
+        /// Extracts the story off the main actor. Android builds its own `Content`, so
+        /// `SubmissionTextContent` only ever goes through here.
+        static func load(data: Data, filename: String, documentUrl: URL) async -> Content {
+            let text = await Task.detached {
+                StoryDocument.richText(from: data, filename: filename)
+            }.value
+            return Content(text: text, documentUrl: documentUrl)
+        }
     }
 
     var title: String

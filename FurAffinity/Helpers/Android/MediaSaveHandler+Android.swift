@@ -81,4 +81,12 @@ extension MediaBridge {
             }
         }
     }
+
+    static func openOffMain(fileUrl url: URL) async -> Bool {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                continuation.resume(returning: open(fileUrl: url))
+            }
+        }
+    }
 }

@@ -2,12 +2,8 @@
 //  SubmissionOtherContent.swift
 //  FurAffinityUI (Android)
 //
-//  Placeholders for the two non-image submission kinds, with the exact signatures
-//  `SubmissionView` calls so it symlinks verbatim.
-//
-//  Story submissions need `StoryDocument` (PDFKit reflow, DOCX, QuickLook) and audio
-//  needs AVPlayer + MPNowPlayingInfoCenter; both are Apple-only stacks, so the port
-//  covers image submissions first.
+//  A placeholder for music submissions, with the exact signature `SubmissionView`
+//  calls. Audio needs AVPlayer + MPNowPlayingInfoCenter, an Apple-only stack.
 //
 
 import SwiftUI
@@ -17,22 +13,6 @@ import FAKit
 @MainActor
 @Observable
 class AudioPlaybackController {
-}
-
-struct SubmissionTextContent: View {
-    var title: String
-    var textContent: FASubmission.TextContent
-    var thumbnail: DynamicThumbnail?
-    var thumbnailWidthOnHeightRatio: Float?
-    @Binding var documentFileUrl: URL?
-    var downloadDocument: (_ url: URL) async throws -> Data
-
-    var body: some View {
-        NotPortedContent(
-            kind: "Story submissions",
-            webUrl: textContent.documentUrl
-        )
-    }
 }
 
 struct SubmissionAudioContent: View {

@@ -29,7 +29,7 @@ public enum StoryDocument {
         let ns: NSAttributedString?
         switch (filename as NSString).pathExtension.lowercased() {
         case "txt", "text", "md":
-            ns = String(data: data, encoding: .utf8).map(plainAttributed)
+            ns = StoryText.text(from: data, filename: filename).map(plainAttributed)
         case "rtf":
             ns = rtfText(from: data)
         case "pdf":

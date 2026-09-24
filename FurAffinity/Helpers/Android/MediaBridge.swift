@@ -2,7 +2,7 @@
 //  MediaBridge.swift
 //  FurAffinityUI (Android)
 //
-//  Native-Swift driver for the Kotlin `FAMediaBridge` (MediaStore save + ACTION_SEND),
+//  Native-Swift driver for the Kotlin `FAMediaBridge` (MediaStore save, ACTION_SEND, ACTION_VIEW),
 //  reached by class name through SkipBridge's `AnyDynamicObject` exactly like
 //  `ImageFetchBridge`.
 //
@@ -58,6 +58,23 @@ enum MediaBridge {
             return ok == true
         } catch {
             logger.error("MediaBridge.share threw for \(url.lastPathComponent): \(error)")
+            return false
+        }
+        #else
+        return false
+        #endif
+    }
+
+    /// Presents the system chooser to open the file in another app.
+    static func open(fileUrl url: URL) -> Bool {
+        #if canImport(Android)
+        guard let bridge else { return false }
+        do {
+            let ok: Bool? = try bridge.open(url.path, url.lastPathComponent)
+            if ok != true { logger.error("MediaBridge.open did not confirm for \(url.lastPathComponent)") }
+            return ok == true
+        } catch {
+            logger.error("MediaBridge.open threw for \(url.lastPathComponent): \(error)")
             return false
         }
         #else
