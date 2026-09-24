@@ -51,7 +51,8 @@ extension HTTPCookie {
             properties[.expires] = expiresDate
         }
         if isSecure {
-            properties[.secure] = true
+            // A String, as documented: corelibs Foundation ignores a Bool here.
+            properties[.secure] = "TRUE"
         }
         return HTTPCookie(properties: properties) ?? self
     }
