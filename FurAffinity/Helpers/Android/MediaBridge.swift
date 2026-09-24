@@ -48,6 +48,25 @@ enum MediaBridge {
         #endif
     }
 
+    /// Copies the file into Download/FurAffinity (the share chooser below API 29).
+    ///
+    /// **Blocking**, like `saveImage`.
+    static func saveDocument(atFileUrl url: URL) -> Bool {
+        #if canImport(Android)
+        guard let bridge else { return false }
+        do {
+            let ok: Bool? = try bridge.saveDocument(url.path, url.lastPathComponent)
+            if ok != true { logger.error("MediaBridge.saveDocument did not confirm for \(url.lastPathComponent)") }
+            return ok == true
+        } catch {
+            logger.error("MediaBridge.saveDocument threw for \(url.lastPathComponent): \(error)")
+            return false
+        }
+        #else
+        return false
+        #endif
+    }
+
     /// Presents the system share chooser for the file.
     static func share(fileUrl url: URL) -> Bool {
         #if canImport(Android)

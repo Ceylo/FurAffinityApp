@@ -74,6 +74,14 @@ extension MediaBridge {
         }
     }
 
+    static func saveDocumentOffMain(atFileUrl url: URL) async -> Bool {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                continuation.resume(returning: saveDocument(atFileUrl: url))
+            }
+        }
+    }
+
     static func shareOffMain(fileUrl url: URL) async -> Bool {
         await withCheckedContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {

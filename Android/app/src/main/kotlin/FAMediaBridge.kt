@@ -2,15 +2,13 @@
 //  FAMediaBridge.kt
 //  FurAffinity (Android)
 //
-//  Kotlin helper backing Save-to-gallery, Share and Open in another app. Same rationale and shape as
-//  FAImageFetchBridge: FurAffinityUI is a *native* Skip module, so it cannot touch Android
+//  Kotlin helper backing Save (to the gallery or Downloads), Share and Open in another
+//  app. Same rationale and shape as FAImageFetchBridge: FurAffinityUI is a *native* Skip module, so it cannot touch Android
 //  framework classes directly and reaches this one by name through SkipBridge's
 //  AnyDynamicObject — see MediaBridge.swift.
 //
-//  Save writes into MediaStore's Pictures/FurAffinity collection. On API 29+ that needs
-//  no permission at all (scoped storage, IS_PENDING while writing); on API ≤28 the same
-//  insert works but requires WRITE_EXTERNAL_STORAGE, which the manifest declares with
-//  maxSdkVersion="28".
+//  Save writes into MediaStore's Pictures/FurAffinity (images) or Download/FurAffinity
+//  (documents) collection; see `insert` for the permissions involved.
 //
 //  Share and Open hand out a content:// URI from the app's FileProvider rather than a file
 //  path: the source file lives in a staging directory inside the app's cache, which no
@@ -22,15 +20,20 @@ package fur.affinity.ui
 import android.content.ContentValues
 import android.content.Intent
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
 import android.webkit.MimeTypeMap
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import java.io.File
 import skip.foundation.ProcessInfo
 
 class FAMediaBridge {
     fun saveImage(path: String, displayName: String): Boolean = Companion.saveImage(path, displayName)
+
+    fun saveDocument(path: String, displayName: String): Boolean = Companion.saveDocument(path, displayName)
 
     fun share(path: String, displayName: String): Boolean = Companion.share(path, displayName)
 
@@ -54,26 +57,69 @@ class FAMediaBridge {
         /// Copies `path` into the shared Pictures/FurAffinity collection so it shows up
         /// in the gallery. Returns false (and logs) rather than throwing across JNI.
         fun saveImage(path: String, displayName: String): Boolean {
-            val source = File(path)
-            if (!source.isFile) {
-                Log.e(TAG, "saveImage: no file at $path")
-                return false
-            }
-
             val mimeType = mimeType(displayName)
             if (mimeType == null) {
                 Log.e(TAG, "saveImage: no MIME type for $displayName")
                 return false
             }
+            return insert(
+                "saveImage",
+                path,
+                displayName,
+                mimeType,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                "Pictures/$ALBUM"
+            )
+        }
+
+        /// Copies `path` into Download/FurAffinity, where the Files app shows it, and says
+        /// so in a toast. `MediaStore.Downloads` is API 29+; below that the system share
+        /// chooser stands in, as it did for every document before.
+        fun saveDocument(path: String, displayName: String): Boolean {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                return share(path, displayName)
+            }
+            val saved = insert(
+                "saveDocument",
+                path,
+                displayName,
+                mimeType(displayName) ?: "application/octet-stream",
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                "Download/$ALBUM"
+            )
+            if (saved) {
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(context(), "Saved to Download/$ALBUM", Toast.LENGTH_SHORT).show()
+                }
+            }
+            return saved
+        }
+
+        /// On API 29+ the insert needs no permission at all (scoped storage, IS_PENDING
+        /// while writing); on API 28 it needs WRITE_EXTERNAL_STORAGE, which the manifest
+        /// declares with maxSdkVersion="28", and ignores `relativePath`.
+        private fun insert(
+            label: String,
+            path: String,
+            displayName: String,
+            mimeType: String,
+            collection: android.net.Uri,
+            relativePath: String
+        ): Boolean {
+            val source = File(path)
+            if (!source.isFile) {
+                Log.e(TAG, "$label: no file at $path")
+                return false
+            }
 
             val resolver = context().contentResolver
             val values = ContentValues().apply {
-                put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
-                put(MediaStore.Images.Media.MIME_TYPE, mimeType)
+                put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
+                put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/$ALBUM")
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
                     // Hides the row from other apps until the bytes are all there.
-                    put(MediaStore.Images.Media.IS_PENDING, 1)
+                    put(MediaStore.MediaColumns.IS_PENDING, 1)
                 }
             }
 
@@ -81,27 +127,27 @@ class FAMediaBridge {
             // IS_PENDING row is invisible to the user and never reclaimed.
             var uri: android.net.Uri? = null
             return try {
-                uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                uri = resolver.insert(collection, values)
                 if (uri == null) {
-                    Log.e(TAG, "saveImage: MediaStore insert returned no URI")
+                    Log.e(TAG, "$label: MediaStore insert returned no URI")
                     return false
                 }
                 val output = resolver.openOutputStream(uri)
                 if (output == null) {
-                    Log.e(TAG, "saveImage: could not open $uri for writing")
+                    Log.e(TAG, "$label: could not open $uri for writing")
                     resolver.delete(uri, null, null)
                     return false
                 }
                 output.use { stream -> source.inputStream().use { it.copyTo(stream) } }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     values.clear()
-                    values.put(MediaStore.Images.Media.IS_PENDING, 0)
+                    values.put(MediaStore.MediaColumns.IS_PENDING, 0)
                     resolver.update(uri, values, null, null)
                 }
-                Log.i(TAG, "saveImage: wrote $displayName to $uri")
+                Log.i(TAG, "$label: wrote $displayName to $uri")
                 true
             } catch (e: Exception) {
-                Log.e(TAG, "saveImage failed for $path", e)
+                Log.e(TAG, "$label failed for $path", e)
                 uri?.let { runCatching { resolver.delete(it, null, null) } }
                 false
             }

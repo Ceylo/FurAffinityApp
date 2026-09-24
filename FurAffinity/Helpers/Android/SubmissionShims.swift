@@ -56,12 +56,18 @@ func share(_ items: [Any]) {
     Task { _ = await MediaBridge.shareOffMain(fileUrl: url) }
 }
 
-/// Android has no "Save to Files" exporter distinct from sharing; the system chooser
-/// includes the Files app. Only reachable from document-backed submissions, which
-/// aren't ported.
+/// Saves into Download/FurAffinity, which the Files app shows, rather than asking where
+/// as iOS's document picker does. The iOS signature carries no error storage, so a
+/// failure is only logged; `FAMediaBridge` confirms a success in a toast.
 @MainActor
 func exportToFiles(_ urls: [URL]) {
-    share(urls)
+    for url in urls {
+        Task {
+            if !(await MediaBridge.saveDocumentOffMain(atFileUrl: url)) {
+                logger.error("exportToFiles could not save \(url.lastPathComponent)")
+            }
+        }
+    }
 }
 
 // MARK: - Thumbnails

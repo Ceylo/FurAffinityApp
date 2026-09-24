@@ -318,8 +318,13 @@ Checked on the emulator on 2026-09-24: that comment scrolls into view, while
 ### Save and Share
 
 `FAMediaBridge.kt` (app module, reached by name through `AnyDynamicObject` like
-`FAImageFetchBridge`) inserts into MediaStore's `Pictures/FurAffinity` and starts
-`ACTION_SEND`. Two things the manifest must carry, both easy to lose in a regeneration:
+`FAImageFetchBridge`) inserts images into MediaStore's `Pictures/FurAffinity` and
+documents into `Download/FurAffinity`, and starts `ACTION_SEND` (Share) and
+`ACTION_VIEW` (Open in another app). "Save to Files" (`exportToFiles`) saves without
+asking where, unlike iOS's document picker. A toast says where the file went, since the
+iOS signature has no error storage to report through. `MediaStore.Downloads` needs API
+29, so on API 28 it falls back to the share chooser. Two things the manifest must carry,
+both easy to lose in a regeneration:
 
 - `<provider android:name="androidx.core.content.FileProvider">` with
   `${applicationId}.fileprovider` and `@xml/file_paths`. Shared files sit in the app
