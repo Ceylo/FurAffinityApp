@@ -51,11 +51,12 @@ production.
 |---|---|---|
 | IPA for AltStore Classic | push a tag | the Upload dSYMs target, `secrets.SENTRY_AUTH_TOKEN` |
 | App Store Connect → AltStore PAL | the procedure below | the same target |
-| Android APK | `Scripts/Android/build-release-apk.sh` | the Sentry Gradle plugin, during `assembleRelease` |
+| Android APK | push a tag (a tester's build: `Scripts/Android/build-release-apk.sh`) | the Sentry Gradle plugin, during `assembleRelease` |
 
 The Android script and the CI workflow need nothing remembered: each refuses to
 produce an unreportable build, CI included, where a missing secret seds in an
-empty DSN that the upload target rejects like the placeholder.
+empty DSN that the upload target — or, for the APK, `build-release-apk.sh --ci` —
+rejects like the placeholder.
 
 The **local iOS archive** is the one manual procedure. From a clean tree:
 

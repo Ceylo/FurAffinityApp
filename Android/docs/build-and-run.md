@@ -429,6 +429,26 @@ in a test file means SkipAndroidBridge's JNI-backed store (skipstone's typealias
 arrives through `@testable import`) — reach the Foundation one `Defaults` uses as
 `key.suite`.
 
+### CI
+
+`build.yml`'s `Build-Android` job runs beside the iOS one, with no secrets:
+
+1. `Scripts/Android/check-skip-version.sh` — Homebrew installs the *latest* skip,
+   and one past the `exact:` pin fails far from the cause (see [Run](#run)).
+2. `SKIP_EXPORT_ARCHS=x86_64 ./gradlew :app:assembleDebug` — only a Gradle build
+   compiles the Darwin bridge and the Kotlin, and x86_64 is the emulator's only ABI.
+3. `ABI=x86_64 Scripts/Android/check-shared-globals.sh debug`, as `run.sh` does.
+4. `Scripts/Android/test.sh` on an API 34 x86_64 emulator
+   (`reactivecircus/android-emulator-runner`, AVD snapshot cached), logs uploaded.
+
+It runs on **`macos-26-intel`**: the emulator needs nested virtualisation, which
+GitHub's arm64 macOS runners do not have — the same choice as Skip's own
+`skip-framework.yml`. GitHub retires its Intel macOS runners around **August
+2027**. The way off is Linux with KVM, where `skip android test` works for
+packages; Skip does not support a full app build there, so step 2 would have to
+stay on macOS without an emulator (arm64 `macos-26`, as the release job already
+does).
+
 The iOS build must stay green at every step:
 
 ```

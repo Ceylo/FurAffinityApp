@@ -8,7 +8,7 @@ still built by `FurAffinity.xcodeproj` and none of its files move.
 
 | Doc | Covers |
 |---|---|
-| [docs/build-and-run.md](docs/build-and-run.md) | emulator, build, run, debug, test, and the build-environment traps |
+| [docs/build-and-run.md](docs/build-and-run.md) | emulator, build, run, debug, test, CI, and the build-environment traps |
 | [docs/shared-sources.md](docs/shared-sources.md) | guarding, and every rule for writing a file both platforms compile |
 | [docs/assets-and-resources.md](docs/assets-and-resources.md) | shared asset-catalog entries, generated launcher/app art |
 | [docs/forks.md](docs/forks.md) | the four forked dependencies and every patch in them |
@@ -18,6 +18,7 @@ still built by `FurAffinity.xcodeproj` and none of its files move.
 | [docs/screens.md](docs/screens.md) | Followed feed, submission screen, animation on SkipUI |
 | [docs/releasing.md](docs/releasing.md) | update check, release signing, handing a build to testers |
 | [docs/crash-reporting.md](docs/crash-reporting.md) | Sentry on both platforms: symbols, consent, tombstones, and how a crash report is verified |
+| [docs/analytics.md](docs/analytics.md) | Amplitude on both platforms, and what it does not collect |
 | [docs/profiling.md](docs/profiling.md) | the `profile` build, CPU samples, Perfetto traces with signposts, memory logs |
 
 ## Layout
@@ -36,7 +37,7 @@ FurAffinity/             ALL app sources — and the Skip target's directory
   iOS/                     iOS-only sources + Info.plist, entitlements, icons
   Resources/               the Android asset catalog Skip mirrors
   Skip/skip.yml            marks this a native Skip module
-Scripts/Android/         emulator, run, debug, logs, derived art, release APK
+Scripts/Android/         emulator, run, debug, test, logs, derived art, release APK
 Scripts/iOS/             this worktree's simulator device
 FAKit/                   shared Swift package (cross-compiles, see AGENTS.md)
 ```
