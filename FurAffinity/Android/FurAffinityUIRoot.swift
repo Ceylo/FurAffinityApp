@@ -63,6 +63,8 @@ import SwiftUI
         installDefaultsSuite()
         // As early as it can be: it reads a Defaults key, so not before the suite.
         CrashReporting.start(appID: AndroidAppInfo.packageName)
+        // Where FurAffinityApp.init() starts it on iOS: after crash reporting.
+        startAnalytics()
         // Matches FurAffinityApp.init() on iOS. A no-op on a fresh Android install
         // (see Defaults.startingSchemaVersion), but it stamps the schema version so a
         // later migration knows where to resume.
