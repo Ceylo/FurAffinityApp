@@ -21,7 +21,7 @@
 
 set -eo pipefail
 
-FAKIT_MIN_TESTS=183
+FAKIT_MIN_TESTS=184
 UI_MIN_TESTS=40
 
 die() { echo "error: $*" >&2; exit 1; }
@@ -77,6 +77,10 @@ run() {
     count="$(sed -E 's/.*Test run with ([0-9]+) tests?.*/\1/' <<< "$summary")"
     (( count >= min )) || die "$name: $count tests ran, expected at least $min"
 }
+
+# `skip android test` never runs Gradle, which is what normally generates the
+# catalog entries the root package's resource bundle carries.
+"$ROOT/Scripts/Android/generate-assets.sh" > /dev/null
 
 run "$ROOT/FAKit" "$LOG_DIR/FAKit.log" "$FAKIT_MIN_TESTS"
 run "$ROOT" "$LOG_DIR/FurAffinityUI.log" "$UI_MIN_TESTS" \

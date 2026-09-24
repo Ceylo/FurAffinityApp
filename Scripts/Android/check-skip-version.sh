@@ -2,18 +2,31 @@
 #
 # Fail unless the installed `skip` CLI is the version Package.swift pins.
 #
-# Usage: Scripts/Android/check-skip-version.sh
+# Usage: Scripts/Android/check-skip-version.sh [--install]
+#
+#   --install   on a mismatch, download the pinned release from GitHub instead of
+#               failing, put it first on PATH, and export it to later GitHub
+#               Actions steps (GITHUB_PATH, and SKIP_COMMAND_OVERRIDE for Gradle)
 #
 # The manifests pin skip with `exact:`, and a CLI that has drifted past that pin
 # fails the build inside a dependency, far from the cause (`AndroidUserDefaults`
-# … "must use a 'required' initializer"). CI installs whatever Homebrew has, so
-# its Android jobs run this first. See Android/docs/build-and-run.md § CI.
+# … "must use a 'required' initializer"). CI's setup-skip installs whatever
+# Homebrew has, so its Android jobs run this with --install: a Skip release
+# must not turn every push red. See Android/docs/build-and-run.md § CI.
 
 set -eo pipefail
 
 die() { echo "error: $*" >&2; exit 1; }
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+INSTALL=0
+case "${1:-}" in
+    "")             ;;
+    --install)      INSTALL=1 ;;
+    -h|--help)      sed -n '3,15p' "$0" | cut -c3-; exit 0 ;;
+    *)              die "unknown argument: $1" ;;
+esac
 
 command -v skip >/dev/null || die "\`skip\` is not on PATH"
 
@@ -23,8 +36,29 @@ FAKIT_PINNED="$(sed -nE 's@.*skiptools/skip\.git", exact: "([0-9.]+)".*@\1@p' "$
 [[ "$FAKIT_PINNED" == "$PINNED" ]] \
     || die "FAKit/Package.swift pins skip $FAKIT_PINNED but Package.swift pins $PINNED"
 
-INSTALLED="$(skip version 2>/dev/null | sed -nE 's/^Skip version ([0-9.]+).*/\1/p' | head -1)"
+installed_version() {
+    skip version 2>/dev/null | sed -nE 's/^Skip version ([0-9.]+).*/\1/p' | head -1
+}
+INSTALLED="$(installed_version)"
 [[ -n "$INSTALLED" ]] || die "could not read \`skip version\`"
+
+if [[ "$INSTALLED" != "$PINNED" ]] && (( INSTALL )); then
+    # What the Homebrew cask installs: a universal binary behind a wrapper script.
+    DEST="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/skip-$PINNED"
+    echo "skip $INSTALLED is installed; fetching $PINNED into $DEST"
+    rm -rf "$DEST" && mkdir -p "$DEST"
+    curl -fsSL -o "$DEST/skip.zip" \
+        "https://github.com/skiptools/skip/releases/download/$PINNED/skip-macos.zip"
+    unzip -q "$DEST/skip.zip" -d "$DEST"
+    BIN="$DEST/skip.artifactbundle/bin"
+    [[ -x "$BIN/skip" ]] || die "the skip $PINNED download has no bin/skip"
+    export PATH="$BIN:$PATH"
+    if [[ -n "$GITHUB_PATH" ]]; then
+        echo "$BIN" >> "$GITHUB_PATH"
+        echo "SKIP_COMMAND_OVERRIDE=$BIN/skip" >> "$GITHUB_ENV"
+    fi
+    INSTALLED="$(installed_version)"
+fi
 
 [[ "$INSTALLED" == "$PINNED" ]] || die "skip $INSTALLED is installed but the manifests pin $PINNED.
     Upgrade the pin with everything it moves (Android/docs/build-and-run.md § Run)

@@ -6,11 +6,7 @@
 import Foundation
 import FAKit
 
-#if FA_SKIP_MODULE
-@testable import FurAffinityUI
-#else
 @testable import Fur_Affinity
-#endif
 
 @MainActor
 final class MockFASession: FASession {

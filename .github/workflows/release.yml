@@ -161,8 +161,9 @@ jobs:
         with:
           install-swift-android-sdk: true
           swift-android-sdk-version: 6.3.3
-      - name: Check the Skip version
-        run: Scripts/Android/check-skip-version.sh
+      - name: Pin the Skip version
+        # setup-skip installs Homebrew's latest; this swaps in the manifests' pin.
+        run: Scripts/Android/check-skip-version.sh --install
       - name: Install the NDK
         run: |
           # Stripping the release .so files needs it; without it the APK is 2.5x

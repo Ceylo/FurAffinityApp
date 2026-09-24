@@ -399,7 +399,7 @@ It runs both Android test packages on the running emulator, under
 [the emulator lock](#the-shared-emulator), and fails if either reports fewer cases
 than its floor in the script — a run that silently finds no tests must not pass:
 
-- **FAKit** (FAPages, FAKit, FALogging): 183 cases, from `FAKit/`.
+- **FAKit** (FAPages, FAKit, FALogging): 184 cases, from `FAKit/`.
 - **FurAffinityUITests** (the root package): 40 cases. It is the Xcode
   `FurAffinityTests` directory, compiled against `FurAffinityUI` with
   `FA_SKIP_MODULE` defined — each file picks its `@testable import` on that define.
@@ -433,8 +433,10 @@ arrives through `@testable import`) — reach the Foundation one `Defaults` uses
 
 `build.yml`'s `Build-Android` job runs beside the iOS one, with no secrets:
 
-1. `Scripts/Android/check-skip-version.sh` — Homebrew installs the *latest* skip,
-   and one past the `exact:` pin fails far from the cause (see [Run](#run)).
+1. `Scripts/Android/check-skip-version.sh --install` — setup-skip installs
+   Homebrew's *latest* skip, and one past the `exact:` pin fails far from the cause
+   (see [Run](#run)); this fetches the pinned release instead, so a Skip release
+   does not turn CI red.
 2. `SKIP_EXPORT_ARCHS=x86_64 ./gradlew :app:assembleDebug` — only a Gradle build
    compiles the Darwin bridge and the Kotlin, and x86_64 is the emulator's only ABI.
 3. `ABI=x86_64 Scripts/Android/check-shared-globals.sh debug`, as `run.sh` does.

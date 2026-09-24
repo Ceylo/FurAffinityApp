@@ -169,6 +169,7 @@ fi
 APP_ID="$(skip_env ANDROID_APPLICATION_ID)"
 [[ -n "$APP_ID" ]] || APP_ID="$(skip_env PRODUCT_BUNDLE_IDENTIFIER)"
 echo "app id $APP_ID, version $VERSION ($BUILD)"
+[[ -n "$APP_ID" ]] || die "Skip.env has an empty PRODUCT_BUNDLE_IDENTIFIER"
 [[ "$APP_ID" == com.example.* ]] \
     && die "the app id is still the placeholder $APP_ID — this would not update the shipped app"
 
@@ -232,7 +233,26 @@ if [[ -x "$APKSIGNER" ]]; then
         die "the APK is DEBUG-signed — do not ship it. See Android/docs/releasing.md § Release signing."
     fi
 else
+    (( CI )) && die "no apksigner in $SDK/build-tools — the signature cannot be checked"
     echo "warning: no apksigner in $SDK/build-tools — signature unverified" >&2
+fi
+
+# --- verify the stripping ---------------------------------------------------
+
+# AGP strips with *its* NDK version, and quietly copies the libraries through when
+# that one is missing, whatever else is installed: check the result, not the SDK.
+READELF="$(ls "$SDK"/ndk/*/toolchains/llvm/prebuilt/*/bin/llvm-readelf 2>/dev/null | sort -V | tail -1)"
+if [[ -x "$READELF" ]]; then
+    SO="$(mktemp -t fa-apk-so)"
+    unzip -p "$APK" lib/arm64-v8a/libFurAffinityUI.so > "$SO"
+    if "$READELF" --section-headers "$SO" | grep -q '\.debug_info'; then
+        rm -f "$SO"
+        (( CI )) && die "the APK's Swift libraries still carry debug info — AGP's NDK is missing"
+        echo "warning: the APK's Swift libraries still carry debug info — AGP's NDK is missing" >&2
+    else
+        rm -f "$SO"
+        echo "native libraries stripped"
+    fi
 fi
 
 # --- done -------------------------------------------------------------------

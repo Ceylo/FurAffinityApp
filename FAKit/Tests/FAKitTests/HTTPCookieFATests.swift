@@ -82,6 +82,16 @@ struct HTTPCookieFATests {
         #endif
     }
 
+    // What WebCookie.asHTTPCookie builds on Android, where WebCookie itself needs
+    // a JVM and so cannot be made in a test.
+    @Test func plainCookieKeepsItsSecureFlag() throws {
+        let cookie = try #require(HTTPCookie.plain(
+            name: "a", value: "v", domain: ".furaffinity.net", path: "/",
+            expires: nil, isSecure: true
+        ))
+        #expect(cookie.isSecure)
+    }
+
     @Test func normalizedClearanceReplaysFromStorageForFAURL() {
         let storage = HTTPCookieStorage.sharedCookieStorage(
             forGroupContainerIdentifier: "test.cf.normalize.\(UUID().uuidString)"

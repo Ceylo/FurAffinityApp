@@ -9,7 +9,7 @@ builds and `build.yml` never send anything.
 | SDK | AmplitudeSwift | `com.amplitude:analytics-android` |
 | Started from | the `amplitude` global in `iOS/FurAffinityApp.swift` | `startAnalytics()` in `Helpers/Android/Analytics+Android.swift`, from `FurAffinityUIAppDelegate.onInit` |
 | Autocapture | sessions, app lifecycles | the same |
-| Not collected | city, region, carrier, DMA, IP address, IDFV | city, region, carrier, DMA, IP address, advertising id, app set id |
+| Not collected | city, region, carrier, DMA, IP address, IDFV | city, region, carrier, DMA, IP address, latitude/longitude, advertising id, app set id |
 
 No custom events are logged on either. The Android device id is the SDK's random
 one: `useAdvertisingIdForDeviceId` and `useAppSetIdForDeviceId` stay false. Both

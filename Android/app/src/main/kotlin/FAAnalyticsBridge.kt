@@ -32,15 +32,18 @@ class FAAnalyticsBridge {
             .disableIpAddress()
             .disableAdid()
             .disableAppSetId()
+            .disableLatLng()
         amplitude = Amplitude(
             Configuration(
                 apiKey = apiKey,
                 context = context,
                 trackingOptions = trackingOptions,
                 autocapture = setOf(AutocaptureOption.SESSIONS, AutocaptureOption.APP_LIFECYCLES),
-                // The defaults already, stated so the device id stays a random one.
+                // The defaults already, stated so the device id stays a random one and
+                // no location is read even if a permission ever arrives.
                 useAdvertisingIdForDeviceId = false,
                 useAppSetIdForDeviceId = false,
+                locationListening = false,
             )
         ).also {
             if ((context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) {

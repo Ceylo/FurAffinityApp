@@ -336,14 +336,9 @@ public struct FAWebSessionView: View {
 extension WebCookie {
     /// Convert to a Foundation cookie for OnlineFASession / FAHTTPDataSource.
     var asHTTPCookie: HTTPCookie? {
-        var properties: [HTTPCookiePropertyKey: Any] = [
-            .name: name,
-            .value: value,
-            .domain: domain ?? ".furaffinity.net",
-            .path: path ?? "/",
-        ]
-        if let expires { properties[.expires] = expires }
-        if isSecure { properties[.secure] = true }
-        return HTTPCookie(properties: properties)
+        HTTPCookie.plain(
+            name: name, value: value, domain: domain ?? ".furaffinity.net",
+            path: path ?? "/", expires: expires, isSecure: isSecure
+        )
     }
 }

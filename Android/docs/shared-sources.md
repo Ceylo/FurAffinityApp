@@ -166,7 +166,7 @@ pull against each other:
 Check the count, not just the exit status: a dropped testable does not fail the build.
 The suite is **352** cases — 86 FurAffinityTests, 211 FAKitTests, 40 FAPagesTests,
 15 FALoggingTests. On Android, `Scripts/Android/test.sh` checks its own floors:
-183 tests in FAKit's package and 40 in `FurAffinityUITests` (Swift Testing counts a
+184 tests in FAKit's package and 40 in `FurAffinityUITests` (Swift Testing counts a
 parameterized test once).
 
 ## Rules for shared sources

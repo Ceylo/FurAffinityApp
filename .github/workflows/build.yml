@@ -1,5 +1,10 @@
 name: Build App
 on: [push, workflow_dispatch]
+# A newer push to the same branch supersedes a run still going: the Android job
+# holds an Intel runner for up to an hour.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   Build-App:
     runs-on: macos-26
@@ -103,8 +108,9 @@ jobs:
         with:
           install-swift-android-sdk: true
           swift-android-sdk-version: 6.3.3
-      - name: Check the Skip version
-        run: Scripts/Android/check-skip-version.sh
+      - name: Pin the Skip version
+        # setup-skip installs Homebrew's latest; this swaps in the manifests' pin.
+        run: Scripts/Android/check-skip-version.sh --install
       - name: Build App
         # A green `skip android test` does not prove the app builds: only a Gradle
         # build compiles the Darwin bridge and the Kotlin. x86_64 alone, the
