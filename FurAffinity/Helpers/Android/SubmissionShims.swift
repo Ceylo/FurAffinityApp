@@ -41,16 +41,6 @@ final class NSUserActivity: Equatable {
 extension View {
     /// SkipSwiftUI has no scroll anchor; only used to centre a failure message.
     func defaultScrollAnchor(_ anchor: UnitPoint) -> some View { self }
-
-    /// Scrolling a deep-linked comment into view is not ported.
-    ///
-    /// The iOS modifier nests its `content` inside a `ScrollViewReader` closure, and
-    /// that crashes the app on Android: `ViewModifier.Content` arrives as a JNI *local*
-    /// reference, valid only for the frame that built the modifier, while the reader's
-    /// closure is invoked later from Compose — "jobject is an invalid JNI transition
-    /// frame reference". Any modifier that defers use of `content` into an escaping
-    /// closure hits this.
-    func scrollToItem(id: (some Hashable)?) -> some View { self }
 }
 
 // MARK: - Sharing

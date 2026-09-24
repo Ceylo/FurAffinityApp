@@ -10,10 +10,7 @@ cold-launch restore check and foreground autorefresh from the same source as iOS
 The scroll-preserving refresh choreography — a zero-height `fetchTrigger` row whose
 `onAppear` performs the fetch, wrapped in a `ScrollViewReader` — **runs on Android too**,
 and was measured working on the emulator: the pull fires the trigger, the fetch happens,
-the badge shows and fades, and the list holds its position. `ScrollViewReader` inside a
-real `body` is fine; the JNI abort under
-[§A `ViewModifier` must not defer its `content`](#a-viewmodifier-must-not-defer-its-content)
-is specific to a modifier deferring `Content`, which this is not.
+the badge shows and fades, and the list holds its position.
 
 `ListItemTracking` **runs on Android too**, from one implementation with no `#if`. It
 writes `Defaults[.lastViewedSubmissionID]` as the row crossing 30% from the top scrolls
@@ -133,7 +130,7 @@ Ported: the image, the zoomable full-screen viewer, favorite (with the optimisti
 routing, threaded comments including the deep-linked one's highlight pulse, comment
 posting (the shared `Replying` / `CommentEditor` sheet, reached from the controls, the
 toolbar and each comment's Reply action), "Send a Note" (the shared `NoteEditor`, its
-recipient pre-filled), and the metadata screen.
+recipient pre-filled), scrolling a deep-linked comment into view, and the metadata screen.
 
 Comment posting needed two things from the forks. `.glass` / `.glassProminent` and
 `buttonBorderShape` now exist, drawn as their bordered counterparts and a Material
@@ -221,7 +218,6 @@ Deferred, with the reason:
 | Not ported | Why |
 |---|---|
 | Story (`.text`) and music (`.audio`) submissions | `StoryDocument` (PDFKit reflow, DOCX, QuickLook) and AVPlayer + `MPNowPlayingInfoCenter` are Apple-only stacks. Both render a placeholder with a link to the file. |
-| `scrollToItem` (scroll a deep-linked comment into view) | see below |
 
 ### Android-only substitutes
 
@@ -262,20 +258,42 @@ survives only as iOS's external entry point.
 `view(for:)`, the half of `InAppNavigation.swift` that can't be shared at all (it names
 screens that don't exist here), lives in `AndroidNavigationDestination.swift`.
 
-### A `ViewModifier` must not defer its `content`
+### Scrolling to a deep-linked comment
 
-`ViewModifier.Content` reaches Swift as a `JavaBackedView` around a JNI **local**
-reference, valid only for the frame that built the modifier. Using it synchronously is
-fine; capturing it in a closure Compose invokes later aborts the process:
+The shared `scrollToItem` needed two fork fixes.
+
+**A `ViewModifier` may defer its `content`.** `ViewModifier.Content` reaches Swift as a
+`JavaBackedView`, which used to wrap the JNI *local* reference it was handed, valid only
+for the frame that built the modifier. `ScrollToItemModifier` uses it inside the
+`ScrollViewReader` closure Compose calls later, which aborted the process:
 
 ```
 JNI DETECTED ERROR IN APPLICATION: jobject is an invalid JNI transition frame reference
   from kotlin.Pair skip.bridge.SwiftBackedFunction1.Swift_invoke(long, java.lang.Object)
 ```
 
-That is what `ScrollToItemModifier` does — `ScrollViewReader { reader in content.onFirstAppear { … } }`
-— so `scrollToItem` is an Android no-op. In a tombstone, look for
+`JavaBackedView` now holds a global reference. If that abort comes back, look for
 `SwiftBackedFunction*.invoke` directly under the SkipUI container owning the closure.
+
+**The proxy resolves its action when used.** `ScrollViewReader` built its proxy from the
+scroll action collected at the time, and on the first composition the `List` has not
+contributed one yet. The proxy `onFirstAppear` captures was therefore a no-op, and nothing
+scrolled. It now reads the collected action at call time, as SwiftUI's does.
+
+The anchor is still ignored: SkipUI brings the target row to the top of the list, where
+iOS centres it.
+
+To reach a deep link without a notification, launch a debug build with
+`--es faOpenURL <url>`: `AndroidRootView` opens it in-app once there is a session, like
+`simctl openurl` on iOS.
+
+```
+adb shell am start -S -n <app id>/fur.affinity.ui.MainActivity \
+  --es faOpenURL "https://www.furaffinity.net/view/48519387/#cid:166652794"
+```
+
+Checked on the emulator on 2026-09-24: that comment scrolls into view, while
+`#cid:1` on the same submission leaves the list at the top.
 
 ### Save and Share
 

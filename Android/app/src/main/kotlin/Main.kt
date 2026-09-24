@@ -66,19 +66,21 @@ open class MainActivity: AppCompatActivity {
         }
 
         AppDelegate.shared.onLaunch()
-        runCrashTestExtras(savedInstanceState)
+        runDebugExtras(savedInstanceState)
     }
 
     /// `--ez faCrashReportingEnabled <bool>` and `--es faCrashTest <case> --es faCrashTestRun <id>`,
-    /// from Scripts/check-crash-reporting.sh. Never in release: this activity is
-    /// exported, so any app could send them. Only on the launch that carried them:
-    /// a recreation or a relaunch from Recents replays the same intent.
-    private fun runCrashTestExtras(savedInstanceState: android.os.Bundle?) {
+    /// from Scripts/check-crash-reporting.sh, and `--es faOpenURL <url>`, which opens an FA
+    /// URL in-app once signed in (the counterpart of `simctl openurl`). Never in release:
+    /// this activity is exported, so any app could send them. Only on the launch that
+    /// carried them: a recreation or a relaunch from Recents replays the same intent.
+    private fun runDebugExtras(savedInstanceState: android.os.Bundle?) {
         if (BuildConfig.BUILD_TYPE == "release") return
         val intent = intent ?: return
         if (savedInstanceState != null) return
         if (intent.flags and android.content.Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
         val extras = intent.extras ?: return
+        extras.getString("faOpenURL")?.let { AppDelegate.shared.openDebugURL(it) }
         if (extras.containsKey("faCrashReportingEnabled")) {
             AppDelegate.shared.setCrashReportingEnabled(extras.getBoolean("faCrashReportingEnabled"))
         }
