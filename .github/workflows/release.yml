@@ -5,11 +5,14 @@ on:
       - '*'
   workflow_dispatch:
 
+# Three jobs: the IPA, the APK, and the draft release that takes both. The release
+# job runs for a tag only, so `workflow_dispatch` on a branch is a full dry run —
+# both artifacts built and checked, symbols uploaded to Sentry, no release.
 jobs:
-  Build-App:
+  ios:
     runs-on: macos-26
     permissions:
-      contents: write
+      contents: read
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -110,14 +113,105 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Xcode Archive
-          path: ./*.xcarchive
+          path: ./*.xcarchive.zip
           if-no-files-found: error
+
+  android:
+    # arm64: no emulator here, so the Intel runner build.yml needs is not. If the
+    # release SkipUI compile runs out of memory on this 7 GB runner, macos-26-intel
+    # (14 GB) is the fallback until GitHub retires it around August 2027.
+    runs-on: macos-26
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: Update Secrets
+        env:
+          AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
+          BUNDLE_ID: ${{ secrets.BUNDLE_ID }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        run: |
+          # The same values as the IPA's. Skip.env's bundle id becomes the
+          # applicationId; build-release-apk.sh refuses the placeholder and an empty DSN.
+          sed -i "" "s/amplitudeApiKey = \"Your App Secret\"/amplitudeApiKey = \"${AMPLITUDE_API_KEY}\"/" "FurAffinity/Secrets.swift"
+          sed -i "" "s#static let sentryDSN = \"Your Sentry DSN\"#static let sentryDSN = \"${SENTRY_DSN}\"#" "FurAffinity/Secrets.swift"
+          sed -i "" "s/^PRODUCT_BUNDLE_IDENTIFIER = com.example.id1234$/PRODUCT_BUNDLE_IDENTIFIER = ${BUNDLE_ID}/" Skip.env
+          AMPLITUDE_API_KEY_HASH=$(echo -n "${AMPLITUDE_API_KEY}" | sha256)
+          BUNDLE_ID_HASH=$(echo -n "${BUNDLE_ID}" | sha256)
+          echo "SHA256 (BUNDLE_ID) = ${BUNDLE_ID_HASH}"
+          echo "SHA256 (AMPLITUDE_API_KEY) = ${AMPLITUDE_API_KEY_HASH}"
+      - name: Install the signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PROPERTIES: ${{ secrets.ANDROID_KEYSTORE_PROPERTIES }}
+        run: |
+          # Without them the release is signed with the debug key, which can never
+          # be replaced once shipped; build-release-apk.sh --ci fails instead.
+          [ -n "${ANDROID_KEYSTORE_BASE64}" ] || { echo "::error::ANDROID_KEYSTORE_BASE64 is not set"; exit 1; }
+          [ -n "${ANDROID_KEYSTORE_PROPERTIES}" ] || { echo "::error::ANDROID_KEYSTORE_PROPERTIES is not set"; exit 1; }
+          echo -n "${ANDROID_KEYSTORE_BASE64}" | base64 --decode -o Android/app/keystore.jks
+          printf '%s\n' "${ANDROID_KEYSTORE_PROPERTIES}" > Android/app/keystore.properties
+          sha256 Android/app/keystore.jks
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: skiptools/actions/setup-skip@v1
+        with:
+          install-swift-android-sdk: true
+          swift-android-sdk-version: 6.3.3
+      - name: Check the Skip version
+        run: Scripts/Android/check-skip-version.sh
+      - name: Install the NDK
+        run: |
+          # Stripping the release .so files needs it; without it the APK is 2.5x
+          # too big, and build-release-apk.sh --ci fails.
+          NDK_VERSION=28.2.13676358
+          if [ ! -d "${ANDROID_HOME}/ndk/${NDK_VERSION}" ]; then
+            yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" "ndk;${NDK_VERSION}" > /dev/null
+          fi
+          ls "${ANDROID_HOME}/ndk"
+      - name: Build APK
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          # The Sentry Gradle plugin uploads the R8 mapping and the .so files during
+          # the build; the script refuses to start without the token.
+          [ -n "${SENTRY_AUTH_TOKEN}" ] || { echo "::error::SENTRY_AUTH_TOKEN is not set"; exit 1; }
+          set -o pipefail
+          Scripts/Android/build-release-apk.sh --ci --out . 2>&1 | tee AndroidBuildLogs.txt
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: APK
+          path: FurAffinity-*.apk
+          if-no-files-found: error
+      - name: Upload Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android Build Logs
+          path: AndroidBuildLogs.txt
+          if-no-files-found: warn
+
+  release:
+    needs: [ios, android]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
       - name: Create Release
         uses: ncipollo/release-action@v1
         id: create_release
         with:
           name: FurAffinity ${{ github.ref_name }}
-          artifacts: FurAffinity-*.ipa,*.xcarchive.zip
+          artifacts: assets/FurAffinity-*.ipa,assets/*.xcarchive.zip,assets/FurAffinity-*.apk
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
           artifactErrorsFailBuild: true
