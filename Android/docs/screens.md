@@ -213,18 +213,38 @@ on the first one: the sheet reports a height ~129 px short of its final one befo
 insets settle, and `boundedFill` computed from that left the image visibly letterboxed
 where `fullScreenCover` had filled the screen.
 
-Deferred, with the reason:
+### Stories and music
 
-| Not ported | Why |
-|---|---|
-| Story (`.text`) and music (`.audio`) submissions | `StoryDocument` (PDFKit reflow, DOCX, QuickLook) and AVPlayer + `MPNowPlayingInfoCenter` are Apple-only stacks. Both render a placeholder with a link to the file. |
+A story's cover, its download and Save/Share come from the shared `SubmissionTextContent`.
+Only the reader is forked: `StoryReaderView` has an iOS build (`UITextView` reflow of
+txt, md, rtf, pdf and docx, with QuickLook for the original) and an Android one. Each
+builds its `Content` through `StoryReaderView.Content.load(data:filename:documentUrl:)`,
+so the shared view never sees what the reader holds. The Android reader shows txt and md
+from FAKit's `StoryText`, one `Text` per line in a `LazyVStack` so that Compose never
+measures a whole novel at once. Any other format gets "Open in another app"
+(`FAMediaBridge.open`, `ACTION_VIEW`).
+
+Music has an Android build of `SubmissionAudioContent` with the iOS signature. It shows
+the cover, downloads the mp3 as soon as it appears (into `documentFileUrl`, so
+Save/Share light up), and hands playback to another app. `AudioPlaybackController` is
+an empty class here, kept only so `SubmissionView`'s `@State` has a type.
+
+Not ported, because each is an Apple-only stack: in-app playback and lock-screen
+controls (AVPlayer, `MPNowPlayingInfoCenter`), pdf/rtf/docx reflow (PDFKit, UIKit's RTF
+importer, `UIFont` traits), the QuickLook "Original" view and the reader's
+landscape gate.
+
+Downloads go through `FAHTTPDataSource` like pages, with one difference: a download that
+is still challenged after the repair fails instead of taking the WebView fallback. That
+fallback reads back the page the WebView lands on, so for a file it never returned: an
+mp3 challenged at launch left "Downloading…" up for good.
 
 ### Android-only substitutes
 
 Each keeps the iOS name and signature so symlinked callers compile unchanged:
 `HTMLView`, `Zoomable`, `FlowLayout`, `MediaSaveHandler`, `fadingSheet` (the iOS one
 crossfades a UIKit-backed `.sheet`; `View+pullableScreenCover.swift`),
-`SubmissionTextContent`/`SubmissionAudioContent`, and the no-ops in
+`StoryReaderView`, `SubmissionAudioContent`, and the no-ops in
 `SubmissionShims.swift`.
 
 `HTMLView` is the one that does real work rather than standing in. iOS renders FA's rich
