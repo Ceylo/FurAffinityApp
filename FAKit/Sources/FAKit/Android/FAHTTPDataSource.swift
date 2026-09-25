@@ -243,12 +243,8 @@ public struct FAHTTPDataSource: HTTPDataSource {
             // It reads back the page the WebView lands on, so it only stands in for a
             // page: a file on d.furaffinity.net never finishes loading as one, and
             // the wait had no end.
-            guard request.url.host != "d.furaffinity.net" else {
-                logger.warning("[CFFALLBACK] \(url): still challenged; not a page, no WebView fallback")
-                throw CloudflareChallengeRequired()
-            }
-            logger.warning("[CFFALLBACK] \(url): still challenged; trying WebView fallback")
-            if let webViewFetch, method == .GET {
+            if let webViewFetch, method == .GET, request.url.host != "d.furaffinity.net" {
+                logger.warning("[CFFALLBACK] \(url): still challenged; trying WebView fallback")
                 let startedAt = ContinuousClock.now
                 let html = try await webViewFetch(request.url)
                 logger.warning("[CFFALLBACK] \(url): rescued by WebView after \(ContinuousClock.now - startedAt)")

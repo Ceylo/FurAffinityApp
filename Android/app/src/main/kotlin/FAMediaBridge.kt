@@ -169,17 +169,13 @@ class FAMediaBridge {
         /// The file is copied into a FileProvider-exposed subdirectory first, under its
         /// display name, so the receiving app sees a sensible filename rather than the
         /// cache's hashed one.
-        /// Hand-offs run on concurrent queues; staging one while another sweeps the
-        /// directory could delete the file it is about to hand out.
-        private val stagingLock = Any()
-
         private fun startChooser(
             label: String,
             path: String,
             displayName: String,
             action: String,
             attach: Intent.(android.net.Uri) -> Unit
-        ): Boolean = synchronized(stagingLock) {
+        ): Boolean {
             val source = File(path)
             if (!source.isFile) {
                 Log.e(TAG, "$label: no file at $path")
@@ -191,24 +187,24 @@ class FAMediaBridge {
                 val shared = File(context.cacheDir, "shared")
                 // Bounded by age rather than cleared: a player handed an mp3 by Open
                 // re-opens the URI to seek, so the last hand-off's file must outlive the
-                // next one.
+                // next one. Every file here is freshly written, so a concurrent
+                // hand-off's sweep never reaches one being handed out.
                 val stale = System.currentTimeMillis() - STAGED_FILE_LIFETIME_MS
                 shared.listFiles()?.filter { it.lastModified() < stale }?.forEach { it.delete() }
                 shared.mkdirs()
                 val staged = File(shared, displayName)
-                // Copy under a temporary name and rename, so a reader of the previous
-                // copy keeps its inode rather than seeing the file truncated under it.
-                val partial = File(shared, ".$displayName.partial")
+                // Copy under a temporary name of its own (hand-offs run concurrently)
+                // and rename, so a reader of the previous copy keeps its inode rather
+                // than seeing the file truncated under it.
+                val partial = File.createTempFile(".stage", ".partial", shared)
                 try {
                     source.copyTo(partial, overwrite = true)
-                } catch (e: Exception) {
+                    if (!partial.renameTo(staged)) {
+                        Log.e(TAG, "$label: could not stage $displayName")
+                        return false
+                    }
+                } finally {
                     partial.delete()
-                    throw e
-                }
-                if (!partial.renameTo(staged)) {
-                    partial.delete()
-                    Log.e(TAG, "$label: could not stage $displayName")
-                    return false
                 }
 
                 val uri = FileProvider.getUriForFile(

@@ -328,8 +328,7 @@ asking where, unlike iOS's document picker. A toast says where the file went, or
 saving failed, since the iOS signature has no error storage to report through. Staged
 hand-off files in `cache/shared` expire after an hour rather than at the next hand-off: a
 player given an mp3 by Open re-opens the URI to seek. Each hand-off copies under a
-temporary name and renames, so such a reader keeps the inode it has open, and staging is
-serialised so the expiry sweep can't delete a file being handed out. `MediaStore.Downloads` needs API
+temporary name and renames, so such a reader keeps the inode it has open. `MediaStore.Downloads` needs API
 29, so on API 28 it falls back to the share chooser. Two things the manifest must carry,
 both easy to lose in a regeneration:
 

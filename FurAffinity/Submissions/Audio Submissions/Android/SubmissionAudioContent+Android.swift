@@ -19,6 +19,8 @@ import FAKit
 @Observable
 final class AudioPlaybackController {
     private let downloadUrl: URL
+    /// Where the mp3 is written: stable per URL, so a later visit finds it.
+    private let fileUrl: URL
     private let downloadDocument: (_ url: URL) async throws -> Data
     private let errorStorage: ErrorStorage
 
@@ -35,15 +37,12 @@ final class AudioPlaybackController {
         self.downloadUrl = downloadUrl
         self.downloadDocument = downloadDocument
         self.errorStorage = errorStorage
+        fileUrl = FileManager.default.temporaryDirectory
+            .appendingPathComponent(downloadUrl.lastPathComponent)
         // An earlier visit's download: Save/Share can light up right away.
-        let fileUrl = Self.fileUrl(for: downloadUrl)
         if FileManager.default.fileExists(atPath: fileUrl.path) {
             documentFileUrl = fileUrl
         }
-    }
-
-    private static func fileUrl(for downloadUrl: URL) -> URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent(downloadUrl.lastPathComponent)
     }
 
     /// Hands the mp3 to another app, downloading it first unless it is on disk: from this
@@ -52,9 +51,9 @@ final class AudioPlaybackController {
     func play() {
         guard !isBusy else { return }
         isBusy = true
+        let fileUrl = fileUrl
         Task {
             defer { isBusy = false }
-            let fileUrl = Self.fileUrl(for: downloadUrl)
             do {
                 if !FileManager.default.fileExists(atPath: fileUrl.path) {
                     documentFileUrl = nil
@@ -65,7 +64,7 @@ final class AudioPlaybackController {
                     }.value
                 }
                 documentFileUrl = fileUrl
-                _ = await MediaBridge.openOffMain(fileUrl: fileUrl)
+                await MediaBridge.open(fileUrl: fileUrl)
             } catch {
                 storeError(error, in: errorStorage, action: "Audio Download", webBrowserURL: downloadUrl)
             }
@@ -83,7 +82,6 @@ struct SubmissionAudioContent: View {
     var thumbnail: DynamicThumbnail?
     var thumbnailWidthOnHeightRatio: Float?
     @Binding var controller: AudioPlaybackController?
-    @Binding var documentFileUrl: URL?
     var downloadDocument: (_ url: URL) async throws -> Data
 
     private var isDownloading: Bool {

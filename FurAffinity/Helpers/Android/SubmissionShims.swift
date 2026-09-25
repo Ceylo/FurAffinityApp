@@ -53,7 +53,7 @@ func share(_ items: [Any]) {
         logger.error("share() called with no file URL")
         return
     }
-    Task { _ = await MediaBridge.shareOffMain(fileUrl: url) }
+    Task { await MediaBridge.share(fileUrl: url) }
 }
 
 /// Saves into Download/FurAffinity, which the Files app shows, rather than asking where
@@ -62,11 +62,7 @@ func share(_ items: [Any]) {
 @MainActor
 func exportToFiles(_ urls: [URL]) {
     for url in urls {
-        Task {
-            if !(await MediaBridge.saveDocumentOffMain(atFileUrl: url)) {
-                logger.error("exportToFiles could not save \(url.lastPathComponent)")
-            }
-        }
+        Task { _ = await MediaBridge.saveDocument(atFileUrl: url) }
     }
 }
 

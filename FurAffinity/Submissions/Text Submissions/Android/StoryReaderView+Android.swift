@@ -53,7 +53,7 @@ struct StoryReaderView: View {
                             .multilineTextAlignment(.center)
                             .foregroundStyle(.secondary)
                         Button("Open in another app") {
-                            Task { _ = await MediaBridge.openOffMain(fileUrl: content.documentUrl) }
+                            Task { await MediaBridge.open(fileUrl: content.documentUrl) }
                         }
                         .buttonStyle(.borderedProminent)
                     }
