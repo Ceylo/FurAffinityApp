@@ -10,11 +10,11 @@
 import SwiftUI
 import FAKit
 
-/// Owns the mp3 download, as iOS's controller does. `SubmissionView` keeps it in
-/// `@State`, so it outlives the row: a row recycled out of the list and back finds the
-/// download already running or done instead of starting another. That matters because
-/// the page transport's blocking exchange can't be cancelled, and it holds one of the
-/// transport's two permits for as long as the transfer runs.
+/// Owns the mp3 download. Unlike iOS, which streams and downloads at once, it only
+/// downloads when asked: the page transport's exchange can't be cancelled and holds one
+/// of its two permits for the whole transfer, so an automatic download on every visit
+/// would stall page loads behind it. `SubmissionView` keeps the controller in `@State`,
+/// so a row recycled out of the list and back finds the download running or done.
 @MainActor
 @Observable
 final class AudioPlaybackController {
@@ -24,8 +24,7 @@ final class AudioPlaybackController {
 
     /// Local file URL of the downloaded mp3 once available, for Save/Share.
     private(set) var documentFileUrl: URL?
-    private(set) var downloadFailed = false
-    @ObservationIgnored private var isDownloading = false
+    private(set) var isDownloading = false
 
     init(
         downloadUrl: URL,
@@ -37,12 +36,16 @@ final class AudioPlaybackController {
         self.errorStorage = errorStorage
     }
 
-    /// Starts the download unless one is running or has succeeded; after a failure, this
-    /// is the retry.
-    func startFileDownload() {
-        guard !isDownloading, documentFileUrl == nil else { return }
+    /// Hands the mp3 to another app, downloading it first unless it is still on disk (the
+    /// app cache it lives in can be cleared under us).
+    func play() {
+        if let documentFileUrl, FileManager.default.fileExists(atPath: documentFileUrl.path) {
+            Task { _ = await MediaBridge.openOffMain(fileUrl: documentFileUrl) }
+            return
+        }
+        guard !isDownloading else { return }
+        documentFileUrl = nil
         isDownloading = true
-        downloadFailed = false
         Task {
             defer { isDownloading = false }
             do {
@@ -54,8 +57,8 @@ final class AudioPlaybackController {
                     try data.write(to: fileUrl, options: .atomic)
                 }.value
                 documentFileUrl = fileUrl
+                _ = await MediaBridge.openOffMain(fileUrl: fileUrl)
             } catch {
-                downloadFailed = true
                 storeError(error, in: errorStorage, action: "Audio Download", webBrowserURL: downloadUrl)
             }
         }
@@ -75,8 +78,8 @@ struct SubmissionAudioContent: View {
     @Binding var documentFileUrl: URL?
     var downloadDocument: (_ url: URL) async throws -> Data
 
-    private var downloadFailed: Bool {
-        controller?.downloadFailed == true
+    private var isDownloading: Bool {
+        controller?.isDownloading == true
     }
 
     var body: some View {
@@ -90,50 +93,34 @@ struct SubmissionAudioContent: View {
             )
 
             Button {
-                if let documentFileUrl {
-                    Task { _ = await MediaBridge.openOffMain(fileUrl: documentFileUrl) }
-                } else {
-                    controller?.startFileDownload()
-                }
+                controller?.play()
             } label: {
                 HStack {
                     Group {
-                        if documentFileUrl != nil {
-                            Image(systemName: "play.fill")
-                        } else if downloadFailed {
-                            Image(systemName: "arrow.clockwise")
-                        } else {
+                        if isDownloading {
                             ProgressView()
                                 .controlSize(.small)
+                        } else {
+                            Image(systemName: "play.fill")
                         }
                     }
                     .frame(width: 17, height: 17)
-                    Text(documentFileUrl != nil ? "Play in another app" : downloadFailed ? "Retry download" : "Downloading…")
+                    Text(isDownloading ? "Downloading…" : "Play in another app")
                 }
             }
             .controlSize(.large)
             .buttonStyle(.borderedProminent)
-            .disabled(documentFileUrl == nil && !downloadFailed)
+            .disabled(isDownloading)
             .padding(.horizontal, 10)
         }
-        .onAppear { prepareController() }
-        .onChange(of: controller?.documentFileUrl) { _, url in
-            documentFileUrl = url
-        }
-    }
-
-    private func prepareController() {
-        if controller == nil {
-            controller = AudioPlaybackController(
-                downloadUrl: audioContent.downloadUrl,
-                downloadDocument: downloadDocument,
-                errorStorage: errorStorage
-            )
-        }
-        documentFileUrl = controller?.documentFileUrl
-        // Only the first appearance starts it; a failure waits for Retry.
-        if controller?.downloadFailed == false {
-            controller?.startFileDownload()
+        .onAppear {
+            if controller == nil {
+                controller = AudioPlaybackController(
+                    downloadUrl: audioContent.downloadUrl,
+                    downloadDocument: downloadDocument,
+                    errorStorage: errorStorage
+                )
+            }
         }
     }
 }

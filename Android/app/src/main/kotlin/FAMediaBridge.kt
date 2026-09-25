@@ -42,7 +42,7 @@ class FAMediaBridge {
     companion object {
         private const val TAG = "FAMediaBridge"
         private const val ALBUM = "FurAffinity"
-        private const val STAGED_FILE_LIFETIME_MS = 24 * 60 * 60 * 1000L
+        private const val STAGED_FILE_LIFETIME_MS = 60 * 60 * 1000L
 
         private fun context() = ProcessInfo.processInfo.androidContext
 
@@ -200,7 +200,12 @@ class FAMediaBridge {
                     staged.setLastModified(System.currentTimeMillis())
                 } else {
                     val partial = File(shared, ".$displayName.${java.util.UUID.randomUUID()}.partial")
-                    source.copyTo(partial, overwrite = true)
+                    try {
+                        source.copyTo(partial, overwrite = true)
+                    } catch (e: Exception) {
+                        partial.delete()
+                        throw e
+                    }
                     if (!partial.renameTo(staged)) {
                         partial.delete()
                         Log.e(TAG, "$label: could not stage $displayName")

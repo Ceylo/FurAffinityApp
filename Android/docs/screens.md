@@ -225,9 +225,12 @@ measures a whole novel at once. Any other format gets "Open in another app"
 (`FAMediaBridge.open`, `ACTION_VIEW`).
 
 Music has an Android build of `SubmissionAudioContent` with the iOS signature. It shows
-the cover, downloads the mp3 as soon as it appears (into `documentFileUrl`, so
-Save/Share light up), and hands playback to another app. `AudioPlaybackController` is
-an empty class here, kept only so `SubmissionView`'s `@State` has a type.
+the cover, and "Play in another app" downloads the mp3 and hands it to another app;
+Save/Share light up once it is downloaded. The Android `AudioPlaybackController` owns
+that download, as iOS's does, and lives in `SubmissionView`'s state, so row recycling
+never starts a second one. It only downloads when asked, whereas iOS downloads as the
+screen appears: the page transport can't cancel an exchange and holds one of its two
+permits for the whole transfer, so a download on every visit would stall page loads.
 
 Not ported, because each is an Apple-only stack: in-app playback and lock-screen
 controls (AVPlayer, `MPNowPlayingInfoCenter`), pdf/rtf/docx reflow (PDFKit, UIKit's RTF
@@ -323,7 +326,7 @@ documents into `Download/FurAffinity`, and starts `ACTION_SEND` (Share) and
 `ACTION_VIEW` (Open in another app). "Save to Files" (`exportToFiles`) saves without
 asking where, unlike iOS's document picker. A toast says where the file went, or that
 saving failed, since the iOS signature has no error storage to report through. Staged
-hand-off files in `cache/shared` expire after a day rather than at the next hand-off: a
+hand-off files in `cache/shared` expire after an hour rather than at the next hand-off: a
 player given an mp3 by Open re-opens the URI to seek. `MediaStore.Downloads` needs API
 29, so on API 28 it falls back to the share chooser. Two things the manifest must carry,
 both easy to lose in a regeneration:

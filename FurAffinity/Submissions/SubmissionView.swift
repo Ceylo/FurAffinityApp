@@ -39,9 +39,11 @@ struct SubmissionView: View {
         }
     }
 
-    /// The downloaded file backing Save/Share, whichever content kind applies.
+    /// The downloaded file backing Save/Share, whichever content kind applies. The audio
+    /// controller's is read directly: a download that finishes while its row is scrolled
+    /// out of the list never reaches `documentFileUrl`.
     private var savableFileUrl: URL? {
-        savesToFiles ? documentFileUrl : fullResolutionMediaFileUrl
+        savesToFiles ? (documentFileUrl ?? audioController?.documentFileUrl) : fullResolutionMediaFileUrl
     }
 
     private var imageResolution: String? {
