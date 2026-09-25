@@ -112,7 +112,6 @@ struct UserNameView: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     List {
         ForEach(UserNameView.DisplayStyle.allCases, id: \.hashValue) { displayStyle in
@@ -129,10 +128,9 @@ struct UserNameView: View {
                 .label {
                     WatchingPill()
                 }
-                .border(.tertiary)
+                .border(.secondary) // .tertiary is unavailable on Android
             }
         }
     }
     .listStyle(.plain)
 }
-#endif

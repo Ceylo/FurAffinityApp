@@ -154,7 +154,6 @@ struct SubmissionControlsView: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview(traits: .sizeThatFitsLayout) {
     @Previewable
     @State var errorStorage = ErrorStorage()
@@ -208,4 +207,3 @@ struct SubmissionControlsView: View {
             .frame(height: 18)
     }
 }
-#endif

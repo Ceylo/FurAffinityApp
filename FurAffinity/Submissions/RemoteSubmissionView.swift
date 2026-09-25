@@ -77,7 +77,6 @@ struct RemoteSubmissionView: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     withAsync({ try await Model.demo }) {
         RemoteSubmissionView(
@@ -89,4 +88,3 @@ struct RemoteSubmissionView: View {
         .environment($0.errorStorage)
     }
 }
-#endif

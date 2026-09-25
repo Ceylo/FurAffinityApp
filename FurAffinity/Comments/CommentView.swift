@@ -152,7 +152,6 @@ struct CommentView: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview("Visible comment") {
     withAsync({ await FAComment.demo[0] }) { comment in
         NavigationStack {
@@ -174,4 +173,3 @@ struct CommentView: View {
         }
     }
 }
-#endif

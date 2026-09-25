@@ -1,5 +1,5 @@
 {
-  "originHash" : "44d49ef2f01801cb03d7b46f6837e87765dc5fb9a1ee460c8748d2aeb18488b5",
+  "originHash" : "0575a3f460a61770d9dc7353d28ea500d1b4c3378f4d723fd6d1721c696e9510",
   "pins" : [
     {
       "identity" : "cache",
@@ -79,7 +79,7 @@
       "location" : "https://github.com/Ceylo/skip-fuse-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "ae772c33bbb2798c6f334ed20b40a489cad246e8"
+        "revision" : "ef2f9e3de0c279e17630d1b926f390b447c8ad0b"
       }
     },
     {
@@ -152,6 +152,15 @@
       "state" : {
         "revision" : "fe76ac21aca639976833b5ea3e875dc072519ac4",
         "version" : "0.5.0"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-syntax.git",
+      "state" : {
+        "revision" : "050f1a346fbbac0ca2cfb15a95274f7bd1cf0ccf",
+        "version" : "604.0.0"
       }
     },
     {

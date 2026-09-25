@@ -37,6 +37,8 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `eaa6abe` resume animation across disposal | skip-ui | no | the recycling-boundary fix; largest single non-text patch |
 | `4b30753` `ScrollView` fills its scrolled axis | skip-ui | no | state the large-title side effect in the body — `forks.md` already names it |
 | `f4776db` `glassEffect` / `AnyTransition.animation` pass-throughs | skip-fuse-ui | no | fuse-ui only |
+| `ef2f9e3` `GlassEffectContainer` pass-through | skip-fuse-ui | no | send with `f4776db`: same argument, same file |
+| `d9ad308` + `15a34f4` `#Preview` / `@Previewable` stubs | skip-fuse-ui | no | fixes skiptools/skip#439 (no maintainer reply since 2025-06). Squash the two; topic branch `feature/preview-macro` is cut from 1.18.2 and names upstream skip-ui. Expect pushback on the from-source swift-syntax build |
 | `60671f0` → `1d56dc9` + `f0e4d6c` runs encoder | skip-ui + skip-fuse-ui | yes | **collides**, see below. `60671f0`/`79dc36f` are the superseded markdown cut — do not send them |
 | `59f7693` + `de02184` inline content + its link | skip-ui + `737dcfa` | yes | **collides** |
 | `193e97c` doc-comment correction on `Text(_:inlineViews:)` | skip-fuse-ui | no | squash into whichever inline-views PR goes; not a PR of its own |

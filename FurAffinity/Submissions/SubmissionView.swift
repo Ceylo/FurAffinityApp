@@ -217,7 +217,6 @@ struct SubmissionView: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview("Image submission") {
     @Previewable
     @State var errorStorage = ErrorStorage()
@@ -236,4 +235,3 @@ struct SubmissionView: View {
     }
     .environment(errorStorage)
 }
-#endif
