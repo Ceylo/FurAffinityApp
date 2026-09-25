@@ -379,4 +379,3 @@ extension SubmissionsFeedView {
         .preferredColorScheme(.dark)
     }
 }
-

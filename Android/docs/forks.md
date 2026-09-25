@@ -20,22 +20,19 @@ Defaults and Kingfisher, the Xcode project too). While iterating, re-point the r
 .package(path: "../../SkipForks/Defaults")     // instead of the URL + branch
 ```
 
-then push to the `android` branch before the step's gate.
+The clone's directory must carry the repo's name: SwiftPM takes the package identity from
+the last path component, so `skip-fuse-ui-preview/` would clash with the URL every other
+package names. Then push to the `android` branch before the step's gate.
 
 The root `Package.resolved` **is** committed (`.gitignore` carries a `!/Package.resolved`
 negation), as is the Xcode workspace's copy; only `FAKit/Package.resolved` stays ignored.
 Five deps resolve from mutable `branch: "android"` refs, so without the recorded
 revisions a release APK isn't reproducible. Refreshing a fork is
-`Scripts/Android/update-packages.sh <dep>`, followed by committing the resulting diff. A
-plain `swift package update` would prune the swift-syntax pin that skip-fuse-ui's
-Android-only `#Preview` macro needs (the script says why). That macro costs about 45 s
-on a clean Android build — swift-syntax builds from source, the swift.org toolchain has
-no prebuilts — and nothing incrementally.
-
-A local clone stands in for a fork only if its directory carries the fork's name:
-the path's last component is the package identity, so
-`../wt/preview-int/skip-fuse-ui` works where `../wt/skip-fuse-ui-preview` collides with
-the URL every other package names.
+`swift package update <dep>`, followed by committing the resulting diff. The root
+manifest declares swift-syntax, unused, only so that update keeps the pin that
+skip-fuse-ui's Android-only `#Preview` macro needs. That macro costs about 45 s on a
+clean Android build — swift-syntax builds from source, the swift.org toolchain has no
+prebuilts — and nothing incrementally.
 
 **`android` is never rebased or force-pushed**: the revisions committed above must stay
 reachable. To pick up upstream — including a fork patch that has since merged there —
@@ -373,7 +370,7 @@ pins from the workspace `Package.resolved`, `rm -rf` that checkout and
 
 A branch pin is refreshed, not re-resolved: `xcodebuild -resolvePackageDependencies`
 re-records the revision already pinned, so after pushing to a fork's `android` branch,
-delete its pin (or `Scripts/Android/update-packages.sh <dep>` at the root) rather than expecting the
+delete its pin (or `swift package update <dep>` at the root) rather than expecting the
 resolve to pick the new head up.
 
 Deleting the pin alone is **not** enough on the Xcode side, and the resolve reports the

@@ -40,6 +40,9 @@ let package = Package(
         .package(url: "https://github.com/Ceylo/Defaults.git", branch: "android"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.3"),
         .package(url: "https://github.com/mxcl/Version.git", from: "2.0.0"),
+        // Unused here: pins skip-fuse-ui's Android-only `#Preview` macro dependency, which a
+        // Darwin `swift package update` would otherwise prune. Keep the range equal to the fork's.
+        .package(url: "https://github.com/swiftlang/swift-syntax.git", "600.0.0"..<"700.0.0"),
     ],
     targets: [
         .target(
@@ -73,8 +76,7 @@ let package = Package(
             resources: [.process("Resources")],
             // Marks a compile of *this* module — the Android cross-compile and the
             // host build alike. Everything the Android build does not compile carries
-            // `#if !FA_SKIP_MODULE`: unported screens and iOS-only files. `#Preview`s
-            // stay unguarded — the skip-fuse-ui fork stubs the macro for Android.
+            // `#if !FA_SKIP_MODULE`: unported screens and iOS-only files.
             // `os(Android)` cannot do that job — it is false for the host build, which
             // would then have to resolve UIKit, Kingfisher and friends.
             swiftSettings: [.define("FA_SKIP_MODULE")],
