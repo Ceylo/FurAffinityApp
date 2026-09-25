@@ -192,11 +192,14 @@ class FAMediaBridge {
                 shared.listFiles()?.filter { it.lastModified() < stale }?.forEach { it.delete() }
                 shared.mkdirs()
                 val staged = File(shared, displayName)
-                // Reuse a copy that is already current. Otherwise copy under a temporary
-                // name and rename, so a reader of the previous copy keeps its inode rather
-                // than seeing the file truncated under it.
-                if (!staged.isFile || staged.length() != source.length() || staged.lastModified() < source.lastModified()) {
-                    val partial = File(shared, ".$displayName.partial")
+                // Reuse a copy that is already current, touched so the expiry counts
+                // from this hand-off. Otherwise copy under a temporary name of its own
+                // (two hand-offs can run at once) and rename, so a reader of the previous
+                // copy keeps its inode rather than seeing the file truncated under it.
+                if (staged.isFile && staged.length() == source.length() && staged.lastModified() >= source.lastModified()) {
+                    staged.setLastModified(System.currentTimeMillis())
+                } else {
+                    val partial = File(shared, ".$displayName.${java.util.UUID.randomUUID()}.partial")
                     source.copyTo(partial, overwrite = true)
                     if (!partial.renameTo(staged)) {
                         partial.delete()

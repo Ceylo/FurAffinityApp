@@ -332,6 +332,10 @@ struct FAHTTPDataSourceTests {
             _ = try await source.httpData(from: file, cookies: nil)
         }
         #expect(await fetched.value == 0)
+
+        let rescued = try await source.httpData(from: Self.feedURL, cookies: nil)
+        #expect(String(data: rescued, encoding: .utf8) == "<html>rescued</html>")
+        #expect(await fetched.value == 1)
     }
 
     @Test func nonSuccessStatusThrows() async throws {

@@ -10,10 +10,56 @@
 import SwiftUI
 import FAKit
 
-/// `SubmissionView` holds one in `@State` and binds it; there is no in-app player here.
+/// Owns the mp3 download, as iOS's controller does. `SubmissionView` keeps it in
+/// `@State`, so it outlives the row: a row recycled out of the list and back finds the
+/// download already running or done instead of starting another. That matters because
+/// the page transport's blocking exchange can't be cancelled, and it holds one of the
+/// transport's two permits for as long as the transfer runs.
 @MainActor
 @Observable
-class AudioPlaybackController {
+final class AudioPlaybackController {
+    private let downloadUrl: URL
+    private let downloadDocument: (_ url: URL) async throws -> Data
+    private let errorStorage: ErrorStorage
+
+    /// Local file URL of the downloaded mp3 once available, for Save/Share.
+    private(set) var documentFileUrl: URL?
+    private(set) var downloadFailed = false
+    @ObservationIgnored private var isDownloading = false
+
+    init(
+        downloadUrl: URL,
+        downloadDocument: @escaping (_ url: URL) async throws -> Data,
+        errorStorage: ErrorStorage
+    ) {
+        self.downloadUrl = downloadUrl
+        self.downloadDocument = downloadDocument
+        self.errorStorage = errorStorage
+    }
+
+    /// Starts the download unless one is running or has succeeded; after a failure, this
+    /// is the retry.
+    func startFileDownload() {
+        guard !isDownloading, documentFileUrl == nil else { return }
+        isDownloading = true
+        downloadFailed = false
+        Task {
+            defer { isDownloading = false }
+            do {
+                let data = try await downloadDocument(downloadUrl)
+                let fileUrl = FileManager.default.temporaryDirectory
+                    .appendingPathComponent(downloadUrl.lastPathComponent)
+                // Off the main actor: an mp3 runs to tens of megabytes.
+                try await Task.detached {
+                    try data.write(to: fileUrl, options: .atomic)
+                }.value
+                documentFileUrl = fileUrl
+            } catch {
+                downloadFailed = true
+                storeError(error, in: errorStorage, action: "Audio Download", webBrowserURL: downloadUrl)
+            }
+        }
+    }
 }
 
 struct SubmissionAudioContent: View {
@@ -29,11 +75,9 @@ struct SubmissionAudioContent: View {
     @Binding var documentFileUrl: URL?
     var downloadDocument: (_ url: URL) async throws -> Data
 
-    // Not private: skipstone can't bridge a private @State.
-    @State var downloadFailed = false
-    /// Bumped by Retry, so the download stays a `.task`: cancelled with the view, never
-    /// two at once.
-    @State var downloadAttempt = 0
+    private var downloadFailed: Bool {
+        controller?.downloadFailed == true
+    }
 
     var body: some View {
         VStack(spacing: 12) {
@@ -49,8 +93,7 @@ struct SubmissionAudioContent: View {
                 if let documentFileUrl {
                     Task { _ = await MediaBridge.openOffMain(fileUrl: documentFileUrl) }
                 } else {
-                    downloadFailed = false
-                    downloadAttempt += 1
+                    controller?.startFileDownload()
                 }
             } label: {
                 HStack {
@@ -73,32 +116,24 @@ struct SubmissionAudioContent: View {
             .disabled(documentFileUrl == nil && !downloadFailed)
             .padding(.horizontal, 10)
         }
-        .task(id: downloadAttempt) { await downloadIfNeeded() }
+        .onAppear { prepareController() }
+        .onChange(of: controller?.documentFileUrl) { _, url in
+            documentFileUrl = url
+        }
     }
 
-    /// `documentFileUrl` lives in `SubmissionView`, so a row recycled out of the list and
-    /// back doesn't download again; one cancelled mid-way starts over.
-    private func downloadIfNeeded() async {
-        guard documentFileUrl == nil else { return }
-        do {
-            let data = try await downloadDocument(audioContent.downloadUrl)
-            let fileUrl = FileManager.default.temporaryDirectory
-                .appendingPathComponent(audioContent.downloadUrl.lastPathComponent)
-            // Off the main actor: an mp3 runs to tens of megabytes.
-            try await Task.detached {
-                try data.write(to: fileUrl, options: .atomic)
-            }.value
-            documentFileUrl = fileUrl
-        } catch {
-            if !isCancellationError(error) {
-                downloadFailed = true
-                storeError(
-                    error,
-                    in: errorStorage,
-                    action: "Audio Download",
-                    webBrowserURL: audioContent.downloadUrl
-                )
-            }
+    private func prepareController() {
+        if controller == nil {
+            controller = AudioPlaybackController(
+                downloadUrl: audioContent.downloadUrl,
+                downloadDocument: downloadDocument,
+                errorStorage: errorStorage
+            )
+        }
+        documentFileUrl = controller?.documentFileUrl
+        // Only the first appearance starts it; a failure waits for Retry.
+        if controller?.downloadFailed == false {
+            controller?.startFileDownload()
         }
     }
 }
