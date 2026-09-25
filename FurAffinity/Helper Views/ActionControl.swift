@@ -52,8 +52,6 @@ struct ActionControl: View {
     }
 }
 
-// SkipSwiftUI's GlassEffectContainer.init is unavailable.
-#if !FA_SKIP_MODULE
 #Preview {
     NavigationStack {
         // A floating control (opaque + glass, as in SubmissionsTabView) overlaid
@@ -90,4 +88,3 @@ struct ActionControl: View {
             }
     }
 }
-#endif

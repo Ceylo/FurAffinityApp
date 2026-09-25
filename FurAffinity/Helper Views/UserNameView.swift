@@ -128,7 +128,7 @@ struct UserNameView: View {
                 .label {
                     WatchingPill()
                 }
-                .border(.secondary)
+                .border(.secondary) // .tertiary is unavailable on Android
             }
         }
     }

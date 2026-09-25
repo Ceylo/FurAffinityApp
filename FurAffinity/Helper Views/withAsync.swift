@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+// SKIP @nobridge
 struct withAsync<DataType: Sendable, SomeView: View>: View {
     var provider: () async throws -> DataType
     var contentsBuilder: (DataType) -> SomeView
@@ -16,8 +17,7 @@ struct withAsync<DataType: Sendable, SomeView: View>: View {
         self.contentsBuilder = contentsBuilder
     }
     
-    // Not private: skipstone can't bridge a private @State/@Environment.
-    @State var data: DataType?
+    @State private var data: DataType?
     var body: some View {
         Group {
             if let data {
