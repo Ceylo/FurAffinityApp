@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+/// Previews only: unbridged, so on Android it never re-renders once `data` loads.
 // SKIP @nobridge
 struct withAsync<DataType: Sendable, SomeView: View>: View {
     var provider: () async throws -> DataType
