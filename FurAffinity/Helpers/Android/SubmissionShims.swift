@@ -57,8 +57,8 @@ func share(_ items: [Any]) {
 }
 
 /// Saves into Download/FurAffinity, which the Files app shows, rather than asking where
-/// as iOS's document picker does. The iOS signature carries no error storage, so a
-/// failure is only logged; `FAMediaBridge` confirms a success in a toast.
+/// as iOS's document picker does. The iOS signature carries no error storage, so
+/// `FAMediaBridge` reports the outcome in a toast.
 @MainActor
 func exportToFiles(_ urls: [URL]) {
     for url in urls {

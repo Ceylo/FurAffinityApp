@@ -29,6 +29,9 @@ struct SubmissionAudioContent: View {
     @Binding var documentFileUrl: URL?
     var downloadDocument: (_ url: URL) async throws -> Data
 
+    // Not private: skipstone can't bridge a private @State.
+    @State var downloadFailed = false
+
     var body: some View {
         VStack(spacing: 12) {
             SubmissionMainImage(
@@ -42,24 +45,29 @@ struct SubmissionAudioContent: View {
             Button {
                 if let documentFileUrl {
                     Task { _ = await MediaBridge.openOffMain(fileUrl: documentFileUrl) }
+                } else {
+                    downloadFailed = false
+                    Task { await downloadIfNeeded() }
                 }
             } label: {
                 HStack {
                     Group {
-                        if documentFileUrl == nil {
+                        if documentFileUrl != nil {
+                            Image(systemName: "play.fill")
+                        } else if downloadFailed {
+                            Image(systemName: "arrow.clockwise")
+                        } else {
                             ProgressView()
                                 .controlSize(.small)
-                        } else {
-                            Image(systemName: "play.fill")
                         }
                     }
                     .frame(width: 17, height: 17)
-                    Text(documentFileUrl == nil ? "Downloading…" : "Play in another app")
+                    Text(documentFileUrl != nil ? "Play in another app" : downloadFailed ? "Retry download" : "Downloading…")
                 }
             }
             .controlSize(.large)
             .buttonStyle(.borderedProminent)
-            .disabled(documentFileUrl == nil)
+            .disabled(documentFileUrl == nil && !downloadFailed)
             .padding(.horizontal, 10)
         }
         .task { await downloadIfNeeded() }
@@ -73,10 +81,14 @@ struct SubmissionAudioContent: View {
             let data = try await downloadDocument(audioContent.downloadUrl)
             let fileUrl = FileManager.default.temporaryDirectory
                 .appendingPathComponent(audioContent.downloadUrl.lastPathComponent)
-            try data.write(to: fileUrl, options: .atomic)
+            // Off the main actor: an mp3 runs to tens of megabytes.
+            try await Task.detached {
+                try data.write(to: fileUrl, options: .atomic)
+            }.value
             documentFileUrl = fileUrl
         } catch {
             if !isCancellationError(error) {
+                downloadFailed = true
                 storeError(
                     error,
                     in: errorStorage,

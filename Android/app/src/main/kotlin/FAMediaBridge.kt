@@ -42,6 +42,7 @@ class FAMediaBridge {
     companion object {
         private const val TAG = "FAMediaBridge"
         private const val ALBUM = "FurAffinity"
+        private const val STAGED_FILE_LIFETIME_MS = 24 * 60 * 60 * 1000L
 
         private fun context() = ProcessInfo.processInfo.androidContext
 
@@ -73,7 +74,7 @@ class FAMediaBridge {
         }
 
         /// Copies `path` into Download/FurAffinity, where the Files app shows it, and says
-        /// so in a toast. `MediaStore.Downloads` is API 29+; below that the system share
+        /// in a toast whether that worked. `MediaStore.Downloads` is API 29+; below that the system share
         /// chooser stands in, as it did for every document before.
         fun saveDocument(path: String, displayName: String): Boolean {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
@@ -87,10 +88,9 @@ class FAMediaBridge {
                 MediaStore.Downloads.EXTERNAL_CONTENT_URI,
                 "Download/$ALBUM"
             )
-            if (saved) {
-                Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(context(), "Saved to Download/$ALBUM", Toast.LENGTH_SHORT).show()
-                }
+            val message = if (saved) "Saved to Download/$ALBUM" else "Could not save $displayName"
+            Handler(Looper.getMainLooper()).post {
+                Toast.makeText(context(), message, Toast.LENGTH_SHORT).show()
             }
             return saved
         }
@@ -185,10 +185,11 @@ class FAMediaBridge {
             return try {
                 val context = context()
                 val shared = File(context.cacheDir, "shared")
-                // One hand-off at a time: clearing first bounds this directory, and avoids
-                // rewriting a file under a receiving app still reading the URI we
-                // granted it for the same name a moment ago.
-                shared.deleteRecursively()
+                // Bounded by age rather than cleared: a player handed an mp3 by Open
+                // re-opens the URI to seek, so the last hand-off's file must outlive the
+                // next one.
+                val stale = System.currentTimeMillis() - STAGED_FILE_LIFETIME_MS
+                shared.listFiles()?.filter { it.lastModified() < stale }?.forEach { it.delete() }
                 shared.mkdirs()
                 val staged = File(shared, displayName)
                 source.copyTo(staged, overwrite = true)

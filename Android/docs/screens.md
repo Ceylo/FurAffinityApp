@@ -321,8 +321,10 @@ Checked on the emulator on 2026-09-24: that comment scrolls into view, while
 `FAImageFetchBridge`) inserts images into MediaStore's `Pictures/FurAffinity` and
 documents into `Download/FurAffinity`, and starts `ACTION_SEND` (Share) and
 `ACTION_VIEW` (Open in another app). "Save to Files" (`exportToFiles`) saves without
-asking where, unlike iOS's document picker. A toast says where the file went, since the
-iOS signature has no error storage to report through. `MediaStore.Downloads` needs API
+asking where, unlike iOS's document picker. A toast says where the file went, or that
+saving failed, since the iOS signature has no error storage to report through. Staged
+hand-off files in `cache/shared` expire after a day rather than at the next hand-off: a
+player given an mp3 by Open re-opens the URI to seek. `MediaStore.Downloads` needs API
 29, so on API 28 it falls back to the share chooser. Two things the manifest must carry,
 both easy to lose in a regeneration:
 
