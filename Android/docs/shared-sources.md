@@ -189,7 +189,7 @@ never the iOS app target — so:
 - Leave `#Preview`s unguarded. On Android `#Preview` and `@Previewable` come from the
   skip-fuse-ui fork's `SwiftUI` shim and expand to nothing, but the preview body is
   still type-checked — so a preview that goes stale fails the Android build too. A
-  preview that calls API SkipSwiftUI lacks (`GlassEffectContainer`, `.tertiary`)
+  preview that calls API SkipSwiftUI marks unavailable (`GlassEffectContainer.init`)
   keeps its guard, with a comment naming the API.
 - Guard Darwin-only frameworks and APIs (Kingfisher, Liquid Glass, `UIKit` types) with
   `#if !os(Android)` / `#if canImport(…)`; those are genuinely per-platform. Reach for

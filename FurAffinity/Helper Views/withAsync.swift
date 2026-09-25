@@ -16,6 +16,7 @@ struct withAsync<DataType: Sendable, SomeView: View>: View {
         self.contentsBuilder = contentsBuilder
     }
     
+    // Not private: skipstone can't bridge a private @State/@Environment.
     @State var data: DataType?
     var body: some View {
         Group {

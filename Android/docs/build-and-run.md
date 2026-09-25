@@ -168,7 +168,7 @@ old `source.skip.tools/*` is gone from the graph (see
 `TARGET_OS_ANDROID=1 swift package update` (put non-Skip pins back if they drift;
 the variable keeps the swift-syntax pin — see
 [forks.md](forks.md)), re-resolve the Xcode
-project's `Package.resolved` the same way, and build from a clean `.build`. The
+project's `Package.resolved` (without the variable), and build from a clean `.build`. The
 generated `SkipBridgeGenerated/*_Bridge.swift` for FurAffinityUI, FAKit and
 Kingfisher are worth diffing against the previous build: a skipstone codegen change
 shows up there first.

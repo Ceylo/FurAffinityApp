@@ -112,8 +112,6 @@ struct UserNameView: View {
     }
 }
 
-// SkipSwiftUI has no HierarchicalShapeStyle (`.tertiary`).
-#if !FA_SKIP_MODULE
 #Preview {
     List {
         ForEach(UserNameView.DisplayStyle.allCases, id: \.hashValue) { displayStyle in
@@ -130,10 +128,9 @@ struct UserNameView: View {
                 .label {
                     WatchingPill()
                 }
-                .border(.tertiary)
+                .border(.secondary)
             }
         }
     }
     .listStyle(.plain)
 }
-#endif
