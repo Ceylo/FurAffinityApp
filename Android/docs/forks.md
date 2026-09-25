@@ -26,13 +26,11 @@ The root `Package.resolved` **is** committed (`.gitignore` carries a `!/Package.
 negation), as is the Xcode workspace's copy; only `FAKit/Package.resolved` stays ignored.
 Five deps resolve from mutable `branch: "android"` refs, so without the recorded
 revisions a release APK isn't reproducible. Refreshing a fork is
-`TARGET_OS_ANDROID=1 swift package update <dep>`, followed by committing the resulting
-diff. The variable matters: swift-syntax is only used by skip-fuse-ui's Android-only
-`#Preview` macro target, and an `update` without it prunes the swift-syntax pin, which
-the next Android build then writes back. A plain `resolve` keeps it either way. Never
-export the variable into an Xcode resolve: it would give the iOS graph the shim module
-named `SwiftUI`. The macro costs about 45 s on a clean Android build (swift-syntax
-builds from source; the swift.org toolchain has no prebuilts) and nothing incrementally.
+`Scripts/Android/update-packages.sh <dep>`, followed by committing the resulting diff. A
+plain `swift package update` would prune the swift-syntax pin that skip-fuse-ui's
+Android-only `#Preview` macro needs (the script says why). That macro costs about 45 s
+on a clean Android build — swift-syntax builds from source, the swift.org toolchain has
+no prebuilts — and nothing incrementally.
 
 A local clone stands in for a fork only if its directory carries the fork's name:
 the path's last component is the package identity, so
@@ -375,7 +373,7 @@ pins from the workspace `Package.resolved`, `rm -rf` that checkout and
 
 A branch pin is refreshed, not re-resolved: `xcodebuild -resolvePackageDependencies`
 re-records the revision already pinned, so after pushing to a fork's `android` branch,
-delete its pin (or `TARGET_OS_ANDROID=1 swift package update <dep>` at the root) rather than expecting the
+delete its pin (or `Scripts/Android/update-packages.sh <dep>` at the root) rather than expecting the
 resolve to pick the new head up.
 
 Deleting the pin alone is **not** enough on the Xcode side, and the resolve reports the

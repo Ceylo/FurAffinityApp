@@ -165,10 +165,8 @@ upstream merges into the skip-ui / skip-fuse-ui / skip-web forks. All of them mu
 name one location per Skip package — `github.com/skiptools/*` since Skip 1.9.6, the
 old `source.skip.tools/*` is gone from the graph (see
 [forks.md § One location per identity](forks.md#one-location-per-identity)). Then
-`TARGET_OS_ANDROID=1 swift package update` (put non-Skip pins back if they drift;
-the variable keeps the swift-syntax pin — see
-[forks.md](forks.md)), re-resolve the Xcode
-project's `Package.resolved` (without the variable), and build from a clean `.build`. The
+`Scripts/Android/update-packages.sh` (put non-Skip pins back if they drift),
+re-resolve the Xcode project's `Package.resolved` with plain SwiftPM, and build from a clean `.build`. The
 generated `SkipBridgeGenerated/*_Bridge.swift` for FurAffinityUI, FAKit and
 Kingfisher are worth diffing against the previous build: a skipstone codegen change
 shows up there first.
