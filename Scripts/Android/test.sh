@@ -18,6 +18,9 @@
 #
 # XDG_CACHE_HOME: an `adb shell` process has none, so Foundation's caches
 # directory resolves to an unwritable /.cache (the app gets context.cacheDir).
+#
+# On CI (GitHub sets CI), FA_NOISY_TIMING tells the tests the emulator's
+# timing is noise: a latency budget there fails at random.
 
 set -eo pipefail
 
@@ -82,7 +85,10 @@ run() {
 # catalog entries the root package's resource bundle carries.
 "$ROOT/Scripts/Android/generate-assets.sh" > /dev/null
 
-run "$ROOT/FAKit" "$LOG_DIR/FAKit.log" "$FAKIT_MIN_TESTS"
-run "$ROOT" "$LOG_DIR/FurAffinityUI.log" "$UI_MIN_TESTS" \
+CI_ENV=()
+[[ -n "$CI" ]] && CI_ENV=(--env FA_NOISY_TIMING=1)
+
+run "$ROOT/FAKit" "$LOG_DIR/FAKit.log" "$FAKIT_MIN_TESTS" "${CI_ENV[@]}"
+run "$ROOT" "$LOG_DIR/FurAffinityUI.log" "$UI_MIN_TESTS" "${CI_ENV[@]}" \
     --scratch-path .build/android-test \
     --env XDG_CACHE_HOME=/data/local/tmp/FurAffinityUITests-cache
