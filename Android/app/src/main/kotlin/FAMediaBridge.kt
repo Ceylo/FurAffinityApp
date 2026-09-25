@@ -169,13 +169,17 @@ class FAMediaBridge {
         /// The file is copied into a FileProvider-exposed subdirectory first, under its
         /// display name, so the receiving app sees a sensible filename rather than the
         /// cache's hashed one.
+        /// Hand-offs run on concurrent queues; staging one while another sweeps the
+        /// directory could delete the file it is about to hand out.
+        private val stagingLock = Any()
+
         private fun startChooser(
             label: String,
             path: String,
             displayName: String,
             action: String,
             attach: Intent.(android.net.Uri) -> Unit
-        ): Boolean {
+        ): Boolean = synchronized(stagingLock) {
             val source = File(path)
             if (!source.isFile) {
                 Log.e(TAG, "$label: no file at $path")
@@ -192,25 +196,19 @@ class FAMediaBridge {
                 shared.listFiles()?.filter { it.lastModified() < stale }?.forEach { it.delete() }
                 shared.mkdirs()
                 val staged = File(shared, displayName)
-                // Reuse a copy that is already current, touched so the expiry counts
-                // from this hand-off. Otherwise copy under a temporary name of its own
-                // (two hand-offs can run at once) and rename, so a reader of the previous
+                // Copy under a temporary name and rename, so a reader of the previous
                 // copy keeps its inode rather than seeing the file truncated under it.
-                if (staged.isFile && staged.length() == source.length() && staged.lastModified() >= source.lastModified()) {
-                    staged.setLastModified(System.currentTimeMillis())
-                } else {
-                    val partial = File(shared, ".$displayName.${java.util.UUID.randomUUID()}.partial")
-                    try {
-                        source.copyTo(partial, overwrite = true)
-                    } catch (e: Exception) {
-                        partial.delete()
-                        throw e
-                    }
-                    if (!partial.renameTo(staged)) {
-                        partial.delete()
-                        Log.e(TAG, "$label: could not stage $displayName")
-                        return false
-                    }
+                val partial = File(shared, ".$displayName.partial")
+                try {
+                    source.copyTo(partial, overwrite = true)
+                } catch (e: Exception) {
+                    partial.delete()
+                    throw e
+                }
+                if (!partial.renameTo(staged)) {
+                    partial.delete()
+                    Log.e(TAG, "$label: could not stage $displayName")
+                    return false
                 }
 
                 val uri = FileProvider.getUriForFile(

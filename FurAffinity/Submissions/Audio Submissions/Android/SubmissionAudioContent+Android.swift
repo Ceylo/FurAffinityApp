@@ -24,7 +24,8 @@ final class AudioPlaybackController {
 
     /// Local file URL of the downloaded mp3 once available, for Save/Share.
     private(set) var documentFileUrl: URL?
-    private(set) var isDownloading = false
+    /// Downloading or handing the file over; a second tap meanwhile would open it twice.
+    private(set) var isBusy = false
 
     init(
         downloadUrl: URL,
@@ -34,28 +35,35 @@ final class AudioPlaybackController {
         self.downloadUrl = downloadUrl
         self.downloadDocument = downloadDocument
         self.errorStorage = errorStorage
+        // An earlier visit's download: Save/Share can light up right away.
+        let fileUrl = Self.fileUrl(for: downloadUrl)
+        if FileManager.default.fileExists(atPath: fileUrl.path) {
+            documentFileUrl = fileUrl
+        }
     }
 
-    /// Hands the mp3 to another app, downloading it first unless it is still on disk (the
-    /// app cache it lives in can be cleared under us).
+    private static func fileUrl(for downloadUrl: URL) -> URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent(downloadUrl.lastPathComponent)
+    }
+
+    /// Hands the mp3 to another app, downloading it first unless it is on disk: from this
+    /// visit, or from an earlier one (the write is atomic, so a file there is whole). The
+    /// app cache it lives in can also be cleared under us.
     func play() {
-        if let documentFileUrl, FileManager.default.fileExists(atPath: documentFileUrl.path) {
-            Task { _ = await MediaBridge.openOffMain(fileUrl: documentFileUrl) }
-            return
-        }
-        guard !isDownloading else { return }
-        documentFileUrl = nil
-        isDownloading = true
+        guard !isBusy else { return }
+        isBusy = true
         Task {
-            defer { isDownloading = false }
+            defer { isBusy = false }
+            let fileUrl = Self.fileUrl(for: downloadUrl)
             do {
-                let data = try await downloadDocument(downloadUrl)
-                let fileUrl = FileManager.default.temporaryDirectory
-                    .appendingPathComponent(downloadUrl.lastPathComponent)
-                // Off the main actor: an mp3 runs to tens of megabytes.
-                try await Task.detached {
-                    try data.write(to: fileUrl, options: .atomic)
-                }.value
+                if !FileManager.default.fileExists(atPath: fileUrl.path) {
+                    documentFileUrl = nil
+                    let data = try await downloadDocument(downloadUrl)
+                    // Off the main actor: an mp3 runs to tens of megabytes.
+                    try await Task.detached {
+                        try data.write(to: fileUrl, options: .atomic)
+                    }.value
+                }
                 documentFileUrl = fileUrl
                 _ = await MediaBridge.openOffMain(fileUrl: fileUrl)
             } catch {
@@ -79,7 +87,7 @@ struct SubmissionAudioContent: View {
     var downloadDocument: (_ url: URL) async throws -> Data
 
     private var isDownloading: Bool {
-        controller?.isDownloading == true
+        controller?.isBusy == true && controller?.documentFileUrl == nil
     }
 
     var body: some View {
@@ -110,7 +118,7 @@ struct SubmissionAudioContent: View {
             }
             .controlSize(.large)
             .buttonStyle(.borderedProminent)
-            .disabled(isDownloading)
+            .disabled(controller?.isBusy == true)
             .padding(.horizontal, 10)
         }
         .onAppear {
