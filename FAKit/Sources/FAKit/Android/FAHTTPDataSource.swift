@@ -243,7 +243,7 @@ public struct FAHTTPDataSource: HTTPDataSource {
             // It reads back the page the WebView lands on, so it only stands in for a
             // page: a file on d.furaffinity.net never finishes loading as one, and
             // the wait had no end.
-            guard request.url.host == FAURLs.homeUrl.host else {
+            guard request.url.host != "d.furaffinity.net" else {
                 logger.warning("[CFFALLBACK] \(url): still challenged; not a page, no WebView fallback")
                 throw CloudflareChallengeRequired()
             }

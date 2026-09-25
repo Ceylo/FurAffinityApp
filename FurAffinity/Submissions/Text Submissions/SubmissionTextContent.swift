@@ -106,7 +106,9 @@ struct SubmissionTextContent: View {
                 let data = try await downloadDocument(textContent.documentUrl)
                 let fileUrl = FileManager.default.temporaryDirectory
                     .appendingPathComponent(textContent.documentUrl.lastPathComponent)
-                try data.write(to: fileUrl, options: .atomic)
+                try await Task.detached {
+                    try data.write(to: fileUrl, options: .atomic)
+                }.value
                 documentFileUrl = fileUrl
 
                 let content = await StoryReaderView.Content.load(

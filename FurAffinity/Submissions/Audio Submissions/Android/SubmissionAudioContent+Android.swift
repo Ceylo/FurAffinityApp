@@ -31,6 +31,9 @@ struct SubmissionAudioContent: View {
 
     // Not private: skipstone can't bridge a private @State.
     @State var downloadFailed = false
+    /// Bumped by Retry, so the download stays a `.task`: cancelled with the view, never
+    /// two at once.
+    @State var downloadAttempt = 0
 
     var body: some View {
         VStack(spacing: 12) {
@@ -47,7 +50,7 @@ struct SubmissionAudioContent: View {
                     Task { _ = await MediaBridge.openOffMain(fileUrl: documentFileUrl) }
                 } else {
                     downloadFailed = false
-                    Task { await downloadIfNeeded() }
+                    downloadAttempt += 1
                 }
             } label: {
                 HStack {
@@ -70,7 +73,7 @@ struct SubmissionAudioContent: View {
             .disabled(documentFileUrl == nil && !downloadFailed)
             .padding(.horizontal, 10)
         }
-        .task { await downloadIfNeeded() }
+        .task(id: downloadAttempt) { await downloadIfNeeded() }
     }
 
     /// `documentFileUrl` lives in `SubmissionView`, so a row recycled out of the list and

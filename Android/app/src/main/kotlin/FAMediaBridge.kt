@@ -192,7 +192,18 @@ class FAMediaBridge {
                 shared.listFiles()?.filter { it.lastModified() < stale }?.forEach { it.delete() }
                 shared.mkdirs()
                 val staged = File(shared, displayName)
-                source.copyTo(staged, overwrite = true)
+                // Reuse a copy that is already current. Otherwise copy under a temporary
+                // name and rename, so a reader of the previous copy keeps its inode rather
+                // than seeing the file truncated under it.
+                if (!staged.isFile || staged.length() != source.length() || staged.lastModified() < source.lastModified()) {
+                    val partial = File(shared, ".$displayName.partial")
+                    source.copyTo(partial, overwrite = true)
+                    if (!partial.renameTo(staged)) {
+                        partial.delete()
+                        Log.e(TAG, "$label: could not stage $displayName")
+                        return false
+                    }
+                }
 
                 val uri = FileProvider.getUriForFile(
                     context,
