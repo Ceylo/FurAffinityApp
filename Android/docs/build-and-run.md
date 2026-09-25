@@ -433,10 +433,15 @@ arrives through `@testable import`) — reach the Foundation one `Defaults` uses
 
 `build.yml`'s `Build-Android` job runs beside the iOS one, with no secrets:
 
-1. `Scripts/Android/check-skip-version.sh --install` — setup-skip installs
-   Homebrew's *latest* skip, and one past the `exact:` pin fails far from the cause
-   (see [Run](#run)); this fetches the pinned release instead, so a Skip release
-   does not turn CI red.
+1. `Scripts/Android/ci-setup.sh` — swiftly from swift.org's package, the skip CLI
+   at the `exact:` pin (`check-skip-version.sh --install`: one past the pin fails far
+   from the cause, see [Run](#run), and a Skip release must not turn CI red), and the
+   Swift Android SDK. Not `skiptools/actions/setup-skip`: its `brew install skip`
+   compiled swiftly and a JDK's openssl from source on the Intel runner, which has
+   no bottles for them — 20 of its 27 minutes. The JDK is `actions/setup-java`, Gradle
+   the wrapper (its user home cached by `gradle/actions/setup-gradle`), the Android SDK
+   the runner's; SwiftPM's repository cache is cached too. The toolchain and the SDK
+   themselves (8 GB) are downloaded each run: too big to cache usefully.
 2. `SKIP_EXPORT_ARCHS=x86_64 ./gradlew :app:assembleDebug` — only a Gradle build
    compiles the Darwin bridge and the Kotlin, and x86_64 is the emulator's only ABI.
 3. `ABI=x86_64 Scripts/Android/check-shared-globals.sh debug`, as `run.sh` does.

@@ -157,13 +157,20 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: skiptools/actions/setup-skip@v1
+      # Gradle's user home (dependencies, wrapper) cached across runs.
+      - uses: gradle/actions/setup-gradle@v5
         with:
-          install-swift-android-sdk: true
-          swift-android-sdk-version: 6.3.3
-      - name: Pin the Skip version
-        # setup-skip installs Homebrew's latest; this swaps in the manifests' pin.
-        run: Scripts/Android/check-skip-version.sh --install
+          add-job-summary: on-failure
+      - name: Cache SwiftPM repositories
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/org.swift.swiftpm/repositories
+          key: swiftpm-repositories-${{ runner.arch }}-${{ hashFiles('Package.resolved', '**/Package.swift') }}
+          restore-keys: swiftpm-repositories-${{ runner.arch }}-
+      - name: Set up Skip
+        # Not skiptools/actions/setup-skip: its Homebrew install compiles from
+        # source on Intel. See the script's header.
+        run: Scripts/Android/ci-setup.sh
       - name: Install the NDK
         run: |
           # Stripping the release .so files needs it; without it the APK is 2.5x

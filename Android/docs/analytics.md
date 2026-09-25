@@ -11,7 +11,10 @@ builds and `build.yml` never send anything.
 | Autocapture | sessions, app lifecycles | the same |
 | Not collected | city, region, carrier, DMA, IP address, IDFV | city, region, carrier, DMA, IP address, latitude/longitude, advertising id, app set id |
 
-No custom events are logged on either. The Android device id is the SDK's random
+No custom events are logged on either. Both set one user property, `commit` — HEAD's
+short hash, the same as Sentry's `commit` tag — which Amplitude stamps onto every
+event after it, so a test build's events can be told from a release's of the same
+version. The Android device id is the SDK's random
 one: `useAdvertisingIdForDeviceId` and `useAppSetIdForDeviceId` stay false. Both
 platforms log `Amplitude is initialized` or `Amplitude is left uninitialized` at
 startup.

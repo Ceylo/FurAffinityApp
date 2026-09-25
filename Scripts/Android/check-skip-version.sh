@@ -4,7 +4,7 @@
 #
 # Usage: Scripts/Android/check-skip-version.sh [--install]
 #
-#   --install   on a mismatch, download the pinned release from GitHub instead of
+#   --install   on a mismatch or no skip at all, download the pinned release from GitHub instead of
 #               failing, put it first on PATH, and export it to later GitHub
 #               Actions steps (GITHUB_PATH, and SKIP_COMMAND_OVERRIDE for Gradle)
 #
@@ -28,8 +28,6 @@ case "${1:-}" in
     *)              die "unknown argument: $1" ;;
 esac
 
-command -v skip >/dev/null || die "\`skip\` is not on PATH"
-
 PINNED="$(sed -nE 's@.*skiptools/skip\.git", exact: "([0-9.]+)".*@\1@p' "$ROOT/Package.swift" | head -1)"
 [[ -n "$PINNED" ]] || die "no exact skip pin in Package.swift"
 FAKIT_PINNED="$(sed -nE 's@.*skiptools/skip\.git", exact: "([0-9.]+)".*@\1@p' "$ROOT/FAKit/Package.swift" | head -1)"
@@ -37,15 +35,16 @@ FAKIT_PINNED="$(sed -nE 's@.*skiptools/skip\.git", exact: "([0-9.]+)".*@\1@p' "$
     || die "FAKit/Package.swift pins skip $FAKIT_PINNED but Package.swift pins $PINNED"
 
 installed_version() {
+    command -v skip >/dev/null || return 0
     skip version 2>/dev/null | sed -nE 's/^Skip version ([0-9.]+).*/\1/p' | head -1
 }
 INSTALLED="$(installed_version)"
-[[ -n "$INSTALLED" ]] || die "could not read \`skip version\`"
+(( INSTALL )) || [[ -n "$INSTALLED" ]] || die "no usable \`skip\` on PATH"
 
 if [[ "$INSTALLED" != "$PINNED" ]] && (( INSTALL )); then
     # What the Homebrew cask installs: a universal binary behind a wrapper script.
     DEST="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/skip-$PINNED"
-    echo "skip $INSTALLED is installed; fetching $PINNED into $DEST"
+    echo "skip ${INSTALLED:-(none)} is installed; fetching $PINNED into $DEST"
     rm -rf "$DEST" && mkdir -p "$DEST"
     curl -fsSL -o "$DEST/skip.zip" \
         "https://github.com/skiptools/skip/releases/download/$PINNED/skip-macos.zip"

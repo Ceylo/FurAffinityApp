@@ -21,7 +21,7 @@ import skip.foundation.ProcessInfo
 
 class FAAnalyticsBridge {
     // Boolean, not Unit: AnyDynamicObject can't resolve the void overload.
-    fun start(apiKey: String): Boolean = try {
+    fun start(apiKey: String, commit: String): Boolean = try {
         val context = ProcessInfo.processInfo.androidContext
         // ADID is the advertising id, app set id the IDFV analogue iOS disables.
         val trackingOptions = TrackingOptions()
@@ -49,6 +49,8 @@ class FAAnalyticsBridge {
             if ((context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
                 it.logger.logMode = Logger.LogMode.DEBUG
             }
+            // A user property, as on iOS: tells a test build's events from a release's.
+            if (commit.isNotEmpty()) it.identify(mapOf("commit" to commit))
         }
         true
     } catch (e: Exception) {

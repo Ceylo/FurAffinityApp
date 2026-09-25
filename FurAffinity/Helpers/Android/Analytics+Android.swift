@@ -12,6 +12,7 @@
 //
 
 import Foundation
+import FAKit
 #if canImport(Android)
 import SkipBridge
 #endif
@@ -24,7 +25,7 @@ func startAnalytics() {
     if Secrets.amplitudeApiKey != Secrets.placeholderApiKey {
         do {
             let bridge = try AnyDynamicObject(className: "fur.affinity.ui.FAAnalyticsBridge")
-            let confirmed: Bool? = try bridge.start(Secrets.amplitudeApiKey)
+            let confirmed: Bool? = try bridge.start(Secrets.amplitudeApiKey, FAAppVersion.commit ?? "")
             started = confirmed == true
         } catch {
             logger.error("Analytics: could not start FAAnalyticsBridge: \(error)")

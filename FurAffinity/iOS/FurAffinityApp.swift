@@ -34,7 +34,13 @@ private let amplitude: Amplitude? = {
         autocapture: [.sessions, .appLifecycles]
     )
 
-    return Amplitude(configuration: config)
+    let amplitude = Amplitude(configuration: config)
+    // Lets a test build's events be told from a release's, like Sentry's `commit`
+    // tag; the version alone can't, since both carry the same one.
+    if let commit = FAAppVersion.commit {
+        amplitude.identify(userProperties: ["commit": commit])
+    }
+    return amplitude
 }()
 
 struct RootView: View {
