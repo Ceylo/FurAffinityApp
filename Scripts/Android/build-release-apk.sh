@@ -245,7 +245,8 @@ READELF="$(ls "$SDK"/ndk/*/toolchains/llvm/prebuilt/*/bin/llvm-readelf 2>/dev/nu
 if [[ -x "$READELF" ]]; then
     SO="$(mktemp -t fa-apk-so)"
     unzip -p "$APK" lib/arm64-v8a/libFurAffinityUI.so > "$SO"
-    if grep -q '\.debug_info' <<< "$("$READELF" --section-headers "$SO")"; then
+    SECTIONS="$("$READELF" --section-headers "$SO")"
+    if grep -q '\.debug_info' <<< "$SECTIONS"; then
         rm -f "$SO"
         (( CI_MODE )) && die "the APK's Swift libraries still carry debug info — AGP's NDK is missing"
         echo "warning: the APK's Swift libraries still carry debug info — AGP's NDK is missing" >&2

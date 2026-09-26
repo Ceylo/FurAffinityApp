@@ -98,8 +98,11 @@ jobs:
     runs-on: macos-26-intel
     timeout-minutes: 150
     env:
-      # AVD cache key and emulator image, kept in one place.
+      # The emulator's configuration, which is also the AVD cache key: a cached AVD
+      # keeps the config it was created with.
       EMULATOR_API_LEVEL: 34
+      EMULATOR_RAM_SIZE: 4096M
+      EMULATOR_DISK_SIZE: 4096M
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -115,8 +118,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/Library/Caches/org.swift.swiftpm/repositories
-          key: swiftpm-repositories-${{ runner.arch }}-${{ hashFiles('Package.resolved', '**/Package.swift') }}
-          restore-keys: swiftpm-repositories-${{ runner.arch }}-
+          key: swiftpm-repositories-${{ hashFiles('Package.resolved', '**/Package.swift') }}
+          restore-keys: swiftpm-repositories-
       - name: Set up Skip
         # Not skiptools/actions/setup-skip: its Homebrew install compiles from
         # source on Intel. See the script's header.
@@ -137,15 +140,15 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ env.EMULATOR_API_LEVEL }}-x86_64-${{ runner.os }}
+          key: avd-${{ env.EMULATOR_API_LEVEL }}-x86_64-${{ env.EMULATOR_RAM_SIZE }}-${{ env.EMULATOR_DISK_SIZE }}-${{ runner.os }}
       - name: Generate the emulator snapshot
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ env.EMULATOR_API_LEVEL }}
           arch: x86_64
-          ram-size: 4096M
-          disk-size: 4096M
+          ram-size: ${{ env.EMULATOR_RAM_SIZE }}
+          disk-size: ${{ env.EMULATOR_DISK_SIZE }}
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: false
@@ -155,8 +158,8 @@ jobs:
         with:
           api-level: ${{ env.EMULATOR_API_LEVEL }}
           arch: x86_64
-          ram-size: 4096M
-          disk-size: 4096M
+          ram-size: ${{ env.EMULATOR_RAM_SIZE }}
+          disk-size: ${{ env.EMULATOR_DISK_SIZE }}
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true

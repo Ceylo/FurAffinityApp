@@ -35,7 +35,7 @@ LOG_DIR=""
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,20p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,23p' "$0" | cut -c3-; exit 0 ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;
         --log-dir)    LOG_DIR="$2"; shift ;;
@@ -79,6 +79,7 @@ run() {
     local count
     count="$(sed -E 's/.*Test run with ([0-9]+) tests?.*/\1/' <<< "$summary")"
     (( count >= min )) || die "$name: $count tests ran, expected at least $min"
+    [[ "$summary" == *" passed after "* ]] || die "$name: $summary"
 }
 
 # `skip android test` never runs Gradle, which is what normally generates the

@@ -38,7 +38,9 @@ if ! command -v swiftly >/dev/null; then
     echo "$HOME/.swiftly/bin" >> "$GITHUB_PATH"
     echo "SWIFTLY_HOME_DIR=$SWIFTLY_HOME_DIR" >> "$GITHUB_ENV"
     echo "SWIFTLY_BIN_DIR=$SWIFTLY_BIN_DIR" >> "$GITHUB_ENV"
-    echo "SWIFTLY_TOOLCHAINS_DIR=${SWIFTLY_TOOLCHAINS_DIR:-}" >> "$GITHUB_ENV"
+    if [[ -n "$SWIFTLY_TOOLCHAINS_DIR" ]]; then
+        echo "SWIFTLY_TOOLCHAINS_DIR=$SWIFTLY_TOOLCHAINS_DIR" >> "$GITHUB_ENV"
+    fi
 fi
 swiftly --version
 
