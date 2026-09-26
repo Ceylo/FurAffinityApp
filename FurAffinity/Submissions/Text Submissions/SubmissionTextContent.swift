@@ -111,11 +111,7 @@ struct SubmissionTextContent: View {
                 }.value
                 documentFileUrl = fileUrl
 
-                let content = await StoryReaderView.Content.load(
-                    data: data,
-                    filename: textContent.documentUrl.lastPathComponent,
-                    documentUrl: fileUrl
-                )
+                let content = await StoryReaderView.Content.load(data: data, documentUrl: fileUrl)
                 loadedContent = content
                 readerContent = content
             }

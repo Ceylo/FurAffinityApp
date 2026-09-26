@@ -2,9 +2,8 @@
 //  SubmissionAudioContent+Android.swift
 //  FurAffinityUI (Android)
 //
-//  The Android build of `SubmissionAudioContent`, same signature. iOS streams the mp3
-//  through AVPlayer with lock-screen controls, an Apple-only stack; here the cover is
-//  shown, the mp3 is downloaded for Save/Share, and playback is handed to another app.
+//  The Android build of `SubmissionAudioContent`: no in-app playback (iOS's AVPlayer
+//  stack is Apple-only), so the mp3 is handed to another app.
 //
 
 import SwiftUI
@@ -54,7 +53,7 @@ final class AudioPlaybackController {
         let fileUrl = fileUrl
         Task {
             defer { isBusy = false }
-            do {
+            await storeLocalizedError(in: errorStorage, action: "Audio Download", webBrowserURL: downloadUrl) {
                 if !FileManager.default.fileExists(atPath: fileUrl.path) {
                     documentFileUrl = nil
                     let data = try await downloadDocument(downloadUrl)
@@ -65,8 +64,6 @@ final class AudioPlaybackController {
                 }
                 documentFileUrl = fileUrl
                 await MediaBridge.open(fileUrl: fileUrl)
-            } catch {
-                storeError(error, in: errorStorage, action: "Audio Download", webBrowserURL: downloadUrl)
             }
         }
     }

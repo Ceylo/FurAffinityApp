@@ -3,16 +3,16 @@
 //  FurAffinity (Android)
 //
 //  Kotlin helper backing Save (to the gallery or Downloads), Share and Open in another
-//  app. Same rationale and shape as FAImageFetchBridge: FurAffinityUI is a *native* Skip module, so it cannot touch Android
-//  framework classes directly and reaches this one by name through SkipBridge's
-//  AnyDynamicObject — see MediaBridge.swift.
+//  app. Same rationale and shape as FAImageFetchBridge: FurAffinityUI is a *native* Skip
+//  module, so it cannot touch Android framework classes directly and reaches this one by
+//  name through SkipBridge's AnyDynamicObject — see MediaBridge.swift.
 //
 //  Save writes into MediaStore's Pictures/FurAffinity (images) or Download/FurAffinity
 //  (documents) collection; see `insert` for the permissions involved.
 //
-//  Share and Open hand out a content:// URI from the app's FileProvider rather than a file
-//  path: the source file lives in a staging directory inside the app's cache, which no
-//  other app may read. res/xml/file_paths.xml exposes exactly that directory.
+//  Share and Open hand out a content:// URI from the app's FileProvider rather than a
+//  file path: the source file lives in a staging directory inside the app's cache, which
+//  no other app may read. res/xml/file_paths.xml exposes exactly that directory.
 //
 
 package fur.affinity.ui
@@ -74,8 +74,8 @@ class FAMediaBridge {
         }
 
         /// Copies `path` into Download/FurAffinity, where the Files app shows it, and says
-        /// in a toast whether that worked. `MediaStore.Downloads` is API 29+; below that the system share
-        /// chooser stands in, as it did for every document before.
+        /// in a toast whether that worked. `MediaStore.Downloads` is API 29+; below that
+        /// the system share chooser stands in, as it did for every document before.
         fun saveDocument(path: String, displayName: String): Boolean {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                 return share(path, displayName)

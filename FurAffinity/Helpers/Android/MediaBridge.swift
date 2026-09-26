@@ -35,6 +35,7 @@ enum MediaBridge {
 
     /// Copies the file into Download/FurAffinity (the share chooser below API 29), and
     /// says in a toast whether that worked.
+    @discardableResult
     static func saveDocument(atFileUrl url: URL) async -> Bool {
         await invoke("saveDocument", url)
     }

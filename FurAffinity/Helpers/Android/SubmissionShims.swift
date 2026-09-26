@@ -62,7 +62,7 @@ func share(_ items: [Any]) {
 @MainActor
 func exportToFiles(_ urls: [URL]) {
     for url in urls {
-        Task { _ = await MediaBridge.saveDocument(atFileUrl: url) }
+        Task { await MediaBridge.saveDocument(atFileUrl: url) }
     }
 }
 

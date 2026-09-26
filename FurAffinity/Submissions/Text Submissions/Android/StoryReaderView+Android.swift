@@ -20,7 +20,8 @@ struct StoryReaderView: View {
 
         var id: String { documentUrl.absoluteString }
 
-        static func load(data: Data, filename: String, documentUrl: URL) async -> Content {
+        static func load(data: Data, documentUrl: URL) async -> Content {
+            let filename = documentUrl.lastPathComponent
             let paragraphs = await Task.detached {
                 StoryText.paragraphs(from: data, filename: filename)
             }.value

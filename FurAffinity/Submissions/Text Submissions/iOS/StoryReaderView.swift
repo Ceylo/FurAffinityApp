@@ -24,9 +24,9 @@ struct StoryReaderView: View {
 
         var id: String { documentUrl.absoluteString }
 
-        /// Extracts the story off the main actor. Android builds its own `Content`, so
-        /// `SubmissionTextContent` only ever goes through here.
-        static func load(data: Data, filename: String, documentUrl: URL) async -> Content {
+        /// Extracts the story off the main actor.
+        static func load(data: Data, documentUrl: URL) async -> Content {
+            let filename = documentUrl.lastPathComponent
             let text = await Task.detached {
                 StoryDocument.richText(from: data, filename: filename)
             }.value

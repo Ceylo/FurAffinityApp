@@ -326,11 +326,11 @@ documents into `Download/FurAffinity`, and starts `ACTION_SEND` (Share) and
 `ACTION_VIEW` (Open in another app). "Save to Files" (`exportToFiles`) saves without
 asking where, unlike iOS's document picker. A toast says where the file went, or that
 saving failed, since the iOS signature has no error storage to report through. Staged
-hand-off files in `cache/shared` expire after an hour rather than at the next hand-off: a
-player given an mp3 by Open re-opens the URI to seek. Each hand-off copies under a
-temporary name and renames, so such a reader keeps the inode it has open. `MediaStore.Downloads` needs API
-29, so on API 28 it falls back to the share chooser. Two things the manifest must carry,
-both easy to lose in a regeneration:
+hand-off files in `cache/shared` expire after an hour rather than at the next hand-off:
+a player given an mp3 by Open re-opens the URI to seek. Each hand-off copies under a
+temporary name and renames, so such a reader keeps the inode it has open.
+`MediaStore.Downloads` needs API 29, so on API 28 it falls back to the share chooser.
+Two things the manifest must carry, both easy to lose in a regeneration:
 
 - `<provider android:name="androidx.core.content.FileProvider">` with
   `${applicationId}.fileprovider` and `@xml/file_paths`. Shared files sit in the app
