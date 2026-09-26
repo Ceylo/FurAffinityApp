@@ -7,7 +7,7 @@
   - [Can I trust this app?](#can-i-trust-this-app)
   - [How does it get access to my account?](#how-does-it-get-access-to-my-account)
   - [Will I get banned from Fur Affinity for using this app?](#will-i-get-banned-from-fur-affinity-for-using-this-app)
-  - [Technologies used and required iOS version](#technologies-used-and-required-ios-version)
+  - [Technologies and requirements](#technologies-and-requirements)
   - [Privacy policy](#privacy-policy)
 
 ## Preview
@@ -15,7 +15,7 @@
 See the screenshots on [furaffinity.app](https://furaffinity.app)!
 
 ## Project Goals
-This project is written to be able to benefit from [furaffinity.net](https://www.furaffinity.net) content on iOS through a more friendly and native experience. It also serves as a learning project for the [technologies mentioned later](#technologies-and-requirements). It can also be useful to other people and is thus provided by the means of this opensource GitHub project.
+This project is written to be able to benefit from [furaffinity.net](https://www.furaffinity.net) content on iOS, and now in preview on Android, through a more friendly and native experience. It also serves as a learning project for the [technologies mentioned later](#technologies-and-requirements). It can also be useful to other people and is thus provided by the means of this opensource GitHub project.
 
 ## Features
 
@@ -37,7 +37,9 @@ This project is written to be able to benefit from [furaffinity.net](https://www
 - [x] Exploration mode (ie. https://www.furaffinity.net/search)
 
 ## Installation
-See the steps on the official website: [furaffinity.app](https://furaffinity.app).
+**iOS:** see the steps on the official website: [furaffinity.app](https://furaffinity.app).
+
+**Android (preview):** download the `FurAffinity-<version>-<commit>.apk` file attached to the [latest release](https://github.com/Ceylo/FurAffinityApp/releases/latest) and open it on your phone; Android will ask you to allow installing apps from your browser or file manager. The Android version is a subset of the iOS app for now: the Followed feed, image submissions (with favorites, saving, sharing and reading comments) and Settings. On first launch Fur Affinity's Cloudflare check asks you to tap "Verify you are human" once.
 
 ## Can I trust this app?
 The application is unofficial so you may wonder if it's trying to steal your Fur Affinity account or some other personal information. The fact that you have access to the full source code lets you check how it works and specifically the fact that no password is ever known to the application. The app also does not try to use any personal information beyond what is stricly necessary to let the application run: it reads the submissions listed on your account only to give you access to them in the app, etc.
@@ -48,9 +50,11 @@ The app displays furaffinity.net login webpage to let you enter account details.
 ## Will I get banned from Fur Affinity for using this app?
 As of May 2022, Fur Affinity staff allows the use of the application as long as it does not make excessive requests to furaffinity.net. This goes against apps that download the full gallery of a user for instance, but not against this app which, from furaffinity.net's point of view, behaves very similarly to a usual web browsing experience.
 
-## Technologies used and required iOS version
+## Technologies and requirements
 This project is fully written in Swift and is based on SwiftUI, Swift Concurrency and other APIs introduced in iOS 18.
 As such iOS 18.0 or later is required to run the latest version of the app. If you're still on iOS 17, the latest compatible version is 1.17.
+
+The Android app is built from the same source with [Skip](https://skip.dev); Android 9.0 or later on a 64-bit ARM device is required.
 
 ## Privacy policy
 See the [Privacy Policy](Privacy%20Policy.md) page.

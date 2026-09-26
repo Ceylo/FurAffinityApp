@@ -27,6 +27,8 @@ dependencies {
     // OkHttp/Compose/Fragment integrations. See docs/crash-reporting.md.
     implementation("io.sentry:sentry-android-core:8.57.0")
     implementation("io.sentry:sentry-android-ndk:8.57.0")
+    // FAAnalyticsBridge.kt: the Android side of iOS's AmplitudeSwift.
+    implementation("com.amplitude:analytics-android:1.33.0")
 }
 
 // Symbol and mapping uploads happen only when SENTRY_AUTH_TOKEN is set (release and

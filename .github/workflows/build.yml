@@ -1,7 +1,14 @@
 name: Build App
 on: [push, workflow_dispatch]
+# A newer push to the same branch supersedes a run still going: the Android job
+# holds an Intel runner for up to an hour. Not on main, where every commit keeps
+# its result.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 jobs:
-  Build-App:
+  Build-iOS-App:
+    name: Build iOS App
     runs-on: macos-26
     steps:
       - name: Check out repository code
@@ -83,3 +90,87 @@ jobs:
           name: Xcode Test Results
           path: ./*.xcresult
           if-no-files-found: error
+  Build-Android-App:
+    name: Build Android App
+    # Intel, because the emulator needs nested virtualisation, which GitHub's arm64
+    # macOS runners lack. GitHub retires its Intel macOS runners around August 2027;
+    # see Android/docs/build-and-run.md § CI for the way off them.
+    runs-on: macos-26-intel
+    timeout-minutes: 150
+    env:
+      # The emulator's configuration, which is also the AVD cache key: a cached AVD
+      # keeps the config it was created with.
+      EMULATOR_API_LEVEL: 34
+      EMULATOR_RAM_SIZE: 4096M
+      EMULATOR_DISK_SIZE: 4096M
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      # Gradle's user home (dependencies, wrapper) cached across runs.
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          add-job-summary: on-failure
+      - name: Cache SwiftPM repositories
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/org.swift.swiftpm/repositories
+          key: swiftpm-repositories-${{ hashFiles('Package.resolved', '**/Package.swift') }}
+          restore-keys: swiftpm-repositories-
+      - name: Set up Skip
+        # Not skiptools/actions/setup-skip: its Homebrew install compiles from
+        # source on Intel. See the script's header.
+        run: Scripts/Android/ci-setup.sh
+      - name: Build App
+        # A green `skip android test` does not prove the app builds: only a Gradle
+        # build compiles the Darwin bridge and the Kotlin. x86_64 alone, the
+        # emulator's ABI.
+        run: |
+          set -o pipefail
+          cd Android && SKIP_EXPORT_ARCHS=x86_64 ./gradlew :app:assembleDebug 2>&1 | tee ../AndroidBuildLogs.txt
+      - name: Check shared globals
+        run: ABI=x86_64 Scripts/Android/check-shared-globals.sh debug
+      - name: Cache the emulator snapshot
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ env.EMULATOR_API_LEVEL }}-x86_64-${{ env.EMULATOR_RAM_SIZE }}-${{ env.EMULATOR_DISK_SIZE }}-${{ runner.os }}
+      - name: Generate the emulator snapshot
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.EMULATOR_API_LEVEL }}
+          arch: x86_64
+          ram-size: ${{ env.EMULATOR_RAM_SIZE }}
+          disk-size: ${{ env.EMULATOR_DISK_SIZE }}
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Generated AVD snapshot for caching"
+      - name: Run Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.EMULATOR_API_LEVEL }}
+          arch: x86_64
+          ram-size: ${{ env.EMULATOR_RAM_SIZE }}
+          disk-size: ${{ env.EMULATOR_DISK_SIZE }}
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          # Fails on a failing case and on a run below its case-count floor.
+          script: Scripts/Android/test.sh --log-dir android-test-logs
+      - name: Upload Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android Logs
+          path: |
+            AndroidBuildLogs.txt
+            android-test-logs/
+          if-no-files-found: warn

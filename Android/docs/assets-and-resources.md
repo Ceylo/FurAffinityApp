@@ -3,19 +3,20 @@
 ## Sharing asset-catalog entries
 
 `FurAffinity/Resources/Assets.xcassets` is this module's own catalog, which Skip
-mirrors into Android resources. To single-source an entry with the iOS catalog,
-symlink the **`Contents.json`**, not the `.colorset`/`.imageset` directory:
+mirrors into Android resources. Every iOS colorset but `AccentColor` (which SkipUI
+would read as the app's tint) is **copied** there by
+`Scripts/Android/generate-assets.sh` (see [Generated art](#generated-art)), and the
+copy is git-ignored.
 
-```
-mkdir Foo.colorset
-ln -s ../../../Assets.xcassets/Foo.colorset/Contents.json Foo.colorset/Contents.json
-```
+Not a symlink, which was the old arrangement: `skip android test` pushes the module's
+resource bundle with `adb push`, and adb cannot create a symlink on the device
+("remote symlink failed: Permission denied"), so the root package's tests could not
+run. A symlinked `.colorset` *directory* was never an option either — Skip's
+resource copy silently skips it.
 
-Skip's resource copy does not follow a symlinked *directory* — it silently copies
-nothing, and the entry never reaches the APK. The failure is quiet: `Color(_:bundle:)`
-falls back to an opaque default, so a 10%-alpha border renders as a solid grey one
-instead of erroring. After changing a catalog, confirm the entry actually landed
-(the mirrored tree is itself made of symlinks, so `find -type f` won't list them):
+Whatever the mechanism, a missing entry fails quietly: `Color(_:bundle:)` falls back
+to an opaque default, so a 10%-alpha border renders as a solid grey one instead of
+erroring. After changing a catalog, confirm the entry actually landed:
 
 ```
 ls -R .build/plugins/outputs/*/FurAffinityUI/destination/skipstone/FurAffinityUI/src/main/assets
@@ -23,14 +24,6 @@ ls -R .build/plugins/outputs/*/FurAffinityUI/destination/skipstone/FurAffinityUI
 
 The path segment after `outputs/` is the **checkout directory's name**, not the word
 `android` — it differs per worktree, hence the glob.
-
-Each build prints two `unable to remove entry
-…/{Border,ButtonBorder}Overlay.colorset/Contents.json` warnings. Both name the
-**committed symlink**, in the source tree: skipstone wants to replace the entry it
-mirrors, and removing it would mean writing to `FurAffinity/Resources/`, which the
-SwiftPM plugin sandbox makes read-only (`NSCocoaErrorDomain Code=513`). The link is
-already there and still resolves, and the colours reach the APK — the warning is the
-sandbox doing its job. The symlinks stay.
 
 ## Reaching a catalog image from shared code
 
@@ -52,13 +45,16 @@ Write `Bundle.faAssets`, not the leading-dot `.faAssets`: `Image(_:bundle:)` and
 extension member through the optional in the Android build.
 
 An entry a shared view names must exist in **both** catalogs under the same name —
-`DefaultAvatar.imageset` is committed on both sides, `AppIcon.imageset` is committed
-on iOS and generated on Android (below).
+`DefaultAvatar.imageset` is committed on both sides, `AppIcon.imageset` and the
+colorsets are committed on iOS and generated on Android (below).
 
 ## Generated art
 
-An entry big enough that a second copy in git would hurt is generated from the iOS
-art instead, and git-ignored. `Scripts/Android/generate-assets.sh` writes two sets:
+An entry big enough that a second copy in git would hurt, or one that must stay
+identical to its iOS original, is generated from the iOS catalog instead, and
+git-ignored. `Scripts/Android/generate-assets.sh` writes three sets:
+
+- every colorset but `AccentColor`, `Contents.json` copied verbatim;
 
 - the in-app `AppIcon`, a 512×512 light/dark pair downscaled from two 1024×1024 PNGs
   (the view draws it at 100 pt);
@@ -83,7 +79,8 @@ dependency cannot order against a separate included build. The script is therefo
 written to be a true no-op when up to date, content-compared rather than rewritten.
 
 `skip android build` goes through SwiftPM only and never runs Gradle, so it stays a
-documented prerequisite; skipping it there costs a blank in-app icon. It is
+documented prerequisite; skipping it there costs a blank in-app icon and opaque
+default colours. It is
 idempotent and takes under a second:
 
 ```

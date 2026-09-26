@@ -9,7 +9,6 @@
 
 import SwiftUI
 import FAKit
-import AmplitudeSwift
 
 struct CloudflareChallengeSheet: View {
     var body: some View {

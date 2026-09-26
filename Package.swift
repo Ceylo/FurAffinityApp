@@ -82,5 +82,21 @@ let package = Package(
             swiftSettings: [.define("FA_SKIP_MODULE")],
             plugins: [.plugin(name: "skipstone", package: "skip")]
         ),
+        // The Xcode FurAffinityTests files that build for Android — run them with
+        // Scripts/Android/test.sh. No skipstone plugin, so `exclude:` is honoured;
+        // the iOS-only files are listed in Android/docs/build-and-run.md § Test.
+        .testTarget(
+            name: "FurAffinityUITests",
+            dependencies: ["FurAffinityUI"],
+            path: "FurAffinityTests",
+            exclude: [
+                "BackgroundRefreshNotificationBuilderTests.swift",
+                "LoggedInViewTabTests.swift",
+                "MockFASession.swift",
+                "ModelTests.swift",
+                "NotificationCoordinatorTests.swift",
+            ],
+            swiftSettings: [.define("FA_SKIP_MODULE")]
+        ),
     ]
 )

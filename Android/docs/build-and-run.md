@@ -112,9 +112,6 @@ triaging the whole log again.
   `swift build --triple arm64-apple-ios` pre-build.
 - **"Detected multiple Kotlin daemon sessions"** — environmental: one daemon per
   worktree.
-- **`unable to remove entry …/{Border,ButtonBorder}Overlay.colorset/Contents.json`**
-  ×2 — skipstone resolving our committed symlinks; see
-  [assets-and-resources.md](assets-and-resources.md#sharing-asset-catalog-entries).
 
 ## Run
 
@@ -394,15 +391,70 @@ URL as a string.
 
 ## Test
 
-The parser + logic layer is tested on the emulator via FAKit:
-
 ```
-cd FAKit && skip android test --testing-library testing
+Scripts/Android/test.sh
 ```
 
-From a second worktree, wrap that in
-`Scripts/Android/with-emulator-lock.sh` (see [the shared
-emulator](#the-shared-emulator)).
+It runs both Android test packages on the running emulator, under
+[the emulator lock](#the-shared-emulator), and fails if either reports fewer cases
+than its floor in the script — a run that silently finds no tests must not pass:
+
+- **FAKit** (FAPages, FAKit, FALogging), from `FAKit/`.
+- **FurAffinityUITests** (the root package). It is the Xcode
+  `FurAffinityTests` directory, compiled against `FurAffinityUI` with
+  `FA_SKIP_MODULE` defined — each file picks its `@testable import` on that define.
+  The target has no skipstone plugin, so SwiftPM honours its `exclude:`.
+
+Left out of the root package, with the reason:
+
+| iOS-only | Why |
+|---|---|
+| `BackgroundRefreshNotificationBuilderTests`, `NotificationCoordinatorTests` | BackgroundTasks, UserNotifications |
+| `LoggedInViewTabTests` | the UIKit tab bar; Android has `AndroidRootView.Tab` |
+| `ModelTests` (+ `MockFASession`) | `Model.init` observes `Defaults`, which on Android is a Kotlin SharedPreferences listener: it needs a JVM, and a native test executable has none |
+| `SettingsMigrationTests.legacyUnmigrated…` | no pre-versioning Android install exists |
+
+`skip android test --apk` would supply the JVM, but its harness (Skip 1.9.11) crashes
+on **any** `@MainActor` test — a trap in libdispatch's main-queue drain, which it
+drives from the Looper — so `ModelTests` waits on that.
+
+The root package tests build in **their own scratch path**, `.build/android-test`.
+In the shared `.build` they rewrite the skipstone plugin outputs the Gradle build
+reads, and the next `run.sh` fails in Kotlin (`Unresolved reference 'ProcessInfo'`)
+until `.build/plugins/outputs`, `.build/Darwin` and `.build/Android` are wiped.
+
+A native test is an `adb shell` process, not an app: it has no `context.cacheDir`,
+so the script sets `XDG_CACHE_HOME` for Kingfisher's disk cache. And `UserDefaults`
+in a test file means SkipAndroidBridge's JNI-backed store (skipstone's typealias
+arrives through `@testable import`) — reach the Foundation one `Defaults` uses as
+`key.suite`.
+
+### CI
+
+`build.yml`'s `Build Android App` job runs beside the iOS one, with no secrets:
+
+1. `Scripts/Android/ci-setup.sh` — swiftly from swift.org's package, the skip CLI
+   at the `exact:` pin (`check-skip-version.sh --install`: one past the pin fails far
+   from the cause, see [Run](#run), and a Skip release must not turn CI red), and the
+   Swift Android SDK. Not `skiptools/actions/setup-skip`: its `brew install skip`
+   compiled swiftly and a JDK's openssl from source on the Intel runner, which has
+   no bottles for them — 20 of its 27 minutes. The JDK is `actions/setup-java`, Gradle
+   the wrapper (its user home cached by `gradle/actions/setup-gradle`), the Android SDK
+   the runner's; SwiftPM's repository cache is cached too. The toolchain and the SDK
+   themselves (8 GB) are downloaded each run: too big to cache usefully.
+2. `SKIP_EXPORT_ARCHS=x86_64 ./gradlew :app:assembleDebug` — only a Gradle build
+   compiles the Darwin bridge and the Kotlin, and x86_64 is the emulator's only ABI.
+3. `ABI=x86_64 Scripts/Android/check-shared-globals.sh debug`, as `run.sh` does.
+4. `Scripts/Android/test.sh` on an API 34 x86_64 emulator
+   (`reactivecircus/android-emulator-runner`, AVD snapshot cached), logs uploaded.
+
+It runs on **`macos-26-intel`**: the emulator needs nested virtualisation, which
+GitHub's arm64 macOS runners do not have — the same choice as Skip's own
+`skip-framework.yml`. GitHub retires its Intel macOS runners around **August
+2027**. The way off is Linux with KVM, where `skip android test` works for
+packages; Skip does not support a full app build there, so step 2 would have to
+stay on macOS without an emulator (arm64 `macos-26`, as the release job already
+does).
 
 The iOS build must stay green at every step:
 

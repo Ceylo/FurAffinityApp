@@ -4,6 +4,7 @@
 # single source of truth:
 #
 #   - FurAffinity/Resources/Assets.xcassets/AppIcon.imageset — the in-app icon
+#   - FurAffinity/Resources/Assets.xcassets/*.colorset — copies of the shared colours
 #   - Android/app/src/main/res/mipmap-* — the launcher icon
 #
 # Nothing this script writes is committed — the outputs are git-ignored.
@@ -97,6 +98,22 @@ write_if_changed "$dst_iconset/Contents.json" <<'JSON'
   }
 }
 JSON
+
+# MARK: - Colours
+
+# Copies, not symlinks: `skip android test` pushes the module's resource bundle with
+# `adb push`, which cannot create a symlink on the device. Not AccentColor, which
+# SkipUI would read as the app's tint.
+for colorset in "$src_catalog"/*.colorset; do
+    name="$(basename "$colorset")"
+    [[ "$name" == AccentColor.colorset ]] && continue
+    mkdir -p "$dst_catalog/$name"
+    write_if_changed "$dst_catalog/$name/Contents.json" < "$colorset/Contents.json"
+done
+# A copy whose original was renamed or deleted would keep working here only.
+for colorset in "$dst_catalog"/*.colorset; do
+    [[ -d "$src_catalog/$(basename "$colorset")" ]] || rm -rf "$colorset"
+done
 
 # MARK: - Launcher icon
 

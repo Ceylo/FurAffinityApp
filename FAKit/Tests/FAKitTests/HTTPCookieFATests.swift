@@ -42,20 +42,29 @@ struct HTTPCookieFATests {
         #expect(cookies.faAuthCookies.isEmpty)
     }
 
-    // Apple-only: SameSite / shared cookie storage APIs are absent on corelibs Foundation.
-    #if !os(Android)
+    /// A secure `cf_clearance` for `.furaffinity.net`, SameSite=Strict where the
+    /// platform has the attribute: corelibs Foundation has no `sameSitePolicy`.
+    private func clearance(value: String, expires: Date? = nil) -> HTTPCookie {
+        var properties: [HTTPCookiePropertyKey: Any] = [
+            .name: "cf_clearance",
+            .value: value,
+            .domain: ".furaffinity.net",
+            .path: "/",
+            .secure: "TRUE",
+        ]
+        if let expires {
+            properties[.expires] = expires
+        }
+        #if !os(Android)
+        properties[.sameSitePolicy] = HTTPCookieStringPolicy.sameSiteStrict
+        #endif
+        return HTTPCookie(properties: properties)!
+    }
+
     @Test func normalizedClearancePreservesEssentialsAndDropsSameSite() {
         // HTTPCookie itself clamps far-future expiry, so compare the normalized
         // cookie against the original's resolved expiry rather than the raw input.
-        let original = HTTPCookie(properties: [
-            .name: "cf_clearance",
-            .value: "abc123",
-            .domain: ".furaffinity.net",
-            .path: "/",
-            .secure: true,
-            .expires: Date(timeIntervalSinceNow: 3600),
-            .sameSitePolicy: HTTPCookieStringPolicy.sameSiteStrict,
-        ])!
+        let original = clearance(value: "abc123", expires: Date(timeIntervalSinceNow: 3600))
 
         let normalized = original.normalizedForSharedStorage
         #expect(normalized.name == "cf_clearance")
@@ -64,31 +73,33 @@ struct HTTPCookieFATests {
         #expect(normalized.path == "/")
         #expect(normalized.isSecure)
         #expect(normalized.expiresDate == original.expiresDate)
+        #if !os(Android)
         // The rebuild also drops SameSite. Not the causal attribute on iOS 27
         // (the CHIPS StoragePartition key is; see HTTPCookie+FA.swift), but there's
         // no public property key to synthesize a partitioned cookie here, so this
         // asserts the observable part of the rebuild.
         #expect(normalized.sameSitePolicy == nil)
+        #endif
+    }
+
+    // What WebCookie.asHTTPCookie builds on Android, where WebCookie itself needs
+    // a JVM and so cannot be made in a test.
+    @Test func plainCookieKeepsItsSecureFlag() throws {
+        let cookie = try #require(HTTPCookie.plain(
+            name: "a", value: "v", domain: ".furaffinity.net", path: "/",
+            expires: nil, isSecure: true
+        ))
+        #expect(cookie.isSecure)
     }
 
     @Test func normalizedClearanceReplaysFromStorageForFAURL() {
         let storage = HTTPCookieStorage.sharedCookieStorage(
-            forGroupContainerIdentifier: "test.cf.normalize.\(UUID().uuidString)"
+            forGroupContainerIdentifier: "test.cf.normalize"
         )
         for stale in storage.cookies ?? [] { storage.deleteCookie(stale) }
 
-        let original = HTTPCookie(properties: [
-            .name: "cf_clearance",
-            .value: "xyz789",
-            .domain: ".furaffinity.net",
-            .path: "/",
-            .secure: true,
-            .sameSitePolicy: HTTPCookieStringPolicy.sameSiteStrict,
-        ])!
-
-        storage.setCookie(original.normalizedForSharedStorage)
+        storage.setCookie(clearance(value: "xyz789").normalizedForSharedStorage)
         let returned = storage.cookies(for: FAURLs.homeUrl) ?? []
         #expect(returned.contains { $0.name == "cf_clearance" && $0.value == "xyz789" })
     }
-    #endif
 }

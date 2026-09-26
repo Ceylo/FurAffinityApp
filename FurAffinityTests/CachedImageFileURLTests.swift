@@ -7,7 +7,11 @@
 
 import Foundation
 import Testing
+#if FA_SKIP_MODULE
+@testable import FurAffinityUI
+#else
 @testable import Fur_Affinity
+#endif
 
 struct CachedImageFileURLTests {
     /// Concurrent copies for the same URL (e.g. one author's avatar reused across

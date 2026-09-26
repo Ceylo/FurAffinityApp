@@ -164,8 +164,9 @@ pull against each other:
   `FALogging` product, and the scheme keeps `container:FAKit`.
 
 Check the count, not just the exit status: a dropped testable does not fail the build.
-The suite is **346** cases — 78 FurAffinityTests, 213 FAKitTests, 40 FAPagesTests,
-15 FALoggingTests.
+The suite is **353** cases — 86 FurAffinityTests, 212 FAKitTests, 40 FAPagesTests,
+15 FALoggingTests. On Android, `Scripts/Android/test.sh` checks its own floors,
+one per package (Swift Testing counts a parameterized test once).
 
 ## Rules for shared sources
 

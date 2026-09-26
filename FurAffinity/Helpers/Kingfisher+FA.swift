@@ -318,14 +318,12 @@ func clearMediaCopies() {
 }
 #endif
 
-#if !FA_SKIP_MODULE
 #if DEBUG
     /// Test seam: seeds the disk cache so `cachedImageFileURL` can be tested without a
     /// fetch. Here (not in the test) so the test target needn't link Kingfisher.
     func seedDiskCacheForTesting(_ data: Data, for url: URL) throws {
         try ImageCache.default.diskStorage.store(value: data, forKey: url.cacheKey)
     }
-#endif
 #endif
 
 @MainActor

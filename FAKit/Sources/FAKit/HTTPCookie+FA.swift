@@ -41,18 +41,31 @@ extension HTTPCookie {
     /// construction, while remaining a no-op for cookies that never had those
     /// attributes. Falls back to `self` if the rebuild somehow fails.
     var normalizedForSharedStorage: HTTPCookie {
+        HTTPCookie.plain(
+            name: name, value: value, domain: domain, path: path,
+            expires: expiresDate, isSecure: isSecure
+        ) ?? self
+    }
+
+    /// A cookie from the standard attributes only, built the same way on every
+    /// platform: `.secure` is the documented String, since corelibs Foundation
+    /// ignores a Bool there.
+    static func plain(
+        name: String, value: String, domain: String, path: String,
+        expires: Date?, isSecure: Bool
+    ) -> HTTPCookie? {
         var properties: [HTTPCookiePropertyKey: Any] = [
             .name: name,
             .value: value,
             .domain: domain,
             .path: path,
         ]
-        if let expiresDate {
-            properties[.expires] = expiresDate
+        if let expires {
+            properties[.expires] = expires
         }
         if isSecure {
-            properties[.secure] = true
+            properties[.secure] = "TRUE"
         }
-        return HTTPCookie(properties: properties) ?? self
+        return HTTPCookie(properties: properties)
     }
 }

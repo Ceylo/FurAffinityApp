@@ -61,7 +61,35 @@ Check what a build actually got signed with:
 apksigner verify --print-certs <apk>      # must NOT say CN=Android Debug
 ```
 
+## The published APK
+
+The APK on a GitHub release comes from the tag, like the IPA: `release.yml`'s
+`android` job seds the app id, the Amplitude key and the DSN in from the same secrets
+the IPA job uses, decodes the signing key from two more, and runs
+`build-release-apk.sh --ci`. The draft release waits for both jobs. Running the
+workflow on a branch (`gh workflow run release.yml --ref <branch>`) builds and checks
+both artifacts and uploads their symbols, but drafts no release — a dry run.
+
+`--ci` means the tree already holds the distribution values: no stash, no clean-tree
+check, nothing reverted. It also refuses what a local build only warns about or
+works around — a missing NDK, and a missing `keystore.properties` (which a local run
+borrows from another worktree). Both modes refuse the placeholder app id.
+
+The two signing secrets hold the one irreplaceable file, so they are set by hand,
+from the checkout that has it:
+
+```
+base64 -i Android/app/keystore.jks | gh secret set ANDROID_KEYSTORE_BASE64
+gh secret set ANDROID_KEYSTORE_PROPERTIES < Android/app/keystore.properties
+```
+
+The job runs on arm64 `macos-26`, which GitHub has not scheduled for retirement.
+If the release SkipUI compile ever runs out of memory there (7 GB, against
+`kotlin.daemon.jvmargs=-Xmx4g`), `macos-26-intel` has 14 GB, until August 2027.
+
 ## Handing a build to testers
+
+For a build between releases, the same script runs locally:
 
 ```
 Scripts/Android/build-release-apk.sh
@@ -135,7 +163,7 @@ is why a plain `skip app launch` build answers to *that* id (see
 launch from the shell rather than the icon:
 `adb shell monkey -p ceylo.FurAffinity -c android.intent.category.LAUNCHER 1`.
 
-Measured 2026-08-16, release, `arm64-v8a`: **94 MB** (95 MB at 1.19). A universal APK with debug
+Measured 2026-08-16, release, `arm64-v8a`: **94 MB** (108 MB at 1.19, with Skip 1.9.11 and Amplitude). A universal APK with debug
 symbols was 436 MB; stripping took it to 249 MB and the ABI filter to 94 MB. The
 stripping only works with the NDK installed (`sdkmanager "ndk;28.2.13676358"`) —
 without it AGP's `stripReleaseDebugSymbols` silently copies the libraries through.
@@ -144,7 +172,8 @@ without it AGP's `stripReleaseDebugSymbols` silently copies the libraries throug
 R8 and resource shrinking run clean. The existing `-keep class fur.affinity.ui.**`
 already covers every Kotlin bridge reached by name through `AnyDynamicObject`
 (`FAAppInfoBridge`, `FAImageFetchBridge`, `FACookieBridge`, `FADefaultsBridge`,
-`FAMediaBridge`, `FADefaultsObserver`) — verified present in the release DEX.
+`FAMediaBridge`, `FADefaultsObserver`, `FAAnalyticsBridge`) — verified present in
+the release DEX. The Amplitude SDK needed no rule of ours: its AAR carries its own.
 
 What to tell a tester:
 

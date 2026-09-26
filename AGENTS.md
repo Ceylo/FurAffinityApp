@@ -74,7 +74,8 @@ Crashes and ANRs report to **Sentry** on both platforms, one project split by
 sentry-cocoa on iOS and sentry-android (tombstones on Android 12+, the NDK signal
 handler below) behind `FACrashReportingBridge`. Three distribution channels each
 need a DSN and their symbols on the server: the DSN comes from the distribution
-stash for both local channels and from a CI secret for the IPA workflow, while
+stash for both local channels and from a CI secret for the release workflow, which
+builds the IPA and the APK from a tag, while
 dSYMs go up from an archive-only `Upload dSYMs` aggregate target (`ACTION=install`)
 and the `.so` files and R8 mapping from the Sentry Gradle plugin. Our packages
 build release with `-disable-cmo`, because Swift's
@@ -86,6 +87,9 @@ keeps the script sandbox. Consent is a Settings toggle, on by
 default; the application log is never sent. `Scripts/check-crash-reporting.sh
 ios|android` crashes the app on purpose and asserts the resulting Sentry event has
 the right `File.swift:line`. See `Android/docs/crash-reporting.md`.
+Amplitude runs on both too, with one configuration: AmplitudeSwift on iOS, the
+Kotlin SDK behind `FAAnalyticsBridge` on Android, and neither with the placeholder
+key. See `Android/docs/analytics.md`.
 
 ## Architecture
 
@@ -175,6 +179,18 @@ don't overwrite each other's app container; shut down the ones you aren't using.
 Destination-by-id also retires the `OS=26.5` pinning trap: a bare
 `name=iPhone 17` resolves to `OS:latest`, the locally-installed iOS 27.0 beta
 runtime, which has only an "iPhone 17 **Pro**" and so matches nothing.
+
+On Android, with the emulator running (`Scripts/Android/start-emulator.sh`):
+
+```
+Scripts/Android/test.sh
+```
+
+It runs FAKit's package and the root package's `FurAffinityUITests` — the
+`FurAffinityTests` files that build for Android, picking their `@testable import` on
+`FA_SKIP_MODULE` — and fails below a case-count floor. CI's `Build Android App` job runs
+the same script. Which files stay iOS-only, and why: `Android/docs/build-and-run.md`
+§ Test.
 
 ## Dependencies
 
