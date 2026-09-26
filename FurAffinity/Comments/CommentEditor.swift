@@ -108,7 +108,6 @@ struct CommentEditor: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview("Reply to journal/submission") {
     @Previewable
     @State var reply = CommentReply()
@@ -120,4 +119,3 @@ struct CommentEditor: View {
         }
     }
 }
-#endif

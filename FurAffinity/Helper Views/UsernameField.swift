@@ -53,7 +53,6 @@ struct UsernameField: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     @Previewable @State var username = "terriniss"
     Form {
@@ -62,4 +61,3 @@ struct UsernameField: View {
         }
     }
 }
-#endif

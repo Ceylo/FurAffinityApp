@@ -69,7 +69,6 @@ private extension RichLocalizedError {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     @Previewable @State var errorStorage = ErrorStorage()
     
@@ -112,4 +111,3 @@ private extension RichLocalizedError {
     ErrorDisplay()
         .environment(errorStorage)
 }
-#endif

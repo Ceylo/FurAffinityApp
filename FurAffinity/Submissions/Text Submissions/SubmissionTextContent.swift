@@ -120,7 +120,6 @@ struct SubmissionTextContent: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     @Previewable
     @State var errorStorage = ErrorStorage()
@@ -143,4 +142,3 @@ struct SubmissionTextContent: View {
         .environment(errorStorage)
     }
 }
-#endif

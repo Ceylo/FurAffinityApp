@@ -153,7 +153,6 @@ struct NoteEditor: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview("New note") {
     @Previewable
     @State var reply = NoteReply()
@@ -166,4 +165,3 @@ struct NoteEditor: View {
         print(action as Any)
     }
 }
-#endif
