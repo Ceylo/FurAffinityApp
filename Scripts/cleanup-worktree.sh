@@ -16,7 +16,8 @@
 #   --force     skip the gate: remove a dirty or unmerged worktree and branch
 #   --base      a branch the worktree's must be merged into; repeatable,
 #               replaces the default `android` and `main`
-#   --orphans   sweep what worktrees removed without this script left behind
+#   --orphans   sweep what worktrees removed without this script left behind;
+#               it assumes every checkout of the repo is one of its worktrees
 #
 # A bare name is a directory under ../FurAffinity-worktrees. The worktree may
 # already be gone (ExitWorktree, `git worktree remove`): its leftovers are still
@@ -44,7 +45,7 @@ TARGETS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)   sed -n '3,30p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)   sed -n '3,31p' "$0" | cut -c3-; exit 0 ;;
         --dry-run)   DRY_RUN=1 ;;
         --force)     FORCE=1 ;;
         --orphans)   ORPHANS=1 ;;
@@ -92,6 +93,9 @@ target_path() {
         echo "$WORKTREES/$arg"
     elif [[ -d "$arg" ]]; then
         (cd "$arg" && pwd -P)
+    elif [[ -d "$(dirname "$arg")" ]]; then
+        # git records worktrees by physical path.
+        echo "$(cd "$(dirname "$arg")" && pwd -P)/$(basename "$arg")"
     elif [[ "$arg" == /* ]]; then
         echo "$arg"
     else
@@ -159,7 +163,17 @@ for p in sys.stdin.read().splitlines():
         out = slug + "-" + hashlib.sha256(p.encode()).hexdigest()[:12]
     print(out, p)
 '
-path_keys() { python3 -c "$PATH_KEYS_PY" "$1"; }
+
+# Sets KEYS and KEY_PATHS from `compute_keys <mode> <newline-separated paths>`.
+# Dies rather than return short: an empty list would read as "nothing is live".
+compute_keys() {
+    local out key path
+    KEYS=() KEY_PATHS=()
+    [[ -n "$2" ]] || return 0
+    out="$(printf '%s\n' "$2" | python3 -c "$PATH_KEYS_PY" "$1")" || die "python3 failed hashing paths"
+    while read -r key path; do KEYS+=("$key"); KEY_PATHS+=("$path"); done <<< "$out"
+    (( ${#KEYS[@]} == $(printf '%s\n' "$2" | wc -l) )) || die "hashed fewer paths than given"
+}
 
 # The candidate paths whose hash names a worktree's DerivedData dirs.
 derived_data_paths() {
@@ -234,8 +248,14 @@ app_prefixes() {
     } | sort -u
 }
 
-# applicationIdSuffix, as Android/app/build.gradle.kts derives it.
-app_suffix() { local s="$1"; echo "${s//[^A-Za-z0-9_]/_}"; }
+# Sets SUFFIX to the applicationIdSuffix Android/app/build.gradle.kts derives
+# from a name: Kotlin replaces per UTF-16 unit, which bash's ${//} can't match.
+app_suffix() {
+    SUFFIX="$(python3 -c 'import re, sys
+print(re.sub(r"[^A-Za-z0-9_]", lambda m: "_" * (len(m.group().encode("utf-16-le")) // 2), sys.argv[1]))' "$1")" \
+        || die "python3 failed deriving an app id"
+    [[ -n "$SUFFIX" ]] || die "no app id for '$1'"
+}
 
 EMULATOR=unknown
 PACKAGES=()
@@ -245,7 +265,8 @@ load_emulator() {
     [[ "$EMULATOR" == unknown ]] || return 0
     local p
     while IFS= read -r p; do [[ -n "$p" ]] && PREFIXES+=("$p"); done < <(app_prefixes)
-    if [[ -x "$ADB" && "$("$ADB" get-state 2>/dev/null | tr -d '\r')" == device ]]; then
+    if [[ -x "$ADB" && "$("$ADB" get-state 2>/dev/null | tr -d '\r')" == device \
+        && "$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == 1 ]]; then
         EMULATOR=up
         while IFS= read -r p; do PACKAGES+=("$p"); done \
             < <("$ADB" shell pm list packages 2>/dev/null | tr -d '\r' | sed -n 's/^package://p')
@@ -276,10 +297,10 @@ uninstall_app() {
 clean_emulator_app() {
     local name="$1" suffix prefix id found=0
     load_emulator
-    suffix="$(app_suffix "$name")"
+    app_suffix "$name"; suffix="$SUFFIX"
     if [[ "$EMULATOR" == down ]]; then
         for prefix in "${PREFIXES[@]}"; do
-            warn "no emulator — later: adb uninstall $prefix.$suffix"
+            warn "no booted emulator (or several, without ANDROID_SERIAL) — later: adb uninstall $prefix.$suffix"
         done
         return
     fi
@@ -335,12 +356,12 @@ clean_simulator() {
 workspace_path() { plutil -extract WorkspacePath raw -o - "$1/info.plist" 2>/dev/null || true; }
 
 clean_derived_data() {
-    local wt="$1" hash dir path found=0 hashes=()
-    while read -r hash _; do hashes+=("$hash"); done < <(derived_data_paths "$wt" | path_keys dd)
+    local wt="$1" dir path found=0
+    compute_keys dd "$(derived_data_paths "$wt")"
     for dir in "$DERIVED_DATA"/*-*; do
         [[ -d "$dir" ]] || continue
         path="$(workspace_path "$dir")"
-        if contains "${dir##*-}" "${hashes[@]}" || [[ -n "$path" && "$path/" == "$wt/"* ]]; then
+        if contains "${dir##*-}" "${KEYS[@]}" || [[ -n "$path" && "$path/" == "$wt/"* ]]; then
             remove_tree "$dir" "DerivedData/$(basename "$dir")"
             found=1
         fi
@@ -350,12 +371,13 @@ clean_derived_data() {
 
 clean_mcp_workspaces() {
     local wt="$1" key found=0
-    while read -r key _; do
+    compute_keys mcp "$(mcp_roots "$wt")"
+    for key in "${KEYS[@]}"; do
         if [[ -d "$MCP_WORKSPACES/$key" ]]; then
             remove_tree "$MCP_WORKSPACES/$key" "XcodeBuildMCP workspace $key"
             found=1
         fi
-    done < <(mcp_roots "$wt" | path_keys mcp)
+    done
     (( found )) || echo "  no XcodeBuildMCP workspace"
 }
 
@@ -364,14 +386,16 @@ clean_mcp_workspaces() {
 # Sets WT_REGISTERED, WT_LOCKED, WT_BRANCH and WT_HEAD from `git worktree list`,
 # and WT_NAMESAKE to another live checkout whose name gives the same app id.
 read_worktree() {
-    local wt="$1" line cur=""
+    local wt="$1" line cur="" suffix
     WT_REGISTERED=0 WT_LOCKED=0 WT_BRANCH="" WT_HEAD="" WT_NAMESAKE=""
+    app_suffix "$(basename "$wt")"; suffix="$SUFFIX"
     while IFS= read -r line; do
         case "$line" in
             "worktree "*) cur="${line#worktree }"
-                          [[ "$cur" != "$wt" && -d "$cur" \
-                              && "$(app_suffix "$(basename "$cur")")" == "$(app_suffix "$(basename "$wt")")" ]] \
-                              && WT_NAMESAKE="$cur" ;;
+                          if [[ "$cur" != "$wt" && -d "$cur" ]]; then
+                              app_suffix "$(basename "$cur")"
+                              [[ "$SUFFIX" == "$suffix" ]] && WT_NAMESAKE="$cur"
+                          fi ;;
             "HEAD "*)     [[ "$cur" == "$wt" ]] && WT_HEAD="${line#HEAD }" ;;
             "branch "*)   [[ "$cur" == "$wt" ]] && WT_BRANCH="${line#branch refs/heads/}" ;;
             locked*)      [[ "$cur" == "$wt" ]] && WT_LOCKED=1 ;;
@@ -490,8 +514,8 @@ clean_worktree() {
 # --- orphans ----------------------------------------------------------------
 
 clean_orphans() {
-    local live=() live_names=() live_suffixes=() live_hashes=() dead_names=()
-    local wt name hash dir path key slug candidate id prefix suffix udid state sim found
+    local live=() live_names=() live_suffixes=() live_hashes=() dead_names=() dead_hashes=()
+    local wt name dir path key id prefix suffix udid state sim found i candidates
 
     while IFS= read -r wt; do
         [[ -d "$wt" ]] && live+=("$wt")
@@ -499,17 +523,31 @@ clean_orphans() {
     for wt in "${live[@]}"; do
         name="$(basename "$wt")"
         live_names+=("$name")
-        live_suffixes+=("$(app_suffix "$name")")
+        app_suffix "$name"; live_suffixes+=("$SUFFIX")
     done
-    while read -r hash _; do live_hashes+=("$hash"); done < <(
-        for wt in "${live[@]}"; do derived_data_paths "$wt"; done | path_keys dd
-    )
+    compute_keys dd "$(for wt in "${live[@]}"; do derived_data_paths "$wt"; done)"
+    live_hashes=("${KEYS[@]}")
+
+    # Names a removed worktree may have had: its simulator's, its branch's and
+    # its XcodeBuildMCP workspace's.
+    while IFS='|' read -r udid state sim; do dead_names+=("$sim"); done < <(fa_simulators)
+    while IFS= read -r name; do dead_names+=("$name"); done \
+        < <(git_main for-each-ref --format='%(refname:short)' refs/heads)
+    for dir in "$MCP_WORKSPACES"/*-*; do
+        [[ -d "$dir" ]] && key="$(basename "$dir")" && dead_names+=("${key%-*}")
+    done
+    candidates=()
+    for name in "${dead_names[@]}"; do
+        [[ -n "$name" && ! -e "$WORKTREES/$name" ]] && candidates+=("$WORKTREES/$name")
+    done
+    compute_keys dd "$(for wt in "${candidates[@]}"; do derived_data_paths "$wt"; done)"
+    dead_hashes=("${KEYS[@]}")
 
     echo "Emulator apps"
     load_emulator
     found=0
     if [[ "$EMULATOR" == down ]]; then
-        warn "no emulator — its apps are not swept"
+        warn "no booted emulator (or several, without ANDROID_SERIAL) — its apps are not swept"
     else
         for id in "${PACKAGES[@]}"; do
             for prefix in "${PREFIXES[@]}"; do
@@ -526,7 +564,6 @@ clean_orphans() {
     echo "Simulators"
     found=0
     while IFS='|' read -r udid state sim; do
-        dead_names+=("$sim")
         contains "$sim" "${live_names[@]}" && continue
         remove_simulator "$udid" "$state" "$sim"
         found=1
@@ -535,20 +572,23 @@ clean_orphans() {
 
     echo "DerivedData"
     found=0
-    # By name prefix for those without an info.plist (Skip's never have one) —
-    # not Project-*, which every Skip app's workspace makes — and by the
-    # recorded path for any other that was under $WORKTREES.
+    # By the hash of a removed worktree we know the name of; failing that, by
+    # name prefix for those without an info.plist (Skip's never have one) — not
+    # Project-*, which every Skip app's workspace makes — and by the recorded
+    # path for any other that was under $WORKTREES.
     for dir in "$DERIVED_DATA"/*-*; do
         [[ -d "$dir" && "${dir##*-}" =~ ^[a-z]{28}$ ]] || continue
         contains "${dir##*-}" "${live_hashes[@]}" && continue
-        path="$(workspace_path "$dir")"
-        if [[ -n "$path" ]]; then
-            [[ "$path" == "$WORKTREES/"* && ! -e "$path" ]] || continue
-        else
-            case "$(basename "$dir")" in
-                FurAffinity-*|FurAffinityUI-*|FAKit-*|FALogging-*) ;;
-                *) continue ;;
-            esac
+        if ! contains "${dir##*-}" "${dead_hashes[@]}"; then
+            path="$(workspace_path "$dir")"
+            if [[ -n "$path" ]]; then
+                [[ "$path" == "$WORKTREES/"* && ! -e "$path" ]] || continue
+            else
+                case "$(basename "$dir")" in
+                    FurAffinity-*|FurAffinityUI-*|FAKit-*|FALogging-*) ;;
+                    *) continue ;;
+                esac
+            fi
         fi
         remove_tree "$dir" "DerivedData/$(basename "$dir")"
         found=1
@@ -556,26 +596,19 @@ clean_orphans() {
     (( found )) || echo "  none"
 
     # A workspace key is <basename>-<sha256[:12]> of its root, so a removed
-    # worktree's is recomputable: from its name when it was started at the
-    # root, and from any name we still know of when it was started in a subdir.
+    # worktree's is recomputable from its name, at its root or in a subdir.
     echo "XcodeBuildMCP workspaces"
     found=0
-    while IFS= read -r name; do dead_names+=("$name"); done < <(git_main for-each-ref --format='%(refname:short)' refs/heads)
+    compute_keys mcp "$(for wt in "${candidates[@]}"; do mcp_roots "$wt"; done)"
     for dir in "$MCP_WORKSPACES"/*-*; do
         [[ -d "$dir" ]] || continue
         key="$(basename "$dir")"
-        slug="${key%-*}"
-        while read -r candidate path; do
-            [[ "$candidate" == "$key" && ! -e "$path" ]] || continue
-            remove_tree "$dir" "XcodeBuildMCP workspace $key ($path)"
+        for i in "${!KEYS[@]}"; do
+            [[ "${KEYS[$i]}" == "$key" ]] || continue
+            remove_tree "$dir" "XcodeBuildMCP workspace $key (${KEY_PATHS[$i]})"
             found=1
             break
-        done < <(
-            echo "$WORKTREES/$slug"
-            if contains "$slug" "${SUBDIRS[@]}"; then
-                for name in "${dead_names[@]}"; do echo "$WORKTREES/$name/$slug"; done
-            fi | path_keys mcp
-        )
+        done
     done
     (( found )) || echo "  none"
 }
