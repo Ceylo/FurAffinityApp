@@ -399,8 +399,8 @@ It runs both Android test packages on the running emulator, under
 [the emulator lock](#the-shared-emulator), and fails if either reports fewer cases
 than its floor in the script — a run that silently finds no tests must not pass:
 
-- **FAKit** (FAPages, FAKit, FALogging): 184 cases, from `FAKit/`.
-- **FurAffinityUITests** (the root package): 40 cases. It is the Xcode
+- **FAKit** (FAPages, FAKit, FALogging), from `FAKit/`.
+- **FurAffinityUITests** (the root package). It is the Xcode
   `FurAffinityTests` directory, compiled against `FurAffinityUI` with
   `FA_SKIP_MODULE` defined — each file picks its `@testable import` on that define.
   The target has no skipstone plugin, so SwiftPM honours its `exclude:`.

@@ -38,6 +38,8 @@ set -eo pipefail
 
 die() { echo "error: $*" >&2; exit 1; }
 step() { echo; echo "==> $*"; }
+# A warning locally; with --ci, which ships the result, an error.
+soft_fail() { (( CI_MODE )) && die "$*"; echo "warning: $*" >&2; }
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 STASH_MSG="📱For App Store distribution"
@@ -78,10 +80,9 @@ if [[ -z "$JAVA_HOME" ]] && ! java -version >/dev/null 2>&1; then
 fi
 
 # Without the NDK, AGP's stripReleaseDebugSymbols silently copies the .so files
-# through and the APK comes out ~2.5x too big. Warn locally; CI ships the result.
+# through and the APK comes out ~2.5x too big.
 if [[ ! -d "$SDK/ndk" ]]; then
-    (( CI_MODE )) && die "no NDK in $SDK/ndk — debug symbols would not be stripped"
-    echo "warning: no NDK in $SDK/ndk — debug symbols will not be stripped" >&2
+    soft_fail "no NDK in $SDK/ndk — debug symbols will not be stripped"
 fi
 
 # --- signing key ------------------------------------------------------------
@@ -233,30 +234,28 @@ if [[ -x "$APKSIGNER" ]]; then
         die "the APK is DEBUG-signed — do not ship it. See Android/docs/releasing.md § Release signing."
     fi
 else
-    (( CI_MODE )) && die "no apksigner in $SDK/build-tools — the signature cannot be checked"
-    echo "warning: no apksigner in $SDK/build-tools — signature unverified" >&2
+    soft_fail "no apksigner in $SDK/build-tools — signature unverified"
 fi
 
 # --- verify the stripping ---------------------------------------------------
 
 # AGP strips with *its* NDK version, and quietly copies the libraries through when
 # that one is missing, whatever else is installed: check the result, not the SDK.
-READELF="$(ls "$SDK"/ndk/*/toolchains/llvm/prebuilt/*/bin/llvm-readelf 2>/dev/null | sort -V | tail -1 || true)"
+# The same lookup as check-shared-globals.sh: the newest NDK's llvm-readelf.
+NDK="$(ls -d "$SDK"/ndk/* 2>/dev/null | sort -V | tail -1 || true)"
+READELF="$(ls "$NDK"/toolchains/llvm/prebuilt/*/bin/llvm-readelf 2>/dev/null | head -1 || true)"
 if [[ -x "$READELF" ]]; then
     SO="$(mktemp -t fa-apk-so)"
     unzip -p "$APK" lib/arm64-v8a/libFurAffinityUI.so > "$SO"
     SECTIONS="$("$READELF" --section-headers "$SO")"
+    rm -f "$SO"
     if grep -q '\.debug_info' <<< "$SECTIONS"; then
-        rm -f "$SO"
-        (( CI_MODE )) && die "the APK's Swift libraries still carry debug info — AGP's NDK is missing"
-        echo "warning: the APK's Swift libraries still carry debug info — AGP's NDK is missing" >&2
+        soft_fail "the APK's Swift libraries still carry debug info — AGP's NDK is missing"
     else
-        rm -f "$SO"
         echo "native libraries stripped"
     fi
 else
-    (( CI_MODE )) && die "no llvm-readelf in $SDK/ndk — the stripping cannot be checked"
-    echo "warning: no llvm-readelf in $SDK/ndk — stripping unverified" >&2
+    soft_fail "no llvm-readelf in $SDK/ndk — stripping unverified"
 fi
 
 # --- done -------------------------------------------------------------------

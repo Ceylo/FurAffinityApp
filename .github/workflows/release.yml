@@ -186,7 +186,6 @@ jobs:
         run: |
           # The Sentry Gradle plugin uploads the R8 mapping and the .so files during
           # the build; the script refuses to start without the token.
-          [ -n "${SENTRY_AUTH_TOKEN}" ] || { echo "::error::SENTRY_AUTH_TOKEN is not set"; exit 1; }
           set -o pipefail
           Scripts/Android/build-release-apk.sh --ci --out . 2>&1 | tee AndroidBuildLogs.txt
       - name: Upload APK

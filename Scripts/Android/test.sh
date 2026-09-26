@@ -56,14 +56,12 @@ if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
         "${BASH_SOURCE[0]}" --log-dir "$LOG_DIR"
 fi
 
-# Runs `skip android test` in $1, logging to $2, and checks the Swift Testing
-# summary reports at least $3 cases, all passed.
+# Runs `skip android test` for suite $1 in $2, logging to $LOG_DIR/$1.log, and
+# checks the Swift Testing summary reports at least $3 cases, all passed.
 run() {
-    local dir="$1" log="$2" min="$3"
+    local name="$1" dir="$2" min="$3"
     shift 3
-    local name="${dir#"$ROOT"}"
-    name="${name#/}"
-    name="${name:-the root package}"
+    local log="$LOG_DIR/$name.log"
     echo; echo "==> skip android test in $name (log: $log)"
     local status=0
     ( cd "$dir" && skip android test --testing-library testing "$@" ) 2>&1 | tee "$log" || status=$?
@@ -89,7 +87,7 @@ run() {
 CI_ENV=()
 [[ -n "$CI" ]] && CI_ENV=(--env FA_NOISY_TIMING=1)
 
-run "$ROOT/FAKit" "$LOG_DIR/FAKit.log" "$FAKIT_MIN_TESTS" "${CI_ENV[@]}"
-run "$ROOT" "$LOG_DIR/FurAffinityUI.log" "$UI_MIN_TESTS" "${CI_ENV[@]}" \
+run FAKit "$ROOT/FAKit" "$FAKIT_MIN_TESTS" "${CI_ENV[@]}"
+run FurAffinityUI "$ROOT" "$UI_MIN_TESTS" "${CI_ENV[@]}" \
     --scratch-path .build/android-test \
     --env XDG_CACHE_HOME=/data/local/tmp/FurAffinityUITests-cache

@@ -29,9 +29,10 @@ case "${1:-}" in
     *)              die "unknown argument: $1" ;;
 esac
 
-PINNED="$(sed -nE 's@.*skiptools/skip\.git", exact: "([0-9.]+)".*@\1@p' "$ROOT/Package.swift" | head -1)"
+skip_pin() { sed -nE 's@.*skiptools/skip\.git", exact: "([0-9.]+)".*@\1@p' "$1" | head -1; }
+PINNED="$(skip_pin "$ROOT/Package.swift")"
 [[ -n "$PINNED" ]] || die "no exact skip pin in Package.swift"
-FAKIT_PINNED="$(sed -nE 's@.*skiptools/skip\.git", exact: "([0-9.]+)".*@\1@p' "$ROOT/FAKit/Package.swift" | head -1)"
+FAKIT_PINNED="$(skip_pin "$ROOT/FAKit/Package.swift")"
 [[ "$FAKIT_PINNED" == "$PINNED" ]] \
     || die "FAKit/Package.swift pins skip $FAKIT_PINNED but Package.swift pins $PINNED"
 
