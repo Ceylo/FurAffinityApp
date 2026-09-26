@@ -4,9 +4,10 @@
 #
 # Usage: Scripts/Android/check-skip-version.sh [--install]
 #
-#   --install   on a mismatch or no skip at all, download the pinned release from GitHub instead of
-#               failing, put it first on PATH, and export it to later GitHub
-#               Actions steps (GITHUB_PATH, and SKIP_COMMAND_OVERRIDE for Gradle)
+#   --install   for CI: on a mismatch or no skip at all, download the pinned
+#               release from GitHub instead of failing and export it to later
+#               GitHub Actions steps (GITHUB_PATH, and SKIP_COMMAND_OVERRIDE for
+#               Gradle). Locally it changes nothing past this script's own PATH.
 #
 # The manifests pin skip with `exact:`, and a CLI that has drifted past that pin
 # fails the build inside a dependency, far from the cause (`AndroidUserDefaults`
@@ -24,7 +25,7 @@ INSTALL=0
 case "${1:-}" in
     "")             ;;
     --install)      INSTALL=1 ;;
-    -h|--help)      sed -n '3,15p' "$0" | cut -c3-; exit 0 ;;
+    -h|--help)      sed -n '3,16p' "$0" | cut -c3-; exit 0 ;;
     *)              die "unknown argument: $1" ;;
 esac
 
@@ -36,7 +37,7 @@ FAKIT_PINNED="$(sed -nE 's@.*skiptools/skip\.git", exact: "([0-9.]+)".*@\1@p' "$
 
 installed_version() {
     command -v skip >/dev/null || return 0
-    skip version 2>/dev/null | sed -nE 's/^Skip version ([0-9.]+).*/\1/p' | head -1
+    skip version 2>/dev/null | sed -nE 's/^Skip version ([0-9.]+).*/\1/p' | head -1 || true
 }
 INSTALLED="$(installed_version)"
 (( INSTALL )) || [[ -n "$INSTALLED" ]] || die "no usable \`skip\` on PATH"

@@ -224,7 +224,7 @@ mv -n "$EXPORTED" "$APK"
 
 # --- verify the signature ---------------------------------------------------
 
-APKSIGNER="$(ls -d "$SDK"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)"
+APKSIGNER="$(ls -d "$SDK"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1 || true)"
 if [[ -x "$APKSIGNER" ]]; then
     step "Signing certificate"
     CERTS="$("$APKSIGNER" verify --print-certs "$APK")"
@@ -245,7 +245,7 @@ READELF="$(ls "$SDK"/ndk/*/toolchains/llvm/prebuilt/*/bin/llvm-readelf 2>/dev/nu
 if [[ -x "$READELF" ]]; then
     SO="$(mktemp -t fa-apk-so)"
     unzip -p "$APK" lib/arm64-v8a/libFurAffinityUI.so > "$SO"
-    if "$READELF" --section-headers "$SO" | grep -q '\.debug_info'; then
+    if grep -q '\.debug_info' <<< "$("$READELF" --section-headers "$SO")"; then
         rm -f "$SO"
         (( CI_MODE )) && die "the APK's Swift libraries still carry debug info — AGP's NDK is missing"
         echo "warning: the APK's Swift libraries still carry debug info — AGP's NDK is missing" >&2
@@ -253,6 +253,9 @@ if [[ -x "$READELF" ]]; then
         rm -f "$SO"
         echo "native libraries stripped"
     fi
+else
+    (( CI_MODE )) && die "no llvm-readelf in $SDK/ndk — the stripping cannot be checked"
+    echo "warning: no llvm-readelf in $SDK/ndk — stripping unverified" >&2
 fi
 
 # --- done -------------------------------------------------------------------

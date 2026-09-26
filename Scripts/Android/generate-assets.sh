@@ -110,6 +110,10 @@ for colorset in "$src_catalog"/*.colorset; do
     mkdir -p "$dst_catalog/$name"
     write_if_changed "$dst_catalog/$name/Contents.json" < "$colorset/Contents.json"
 done
+# A copy whose original was renamed or deleted would keep working here only.
+for colorset in "$dst_catalog"/*.colorset; do
+    [[ -d "$src_catalog/$(basename "$colorset")" ]] || rm -rf "$colorset"
+done
 
 # MARK: - Launcher icon
 
