@@ -22,6 +22,7 @@ struct AndroidRootView: View {
     @State var challengeCoordinator = CloudflareChallengeCoordinator.shared
     @State var path = [FATarget]()
     @State var selectedTab: Tab = .submissions
+    @State var pendingDebugDeepLink = PendingDebugDeepLink.shared
 
     enum Tab {
         case submissions
@@ -172,6 +173,16 @@ struct AndroidRootView: View {
             guard let event else { return }
             path.append(event.target)
         }
+        // Held until there is a session to open it in.
+        .task(id: "\(model.session != nil) \(pendingDebugDeepLink.url?.absoluteString ?? "")") {
+            guard model.session != nil, let url = pendingDebugDeepLink.url else { return }
+            pendingDebugDeepLink.url = nil
+            guard let target = FATarget(with: url) else {
+                logger.error("faOpenURL: not an in-app target: \(url.absoluteString)")
+                return
+            }
+            navigationStream.send(target)
+        }
         .autorefreshingOnForeground {
             await model.autorefreshIfNeeded()
         }
@@ -221,4 +232,13 @@ struct AndroidRootView: View {
             .background(.thinMaterial)
         }
     }
+}
+
+/// A URL from `MainActivity`'s debug-only `faOpenURL` launch extra, waiting for a session.
+@MainActor
+@Observable
+final class PendingDebugDeepLink {
+    static let shared = PendingDebugDeepLink()
+
+    var url: URL?
 }

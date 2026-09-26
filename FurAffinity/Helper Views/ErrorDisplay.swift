@@ -5,13 +5,12 @@
 //  Created by Ceylo on 29/11/2025.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 
 struct ErrorDisplay: View {
-    @State private var showAlert = false
-    @Environment(ErrorStorage.self) private var errorStorage
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var showAlert = false
+    @Environment(ErrorStorage.self) var errorStorage
     
     @ViewBuilder
     func alertActions(for error: RichLocalizedError) -> some View {
@@ -112,5 +111,3 @@ private extension RichLocalizedError {
     ErrorDisplay()
         .environment(errorStorage)
 }
-
-#endif

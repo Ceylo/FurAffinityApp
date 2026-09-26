@@ -5,8 +5,6 @@
 //  Created by Ceylo on 21/06/2026.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
@@ -14,7 +12,8 @@ import FAKit
 /// downloads the document and opens it in a native reading view. The downloaded
 /// file URL is exposed to the parent (for Save/Share) via `documentFileUrl`.
 struct SubmissionTextContent: View {
-    @Environment(ErrorStorage.self) private var errorStorage
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(ErrorStorage.self) var errorStorage
 
     var title: String
     var textContent: FASubmission.TextContent
@@ -23,10 +22,10 @@ struct SubmissionTextContent: View {
     @Binding var documentFileUrl: URL?
     var downloadDocument: (_ url: URL) async throws -> Data
 
-    @State private var isDownloading = false
-    @State private var readerContent: StoryReaderView.Content?
+    @State var isDownloading = false
+    @State var readerContent: StoryReaderView.Content?
     /// Extracted once, reused so re-opening doesn't re-download or re-parse.
-    @State private var loadedContent: StoryReaderView.Content?
+    @State var loadedContent: StoryReaderView.Content?
 
     private var coverUrl: URL {
         textContent.renderedPreviewUrl
@@ -107,14 +106,12 @@ struct SubmissionTextContent: View {
                 let data = try await downloadDocument(textContent.documentUrl)
                 let fileUrl = FileManager.default.temporaryDirectory
                     .appendingPathComponent(textContent.documentUrl.lastPathComponent)
-                try data.write(to: fileUrl, options: .atomic)
+                try await Task.detached {
+                    try data.write(to: fileUrl, options: .atomic)
+                }.value
                 documentFileUrl = fileUrl
 
-                let filename = textContent.documentUrl.lastPathComponent
-                let text = await Task.detached {
-                    StoryDocument.richText(from: data, filename: filename)
-                }.value
-                let content = StoryReaderView.Content(text: text, documentUrl: fileUrl)
+                let content = await StoryReaderView.Content.load(data: data, documentUrl: fileUrl)
                 loadedContent = content
                 readerContent = content
             }
@@ -145,5 +142,3 @@ struct SubmissionTextContent: View {
         .environment(errorStorage)
     }
 }
-
-#endif

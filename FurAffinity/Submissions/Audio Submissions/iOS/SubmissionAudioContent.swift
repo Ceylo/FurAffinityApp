@@ -12,9 +12,9 @@ import SwiftUI
 
 /// Renders an audio/music submission: the cover art plus an inline native player
 /// that streams the mp3 progressively, with background/lock-screen playback driven
-/// by `AudioPlaybackController`. In the background the mp3 is downloaded and its
-/// file URL exposed to the parent (for Save/Share) via `documentFileUrl`; playback
-/// does not wait on that download.
+/// by `AudioPlaybackController`. In the background the mp3 is downloaded, and the
+/// controller exposes its file URL (for Save/Share); playback does not wait on that
+/// download.
 struct SubmissionAudioContent: View {
     @Environment(ErrorStorage.self) private var errorStorage
 
@@ -24,7 +24,6 @@ struct SubmissionAudioContent: View {
     var thumbnail: DynamicThumbnail?
     var thumbnailWidthOnHeightRatio: Float?
     @Binding var controller: AudioPlaybackController?
-    @Binding var documentFileUrl: URL?
     var downloadDocument: (_ url: URL) async throws -> Data
 
     var body: some View {
@@ -41,10 +40,6 @@ struct SubmissionAudioContent: View {
                 .padding(.horizontal, 10)
         }
         .task { await prepareController() }
-        .onAppear { documentFileUrl = controller?.documentFileUrl }
-        .onChange(of: controller?.documentFileUrl) { _, url in
-            documentFileUrl = url
-        }
     }
 
     @ViewBuilder
@@ -93,7 +88,6 @@ struct SubmissionAudioContent: View {
             thumbnail: nil,
             thumbnailWidthOnHeightRatio: nil,
             controller: $controller,
-            documentFileUrl: .constant(nil),
             downloadDocument: { try await OfflineFASession.default.file(at: $0) }
         )
         .environment(errorStorage)

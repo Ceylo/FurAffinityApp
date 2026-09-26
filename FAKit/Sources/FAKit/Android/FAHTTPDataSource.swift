@@ -236,12 +236,12 @@ public struct FAHTTPDataSource: HTTPDataSource {
                 )
             }
 
-            // Entry and rescue both carry [CFFALLBACK], so how often the expensive
-            // path is taken — and whether it pays off — is one grep. A fallback
-            // with no matching "rescued" line failed; fetchPageHTML logs each of
-            // its own navigations just above that.
-            logger.warning("[CFFALLBACK] \(url): still challenged; trying WebView fallback")
-            if let webViewFetch, method == .GET {
+            // Pages only: the WebView reads back the page it lands on, and a file on
+            // d.furaffinity.net never finishes loading as one. Entry and rescue both
+            // carry [CFFALLBACK], so an entry with no "rescued" line is a failure;
+            // fetchPageHTML logs its own navigations just above that.
+            if let webViewFetch, method == .GET, request.url.host != "d.furaffinity.net" {
+                logger.warning("[CFFALLBACK] \(url): still challenged; trying WebView fallback")
                 let startedAt = ContinuousClock.now
                 let html = try await webViewFetch(request.url)
                 logger.warning("[CFFALLBACK] \(url): rescued by WebView after \(ContinuousClock.now - startedAt)")

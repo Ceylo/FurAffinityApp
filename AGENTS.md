@@ -20,7 +20,9 @@ is unaffected. Ported so far: the login screen (shared
 `SubmissionsFeedView` container, badge and refresh choreography included), the
 submission detail screen (shared `SubmissionMainImage`, a zoomable viewer presented from
 a `fadingSheet` and dismissed by pulling it down, favorite, Save/Share, rich-text
-description with in-app links, read-only comments, metadata) and the Settings tab (shared
+description with in-app links, comments with posting and deep-link scroll, "Send a
+Note", story submissions with a txt/md reader, music submissions without in-app playback,
+metadata) and the Settings tab (shared
 `SettingsView` / `NotificationSettingsView`, image-cache control, log sharing, logout).
 FA's rich text is rendered by Compose's own HTML parser: `FAKit/Sources/FAKit/RichText/`
 normalises the markup into the subset `AnnotatedString.fromHtml` understands (and cuts it

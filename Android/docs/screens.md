@@ -10,10 +10,7 @@ cold-launch restore check and foreground autorefresh from the same source as iOS
 The scroll-preserving refresh choreography — a zero-height `fetchTrigger` row whose
 `onAppear` performs the fetch, wrapped in a `ScrollViewReader` — **runs on Android too**,
 and was measured working on the emulator: the pull fires the trigger, the fetch happens,
-the badge shows and fades, and the list holds its position. `ScrollViewReader` inside a
-real `body` is fine; the JNI abort under
-[§A `ViewModifier` must not defer its `content`](#a-viewmodifier-must-not-defer-its-content)
-is specific to a modifier deferring `Content`, which this is not.
+the badge shows and fades, and the list holds its position.
 
 `ListItemTracking` **runs on Android too**, from one implementation with no `#if`. It
 writes `Defaults[.lastViewedSubmissionID]` as the row crossing 30% from the top scrolls
@@ -130,8 +127,18 @@ draws. Those, and `RemoteView`, `SubmissionPreviewView`, `SubmissionControlsView
 
 Ported: the image, the zoomable full-screen viewer, favorite (with the optimistic
 `UpdateHandler` rollback), Save to gallery, Share, the description with in-app link
-routing, read-only threaded comments including the deep-linked one's highlight pulse,
-and the metadata screen.
+routing, threaded comments including the deep-linked one's highlight pulse, comment
+posting (the shared `Replying` / `CommentEditor` sheet, reached from the controls, the
+toolbar and each comment's Reply action), "Send a Note" (the shared `NoteEditor`, its
+recipient pre-filled), scrolling a deep-linked comment into view, and the metadata screen.
+
+Comment posting needed two things from the forks. `.glass` / `.glassProminent` and
+`buttonBorderShape` now exist, drawn as their bordered counterparts and a Material
+shape, so the editor's `#available(iOS 26, *)` branch compiles as-is. And a sheet's
+`content` is now only called while it is presented, as in SwiftUI. skip-fuse-ui used to
+call the builder on every body evaluation, and SkipUI called it again while the sheet
+animated away. `Replying` unwraps its session with a `fatalError()` guard, so both
+calls crashed.
 
 `SubmissionMainImage` itself is *shared*, and since Kingfisher builds for Android the
 loader is shared too: one `configure(_:geometry:)` chain over `KFImageProtocol`, with
@@ -206,20 +213,41 @@ on the first one: the sheet reports a height ~129 px short of its final one befo
 insets settle, and `boundedFill` computed from that left the image visibly letterboxed
 where `fullScreenCover` had filled the screen.
 
-Deferred, with the reason:
+### Stories and music
 
-| Not ported | Why |
-|---|---|
-| Comment posting, note sending | The `CommentEditor`/`NoteEditor` UI isn't ported. Android passes `replyAction: nil` / `acceptsNewReplies: false`, so the swipe/context reply paths are inert. (`Replying`'s storage is now `@Observable`, not `ObservableObject`, so the machinery around the editors is no longer the blocker.) |
-| Story (`.text`) and music (`.audio`) submissions | `StoryDocument` (PDFKit reflow, DOCX, QuickLook) and AVPlayer + `MPNowPlayingInfoCenter` are Apple-only stacks. Both render a placeholder with a link to the file. |
-| `scrollToItem` (scroll a deep-linked comment into view) | see below |
+A story's cover, its download and Save/Share come from the shared `SubmissionTextContent`.
+Only the reader is forked: `StoryReaderView` has an iOS build (`UITextView` reflow of
+txt, md, rtf, pdf and docx, with QuickLook for the original) and an Android one. Each
+builds its `Content` through `StoryReaderView.Content.load(data:filename:documentUrl:)`,
+so the shared view never sees what the reader holds. The Android reader shows txt and md
+from FAKit's `StoryText`, one `Text` per line in a `LazyVStack` so that Compose never
+measures a whole novel at once. Any other format gets "Open in another app"
+(`FAMediaBridge.open`, `ACTION_VIEW`).
+
+Music has an Android build of `SubmissionAudioContent` with the iOS signature. It shows
+the cover, and "Play in another app" downloads the mp3 and hands it to another app;
+Save/Share light up once it is downloaded. The Android `AudioPlaybackController` owns
+that download, as iOS's does, and lives in `SubmissionView`'s state, so row recycling
+never starts a second one. It only downloads when asked, whereas iOS downloads as the
+screen appears: the page transport can't cancel an exchange and holds one of its two
+permits for the whole transfer, so a download on every visit would stall page loads.
+
+Not ported, because each is an Apple-only stack: in-app playback and lock-screen
+controls (AVPlayer, `MPNowPlayingInfoCenter`), pdf/rtf/docx reflow (PDFKit, UIKit's RTF
+importer, `UIFont` traits), the QuickLook "Original" view and the reader's
+landscape gate.
+
+Downloads go through `FAHTTPDataSource` like pages, with one difference: a download that
+is still challenged after the repair fails instead of taking the WebView fallback. That
+fallback reads back the page the WebView lands on, so for a file it never returned: an
+mp3 challenged at launch left "Downloading…" up for good.
 
 ### Android-only substitutes
 
 Each keeps the iOS name and signature so symlinked callers compile unchanged:
 `HTMLView`, `Zoomable`, `FlowLayout`, `MediaSaveHandler`, `fadingSheet` (the iOS one
 crossfades a UIKit-backed `.sheet`; `View+pullableScreenCover.swift`),
-`SubmissionTextContent`/`SubmissionAudioContent`, and the no-ops in
+`StoryReaderView`, `SubmissionAudioContent`, and the no-ops in
 `SubmissionShims.swift`.
 
 `HTMLView` is the one that does real work rather than standing in. iOS renders FA's rich
@@ -253,26 +281,56 @@ survives only as iOS's external entry point.
 `view(for:)`, the half of `InAppNavigation.swift` that can't be shared at all (it names
 screens that don't exist here), lives in `AndroidNavigationDestination.swift`.
 
-### A `ViewModifier` must not defer its `content`
+### Scrolling to a deep-linked comment
 
-`ViewModifier.Content` reaches Swift as a `JavaBackedView` around a JNI **local**
-reference, valid only for the frame that built the modifier. Using it synchronously is
-fine; capturing it in a closure Compose invokes later aborts the process:
+The shared `scrollToItem` needed two fork fixes.
+
+**A `ViewModifier` may defer its `content`.** `ViewModifier.Content` reaches Swift as a
+`JavaBackedView`, which used to wrap the JNI *local* reference it was handed, valid only
+for the frame that built the modifier. `ScrollToItemModifier` uses it inside the
+`ScrollViewReader` closure Compose calls later, which aborted the process:
 
 ```
 JNI DETECTED ERROR IN APPLICATION: jobject is an invalid JNI transition frame reference
   from kotlin.Pair skip.bridge.SwiftBackedFunction1.Swift_invoke(long, java.lang.Object)
 ```
 
-That is what `ScrollToItemModifier` does — `ScrollViewReader { reader in content.onFirstAppear { … } }`
-— so `scrollToItem` is an Android no-op. In a tombstone, look for
+`JavaBackedView` now holds a global reference. If that abort comes back, look for
 `SwiftBackedFunction*.invoke` directly under the SkipUI container owning the closure.
+
+**The proxy resolves its action when used.** `ScrollViewReader` built its proxy from the
+scroll action collected at the time, and on the first composition the `List` has not
+contributed one yet. The proxy `onFirstAppear` captures was therefore a no-op, and nothing
+scrolled. It now reads the collected action at call time, as SwiftUI's does.
+
+The anchor is still ignored: SkipUI brings the target row to the top of the list, where
+iOS centres it.
+
+To reach a deep link without a notification, launch a debug build with
+`--es faOpenURL <url>`: `AndroidRootView` opens it in-app once there is a session, like
+`simctl openurl` on iOS.
+
+```
+adb shell am start -S -n <app id>/fur.affinity.ui.MainActivity \
+  --es faOpenURL "https://www.furaffinity.net/view/48519387/#cid:166652794"
+```
+
+Checked on the emulator on 2026-09-24: that comment scrolls into view, while
+`#cid:1` on the same submission leaves the list at the top.
 
 ### Save and Share
 
 `FAMediaBridge.kt` (app module, reached by name through `AnyDynamicObject` like
-`FAImageFetchBridge`) inserts into MediaStore's `Pictures/FurAffinity` and starts
-`ACTION_SEND`. Two things the manifest must carry, both easy to lose in a regeneration:
+`FAImageFetchBridge`) inserts images into MediaStore's `Pictures/FurAffinity` and
+documents into `Download/FurAffinity`, and starts `ACTION_SEND` (Share) and
+`ACTION_VIEW` (Open in another app). "Save to Files" (`exportToFiles`) saves without
+asking where, unlike iOS's document picker. A toast says where the file went, or that
+saving failed, since the iOS signature has no error storage to report through. Staged
+hand-off files in `cache/shared` expire after an hour rather than at the next hand-off:
+a player given an mp3 by Open re-opens the URI to seek. Each hand-off copies under a
+temporary name and renames, so such a reader keeps the inode it has open.
+`MediaStore.Downloads` needs API 29, so on API 28 it falls back to the share chooser.
+Two things the manifest must carry, both easy to lose in a regeneration:
 
 - `<provider android:name="androidx.core.content.FileProvider">` with
   `${applicationId}.fileprovider` and `@xml/file_paths`. Shared files sit in the app

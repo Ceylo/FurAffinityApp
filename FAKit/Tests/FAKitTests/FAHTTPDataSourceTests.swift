@@ -316,6 +316,28 @@ struct FAHTTPDataSourceTests {
         #expect(await fetched.value == 1)
     }
 
+    /// The fallback returns the HTML of the page the WebView lands on, so a file —
+    /// which never lands as a page — fails instead of waiting on it.
+    @Test func webViewFallbackRescuesPagesButNeverFiles() async throws {
+        let fetched = Counter()
+        let source = Self.dataSource(
+            transport: ScriptedTransport([.challenge(protocol: "h2")]),
+            webViewFetch: { _ in
+                await fetched.increment()
+                return Data("<html>rescued</html>".utf8)
+            }
+        )
+        let file = URL(string: "https://d.furaffinity.net/download/art/someone/music/1/1.someone_song.mp3")!
+        await #expect(throws: CloudflareChallengeRequired.self) {
+            _ = try await source.httpData(from: file, cookies: nil)
+        }
+        #expect(await fetched.value == 0)
+
+        let rescued = try await source.httpData(from: Self.feedURL, cookies: nil)
+        #expect(String(data: rescued, encoding: .utf8) == "<html>rescued</html>")
+        #expect(await fetched.value == 1)
+    }
+
     @Test func nonSuccessStatusThrows() async throws {
         let transport = ScriptedTransport([
             FANativeHTTPResponse(statusCode: 500, headers: [:], body: Data(), networkProtocol: "http/1.1")

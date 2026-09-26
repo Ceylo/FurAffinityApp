@@ -459,6 +459,9 @@
 			isa = PBXGroup;
 			children = (
 				FA0000000000000000000009 /* AudioPlaybackController.swift */,
+				FA0000000000000000000007 /* SubmissionAudioContent.swift */,
+				878AB7152FEB2D4800E78CFB /* AudioScrubber.swift */,
+				878AB7132FEB2D3E00E78CFB /* AudioPlayerControls.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -655,9 +658,6 @@
 		877D547C2FF0351C00BA9802 /* Audio Submissions */ = {
 			isa = PBXGroup;
 			children = (
-				FA0000000000000000000007 /* SubmissionAudioContent.swift */,
-				878AB7152FEB2D4800E78CFB /* AudioScrubber.swift */,
-				878AB7132FEB2D3E00E78CFB /* AudioPlayerControls.swift */,
 				0FB7F410E91233EE592898CD /* iOS */,
 			);
 			path = "Audio Submissions";
@@ -666,7 +666,6 @@
 		877D54812FF036E100BA9802 /* Text Submissions */ = {
 			isa = PBXGroup;
 			children = (
-				877D547F2FF036E100BA9802 /* StoryReaderView.swift */,
 				877D54802FF036E100BA9802 /* SubmissionTextContent.swift */,
 				C234CCE81EF8D3751004229E /* iOS */,
 			);
@@ -809,6 +808,7 @@
 			isa = PBXGroup;
 			children = (
 				877D547E2FF036E100BA9802 /* QuickLookPreview.swift */,
+				877D547F2FF036E100BA9802 /* StoryReaderView.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";

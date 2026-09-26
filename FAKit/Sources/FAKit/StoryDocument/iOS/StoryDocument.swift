@@ -26,10 +26,11 @@ public enum StoryDocument {
     static let bodyPointSize: CGFloat = 17
 
     public static func richText(from data: Data, filename: String) -> AttributedString? {
+        if let text = StoryText.text(from: data, filename: filename) {
+            return AttributedString(plainAttributed(text))
+        }
         let ns: NSAttributedString?
         switch (filename as NSString).pathExtension.lowercased() {
-        case "txt", "text", "md":
-            ns = String(data: data, encoding: .utf8).map(plainAttributed)
         case "rtf":
             ns = rtfText(from: data)
         case "pdf":
