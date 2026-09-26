@@ -38,6 +38,7 @@ FurAffinity/             ALL app sources — and the Skip target's directory
   Skip/skip.yml            marks this a native Skip module
 Scripts/Android/         emulator, run, debug, logs, derived art, release APK
 Scripts/iOS/             this worktree's simulator device
+Scripts/                 cleanup-worktree.sh: a merged worktree and all it left behind
 FAKit/                   shared Swift package (cross-compiles, see AGENTS.md)
 ```
 
