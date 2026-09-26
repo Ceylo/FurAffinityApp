@@ -13,7 +13,8 @@
 #        Scripts/cleanup-worktree.sh [--dry-run] --orphans
 #
 #   --dry-run   print what would be removed, and its size, without removing it
-#   --force     skip the gate: remove a dirty or unmerged worktree and branch
+#   --force     remove an unmerged worktree and branch (a squash-merged one);
+#               a worktree with changes is refused regardless
 #   --base      a branch the worktree's must be merged into; repeatable,
 #               replaces the default `android` and `main`
 #   --orphans   sweep what worktrees removed without this script left behind;
@@ -146,6 +147,8 @@ contains() {
 # Reads paths on stdin and prints "<key> <path>" for each. `dd`: Xcode's
 # DerivedData hash — md5, each 8-byte half a big-endian uint64 written as 14
 # letters a–z. `mcp`: XcodeBuildMCP's workspace key (build/utils/workspace-identity.js).
+# `suffix`: the applicationIdSuffix Android/app/build.gradle.kts derives from
+# the basename — java.util.regex, like python's re, replaces per code point.
 PATH_KEYS_PY='
 import hashlib, os, re, sys
 mode = sys.argv[1]
@@ -157,6 +160,8 @@ for p in sys.stdin.read().splitlines():
             for _ in range(14):
                 s, n = chr(97 + n % 26) + s, n // 26
             out += s
+    elif mode == "suffix":
+        out = re.sub(r"[^A-Za-z0-9_]", "_", os.path.basename(p))
     else:
         slug = re.sub(r"[^A-Za-z0-9._-]+", "-", os.path.basename(p) or "workspace")
         slug = re.sub(r"^[.-]+|[.-]+$", "", slug)[:64] or "workspace"
@@ -201,6 +206,7 @@ human() {
 }
 
 TOTAL_KB=0
+FAILED=0
 
 # du's size even when it fails partway (a build rewriting the tree, a missing dir).
 size_kb() {
@@ -220,7 +226,7 @@ remove_tree() {
         echo "  removed $label ($(human "$kb"))"
     else
         TOTAL_KB=$(( TOTAL_KB - kb ))
-        warn "could not remove all of $label"
+        warn "could not remove all of $label"; FAILED=1
     fi
 }
 
@@ -246,15 +252,6 @@ app_prefixes() {
         sha="$(git_main stash list --format='%H %gs' | sed -n 's/ .*For App Store distribution$//p' | head -1)"
         if [[ -n "$sha" ]]; then git_main show "$sha:Skip.env" 2>/dev/null | skip_env_values || true; fi
     } | sort -u
-}
-
-# Sets SUFFIX to the applicationIdSuffix Android/app/build.gradle.kts derives
-# from a name: Kotlin replaces per UTF-16 unit, which bash's ${//} can't match.
-app_suffix() {
-    SUFFIX="$(python3 -c 'import re, sys
-print(re.sub(r"[^A-Za-z0-9_]", lambda m: "_" * (len(m.group().encode("utf-16-le")) // 2), sys.argv[1]))' "$1")" \
-        || die "python3 failed deriving an app id"
-    [[ -n "$SUFFIX" ]] || die "no app id for '$1'"
 }
 
 EMULATOR=unknown
@@ -290,14 +287,15 @@ uninstall_app() {
     if "${lock[@]}" "$ADB" uninstall "$id" >/dev/null; then
         echo "  uninstalled $id"
     else
-        warn "could not uninstall $id"
+        warn "could not uninstall $id"; FAILED=1
     fi
 }
 
+# The app and, if on-device tests ran, its instrumentation APK.
 clean_emulator_app() {
-    local name="$1" suffix prefix id found=0
+    local wt="$1" suffix prefix id found=0
     load_emulator
-    app_suffix "$name"; suffix="$SUFFIX"
+    compute_keys suffix "$wt"; suffix="${KEYS[0]}"
     if [[ "$EMULATOR" == down ]]; then
         for prefix in "${PREFIXES[@]}"; do
             warn "no booted emulator (or several, without ANDROID_SERIAL) — later: adb uninstall $prefix.$suffix"
@@ -305,11 +303,12 @@ clean_emulator_app() {
         return
     fi
     for prefix in "${PREFIXES[@]}"; do
-        id="$prefix.$suffix"
-        if contains "$id" "${PACKAGES[@]}"; then
-            uninstall_app "$id"
-            found=1
-        fi
+        for id in "$prefix.$suffix" "$prefix.$suffix.test"; do
+            if contains "$id" "${PACKAGES[@]}"; then
+                uninstall_app "$id"
+                found=1
+            fi
+        done
     done
     (( found )) || echo "  no emulator app"
 }
@@ -334,7 +333,7 @@ remove_simulator() {
     if xcrun simctl delete "$udid"; then
         echo "  deleted simulator FA $name ($(human "$kb"))"
     else
-        warn "could not delete simulator FA $name"
+        warn "could not delete simulator FA $name"; FAILED=1
     fi
 }
 
@@ -386,26 +385,27 @@ clean_mcp_workspaces() {
 # Sets WT_REGISTERED, WT_LOCKED, WT_BRANCH and WT_HEAD from `git worktree list`,
 # and WT_NAMESAKE to another live checkout whose name gives the same app id.
 read_worktree() {
-    local wt="$1" line cur="" suffix
+    local wt="$1" line cur="" others="" i
     WT_REGISTERED=0 WT_LOCKED=0 WT_BRANCH="" WT_HEAD="" WT_NAMESAKE=""
-    app_suffix "$(basename "$wt")"; suffix="$SUFFIX"
     while IFS= read -r line; do
         case "$line" in
             "worktree "*) cur="${line#worktree }"
-                          if [[ "$cur" != "$wt" && -d "$cur" ]]; then
-                              app_suffix "$(basename "$cur")"
-                              [[ "$SUFFIX" == "$suffix" ]] && WT_NAMESAKE="$cur"
-                          fi ;;
+                          [[ "$cur" != "$wt" && -d "$cur" ]] && others+=$'\n'"$cur" ;;
             "HEAD "*)     [[ "$cur" == "$wt" ]] && WT_HEAD="${line#HEAD }" ;;
             "branch "*)   [[ "$cur" == "$wt" ]] && WT_BRANCH="${line#branch refs/heads/}" ;;
             locked*)      [[ "$cur" == "$wt" ]] && WT_LOCKED=1 ;;
         esac
         [[ "$cur" == "$wt" ]] && WT_REGISTERED=1
     done < <(git_main worktree list --porcelain)
+    compute_keys suffix "$wt$others"
+    for (( i = 1; i < ${#KEYS[@]}; i++ )); do
+        [[ "${KEYS[$i]}" == "${KEYS[0]}" ]] && WT_NAMESAKE="${KEY_PATHS[$i]}"
+    done
     return 0
 }
 
-# Refuses (non-zero) when removing the worktree would lose work.
+# Refuses (non-zero) when removing the worktree would lose work; --force
+# waives only the merge check.
 gate() {
     local wt="$1" tip base
     local changes
@@ -415,10 +415,11 @@ gate() {
             return 1
         fi
         if [[ -n "$changes" ]]; then
-            echo "  refused: uncommitted or untracked changes (--force to discard them)" >&2
+            echo "  refused: uncommitted or untracked changes" >&2
             return 1
         fi
     fi
+    (( FORCE )) && return 0
     tip="${WT_BRANCH:-$WT_HEAD}"
     [[ -n "$tip" ]] || return 0
     for base in "${BASES[@]}"; do
@@ -430,15 +431,14 @@ gate() {
 }
 
 remove_worktree() {
-    local wt="$1" kb flags=()
+    local wt="$1" kb
     (( WT_REGISTERED )) || return 0
-    (( FORCE )) && flags+=(--force)
     # Also unregisters one whose directory is already gone.
     kb="$(size_kb "$wt")"
     TOTAL_KB=$(( TOTAL_KB + kb ))
     if (( DRY_RUN )); then
         echo "  would remove worktree $wt ($(human "$kb"))"
-    elif git_main worktree remove "${flags[@]}" "$wt"; then
+    elif git_main worktree remove "$wt"; then
         echo "  removed worktree $wt ($(human "$kb"))"
     else
         TOTAL_KB=$(( TOTAL_KB - kb ))
@@ -455,7 +455,7 @@ delete_branch() {
         elif git_main branch -D "$WT_BRANCH" >/dev/null; then
             echo "  deleted branch $WT_BRANCH"
         else
-            warn "could not delete branch $WT_BRANCH"
+            warn "could not delete branch $WT_BRANCH"; FAILED=1
         fi
     fi
 }
@@ -496,7 +496,7 @@ clean_worktree() {
         echo "  refused: $WT_BRANCH is a base branch" >&2
         return 1
     fi
-    if (( ! FORCE )) && ! gate "$wt"; then
+    if ! gate "$wt"; then
         return 1
     fi
 
@@ -504,7 +504,7 @@ clean_worktree() {
     # in place; the Skip.env prefixes are read while it is still there.
     load_emulator
     remove_worktree "$wt" || return 1
-    clean_emulator_app "$name"
+    clean_emulator_app "$wt"
     clean_simulator "$name"
     clean_derived_data "$wt"
     clean_mcp_workspaces "$wt"
@@ -520,11 +520,9 @@ clean_orphans() {
     while IFS= read -r wt; do
         [[ -d "$wt" ]] && live+=("$wt")
     done < <(git_main worktree list --porcelain | sed -n 's/^worktree //p')
-    for wt in "${live[@]}"; do
-        name="$(basename "$wt")"
-        live_names+=("$name")
-        app_suffix "$name"; live_suffixes+=("$SUFFIX")
-    done
+    for wt in "${live[@]}"; do live_names+=("$(basename "$wt")"); done
+    compute_keys suffix "$(printf '%s\n' "${live[@]}")"
+    live_suffixes=("${KEYS[@]}")
     compute_keys dd "$(for wt in "${live[@]}"; do derived_data_paths "$wt"; done)"
     live_hashes=("${KEYS[@]}")
 
@@ -552,7 +550,8 @@ clean_orphans() {
         for id in "${PACKAGES[@]}"; do
             for prefix in "${PREFIXES[@]}"; do
                 suffix="${id#"$prefix".}"
-                [[ "$suffix" != "$id" && "$suffix" =~ ^[A-Za-z0-9_]+$ ]] || continue
+                [[ "$suffix" != "$id" && "$suffix" =~ ^[A-Za-z0-9_]+(\.test)?$ ]] || continue
+                suffix="${suffix%.test}"
                 contains "$suffix" "${live_suffixes[@]}" && continue
                 uninstall_app "$id"
                 found=1
@@ -596,7 +595,8 @@ clean_orphans() {
     (( found )) || echo "  none"
 
     # A workspace key is <basename>-<sha256[:12]> of its root, so a removed
-    # worktree's is recomputable from its name, at its root or in a subdir.
+    # worktree's is recomputable, at its root or in a subdir, as long as its
+    # name survives somewhere: a subdir's key alone doesn't carry it.
     echo "XcodeBuildMCP workspaces"
     found=0
     compute_keys mcp "$(for wt in "${candidates[@]}"; do mcp_roots "$wt"; done)"
@@ -634,4 +634,5 @@ if [[ "$FA_CLEANUP_CALLER_INSIDE" == 1 ]] && (( ! DRY_RUN )); then
     echo "note: your shell is in a deleted directory — cd $MAIN"
 fi
 
+(( FAILED )) && status=1
 exit $status
