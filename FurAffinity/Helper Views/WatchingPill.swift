@@ -22,8 +22,6 @@ struct WatchingPill: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     WatchingPill()
 }
-#endif

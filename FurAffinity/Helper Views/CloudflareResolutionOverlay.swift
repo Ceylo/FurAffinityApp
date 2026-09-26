@@ -111,9 +111,7 @@ struct CloudflareResolutionOverlay: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview(traits: .sizeThatFitsLayout) {
     CloudflareResolutionOverlay(revealDelay: 0)
         .padding()
 }
-#endif

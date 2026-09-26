@@ -34,10 +34,8 @@ struct DateTimeButton: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     DateTimeButton(datetime: "Apr 7th, 2022, 11:58 AM",
                    naturalDatetime: "8 months ago",
                    initialDisplayedDate: .natural)
 }
-#endif

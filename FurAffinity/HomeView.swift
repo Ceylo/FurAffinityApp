@@ -234,7 +234,6 @@ struct HomeView: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     withAsync({ try await Model.demo }) {
         HomeView()
@@ -242,4 +241,3 @@ struct HomeView: View {
             .environment($0.errorStorage)
     }
 }
-#endif

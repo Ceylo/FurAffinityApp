@@ -75,9 +75,7 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     SubmissionFeedItemView<TitleAuthorHeader>(submission: OfflineFASession.default.submissionPreviews[0])
         .preferredColorScheme(.dark)
 }
-#endif

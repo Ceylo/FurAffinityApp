@@ -83,7 +83,6 @@ struct CommentThreadConnector: Shape {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     func row(_ info: CommentThreadInfo) -> some View {
         HStack(alignment: .top, spacing: 0) {
@@ -107,4 +106,3 @@ struct CommentThreadConnector: Shape {
     }
     .padding()
 }
-#endif

@@ -20,8 +20,6 @@ struct SectionHeader: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     SectionHeader(text: "Section Header")
 }
-#endif

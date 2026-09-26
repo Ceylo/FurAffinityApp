@@ -183,7 +183,6 @@ struct SubmissionMainImage: View {
 #endif
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     SubmissionMainImage(
         widthOnHeightRatio: 208/300.0,
@@ -192,4 +191,3 @@ struct SubmissionMainImage: View {
         fullResolutionMediaFileUrl: .constant(nil)
     )
 }
-#endif
