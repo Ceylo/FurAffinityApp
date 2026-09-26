@@ -17,8 +17,9 @@
 #               a worktree with changes is refused regardless
 #   --base      a branch the worktree's must be merged into; repeatable,
 #               replaces the default `android` and `main`
-#   --orphans   sweep what worktrees removed without this script left behind;
-#               it assumes every checkout of the repo is one of its worktrees
+#   --orphans   sweep what worktrees removed without this script left behind,
+#               and list what it kept and what still uses it; it assumes every
+#               checkout of the repo is one of its worktrees
 #
 # A bare name is a directory under ../FurAffinity-worktrees. The worktree may
 # already be gone (ExitWorktree, `git worktree remove`): its leftovers are still
@@ -46,7 +47,7 @@ TARGETS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)   sed -n '3,32p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)   sed -n '3,33p' "$0" | cut -c3-; exit 0 ;;
         --dry-run)   DRY_RUN=1 ;;
         --force)     FORCE=1 ;;
         --orphans)   ORPHANS=1 ;;
@@ -551,9 +552,48 @@ clean_worktree() {
 
 # --- orphans ----------------------------------------------------------------
 
+KEPT_KB=0
+KEPT=()
+
+# Records an item the sweep looked at and left alone, sized when it has a path.
+keep() {
+    local label="$1" reason="$2" path="$3" kb size=""
+    if [[ -n "$path" ]]; then
+        kb="$(size_kb "$path")"
+        KEPT_KB=$(( KEPT_KB + kb ))
+        size=" ($(human "$kb"))"
+    fi
+    KEPT+=("  kept $label$size — $reason")
+}
+
+# Ends a section: what was kept, after what was removed.
+end_section() {
+    (( $1 )) || echo "  nothing to remove"
+    local line
+    for line in "${KEPT[@]}"; do echo "$line"; done
+    KEPT=()
+}
+
+# Index of $1 among the other arguments.
+index_of() {
+    local needle="$1" i=0 x
+    shift
+    for x in "$@"; do
+        [[ "$x" == "$needle" ]] && { echo "$i"; return 0; }
+        i=$(( i + 1 ))
+    done
+    return 1
+}
+
+tilde() {
+    # shellcheck disable=SC2088 # a literal ~, for display
+    if [[ "$1" == "$HOME/"* ]]; then echo "~/${1#"$HOME/"}"; else echo "$1"; fi
+}
+
 clean_orphans() {
-    local live=() live_names=() live_suffixes=() live_hashes=() dead_names=() dead_hashes=()
-    local wt name dir path key id prefix suffix line udid state sim found i candidates
+    local live=() live_names=() live_suffixes=() live_hashes=() live_hash_paths=()
+    local live_mcp_keys=() live_mcp_paths=() dead_names=() dead_hashes=() candidates=()
+    local wt name dir path key id prefix suffix line udid state sim found i
 
     while IFS= read -r wt; do
         [[ -d "$wt" ]] && live+=("$wt")
@@ -562,7 +602,9 @@ clean_orphans() {
     compute_keys suffix "$(printf '%s\n' "${live[@]}")"
     live_suffixes=("${KEYS[@]}")
     compute_keys dd "$(for wt in "${live[@]}"; do derived_data_paths "$wt"; done)"
-    live_hashes=("${KEYS[@]}")
+    live_hashes=("${KEYS[@]}") live_hash_paths=("${KEY_PATHS[@]}")
+    compute_keys mcp "$(for wt in "${live[@]}"; do mcp_roots "$wt"; done)"
+    live_mcp_keys=("${KEYS[@]}") live_mcp_paths=("${KEY_PATHS[@]}")
 
     # Names a removed worktree may have had: its simulator's, its branch's and
     # its XcodeBuildMCP workspace's.
@@ -573,7 +615,6 @@ clean_orphans() {
     for dir in "$MCP_WORKSPACES"/*-*; do
         [[ -d "$dir" ]] && key="$(basename "$dir")" && dead_names+=("${key%-*}")
     done
-    candidates=()
     for name in "${dead_names[@]}"; do
         [[ -n "$name" && ! -e "$WORKTREES/$name" ]] || continue
         contains "$WORKTREES/$name" "${candidates[@]}" || candidates+=("$WORKTREES/$name")
@@ -589,29 +630,40 @@ clean_orphans() {
     else
         for id in "${PACKAGES[@]}"; do
             for prefix in "${PREFIXES[@]}"; do
+                if [[ "$id" == "$prefix" ]]; then
+                    keep "$id" "the unsuffixed (release or distribution) build"
+                    break
+                fi
                 suffix="${id#"$prefix".}"
-                [[ "$suffix" != "$id" && "$suffix" =~ ^[A-Za-z0-9_]+(\.test)?$ ]] || continue
-                # <prefix>.test is the unsuffixed build's instrumentation APK.
-                [[ "$suffix" == test ]] && continue
-                suffix="${suffix%.test}"
-                contains "$suffix" "${live_suffixes[@]}" && continue
-                uninstall_app "$id"
-                found=1
+                [[ "$suffix" != "$id" ]] || continue
+                if [[ "$suffix" == test ]]; then
+                    keep "$id" "the unsuffixed build's test APK"
+                elif [[ ! "$suffix" =~ ^[A-Za-z0-9_]+(\.test)?$ ]]; then
+                    keep "$id" "not a worktree's app id"
+                elif i="$(index_of "${suffix%.test}" "${live_suffixes[@]}")"; then
+                    keep "$id" "$(tilde "${live[$i]}")"
+                else
+                    uninstall_app "$id"
+                    found=1
+                fi
                 break
             done
         done
     fi
-    (( found )) || echo "  none"
+    end_section "$found"
 
     echo "Simulators"
     found=0
     for line in "${SIMS[@]}"; do
         IFS='|' read -r udid state sim <<< "$line"
-        contains "$sim" "${live_names[@]}" && continue
-        remove_simulator "$udid" "$state" "$sim"
-        found=1
+        if i="$(index_of "$sim" "${live_names[@]}")"; then
+            keep "FA $sim" "$(tilde "${live[$i]}")" "$SIM_DEVICES/$udid"
+        else
+            remove_simulator "$udid" "$state" "$sim"
+            found=1
+        fi
     done
-    (( found )) || echo "  none"
+    end_section "$found"
 
     echo "DerivedData"
     found=0
@@ -621,22 +673,31 @@ clean_orphans() {
     # path for any other that was under $WORKTREES.
     for dir in "$DERIVED_DATA"/*-*; do
         [[ -d "$dir" && "${dir##*-}" =~ ^[a-z]{28}$ ]] || continue
-        contains "${dir##*-}" "${live_hashes[@]}" && continue
+        name="$(basename "$dir")"
+        if i="$(index_of "${dir##*-}" "${live_hashes[@]}")"; then
+            keep "$name" "$(tilde "${live_hash_paths[$i]}")" "$dir"
+            continue
+        fi
         if ! contains "${dir##*-}" "${dead_hashes[@]}"; then
             path="$(workspace_path "$dir")"
-            if [[ -n "$path" ]]; then
-                [[ "$path" == "$WORKTREES/"* && ! -e "$path" ]] || continue
-            else
-                case "$(basename "$dir")" in
+            if [[ -n "$path" && -e "$path" ]]; then
+                keep "$name" "$(tilde "$path")" "$dir"
+                continue
+            elif [[ -n "$path" && "$path" != "$WORKTREES/"* ]]; then
+                keep "$name" "$(tilde "$path"), gone, but not under $(tilde "$WORKTREES")" "$dir"
+                continue
+            elif [[ -z "$path" ]]; then
+                case "$name" in
                     FurAffinity-*|FurAffinityUI-*|FAKit-*|FALogging-*) ;;
-                    *) continue ;;
+                    *) keep "$name" "no info.plist, and not one of this repo's project names" "$dir"
+                       continue ;;
                 esac
             fi
         fi
-        remove_tree "$dir" "DerivedData/$(basename "$dir")"
+        remove_tree "$dir" "DerivedData/$name"
         found=1
     done
-    (( found )) || echo "  none"
+    end_section "$found"
 
     # A workspace key is <basename>-<sha256[:12]> of its root, so a removed
     # worktree's is recomputable, at its root or in a subdir, as long as its
@@ -647,14 +708,16 @@ clean_orphans() {
     for dir in "$MCP_WORKSPACES"/*-*; do
         [[ -d "$dir" ]] || continue
         key="$(basename "$dir")"
-        for i in "${!KEYS[@]}"; do
-            [[ "${KEYS[$i]}" == "$key" ]] || continue
-            remove_tree "$dir" "XcodeBuildMCP workspace $key (${KEY_PATHS[$i]})"
+        if i="$(index_of "$key" "${KEYS[@]}")"; then
+            remove_tree "$dir" "XcodeBuildMCP workspace $key ($(tilde "${KEY_PATHS[$i]}"))"
             found=1
-            break
-        done
+        elif i="$(index_of "$key" "${live_mcp_keys[@]}")"; then
+            keep "$key" "$(tilde "${live_mcp_paths[$i]}")" "$dir"
+        else
+            keep "$key" "started outside $(tilde "$WORKTREES"), or in a removed worktree whose name is lost" "$dir"
+        fi
     done
-    (( found )) || echo "  none"
+    end_section "$found"
 }
 
 # --- run --------------------------------------------------------------------
@@ -668,10 +731,12 @@ else
     done
 fi
 
+KEPT_TOTAL=""
+(( ORPHANS )) && KEPT_TOTAL="; kept $(human "$KEPT_KB")"
 if (( DRY_RUN )); then
-    echo "would reclaim $(human "$TOTAL_KB") (plus emulator app data)"
+    echo "would reclaim $(human "$TOTAL_KB") (plus emulator app data)$KEPT_TOTAL"
 else
-    echo "reclaimed $(human "$TOTAL_KB") (plus emulator app data)"
+    echo "reclaimed $(human "$TOTAL_KB") (plus emulator app data)$KEPT_TOTAL"
 fi
 
 if (( CALLER_REMOVED )); then
