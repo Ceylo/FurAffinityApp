@@ -6,8 +6,8 @@
 # not what is keyed by its path or name elsewhere: its emulator debug app, its
 # `FA <name>` simulator, its DerivedData dirs (the Skip Xcode project's have no
 # info.plist, so nothing can tell whose they are but the path hash) and its
-# XcodeBuildMCP workspace. This removes all of them, then the worktree and its
-# branch.
+# XcodeBuildMCP workspace. This removes the worktree first, so a removal git
+# refuses leaves everything else in place, then all of them, then its branch.
 #
 # Usage: Scripts/cleanup-worktree.sh [--dry-run] [--force] [--base <branch>]… <worktree name|path>…
 #        Scripts/cleanup-worktree.sh [--dry-run] --orphans
@@ -59,7 +59,9 @@ while (( $# )); do
     shift
 done
 
-(( ${#BASES[@]} )) || BASES=(android main)
+# Never removed, whatever --base says.
+PROTECTED=(android main)
+(( ${#BASES[@]} )) || BASES=("${PROTECTED[@]}")
 
 if (( ORPHANS )); then
     (( ${#TARGETS[@]} == 0 )) || die "--orphans takes no worktree"
@@ -292,9 +294,8 @@ uninstall_app() {
 
 # The app and, if on-device tests ran, its instrumentation APK.
 clean_emulator_app() {
-    local wt="$1" suffix prefix id found=0
+    local suffix="$WT_SUFFIX" prefix id found=0
     load_emulator
-    compute_keys suffix "$wt"; suffix="${KEYS[0]}"
     if [[ "$EMULATOR" == down ]]; then
         for prefix in "${PREFIXES[@]}"; do
             warn "no booted emulator (or several, without ANDROID_SERIAL) — later: adb uninstall $prefix.$suffix"
@@ -314,10 +315,18 @@ clean_emulator_app() {
 
 # --- the simulator ----------------------------------------------------------
 
-# "<udid>|<state>|<name>" for every `FA <name>` device.
-fa_simulators() {
-    xcrun simctl list devices 2>/dev/null \
-        | sed -nE 's@^[[:space:]]*FA (.+) \(([0-9A-Fa-f-]{36})\) \(([A-Za-z ]+)\).*@\2|\3|\1@p'
+# SIMS: "<udid>|<state>|<name>" for every `FA <name>` device, listed once
+# (simctl takes ~0.3 s) — a run only ever deletes devices it has listed.
+SIMS=()
+SIMS_LOADED=0
+load_simulators() {
+    (( SIMS_LOADED )) && return 0
+    SIMS_LOADED=1
+    local line
+    while IFS= read -r line; do SIMS+=("$line"); done < <(
+        xcrun simctl list devices 2>/dev/null \
+            | sed -nE 's@^[[:space:]]*FA (.+) \(([0-9A-Fa-f-]{36})\) \(([A-Za-z ]+)\).*@\2|\3|\1@p'
+    )
 }
 
 remove_simulator() {
@@ -338,15 +347,17 @@ remove_simulator() {
 }
 
 clean_simulator() {
-    local name="$1" udid state sim found=0
+    local name="$1" line udid state sim found=0
+    load_simulators
     # Matching the whole name is what keeps `FA android` from also taking
     # `FA android-ci`.
-    while IFS='|' read -r udid state sim; do
+    for line in "${SIMS[@]}"; do
+        IFS='|' read -r udid state sim <<< "$line"
         if [[ "$sim" == "$name" ]]; then
             remove_simulator "$udid" "$state" "$sim"
             found=1
         fi
-    done < <(fa_simulators)
+    done
     (( found )) || echo "  no simulator"
 }
 
@@ -383,7 +394,8 @@ clean_mcp_workspaces() {
 # --- one worktree -----------------------------------------------------------
 
 # Sets WT_REGISTERED, WT_LOCKED, WT_BRANCH and WT_HEAD from `git worktree list`,
-# and WT_NAMESAKE to another live checkout whose name gives the same app id.
+# WT_SUFFIX to its app id suffix, and WT_NAMESAKE to another live checkout whose
+# name gives the same one.
 read_worktree() {
     local wt="$1" line cur="" others="" i
     WT_REGISTERED=0 WT_LOCKED=0 WT_BRANCH="" WT_HEAD="" WT_NAMESAKE=""
@@ -398,6 +410,7 @@ read_worktree() {
         [[ "$cur" == "$wt" ]] && WT_REGISTERED=1
     done < <(git_main worktree list --porcelain)
     compute_keys suffix "$wt$others"
+    WT_SUFFIX="${KEYS[0]}"
     for (( i = 1; i < ${#KEYS[@]}; i++ )); do
         [[ "${KEYS[$i]}" == "${KEYS[0]}" ]] && WT_NAMESAKE="${KEY_PATHS[$i]}"
     done
@@ -421,7 +434,7 @@ signing_material() {
 # waives only the merge check.
 gate() {
     local wt="$1" tip base
-    local changes
+    local changes material
     if [[ -d "$wt" ]] && (( WT_REGISTERED )); then
         if ! changes="$(git -C "$wt" status --porcelain --untracked-files=normal)"; then
             echo "  refused: git status failed" >&2
@@ -432,8 +445,9 @@ gate() {
             return 1
         fi
         # Ignored, so status doesn't show them, and other checkouts may link to them.
-        if [[ -n "$(signing_material "$wt")" ]]; then
-            echo "  refused: holds signing material — move it first: $(signing_material "$wt" | paste -sd ' ' -)" >&2
+        material="$(signing_material "$wt" | paste -sd ' ' -)"
+        if [[ -n "$material" ]]; then
+            echo "  refused: holds signing material — move it first: $material" >&2
             return 1
         fi
     fi
@@ -516,7 +530,7 @@ clean_worktree() {
         echo "  refused: neither a worktree nor a branch (--orphans sweeps what is left)" >&2
         return 1
     fi
-    if [[ -n "$WT_BRANCH" ]] && contains "$WT_BRANCH" "${BASES[@]}" main android; then
+    if [[ -n "$WT_BRANCH" ]] && contains "$WT_BRANCH" "${BASES[@]}" "${PROTECTED[@]}"; then
         echo "  refused: $WT_BRANCH is a base branch" >&2
         return 1
     fi
@@ -528,7 +542,7 @@ clean_worktree() {
     # in place; the Skip.env prefixes are read while it is still there.
     load_emulator
     remove_worktree "$wt" || return 1
-    clean_emulator_app "$wt"
+    clean_emulator_app
     clean_simulator "$name"
     clean_derived_data "$wt"
     clean_mcp_workspaces "$wt"
@@ -539,7 +553,7 @@ clean_worktree() {
 
 clean_orphans() {
     local live=() live_names=() live_suffixes=() live_hashes=() dead_names=() dead_hashes=()
-    local wt name dir path key id prefix suffix udid state sim found i candidates
+    local wt name dir path key id prefix suffix line udid state sim found i candidates
 
     while IFS= read -r wt; do
         [[ -d "$wt" ]] && live+=("$wt")
@@ -552,7 +566,8 @@ clean_orphans() {
 
     # Names a removed worktree may have had: its simulator's, its branch's and
     # its XcodeBuildMCP workspace's.
-    while IFS='|' read -r udid state sim; do dead_names+=("$sim"); done < <(fa_simulators)
+    load_simulators
+    for line in "${SIMS[@]}"; do dead_names+=("${line##*|}"); done
     while IFS= read -r name; do dead_names+=("$name"); done \
         < <(git_main for-each-ref --format='%(refname:short)' refs/heads)
     for dir in "$MCP_WORKSPACES"/*-*; do
@@ -560,7 +575,8 @@ clean_orphans() {
     done
     candidates=()
     for name in "${dead_names[@]}"; do
-        [[ -n "$name" && ! -e "$WORKTREES/$name" ]] && candidates+=("$WORKTREES/$name")
+        [[ -n "$name" && ! -e "$WORKTREES/$name" ]] || continue
+        contains "$WORKTREES/$name" "${candidates[@]}" || candidates+=("$WORKTREES/$name")
     done
     compute_keys dd "$(for wt in "${candidates[@]}"; do derived_data_paths "$wt"; done)"
     dead_hashes=("${KEYS[@]}")
@@ -589,11 +605,12 @@ clean_orphans() {
 
     echo "Simulators"
     found=0
-    while IFS='|' read -r udid state sim; do
+    for line in "${SIMS[@]}"; do
+        IFS='|' read -r udid state sim <<< "$line"
         contains "$sim" "${live_names[@]}" && continue
         remove_simulator "$udid" "$state" "$sim"
         found=1
-    done < <(fa_simulators)
+    done
     (( found )) || echo "  none"
 
     echo "DerivedData"
