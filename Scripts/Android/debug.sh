@@ -152,6 +152,8 @@ if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
         "${BASH_SOURCE[0]}" "${args[@]}"
 fi
 
+source "$(dirname "${BASH_SOURCE[0]}")/skip-forks.sh"
+
 if (( BUILD )); then
     # lldb-server ignores an APK's last entry (llvm/llvm-project#173966), which
     # assembleDebug makes a .so; installing with testOnly re-packs it so a

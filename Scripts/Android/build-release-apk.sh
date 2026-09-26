@@ -194,6 +194,7 @@ rm -rf .build/plugins/outputs .build/Darwin .build/Android
 # them and includeBuild()s them), plus an .aab nothing uses — 339s against 275s.
 # SKIP_EXPORT_ARCHS: a release otherwise compiles the Swift for all three ABIs,
 # and the release abiFilters (Android/app/build.gradle.kts) ships only arm64-v8a.
+source "$(dirname "${BASH_SOURCE[0]}")/skip-forks.sh"
 step "gradlew :app:assembleRelease"
 ( cd Android && SKIP_EXPORT_ARCHS=aarch64 ./gradlew :app:assembleRelease )
 

@@ -3,6 +3,18 @@
 
 import PackageDescription
 
+// Scripts/Android/skip-forks.sh points FA_SKIP_FORKS at local checkouts of the forks
+// below, so the Android build can use unpushed fork work. It also holds `skip` itself:
+// SKIPLOCAL makes skip build its plugin from a skipstone checkout, and SwiftPM refuses
+// that under a version requirement. Unset — as in Xcode — they come from GitHub.
+let localForks = Context.environment["FA_SKIP_FORKS"]
+func fork(_ name: String) -> Package.Dependency {
+    if let localForks {
+        return .package(path: "\(localForks)/\(name)")
+    }
+    return .package(url: "https://github.com/Ceylo/\(name).git", branch: "android")
+}
+
 let package = Package(
     name: "FAKit",
     platforms: [.iOS(.v18), .macOS(.v14)],
@@ -29,9 +41,9 @@ let package = Package(
         // skip-web is forked for its dependency locations alone. One location per
         // package identity: the forks name Ceylo/skip-ui between them, so this
         // manifest must not re-declare it.
-        .package(url: "https://github.com/skiptools/skip.git", exact: "1.9.11"),
-        .package(url: "https://github.com/Ceylo/skip-fuse-ui.git", branch: "android"),
-        .package(url: "https://github.com/Ceylo/skip-web.git", branch: "android"),
+        localForks.map { .package(path: "\($0)/skip") } ?? .package(url: "https://github.com/skiptools/skip.git", exact: "1.9.11"),
+        fork("skip-fuse-ui"),
+        fork("skip-web"),
     ],
     targets: [
         .target(

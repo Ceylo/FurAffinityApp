@@ -12,6 +12,18 @@
 // Skip.env's PRODUCT_NAME are derived from.
 import PackageDescription
 
+// Scripts/Android/skip-forks.sh points FA_SKIP_FORKS at local checkouts of the forks
+// below, so the Android build can use unpushed fork work. It also holds `skip` itself:
+// SKIPLOCAL makes skip build its plugin from a skipstone checkout, and SwiftPM refuses
+// that under a version requirement. Unset — as in Xcode — they come from GitHub.
+let localForks = Context.environment["FA_SKIP_FORKS"]
+func fork(_ name: String) -> Package.Dependency {
+    if let localForks {
+        return .package(path: "\(localForks)/\(name)")
+    }
+    return .package(url: "https://github.com/Ceylo/\(name).git", branch: "android")
+}
+
 let package = Package(
     name: "FurAffinityApp",
     defaultLocalization: "en",
@@ -23,18 +35,18 @@ let package = Package(
         // Exact, not `from:`: a floating pin silently drifts past the installed
         // `skip` CLI and the build fails inside a dependency (`AndroidUserDefaults`
         // … "must use a 'required' initializer"). Keep this equal to `skip version`.
-        .package(url: "https://github.com/skiptools/skip.git", exact: "1.9.11"),
+        localForks.map { .package(path: "\($0)/skip") } ?? .package(url: "https://github.com/skiptools/skip.git", exact: "1.9.11"),
         // Forked for `listRowInsets`, `Text(AttributedString)`, `FlowRow` and a few
         // unavailable-to-passthrough fixes — see Android/docs/forks.md. skip-web is
         // forked for its dependency locations alone. One location per package
         // identity: the forks name Ceylo/skip-ui between them, so this manifest must
         // not re-declare it.
-        .package(url: "https://github.com/Ceylo/skip-fuse-ui.git", branch: "android"),
-        .package(url: "https://github.com/Ceylo/skip-web.git", branch: "android"),
+        fork("skip-fuse-ui"),
+        fork("skip-web"),
         // Forked to build on Android: platform guards plus a decode seam onto
         // SkipSwiftUI's `UIImage`, and a bridgeable SwiftUI layer — see
         // Android/docs/forks.md.
-        .package(url: "https://github.com/Ceylo/Kingfisher.git", branch: "android"),
+        fork("Kingfisher"),
         .package(path: "FAKit"),
         .package(path: "FALogging"),
         .package(url: "https://github.com/Ceylo/Defaults.git", branch: "android"),

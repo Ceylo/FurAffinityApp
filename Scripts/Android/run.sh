@@ -101,6 +101,7 @@ if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
         "${BASH_SOURCE[0]}" $([[ $VARIANT == profile ]] && echo --profile) -- "$@"
 fi
 
+source "$(dirname "${BASH_SOURCE[0]}")/skip-forks.sh"
 TASK=":app:install$(tr '[:lower:]' '[:upper:]' <<< "${VARIANT:0:1}")${VARIANT:1}"
 ( cd "$ROOT/Android" && ./gradlew "$TASK" "$@" )
 

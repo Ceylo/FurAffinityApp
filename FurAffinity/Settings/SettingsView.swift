@@ -11,8 +11,7 @@ import FALogging
 import Defaults
 
 struct SettingsView: View {
-    // Not private: skipstone can't bridge a private @State/@Environment.
-    @Environment(Model.self) var model
+    @Environment(Model.self) private var model
     @State var dumpingLogs = false
 
     @Default(.animateAvatars) private var animateAvatars: Bool
