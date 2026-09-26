@@ -1,0 +1,81 @@
+#!/bin/bash
+#
+# swift-frontend of the FA Compilation Cache toolchain, installed there by
+# Scripts/iOS/compilation-cache-toolchain.sh; the real one sits next to it.
+#
+# The toolchain's prefix maps (/^src, /^derived, …) make a cache key independent
+# of the worktree, except for what Xcode 26.6's driver leaves unmapped in each
+# cached job. This maps those too, before the frontend computes the key. A job
+# that is not cached is passed through untouched.
+
+real="${BASH_SOURCE[0]%/*}/swift-frontend-real"
+llvm_cas="${BASH_SOURCE[0]%/*}/llvm-cas"
+scratch="$HOME/Library/Caches/FACompilationCache"
+
+args=("$@")
+n=${#args[@]}
+cache=0; cas=; phs=(); reals=()
+for (( i = 0; i < n; i++ )); do
+    case "${args[i]}" in
+        -cache-compile-job) cache=1 ;;
+        -cas-path) cas="${args[i+1]}" ;;
+        # The driver's own record of the mapping, as placeholder/real pairs.
+        -cache-replay-prefix-map) phs+=("${args[i+1]}"); reals+=("${args[i+2]}") ;;
+    esac
+done
+
+(( cache )) || exec -a "$0" "$real" "$@"
+
+for (( i = 0; i < n - 1; i++ )); do
+    case "${args[i]}" in
+        -debug-module-path|-module-cache-path)
+            v="${args[i+1]}"
+            for (( j = 0; j < ${#phs[@]}; j++ )); do
+                if [[ "$v" == "${reals[j]}"/* ]]; then args[i+1]="${phs[j]}${v#"${reals[j]}"}"; break; fi
+            done ;;
+        -const-gather-protocols-file)
+            # Read from disk rather than from the CAS, so it needs a real path:
+            # one named by its content is the same in every worktree.
+            v="${args[i+1]}"
+            [[ -f "$v" ]] || continue
+            stable="$scratch/const-protocols/$(md5 -q "$v").json"
+            if [[ ! -f "$stable" ]]; then
+                mkdir -p "${stable%/*}" && cp "$v" "$stable.$$" && mv -f "$stable.$$" "$stable"
+            fi
+            args[i+1]="$stable" ;;
+        -explicit-swift-module-map-file)
+            # A JSON blob in the CAS whose modulePath entries are unmapped. Modules
+            # load by their moduleCacheKey, so those paths are only labels: map
+            # them, keep the result on disk named by its content, and store it back
+            # every time, since a pruned CAS may have lost it.
+            id="${args[i+1]}"
+            [[ "$id" == llvmcas://* && -n "$cas" ]] || continue
+            memo="$scratch/module-maps/by-id/${id#llvmcas://}"
+            stable=; [[ -f "$memo" ]] && stable="$(< "$memo")"
+            if [[ ! -f "$stable" ]]; then
+                pairs=(); for (( j = 0; j < ${#phs[@]}; j++ )); do pairs+=("${phs[j]}" "${reals[j]}"); done
+                mkdir -p "${memo%/*}"
+                tmp="$scratch/module-maps/$$.json"
+                "$llvm_cas" --cas="$cas" --cat-blob "$id" | perl -0777 -pe '
+                    BEGIN { our %m = @ARGV; @ARGV = () } our %m;
+                    for my $ph (keys %m) {
+                        (my $r = $m{$ph}) =~ s{/}{\\/}g; (my $p = $ph) =~ s{/}{\\/}g;
+                        s/\Q$r\E(?=\\\/|")/$p/g; s/\Q$m{$ph}\E(?=\/|")/$ph/g;
+                    }
+                    # A module built from its interface is named after a hash of its
+                    # unmapped context.
+                    s{(SwiftExplicitPrecompiledModules\\?/\w+)-[A-Z0-9]+\.swiftmodule}{$1.swiftmodule}g;
+                ' "${pairs[@]}" > "$tmp" || continue
+                stable="$scratch/module-maps/$(md5 -q "$tmp").json"
+                mv -f "$tmp" "$stable"
+                echo "$stable" > "$memo.$$" && mv -f "$memo.$$" "$memo"
+            fi
+            args[i+1]="$("$llvm_cas" --cas="$cas" --make-blob --data "$stable")" || args[i+1]="$id" ;;
+    esac
+done
+
+# Skeleton CUs name each imported Clang module's .pcm by its mapped path, which the
+# debugger cannot open; without them it finds those types through its Clang importer.
+[[ "${args[1]}" == -c ]] && args+=(-no-clang-module-breadcrumbs)
+
+exec -a "$0" "$real" "${args[@]}"

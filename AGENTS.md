@@ -215,7 +215,9 @@ FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, 
   The cost of all this: each worktree's app has its **own container**, so a separate
   FA login, cookie jar and (on Android) Cloudflare clearance.
   Gradle's build cache is shared, so a new worktree's Android build reuses the
-  others' Kotlin compiles (`Android/docs/build-and-run.md` § Build cache).
+  others' Kotlin compiles (`Android/docs/build-and-run.md` § Build cache); on iOS,
+  so does Xcode's compilation cache once the FA Compilation Cache toolchain is
+  selected (`COMPILATION_CACHE.md`).
   DerivedData keeps one directory per worktree path *ever* used, so it grows with
   worktrees that no longer exist. To list the orphans (then delete what it prints):
   ```
