@@ -60,6 +60,22 @@ Transpiled Kotlin lands under `.build/` (e.g.
 `.build/plugins/outputs`, `.build/Darwin`, and `.build/Android` after changing
 `Skip.env` — the generated Gradle module namespace is cached there.
 
+### Build cache
+
+`org.gradle.caching` is on, so Gradle's local build cache
+(`~/.gradle/caches/build-cache-1`) is shared by every worktree and outlives
+`rm -rf .build`. It holds the Kotlin compiles of all Skip's included builds (SkipUI,
+SkipLib, FAKit, …) and the dex merges, which took a fresh worktree from 314 s to
+204 s. The transpiled Kotlin carries no absolute paths, so an entry built in one
+worktree fits another. It does not cover the Swift: `buildAndroidSwiftPackageDebug`
+declares no outputs and always runs, and the `skip plugin --prebuild` in
+`settings.gradle.kts` runs on every build too. `:app:compileDebugKotlin` misses on a
+new worktree because its BuildConfig carries the worktree's app id suffix.
+`Scripts/Android/prune-build-cache.sh`, which `settings.gradle.kts` runs before each
+build, caps the cache at 1.5× a clean `.build` by dropping the least recently read
+entries. If a cached task looks suspect, bypass the cache with
+`./gradlew --no-build-cache …`.
+
 ### Two sources of the Gradle version
 
 `skip gradle` (and the Xcode `Run skip gradle` phase) shells out to the `gradle` on

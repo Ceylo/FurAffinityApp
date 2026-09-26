@@ -11,6 +11,13 @@ pluginManagement {
     print(assetsResult.standardOutput.asText.get())
     print(assetsResult.standardError.asText.get())
 
+    // Cap the build cache before this build adds to it.
+    val pruneResult = providers.exec {
+        commandLine("/bin/sh", "-c", "'${settings.rootDir.parent}/Scripts/Android/prune-build-cache.sh'")
+    }
+    print(pruneResult.standardOutput.asText.get())
+    print(pruneResult.standardError.asText.get())
+
     // Initialize the Skip plugin folder and perform a pre-build for non-Xcode builds
     val pluginPath = File.createTempFile("skip-plugin-path", ".tmp")
 
