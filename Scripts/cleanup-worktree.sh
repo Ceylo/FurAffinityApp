@@ -202,9 +202,11 @@ remove_tree() {
     TOTAL_KB=$(( TOTAL_KB + kb ))
     if (( DRY_RUN )); then
         echo "  would remove $label ($(human "$kb"))"
-    else
-        rm -rf "$path"
+    elif rm -rf "$path"; then
         echo "  removed $label ($(human "$kb"))"
+    else
+        TOTAL_KB=$(( TOTAL_KB - kb ))
+        warn "could not remove all of $label"
     fi
 }
 
@@ -218,16 +220,17 @@ skip_env_values() {
 # Every app-id prefix a debug build may have used: each live checkout's
 # Skip.env, the bases', and the distribution stash's.
 app_prefixes() {
+    # `|| true`: main has no Skip.env, and errexit would end the whole group there.
     {
         local wt ref sha
         while IFS= read -r wt; do
             [[ -f "$wt/Skip.env" ]] && skip_env_values < "$wt/Skip.env"
         done < <(git_main worktree list --porcelain | sed -n 's/^worktree //p')
         for ref in "${BASES[@]}"; do
-            git_main show "$ref:Skip.env" 2>/dev/null | skip_env_values
+            git_main show "$ref:Skip.env" 2>/dev/null | skip_env_values || true
         done
         sha="$(git_main stash list --format='%H %gs' | sed -n 's/ .*For App Store distribution$//p' | head -1)"
-        [[ -n "$sha" ]] && git_main show "$sha:Skip.env" 2>/dev/null | skip_env_values
+        if [[ -n "$sha" ]]; then git_main show "$sha:Skip.env" 2>/dev/null | skip_env_values || true; fi
     } | sort -u
 }
 
@@ -359,14 +362,15 @@ clean_mcp_workspaces() {
 # --- one worktree -----------------------------------------------------------
 
 # Sets WT_REGISTERED, WT_LOCKED, WT_BRANCH and WT_HEAD from `git worktree list`,
-# and WT_NAMESAKE to another live checkout with the same directory name.
+# and WT_NAMESAKE to another live checkout whose name gives the same app id.
 read_worktree() {
     local wt="$1" line cur=""
     WT_REGISTERED=0 WT_LOCKED=0 WT_BRANCH="" WT_HEAD="" WT_NAMESAKE=""
     while IFS= read -r line; do
         case "$line" in
             "worktree "*) cur="${line#worktree }"
-                          [[ "$cur" != "$wt" && "$(basename "$cur")" == "$(basename "$wt")" && -d "$cur" ]] \
+                          [[ "$cur" != "$wt" && -d "$cur" \
+                              && "$(app_suffix "$(basename "$cur")")" == "$(app_suffix "$(basename "$wt")")" ]] \
                               && WT_NAMESAKE="$cur" ;;
             "HEAD "*)     [[ "$cur" == "$wt" ]] && WT_HEAD="${line#HEAD }" ;;
             "branch "*)   [[ "$cur" == "$wt" ]] && WT_BRANCH="${line#branch refs/heads/}" ;;
@@ -380,10 +384,16 @@ read_worktree() {
 # Refuses (non-zero) when removing the worktree would lose work.
 gate() {
     local wt="$1" tip base
-    if [[ -d "$wt" ]] && (( WT_REGISTERED )) \
-        && [[ -n "$(git -C "$wt" status --porcelain 2>/dev/null)" ]]; then
-        echo "  refused: uncommitted or untracked changes (--force to discard them)" >&2
-        return 1
+    local changes
+    if [[ -d "$wt" ]] && (( WT_REGISTERED )); then
+        if ! changes="$(git -C "$wt" status --porcelain --untracked-files=normal)"; then
+            echo "  refused: git status failed" >&2
+            return 1
+        fi
+        if [[ -n "$changes" ]]; then
+            echo "  refused: uncommitted or untracked changes (--force to discard them)" >&2
+            return 1
+        fi
     fi
     tip="${WT_BRANCH:-$WT_HEAD}"
     [[ -n "$tip" ]] || return 0
@@ -397,20 +407,23 @@ gate() {
 
 remove_worktree() {
     local wt="$1" kb flags=()
+    (( WT_REGISTERED )) || return 0
     (( FORCE )) && flags+=(--force)
     # Also unregisters one whose directory is already gone.
-    if (( WT_REGISTERED )); then
-        kb="$(size_kb "$wt")"
-        TOTAL_KB=$(( TOTAL_KB + kb ))
-        if (( DRY_RUN )); then
-            echo "  would remove worktree $wt ($(human "$kb"))"
-        elif git_main worktree remove "${flags[@]}" "$wt"; then
-            echo "  removed worktree $wt ($(human "$kb"))"
-        else
-            echo "  could not remove worktree $wt, so kept branch ${WT_BRANCH:-(none)}" >&2
-            return 1
-        fi
+    kb="$(size_kb "$wt")"
+    TOTAL_KB=$(( TOTAL_KB + kb ))
+    if (( DRY_RUN )); then
+        echo "  would remove worktree $wt ($(human "$kb"))"
+    elif git_main worktree remove "${flags[@]}" "$wt"; then
+        echo "  removed worktree $wt ($(human "$kb"))"
+    else
+        TOTAL_KB=$(( TOTAL_KB - kb ))
+        echo "  could not remove worktree $wt, so left everything else in place" >&2
+        return 1
     fi
+}
+
+delete_branch() {
     if [[ -n "$WT_BRANCH" ]]; then
         # -D: -d checks against the current HEAD, and the gate already checked the bases.
         if (( DRY_RUN )); then
@@ -463,11 +476,15 @@ clean_worktree() {
         return 1
     fi
 
+    # The worktree goes first, so a removal git refuses leaves everything else
+    # in place; the Skip.env prefixes are read while it is still there.
+    load_emulator
+    remove_worktree "$wt" || return 1
     clean_emulator_app "$name"
     clean_simulator "$name"
     clean_derived_data "$wt"
     clean_mcp_workspaces "$wt"
-    remove_worktree "$wt"
+    delete_branch
 }
 
 # --- orphans ----------------------------------------------------------------
@@ -518,12 +535,21 @@ clean_orphans() {
 
     echo "DerivedData"
     found=0
-    for dir in "$DERIVED_DATA"/{FurAffinity,FurAffinityUI,Project,FAKit,FALogging}-*; do
+    # By name prefix for those without an info.plist (Skip's never have one) —
+    # not Project-*, which every Skip app's workspace makes — and by the
+    # recorded path for any other that was under $WORKTREES.
+    for dir in "$DERIVED_DATA"/*-*; do
         [[ -d "$dir" && "${dir##*-}" =~ ^[a-z]{28}$ ]] || continue
         contains "${dir##*-}" "${live_hashes[@]}" && continue
-        # One whose project still exists belongs to some other checkout.
         path="$(workspace_path "$dir")"
-        [[ -n "$path" && -e "$path" ]] && continue
+        if [[ -n "$path" ]]; then
+            [[ "$path" == "$WORKTREES/"* && ! -e "$path" ]] || continue
+        else
+            case "$(basename "$dir")" in
+                FurAffinity-*|FurAffinityUI-*|FAKit-*|FALogging-*) ;;
+                *) continue ;;
+            esac
+        fi
         remove_tree "$dir" "DerivedData/$(basename "$dir")"
         found=1
     done
