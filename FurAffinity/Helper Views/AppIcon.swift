@@ -19,8 +19,6 @@ struct AppIcon: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     AppIcon()
 }
-#endif

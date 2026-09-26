@@ -53,10 +53,8 @@ struct NotificationSettingsView: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     NavigationStack {
         NotificationSettingsView()
     }
 }
-#endif

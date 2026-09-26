@@ -161,10 +161,8 @@ private struct Checkerboard: Shape {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview(traits: .sizeThatFitsLayout) {
     NotificationOverlay(itemCount: .constant(12))
         .padding()
         .background(Checkerboard(rows: 5, columns: 16).fill(.cyan))
 }
-#endif

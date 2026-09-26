@@ -132,7 +132,6 @@ struct CommentsView: View {
     }
 }
 
-#if !FA_SKIP_MODULE
 #Preview {
     withAsync({ await FAComment.demo }) { comments in
         List {
@@ -159,4 +158,3 @@ struct CommentsView: View {
         )
     }
 }
-#endif
