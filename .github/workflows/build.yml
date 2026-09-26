@@ -6,7 +6,8 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  Build-App:
+  Build-iOS-App:
+    name: Build iOS App
     runs-on: macos-26
     steps:
       - name: Check out repository code
@@ -88,7 +89,8 @@ jobs:
           name: Xcode Test Results
           path: ./*.xcresult
           if-no-files-found: error
-  Build-Android:
+  Build-Android-App:
+    name: Build Android App
     # Intel, because the emulator needs nested virtualisation, which GitHub's arm64
     # macOS runners lack. GitHub retires its Intel macOS runners around August 2027;
     # see Android/docs/build-and-run.md § CI for the way off them.

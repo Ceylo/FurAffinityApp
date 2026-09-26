@@ -186,7 +186,7 @@ Scripts/Android/test.sh
 
 It runs FAKit's package and the root package's `FurAffinityUITests` — the
 `FurAffinityTests` files that build for Android, picking their `@testable import` on
-`FA_SKIP_MODULE` — and fails below a case-count floor. CI's `Build-Android` job runs
+`FA_SKIP_MODULE` — and fails below a case-count floor. CI's `Build Android App` job runs
 the same script. Which files stay iOS-only, and why: `Android/docs/build-and-run.md`
 § Test.
 

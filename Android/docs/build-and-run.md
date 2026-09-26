@@ -431,7 +431,7 @@ arrives through `@testable import`) — reach the Foundation one `Defaults` uses
 
 ### CI
 
-`build.yml`'s `Build-Android` job runs beside the iOS one, with no secrets:
+`build.yml`'s `Build Android App` job runs beside the iOS one, with no secrets:
 
 1. `Scripts/Android/ci-setup.sh` — swiftly from swift.org's package, the skip CLI
    at the `exact:` pin (`check-skip-version.sh --install`: one past the pin fails far
