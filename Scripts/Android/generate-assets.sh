@@ -102,11 +102,13 @@ JSON
 # MARK: - Colours
 
 # Copies, not symlinks: `skip android test` pushes the module's resource bundle with
-# `adb push`, which cannot create a symlink on the device.
-for colorset in BorderOverlay ButtonBorderOverlay; do
-    mkdir -p "$dst_catalog/$colorset.colorset"
-    write_if_changed "$dst_catalog/$colorset.colorset/Contents.json" \
-        < "$src_catalog/$colorset.colorset/Contents.json"
+# `adb push`, which cannot create a symlink on the device. Not AccentColor, which
+# SkipUI would read as the app's tint.
+for colorset in "$src_catalog"/*.colorset; do
+    name="$(basename "$colorset")"
+    [[ "$name" == AccentColor.colorset ]] && continue
+    mkdir -p "$dst_catalog/$name"
+    write_if_changed "$dst_catalog/$name/Contents.json" < "$colorset/Contents.json"
 done
 
 # MARK: - Launcher icon

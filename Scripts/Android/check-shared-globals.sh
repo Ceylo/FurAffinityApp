@@ -65,7 +65,7 @@ READELF="$(ls "$NDK"/toolchains/llvm/prebuilt/*/bin/llvm-readelf 2>/dev/null | h
 
 LIBS="$ROOT/.build/Android/app/intermediates/merged_native_libs/$VARIANT"
 ABI="${ABI:-arm64-v8a}"
-LIBS="$(ls -d "$LIBS"/*/out/lib/"$ABI" 2>/dev/null | head -1)"
+LIBS="$(ls -d "$LIBS"/*/out/lib/"$ABI" 2>/dev/null | head -1 || true)"
 [[ -n "$LIBS" ]] || die "no merged $VARIANT $ABI native libs — build the app first"
 
 # --- one definer per module -------------------------------------------------

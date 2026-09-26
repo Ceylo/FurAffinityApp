@@ -3,9 +3,10 @@
 ## Sharing asset-catalog entries
 
 `FurAffinity/Resources/Assets.xcassets` is this module's own catalog, which Skip
-mirrors into Android resources. An entry shared with the iOS catalog is **copied**
-there by `Scripts/Android/generate-assets.sh` (see [Generated art](#generated-art)),
-and the copy is git-ignored — add the entry's name to the script's colorset loop.
+mirrors into Android resources. Every iOS colorset but `AccentColor` (which SkipUI
+would read as the app's tint) is **copied** there by
+`Scripts/Android/generate-assets.sh` (see [Generated art](#generated-art)), and the
+copy is git-ignored.
 
 Not a symlink, which was the old arrangement: `skip android test` pushes the module's
 resource bundle with `adb push`, and adb cannot create a symlink on the device
@@ -53,7 +54,7 @@ An entry big enough that a second copy in git would hurt, or one that must stay
 identical to its iOS original, is generated from the iOS catalog instead, and
 git-ignored. `Scripts/Android/generate-assets.sh` writes three sets:
 
-- the shared colorsets, `Contents.json` copied verbatim;
+- every colorset but `AccentColor`, `Contents.json` copied verbatim;
 
 - the in-app `AppIcon`, a 512×512 light/dark pair downscaled from two 1024×1024 PNGs
   (the view draws it at 100 pt);

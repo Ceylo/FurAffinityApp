@@ -45,7 +45,7 @@ STASH_MSG="📱For App Store distribution"
 OUT="$ROOT/out"
 INSTALL=0
 KEEP_STASH=0
-CI=0
+CI_MODE=0
 
 while (( $# )); do
     case "$1" in
@@ -54,7 +54,7 @@ while (( $# )); do
         --out=*)     OUT="${1#*=}" ;;
         --install)   INSTALL=1 ;;
         --keep-stash) KEEP_STASH=1 ;;
-        --ci)        CI=1 ;;
+        --ci)        CI_MODE=1 ;;
         *)           die "unknown argument: $1" ;;
     esac
     shift
@@ -80,7 +80,7 @@ fi
 # Without the NDK, AGP's stripReleaseDebugSymbols silently copies the .so files
 # through and the APK comes out ~2.5x too big. Warn locally; CI ships the result.
 if [[ ! -d "$SDK/ndk" ]]; then
-    (( CI )) && die "no NDK in $SDK/ndk — debug symbols would not be stripped"
+    (( CI_MODE )) && die "no NDK in $SDK/ndk — debug symbols would not be stripped"
     echo "warning: no NDK in $SDK/ndk — debug symbols will not be stripped" >&2
 fi
 
@@ -89,7 +89,7 @@ fi
 # Gitignored, so it exists in whichever checkout it was generated in. Link it
 # rather than making the user copy the one irreplaceable file in the project.
 if [[ ! -f Android/app/keystore.properties ]]; then
-    (( CI )) && die "Android/app/keystore.properties is missing — a release build without it
+    (( CI_MODE )) && die "Android/app/keystore.properties is missing — a release build without it
     would be signed with the DEBUG key. Decode it from the ANDROID_KEYSTORE_* secrets."
     found=""
     while read -r wt; do
@@ -135,7 +135,7 @@ APK="$OUT/FurAffinity-$VERSION-$COMMIT.apk"
 
 # --- the distribution stash -------------------------------------------------
 
-if (( CI )); then
+if (( CI_MODE )); then
     step "Using the distribution values already in the working tree (--ci)"
 else
     STASH="$(git stash list --format='%H %gs' | awk -v m="$STASH_MSG" 'f { next } index($0, m) { print $1; f = 1 }')"
@@ -233,7 +233,7 @@ if [[ -x "$APKSIGNER" ]]; then
         die "the APK is DEBUG-signed — do not ship it. See Android/docs/releasing.md § Release signing."
     fi
 else
-    (( CI )) && die "no apksigner in $SDK/build-tools — the signature cannot be checked"
+    (( CI_MODE )) && die "no apksigner in $SDK/build-tools — the signature cannot be checked"
     echo "warning: no apksigner in $SDK/build-tools — signature unverified" >&2
 fi
 
@@ -241,13 +241,13 @@ fi
 
 # AGP strips with *its* NDK version, and quietly copies the libraries through when
 # that one is missing, whatever else is installed: check the result, not the SDK.
-READELF="$(ls "$SDK"/ndk/*/toolchains/llvm/prebuilt/*/bin/llvm-readelf 2>/dev/null | sort -V | tail -1)"
+READELF="$(ls "$SDK"/ndk/*/toolchains/llvm/prebuilt/*/bin/llvm-readelf 2>/dev/null | sort -V | tail -1 || true)"
 if [[ -x "$READELF" ]]; then
     SO="$(mktemp -t fa-apk-so)"
     unzip -p "$APK" lib/arm64-v8a/libFurAffinityUI.so > "$SO"
     if "$READELF" --section-headers "$SO" | grep -q '\.debug_info'; then
         rm -f "$SO"
-        (( CI )) && die "the APK's Swift libraries still carry debug info — AGP's NDK is missing"
+        (( CI_MODE )) && die "the APK's Swift libraries still carry debug info — AGP's NDK is missing"
         echo "warning: the APK's Swift libraries still carry debug info — AGP's NDK is missing" >&2
     else
         rm -f "$SO"

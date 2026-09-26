@@ -10,9 +10,9 @@
 #
 # The manifests pin skip with `exact:`, and a CLI that has drifted past that pin
 # fails the build inside a dependency, far from the cause (`AndroidUserDefaults`
-# … "must use a 'required' initializer"). CI's setup-skip installs whatever
-# Homebrew has, so its Android jobs run this with --install: a Skip release
-# must not turn every push red. See Android/docs/build-and-run.md § CI.
+# … "must use a 'required' initializer"). CI installs skip through this, with
+# --install (Scripts/Android/ci-setup.sh), so a Skip release cannot turn every
+# push red. See Android/docs/build-and-run.md § CI.
 
 set -eo pipefail
 

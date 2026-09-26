@@ -1,10 +1,11 @@
 name: Build App
 on: [push, workflow_dispatch]
 # A newer push to the same branch supersedes a run still going: the Android job
-# holds an Intel runner for up to an hour.
+# holds an Intel runner for up to an hour. Not on main, where every commit keeps
+# its result.
 concurrency:
   group: build-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 jobs:
   Build-iOS-App:
     name: Build iOS App

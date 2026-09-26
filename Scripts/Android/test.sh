@@ -71,7 +71,7 @@ run() {
     # The summary line, stripped of colour and the spinner's carriage returns.
     local summary
     summary="$(sed 's/\x1b\[[0-9;]*m//g' "$log" | tr '\r' '\n' \
-        | grep -E 'Test run with [0-9]+ tests?' | tail -1)"
+        | grep -E 'Test run with [0-9]+ tests?' | tail -1 || true)"
     [[ -z "$summary" ]] || echo "$summary"
     (( status == 0 )) || die "$name: skip android test failed ($status)"
     [[ -n "$summary" ]] || die "$name: no Swift Testing summary in $log"

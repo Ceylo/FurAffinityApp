@@ -94,7 +94,7 @@ struct HTTPCookieFATests {
 
     @Test func normalizedClearanceReplaysFromStorageForFAURL() {
         let storage = HTTPCookieStorage.sharedCookieStorage(
-            forGroupContainerIdentifier: "test.cf.normalize.\(UUID().uuidString)"
+            forGroupContainerIdentifier: "test.cf.normalize"
         )
         for stale in storage.cookies ?? [] { storage.deleteCookie(stale) }
 
