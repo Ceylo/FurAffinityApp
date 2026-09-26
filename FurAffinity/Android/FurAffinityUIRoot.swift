@@ -77,6 +77,13 @@ import SwiftUI
         CrashTest.run(name, runID: runID)
     }
 
+    /// From `MainActivity`'s `faOpenURL` extra on a non-release build.
+    /* SKIP @bridge */public func openDebugURL(_ url: String) {
+        Task { @MainActor in
+            PendingDebugDeepLink.shared.url = URL(string: url)
+        }
+    }
+
     /// Lets the script's opt-out control flip the setting without the UI.
     /* SKIP @bridge */public func setCrashReportingEnabled(_ enabled: Bool) {
         Defaults[.crashReportingEnabled] = enabled

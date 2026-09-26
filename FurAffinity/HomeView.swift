@@ -116,9 +116,9 @@ struct HomeView: View {
                         
                         VStack(spacing: 30) {
                             // `#available(iOS 26, *)` is vacuously true off-Apple, so
-                            // Skip would take the Liquid Glass branch — where
-                            // GlassButtonStyle is unavailable and `.glassProminent`
-                            // doesn't exist at all.
+                            // Skip would take the Liquid Glass branch, whose styles
+                            // Compose draws as plain bordered buttons; the legacy
+                            // ones are styled on purpose.
 #if FA_SKIP_MODULE
                             legacyButtons
 #else

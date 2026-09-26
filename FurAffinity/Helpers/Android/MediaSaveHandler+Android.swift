@@ -33,7 +33,7 @@ class MediaSaveHandler {
 
     func saveMedia(atFileUrl url: URL) async {
         state = .inProgress
-        let saved = await MediaBridge.saveImageOffMain(atFileUrl: url)
+        let saved = await MediaBridge.saveImage(atFileUrl: url)
         guard saved else {
             state = .idle
             storeError(
@@ -59,26 +59,6 @@ enum MediaSaveError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .saveFailed: "The image could not be written to your gallery."
-        }
-    }
-}
-
-extension MediaBridge {
-    /// `saveImage` blocks on JNI I/O, and FurAffinityUI is a native Skip module, so it
-    /// must not run on a cooperative-pool thread. Hop to a real queue.
-    static func saveImageOffMain(atFileUrl url: URL) async -> Bool {
-        await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                continuation.resume(returning: saveImage(atFileUrl: url))
-            }
-        }
-    }
-
-    static func shareOffMain(fileUrl url: URL) async -> Bool {
-        await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                continuation.resume(returning: share(fileUrl: url))
-            }
         }
     }
 }
