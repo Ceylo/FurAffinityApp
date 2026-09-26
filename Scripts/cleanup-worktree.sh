@@ -370,8 +370,8 @@ clean_derived_data() {
     compute_keys dd "$(derived_data_paths "$wt")"
     for dir in "$DERIVED_DATA"/*-*; do
         [[ -d "$dir" ]] || continue
-        path="$(workspace_path "$dir")"
-        if contains "${dir##*-}" "${KEYS[@]}" || [[ -n "$path" && "$path/" == "$wt/"* ]]; then
+        if contains "${dir##*-}" "${KEYS[@]}" \
+            || { path="$(workspace_path "$dir")"; [[ -n "$path" && "$path/" == "$wt/"* ]]; }; then
             remove_tree "$dir" "DerivedData/$(basename "$dir")"
             found=1
         fi
