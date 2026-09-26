@@ -46,7 +46,7 @@ TARGETS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)   sed -n '3,31p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)   sed -n '3,32p' "$0" | cut -c3-; exit 0 ;;
         --dry-run)   DRY_RUN=1 ;;
         --force)     FORCE=1 ;;
         --orphans)   ORPHANS=1 ;;
@@ -124,11 +124,9 @@ if (( ! ORPHANS )) && [[ -z "$FA_CLEANUP_REEXEC" ]]; then
         (( DRY_RUN )) && ARGS+=(--dry-run)
         (( FORCE )) && ARGS+=(--force)
         for b in "${BASES[@]}"; do ARGS+=(--base "$b"); done
-        caller_inside=0
-        for wt in "${RESOLVED[@]}"; do [[ "$HERE/" == "$wt/"* ]] && caller_inside=1; done
         cd "$MAIN"
         FA_CLEANUP_REEXEC="$TMP" FA_CLEANUP_ROOT="$MAIN" FA_CLEANUP_LOCK="$TMP/with-emulator-lock.sh" \
-            FA_CLEANUP_CALLER_INSIDE="$caller_inside" \
+            FA_CLEANUP_CALLER_DIR="$HERE" \
             exec bash "$TMP/cleanup-worktree.sh" "${ARGS[@]}" -- "${RESOLVED[@]}"
     fi
 fi
@@ -207,6 +205,7 @@ human() {
 
 TOTAL_KB=0
 FAILED=0
+CALLER_REMOVED=0
 
 # du's size even when it fails partway (a build rewriting the tree, a missing dir).
 size_kb() {
@@ -333,6 +332,7 @@ remove_simulator() {
     if xcrun simctl delete "$udid"; then
         echo "  deleted simulator FA $name ($(human "$kb"))"
     else
+        TOTAL_KB=$(( TOTAL_KB - kb ))
         warn "could not delete simulator FA $name"; FAILED=1
     fi
 }
@@ -404,6 +404,19 @@ read_worktree() {
     return 0
 }
 
+# Ignored files that must not go with the worktree: keystores, certificates,
+# profiles and the Sentry token — real files, not the links to another copy.
+signing_material() {
+    local f
+    git -C "$1" ls-files --others --ignored --exclude-standard --directory 2>/dev/null \
+        | while IFS= read -r f; do
+            case "$(basename "$f")" in
+                *.jks|*.keystore|keystore.properties|*.p12|*.mobileprovision|.sentryclirc)
+                    [[ -L "$1/$f" ]] || echo "$f" ;;
+            esac
+        done
+}
+
 # Refuses (non-zero) when removing the worktree would lose work; --force
 # waives only the merge check.
 gate() {
@@ -418,15 +431,23 @@ gate() {
             echo "  refused: uncommitted or untracked changes" >&2
             return 1
         fi
+        # Ignored, so status doesn't show them, and other checkouts may link to them.
+        if [[ -n "$(signing_material "$wt")" ]]; then
+            echo "  refused: holds signing material — move it first: $(signing_material "$wt" | paste -sd ' ' -)" >&2
+            return 1
+        fi
     fi
     (( FORCE )) && return 0
-    tip="${WT_BRANCH:-$WT_HEAD}"
+    # By ref, so a tag of the same name can't answer for the branch.
+    tip="${WT_HEAD}"
+    [[ -n "$WT_BRANCH" ]] && tip="refs/heads/$WT_BRANCH"
     [[ -n "$tip" ]] || return 0
     for base in "${BASES[@]}"; do
+        git_main show-ref --verify -q "refs/heads/$base" && base="refs/heads/$base"
         git_main rev-parse --verify -q "$base^{commit}" >/dev/null || continue
         git_main merge-base --is-ancestor "$tip" "$base" && return 0
     done
-    echo "  refused: $tip is not merged into ${BASES[*]} (--force to drop it)" >&2
+    echo "  refused: ${WT_BRANCH:-$WT_HEAD} is not merged into ${BASES[*]} (--force to drop it)" >&2
     return 1
 }
 
@@ -440,6 +461,9 @@ remove_worktree() {
         echo "  would remove worktree $wt ($(human "$kb"))"
     elif git_main worktree remove "$wt"; then
         echo "  removed worktree $wt ($(human "$kb"))"
+        if [[ -n "$FA_CLEANUP_CALLER_DIR" && "$FA_CLEANUP_CALLER_DIR/" == "$wt/"* ]]; then
+            CALLER_REMOVED=1
+        fi
     else
         TOTAL_KB=$(( TOTAL_KB - kb ))
         echo "  could not remove worktree $wt, so left everything else in place" >&2
@@ -551,10 +575,13 @@ clean_orphans() {
             for prefix in "${PREFIXES[@]}"; do
                 suffix="${id#"$prefix".}"
                 [[ "$suffix" != "$id" && "$suffix" =~ ^[A-Za-z0-9_]+(\.test)?$ ]] || continue
+                # <prefix>.test is the unsuffixed build's instrumentation APK.
+                [[ "$suffix" == test ]] && continue
                 suffix="${suffix%.test}"
                 contains "$suffix" "${live_suffixes[@]}" && continue
                 uninstall_app "$id"
                 found=1
+                break
             done
         done
     fi
@@ -630,7 +657,7 @@ else
     echo "reclaimed $(human "$TOTAL_KB") (plus emulator app data)"
 fi
 
-if [[ "$FA_CLEANUP_CALLER_INSIDE" == 1 ]] && (( ! DRY_RUN )); then
+if (( CALLER_REMOVED )); then
     echo "note: your shell is in a deleted directory — cd $MAIN"
 fi
 
