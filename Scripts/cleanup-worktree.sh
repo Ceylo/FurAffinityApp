@@ -88,7 +88,7 @@ git_main() { git -C "$MAIN" "$@"; }
 # Absolute path for a worktree argument: a bare name lives in $WORKTREES.
 target_path() {
     local arg="${1%/}"
-    if [[ "$arg" != */* ]]; then
+    if [[ "$arg" != */* && "$arg" != . && "$arg" != .. ]]; then
         echo "$WORKTREES/$arg"
     elif [[ -d "$arg" ]]; then
         (cd "$arg" && pwd -P)
@@ -166,6 +166,7 @@ derived_data_paths() {
     local wt="$1" sub
     echo "$wt"
     echo "$wt/FurAffinity.xcodeproj"
+    echo "$wt/Project.xcworkspace"
     echo "$wt/Darwin/FurAffinityUI.xcodeproj"
     for sub in FAKit FALogging; do echo "$wt/$sub"; done
 }
@@ -187,10 +188,17 @@ human() {
 
 TOTAL_KB=0
 
+# du's size even when it fails partway (a build rewriting the tree, a missing dir).
+size_kb() {
+    local kb
+    kb="$(du -sk "$1" 2>/dev/null | cut -f1)" || true
+    echo "${kb:-0}"
+}
+
 # Remove a file tree, reporting its size.
 remove_tree() {
     local path="$1" label="$2" kb
-    kb="$(du -sk "$path" 2>/dev/null | cut -f1)"; kb="${kb:-0}"
+    kb="$(size_kb "$path")"
     TOTAL_KB=$(( TOTAL_KB + kb ))
     if (( DRY_RUN )); then
         echo "  would remove $label ($(human "$kb"))"
@@ -249,13 +257,17 @@ uninstall_app() {
         echo "  would uninstall $id"
         return
     fi
+    local lock=()
     if [[ -x "$LOCK_SCRIPT" ]]; then
-        "$LOCK_SCRIPT" "$ADB" uninstall "$id" >/dev/null
+        lock=("$LOCK_SCRIPT")
     else
         warn "no $LOCK_SCRIPT — uninstalling without the emulator lock"
-        "$ADB" uninstall "$id" >/dev/null
     fi
-    echo "  uninstalled $id"
+    if "${lock[@]}" "$ADB" uninstall "$id" >/dev/null; then
+        echo "  uninstalled $id"
+    else
+        warn "could not uninstall $id"
+    fi
 }
 
 clean_emulator_app() {
@@ -288,15 +300,18 @@ fa_simulators() {
 
 remove_simulator() {
     local udid="$1" state="$2" name="$3" kb
-    kb="$(du -sk "$SIM_DEVICES/$udid" 2>/dev/null | cut -f1)"; kb="${kb:-0}"
+    kb="$(size_kb "$SIM_DEVICES/$udid")"
     TOTAL_KB=$(( TOTAL_KB + kb ))
     if (( DRY_RUN )); then
         echo "  would delete simulator FA $name ($(human "$kb"))"
         return
     fi
     [[ "$state" == Shutdown ]] || xcrun simctl shutdown "$udid" 2>/dev/null || true
-    xcrun simctl delete "$udid"
-    echo "  deleted simulator FA $name ($(human "$kb"))"
+    if xcrun simctl delete "$udid"; then
+        echo "  deleted simulator FA $name ($(human "$kb"))"
+    else
+        warn "could not delete simulator FA $name"
+    fi
 }
 
 clean_simulator() {
@@ -343,15 +358,19 @@ clean_mcp_workspaces() {
 
 # --- one worktree -----------------------------------------------------------
 
-# Sets WT_REGISTERED, WT_BRANCH and WT_HEAD from `git worktree list`.
+# Sets WT_REGISTERED, WT_LOCKED, WT_BRANCH and WT_HEAD from `git worktree list`,
+# and WT_NAMESAKE to another live checkout with the same directory name.
 read_worktree() {
     local wt="$1" line cur=""
-    WT_REGISTERED=0 WT_BRANCH="" WT_HEAD=""
+    WT_REGISTERED=0 WT_LOCKED=0 WT_BRANCH="" WT_HEAD="" WT_NAMESAKE=""
     while IFS= read -r line; do
         case "$line" in
-            "worktree "*) cur="${line#worktree }" ;;
+            "worktree "*) cur="${line#worktree }"
+                          [[ "$cur" != "$wt" && "$(basename "$cur")" == "$(basename "$wt")" && -d "$cur" ]] \
+                              && WT_NAMESAKE="$cur" ;;
             "HEAD "*)     [[ "$cur" == "$wt" ]] && WT_HEAD="${line#HEAD }" ;;
             "branch "*)   [[ "$cur" == "$wt" ]] && WT_BRANCH="${line#branch refs/heads/}" ;;
+            locked*)      [[ "$cur" == "$wt" ]] && WT_LOCKED=1 ;;
         esac
         [[ "$cur" == "$wt" ]] && WT_REGISTERED=1
     done < <(git_main worktree list --porcelain)
@@ -379,17 +398,19 @@ gate() {
 remove_worktree() {
     local wt="$1" kb flags=()
     (( FORCE )) && flags+=(--force)
-    if [[ -d "$wt" ]]; then
-        kb="$(du -sk "$wt" 2>/dev/null | cut -f1)"; kb="${kb:-0}"
+    # Also unregisters one whose directory is already gone.
+    if (( WT_REGISTERED )); then
+        kb="$(size_kb "$wt")"
         TOTAL_KB=$(( TOTAL_KB + kb ))
         if (( DRY_RUN )); then
             echo "  would remove worktree $wt ($(human "$kb"))"
-        else
-            git_main worktree remove "${flags[@]}" "$wt"
+        elif git_main worktree remove "${flags[@]}" "$wt"; then
             echo "  removed worktree $wt ($(human "$kb"))"
+        else
+            echo "  could not remove worktree $wt, so kept branch ${WT_BRANCH:-(none)}" >&2
+            return 1
         fi
     fi
-    (( DRY_RUN )) || git_main worktree prune
     if [[ -n "$WT_BRANCH" ]]; then
         # -D: -d checks against the current HEAD, and the gate already checked the bases.
         if (( DRY_RUN )); then
@@ -417,10 +438,22 @@ clean_worktree() {
         echo "  refused: not a worktree of $MAIN" >&2
         return 1
     fi
+    # Its app and simulator are keyed by the name alone, so they are that one's too.
+    if [[ -n "$WT_NAMESAKE" ]]; then
+        echo "  refused: $WT_NAMESAKE shares its name" >&2
+        return 1
+    fi
+    if (( WT_LOCKED )); then
+        echo "  refused: locked (git worktree unlock $wt)" >&2
+        return 1
+    fi
     # A worktree removed by hand still leaves its branch behind under its name.
-    if [[ -z "$WT_BRANCH" && -z "$WT_HEAD" ]] \
-        && git_main show-ref --verify -q "refs/heads/$name"; then
+    if (( ! WT_REGISTERED )) && git_main show-ref --verify -q "refs/heads/$name"; then
         WT_BRANCH="$name"
+    fi
+    if (( ! WT_REGISTERED )) && [[ -z "$WT_BRANCH" ]]; then
+        echo "  refused: neither a worktree nor a branch (--orphans sweeps what is left)" >&2
+        return 1
     fi
     if [[ -n "$WT_BRANCH" ]] && contains "$WT_BRANCH" "${BASES[@]}" main android; then
         echo "  refused: $WT_BRANCH is a base branch" >&2
@@ -485,7 +518,7 @@ clean_orphans() {
 
     echo "DerivedData"
     found=0
-    for dir in "$DERIVED_DATA"/{FurAffinity,FurAffinityUI,FAKit,FALogging}-*; do
+    for dir in "$DERIVED_DATA"/{FurAffinity,FurAffinityUI,Project,FAKit,FALogging}-*; do
         [[ -d "$dir" && "${dir##*-}" =~ ^[a-z]{28}$ ]] || continue
         contains "${dir##*-}" "${live_hashes[@]}" && continue
         # One whose project still exists belongs to some other checkout.
