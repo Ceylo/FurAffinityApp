@@ -42,6 +42,27 @@ What it does, and why each part is needed on Xcode 26.6:
   is an APFS clone and costs no disk. The scheme's build pre-action re-clones it after
   an Xcode update.
 
+## Opting in
+
+The toolchain is per machine: nothing installs it but the script above, and the
+scheme's pre-action only refreshes one that is already installed. Without it, a clone
+still gets the per-worktree cache, and the LLDB init file only chains to
+`~/.lldbinit`.
+
+Xcode ▸ Toolchains is one preference for all of Xcode, not per project, so every
+worktree opened in Xcode uses it (`xcodebuild` ignores that preference and needs
+`TOOLCHAINS`). Other projects build as with Xcode's default toolchain unless they turn
+on `COMPILATION_CACHE_ENABLE_CACHING`. If they do, their objects get `/^src` paths that
+nothing maps back, so their breakpoints don't bind: select the default toolchain for
+them.
+
+After an Xcode update, build FurAffinity first, or run the script. Until then the
+toolchain is the old Xcode's, for every project. The shim is written against Xcode
+26.6's driver. A newer driver may leave a different path unmapped, which only turns
+cross-worktree hits into misses: check a new worktree's first build with
+`-Rcache-compile-job` (`replay` is a hit, `cache miss` is not). Building with two
+Xcodes in turn re-clones the toolchain at every switch.
+
 ## Debugging
 
 Objects built this way name `/^src/…` files, and a cache hit replays another
