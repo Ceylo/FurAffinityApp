@@ -21,6 +21,10 @@ TOOLCHAIN = os.path.expanduser("~/Library/Developer/Toolchains/FACompilationCach
 DERIVED_DATA = os.path.expanduser("~/Library/Developer/Xcode/DerivedData")
 SCRATCH = os.path.expanduser("~/Library/Caches/FACompilationCache/lldb")
 
+# Whether this session maps. Xcode keeps one debugger across sessions, so a
+# stop hook from an earlier toolchain session must not map a later one.
+_mapping = False
+
 
 def _derived_data_dir():
     """This worktree's most recently used DerivedData directory, if any."""
@@ -98,7 +102,7 @@ class PerTarget:
         self.done = False
 
     def handle_stop(self, exe_ctx, stream):
-        if not self.done:
+        if _mapping and not self.done:
             self.done = True
             triple = exe_ctx.target.GetTriple() or ""
             if "simulator" not in triple:
@@ -112,8 +116,18 @@ def __lldb_init_module(debugger, internal_dict):
         if os.path.isfile(f):
             debugger.HandleCommand(f'command source -s true "{f}"')
             break
-    # Shared scheme: do nothing unless the toolchain built what is being debugged.
-    if not os.path.isdir(TOOLCHAIN) or not _built_with_toolchain():
+    global _mapping
+    # Shared scheme: do nothing unless the toolchain built what is being debugged,
+    # and undo what an earlier session of this debugger set.
+    _mapping = os.path.isdir(TOOLCHAIN) and _built_with_toolchain()
+    if os.path.isdir(TOOLCHAIN):
+        print("FA Compilation Cache: " + ("mapping /^src paths" if _mapping else "not a toolchain build, paths left as built"))
+    if not _mapping:
+        shown = lldb.SBCommandReturnObject()
+        debugger.GetCommandInterpreter().HandleCommand("settings show target.source-map", shown)
+        if "/^src" in (shown.GetOutput() or ""):
+            debugger.HandleCommand("settings clear target.source-map")
+            debugger.HandleCommand("settings clear target.swift-extra-clang-flags")
         return
     # Set before any target exists, so a breakpoint by full path binds when its
     # module loads.
