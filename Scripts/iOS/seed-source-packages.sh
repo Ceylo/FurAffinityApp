@@ -91,12 +91,17 @@ if [ -z "$SRC" ]; then
   exit 0
 fi
 
+# Built aside and swapped in with one rename, so a Ctrl-C or a full disk during
+# the multi-GB copy leaves no half-seeded SourcePackages at the path the exit
+# check above trusts.
+STAGING="$DST/SourcePackages.seeding.$$"
+trap 'rm -rf "${STAGING:?}"' EXIT
 mkdir -p "$DST"
-cp -Rc "$SRC/SourcePackages" "$DST/SourcePackages"
+cp -Rc "$SRC/SourcePackages" "$STAGING"
 
-for f in "$DST/SourcePackages/workspace-state.json" \
-         "$DST/SourcePackages"/checkouts/*/.git/config \
-         "$DST/SourcePackages"/checkouts/*/.git/objects/info/alternates; do
+for f in "$STAGING/workspace-state.json" \
+         "$STAGING"/checkouts/*/.git/config \
+         "$STAGING"/checkouts/*/.git/objects/info/alternates; do
   [ -f "$f" ] || continue
   sed -i '' \
     -e "s#$SRC#$DST#g" \
@@ -104,11 +109,11 @@ for f in "$DST/SourcePackages/workspace-state.json" \
     "$f"
 done
 
-if grep -rIl "$SRC" "$DST/SourcePackages/workspace-state.json" \
-       "$DST/SourcePackages"/checkouts/*/.git/config \
-       "$DST/SourcePackages"/checkouts/*/.git/objects/info/alternates 2>/dev/null | grep -q .; then
-  rm -rf "$DST/SourcePackages"
-  die "stale path from $SRC survived rewriting; removed the seeded copy"
+if grep -rIl -e "$SRC" -e "$SRC_WORKTREE" "$STAGING/workspace-state.json" \
+       "$STAGING"/checkouts/*/.git/config \
+       "$STAGING"/checkouts/*/.git/objects/info/alternates 2>/dev/null | grep -q .; then
+  die "stale path from $SRC or $SRC_WORKTREE survived rewriting"
 fi
 
+mv "$STAGING" "$DST/SourcePackages"
 echo "seed-source-packages: seeded $DST/SourcePackages from $SRC"

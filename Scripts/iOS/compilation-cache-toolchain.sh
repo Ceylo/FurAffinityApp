@@ -47,10 +47,13 @@ if (( IF_STALE )) && [[ "$(plutil -extract FAStamp raw "$DST/Info.plist" 2>/dev/
 fi
 
 # Built aside and swapped in whole, so a build running meanwhile keeps a
-# consistent toolchain.
+# consistent toolchain. Only $TMP is trap-cleaned: if we're interrupted between
+# rotating $DST to $OLD and moving $TMP into place, $OLD is the last working
+# toolchain and must survive to be found (and manually restored) rather than be
+# deleted alongside the half-finished install.
 TMP="$DST.new.$$"
 OLD="$DST.old.$$"
-trap 'rm -rf "${TMP:?}" "${OLD:?}"' EXIT
+trap 'rm -rf "${TMP:?}"' EXIT
 mkdir -p "${DST%/*}"
 cp -Rc "$SRC" "$TMP"
 rm "$TMP/ToolchainInfo.plist"   # carries Xcode's own toolchain identifier
@@ -116,4 +119,5 @@ plutil -lint -s "$TMP/Info.plist"
 # converge on the same toolchain either way.
 mv "$DST" "$OLD" 2>/dev/null || true
 mv "$TMP" "$DST"
+rm -rf "${OLD:?}"
 echo "installed $DST (Xcode $XCODE_BUILD)"
