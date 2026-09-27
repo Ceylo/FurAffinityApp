@@ -226,6 +226,10 @@ FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, 
     [ -n "$p" ] && [ ! -e "$p" ] && echo "$d"
   done
   ```
+  Run `Scripts/install-git-hooks.sh` once per clone: a new worktree's `post-checkout`
+  then seeds its DerivedData/SourcePackages from a sibling's pinned to the same
+  `Package.resolved` (`Scripts/iOS/seed-source-packages.sh`), skipping SwiftPM's
+  package resolution and ~29 checkouts.
 - **A bridged view's `@State`/`@Environment` must not be `private`.** skipstone
   generates the bridge from the property list it can see, so a private one is
   silently left out and the view never recomposes. Call sites carry a one-line
