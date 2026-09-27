@@ -693,7 +693,7 @@ tilde() {
 clean_orphans() {
     local live=() live_names=() live_suffixes=() live_hashes=() live_hash_paths=()
     local live_mcp_keys=() live_mcp_paths=() dead_names=() dead_hashes=() candidates=()
-    local wt name dir path key id prefix suffix line udid state sim found i
+    local wt name dir path key id prefix suffix line udid state sim found i tmp
 
     # Porcelain blocks end with a blank line.
     LIVE_BRANCHES=()
@@ -748,6 +748,12 @@ clean_orphans() {
     compute_keys dd "$(for wt in "${candidates[@]}"; do derived_data_paths "$wt"; done)"
     dead_hashes=("${KEYS[@]}")
 
+    # Buffered to files so the "merged and clean" summary below — which needs
+    # every section's charges tallied first — can still print before them.
+    tmp="$(mktemp -d "${TMPDIR:-/tmp}/fa-orphans.XXXXXX")"
+    exec 5>&1
+
+    exec 1>"$tmp/emulator"
     echo "Emulator apps"
     load_emulator
     found=0
@@ -777,7 +783,9 @@ clean_orphans() {
         done
     fi
     end_section "$found"
+    exec 1>&5
 
+    exec 1>"$tmp/simulators"
     echo "Simulators"
     found=0
     for line in "${SIMS[@]}"; do
@@ -790,7 +798,9 @@ clean_orphans() {
         fi
     done
     end_section "$found"
+    exec 1>&5
 
+    exec 1>"$tmp/derived_data"
     echo "DerivedData"
     found=0
     # By the hash of a removed worktree we know the name of; failing that, by
@@ -824,10 +834,12 @@ clean_orphans() {
         found=1
     done
     end_section "$found"
+    exec 1>&5
 
     # A workspace key is <basename>-<sha256[:12]> of its root, so a removed
     # worktree's is recomputable, at its root or in a subdir, as long as its
     # name survives somewhere: a subdir's key alone doesn't carry it.
+    exec 1>"$tmp/mcp"
     echo "XcodeBuildMCP workspaces"
     found=0
     compute_keys mcp "$(for wt in "${candidates[@]}"; do mcp_roots "$wt"; done)"
@@ -844,11 +856,14 @@ clean_orphans() {
         fi
     done
     end_section "$found"
+    exec 1>&5
+    exec 5>&-
 
     for i in "${!LIVE[@]}"; do charge "$i" $WORKTREE_COL "$(size_kb "${LIVE[$i]}")"; done
 
-    # Not leftovers, since they still exist, but the next thing to reclaim.
-    echo "Merged and clean worktrees: cleanup-worktree.sh <name> reclaims each total"
+    # Not leftovers, since they still exist, but the next thing to reclaim —
+    # surfaced first since it's easy to miss buried after the sections below.
+    echo "Merged and clean worktrees — safe to remove with cleanup-worktree.sh <name>:"
     found=0
     for i in "${!LIVE[@]}"; do
         [[ -n "${LIVE_NOTES[$i]}" ]] || continue
@@ -856,6 +871,9 @@ clean_orphans() {
         found=1
     done
     (( found )) || echo "  none"
+
+    cat "$tmp/emulator" "$tmp/simulators" "$tmp/derived_data" "$tmp/mcp"
+    rm -rf "$tmp"
 
     report_usage
 }
