@@ -274,10 +274,24 @@ load_emulator() {
     fi
 }
 
+# Sets APP_KB to an installed app's APK plus data, and APP_SIZE to it for
+# display. Its data is only readable through run-as, so a debug build's.
+app_size() {
+    local apk data
+    read -r apk data < <("$ADB" shell "d=\$(pm path '$1' | sed -n '1s/^package://p');
+        du -sk \"\${d%/*}\" 2>/dev/null | cut -f1 | tr '\n' ' ';
+        run-as '$1' du -sk . 2>/dev/null | cut -f1" | tr -d '\r' | tr '\n' ' ') || true
+    APP_KB=$(( ${apk:-0} + ${data:-0} ))
+    APP_SIZE="$(human "$APP_KB")"
+    [[ -n "$data" ]] || APP_SIZE="$APP_SIZE APK, data unreadable"
+}
+
 uninstall_app() {
     local id="$1"
+    app_size "$id"
+    TOTAL_KB=$(( TOTAL_KB + APP_KB ))
     if (( DRY_RUN )); then
-        echo "  would uninstall $id"
+        echo "  would uninstall $id ($APP_SIZE)"
         return
     fi
     local lock=()
@@ -287,8 +301,9 @@ uninstall_app() {
         warn "no $LOCK_SCRIPT — uninstalling without the emulator lock"
     fi
     if "${lock[@]}" "$ADB" uninstall "$id" >/dev/null; then
-        echo "  uninstalled $id"
+        echo "  uninstalled $id ($APP_SIZE)"
     else
+        TOTAL_KB=$(( TOTAL_KB - APP_KB ))
         warn "could not uninstall $id"; FAILED=1
     fi
 }
@@ -555,10 +570,15 @@ clean_worktree() {
 KEPT_KB=0
 KEPT=()
 
-# Records an item the sweep looked at and left alone, sized when it has a path.
+# Records an item the sweep looked at and left alone, sized by its path, or
+# by its app id with `app:<id>`.
 keep() {
     local label="$1" reason="$2" path="$3" kb size=""
-    if [[ -n "$path" ]]; then
+    if [[ "$path" == app:* ]]; then
+        app_size "${path#app:}"
+        KEPT_KB=$(( KEPT_KB + APP_KB ))
+        size=" ($APP_SIZE)"
+    elif [[ -n "$path" ]]; then
         kb="$(size_kb "$path")"
         KEPT_KB=$(( KEPT_KB + kb ))
         size=" ($(human "$kb"))"
@@ -585,6 +605,19 @@ index_of() {
     return 1
 }
 
+# The path a kept item belongs to, and whether its worktree is merged and
+# clean, so that it is kept only for want of a cleanup-worktree.sh run.
+user_of() {
+    local path="$1" i
+    for i in "${!LIVE[@]}"; do
+        if [[ "$path" == "${LIVE[$i]}" || "$path" == "${LIVE[$i]}/"* ]]; then
+            echo "$(tilde "$path")${LIVE_NOTES[$i]}"
+            return
+        fi
+    done
+    tilde "$path"
+}
+
 tilde() {
     # shellcheck disable=SC2088 # a literal ~, for display
     if [[ "$1" == "$HOME/"* ]]; then echo "~/${1#"$HOME/"}"; else echo "$1"; fi
@@ -599,6 +632,21 @@ clean_orphans() {
         [[ -d "$wt" ]] && live+=("$wt")
     done < <(git_main worktree list --porcelain | sed -n 's/^worktree //p')
     for wt in "${live[@]}"; do live_names+=("$(basename "$wt")"); done
+
+    # A live worktree the gate would let go (read_worktree reuses KEYS).
+    LIVE=("${live[@]}") LIVE_NOTES=()
+    for wt in "${live[@]}"; do
+        name=""
+        if [[ "$wt" != "$MAIN" ]]; then
+            read_worktree "$wt"
+            if (( ! WT_LOCKED )) && [[ -z "$WT_NAMESAKE" ]] \
+                && { [[ -z "$WT_BRANCH" ]] || ! contains "$WT_BRANCH" "${BASES[@]}" "${PROTECTED[@]}"; } \
+                && gate "$wt" 2>/dev/null; then
+                name=" — merged and clean"
+            fi
+        fi
+        LIVE_NOTES+=("$name")
+    done
     compute_keys suffix "$(printf '%s\n' "${live[@]}")"
     live_suffixes=("${KEYS[@]}")
     compute_keys dd "$(for wt in "${live[@]}"; do derived_data_paths "$wt"; done)"
@@ -631,17 +679,17 @@ clean_orphans() {
         for id in "${PACKAGES[@]}"; do
             for prefix in "${PREFIXES[@]}"; do
                 if [[ "$id" == "$prefix" ]]; then
-                    keep "$id" "the unsuffixed (release or distribution) build"
+                    keep "$id" "the unsuffixed (release or distribution) build" "app:$id"
                     break
                 fi
                 suffix="${id#"$prefix".}"
                 [[ "$suffix" != "$id" ]] || continue
                 if [[ "$suffix" == test ]]; then
-                    keep "$id" "the unsuffixed build's test APK"
+                    keep "$id" "the unsuffixed build's test APK" "app:$id"
                 elif [[ ! "$suffix" =~ ^[A-Za-z0-9_]+(\.test)?$ ]]; then
-                    keep "$id" "not a worktree's app id"
+                    keep "$id" "not a worktree's app id" "app:$id"
                 elif i="$(index_of "${suffix%.test}" "${live_suffixes[@]}")"; then
-                    keep "$id" "$(tilde "${live[$i]}")"
+                    keep "$id" "$(user_of "${live[$i]}")" "app:$id"
                 else
                     uninstall_app "$id"
                     found=1
@@ -657,7 +705,7 @@ clean_orphans() {
     for line in "${SIMS[@]}"; do
         IFS='|' read -r udid state sim <<< "$line"
         if i="$(index_of "$sim" "${live_names[@]}")"; then
-            keep "FA $sim" "$(tilde "${live[$i]}")" "$SIM_DEVICES/$udid"
+            keep "FA $sim" "$(user_of "${live[$i]}")" "$SIM_DEVICES/$udid"
         else
             remove_simulator "$udid" "$state" "$sim"
             found=1
@@ -675,7 +723,7 @@ clean_orphans() {
         [[ -d "$dir" && "${dir##*-}" =~ ^[a-z]{28}$ ]] || continue
         name="$(basename "$dir")"
         if i="$(index_of "${dir##*-}" "${live_hashes[@]}")"; then
-            keep "$name" "$(tilde "${live_hash_paths[$i]}")" "$dir"
+            keep "$name" "$(user_of "${live_hash_paths[$i]}")" "$dir"
             continue
         fi
         if ! contains "${dir##*-}" "${dead_hashes[@]}"; then
@@ -712,12 +760,23 @@ clean_orphans() {
             remove_tree "$dir" "XcodeBuildMCP workspace $key ($(tilde "${KEY_PATHS[$i]}"))"
             found=1
         elif i="$(index_of "$key" "${live_mcp_keys[@]}")"; then
-            keep "$key" "$(tilde "${live_mcp_paths[$i]}")" "$dir"
+            keep "$key" "$(user_of "${live_mcp_paths[$i]}")" "$dir"
         else
             keep "$key" "started outside $(tilde "$WORKTREES"), or in a removed worktree whose name is lost" "$dir"
         fi
     done
     end_section "$found"
+
+    # Not leftovers, since they still exist, but the next thing to reclaim.
+    echo "Merged and clean worktrees, kept: cleanup-worktree.sh <name> removes one"
+    found=0
+    for i in "${!LIVE[@]}"; do
+        [[ -n "${LIVE_NOTES[$i]}" ]] || continue
+        keep "$(basename "${LIVE[$i]}")" "$(tilde "${LIVE[$i]}")" "${LIVE[$i]}"
+        found=1
+    done
+    (( found )) || echo "  none"
+    end_section 1
 }
 
 # --- run --------------------------------------------------------------------
@@ -734,9 +793,9 @@ fi
 KEPT_TOTAL=""
 (( ORPHANS )) && KEPT_TOTAL="; kept $(human "$KEPT_KB")"
 if (( DRY_RUN )); then
-    echo "would reclaim $(human "$TOTAL_KB") (plus emulator app data)$KEPT_TOTAL"
+    echo "would reclaim $(human "$TOTAL_KB")$KEPT_TOTAL"
 else
-    echo "reclaimed $(human "$TOTAL_KB") (plus emulator app data)$KEPT_TOTAL"
+    echo "reclaimed $(human "$TOTAL_KB")$KEPT_TOTAL"
 fi
 
 if (( CALLER_REMOVED )); then
