@@ -18,8 +18,8 @@
 #   --base      a branch the worktree's must be merged into; repeatable,
 #               replaces the default `android` and `main`
 #   --orphans   sweep what worktrees removed without this script left behind,
-#               and list what it kept and what still uses it; it assumes every
-#               checkout of the repo is one of its worktrees
+#               list what it kept and what still uses it, and total the storage
+#               of each branch; it assumes every checkout is a worktree of this repo
 #
 # A bare name is a directory under ../FurAffinity-worktrees. The worktree may
 # already be gone (ExitWorktree, `git worktree remove`): its leftovers are still
@@ -567,23 +567,39 @@ clean_worktree() {
 
 # --- orphans ----------------------------------------------------------------
 
-KEPT_KB=0
 KEPT=()
 
-# Records an item the sweep looked at and left alone, sized by its path, or
-# by its app id with `app:<id>`.
+# The per-branch usage table: USAGE[row * 5 + column], a row per LIVE
+# checkout plus a last one for what belongs to none, a column per kind.
+USAGE=()
+USAGE_COLUMNS=(emulator simulator DerivedData XcodeBuildMCP worktree)
+EMULATOR_COL=0 SIMULATOR_COL=1 DERIVED_DATA_COL=2 MCP_COL=3 WORKTREE_COL=4
+
+charge() {
+    local cell=$(( $1 * 5 + $2 ))
+    USAGE[cell]=$(( ${USAGE[cell]:-0} + $3 ))
+}
+
+row_kb() {
+    local col kb=0
+    for col in 0 1 2 3 4; do kb=$(( kb + ${USAGE[$1 * 5 + col]:-0} )); done
+    echo "$kb"
+}
+
+# keep <column> <owner> <label> <reason> <path | app:id>: records an item the
+# sweep left alone, sized, and charges it to the live checkout its owner path
+# lies in, if any.
 keep() {
-    local label="$1" reason="$2" path="$3" kb size=""
-    if [[ "$path" == app:* ]]; then
-        app_size "${path#app:}"
-        KEPT_KB=$(( KEPT_KB + APP_KB ))
-        size=" ($APP_SIZE)"
-    elif [[ -n "$path" ]]; then
-        kb="$(size_kb "$path")"
-        KEPT_KB=$(( KEPT_KB + kb ))
-        size=" ($(human "$kb"))"
+    local col="$1" owner="$2" label="$3" reason="$4" sizing="$5" kb size row
+    if [[ "$sizing" == app:* ]]; then
+        app_size "${sizing#app:}"
+        kb="$APP_KB" size="$APP_SIZE"
+    else
+        kb="$(size_kb "$sizing")" size="$(human "$kb")"
     fi
-    KEPT+=("  kept $label$size — $reason")
+    row="$(live_index "$owner")" || row=${#LIVE[@]}
+    charge "$row" "$col" "$kb"
+    KEPT+=("  kept $label ($size) — $reason")
 }
 
 # Ends a section: what was kept, after what was removed.
@@ -605,17 +621,68 @@ index_of() {
     return 1
 }
 
+# Index of the LIVE checkout a path lies in.
+live_index() {
+    local i
+    [[ -n "$1" ]] || return 1
+    for i in "${!LIVE[@]}"; do
+        if [[ "$1" == "${LIVE[$i]}" || "$1" == "${LIVE[$i]}/"* ]]; then
+            echo "$i"
+            return 0
+        fi
+    done
+    return 1
+}
+
 # The path a kept item belongs to, and whether its worktree is merged and
 # clean, so that it is kept only for want of a cleanup-worktree.sh run.
 user_of() {
-    local path="$1" i
-    for i in "${!LIVE[@]}"; do
-        if [[ "$path" == "${LIVE[$i]}" || "$path" == "${LIVE[$i]}/"* ]]; then
-            echo "$(tilde "$path")${LIVE_NOTES[$i]}"
-            return
-        fi
+    local i
+    if i="$(live_index "$1")"; then
+        echo "$(tilde "$1")${LIVE_NOTES[$i]}"
+    else
+        tilde "$1"
+    fi
+}
+
+# usage_line <width> <label> <kb>…: the label, a size (or -) per kb, and their total.
+usage_line() {
+    local width="$1" label="$2" kb total=0
+    shift 2
+    printf '  %-*s' "$width" "$label"
+    for kb in "$@"; do
+        total=$(( total + kb ))
+        if (( kb )); then printf ' %13s' "$(human "$kb")"; else printf ' %13s' -; fi
     done
-    tilde "$path"
+    printf ' %13s\n' "$(human "$total")"
+}
+
+# What each live checkout's branch costs, all kinds together, largest first,
+# then each kind's total.
+report_usage() {
+    local i col label width=6 labels=() cells sums=()
+    for (( i = 0; i <= ${#LIVE[@]}; i++ )); do
+        label="${LIVE_BRANCHES[$i]:-other (in no worktree)}"
+        labels+=("$label")
+        (( ${#label} > width )) && width=${#label}
+    done
+    for col in 0 1 2 3 4; do
+        sums[col]=0
+        for (( i = 0; i <= ${#LIVE[@]}; i++ )); do
+            sums[col]=$(( sums[col] + ${USAGE[i * 5 + col]:-0} ))
+        done
+    done
+
+    echo "Storage per branch"
+    printf '  %-*s' "$width" branch
+    for col in "${USAGE_COLUMNS[@]}" total; do printf ' %13s' "$col"; done
+    echo
+    for (( i = 0; i <= ${#LIVE[@]}; i++ )); do
+        cells=()
+        for col in 0 1 2 3 4; do cells+=("${USAGE[i * 5 + col]:-0}"); done
+        printf '%s\t%s\n' "$(row_kb "$i")" "$(usage_line "$width" "${labels[$i]}" "${cells[@]}")"
+    done | sort -rn | cut -f2-
+    usage_line "$width" all "${sums[@]}"
 }
 
 tilde() {
@@ -628,9 +695,20 @@ clean_orphans() {
     local live_mcp_keys=() live_mcp_paths=() dead_names=() dead_hashes=() candidates=()
     local wt name dir path key id prefix suffix line udid state sim found i
 
-    while IFS= read -r wt; do
-        [[ -d "$wt" ]] && live+=("$wt")
-    done < <(git_main worktree list --porcelain | sed -n 's/^worktree //p')
+    # Porcelain blocks end with a blank line.
+    LIVE_BRANCHES=()
+    wt="" name=""
+    while IFS= read -r line; do
+        case "$line" in
+            "worktree "*) wt="${line#worktree }" ;;
+            "branch "*)   name="${line#branch refs/heads/}" ;;
+            "")           if [[ -d "$wt" ]]; then
+                              live+=("$wt")
+                              LIVE_BRANCHES+=("${name:-(detached) $(basename "$wt")}")
+                          fi
+                          wt="" name="" ;;
+        esac
+    done < <(git_main worktree list --porcelain; echo)
     for wt in "${live[@]}"; do live_names+=("$(basename "$wt")"); done
 
     # A live worktree the gate would let go (read_worktree reuses KEYS).
@@ -679,17 +757,17 @@ clean_orphans() {
         for id in "${PACKAGES[@]}"; do
             for prefix in "${PREFIXES[@]}"; do
                 if [[ "$id" == "$prefix" ]]; then
-                    keep "$id" "the unsuffixed (release or distribution) build" "app:$id"
+                    keep $EMULATOR_COL "" "$id" "the unsuffixed (release or distribution) build" "app:$id"
                     break
                 fi
                 suffix="${id#"$prefix".}"
                 [[ "$suffix" != "$id" ]] || continue
                 if [[ "$suffix" == test ]]; then
-                    keep "$id" "the unsuffixed build's test APK" "app:$id"
+                    keep $EMULATOR_COL "" "$id" "the unsuffixed build's test APK" "app:$id"
                 elif [[ ! "$suffix" =~ ^[A-Za-z0-9_]+(\.test)?$ ]]; then
-                    keep "$id" "not a worktree's app id" "app:$id"
+                    keep $EMULATOR_COL "" "$id" "not a worktree's app id" "app:$id"
                 elif i="$(index_of "${suffix%.test}" "${live_suffixes[@]}")"; then
-                    keep "$id" "$(user_of "${live[$i]}")" "app:$id"
+                    keep $EMULATOR_COL "${live[$i]}" "$id" "$(user_of "${live[$i]}")" "app:$id"
                 else
                     uninstall_app "$id"
                     found=1
@@ -705,7 +783,7 @@ clean_orphans() {
     for line in "${SIMS[@]}"; do
         IFS='|' read -r udid state sim <<< "$line"
         if i="$(index_of "$sim" "${live_names[@]}")"; then
-            keep "FA $sim" "$(user_of "${live[$i]}")" "$SIM_DEVICES/$udid"
+            keep $SIMULATOR_COL "${live[$i]}" "FA $sim" "$(user_of "${live[$i]}")" "$SIM_DEVICES/$udid"
         else
             remove_simulator "$udid" "$state" "$sim"
             found=1
@@ -723,21 +801,21 @@ clean_orphans() {
         [[ -d "$dir" && "${dir##*-}" =~ ^[a-z]{28}$ ]] || continue
         name="$(basename "$dir")"
         if i="$(index_of "${dir##*-}" "${live_hashes[@]}")"; then
-            keep "$name" "$(user_of "${live_hash_paths[$i]}")" "$dir"
+            keep $DERIVED_DATA_COL "${live_hash_paths[$i]}" "$name" "$(user_of "${live_hash_paths[$i]}")" "$dir"
             continue
         fi
         if ! contains "${dir##*-}" "${dead_hashes[@]}"; then
             path="$(workspace_path "$dir")"
             if [[ -n "$path" && -e "$path" ]]; then
-                keep "$name" "$(tilde "$path")" "$dir"
+                keep $DERIVED_DATA_COL "$path" "$name" "$(user_of "$path")" "$dir"
                 continue
             elif [[ -n "$path" && "$path" != "$WORKTREES/"* ]]; then
-                keep "$name" "$(tilde "$path"), gone, but not under $(tilde "$WORKTREES")" "$dir"
+                keep $DERIVED_DATA_COL "" "$name" "$(tilde "$path"), gone, but not under $(tilde "$WORKTREES")" "$dir"
                 continue
             elif [[ -z "$path" ]]; then
                 case "$name" in
                     FurAffinity-*|FurAffinityUI-*|FAKit-*|FALogging-*) ;;
-                    *) keep "$name" "no info.plist, and not one of this repo's project names" "$dir"
+                    *) keep $DERIVED_DATA_COL "" "$name" "no info.plist, and not one of this repo's project names" "$dir"
                        continue ;;
                 esac
             fi
@@ -760,23 +838,26 @@ clean_orphans() {
             remove_tree "$dir" "XcodeBuildMCP workspace $key ($(tilde "${KEY_PATHS[$i]}"))"
             found=1
         elif i="$(index_of "$key" "${live_mcp_keys[@]}")"; then
-            keep "$key" "$(user_of "${live_mcp_paths[$i]}")" "$dir"
+            keep $MCP_COL "${live_mcp_paths[$i]}" "$key" "$(user_of "${live_mcp_paths[$i]}")" "$dir"
         else
-            keep "$key" "started outside $(tilde "$WORKTREES"), or in a removed worktree whose name is lost" "$dir"
+            keep $MCP_COL "" "$key" "started outside $(tilde "$WORKTREES"), or in a removed worktree whose name is lost" "$dir"
         fi
     done
     end_section "$found"
 
+    for i in "${!LIVE[@]}"; do charge "$i" $WORKTREE_COL "$(size_kb "${LIVE[$i]}")"; done
+
     # Not leftovers, since they still exist, but the next thing to reclaim.
-    echo "Merged and clean worktrees, kept: cleanup-worktree.sh <name> removes one"
+    echo "Merged and clean worktrees: cleanup-worktree.sh <name> reclaims each total"
     found=0
     for i in "${!LIVE[@]}"; do
         [[ -n "${LIVE_NOTES[$i]}" ]] || continue
-        keep "$(basename "${LIVE[$i]}")" "$(tilde "${LIVE[$i]}")" "${LIVE[$i]}"
+        echo "  $(basename "${LIVE[$i]}") ($(human "$(row_kb "$i")")) — $(tilde "${LIVE[$i]}")"
         found=1
     done
     (( found )) || echo "  none"
-    end_section 1
+
+    report_usage
 }
 
 # --- run --------------------------------------------------------------------
@@ -790,12 +871,10 @@ else
     done
 fi
 
-KEPT_TOTAL=""
-(( ORPHANS )) && KEPT_TOTAL="; kept $(human "$KEPT_KB")"
 if (( DRY_RUN )); then
-    echo "would reclaim $(human "$TOTAL_KB")$KEPT_TOTAL"
+    echo "would reclaim $(human "$TOTAL_KB")"
 else
-    echo "reclaimed $(human "$TOTAL_KB")$KEPT_TOTAL"
+    echo "reclaimed $(human "$TOTAL_KB")"
 fi
 
 if (( CALLER_REMOVED )); then
