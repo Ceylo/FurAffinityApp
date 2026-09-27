@@ -12,26 +12,26 @@ real="${BASH_SOURCE[0]%/*}/swift-frontend-real"
 llvm_cas="${BASH_SOURCE[0]%/*}/llvm-cas"
 scratch="$HOME/Library/Caches/FACompilationCache"
 
+[[ " $* " == *" -cache-compile-job "* ]] || exec -a "$0" "$real" "$@"
+
 args=("$@")
 n=${#args[@]}
-cache=0; cas=; phs=(); reals=()
+cas=; pairs=()
 for (( i = 0; i < n; i++ )); do
     case "${args[i]}" in
-        -cache-compile-job) cache=1 ;;
         -cas-path) cas="${args[i+1]}" ;;
         # The driver's own record of the mapping, as placeholder/real pairs.
-        -cache-replay-prefix-map) phs+=("${args[i+1]}"); reals+=("${args[i+2]}") ;;
+        -cache-replay-prefix-map) pairs+=("${args[i+1]}" "${args[i+2]}") ;;
     esac
 done
-
-(( cache )) || exec -a "$0" "$real" "$@"
 
 for (( i = 0; i < n - 1; i++ )); do
     case "${args[i]}" in
         -debug-module-path|-module-cache-path)
             v="${args[i+1]}"
-            for (( j = 0; j < ${#phs[@]}; j++ )); do
-                if [[ "$v" == "${reals[j]}"/* ]]; then args[i+1]="${phs[j]}${v#"${reals[j]}"}"; break; fi
+            for (( j = 0; j < ${#pairs[@]}; j += 2 )); do
+                ph="${pairs[j]}" r="${pairs[j+1]}"
+                if [[ "$v" == "$r"/* ]]; then args[i+1]="$ph${v#"$r"}"; break; fi
             done ;;
         -const-gather-protocols-file)
             # Read from disk rather than from the CAS, so it needs a real path:
@@ -51,9 +51,8 @@ for (( i = 0; i < n - 1; i++ )); do
             id="${args[i+1]}"
             [[ "$id" == llvmcas://* && -n "$cas" ]] || continue
             memo="$scratch/module-maps/by-id/${id#llvmcas://}"
-            stable=; [[ -f "$memo" ]] && stable="$(< "$memo")"
+            stable=; [[ -f "$memo" ]] && read -r stable < "$memo"
             if [[ ! -f "$stable" ]]; then
-                pairs=(); for (( j = 0; j < ${#phs[@]}; j++ )); do pairs+=("${phs[j]}" "${reals[j]}"); done
                 mkdir -p "${memo%/*}"
                 tmp="$scratch/module-maps/$$.json"
                 "$llvm_cas" --cas="$cas" --cat-blob "$id" | perl -0777 -pe '

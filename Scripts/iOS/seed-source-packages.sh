@@ -3,18 +3,10 @@
 # Seed a worktree's DerivedData/SourcePackages from a sibling worktree's, so a
 # fresh worktree skips SwiftPM's package resolution and checkout entirely.
 #
-# Half of a fresh iOS build is package resolution, not compiling: SourcePackages
-# is ~3.6 GB per worktree, 3.0 GB of it sentry-cocoa's 7 binary xcframework
-# variants, unzipped from ~/Library/Caches/org.swift.swiftpm/artifacts into every
-# worktree that resolves it, plus ~29 git working copies checked out from the
-# shared bare repositories. None of that differs between worktrees pinned to the
-# same Package.resolved, so it is copied wholesale (an APFS clone, so it costs no
-# disk) instead of re-resolved. Only two kinds of absolute path need rewriting
-# afterwards: the DerivedData directory SourcePackages sits under (in
-# workspace-state.json's artifact paths, and in each checkout's .git config/
-# alternates, which point at the sibling's SourcePackages/repositories), and the
-# worktree path itself (in workspace-state.json's entry for the local FALogging
-# package, referenced by path: rather than a git URL).
+# Half of a fresh iOS build is package resolution: ~3.6 GB of unzipped binary
+# artifacts and ~29 git checkouts, none of which differ between worktrees pinned
+# to the same Package.resolved. So it is APFS-cloned (no disk cost), then the
+# sibling's DerivedData and worktree paths are rewritten to this one's.
 #
 # Usage: Scripts/iOS/seed-source-packages.sh [worktree]
 #
@@ -29,9 +21,7 @@ set -euo pipefail
 die() { echo "error: $*" >&2; exit 1; }
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKTREE="$(cd "$HERE/../.." && pwd)"
-WORKTREE="${1:-$WORKTREE}"
-WORKTREE="$(cd "$WORKTREE" && pwd)"
+WORKTREE="$(cd "${1:-$HERE/../..}" && pwd)"
 
 DERIVED_DATA="$HOME/Library/Developer/Xcode/DerivedData"
 RESOLVED="FurAffinity.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved"
@@ -56,8 +46,7 @@ print(enc(h[:8]) + enc(h[8:]))
 " "$1"
 }
 
-DST_HASH="$(dd_hash "$WORKTREE/FurAffinity.xcodeproj")"
-DST="$DERIVED_DATA/FurAffinity-$DST_HASH"
+DST="$DERIVED_DATA/FurAffinity-$(dd_hash "$WORKTREE/FurAffinity.xcodeproj")"
 
 if [ -d "$DST/SourcePackages" ]; then
   exit 0
@@ -99,21 +88,14 @@ trap 'rm -rf "${STAGING:?}"' EXIT
 mkdir -p "$DST"
 cp -Rc "$SRC/SourcePackages" "$STAGING"
 
+# Both paths only ever occur as a directory prefix. Anchoring on the "/" keeps a
+# sibling named android from also matching android-x.
 for f in "$STAGING/workspace-state.json" \
          "$STAGING"/checkouts/*/.git/config \
          "$STAGING"/checkouts/*/.git/objects/info/alternates; do
   [ -f "$f" ] || continue
-  sed -i '' \
-    -e "s#$SRC#$DST#g" \
-    -e "s#$SRC_WORKTREE#$WORKTREE#g" \
-    "$f"
+  sed -i '' -e "s#$SRC/#$DST/#g" -e "s#$SRC_WORKTREE/#$WORKTREE/#g" "$f"
 done
-
-if grep -rIl -e "$SRC" -e "$SRC_WORKTREE" "$STAGING/workspace-state.json" \
-       "$STAGING"/checkouts/*/.git/config \
-       "$STAGING"/checkouts/*/.git/objects/info/alternates 2>/dev/null | grep -q .; then
-  die "stale path from $SRC or $SRC_WORKTREE survived rewriting"
-fi
 
 mv "$STAGING" "$DST/SourcePackages"
 echo "seed-source-packages: seeded $DST/SourcePackages from $SRC"

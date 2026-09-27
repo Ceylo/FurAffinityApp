@@ -92,10 +92,12 @@ class PerTarget:
 
 
 def __lldb_init_module(debugger, internal_dict):
-    # Every debug/test session of this shared scheme loads this file, whether or
-    # not this machine ever opted into the toolchain; skip the mapping (and the
-    # xcode-select/xcrun subprocess calls) rather than pay for or risk breaking
-    # unrelated debugging when it wasn't.
+    # The scheme's init file replaces the usual one, so chain to it.
+    for f in map(os.path.expanduser, ("~/.lldbinit-Xcode", "~/.lldbinit")):
+        if os.path.isfile(f):
+            debugger.HandleCommand(f'command source -s true "{f}"')
+            break
+    # Shared scheme: do nothing on machines without the toolchain.
     if not os.path.isdir(TOOLCHAIN):
         return
     # Set before any target exists, so a breakpoint by full path binds when its

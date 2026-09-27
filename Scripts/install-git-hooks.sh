@@ -32,6 +32,7 @@ install_hook() {
   fi
   printf '#!/bin/bash\n%s\n\n%s\n' "$MARKER" "$body" > "$dst"
   chmod +x "$dst"
+  echo "install-git-hooks: installed $dst"
 }
 
 install_hook post-checkout '
@@ -40,5 +41,3 @@ if [ "$prev_head" = "0000000000000000000000000000000000000000" ] \
     && [ -x Scripts/iOS/seed-source-packages.sh ]; then
   Scripts/iOS/seed-source-packages.sh || true
 fi'
-
-echo "install-git-hooks: installed $HOOKS_DIR/post-checkout"

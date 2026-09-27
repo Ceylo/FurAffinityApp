@@ -10,9 +10,7 @@
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if [[ -d "$HOME/Library/Developer/Toolchains/FACompilationCache.xctoolchain" ]]; then
-    "$HERE/compilation-cache-toolchain.sh" --if-stale
-fi
+"$HERE/compilation-cache-toolchain.sh" --if-installed
 
 CAS="${COMPILATION_CACHE_CAS_PATH:-$HOME/Library/Developer/Xcode/DerivedData/CompilationCache.noindex}/builtin"
 [[ -d "$CAS" ]] && xcrun llvm-cas --cas="$CAS" --prune

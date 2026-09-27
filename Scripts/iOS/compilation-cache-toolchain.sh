@@ -11,10 +11,11 @@
 # 26.6's driver still leaves unmapped. It is an APFS clone of Xcode's default
 # toolchain, so it costs no disk. See COMPILATION_CACHE.md.
 #
-# Usage: Scripts/iOS/compilation-cache-toolchain.sh [--if-stale]
+# Usage: Scripts/iOS/compilation-cache-toolchain.sh [--if-installed]
 #
-#   --if-stale   do nothing unless it is missing, or was made from another Xcode
-#                or another shim; the scheme's build pre-action runs this
+#   --if-installed   only refresh an installed toolchain, and only if it was made
+#                    from another Xcode or another shim; compilation-cache-prune.sh
+#                    runs this before each build
 #
 # Select it in Xcode ▸ Toolchains, or with TOOLCHAINS=dev.fa.compilation-cache
 # for xcodebuild. Remove it by deleting the directory printed below.
@@ -28,13 +29,15 @@ SHIM="$HERE/compilation-cache-swift-frontend"
 ID=dev.fa.compilation-cache
 DST="$HOME/Library/Developer/Toolchains/FACompilationCache.xctoolchain"
 
-IF_STALE=0
+IF_INSTALLED=0
 case "${1:-}" in
-    -h|--help)  sed -n '3,20p' "$0" | cut -c3-; exit 0 ;;
-    --if-stale) IF_STALE=1 ;;
-    "")         ;;
-    *)          die "unknown option $1 (see --help)" ;;
+    -h|--help)      sed -n '3,21p' "$0" | cut -c3-; exit 0 ;;
+    --if-installed) IF_INSTALLED=1 ;;
+    "")             ;;
+    *)              die "unknown option $1 (see --help)" ;;
 esac
+
+(( IF_INSTALLED )) && [[ ! -d "$DST" ]] && exit 0
 
 DEV="$(xcode-select -p)"
 SRC="$DEV/Toolchains/XcodeDefault.xctoolchain"
@@ -42,15 +45,13 @@ SRC="$DEV/Toolchains/XcodeDefault.xctoolchain"
 XCODE_BUILD="$(plutil -extract ProductBuildVersion raw "$DEV/../version.plist")"
 STAMP="$XCODE_BUILD $(md5 -q "$SHIM")"
 
-if (( IF_STALE )) && [[ "$(plutil -extract FAStamp raw "$DST/Info.plist" 2>/dev/null)" == "$STAMP" ]]; then
+if (( IF_INSTALLED )) && [[ "$(plutil -extract FAStamp raw "$DST/Info.plist" 2>/dev/null)" == "$STAMP" ]]; then
     exit 0
 fi
 
 # Built aside and swapped in whole, so a build running meanwhile keeps a
-# consistent toolchain. Only $TMP is trap-cleaned: if we're interrupted between
-# rotating $DST to $OLD and moving $TMP into place, $OLD is the last working
-# toolchain and must survive to be found (and manually restored) rather than be
-# deleted alongside the half-finished install.
+# consistent toolchain. Only $TMP is trap-cleaned: $OLD is the last good
+# toolchain if we die mid-swap.
 TMP="$DST.new.$$"
 OLD="$DST.old.$$"
 trap 'rm -rf "${TMP:?}"' EXIT
@@ -60,18 +61,21 @@ rm "$TMP/ToolchainInfo.plist"   # carries Xcode's own toolchain identifier
 
 # A tool whose rpath climbs out of the toolchain into Xcode.app finds nothing from
 # here. dyld resolves @executable_path through symlinks, so point back at Xcode's.
+# One otool over all ~500 executables: 0.3 s, against 9 s spawning one per file.
 while IFS= read -r file; do
-    otool -l "$file" 2>/dev/null | grep -A2 LC_RPATH | grep -q ' path .*\.\./\.\./\.\./\.\.' || continue
     rel="${file#"$TMP"/}"
     [[ "$rel" == *.framework/* ]] && rel="${rel%%.framework/*}.framework"
     [[ -L "$TMP/$rel" ]] && continue
     rm -rf "${TMP:?}/${rel:?}"
     ln -s "$SRC/$rel" "$TMP/$rel"
-done < <(find "$TMP/usr" -type f -perm -u+x)
+done < <(find "$TMP/usr" -type f -perm -u+x -print0 \
+    | xargs -0 "$SRC/usr/bin/otool" -l 2>/dev/null \
+    | awk '/^\/.*:$/ { f = substr($0, 1, length($0) - 1) }
+           /cmd LC_RPATH/ { getline; getline; if ($0 ~ / path .*\.\.\/\.\.\/\.\.\/\.\./) print f }' \
+    | sort -u)
 
 mv "$TMP/usr/bin/swift-frontend" "$TMP/usr/bin/swift-frontend-real"
 cp "$SHIM" "$TMP/usr/bin/swift-frontend"
-chmod +x "$TMP/usr/bin/swift-frontend"
 
 # /^src is the workspace's parent directory: the checkout, whichever of its
 # workspaces is open. /^derived is this build's DerivedData directory.
@@ -113,10 +117,7 @@ cat > "$TMP/Info.plist" <<EOF
 EOF
 plutil -lint -s "$TMP/Info.plist"
 
-
-# A concurrent install from another worktree may have already rotated $DST out
-# from under this check by the time the mv below runs; that's fine, both installs
-# converge on the same toolchain either way.
+# A concurrent install may have rotated $DST already; both converge.
 mv "$DST" "$OLD" 2>/dev/null || true
 mv "$TMP" "$DST"
 rm -rf "${OLD:?}"
