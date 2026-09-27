@@ -52,6 +52,11 @@ and a Clang VFS overlay, without which `po` cannot import the SDK. It sources
 `~/.lldbinit-Xcode` or `~/.lldbinit` first, since Xcode reads it in their place. For a
 bare `lldb`, run `command source Scripts/iOS/compilation-cache.lldbinit`.
 
+It maps only when the app's newest object file records `/^src`, that is, when the
+last build used the toolchain. LLDB also rewrites a breakpoint's path through
+`target.source-map`, so mapping a build with real paths would leave every breakpoint
+Xcode sets unresolved.
+
 ## Size
 
 `COMPILATION_CACHE_LIMIT_SIZE = 2500M` makes Xcode start a new CAS generation once the

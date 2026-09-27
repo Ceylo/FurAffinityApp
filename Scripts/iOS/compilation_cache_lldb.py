@@ -4,9 +4,11 @@ Its compiles record /^src, /^derived, /^sdk, /^toolchain and /^xcode instead of
 real paths, and a cache hit replays them unchanged, so the debugger maps them
 back to this worktree: source-map for files and breakpoints, a Clang VFS overlay
 for the modules `po` imports. A build without the toolchain records real paths,
-which none of this touches. See COMPILATION_CACHE.md.
+so it must get none of this: LLDB also rewrites Xcode's full-path breakpoints
+through the source-map, which no real path then matches. See COMPILATION_CACHE.md.
 """
 
+import glob
 import hashlib
 import os
 import plistlib
@@ -34,6 +36,18 @@ def _derived_data_dir():
         if os.path.dirname(workspace) == WORKTREE and workspace.endswith((".xcodeproj", ".xcworkspace")):
             found.append((os.path.getmtime(info), os.path.dirname(info)))
     return max(found)[1] if found else None
+
+
+def _built_with_toolchain():
+    """Whether the app's newest object file records /^src placeholders."""
+    derived = _derived_data_dir()
+    objects = glob.glob(os.path.join(
+        derived, "Build/Intermediates.noindex/FurAffinity.build/*/FurAffinity.build/Objects-normal/*/*.o"
+    )) if derived else []
+    if not objects:
+        return False
+    with open(max(objects, key=os.path.getmtime), "rb") as f:
+        return b"/^src" in f.read()
 
 
 def _run(*cmd):
@@ -98,8 +112,8 @@ def __lldb_init_module(debugger, internal_dict):
         if os.path.isfile(f):
             debugger.HandleCommand(f'command source -s true "{f}"')
             break
-    # Shared scheme: do nothing on machines without the toolchain.
-    if not os.path.isdir(TOOLCHAIN):
+    # Shared scheme: do nothing unless the toolchain built what is being debugged.
+    if not os.path.isdir(TOOLCHAIN) or not _built_with_toolchain():
         return
     # Set before any target exists, so a breakpoint by full path binds when its
     # module loads.
