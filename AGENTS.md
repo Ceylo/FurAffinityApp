@@ -232,14 +232,12 @@ FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, 
   `Scripts/Android/with-emulator-lock.sh`. Release is untouched on both platforms.
   The cost of all this: each worktree's app has its **own container**, so a separate
   FA login, cookie jar and (on Android) Cloudflare clearance.
-  DerivedData keeps one directory per worktree path *ever* used, so it grows with
-  worktrees that no longer exist. To list the orphans (then delete what it prints):
-  ```
-  for d in ~/Library/Developer/Xcode/DerivedData/*/; do
-    p=$(plutil -extract WorkspacePath raw -o - "$d/info.plist" 2>/dev/null)
-    [ -n "$p" ] && [ ! -e "$p" ] && echo "$d"
-  done
-  ```
+  Removing a worktree leaves behind what is keyed by its path or name elsewhere:
+  its emulator app, simulator, DerivedData dirs (the Skip project's have no
+  `info.plist`, only a path hash) and XcodeBuildMCP workspace.
+  `Scripts/cleanup-worktree.sh <name>` removes a merged worktree with all of them
+  and its branch; `--orphans` sweeps what worktrees removed without it left, and
+  reports what it kept, why, and each branch's storage.
 - **A bridged view's `@State`/`@Environment` must not be `private`.** skipstone
   generates the bridge from the property list it can see, so a private one is
   silently left out and the view never recomposes. Call sites carry a one-line
