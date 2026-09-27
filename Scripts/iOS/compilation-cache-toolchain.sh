@@ -110,6 +110,10 @@ cat > "$TMP/Info.plist" <<EOF
 EOF
 plutil -lint -s "$TMP/Info.plist"
 
-[[ -e "$DST" ]] && mv "$DST" "$OLD"
+
+# A concurrent install from another worktree may have already rotated $DST out
+# from under this check by the time the mv below runs; that's fine, both installs
+# converge on the same toolchain either way.
+mv "$DST" "$OLD" 2>/dev/null || true
 mv "$TMP" "$DST"
 echo "installed $DST (Xcode $XCODE_BUILD)"

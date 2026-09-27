@@ -34,7 +34,7 @@ target_kb=$(( CAP_KB - BUILD_WRITES_KB ))
 # Entries are the hash-named files; leave the lock and gc.properties alone.
 # stat's %b counts 512-byte blocks, so halving it gives `du -k`'s unit.
 find "$cache" -maxdepth 1 -type f ! -name '*.lock' ! -name 'gc.properties' -print0 \
-    | xargs -0 stat -f '%a %b %N' 2>/dev/null \
+    | { xargs -0 stat -f '%a %b %N' 2>/dev/null || true; } \
     | sort -n \
     | awk -v target="$target_kb" '
         { kb[NR] = $2 / 2; total += kb[NR]

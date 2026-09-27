@@ -69,7 +69,7 @@ def _overlay(pairs):
 
 def _apply(debugger, sdk_name):
     pairs = _mappings(sdk_name)
-    source_map = " ".join(f"{ph} {real}" for ph, real in pairs)
+    source_map = " ".join(f'"{ph}" "{real}"' for ph, real in pairs)
     debugger.HandleCommand(f"settings set target.source-map {source_map}")
     debugger.HandleCommand(
         f'settings set -- target.swift-extra-clang-flags "-ivfsoverlay {_overlay(pairs)}"')
@@ -92,6 +92,12 @@ class PerTarget:
 
 
 def __lldb_init_module(debugger, internal_dict):
+    # Every debug/test session of this shared scheme loads this file, whether or
+    # not this machine ever opted into the toolchain; skip the mapping (and the
+    # xcode-select/xcrun subprocess calls) rather than pay for or risk breaking
+    # unrelated debugging when it wasn't.
+    if not os.path.isdir(TOOLCHAIN):
+        return
     # Set before any target exists, so a breakpoint by full path binds when its
     # module loads.
     _apply(debugger, "iphonesimulator")
