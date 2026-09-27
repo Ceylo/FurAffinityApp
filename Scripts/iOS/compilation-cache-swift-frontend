@@ -11,6 +11,7 @@
 real="${BASH_SOURCE[0]%/*}/swift-frontend-real"
 llvm_cas="${BASH_SOURCE[0]%/*}/llvm-cas"
 scratch="$HOME/Library/Caches/FACompilationCache"
+set -o pipefail   # a failed cat-blob must not memoize an empty module map
 
 [[ " $* " == *" -cache-compile-job "* ]] || exec -a "$0" "$real" "$@"
 
@@ -64,7 +65,7 @@ for (( i = 0; i < n - 1; i++ )); do
                     # A module built from its interface is named after a hash of its
                     # unmapped context.
                     s{(SwiftExplicitPrecompiledModules\\?/\w+)-[A-Z0-9]+\.swiftmodule}{$1.swiftmodule}g;
-                ' "${pairs[@]}" > "$tmp" || continue
+                ' "${pairs[@]}" > "$tmp" || { rm -f "$tmp"; continue; }
                 stable="$scratch/module-maps/$(md5 -q "$tmp").json"
                 mv -f "$tmp" "$stable"
                 echo "$stable" > "$memo.$$" && mv -f "$memo.$$" "$memo"

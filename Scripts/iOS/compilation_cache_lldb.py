@@ -30,7 +30,8 @@ def _derived_data_dir():
                 workspace = plistlib.load(f).get("WorkspacePath", "")
         except (OSError, plistlib.InvalidFileException):
             continue
-        if os.path.dirname(workspace) == WORKTREE:
+        # The app's project or workspace, not FAKit/ or FALogging/ opened alone.
+        if os.path.dirname(workspace) == WORKTREE and workspace.endswith((".xcodeproj", ".xcworkspace")):
             found.append((os.path.getmtime(info), os.path.dirname(info)))
     return max(found)[1] if found else None
 

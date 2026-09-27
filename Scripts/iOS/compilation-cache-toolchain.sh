@@ -117,8 +117,12 @@ cat > "$TMP/Info.plist" <<EOF
 EOF
 plutil -lint -s "$TMP/Info.plist"
 
-# A concurrent install may have rotated $DST already; both converge.
+# rename(2), not mv, which would nest $TMP inside a $DST that a concurrent
+# install put back in between; that install's toolchain is then kept instead.
 mv "$DST" "$OLD" 2>/dev/null || true
-mv "$TMP" "$DST"
+if python3 -c 'import os, sys; os.rename(*sys.argv[1:])' "$TMP" "$DST" 2>/dev/null; then
+    echo "installed $DST (Xcode $XCODE_BUILD)"
+else
+    echo "kept $DST, which a concurrent install replaced first"
+fi
 rm -rf "${OLD:?}"
-echo "installed $DST (Xcode $XCODE_BUILD)"

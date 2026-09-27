@@ -52,9 +52,21 @@ if [ -d "$DST/SourcePackages" ]; then
   exit 0
 fi
 
-# Pick the most recently used sibling worktree pinned to the same
-# Package.resolved (byte-identical, not just present) that still exists and has
-# a fully resolved SourcePackages of its own.
+# Whether workspace-state.json $1 checked out every pin of Package.resolved $2.
+# What the sibling resolved, not its Package.resolved: SwiftPM keeps a stale
+# checkout's pins over a changed Package.resolved, and we'd copy them along.
+resolved_to_pins() {
+  python3 -c "
+import json, sys
+state = json.load(open(sys.argv[1]))['object']['dependencies']
+have = {d['packageRef']['identity']: d['state'].get('checkoutState', {}).get('revision') for d in state}
+pins = json.load(open(sys.argv[2]))['pins']
+sys.exit(any(have.get(p['identity']) != p['state'].get('revision') for p in pins))
+" "$1" "$2"
+}
+
+# Pick the most recently used sibling worktree whose SourcePackages is resolved
+# to exactly this worktree's pins.
 SRC=""
 SRC_MTIME=0
 for info in "$DERIVED_DATA"/FurAffinity-*/info.plist; do
@@ -66,13 +78,12 @@ for info in "$DERIVED_DATA"/FurAffinity-*/info.plist; do
   src_worktree="$(dirname "$ws_path")"
   [ -d "$src_worktree" ] || continue
   [ -f "$dd_dir/SourcePackages/workspace-state.json" ] || continue
-  cmp -s "$src_worktree/$RESOLVED" "$WORKTREE/$RESOLVED" || continue
   mtime="$(stat -f %m "$info")"
-  if [ "$mtime" -gt "$SRC_MTIME" ]; then
-    SRC="$dd_dir"
-    SRC_MTIME="$mtime"
-    SRC_WORKTREE="$src_worktree"
-  fi
+  [ "$mtime" -gt "$SRC_MTIME" ] || continue
+  resolved_to_pins "$dd_dir/SourcePackages/workspace-state.json" "$WORKTREE/$RESOLVED" || continue
+  SRC="$dd_dir"
+  SRC_MTIME="$mtime"
+  SRC_WORKTREE="$src_worktree"
 done
 
 if [ -z "$SRC" ]; then
@@ -97,5 +108,10 @@ for f in "$STAGING/workspace-state.json" \
   sed -i '' -e "s#$SRC/#$DST/#g" -e "s#$SRC_WORKTREE/#$WORKTREE/#g" "$f"
 done
 
-mv "$STAGING" "$DST/SourcePackages"
+# rename(2), not mv: mv would nest it inside a SourcePackages that Xcode created
+# meanwhile, and still report success.
+if ! python3 -c 'import os, sys; os.rename(*sys.argv[1:])' "$STAGING" "$DST/SourcePackages" 2>/dev/null; then
+  echo "seed-source-packages: Xcode created $DST/SourcePackages meanwhile; leaving it"
+  exit 0
+fi
 echo "seed-source-packages: seeded $DST/SourcePackages from $SRC"

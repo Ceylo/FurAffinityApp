@@ -26,7 +26,7 @@ cache="${GRADLE_USER_HOME:-$HOME/.gradle}/caches/build-cache-1"
 
 # Entries are the hash-named files; leave the lock and gc.properties alone.
 # stat's %b counts 512-byte blocks, so halving it gives `du -k`'s unit.
-find "$cache" -maxdepth 1 -type f ! -name '*.lock' ! -name 'gc.properties' -print0 \
+find "$cache" -maxdepth 1 -ignore_readdir_race -type f ! -name '*.lock' ! -name 'gc.properties' -print0 \
     | { xargs -0 stat -f '%a %b %N' 2>/dev/null || true; } \
     | sort -n \
     | awk -v target=$(( CAP_KB - BUILD_WRITES_KB )) '
