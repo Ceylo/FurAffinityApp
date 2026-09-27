@@ -1,0 +1,3 @@
+# LLDB init file of the FurAffinity scheme. Xcode reads it in place of the usual
+# ~/.lldbinit-Xcode or ~/.lldbinit; the module chains to whichever of them exists.
+command script import -c compilation_cache_lldb.py

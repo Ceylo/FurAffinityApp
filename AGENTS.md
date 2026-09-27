@@ -232,6 +232,14 @@ FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, 
   `Scripts/Android/with-emulator-lock.sh`. Release is untouched on both platforms.
   The cost of all this: each worktree's app has its **own container**, so a separate
   FA login, cookie jar and (on Android) Cloudflare clearance.
+  Gradle's build cache is shared, so a new worktree's Android build reuses the
+  others' Kotlin compiles (`Android/docs/build-and-run.md` § Build cache); on iOS,
+  so does Xcode's compilation cache once the FA Compilation Cache toolchain is
+  selected (`COMPILATION_CACHE.md`).
+  Run `Scripts/install-git-hooks.sh` once per clone: a new worktree's `post-checkout`
+  then seeds its DerivedData/SourcePackages from a sibling's pinned to the same
+  `Package.resolved` (`Scripts/iOS/seed-source-packages.sh`), skipping SwiftPM's
+  package resolution and ~29 checkouts.
   Removing a worktree leaves behind what is keyed by its path or name elsewhere:
   its emulator app, simulator, DerivedData dirs (the Skip project's have no
   `info.plist`, only a path hash) and XcodeBuildMCP workspace.

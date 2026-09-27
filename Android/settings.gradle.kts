@@ -1,27 +1,26 @@
 // This gradle project is part of a conventional Skip app project.
 pluginManagement {
+    val repo = settings.rootDir.parent
+    fun sh(command: String) = providers.exec {
+        commandLine("/bin/sh", "-c", command)
+        environment("PATH", "${System.getenv("PATH")}:/opt/homebrew/bin")
+    }.run {
+        print(standardOutput.asText.get())
+        print(standardError.asText.get())
+    }
+
     // Derive the launcher mipmaps and the in-app AppIcon from the iOS asset catalog.
     // Configuration time is the one place that orders correctly for both consumers —
     // this module's resource merge and the skipstone included build's resource copy —
     // since an app:preBuild dependency cannot order against a separate included build.
-    val assetsResult = providers.exec {
-        commandLine("/bin/sh", "-c", "'${settings.rootDir.parent}/Scripts/Android/generate-assets.sh'")
-        environment("PATH", "${System.getenv("PATH")}:/opt/homebrew/bin")
-    }
-    print(assetsResult.standardOutput.asText.get())
-    print(assetsResult.standardError.asText.get())
+    sh("'$repo/Scripts/Android/generate-assets.sh'")
+
+    // Cap the build cache before this build adds to it.
+    sh("'$repo/Scripts/Android/prune-build-cache.sh'")
 
     // Initialize the Skip plugin folder and perform a pre-build for non-Xcode builds
     val pluginPath = File.createTempFile("skip-plugin-path", ".tmp")
-
-    val skipPluginResult = providers.exec {
-        commandLine("/bin/sh", "-c", "skip plugin --prebuild --package-path '${settings.rootDir.parent}' --plugin-ref '${pluginPath.absolutePath}'")
-        environment("PATH", "${System.getenv("PATH")}:/opt/homebrew/bin")
-    }
-    val skipPluginOutput = skipPluginResult.standardOutput.asText.get()
-    print(skipPluginOutput)
-    val skipPluginError = skipPluginResult.standardError.asText.get()
-    print(skipPluginError)
+    sh("skip plugin --prebuild --package-path '$repo' --plugin-ref '${pluginPath.absolutePath}'")
 
     includeBuild(pluginPath.readText()) {
         name = "skip-plugins"

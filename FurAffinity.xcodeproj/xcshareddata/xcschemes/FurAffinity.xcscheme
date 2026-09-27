@@ -6,6 +6,24 @@
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES"
       buildArchitectures = "Automatic">
+      <PreActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Compilation cache upkeep"
+               scriptText = "&quot;$SRCROOT/Scripts/iOS/compilation-cache-prune.sh&quot;&#10;">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "8716E7E7271C659C00C0BC4A"
+                     BuildableName = "Fur Affinity.app"
+                     BlueprintName = "FurAffinity"
+                     ReferencedContainer = "container:FurAffinity.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
@@ -39,6 +57,7 @@
    </BuildAction>
    <TestAction
       buildConfiguration = "Debug"
+      customLLDBInitFile = "$(SRCROOT)/Scripts/iOS/compilation-cache.lldbinit"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
@@ -95,6 +114,7 @@
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
+      customLLDBInitFile = "$(SRCROOT)/Scripts/iOS/compilation-cache.lldbinit"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
