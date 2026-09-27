@@ -215,13 +215,11 @@ FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, 
   The cost of all this: each worktree's app has its **own container**, so a separate
   FA login, cookie jar and (on Android) Cloudflare clearance.
   Removing a worktree leaves behind what is keyed by its path or name elsewhere:
-  its emulator app, its simulator, its DerivedData dirs (the Skip project's have no
-  `info.plist`, only a path hash) and its XcodeBuildMCP workspace. Once its branch
-  is merged, `Scripts/cleanup-worktree.sh <name>` removes all of them along with the
-  worktree and branch; `--orphans` sweeps those of worktrees removed without it,
-  lists what it kept, with its size and what still uses it — merged, clean
-  worktrees included, since only `<name>` removes a live one — and ends with each
-  branch's storage across the emulator, simulator, DerivedData and its worktree.
+  its emulator app, simulator, DerivedData dirs (the Skip project's have no
+  `info.plist`, only a path hash) and XcodeBuildMCP workspace.
+  `Scripts/cleanup-worktree.sh <name>` removes a merged worktree with all of them
+  and its branch; `--orphans` sweeps what worktrees removed without it left, and
+  reports what it kept, why, and each branch's storage.
 - **A bridged view's `@State`/`@Environment` must not be `private`.** skipstone
   generates the bridge from the property list it can see, so a private one is
   silently left out and the view never recomposes. Call sites carry a one-line
