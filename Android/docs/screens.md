@@ -7,6 +7,22 @@ is symlinked in, and the old `AndroidSubmissionsFeedView` is gone. Android there
 the refresh badge ("3 new submissions" / "No new submission"), swipe-to-delete, the
 cold-launch restore check and foreground autorefresh from the same source as iOS.
 
+So is the tab around it: `AndroidRootView`'s first tab mounts `SubmissionsTabView`, as
+`LoggedInView` does. It hides the navigation bar, so the list scrolls under the status bar,
+and floats the "…" control (`SubmissionsFeedActionView`, Nuke All Submissions) over the
+top-trailing corner on the glass surface — on Android an opaque M3 `surfaceContainer`
+under a 3 dp shadow ([forks.md § The feed-gaps patches](forks.md#the-feed-gaps-patches),
+which also has the three skip-ui fixes a hidden bar needed). Only Explore is left out:
+`ExplorationView`, the mode switch, the filters button and its sheet are fenced
+`#if !FA_SKIP_MODULE`, and so is `@Namespace`, which SkipSwiftUI marks unavailable; its
+one use, `glassEffectUnion`, is a pass-through there. The refresh badge
+(`NotificationOverlay`) takes the shared glass branch too — its Android
+`.ultraThickMaterial` branch existed only because glass drew nothing.
+
+Re-tapping the selected tab pops to the root and, once there, scrolls to the top, as on
+iOS and in Material. Hiding the bar took away SkipUI's only other scroll-to-top gesture,
+tapping the bar.
+
 The scroll-preserving refresh choreography — a zero-height `fetchTrigger` row whose
 `onAppear` performs the fetch, wrapped in a `ScrollViewReader` — **runs on Android too**,
 and was measured working on the emulator: the pull fires the trigger, the fetch happens,
@@ -46,13 +62,19 @@ What Android gives up, and why:
 |---|---|
 | `@Weak var scrollView: UIScrollView?` + `.introspect(.scrollView…)` | Fenced `#if !FA_SKIP_MODULE` — SwiftUIIntrospect isn't a dependency of this module, and the Darwin bridge lacks it too, so `os(Android)` would be the wrong flag. The two reads of it sit behind `waitForPullToSettle()` and `scrollViewIsAtTop` so no `#if` reaches the refresh logic. |
 | `waitForPullToSettle()` | Returns immediately. Compose retracts its own indicator, and a blind 1 s sleep would just be a dead second before the fetch. The visible consequence: the pull spinner retracts *before* the fetch finishes (iOS's `refresh(pulled:)` is fire-and-forget) — the badge is the completion feedback. |
-| `scrollViewIsAtTop` | Backed by `firstItemIsAtTop`, which `trackFirstItemTop` derives from the first row's `minY` in the `onItemFrameChanged` reports the feed already receives — `> 0` while its top edge is visible, negative once it goes under the list, nil once it leaves it. So foreground autorefresh *does* skip on scroll position, as on iOS: measured, a drag of ~9 dp stays at top (the 10 pt inset is the slack), two flings down read `minY` −134 and the next foreground logged `atTop=false`, and scrolling back read `true` again. One gap, older than any of this: after a cold-launch restore the rows prepended above the anchor are never composed, so the first row never reports and the flag keeps its initial `true` until one does. |
+| `scrollViewIsAtTop` | Backed by `firstItemIsAtTop`, which `trackFirstItemTop` derives from the first row's `minY` in the `onItemFrameChanged` reports the feed already receives — `> 0` while its top edge is visible, negative once it goes under the list, nil once it leaves it. So foreground autorefresh *does* skip on scroll position, as on iOS: measured, a drag of ~9 dp stays at top (the 10 pt inset is the slack), two flings down read `minY` −134 and the next foreground logged `atTop=false`, and scrolling back read `true` again. After a cold-launch restore, the rows prepended above the anchor *are* composed, for the one transient frame below: the new head reports "at top" and is then recycled without another report. The flag used to stay `true`, so the next foreground armed an autorefresh that fired mid-scroll once the user scrolled up. Two rules clear it now: a change of the first id, and any later row reporting `minY < 32` (SkipUI's minimum row height), since the anchor settling back at the top means the head is above it. Measured on the restore repro below: `atTop=false`, with no fetch and no movement, where it logged `true`. |
 
-`.onDelete` **works** on SkipUI, with one difference worth knowing: iOS reveals a Delete
-button that must then be tapped, whereas Compose commits the delete at the end of the
-swipe with no confirming affordance. A full left-swipe on a card removes that submission
-from the FA inbox immediately (`POST /msg/submissions/new~<sid>@<n>`). Be careful
-demoing this against a real account.
+`.onDelete` **works** on SkipUI, with one difference: iOS reveals a Delete button that
+must then be tapped, whereas Compose commits the delete at the end of the swipe. So on
+Android the feed *stages* the deletion instead (`Model.stageSubmissionPreviewsDeletion`),
+removing the row and showing Material's Undo snackbar (the shared `UndoSnackbar`). The
+`POST /msg/submissions/new~<sid>@<n>` goes out after 5 s (a `.task(id:)` keyed on the
+staged batch), when the feed disappears, or when another row is staged; Undo re-inserts
+the rows in order. Staged rows are filtered out of every fetch until committed, so a
+refresh cannot bring one back. iOS keeps its immediate delete, through the same
+stage-then-commit code. The 5 s timer needed skip-ui's `.task` cancellation fix
+([forks.md § The feed-gaps patches](forks.md#the-feed-gaps-patches)): without it an undone
+batch's timer committed the next batch early.
 
 Holding scroll position across a real *prepend* is now measured too (2026-08-15). The
 repro needs no waiting for FA: scroll down a few cards, `am force-stop`, relaunch — the
@@ -123,7 +145,9 @@ between "animating" and "snapping" is 10 frames, and easy to miss.
 
 Tapping a feed card pushes the same `RemoteSubmissionView` → `SubmissionView` the iOS app
 draws. Those, and `RemoteView`, `SubmissionPreviewView`, `SubmissionControlsView`,
-`SubmissionMetadataView` and all of `Comments/`, are symlinked **verbatim**.
+`SubmissionMetadataView` and all of `Comments/`, are symlinked **verbatim**. Its title is
+inline, as on iOS: `SubmissionsTabView`'s `.navigationBarTitleDisplayMode(.inline)` carries
+over to what it pushes.
 
 Ported: the image, the zoomable full-screen viewer, favorite (with the optimistic
 `UpdateHandler` rollback), Save to gallery, Share, the description with in-app link
