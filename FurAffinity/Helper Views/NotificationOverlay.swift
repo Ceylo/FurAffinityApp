@@ -51,12 +51,8 @@ struct NotificationOverlay: View {
         }
     }
     
-    /// SkipUI has no Liquid Glass, so Android always uses the material badge.
     @ViewBuilder
     func badge(_ count: Int) -> some View {
-#if os(Android)
-        materialBadge(count)
-#else
         if #available(iOS 26, *) {
             Text(text(count: count))
                 .font(.callout)
@@ -67,7 +63,6 @@ struct NotificationOverlay: View {
         } else {
             materialBadge(count)
         }
-#endif
     }
 
     func materialBadge(_ count: Int) -> some View {
@@ -76,14 +71,7 @@ struct NotificationOverlay: View {
             .foregroundColor(Color.primary)
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            // Android has no blur — our skip-fuse-ui fork renders a material as a flat
-            // scrim, so thickness is literally opacity and 0.6 (regular) is still too
-            // sheer over bright artwork. On iOS the material is a real blur, so thin reads.
-#if os(Android)
-            .background(.ultraThickMaterial)
-#else
             .background(.thinMaterial)
-#endif
             .cornerRadius(16)
             .shadow(color: .black.opacity(0.33), radius: Self.shadowRadius, x: 0, y: 0)
     }
@@ -92,7 +80,7 @@ struct NotificationOverlay: View {
     /// what it floats over.
     var body: some View {
         badge(lastCount)
-            // Before `.opacity`, and here rather than in `materialBadge`, so all three
+            // Before `.opacity`, and here rather than in `materialBadge`, so both
             // badge branches get the same geometry.
             .padding(Self.shadowRadius)
             .opacity(phase == .shown ? 1 : 0)
