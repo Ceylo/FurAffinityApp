@@ -1,10 +1,13 @@
 import org.gradle.api.logging.Logging
 import java.io.File
+import java.io.StringWriter
 import java.nio.channels.FileChannel
 import java.nio.channels.OverlappingFileLockException
 import java.nio.file.StandardOpenOption.CREATE
 import java.nio.file.StandardOpenOption.WRITE
+import java.security.MessageDigest
 import java.util.Properties
+import java.util.UUID
 
 private val logger = Logging.getLogger(SlotPool::class.java)
 
@@ -68,6 +71,7 @@ class SlotPool(private val dir: File, private val max: Int) {
                     SlotLock.tryAcquire(chosen.dir) ?: error("Could not lock the new build slot ${chosen.dir}.")
                 }
                 writeState(chosen.dir, worktree, commit = null)
+                checkToken(chosen, slots, worktree)
                 evict(idle - chosen, total = slots.size + if (chosen in idle) 0 else 1)
                 held.remove(chosen)
                 return lease
@@ -104,16 +108,50 @@ class SlotPool(private val dir: File, private val max: Int) {
         return Slot(slot, number)
     }
 
+    /**
+     * Keeps `rm -rf .build` in the worktree a clean build, whichever slot it lands on. The
+     * worktree's token is in its `.build/.fa-slot-token` and in `.slot-tokens/<sha1(path)>` of
+     * each slot it built in; a slot token the worktree no longer has means `.build` was
+     * deleted. Tokens are only touched under the pool lock, so a busy slot's can be deleted.
+     */
+    private fun checkToken(chosen: Slot, slots: List<Slot>, worktree: File) {
+        val local = worktree.resolve(".build/$TOKEN_FILE")
+        val mine = local.takeIf { it.isFile }?.readText()?.trim()
+        val name = sha1(worktree.path)
+        val tokens = (slots.map { it.dir } + chosen.dir).distinct()
+            .map { it.resolve("$TOKENS/$name") }.filter { it.isFile }
+        val cleaned = tokens.any { it.readText().trim() != mine }
+        if (cleaned) {
+            logger.lifecycle(
+                "fa.build-slots: this worktree's .build was deleted since its last build; " +
+                    "deleting ${chosen.dir.name}/.build too, so this is a cold build."
+            )
+            val build = chosen.dir.resolve(".build")
+            if (build.exists() && !trash(build, "${chosen.number}-build")) error("Could not delete $build.")
+            tokens.forEach { it.delete() }
+        }
+        val token = mine.takeUnless { cleaned || it.isNullOrEmpty() } ?: UUID.randomUUID().toString()
+        writeAtomically(chosen.dir.resolve("$TOKENS/$name"), "$token\n")
+        writeAtomically(local, "$token\n")
+    }
+
     /** Deletes idle slots beyond [max], least recently used first. */
     private fun evict(idle: Set<Slot>, total: Int) {
         idle.sortedBy { it.lastUsed }.take((total - max).coerceAtLeast(0)).forEach { slot ->
-            // Renamed under its lock, so no build can pick it, then deleted in the background.
-            val trash = dir.resolve("$TRASH_PREFIX${slot.number}-${System.nanoTime()}")
-            if (slot.dir.renameTo(trash)) {
+            // Renamed under its lock, so no build can pick it.
+            if (trash(slot.dir, "${slot.number}")) {
                 logger.lifecycle("fa.build-slots: deleting ${slot.dir.name}, above FA_ANDROID_SLOTS_MAX=$max.")
-                removeInBackground(trash)
             }
         }
+    }
+
+    /**
+     * Renames [file] into the pool's trash and deletes it in the background. A plain
+     * `rm -rf` in place can fail on a `.DS_Store` Finder writes meanwhile.
+     */
+    private fun trash(file: File, tag: String): Boolean {
+        val trash = dir.resolve("$TRASH_PREFIX$tag-${System.nanoTime()}")
+        return file.renameTo(trash).also { if (it) removeInBackground(trash) }
     }
 
     private fun sweepTrash() {
@@ -141,10 +179,18 @@ class SlotPool(private val dir: File, private val max: Int) {
             commit?.let { setProperty("commit", it) }
             setProperty("lastUsed", System.currentTimeMillis().toString())
         }
-        val tmp = slot.resolve("$STATE.tmp")
-        tmp.writer().use { state.store(it, null) }
-        if (!tmp.renameTo(slot.resolve(STATE))) error("Could not write ${slot.resolve(STATE)}.")
+        writeAtomically(slot.resolve(STATE), StringWriter().also { state.store(it, null) }.toString())
     }
+
+    private fun writeAtomically(file: File, text: String) {
+        file.parentFile.mkdirs()
+        val tmp = file.resolveSibling("${file.name}.tmp")
+        tmp.writeText(text)
+        if (!tmp.renameTo(file)) error("Could not write $file.")
+    }
+
+    private fun sha1(text: String) =
+        MessageDigest.getInstance("SHA-1").digest(text.toByteArray()).joinToString("") { "%02x".format(it) }
 
     /** How many files differ between [commit] and the worktree; null if git can't tell. */
     private fun distance(worktree: File, commit: String): Int? =
@@ -162,5 +208,7 @@ class SlotPool(private val dir: File, private val max: Int) {
         val SLOT_NAME = Regex("android-slot-([1-9][0-9]*)")
         const val STATE = ".slot-state"
         const val TRASH_PREFIX = ".android-slot-trash-"
+        const val TOKENS = ".slot-tokens"
+        const val TOKEN_FILE = ".fa-slot-token"
     }
 }
