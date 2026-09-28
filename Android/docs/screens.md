@@ -75,6 +75,20 @@ the rows in order. Staged rows are filtered out of every fetch until committed, 
 refresh cannot bring one back. iOS keeps its immediate delete, through the same
 stage-then-commit code, and mounts no snackbar.
 
+The snackbar is accessible the way Material's is. Its 5 s become
+`AccessibilityManager.getRecommendedTimeoutMillis(5000, FLAG_CONTENT_TEXT |
+FLAG_CONTENT_CONTROLS)`, read at each stage (`AndroidAccessibility` over
+`FAAccessibilityBridge.kt`): the user's "Time to take action", or the 10 s TalkBack
+declares as its `interactiveUiTimeout`, whichever is longer. It is a polite live region
+(`.accessibilityAddTraits(.updatesFrequently)`, see [forks.md](forks.md#the-feed-gaps-patches)),
+so TalkBack reads it as it appears. It is one only while shown: the view stays mounted
+to fade, and a live region that hides is read again. Measured offline on the API 37
+emulator (2026-09-28): the commit followed the stage by 5.3 s with the setting unset,
+30.2 s with `accessibility_interactive_ui_timeout_ms` at 30000 (set while the app ran), and
+10.1 s under TalkBack. TalkBack's verbose log shows it speaking "Submission deleted. Undo"
+once, about 5 s after the swipe, because it queues the region behind the speech already
+in progress, and nothing at the commit. The same run without the trait speaks nothing.
+
 Holding scroll position across a real *prepend* is now measured too (2026-08-15). The
 repro needs no waiting for FA: scroll down a few cards, `am force-stop`, relaunch — the
 cold-launch restore fetches `new~<sid>@72`, then the restore check fetches `new@72`, whose

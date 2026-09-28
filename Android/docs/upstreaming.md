@@ -43,6 +43,9 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `001f4ec` tab re-tap pops to root, then scrolls to top | skip-ui | no | Material and iOS parity; adds internal `Navigator.navigateToRoot()` |
 | `ca5fad0` `List` under the status bar with the nav bar hidden | skip-ui | no | bug fix plus its two `List` follow-ons (`scrollTo` offset, late header) |
 | `1335ebf` bridged `.task(id:)` is really cancelled | skip-ui | no | bug fix with app-wide effect; send `22ff079` with it, the test showing `RefreshAction(bridgedAction:)` is not affected |
+| `88ac81d` `.updatesFrequently` → polite live region | skip-ui | no | the trait already bridges; argue it from Material's snackbar. Name the pitfall: a live region that stays mounted while hidden is read again, so apply it only while shown |
+| `84586ee` shadow copy out of the accessibility tree | skip-ui | no | bug fix; the Robolectric test fails with 2 nodes without it |
+| `d1905bc` `AccessibilityTraits()` recursion | skip-fuse-ui | no | already upstream as PR #132 (not ours), cherry-picked; drop it from the fork when #132 merges |
 | `d9ad308` + `15a34f4` `#Preview` / `@Previewable` stubs | skip-fuse-ui | no | fixes skiptools/skip#439 (no maintainer reply since 2025-06). Squash the two; topic branch `feature/preview-macro` is cut from 1.18.2 and names upstream skip-ui. Expect pushback on the from-source swift-syntax build |
 | `60671f0` → `1d56dc9` + `f0e4d6c` runs encoder | skip-ui + skip-fuse-ui | yes | **collides**, see below. `60671f0`/`79dc36f` are the superseded markdown cut — do not send them |
 | `59f7693` + `de02184` inline content + its link | skip-ui + `737dcfa` | yes | **collides** |

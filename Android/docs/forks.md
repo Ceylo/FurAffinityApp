@@ -3,8 +3,8 @@
 | Fork | Why |
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
-| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; `.glass`/`.glassProminent` drawn as bordered and `buttonBorderShape`; `glassEffect` drawn as the M3 floating surface; tab re-tap popping to root, then scrolling to top; a `List` under the status bar when the navigation bar is hidden; a bridged `.task(id:)` that is really cancelled; a sheet that calls its content only while presented and keeps the last one while it animates away; a `ScrollViewReader` proxy that resolves its scroll action when used; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
-| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, `ButtonBorderShape`, `sheet`/`fullScreenCover` content passed as a builder, a `JavaBackedView` holding a global JNI reference, `glassEffect` bridged to SkipUI's surface, `GlassEffectContainer` bridged as a `Group`, plus `glassEffectUnion`/`glassEffectID`/`AnyTransition.animation`/`.glass`/`.glassProminent` un-`unavailable`d and `controlSize`/`contentShape` as pass-throughs; `#Preview` / `@Previewable` stubs (skiptools/skip#439) |
+| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; `.glass`/`.glassProminent` drawn as bordered and `buttonBorderShape`; `glassEffect` drawn as the M3 floating surface; tab re-tap popping to root, then scrolling to top; a `List` under the status bar when the navigation bar is hidden; a bridged `.task(id:)` that is really cancelled; `.updatesFrequently` as a polite live region; a shadow whose copy of its content is kept out of the accessibility tree; a sheet that calls its content only while presented and keeps the last one while it animates away; a `ScrollViewReader` proxy that resolves its scroll action when used; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
+| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, `ButtonBorderShape`, `sheet`/`fullScreenCover` content passed as a builder, a `JavaBackedView` holding a global JNI reference, `glassEffect` bridged to SkipUI's surface, `GlassEffectContainer` bridged as a `Group`, an `AccessibilityTraits()` that doesn't recurse (upstream #132), plus `glassEffectUnion`/`glassEffectID`/`AnyTransition.animation`/`.glass`/`.glassProminent` un-`unavailable`d and `controlSize`/`contentShape` as pass-throughs; `#Preview` / `@Previewable` stubs (skiptools/skip#439) |
 | `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, and a rendered image that comes out of an `ImageHolder` rather than out of the view value |
 | `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
 
@@ -542,6 +542,14 @@ skip-ui:
   - `RefreshAction(bridgedAction:)` (`Commands/Actions.swift`) waits on the same bare
     `invokeOnCancellation`, but is not affected: `List` and `ScrollView` launch it in a
     Compose coroutine scope, whose cancellation is a real one (`22ff079` tests it).
+- **`.updatesFrequently` is a polite live region** (`88ac81d`, `System/Accessibility.swift`).
+  SkipUI declared the trait and dropped it. `LiveRegionMode.Polite` is what Material's
+  snackbar sets so TalkBack reads it as it appears, and nothing else in Compose comes closer.
+- **A shadow's copy of its content is out of the accessibility tree** (`84586ee`,
+  `Skip/Shadowed.kt`). `Shadowed` composes the content twice, the second time as the
+  shadow, and that copy kept its semantics: TalkBack read the Undo snackbar as "Submission
+  deleted. Submission deleted. Unlabelled. Undo", and could focus each copy. The copy
+  now gets `clearAndSetSemantics {}`.
 
 skip-fuse-ui:
 
@@ -550,6 +558,10 @@ skip-fuse-ui:
 - **`GlassEffectContainer` bridges as a `Group`** (`e0600ec`). A View with only a `body` is
   not `SkipUIBridging`, so the pass-through reached Compose as `Java_viewOrEmpty`'s
   `EmptyView`: every glass control a shared source wrapped in one drew nothing on Android.
+- **`AccessibilityTraits()` no longer recurses** (`d1905bc`, cherry-picked from upstream
+  PR #132, issue #130). `init() { self = [] }` built `[]` through `init()` again, so any
+  array literal, the empty one included, overflowed the stack on Android. The snackbar's
+  `isShown ? .updatesFrequently : []` needs it.
 
 ## The other fork patches
 

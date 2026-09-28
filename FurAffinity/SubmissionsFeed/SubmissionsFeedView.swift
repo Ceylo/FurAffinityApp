@@ -412,6 +412,9 @@ struct StagedDeletionUndoSnackbar: View {
         .animation(.easeInOut(duration: 0.25), value: isShown)
         .allowsHitTesting(isShown)
         .accessibilityHidden(!isShown)
+        // A polite live region on Android, so TalkBack reads the snackbar as it appears;
+        // only while shown, or it is read again as it fades out.
+        .accessibilityAddTraits(isShown ? .updatesFrequently : [])
         // Undo can't be reached from the background, and the process may not outlive it.
         .onChange(of: scenePhase) { _, phase in
             if phase == .background {

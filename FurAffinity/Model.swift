@@ -263,7 +263,12 @@ class Model: NotificationsNuker, NotificationsDeleter {
         for preview in previews {
             submissionPreviews!.remove(preview)
         }
+        #if FA_SKIP_MODULE
+        // Android's snackbar honours the "Time to take action" setting, as Material's does.
+        let delay = AndroidAccessibility.recommendedTimeout(stagedDeletionUndoDelay)
+        #else
         let delay = stagedDeletionUndoDelay
+        #endif
         stagedDeletionCommitTimer = Task {
             try? await Task.sleep(for: delay)
             guard !Task.isCancelled else { return }
