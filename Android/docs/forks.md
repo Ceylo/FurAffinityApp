@@ -440,8 +440,8 @@ Five things the port needed beyond the guards:
   result was a view that downloaded its image and drew nothing at all — no error
   anywhere. `KFImage` also has to name `View` in its conformance list rather than inherit
   it through `KFImageProtocol`, which the generator does not follow. The symptom to
-  recognise: an empty `<Type>_Bridge.swift` under
-  `.build/plugins/outputs/…/SkipBridgeGenerated/`.
+  recognise: an empty `<Type>_Bridge.swift` under the
+  [build slot](build-and-run.md#build-slots)'s `.build/plugins/outputs/…/SkipBridgeGenerated/`.
 - **The rendered image comes out of an `ImageHolder`, not out of the view value.** A
   SwiftUI `Image` is a value, so its bitmap reaches the screen only through a
   recomposition — and `KFImageRenderer` starts its load from the placeholder's `onAppear`,

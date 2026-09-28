@@ -120,7 +120,7 @@ What it runs:
 ```
 git stash apply <the distribution stash>   # pbxproj id + Amplitude key + Skip.env id
 rm -rf .build/plugins/outputs .build/Darwin .build/Android    # applicationId changed
-(cd Android && SKIP_EXPORT_ARCHS=aarch64 ./gradlew :app:assembleRelease)
+(cd Android && FA_ANDROID_SLOTS=0 SKIP_EXPORT_ARCHS=aarch64 ./gradlew :app:assembleRelease)   # in the worktree, not a build slot
 mv .build/Android/app/outputs/apk/release/app-release.apk out/FurAffinity-<version>-<commit>.apk
 ```
 

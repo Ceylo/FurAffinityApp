@@ -9,6 +9,7 @@ still built by `FurAffinity.xcodeproj` and none of its files move.
 | Doc | Covers |
 |---|---|
 | [docs/build-and-run.md](docs/build-and-run.md) | emulator, build, run, debug, test, CI, and the build-environment traps |
+| [docs/build-and-run.md § Build slots](docs/build-and-run.md#build-slots) | where the Swift side builds: slots shared by every worktree, their lease, sync, clean and opt-outs |
 | [docs/shared-sources.md](docs/shared-sources.md) | guarding, and every rule for writing a file both platforms compile |
 | [docs/assets-and-resources.md](docs/assets-and-resources.md) | shared asset-catalog entries, generated launcher/app art |
 | [docs/forks.md](docs/forks.md) | the four forked dependencies and every patch in them |
@@ -27,6 +28,7 @@ still built by `FurAffinity.xcodeproj` and none of its files move.
 Package.swift            Skip Fuse app package (Android build only)
 Skip.env                 shared app identity (name, version, package)
 Android/                 generated Android app shell + Gradle project
+  build-slots/             the settings plugin that builds the Swift side in a shared slot
 Darwin/                  generated iOS bridge project used by `skip` tooling
 Project.xcworkspace      workspace `skip` drives
 FurAffinity/             ALL app sources — and the Skip target's directory
@@ -78,6 +80,7 @@ that compiles the Darwin bridge.
 ```
 skip android build                           # transpile + compile via SwiftPM (fast inner loop)
 Scripts/Android/build-release-apk.sh         # the signed release APK (docs/releasing.md)
+Scripts/Android/clean.sh [--all]             # next build is clean; --all also drops idle slots
 ```
 
 ```
