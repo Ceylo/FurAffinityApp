@@ -42,7 +42,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `f54f6e8` `rectangle.grid.2x2` / `slider.horizontal.3` mappings | skip-ui | no | same shape as #525 |
 | `001f4ec` tab re-tap pops to root, then scrolls to top | skip-ui | no | Material and iOS parity; adds internal `Navigator.navigateToRoot()` |
 | `ca5fad0` `List` under the status bar with the nav bar hidden | skip-ui | no | bug fix plus its two `List` follow-ons (`scrollTo` offset, late header) |
-| `1335ebf` bridged `.task(id:)` is really cancelled | skip-ui | no | bug fix with app-wide effect; `RefreshAction(bridgedAction:)` likely has the same bug, still open ([forks.md § The feed-gaps patches](forks.md#the-feed-gaps-patches)) |
+| `1335ebf` bridged `.task(id:)` is really cancelled | skip-ui | no | bug fix with app-wide effect; send `22ff079` with it, the test showing `RefreshAction(bridgedAction:)` is not affected |
 | `d9ad308` + `15a34f4` `#Preview` / `@Previewable` stubs | skip-fuse-ui | no | fixes skiptools/skip#439 (no maintainer reply since 2025-06). Squash the two; topic branch `feature/preview-macro` is cut from 1.18.2 and names upstream skip-ui. Expect pushback on the from-source swift-syntax build |
 | `60671f0` → `1d56dc9` + `f0e4d6c` runs encoder | skip-ui + skip-fuse-ui | yes | **collides**, see below. `60671f0`/`79dc36f` are the superseded markdown cut — do not send them |
 | `59f7693` + `de02184` inline content + its link | skip-ui + `737dcfa` | yes | **collides** |

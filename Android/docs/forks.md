@@ -539,9 +539,9 @@ skip-ui:
   Android (plain `.task` bridges as `task(id: 0)`) is now cancelled on disappear, as on
   iOS. Found through the Undo snackbar, whose undone batch's 5 s timer committed the next
   batch after ~1 s.
-  - **Open:** `RefreshAction(bridgedAction:)` (`Commands/Actions.swift`) waits on the same
-    bare `invokeOnCancellation`, so a cancelled `.refreshable` action likely never reaches
-    its Swift task either. Untouched for now.
+  - `RefreshAction(bridgedAction:)` (`Commands/Actions.swift`) waits on the same bare
+    `invokeOnCancellation`, but is not affected: `List` and `ScrollView` launch it in a
+    Compose coroutine scope, whose cancellation is a real one (`22ff079` tests it).
 
 skip-fuse-ui:
 
