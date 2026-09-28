@@ -9,12 +9,13 @@ import java.util.Properties
 /**
  * Replaces Skip's `skip-plugin` settings plugin (SkipSettingsPlugin in the generated
  * `.build/Android/skip-gradle`), whose paths are fixed to `rootDir/..`, with one that
- * builds the Skip/Swift side from a chosen base directory. The Gradle root and the
- * `:app` outputs stay in the worktree.
+ * builds the Skip/Swift side from a chosen base directory: a build slot leased from
+ * [SlotPool], or the worktree itself. The Gradle root and the `:app` outputs stay in
+ * the worktree.
  */
 class BuildSlotsPlugin : Plugin<Settings> {
     override fun apply(settings: Settings) {
-        val worktree = settings.rootDir.parentFile
+        val worktree = settings.rootDir.parentFile.canonicalFile
 
         // Derive the launcher mipmaps and the in-app AppIcon from the iOS asset catalog.
         // Configuration time is the one place that orders correctly for both consumers —
@@ -24,13 +25,51 @@ class BuildSlotsPlugin : Plugin<Settings> {
         // Cap the build cache before this build adds to it.
         settings.runCommand("$worktree/Scripts/Android/prune-build-cache.sh")
 
-        includeSkip(settings, worktree, base = worktree)
+        if (slotsEnabled(settings)) {
+            val pool = slotPool(settings)
+            val slot = leaseSlot(settings, pool, worktree)
+            includeSkip(settings, worktree, base = slot)
+            pool.markPrebuilt(slot, worktree)
+        } else {
+            worktree.resolve(".build/.fa-slot").delete()
+            includeSkip(settings, worktree, base = worktree)
+        }
     }
+}
+
+/**
+ * Off for CI and FA_ANDROID_SLOTS=0, and for Xcode's "Run skip gradle" phase, whose
+ * transpiled output already lives in Xcode's own DerivedData.
+ */
+private fun slotsEnabled(settings: Settings) =
+    settings.env("FA_ANDROID_SLOTS") != "0" && settings.env("CI") == null &&
+        settings.env("BUILT_PRODUCTS_DIR") == null && System.getProperty("BUILT_PRODUCTS_DIR") == null
+
+private fun slotPool(settings: Settings) = SlotPool(
+    dir = settings.env("FA_ANDROID_SLOTS_DIR")?.let(::File)
+        ?: File(System.getProperty("user.home"), "Library/Developer/Xcode/DerivedData"),
+    max = settings.env("FA_ANDROID_SLOTS_MAX")?.toIntOrNull()?.coerceAtLeast(1) ?: 3,
+)
+
+/** Leases a slot for this build and mirrors the worktree into it. */
+private fun leaseSlot(settings: Settings, pool: SlotPool, worktree: File): File {
+    val slot = settings.gradle.sharedServices
+        .registerIfAbsent("faSlotLease", SlotLease::class.java) {}
+        .get()
+        .acquire(pool, worktree)
+
+    settings.runCommand("$worktree/Scripts/Android/slot-sync.sh", worktree.path, slot.path)
+    // For debug.sh's source map.
+    worktree.resolve(".build").mkdirs()
+    worktree.resolve(".build/.fa-slot").writeText("${slot.path}\n")
+    return slot
 }
 
 /** Prebuilds the Swift package at [base] and includes its transpiled Gradle builds. */
 private fun includeSkip(settings: Settings, worktree: File, base: File) = with(settings) {
-    runCommand("/usr/bin/env", "skip", "plugin", "--prebuild", "--package-path", base.path)
+    // SwiftPM keys its manifest cache on the environment, PWD included: run from the
+    // base, not the caller's directory, or every worktree switch recompiles ~30 manifests (~11 s).
+    runCommand("/usr/bin/env", "skip", "plugin", "--prebuild", "--package-path", base.path, workingDir = base)
 
     val env = loadSkipEnv(worktree.resolve("Skip.env"))
     rootProject.name = env.skipEnv("ANDROID_PACKAGE_NAME")
@@ -78,10 +117,18 @@ private fun findSkipstone(base: File, module: String): File {
         )
 }
 
-private fun Settings.runCommand(vararg command: String) {
+private fun Settings.env(name: String) =
+    providers.environmentVariable(name).orNull?.takeIf { it.isNotEmpty() }
+
+private fun Settings.runCommand(vararg command: String, workingDir: File? = null) {
     val result = providers.exec {
         commandLine(*command)
         environment("PATH", "${System.getenv("PATH")}:/opt/homebrew/bin")
+        if (workingDir != null) {
+            workingDir(workingDir)
+            environment("PWD", workingDir.path)
+            environment.remove("OLDPWD")
+        }
         isIgnoreExitValue = true
     }
     print(result.standardOutput.asText.get())
