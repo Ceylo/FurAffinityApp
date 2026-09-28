@@ -239,8 +239,11 @@ struct SubmissionsFeedView: View {
         }
         // Keyed on the batch, so staging another one restarts the countdown.
         .task(id: model.stagedSubmissionPreviewsDeletion) {
-            guard !model.stagedSubmissionPreviewsDeletion.isEmpty else { return }
+            let batch = model.stagedSubmissionPreviewsDeletion
+            guard !batch.isEmpty else { return }
             do { try await Task.sleep(for: .seconds(Self.undoDelay)) } catch { return }
+            // The restart on a new batch lands a frame late; don't commit that one early.
+            guard model.stagedSubmissionPreviewsDeletion == batch else { return }
             model.commitStagedSubmissionPreviewsDeletion()
         }
         .autorefreshingOnForeground {
