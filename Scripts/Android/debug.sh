@@ -245,6 +245,17 @@ if [[ -n "$SWIFT_SDK_PATH" && -n "$SWIFT_MODULE_PATH" ]]; then
                 \"settings append target.swift-module-search-paths $SWIFT_MODULE_PATH\",
 "
 fi
+# The Swift side builds in a slot (Android/build-slots), so DWARF names the slot's
+# copy of each source. Map it back to the worktree, except the slot's own .build
+# (dependency checkouts, generated bridges): LLDB takes the first matching prefix.
+SLOT="$(cat "$ROOT/.build/.fa-slot" 2>/dev/null || true)"
+if [[ -n "$SLOT" ]]; then
+    INIT_COMMANDS="$INIT_COMMANDS                \"settings set target.source-map $SLOT/.build $SLOT/.build $SLOT $ROOT\",
+"
+else
+    INIT_COMMANDS="$INIT_COMMANDS                \"settings clear target.source-map\",
+"
+fi
 # LLDB's Foundation formatters miss swift-foundation's pure-Swift URL. This
 # relies on _SwiftURL's private layout; if it changes, use `p url.absoluteString`.
 INIT_COMMANDS="$INIT_COMMANDS                \"type summary add --summary-string \\\"\${var._url._parseInfo.urlString}\\\" FoundationEssentials.URL\",
