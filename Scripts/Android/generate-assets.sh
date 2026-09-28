@@ -9,8 +9,8 @@
 #
 # Nothing this script writes is committed — the outputs are git-ignored.
 #
-# Android/settings.gradle.kts runs it at configuration time, so a Gradle build or an
-# Android Studio sync regenerates it automatically. `skip android build` goes through
+# The Android/build-slots settings plugin runs it at configuration time, so a Gradle
+# build or an Android Studio sync regenerates it automatically. `skip android build` goes through
 # SwiftPM only and does not, hence run it by hand after checking out. It is idempotent:
 # an output newer than its source, or a file whose content is unchanged, is left alone.
 #
