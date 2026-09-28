@@ -5,12 +5,14 @@
 # `git worktree remove` takes the worktree's own .build/ and Gradle output, but
 # not what is keyed by its path or name elsewhere: its emulator debug app, its
 # `FA <name>` simulator, its DerivedData dirs (the Skip Xcode project's have no
-# info.plist, so nothing can tell whose they are but the path hash) and its
-# XcodeBuildMCP workspace. This removes the worktree first, so a removal git
-# refuses leaves everything else in place, then all of them, then its branch.
+# info.plist, so nothing can tell whose they are but the path hash), its
+# XcodeBuildMCP workspace and its tokens in the Android build slots. This
+# removes the worktree first, so a removal git refuses leaves everything else in
+# place, then all of them, then its branch. The slots themselves stay: any
+# worktree reuses them.
 #
 # Usage: Scripts/cleanup-worktree.sh [--dry-run] [--force] [--base <branch>]… <worktree name|path>…
-#        Scripts/cleanup-worktree.sh [--dry-run] --orphans
+#        Scripts/cleanup-worktree.sh [--dry-run] [--reclaim] --orphans
 #
 #   --dry-run   print what would be removed, and its size, without removing it
 #   --force     remove an unmerged worktree and branch (a squash-merged one);
@@ -19,7 +21,11 @@
 #               replaces the default `android` and `main`
 #   --orphans   sweep what worktrees removed without this script left behind,
 #               list what it kept and what still uses it, and total the storage
-#               of each branch; it assumes every checkout is a worktree of this repo
+#               of each branch; it assumes every checkout is a worktree of this repo.
+#               It also reports the Android build slots, slot tokens of removed
+#               worktrees, and the per-worktree .build/{plugins,checkouts,
+#               repositories,arm64-apple-ios} that builds in a slot leave unused
+#   --reclaim   with --orphans, also delete those tokens and unused directories
 #
 # A bare name is a directory under ../FurAffinity-worktrees. The worktree may
 # already be gone (ExitWorktree, `git worktree remove`): its leftovers are still
@@ -30,7 +36,8 @@
 # are content-addressed or self-pruning, and not any one worktree's.
 #
 # Environment: ANDROID_HOME / ANDROID_SDK_ROOT (SDK location), ANDROID_SERIAL
-# (which device, when several are attached).
+# (which device, when several are attached), FA_ANDROID_SLOTS_DIR (the build
+# slots' parent, default ~/Library/Developer/Xcode/DerivedData).
 
 set -eo pipefail
 
@@ -42,15 +49,17 @@ ROOT="${FA_CLEANUP_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)}"
 DRY_RUN=0
 FORCE=0
 ORPHANS=0
+RECLAIM=0
 BASES=()
 TARGETS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)   sed -n '3,33p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)   sed -n '3,42p' "$0" | cut -c3-; exit 0 ;;
         --dry-run)   DRY_RUN=1 ;;
         --force)     FORCE=1 ;;
         --orphans)   ORPHANS=1 ;;
+        --reclaim)   RECLAIM=1 ;;
         --base)      [[ -n "$2" ]] || die "--base takes a branch"; BASES+=("$2"); shift ;;
         --base=*)    BASES+=("${1#*=}") ;;
         --)          shift; TARGETS+=("$@"); break ;;
@@ -68,6 +77,7 @@ if (( ORPHANS )); then
     (( ${#TARGETS[@]} == 0 )) || die "--orphans takes no worktree"
 else
     (( ${#TARGETS[@]} )) || die "no worktree given (see --help)"
+    (( ! RECLAIM )) || die "--reclaim goes with --orphans"
 fi
 
 # --- where things are -------------------------------------------------------
@@ -80,6 +90,7 @@ WORKTREES="$(dirname "$MAIN")/FurAffinity-worktrees"
 DERIVED_DATA="$HOME/Library/Developer/Xcode/DerivedData"
 MCP_WORKSPACES="$HOME/Library/Developer/XcodeBuildMCP/workspaces"
 SIM_DEVICES="$HOME/Library/Developer/CoreSimulator/Devices"
+SLOTS_DIR="${FA_ANDROID_SLOTS_DIR:-$DERIVED_DATA}"
 
 SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 ADB="$SDK/platform-tools/adb"
@@ -385,7 +396,7 @@ clean_derived_data() {
     local wt="$1" dir path found=0
     compute_keys dd "$(derived_data_paths "$wt")"
     for dir in "$DERIVED_DATA"/*-*; do
-        [[ -d "$dir" ]] || continue
+        [[ -d "$dir" && "$(basename "$dir")" != android-slot-* ]] || continue
         if contains "${dir##*-}" "${KEYS[@]}" \
             || { path="$(workspace_path "$dir")"; [[ -n "$path" && "$path/" == "$wt/"* ]]; }; then
             remove_tree "$dir" "DerivedData/$(basename "$dir")"
@@ -405,6 +416,142 @@ clean_mcp_workspaces() {
         fi
     done
     (( found )) || echo "  no XcodeBuildMCP workspace"
+}
+
+# --- Android build slots ----------------------------------------------------
+
+# A worktree's token in each slot it built in is .slot-tokens/<sha1 of its path>
+# (Android/build-slots). Left behind, a new worktree at that path would take it
+# for a deleted .build and wipe the slot's.
+slot_token_name() { printf %s "$1" | shasum -a1 | cut -d' ' -f1; }
+
+clean_slot_tokens() {
+    local wt="$1" token slot found=0
+    token="$(slot_token_name "$wt")"
+    for slot in "$SLOTS_DIR"/android-slot-*; do
+        # Properties escapes with a backslash.
+        if [[ "$(sed -n 's/^owner=//p' "$slot/.slot-state" 2>/dev/null | sed 's/\\\(.\)/\1/g')" == "$wt" ]]; then
+            echo "  kept $(basename "$slot"), which it built in last: any worktree reuses it"
+        fi
+        [[ -f "$slot/.slot-tokens/$token" ]] || continue
+        if (( DRY_RUN )); then
+            echo "  would remove its token in $(basename "$slot")"
+        elif rm -f "$slot/.slot-tokens/$token"; then
+            echo "  removed its token in $(basename "$slot")"
+        else
+            warn "could not remove its token in $(basename "$slot")"; FAILED=1
+        fi
+        found=1
+    done
+    (( found )) || echo "  no Android build slot token"
+}
+
+# Prints, per slot, "slot<TAB>path<TAB>idle|busy<TAB>owner<TAB>lastUsed ms", then
+# "token<TAB>path" for each token whose worktree is not among the paths on stdin.
+# Builds lock a slot with a POSIX lock (Java's FileChannel), probed here as
+# Scripts/Android/clean.sh takes it, under the pool lock so that the probe can't
+# make a starting build pass the slot over.
+SLOTS_PY='
+import fcntl, hashlib, os, re, sys
+pool_dir = sys.argv[1]
+live = {hashlib.sha1(p.encode()).hexdigest() for p in sys.stdin.read().splitlines()}
+slots = sorted(
+    (int(m.group(1)), os.path.join(pool_dir, n)) for n in os.listdir(pool_dir)
+    if (m := re.fullmatch(r"android-slot-([1-9][0-9]*)", n)) and os.path.isdir(os.path.join(pool_dir, n))
+)
+if not slots:
+    sys.exit(0)
+pool = open(os.path.join(pool_dir, ".android-slot-pool.lock"), "a")
+fcntl.lockf(pool, fcntl.LOCK_EX)
+for _, slot in slots:
+    with open(os.path.join(slot, ".lock"), "a") as lock:
+        try:
+            fcntl.lockf(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            state = "idle"
+        except OSError:
+            state = "busy"
+    props = {}
+    try:
+        with open(os.path.join(slot, ".slot-state"), encoding="latin-1") as f:
+            for line in f:
+                key, sep, value = line.rstrip("\n").partition("=")
+                if sep and not key.startswith("#"):
+                    props[key] = re.sub(r"\\(?:u([0-9a-fA-F]{4})|(.))",
+                        lambda m: chr(int(m[1], 16)) if m[1] else m[2], value)
+    except OSError:
+        pass
+    print("slot", slot, state, props.get("owner", ""), props.get("lastUsed", "0"), sep="\t")
+    tokens = os.path.join(slot, ".slot-tokens")
+    for t in sorted(os.listdir(tokens)) if os.path.isdir(tokens) else []:
+        if re.fullmatch(r"[0-9a-f]{40}", t) and t not in live:
+            print("token", os.path.join(tokens, t), sep="\t")
+'
+
+# The slots, kept whatever their owner: any worktree reuses them, and
+# FA_ANDROID_SLOTS_MAX already caps them. Clean.sh --all deletes the idle ones.
+report_slots() {
+    local out kind path state owner used kb lines=() label when found=0
+    [[ -d "$SLOTS_DIR" ]] || return 0
+    out="$(printf '%s\n' "${LIVE[@]}" | python3 -c "$SLOTS_PY" "$SLOTS_DIR")" \
+        || die "python3 failed reading the Android build slots"
+    echo "Android build slots (any worktree reuses them; Scripts/Android/clean.sh --all deletes the idle ones)"
+    while IFS=$'\t' read -r kind path state owner used; do
+        [[ -n "$kind" ]] || continue
+        if [[ "$kind" == token ]]; then
+            label="token $(basename "$(dirname "$(dirname "$path")")")/.slot-tokens/$(basename "$path")"
+            if (( ! RECLAIM )); then
+                lines+=("  kept $label — its worktree is gone (--reclaim removes it)")
+            elif (( DRY_RUN )); then
+                echo "  would remove $label, of a removed worktree"; found=1
+            elif rm -f "$path"; then
+                echo "  removed $label, of a removed worktree"; found=1
+            else
+                warn "could not remove $path"; FAILED=1
+            fi
+            continue
+        fi
+        kb="$(size_kb "$path")"
+        when="never used"
+        [[ "$used" =~ ^[0-9]+$ ]] && (( used > 0 )) \
+            && when="last used $(date -r $(( used / 1000 )) '+%Y-%m-%d %H:%M')"
+        [[ -z "$owner" || -d "$owner" ]] || owner="$owner (gone)"
+        lines+=("  kept $(basename "$path") ($(human "$kb")) — $state, $when${owner:+ by $(tilde "$owner")}")
+    done <<< "$out"
+    end_section_lines "$found" "${lines[@]}"
+}
+
+# What the prebuild left in each checkout's .build before its Swift side moved to
+# a slot. A branch without Android/build-slots still builds there, as does
+# build-release-apk.sh, which recreates them.
+report_legacy_build() {
+    local i wt dirs names d kb found=0 lines=()
+    echo "Legacy Android .build directories"
+    for i in "${!LIVE[@]}"; do
+        wt="${LIVE[$i]}" dirs=() names="" kb=0
+        for d in plugins checkouts repositories arm64-apple-ios; do
+            [[ -d "$wt/.build/$d" ]] || continue
+            dirs+=("$wt/.build/$d") names+="${names:+,}$d"
+            kb=$(( kb + $(size_kb "$wt/.build/$d") ))
+        done
+        (( ${#dirs[@]} )) || continue
+        names="$(basename "$wt")/.build/{$names}"
+        if [[ ! -d "$wt/Android/build-slots" ]]; then
+            lines+=("  kept $names ($(human "$kb")) — in use: ${LIVE_BRANCHES[$i]} predates build slots")
+        elif (( RECLAIM )); then
+            for d in "${dirs[@]}"; do remove_tree "$d" "$(basename "$wt")/.build/$(basename "$d")"; done
+            found=1
+        else
+            lines+=("  kept $names ($(human "$kb")) — unused: it builds in a slot (--reclaim removes it)")
+        fi
+    done
+    end_section_lines "$found" "${lines[@]}"
+}
+
+end_section_lines() {
+    local found="$1"
+    shift
+    KEPT=("$@")
+    end_section "$found"
 }
 
 # --- one worktree -----------------------------------------------------------
@@ -562,6 +709,7 @@ clean_worktree() {
     clean_simulator "$name"
     clean_derived_data "$wt"
     clean_mcp_workspaces "$wt"
+    clean_slot_tokens "$wt"
     delete_branch
 }
 
@@ -874,6 +1022,8 @@ clean_orphans() {
 
     cat "$tmp/emulator" "$tmp/simulators" "$tmp/derived_data" "$tmp/mcp"
     rm -rf "$tmp"
+    report_slots
+    report_legacy_build
 
     report_usage
 }
