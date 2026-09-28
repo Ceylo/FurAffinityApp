@@ -68,14 +68,12 @@ What Android gives up, and why:
 must then be tapped, whereas Compose commits the delete at the end of the swipe. So on
 Android the feed *stages* the deletion instead (`Model.stageSubmissionPreviewsDeletion`),
 removing the row and showing Material's Undo snackbar (the shared `UndoSnackbar`). The
-`POST /msg/submissions/new~<sid>@<n>` goes out after 5 s (a `.task(id:)` keyed on the
-staged batch), when the feed disappears or the app goes to the background, or when
-another row is staged; Undo re-inserts
+`POST /msg/submissions/new~<sid>@<n>` goes out after 5 s (a timer `Model` starts when it
+stages, which undo and any commit cancel), when the feed disappears or the app goes to
+the background, or when another row is staged; Undo re-inserts
 the rows in order. Staged rows are filtered out of every fetch until committed, so a
 refresh cannot bring one back. iOS keeps its immediate delete, through the same
-stage-then-commit code. The 5 s timer needed skip-ui's `.task` cancellation fix
-([forks.md § The feed-gaps patches](forks.md#the-feed-gaps-patches)): without it an undone
-batch's timer committed the next batch early.
+stage-then-commit code, and mounts no snackbar.
 
 Holding scroll position across a real *prepend* is now measured too (2026-08-15). The
 repro needs no waiting for FA: scroll down a few cards, `am force-stop`, relaunch — the

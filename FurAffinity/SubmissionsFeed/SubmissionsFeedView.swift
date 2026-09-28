@@ -24,7 +24,6 @@ import UIKit
 struct SubmissionsFeedView: View {
     @Environment(Model.self) var model
     @Environment(ErrorStorage.self) var errorStorage
-    @Environment(\.scenePhase) var scenePhase
     @State var newSubmissionsCount: Int?
     @State var targetScrollItem: FASubmissionPreview?
     @State var currentViewIsDisplayed = false
@@ -206,23 +205,6 @@ struct SubmissionsFeedView: View {
         }
     }
     
-    private static let undoDelay: TimeInterval = 5
-
-    /// Stays mounted so it can fade: `.transition` gets a hard cut on SkipUI.
-    private var undoSnackbar: some View {
-        let isShown = !model.stagedSubmissionPreviewsDeletion.isEmpty
-        let count = model.stagedSubmissionPreviewsDeletion.count
-        return UndoSnackbar(message: count > 1 ? "\(count) submissions deleted" : "Submission deleted") {
-            model.undoStagedSubmissionPreviewsDeletion()
-        }
-        .opacity(isShown ? 1 : 0)
-        .offset(y: isShown ? 0 : 16)
-        // Not `withAnimation`: it marks the whole Compose frame on SkipUI.
-        .animation(.easeInOut(duration: 0.25), value: isShown)
-        .allowsHitTesting(isShown)
-        .accessibilityHidden(!isShown)
-    }
-
     var body: some View {
         Group {
             if let listItems {
@@ -234,18 +216,12 @@ struct SubmissionsFeedView: View {
                 // 35, not 40: the badge now carries 5pt of transparent shadow inset.
                 .offset(y: 35)
         }
+        // Only Android stages a deletion (see `onDelete`).
+        #if FA_SKIP_MODULE
         .overlay(alignment: .bottom) {
-            undoSnackbar
+            StagedDeletionUndoSnackbar()
         }
-        // Keyed on the batch, so staging another one restarts the countdown.
-        .task(id: model.stagedSubmissionPreviewsDeletion) {
-            let batch = model.stagedSubmissionPreviewsDeletion
-            guard !batch.isEmpty else { return }
-            do { try await Task.sleep(for: .seconds(Self.undoDelay)) } catch { return }
-            // The restart on a new batch lands a frame late; don't commit that one early.
-            guard model.stagedSubmissionPreviewsDeletion == batch else { return }
-            model.commitStagedSubmissionPreviewsDeletion()
-        }
+        #endif
         .autorefreshingOnForeground {
             autorefreshIfNeeded()
         }
@@ -256,12 +232,6 @@ struct SubmissionsFeedView: View {
             #if FA_SKIP_MODULE
             firstItemIsAtTop = firstID == nil
             #endif
-        }
-        // Undo can't be reached from the background, and the process may not outlive it.
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .background {
-                model.commitStagedSubmissionPreviewsDeletion()
-            }
         }
         // One-shot newer-submissions check after a cold-launch restore, reusing the
         // foreground autorefresh's scroll-preserving choreography. `initial: true`
@@ -289,7 +259,6 @@ struct SubmissionsFeedView: View {
         }
         .onDisappear {
             currentViewIsDisplayed = false
-            model.commitStagedSubmissionPreviewsDeletion()
 
             // The feed just got covered by a navigation push. If a scroll-managed
             // refresh is in flight, abort it cleanly so no new items are inserted
@@ -420,6 +389,39 @@ extension SubmissionsFeedView {
         
         // Not `withAnimation`: it marks the whole Compose frame on SkipUI.
         newSubmissionsCount = newSubmissionCount
+    }
+}
+
+/// The Undo snackbar for the model's staged deletion, and the commits that end it
+/// early. A view of its own, so the feed body depends on neither.
+struct StagedDeletionUndoSnackbar: View {
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(Model.self) var model
+    @Environment(\.scenePhase) var scenePhase
+
+    var body: some View {
+        let count = model.stagedSubmissionPreviewsDeletion.count
+        let isShown = count > 0
+        UndoSnackbar(message: count > 1 ? "\(count) submissions deleted" : "Submission deleted") {
+            model.undoStagedSubmissionPreviewsDeletion()
+        }
+        // Stays mounted so it can fade: `.transition` gets a hard cut on SkipUI.
+        .opacity(isShown ? 1 : 0)
+        .offset(y: isShown ? 0 : 16)
+        // Not `withAnimation`: it marks the whole Compose frame on SkipUI.
+        .animation(.easeInOut(duration: 0.25), value: isShown)
+        .allowsHitTesting(isShown)
+        .accessibilityHidden(!isShown)
+        // Undo can't be reached from the background, and the process may not outlive it.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background {
+                model.commitStagedSubmissionPreviewsDeletion()
+            }
+        }
+        // Nor from a covered feed.
+        .onDisappear {
+            model.commitStagedSubmissionPreviewsDeletion()
+        }
     }
 }
 
