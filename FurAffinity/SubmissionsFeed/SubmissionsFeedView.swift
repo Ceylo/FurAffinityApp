@@ -155,7 +155,14 @@ struct SubmissionsFeedView: View {
                         itemView(for: preview, geometry: geometry, scrollProxy: scrollProxy)
                     }
                     .onDelete { offsets in
-                        model.deleteSubmissionPreviews(offsets.map { items[$0] })
+                        let previews = offsets.map { items[$0] }
+                        // Android: a full swipe commits at the end of the gesture, so
+                        // Material's Undo snackbar holds the deletion back instead.
+                        #if FA_SKIP_MODULE
+                        model.stageSubmissionPreviewsDeletion(previews)
+                        #else
+                        model.deleteSubmissionPreviews(previews)
+                        #endif
                     }
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
@@ -186,6 +193,23 @@ struct SubmissionsFeedView: View {
         }
     }
     
+    private static let undoDelay: TimeInterval = 5
+
+    /// Stays mounted so it can fade: `.transition` gets a hard cut on SkipUI.
+    private var undoSnackbar: some View {
+        let isShown = !model.stagedSubmissionPreviewsDeletion.isEmpty
+        let count = model.stagedSubmissionPreviewsDeletion.count
+        return UndoSnackbar(message: count > 1 ? "\(count) submissions deleted" : "Submission deleted") {
+            model.undoStagedSubmissionPreviewsDeletion()
+        }
+        .opacity(isShown ? 1 : 0)
+        .offset(y: isShown ? 0 : 16)
+        // Not `withAnimation`: it marks the whole Compose frame on SkipUI.
+        .animation(.easeInOut(duration: 0.25), value: isShown)
+        .allowsHitTesting(isShown)
+        .accessibilityHidden(!isShown)
+    }
+
     var body: some View {
         Group {
             if let listItems {
@@ -196,6 +220,15 @@ struct SubmissionsFeedView: View {
             NotificationOverlay(itemCount: $newSubmissionsCount)
                 // 35, not 40: the badge now carries 5pt of transparent shadow inset.
                 .offset(y: 35)
+        }
+        .overlay(alignment: .bottom) {
+            undoSnackbar
+        }
+        // Keyed on the batch, so staging another one restarts the countdown.
+        .task(id: model.stagedSubmissionPreviewsDeletion) {
+            guard !model.stagedSubmissionPreviewsDeletion.isEmpty else { return }
+            do { try await Task.sleep(for: .seconds(Self.undoDelay)) } catch { return }
+            model.commitStagedSubmissionPreviewsDeletion()
         }
         .autorefreshingOnForeground {
             autorefreshIfNeeded()
@@ -226,6 +259,7 @@ struct SubmissionsFeedView: View {
         }
         .onDisappear {
             currentViewIsDisplayed = false
+            model.commitStagedSubmissionPreviewsDeletion()
 
             // The feed just got covered by a navigation push. If a scroll-managed
             // refresh is in flight, abort it cleanly so no new items are inserted

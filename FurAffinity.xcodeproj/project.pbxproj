@@ -161,6 +161,7 @@
 		87E58C642DBCE9E00022F731 /* UserNameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E58C632DBCE9E00022F731 /* UserNameView.swift */; };
 		87E796172C99994D0020EACD /* SwiftUIIntrospect in Frameworks */ = {isa = PBXBuildFile; productRef = 87E796162C99994D0020EACD /* SwiftUIIntrospect */; };
 		87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */; };
+		87F0DE5B2F7C1A0000C0FFEE /* UndoSnackbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F0DE5A2F7C1A0000C0FFEE /* UndoSnackbar.swift */; };
 		87EAA2DB29EB4F1800677446 /* RemoteNotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87EAA2DA29EB4F1800677446 /* RemoteNotificationsView.swift */; };
 		87EAA2DD29EB4F3700677446 /* JournalNotificationItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87EAA2DC29EB4F3700677446 /* JournalNotificationItemView.swift */; };
 		87F074A82C91AF0C00218D0E /* RemoteSubmissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F074A72C91AF0C00218D0E /* RemoteSubmissionView.swift */; };
@@ -382,6 +383,7 @@
 		87E528362CE8D3D800CAFDC0 /* Zoomable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zoomable.swift; sourceTree = "<group>"; };
 		87E58C632DBCE9E00022F731 /* UserNameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserNameView.swift; sourceTree = "<group>"; };
 		87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOverlay.swift; sourceTree = "<group>"; };
+		87F0DE5A2F7C1A0000C0FFEE /* UndoSnackbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoSnackbar.swift; sourceTree = "<group>"; };
 		87EAA2DA29EB4F1800677446 /* RemoteNotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteNotificationsView.swift; sourceTree = "<group>"; };
 		87EAA2DC29EB4F3700677446 /* JournalNotificationItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalNotificationItemView.swift; sourceTree = "<group>"; };
 		87F074A72C91AF0C00218D0E /* RemoteSubmissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteSubmissionView.swift; sourceTree = "<group>"; };
@@ -743,6 +745,7 @@
 				87A185A12745A8A100B10D2A /* CenteredView.swift */,
 				875EF2E52C1E1705000D4BFB /* LinearProgress.swift */,
 				87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */,
+				87F0DE5A2F7C1A0000C0FFEE /* UndoSnackbar.swift */,
 				FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */,
 				873E65F127529866009C8767 /* SaveButton.swift */,
 				8733DDFE28FAD58D00CD8BCF /* SwapView.swift */,
@@ -1153,6 +1156,7 @@
 				8733DDFD28F75C1200CD8BCF /* Sharing.swift in Sources */,
 				87B0933A2AED6CEA008DFDE7 /* TitleHeader.swift in Sources */,
 				87E7B0242788D4FC0053CFAA /* NotificationOverlay.swift in Sources */,
+				87F0DE5B2F7C1A0000C0FFEE /* UndoSnackbar.swift in Sources */,
 				87566B82297DC71600FD3199 /* CommentEditor.swift in Sources */,
 				87C94A542AA893BA0049CA81 /* UserGalleryLikeView.swift in Sources */,
 				879233D2278216DF0019AC44 /* HTMLView.swift in Sources */,
