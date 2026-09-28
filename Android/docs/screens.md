@@ -79,7 +79,9 @@ The snackbar is accessible the way Material's is. Its 5 s become
 `AccessibilityManager.getRecommendedTimeoutMillis(5000, FLAG_CONTENT_TEXT |
 FLAG_CONTENT_CONTROLS)`, read at each stage (`AndroidAccessibility` over
 `FAAccessibilityBridge.kt`): the user's "Time to take action", or the 10 s TalkBack
-declares as its `interactiveUiTimeout`, whichever is longer. It is a polite live region
+declares as its `interactiveUiTimeout`, whichever is longer. Below API 29 there is no such
+call, and like Compose's own snackbar it waits indefinitely (`Int.MAX_VALUE` ms) while touch
+exploration is on; that branch is untested, since the only emulator is API 37. It is a polite live region
 (`.accessibilityAddTraits(.updatesFrequently)`, see [forks.md](forks.md#the-feed-gaps-patches)),
 so TalkBack reads it as it appears. It is one only while shown: the view stays mounted
 to fade, and a live region that hides is read again. Measured offline on the API 37
