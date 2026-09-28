@@ -24,6 +24,7 @@ import UIKit
 struct SubmissionsFeedView: View {
     @Environment(Model.self) var model
     @Environment(ErrorStorage.self) var errorStorage
+    @Environment(\.scenePhase) var scenePhase
     @State var newSubmissionsCount: Int?
     @State var targetScrollItem: FASubmissionPreview?
     @State var currentViewIsDisplayed = false
@@ -246,11 +247,18 @@ struct SubmissionsFeedView: View {
             autorefreshIfNeeded()
         }
         // A new first row may never be composed (prepended above a restored anchor),
-        // so it is not at top until it reports otherwise.
-        .onChange(of: model.submissionPreviews?.first?.id) {
+        // so it is not at top until it reports otherwise. An empty feed has no row to
+        // report, and is at its top.
+        .onChange(of: model.submissionPreviews?.first?.id) { _, firstID in
             #if FA_SKIP_MODULE
-            firstItemIsAtTop = false
+            firstItemIsAtTop = firstID == nil
             #endif
+        }
+        // Undo can't be reached from the background, and the process may not outlive it.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background {
+                model.commitStagedSubmissionPreviewsDeletion()
+            }
         }
         // One-shot newer-submissions check after a cold-launch restore, reusing the
         // foreground autorefresh's scroll-preserving choreography. `initial: true`
