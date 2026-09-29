@@ -97,6 +97,9 @@ SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 ADB="$SDK/platform-tools/adb"
 LOCK_SCRIPT="${FA_CLEANUP_LOCK:-$ROOT/Scripts/Android/with-emulator-lock.sh}"
 SLOTS_HELPER="${FA_CLEANUP_SLOTS_PY:-$ROOT/Scripts/Android/slots.py}"
+SIGNING_HELPER="${FA_CLEANUP_SIGNING:-$ROOT/Scripts/signing-material.sh}"
+# shellcheck source=Scripts/signing-material.sh
+source "$SIGNING_HELPER" || die "no $SIGNING_HELPER"
 
 # Subdirectories an agent may start XcodeBuildMCP in, or Xcode may open as a package.
 SUBDIRS=(FAKit FALogging Android Darwin FurAffinity)
@@ -137,13 +140,14 @@ if (( ! ORPHANS )) && [[ -z "$FA_CLEANUP_REEXEC" ]]; then
         cp "${BASH_SOURCE[0]}" "$TMP/cleanup-worktree.sh"
         [[ -x "$LOCK_SCRIPT" ]] && cp "$LOCK_SCRIPT" "$TMP/with-emulator-lock.sh"
         [[ -f "$SLOTS_HELPER" ]] && cp "$SLOTS_HELPER" "$TMP/slots.py"
+        cp "$SIGNING_HELPER" "$TMP/signing-material.sh"
         ARGS=()
         (( DRY_RUN )) && ARGS+=(--dry-run)
         (( FORCE )) && ARGS+=(--force)
         for b in "${BASES[@]}"; do ARGS+=(--base "$b"); done
         cd "$MAIN"
         FA_CLEANUP_REEXEC="$TMP" FA_CLEANUP_ROOT="$MAIN" FA_CLEANUP_LOCK="$TMP/with-emulator-lock.sh" \
-            FA_CLEANUP_SLOTS_PY="$TMP/slots.py" \
+            FA_CLEANUP_SLOTS_PY="$TMP/slots.py" FA_CLEANUP_SIGNING="$TMP/signing-material.sh" \
             FA_CLEANUP_CALLER_DIR="$HERE" \
             exec bash "$TMP/cleanup-worktree.sh" "${ARGS[@]}" -- "${RESOLVED[@]}"
     fi
@@ -567,11 +571,7 @@ signing_material() {
     local f
     git -C "$1" ls-files --others --ignored --exclude-standard --directory 2>/dev/null \
         | while IFS= read -r f; do
-            case "$(basename "$f")" in
-                # Scripts/Android/slot-sync.sh never copies the same list.
-                *.p12|*.mobileprovision|*.jks|*.keystore|keystore.properties|.sentryclirc)
-                    [[ -L "$1/$f" ]] || echo "$f" ;;
-            esac
+            if is_signing_material "$f" && [[ ! -L "$1/$f" ]]; then echo "$f"; fi
         done
 }
 

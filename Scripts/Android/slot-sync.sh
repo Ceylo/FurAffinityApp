@@ -52,14 +52,9 @@ owned() {
     esac
 }
 
-# Never copied, tracked or not (nothing tracked matches). The same list as
-# signing_material() in Scripts/cleanup-worktree.sh.
-signing() {
-    case "${1##*/}" in
-        *.p12|*.mobileprovision|*.jks|*.keystore|keystore.properties|.sentryclirc) return 0 ;;
-    esac
-    return 1
-}
+# Signing material is never copied, tracked or not (nothing tracked matches).
+# shellcheck source=Scripts/signing-material.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../signing-material.sh"
 
 # --- the new list -----------------------------------------------------------
 
@@ -67,7 +62,7 @@ signing() {
     git -C "$worktree" ls-files -z -co --exclude-standard
     git -C "$worktree" ls-files -z -oi --exclude-standard -- FurAffinity/Resources/Assets.xcassets
 } | while IFS= read -r -d '' path; do
-    if ! owned "$path" || signing "$path"; then continue; fi
+    if ! owned "$path" || is_signing_material "$path"; then continue; fi
     # -c also lists tracked files deleted from the working tree.
     [[ -e "$worktree/$path" || -L "$worktree/$path" ]] || continue
     printf '%s\0' "$path"
