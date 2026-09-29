@@ -80,7 +80,7 @@ class SlotPool(private val dir: File, private val max: Int) {
                 val lease = held.getOrPut(chosen) {
                     SlotLock.tryAcquire(chosen.dir) ?: error("Could not lock the new build slot ${chosen.dir}.")
                 }
-                checkToken(chosen, slots, worktree)
+                checkToken(chosen, worktree)
                 checkSkipEnv(chosen, worktree)
                 writeState(chosen.dir, worktree, commit = null)
                 evict(idle - chosen, total = slots.size + if (chosen in idle) 0 else 1)
@@ -162,33 +162,29 @@ class SlotPool(private val dir: File, private val max: Int) {
     }
 
     /**
-     * Keeps `rm -rf .build` in the worktree a clean build, whichever slot it lands on. The
-     * worktree's token is in its `.build/.fa-slot-token` and in `.slot-tokens/<sha1(path)>` of
-     * each slot it built in, and the pool's `.android-slot-worktrees/<sha1(path)>` records that
-     * it was issued one, surviving the slots' eviction. With no local token but either of
-     * those, `.build` was deleted; a slot holding another token than the local one predates
-     * that clean. Either way the chosen slot's `.build` goes. Other slots keep their stale
-     * tokens until built in.
+     * Keeps `rm -rf .build` in the worktree a clean build, whichever slot it lands on;
+     * the rule is in Android/docs/build-and-run.md § Build slots.
      */
-    private fun checkToken(chosen: Slot, slots: List<Slot>, worktree: File) {
+    private fun checkToken(chosen: Slot, worktree: File) {
+        val gitDir = git(worktree, "rev-parse", "--absolute-git-dir")?.trim()
+            ?: error("Could not find the git directory of $worktree.")
+        val idFile = File(gitDir, ID_FILE)
+        val id = idFile.readToken()
         val local = worktree.resolve(".build/$TOKEN_FILE")
-        val mine = local.takeIf { it.isFile }?.readText()?.trim()?.takeIf { it.isNotEmpty() }
-        val name = sha1(worktree.path)
-        val registered = dir.resolve("$WORKTREES/$name")
-        fun token(slot: Slot) = slot.dir.resolve("$TOKENS/$name").takeIf { it.isFile }?.readText()?.trim()
-        val held = token(chosen)
+        val mine = local.readToken()
+        val held = id?.let { chosen.dir.resolve(".build/$TOKENS/$it").readToken() }
         val reason = when {
-            mine == null && (registered.isFile || slots.any { token(it) != null }) ->
-                "this worktree's .build was deleted since its last build"
+            mine == null && id != null -> "this worktree's .build was deleted since its last build"
             mine != null && held != null && held != mine -> "${chosen.dir.name} predates this worktree's last clean"
             else -> null
         }
         if (reason != null) wipe(chosen, ".build", reason = reason)
-        val token = mine ?: UUID.randomUUID().toString()
-        writeAtomically(chosen.dir.resolve("$TOKENS/$name"), "$token\n")
-        writeAtomically(registered, "$token\n")
-        writeAtomically(local, "$token\n")
+        val token = mine ?: UUID.randomUUID().toString().also { writeAtomically(local, "$it\n") }
+        val worktreeId = id ?: UUID.randomUUID().toString().also { writeAtomically(idFile, "$it\n") }
+        writeAtomically(chosen.dir.resolve(".build/$TOKENS/$worktreeId"), "$token\n")
     }
+
+    private fun File.readToken() = takeIf { it.isFile }?.readText()?.trim()?.takeIf { it.isNotEmpty() }
 
     /**
      * skipstone caches Skip.env's package name and app id in these, so a slot last built
@@ -271,8 +267,6 @@ class SlotPool(private val dir: File, private val max: Int) {
         if (!tmp.renameTo(file)) error("Could not write $file.")
     }
 
-    private fun sha1(text: String) = sha1(text.toByteArray())
-
     private fun sha1(bytes: ByteArray) =
         MessageDigest.getInstance("SHA-1").digest(bytes).joinToString("") { "%02x".format(it) }
 
@@ -295,8 +289,8 @@ class SlotPool(private val dir: File, private val max: Int) {
         const val STATE = ".slot-state"
         const val TRASH_PREFIX = ".android-slot-trash-"
         const val TOKENS = ".slot-tokens"
-        const val WORKTREES = ".android-slot-worktrees"
         const val TOKEN_FILE = ".fa-slot-token"
+        const val ID_FILE = "fa-slot-id"
 
         /** Trash this JVM is already removing. */
         val removing: MutableSet<String> = ConcurrentHashMap.newKeySet()

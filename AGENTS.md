@@ -247,7 +247,7 @@ FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, 
   package resolution and ~29 checkouts.
   Removing a worktree leaves behind what is keyed by its path or name elsewhere:
   its emulator app, simulator, DerivedData dirs (the Skip project's have no
-  `info.plist`, only a path hash), XcodeBuildMCP workspace and build-slot tokens.
+  `info.plist`, only a path hash) and XcodeBuildMCP workspace.
   `Scripts/cleanup-worktree.sh <name>` removes a merged worktree with all of them
   and its branch; `--orphans` sweeps what worktrees removed without it left, and
   reports what it kept, why, and each branch's storage.
