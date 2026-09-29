@@ -164,24 +164,29 @@ class SlotPool(private val dir: File, private val max: Int) {
     /**
      * Keeps `rm -rf .build` in the worktree a clean build, whichever slot it lands on. The
      * worktree's token is in its `.build/.fa-slot-token` and in `.slot-tokens/<sha1(path)>` of
-     * each slot it built in. With no local token but one in some slot, `.build` was deleted;
-     * a slot holding another token than the local one predates that clean. Either way the
-     * chosen slot's `.build` goes. Other slots keep their stale tokens until built in.
+     * each slot it built in, and the pool's `.android-slot-worktrees/<sha1(path)>` records that
+     * it was issued one, surviving the slots' eviction. With no local token but either of
+     * those, `.build` was deleted; a slot holding another token than the local one predates
+     * that clean. Either way the chosen slot's `.build` goes. Other slots keep their stale
+     * tokens until built in.
      */
     private fun checkToken(chosen: Slot, slots: List<Slot>, worktree: File) {
         val local = worktree.resolve(".build/$TOKEN_FILE")
         val mine = local.takeIf { it.isFile }?.readText()?.trim()?.takeIf { it.isNotEmpty() }
         val name = sha1(worktree.path)
+        val registered = dir.resolve("$WORKTREES/$name")
         fun token(slot: Slot) = slot.dir.resolve("$TOKENS/$name").takeIf { it.isFile }?.readText()?.trim()
         val held = token(chosen)
         val reason = when {
-            mine == null && slots.any { token(it) != null } -> "this worktree's .build was deleted since its last build"
+            mine == null && (registered.isFile || slots.any { token(it) != null }) ->
+                "this worktree's .build was deleted since its last build"
             mine != null && held != null && held != mine -> "${chosen.dir.name} predates this worktree's last clean"
             else -> null
         }
         if (reason != null) wipe(chosen, ".build", reason = reason)
         val token = mine ?: UUID.randomUUID().toString()
         writeAtomically(chosen.dir.resolve("$TOKENS/$name"), "$token\n")
+        writeAtomically(registered, "$token\n")
         writeAtomically(local, "$token\n")
     }
 
@@ -290,6 +295,7 @@ class SlotPool(private val dir: File, private val max: Int) {
         const val STATE = ".slot-state"
         const val TRASH_PREFIX = ".android-slot-trash-"
         const val TOKENS = ".slot-tokens"
+        const val WORKTREES = ".android-slot-worktrees"
         const val TOKEN_FILE = ".fa-slot-token"
 
         /** Trash this JVM is already removing. */

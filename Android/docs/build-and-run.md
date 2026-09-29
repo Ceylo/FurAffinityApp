@@ -141,15 +141,17 @@ Two measured rules shape the sync:
   Nothing outside the list is ever touched.
 
 **`rm -rf .build` is still a clean build**, in every slot the worktree built in. The
-worktree keeps a token in `.build/.fa-slot-token`, and each slot it built in a copy in
-`.slot-tokens/<sha1 of the worktree path>`. The build deletes the chosen slot's
-`.build`, and says so, when the worktree has no token but some slot has one (`.build`
-was deleted), or when the chosen slot has a token other than the worktree's (it
-predates that clean). Either way the slot then gets the worktree's token. A stale
-token in another slot stays until the worktree builds there: it is what says that
-slot's `.build` must go too. A new worktree has no token anywhere and reuses a warm
-slot. `Scripts/Android/clean.sh` is the same wipe by name; `--all` also deletes every
-idle slot and names the busy ones.
+worktree keeps a token in `.build/.fa-slot-token`, each slot it built in a copy in
+`.slot-tokens/<sha1 of the worktree path>`, and the pool a record that it was issued
+one, `DerivedData/.android-slot-worktrees/<sha1 of the worktree path>`, which outlives
+the slots' eviction and `clean.sh --all`. The build deletes the chosen slot's
+`.build`, and says so, when the worktree has no token but some slot or the record has
+one (`.build` was deleted), or when the chosen slot has a token other than the
+worktree's (it predates that clean). Either way the slot then gets the worktree's
+token. A stale token in another slot stays until the worktree builds there: it is what
+says that slot's `.build` must go too. A new worktree has no token or record and reuses
+a warm slot. `Scripts/Android/clean.sh` is the same wipe by name; `--all` also deletes
+every idle slot and names the busy ones.
 
 **Where slots are off**, the base is the worktree, as before:
 

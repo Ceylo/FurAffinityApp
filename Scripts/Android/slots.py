@@ -3,12 +3,14 @@
 
 Usage: slots.py list <pool>
            a record per slot: slot, path, idle|busy, owner, lastUsed; then one per
-           token whose worktree is not among the paths on stdin: token, path
+           token, or registry entry (.android-slot-worktrees/<name>), whose worktree
+           is not among the paths on stdin: token, path
        slots.py delete-idle <pool>
            renames each idle slot into the trash. Records: trash, path, slot
            (empty for trash already there) and busy, slot, owner
        slots.py drop-tokens [--dry-run] <pool> <token name>...
-           deletes those tokens from every slot. Records: removed|would|failed, path
+           deletes those tokens from every slot and the registry. Records:
+           removed|would|failed, path
 
 Each command holds the pool lock. Records are fields joined by \\x1f, which, unlike
 a tab, `IFS=$'\\x1f' read` keeps apart when one is empty.
@@ -59,10 +61,14 @@ def slots(pool):
     return sorted((int(m[1]), path) for m, path in found if os.path.isdir(path))
 
 
-def tokens(slot):
-    directory = os.path.join(slot, ".slot-tokens")
+def tokens(directory):
+    """The `<sha1 of a worktree path>` files in a slot's .slot-tokens or the pool's registry."""
     names = sorted(os.listdir(directory)) if os.path.isdir(directory) else []
     return [os.path.join(directory, n) for n in names if re.fullmatch(r"[0-9a-f]{40}", n)]
+
+
+def token_dirs(pool, listed):
+    return [os.path.join(slot, ".slot-tokens") for _, slot in listed] + [os.path.join(pool, ".android-slot-worktrees")]
 
 
 def list_slots(pool):
@@ -74,8 +80,8 @@ def list_slots(pool):
             held.close()
         props = state(slot)
         emit("slot", slot, "idle" if held else "busy", props.get("owner", ""), props.get("lastUsed", "0"))
-    for _, slot in listed:
-        for token in tokens(slot):
+    for directory in token_dirs(pool, listed):
+        for token in tokens(directory):
             if os.path.basename(token) not in live:
                 emit("token", token)
 
@@ -97,9 +103,9 @@ def delete_idle(pool):
 
 
 def drop_tokens(pool, names, dry_run):
-    for _, slot in slots(pool):
+    for directory in token_dirs(pool, slots(pool)):
         for name in dict.fromkeys(names):
-            token = os.path.join(slot, ".slot-tokens", name)
+            token = os.path.join(directory, name)
             if not os.path.isfile(token):
                 continue
             if dry_run:

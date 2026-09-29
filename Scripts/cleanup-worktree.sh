@@ -6,7 +6,8 @@
 # not what is keyed by its path or name elsewhere: its emulator debug app, its
 # `FA <name>` simulator, its DerivedData dirs (the Skip Xcode project's have no
 # info.plist, so nothing can tell whose they are but the path hash), its
-# XcodeBuildMCP workspace and its tokens in the Android build slots. This
+# XcodeBuildMCP workspace and its tokens in the Android build slots and their
+# registry. This
 # removes the worktree first, so a removal git refuses leaves everything else in
 # place, then all of them, then its branch. The slots themselves stay: any
 # worktree reuses them.
@@ -22,9 +23,10 @@
 #   --orphans   sweep what worktrees removed without this script left behind,
 #               list what it kept and what still uses it, and total the storage
 #               of each branch; it assumes every checkout is a worktree of this repo.
-#               It also reports the Android build slots, slot tokens of removed
-#               worktrees, and each worktree's .build/{plugins,checkouts,
-#               repositories,arm64-apple-ios}, which Gradle builds in a slot don't use
+#               It also reports the Android build slots, slot tokens and registry
+#               entries of removed worktrees, and each worktree's .build/{plugins,
+#               checkouts,repositories,arm64-apple-ios}, which Gradle builds in a
+#               slot don't use
 #   --reclaim   with --orphans, also delete those tokens and directories, but not
 #               a worktree's while a build tool runs in it; `skip android build`
 #               and `swift package update` recreate the latter cold
@@ -429,10 +431,14 @@ clean_mcp_workspaces() {
 
 # --- Android build slots ----------------------------------------------------
 
-# A worktree's token in each slot it built in is .slot-tokens/<sha1 of its path>
-# (Android/build-slots). Left behind, a new worktree at that path would take it
-# for a deleted .build and wipe the slot's.
+# A worktree's token in each slot it built in is .slot-tokens/<sha1 of its path>,
+# and the pool's registry has a .android-slot-worktrees/<sha1 of its path>
+# (Android/build-slots). Left behind, a new worktree at that path would take
+# either for a deleted .build and wipe a slot's.
 slot_token_name() { printf %s "$1" | shasum -a1 | cut -d' ' -f1; }
+
+# A path slots.py printed, relative to the pool.
+pool_path() { echo "${1#"$SLOTS_DIR"/}"; }
 
 slots_py() { python3 "$SLOTS_HELPER" "$@"; }
 DRY_FLAG=()
@@ -457,11 +463,11 @@ clean_slot_tokens() {
     while IFS=$'\x1f' read -r kind path; do
         [[ -n "$kind" ]] || continue
         found=1
-        path="$(basename "$(dirname "$(dirname "$path")")")"
+        path="$(pool_path "$path")"
         case "$kind" in
-            would)   echo "  would remove its token in $path" ;;
-            removed) echo "  removed its token in $path" ;;
-            *)       warn "could not remove its token in $path"; FAILED=1 ;;
+            would)   echo "  would remove its token $path" ;;
+            removed) echo "  removed its token $path" ;;
+            *)       warn "could not remove its token $path"; FAILED=1 ;;
         esac
     done <<< "$out"
     (( found )) || echo "  no Android build slot token"
@@ -470,7 +476,7 @@ clean_slot_tokens() {
 # The slots, kept whatever their owner: any worktree reuses them, and
 # FA_ANDROID_SLOTS_MAX already caps them. Clean.sh --all deletes the idle ones.
 report_slots() {
-    local out kind path state owner used kb lines=() stale=() label when found=0
+    local out kind path state owner used kb lines=() stale=() when found=0
     [[ -d "$SLOTS_DIR" && -f "$SLOTS_HELPER" ]] || return 0
     out="$(printf '%s\n' "${LIVE[@]}" | slots_py list "$SLOTS_DIR")" \
         || die "python3 failed reading the Android build slots"
@@ -478,11 +484,10 @@ report_slots() {
     while IFS=$'\x1f' read -r kind path state owner used; do
         [[ -n "$kind" ]] || continue
         if [[ "$kind" == token ]]; then
-            label="token $(basename "$(dirname "$(dirname "$path")")")/.slot-tokens/$(basename "$path")"
             if (( RECLAIM )); then
                 stale+=("$(basename "$path")")
             else
-                lines+=("  kept $label — its worktree is gone (--reclaim removes it)")
+                lines+=("  kept token $(pool_path "$path") — its worktree is gone (--reclaim removes it)")
             fi
             continue
         fi
@@ -497,10 +502,9 @@ report_slots() {
         out="$(slots_py drop-tokens "${DRY_FLAG[@]}" "$SLOTS_DIR" "${stale[@]}")" \
             || die "python3 failed removing Android build slot tokens"
         while IFS=$'\x1f' read -r kind path; do
-            label="token $(basename "$(dirname "$(dirname "$path")")")/.slot-tokens/$(basename "$path")"
             case "$kind" in
-                would)   echo "  would remove $label, of a removed worktree"; found=1 ;;
-                removed) echo "  removed $label, of a removed worktree"; found=1 ;;
+                would)   echo "  would remove token $(pool_path "$path"), of a removed worktree"; found=1 ;;
+                removed) echo "  removed token $(pool_path "$path"), of a removed worktree"; found=1 ;;
                 failed)  warn "could not remove $path"; FAILED=1 ;;
             esac
         done <<< "$out"
