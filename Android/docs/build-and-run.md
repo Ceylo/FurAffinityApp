@@ -170,8 +170,9 @@ What this changes day to day:
 
 - **Errors and DWARF paths name the slot.** Clicking a compiler error in Android
   Studio opens the slot's copy, and the next sync overwrites an edit made there. Edit
-  the worktree. `debug.sh` maps the slot (from `.build/.fa-slot`) back to the worktree
-  for LLDB, except `<slot>/.build`, where the package checkouts are.
+  the worktree. `debug.sh` maps the slot back to the worktree for LLDB, except
+  `<slot>/.build`, where the package checkouts are. It takes the slot from the debug
+  library's DWARF, since `.build/.fa-slot` names whichever slot Gradle configured last.
 - **Generated output is in the slot.** Wherever these docs say
   `.build/plugins/outputs` or `.build/Android/skip-gradle`, a Gradle build's is under
   `$(cat .build/.fa-slot)/.build/`, and its segment after `outputs/` is
