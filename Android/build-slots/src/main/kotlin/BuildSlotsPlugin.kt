@@ -71,13 +71,10 @@ private fun slotPool(settings: Settings) = SlotPool(
  * copies. An absolute one resolves the same from a slot.
  */
 private fun unsyncedPathDependency(settings: Settings, worktree: File): String? {
-    val listed = settings.providers.exec {
-        commandLine("git", "-C", worktree.path, "ls-files", "-z", "-co", "--exclude-standard", "--", "*Package.swift")
+    val synced = settings.providers.exec {
+        commandLine("$worktree/Scripts/Android/slot-sync.sh", "--list", worktree.path)
     }.standardOutput.asText.get()
-    // As slot-sync.sh lists them: a nested repository shows as `dir/`, a deleted tracked file is skipped.
-    val manifests = listed.split('\u0000')
-        .filter { (it == "Package.swift" || it.endsWith("/Package.swift")) && worktree.resolve(it).isFile }
-        .toSet()
+    val manifests = synced.split('\u0000').filter { it == "Package.swift" || it.endsWith("/Package.swift") }.toSet()
     val root = worktree.toPath()
     for (path in manifests) {
         val manifest = worktree.resolve(path)
