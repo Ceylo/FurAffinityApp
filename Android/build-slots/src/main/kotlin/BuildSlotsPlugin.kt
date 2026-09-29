@@ -24,29 +24,42 @@ abstract class BuildSlotsPlugin @Inject constructor(
 ) : Plugin<Settings> {
     override fun apply(settings: Settings) {
         val worktree = settings.rootDir.parentFile.canonicalFile
+        // Cap the build cache before this build adds to it, alongside the configuration.
+        val pruneLog = File.createTempFile("prune-build-cache", ".log")
+        val prune = ProcessBuilder("$worktree/Scripts/Android/prune-build-cache.sh")
+            .redirectErrorStream(true).redirectOutput(pruneLog).start()
+        val configured = runCatching { configure(settings, worktree) }
+        val status = prune.waitFor()
+        print(pruneLog.readText())
+        pruneLog.delete()
+        configured.getOrThrow()
+        if (status != 0) throw GradleException("`prune-build-cache.sh` exited with $status.")
+    }
 
+    private fun configure(settings: Settings, worktree: File) {
         // Derive the launcher mipmaps and the in-app AppIcon from the iOS asset catalog.
         // Configuration time is the one place that orders correctly for both consumers —
         // this module's resource merge and the skipstone included build's resource copy —
         // since an app:preBuild dependency cannot order against a separate included build.
         settings.runCommand("$worktree/Scripts/Android/generate-assets.sh")
-        // Cap the build cache before this build adds to it.
-        settings.runCommand("$worktree/Scripts/Android/prune-build-cache.sh")
 
-        val inSlot = slotsEnabled(settings) && unsyncedPathDependency(settings, worktree)?.also {
+        val builtProducts = settings.env("BUILT_PRODUCTS_DIR") ?: System.getProperty("BUILT_PRODUCTS_DIR")
+        val enabled = slotsEnabled(settings, builtProducts)
+        val unsynced = if (enabled) unsyncedPathDependency(settings, worktree) else null
+        if (unsynced != null) {
             logger.lifecycle(
-                "fa.build-slots: building in the worktree, not a slot: $it is not in what a slot copies " +
+                "fa.build-slots: building in the worktree, not a slot: $unsynced is not in what a slot copies " +
                     "(it leaves the worktree, or is git-ignored, missing or its own repository)."
             )
-        } == null
-        if (inSlot) {
+        }
+        if (enabled && unsynced == null) {
             val pool = slotPool(settings)
             val slot = leaseSlot(settings, pool, worktree, buildEvents)
-            includeSkip(settings, worktree, base = slot)
+            includeSkip(settings, worktree, base = slot, builtProducts)
             pool.markPrebuilt(slot, worktree)
         } else {
             worktree.resolve(".build/.fa-slot").delete()
-            includeSkip(settings, worktree, base = worktree)
+            includeSkip(settings, worktree, base = worktree, builtProducts)
         }
     }
 }
@@ -55,9 +68,8 @@ abstract class BuildSlotsPlugin @Inject constructor(
  * Off for CI and FA_ANDROID_SLOTS=0, and for Xcode's "Run skip gradle" phase, whose
  * transpiled output already lives in Xcode's own DerivedData.
  */
-private fun slotsEnabled(settings: Settings) =
-    settings.env("FA_ANDROID_SLOTS") != "0" && settings.env("CI") == null &&
-        settings.env("BUILT_PRODUCTS_DIR") == null && System.getProperty("BUILT_PRODUCTS_DIR") == null
+private fun slotsEnabled(settings: Settings, builtProducts: String?) =
+    settings.env("FA_ANDROID_SLOTS") != "0" && settings.env("CI") == null && builtProducts == null
 
 private fun slotPool(settings: Settings) = SlotPool(
     dir = settings.env("FA_ANDROID_SLOTS_DIR")?.let(::File)
@@ -109,7 +121,7 @@ private fun leaseSlot(settings: Settings, pool: SlotPool, worktree: File, buildE
 }
 
 /** Prebuilds the Swift package at [base] and includes its transpiled Gradle builds. */
-private fun includeSkip(settings: Settings, worktree: File, base: File) = with(settings) {
+private fun includeSkip(settings: Settings, worktree: File, base: File, builtProducts: String?) = with(settings) {
     checkSkipEnv(worktree, base)
     // SwiftPM keys its manifest cache on the environment, PWD included: run from the
     // base, not the caller's directory, or every worktree switch recompiles ~30 manifests (~11 s).
@@ -135,7 +147,7 @@ private fun includeSkip(settings: Settings, worktree: File, base: File) = with(s
         }
     }
 
-    val skipstone = findSkipstone(base, swiftModuleName)
+    val skipstone = findSkipstone(base, swiftModuleName, builtProducts)
     // Supplies the "libs" version catalog and the plugin repositories.
     apply(from = skipstone.resolve("settings.gradle.kts"))
     includeBuild(skipstone)
@@ -195,8 +207,7 @@ private fun warnOnSkipSettingsDrift(skipGradle: File) {
     val lines = source.takeIf { it.isFile }?.readLines().orEmpty()
         .dropWhile { !it.startsWith("class SkipSettingsPlugin") }
     val block = lines.take(lines.indexOf("}") + 1).joinToString("") { "$it\n" }
-    val hash = MessageDigest.getInstance("SHA-256").digest(block.toByteArray())
-        .joinToString("") { "%02x".format(it) }
+    val hash = hexDigest("SHA-256", block.toByteArray())
     if (hash != SKIP_SETTINGS_PLUGIN_SHA256) {
         logger.warn(
             "fa.build-slots: warning: Skip's SkipSettingsPlugin changed; review Android/build-slots against it " +
@@ -206,9 +217,8 @@ private fun warnOnSkipSettingsDrift(skipGradle: File) {
 }
 
 /** The transpiled module's skipstone project, looked up the way SkipSettingsPlugin does. */
-private fun findSkipstone(base: File, module: String): File {
+private fun findSkipstone(base: File, module: String, builtProducts: String?): File {
     // Xcode's "Run skip gradle" phase sets BUILT_PRODUCTS_DIR; its plugin outputs live in DerivedData.
-    val builtProducts = System.getenv("BUILT_PRODUCTS_DIR") ?: System.getProperty("BUILT_PRODUCTS_DIR")
     val outputs = if (builtProducts != null) {
         File(builtProducts).resolve("../../../Build/Intermediates.noindex/BuildToolPluginIntermediates/")
             .takeIf { it.exists() }

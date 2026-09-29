@@ -5,11 +5,7 @@ import org.gradle.tooling.events.FinishEvent
 import org.gradle.tooling.events.OperationCompletionListener
 import java.io.File
 
-/**
- * Holds this build's slot lock. Registered as a task-completion listener, which Gradle
- * keeps alive until the end of the build, a failed one included; the OS drops the lock
- * if the daemon dies.
- */
+/** Holds this build's slot lock until the build ends; see Android/docs/build-and-run.md § Build slots. */
 abstract class SlotLease : BuildService<BuildServiceParameters.None>, OperationCompletionListener, AutoCloseable {
     private var lock: SlotLock? = null
 

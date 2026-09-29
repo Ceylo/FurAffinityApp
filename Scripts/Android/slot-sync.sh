@@ -91,8 +91,10 @@ manifest="$slot/.slot-manifest"
 # --- removals: in the old manifest, not in the new list ---------------------
 
 # Both lists are sorted, so one merge walk finds them.
+changed=1
+if cmp -s "$tmp/new" "$manifest"; then changed=0; fi
 : > "$tmp/removed"
-if [[ -f "$manifest" ]]; then
+if (( changed )) && [[ -f "$manifest" ]]; then
     exec 3< "$tmp/new"
     have=0; IFS= read -r -d '' next <&3 && have=1
     while IFS= read -r -d '' old; do
@@ -118,7 +120,7 @@ done < "$tmp/removed"
 
 # Written before the copy, so a copy that fails halfway leaves every file it
 # may have created on the list for the next run to own.
-if ! cmp -s "$tmp/new" "$manifest"; then
+if (( changed )); then
     cp "$tmp/new" "$manifest.tmp"
     mv -f "$manifest.tmp" "$manifest"
 fi

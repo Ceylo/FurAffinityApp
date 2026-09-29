@@ -8,8 +8,7 @@ still built by `FurAffinity.xcodeproj` and none of its files move.
 
 | Doc | Covers |
 |---|---|
-| [docs/build-and-run.md](docs/build-and-run.md) | emulator, build, run, debug, test, CI, and the build-environment traps |
-| [docs/build-and-run.md § Build slots](docs/build-and-run.md#build-slots) | where the Swift side builds: slots shared by every worktree, their lease, sync, clean and opt-outs |
+| [docs/build-and-run.md](docs/build-and-run.md) | emulator, build, run, debug, test, CI, the build-environment traps, and the [build slots](docs/build-and-run.md#build-slots) the Swift side builds in, shared by every worktree |
 | [docs/shared-sources.md](docs/shared-sources.md) | guarding, and every rule for writing a file both platforms compile |
 | [docs/assets-and-resources.md](docs/assets-and-resources.md) | shared asset-catalog entries, generated launcher/app art |
 | [docs/forks.md](docs/forks.md) | the four forked dependencies and every patch in them |

@@ -235,11 +235,17 @@ size_kb() {
     echo "${kb:-0}"
 }
 
-# remove_tree <label> <path>…: remove file trees, reporting their size.
+# remove_tree [--kb <size>] <label> <path>…: remove file trees, reporting their
+# size, measured unless given.
 remove_tree() {
-    local label="$1" path kb=0
+    local label path kb=""
+    if [[ "$1" == --kb ]]; then kb="$2"; shift 2; fi
+    label="$1"
     shift
-    for path in "$@"; do kb=$(( kb + $(size_kb "$path") )); done
+    if [[ -z "$kb" ]]; then
+        kb=0
+        for path in "$@"; do kb=$(( kb + $(size_kb "$path") )); done
+    fi
     TOTAL_KB=$(( TOTAL_KB + kb ))
     if (( DRY_RUN )); then
         echo "  would remove $label ($(human "$kb"))"
@@ -433,7 +439,7 @@ slots_py() { python3 "$SLOTS_HELPER" "$@"; }
 # The slots, kept whatever their owner: any worktree reuses them, and
 # FA_ANDROID_SLOTS_MAX already caps them. Clean.sh --all deletes the idle ones.
 report_slots() {
-    local out kind path state owner used kb lines=() when
+    local out kind path state owner used kb when
     [[ -d "$SLOTS_DIR" ]] || return 0
     if ! out="$(slots_py list "$SLOTS_DIR")"; then
         warn "python3 failed reading the Android build slots"; FAILED=1; return 0
@@ -446,9 +452,9 @@ report_slots() {
         [[ "$used" =~ ^[0-9]+$ ]] && (( used > 0 )) \
             && when="last used $(date -r $(( used / 1000 )) '+%Y-%m-%d %H:%M')"
         [[ -z "$owner" || -d "$owner" ]] || owner="$owner (gone)"
-        lines+=("  kept $(basename "$path") ($(human "$kb")) — $state, $when${owner:+ by $(tilde "$owner")}")
+        KEPT+=("  kept $(basename "$path") ($(human "$kb")) — $state, $when${owner:+ by $(tilde "$owner")}")
     done <<< "$out"
-    end_section_lines 0 "${lines[@]}"
+    end_section 0
 }
 
 # "<cwd|file> <command> <path>" for what build tools hold: their working
@@ -485,7 +491,7 @@ building_in() {
 # recreate it cold. Removing only part of it leaves the stale state behind
 # "missing required module" errors.
 report_legacy_build() {
-    local i wt entries names d kb tool found=0 lines=()
+    local i wt entries names d kb tool found=0
     (( ! RECLAIM )) || BUILD_TOOL_PATHS="$(build_tool_paths)"
     echo "Per-worktree .build content Gradle builds in a slot don't use (all but Android/ and .fa-slot*)"
     for i in "${!LIVE[@]}"; do
@@ -500,23 +506,16 @@ report_legacy_build() {
         names="$(basename "$wt")/.build/{$names}"
         # By a tracked file: ignored build output under Android/build-slots survives a checkout.
         if ! git -C "$wt" ls-files --error-unmatch -- Android/build-slots/build.gradle.kts >/dev/null 2>&1; then
-            lines+=("  kept $names ($(human "$kb")) — in use: ${LIVE_BRANCHES[$i]} predates build slots")
+            KEPT+=("  kept $names ($(human "$kb")) — in use: ${LIVE_BRANCHES[$i]} predates build slots")
         elif (( RECLAIM )) && tool="$(building_in "$wt" "${entries[@]}")"; then
-            lines+=("  kept $names ($(human "$kb")) — $tool is building there")
+            KEPT+=("  kept $names ($(human "$kb")) — $tool is building there")
         elif (( RECLAIM )); then
-            remove_tree "$names" "${entries[@]}"
+            remove_tree --kb "$kb" "$names" "${entries[@]}"
             found=1
         else
-            lines+=("  kept $names ($(human "$kb")) — not used by Gradle builds; \`skip android build\` recreates it cold (--reclaim removes it)")
+            KEPT+=("  kept $names ($(human "$kb")) — not used by Gradle builds; \`skip android build\` recreates it cold (--reclaim removes it)")
         fi
     done
-    end_section_lines "$found" "${lines[@]}"
-}
-
-end_section_lines() {
-    local found="$1"
-    shift
-    KEPT=("$@")
     end_section "$found"
 }
 
