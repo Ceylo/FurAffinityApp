@@ -442,14 +442,17 @@ clean_slot_tokens() {
     local wt="$1" out kind path state owner found=0
     [[ -d "$SLOTS_DIR" ]] || { echo "  no Android build slot"; return 0; }
     [[ -f "$SLOTS_HELPER" ]] || { warn "no $SLOTS_HELPER — its slot tokens stay"; return 0; }
-    out="$(slots_py list "$SLOTS_DIR" < /dev/null)" || die "python3 failed reading the Android build slots"
+    if ! out="$(slots_py list "$SLOTS_DIR" < /dev/null)"; then
+        warn "python3 failed reading the Android build slots — its slot tokens stay"; FAILED=1; return 0
+    fi
     while IFS=$'\x1f' read -r kind path state owner _; do
         if [[ "$kind" == slot && "$owner" == "$wt" ]]; then
             echo "  kept $(basename "$path"), which it built in last: any worktree reuses it"
         fi
     done <<< "$out"
-    out="$(slots_py drop-tokens "${DRY_FLAG[@]}" "$SLOTS_DIR" "$(slot_token_name "$wt")")" \
-        || die "python3 failed removing its Android build slot tokens"
+    if ! out="$(slots_py drop-tokens "${DRY_FLAG[@]}" "$SLOTS_DIR" "$(slot_token_name "$wt")")"; then
+        warn "python3 failed removing its Android build slot tokens"; FAILED=1; return 0
+    fi
     while IFS=$'\x1f' read -r kind path; do
         [[ -n "$kind" ]] || continue
         found=1
