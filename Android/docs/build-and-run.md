@@ -104,10 +104,14 @@ suffix and `GIT_COMMIT` stay the worktree's. Each build:
    waited on with no timeout) it takes the idle slot this worktree used last, else,
    preferring one last built with the same `Skip.env`, the one whose recorded commit is
    fewest files away, else the least recently used; if every slot is busy it creates
-   one, cold. Idle slots beyond `FA_ANDROID_SLOTS_MAX` (default 3) are deleted, least
-   recently used first. A slot last built with another `Skip.env` (its hash is in
-   `<slot>/.slot-state`) drops its `.build/{plugins/outputs,Darwin,Android}`, where
-   skipstone caches the package name and app id.
+   one, cold. An unleased slot a Swift build still runs in counts as busy: a `swift*`,
+   `skip` or `clang` process with its cwd in the slot or a file open under its
+   `.build`, as a cancelled build or a dead daemon leaves behind. The build names its
+   pid; the one `lsof` costs 30–80 ms. Idle slots beyond `FA_ANDROID_SLOTS_MAX`
+   (default 3) are deleted, least recently used first. A slot last built with another
+   `Skip.env` (its hash is in `<slot>/.slot-state`) drops its
+   `.build/{plugins/outputs,Darwin,Android}`, where skipstone caches the package name
+   and app id.
 2. **Syncs** the worktree into it (`Scripts/Android/slot-sync.sh`): git's tracked and
    untracked-unignored files plus the generated catalog entries, never signing
    material.

@@ -1,5 +1,6 @@
 import org.gradle.api.logging.Logging
 import java.io.File
+import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.channels.OverlappingFileLockException
 import java.nio.file.StandardOpenOption.CREATE
@@ -66,8 +67,15 @@ class SlotPool(private val dir: File, private val max: Int) {
             // Every idle slot stays locked until the choice is made, so eviction only takes
             // idle ones; whatever is still in `held` is released, the lease itself on failure.
             val held = slots.mapNotNull { slot -> SlotLock.tryAcquire(slot.dir)?.let { slot to it } }.toMap(HashMap())
-            val idle = held.keys.toSet()
             try {
+                for ((slot, process) in strayBuilds(held.keys)) {
+                    logger.lifecycle(
+                        "fa.build-slots: skipping ${slot.dir.name}: $process is still running in it, " +
+                            "left by a cancelled build or a dead daemon."
+                    )
+                    held.remove(slot)?.close()
+                }
+                val idle = held.keys.toSet()
                 val chosen = choose(idle, worktree) ?: create(slots)
                 val lease = held.getOrPut(chosen) {
                     SlotLock.tryAcquire(chosen.dir) ?: error("Could not lock the new build slot ${chosen.dir}.")
@@ -82,6 +90,41 @@ class SlotPool(private val dir: File, private val max: Int) {
                 held.values.forEach { it.close() }
             }
         }
+    }
+
+    /**
+     * Unleased slots a Swift build still runs in, by its cwd or a file open under the
+     * slot's `.build`, with that process: a lease dies with its daemon, its children don't.
+     */
+    private fun strayBuilds(slots: Set<Slot>): Map<Slot, String> {
+        if (slots.isEmpty()) return emptyMap()
+        val output = try {
+            val process = ProcessBuilder("/usr/sbin/lsof", "-w", "-n", "-P", "-c", "swift", "-c", "skip", "-c", "clang", "-Fpcfn")
+                .redirectError(ProcessBuilder.Redirect.DISCARD)
+                .start()
+            process.inputStream.bufferedReader().readText().also { process.waitFor() }
+        } catch (e: IOException) {
+            logger.info("fa.build-slots: could not look for stray builds: $e")
+            return emptyMap()
+        }
+        val roots = slots.associateBy { it.dir.canonicalPath }
+        val found = HashMap<Slot, String>()
+        var pid = ""
+        var command = ""
+        var fd = ""
+        for (line in output.lineSequence().filter { it.isNotEmpty() }) {
+            val value = line.substring(1)
+            when (line[0]) {
+                'p' -> pid = value
+                'c' -> command = value
+                'f' -> fd = value
+                'n' -> for ((root, slot) in roots) {
+                    val inSlot = if (fd == "cwd") value == root || value.startsWith("$root/") else value.startsWith("$root/.build/")
+                    if (inSlot) found.putIfAbsent(slot, "$command (pid $pid)")
+                }
+            }
+        }
+        return found
     }
 
     private fun choose(idle: Set<Slot>, worktree: File): Slot? {
