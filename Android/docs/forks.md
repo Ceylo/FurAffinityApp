@@ -3,8 +3,8 @@
 | Fork | Why |
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
-| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; `.glass`/`.glassProminent` drawn as bordered and `buttonBorderShape`; a sheet that calls its content only while presented and keeps the last one while it animates away; a `ScrollViewReader` proxy that resolves its scroll action when used; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
-| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, `ButtonBorderShape`, `sheet`/`fullScreenCover` content passed as a builder, a `JavaBackedView` holding a global JNI reference, plus `glassEffect`/`GlassEffectContainer`/`AnyTransition.animation`/`.glass`/`.glassProminent` un-`unavailable`d and `controlSize`/`contentShape` as pass-throughs; `#Preview` / `@Previewable` stubs (skiptools/skip#439) |
+| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; `.glass`/`.glassProminent` drawn as bordered and `buttonBorderShape`; `glassEffect` drawn as the M3 floating surface; tab re-tap popping to root, then scrolling to top; a `List` under the status bar when the navigation bar is hidden; a bridged `.task(id:)` that is really cancelled; `.updatesFrequently` as a polite live region; a shadow whose copy of its content is kept out of the accessibility tree; a sheet that calls its content only while presented and keeps the last one while it animates away; a `ScrollViewReader` proxy that resolves its scroll action when used; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
+| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, `ButtonBorderShape`, `sheet`/`fullScreenCover` content passed as a builder, a `JavaBackedView` holding a global JNI reference, `glassEffect` bridged to SkipUI's surface, `GlassEffectContainer` bridged as a `Group`, an `AccessibilityTraits()` that doesn't recurse (upstream #132), plus `glassEffectUnion`/`glassEffectID`/`AnyTransition.animation`/`.glass`/`.glassProminent` un-`unavailable`d and `controlSize`/`contentShape` as pass-throughs; `#Preview` / `@Previewable` stubs (skiptools/skip#439) |
 | `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, and a rendered image that comes out of an `ImageHolder` rather than out of the view value |
 | `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
 
@@ -504,6 +504,68 @@ Kotlin redeclarations. `#if` around them does not help, for the reason above.
 Adopting the fork moves iOS from upstream 8.10.0 to a branch based on upstream `master`
 past 8.12.0 (`2fd07d84`, which includes #2579), merged into `android` as `c2cacbaa` on 2026-09-22.
 
+## The feed-gaps patches
+
+What sharing `SubmissionsTabView` needed ([screens.md § Followed feed](screens.md#followed-feed)).
+
+skip-ui:
+
+- **`glassEffect` draws the M3 floating surface** (`9b8671b`, `Graphics/Glass.swift`).
+  Compose has no Liquid Glass, so it draws what M3 draws under a floating toolbar or FAB:
+  `surfaceContainer` in the given shape, under a 3 dp (level 2) shadow that doesn't clip
+  the content; `isEnabled: false` leaves the view as it is. `glassEffectUnion` /
+  `glassEffectID` are pass-throughs, so each glass shape draws on its own.
+- **Re-tapping the selected tab** (`001f4ec`, `TabView.swift`, `Navigation.swift`) pops to
+  the root, then scrolls to top, as Material and iOS do; SkipUI ignored it. `TabView`
+  bumps a per-tab counter handed down as the internal `_tabReselectSignal`. The tab's
+  `NavigationStack` watches it — on the stack, since the root entry isn't composed while
+  something is pushed — and either calls the new `Navigator.navigateToRoot()` (clears a
+  bound path and trims pushed views outside it) or runs the root entry's scroll-to-top
+  action, the one the top-bar tap uses. Entry content and sheets clear the signal, so
+  nested stacks don't react.
+- **A `List` under the status bar with the bar hidden** (`ca5fad0`). `NavigationStack`'s
+  Box layout clamped the content's top inset to the status bar even with no top bar, and
+  insetting drops the edge's system-bar flag, so `List` never expanded into it; it now
+  insets only when a bar is shown, as the Column layout does. Two follow-ons, both in
+  `List.swift`: `scrollTo(id)` stops the item below the safe-area header, as iOS stops it
+  below the content inset (the offset is read at call time, since `ScrollToIDAction`
+  compares by key and keeps its first closure); and a root stack's first pass reserves a
+  top bar, so the header arrives one pass late and Compose keeps the first keyed row above
+  it — the list is scrolled back to the header when it was resting at its top.
+- **A bridged `.task(id:)` is cancelled** when its id changes or the view leaves
+  (`1335ebf`, `AdditionalViewModifiers.swift`). SkipLib's Kotlin `Task.cancel()` only flags
+  the task and runs `withTaskCancellationHandler` handlers; it never cancels the
+  coroutine, so the `invokeOnCancellation` the bridge waited on never fired and a
+  superseded or disposed task ran to completion. It now registers through
+  `withTaskCancellationHandler`, and covers a cancel landing before the action installs
+  its `onCancel`. **This changes behaviour app-wide**: every `.task` / `.task(id:)` on
+  Android (plain `.task` bridges as `task(id: 0)`) is now cancelled on disappear, as on
+  iOS. Found through the Undo snackbar, whose undone batch's 5 s timer committed the next
+  batch after ~1 s.
+  - `RefreshAction(bridgedAction:)` (`Commands/Actions.swift`) waits on the same bare
+    `invokeOnCancellation`, but is not affected: `List` and `ScrollView` launch it in a
+    Compose coroutine scope, whose cancellation is a real one (`22ff079` tests it).
+- **`.updatesFrequently` is a polite live region** (`88ac81d`, `System/Accessibility.swift`).
+  SkipUI declared the trait and dropped it. `LiveRegionMode.Polite` is what Material's
+  snackbar sets so TalkBack reads it as it appears, and nothing else in Compose comes closer.
+- **A shadow's copy of its content is out of the accessibility tree** (`84586ee`,
+  `Skip/Shadowed.kt`). `Shadowed` composes the content twice, the second time as the
+  shadow, and that copy kept its semantics: TalkBack read the Undo snackbar as "Submission
+  deleted. Submission deleted. Unlabelled. Undo", and could focus each copy. The copy
+  now gets `clearAndSetSemantics {}`.
+
+skip-fuse-ui:
+
+- **`glassEffect` bridges to SkipUI** (`6c66c8d`) with its shape, instead of returning
+  `self`; `glassEffectUnion` / `glassEffectID` become pass-throughs instead of unavailable.
+- **`GlassEffectContainer` bridges as a `Group`** (`e0600ec`). A View with only a `body` is
+  not `SkipUIBridging`, so the pass-through reached Compose as `Java_viewOrEmpty`'s
+  `EmptyView`: every glass control a shared source wrapped in one drew nothing on Android.
+- **`AccessibilityTraits()` no longer recurses** (`d1905bc`, cherry-picked from upstream
+  PR #132, issue #130). `init() { self = [] }` built `[]` through `init()` again, so any
+  array literal, the empty one included, overflowed the stack on Android. The snackbar's
+  `isShown ? .updatesFrequently : []` needs it.
+
 ## The other fork patches
 
 - **`Text(html:)`** hands markup to Compose's own parser,
@@ -591,17 +653,20 @@ past 8.12.0 (`2fd07d84`, which includes #2579), merged into `android` as `c2cacb
   which can't be emulated: a `Layout` enumerates and places its subviews, and an opaque
   `Content` gives a Fuse module no access to them. Compose wraps natively, so it is a
   container instead, with `FurAffinity/Helper Views/Android/FlowLayout+Android.swift` keeping the iOS call signature.
-- **`glassEffect`** and **`AnyTransition.animation`** become pass-throughs rather than
-  `unavailable`. `#available(iOS 26, *)` is vacuously true off-Apple, so a shared source
-  takes its Liquid Glass branch on Android; making the call unbuildable is worse than
-  ignoring an effect Compose can't express.
+- **`AnyTransition.animation`**, **`glassEffectUnion`** and **`glassEffectID`** become
+  pass-throughs rather than `unavailable`. `#available(iOS 26, *)` is vacuously true
+  off-Apple, so a shared source takes its Liquid Glass branch on Android; making the call
+  unbuildable is worse than ignoring an effect Compose can't express. `glassEffect` itself
+  now draws — see [§ The feed-gaps patches](#the-feed-gaps-patches).
 - **SF Symbol mappings** for the symbols this app uses. Unmapped names render as a
   warning triangle. Six are now the mapping sent as skip-ui #525, picked by the symbol's
   *shape* rather than by what the app means by it: `bubble` → ChatBubbleOutline,
   `message` → Chat, `safari` → Explore (was Public), `exclamationmark.bubble` → Feedback
   (was CommentsDisabled), `ellipsis.bubble` → Sms (was Forum), `square.and.arrow.down` →
   SaveAlt (was FileDownload). `text.badge.star` → Info stays fork-only: Material has
-  nothing shaped like it.
+  nothing shaped like it. The tab icons came later (`f54f6e8`): `rectangle.grid.2x2` →
+  GridView and `slider.horizontal.3` → Tune, so `AndroidRootView` uses `LoggedInView`'s
+  labels.
 - **Text layout parity with iOS.** Four Material defaults that each read as a bug next
   to the iOS build, all measured off screenshots rather than eyeballed:
   - Material's typography **fixes a line height** (`bodyLarge` is 24sp on a 16sp face,

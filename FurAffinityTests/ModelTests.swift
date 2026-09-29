@@ -143,6 +143,107 @@ struct ModelTests {
         #expect(model.submissionPreviews?.count == 2)
     }
 
+    private func makeModelWithSubmissions(_ ids: [Int]) async throws -> (Model, MockFASession) {
+        let mock = MockFASession(mockSubmissionPreviews: ids.map { makeSubmission(id: $0) })
+        let model = Model()
+        try await model.setSession(mock)
+        return (model, mock)
+    }
+
+    @Test func stageSubmissionPreviewsDeletion_removesRowsWithoutSessionCall() async throws {
+        let (model, mock) = try await makeModelWithSubmissions([3, 2, 1])
+        let staged = model.submissionPreviews![1]
+
+        model.stageSubmissionPreviewsDeletion([staged])
+
+        #expect(model.submissionPreviews?.map(\.sid) == [3, 1])
+        #expect(model.stagedSubmissionPreviewsDeletion == [staged])
+        try await Task.sleep(nanoseconds: 100_000_000)
+        #expect(mock.deletedSubmissionPreviewBatches.isEmpty)
+    }
+
+    @Test func fetchSubmissionPreviews_doesNotBringBackStagedRows() async throws {
+        let (model, _) = try await makeModelWithSubmissions([3, 2, 1])
+        // The newest row: once it's gone, a fetch would otherwise see it as new.
+        let staged = model.submissionPreviews![0]
+        model.stageSubmissionPreviewsDeletion([staged])
+
+        _ = try await model.fetchSubmissionPreviews()
+        _ = try await model.fetchSubmissionPreviews()
+
+        #expect(model.submissionPreviews?.map(\.sid) == [2, 1])
+        #expect(model.stagedSubmissionPreviewsDeletion == [staged])
+    }
+
+    @Test func undoStagedSubmissionPreviewsDeletion_restoresOrder() async throws {
+        let (model, mock) = try await makeModelWithSubmissions([4, 3, 2, 1])
+        model.stageSubmissionPreviewsDeletion([model.submissionPreviews![1], model.submissionPreviews![3]])
+        #expect(model.submissionPreviews?.map(\.sid) == [4, 2])
+
+        model.undoStagedSubmissionPreviewsDeletion()
+
+        #expect(model.submissionPreviews?.map(\.sid) == [4, 3, 2, 1])
+        #expect(model.stagedSubmissionPreviewsDeletion.isEmpty)
+        #expect(model.commitStagedSubmissionPreviewsDeletion() == nil)
+        #expect(mock.deletedSubmissionPreviewBatches.isEmpty)
+    }
+
+    @Test func commitStagedSubmissionPreviewsDeletion_callsSession() async throws {
+        let (model, mock) = try await makeModelWithSubmissions([3, 2, 1])
+        let staged = model.submissionPreviews![1]
+        model.stageSubmissionPreviewsDeletion([staged])
+
+        await model.commitStagedSubmissionPreviewsDeletion()?.value
+
+        #expect(mock.deletedSubmissionPreviewBatches == [[staged]])
+        #expect(model.stagedSubmissionPreviewsDeletion.isEmpty)
+        #expect(model.submissionPreviews?.map(\.sid) == [3, 1])
+    }
+
+    @Test func commitStagedSubmissionPreviewsDeletion_rollsBackOnFailure() async throws {
+        let (model, mock) = try await makeModelWithSubmissions([3, 2, 1])
+        mock.shouldDeleteFail = true
+        model.stageSubmissionPreviewsDeletion([model.submissionPreviews![1]])
+
+        await model.commitStagedSubmissionPreviewsDeletion()?.value
+
+        #expect(mock.deletedSubmissionPreviewBatches.count == 1)
+        #expect(model.submissionPreviews?.map(\.sid) == [3, 2, 1])
+    }
+
+    @Test func stageSubmissionPreviewsDeletion_commitsAfterUndoDelay() async throws {
+        let (model, mock) = try await makeModelWithSubmissions([3, 2, 1])
+        model.stagedDeletionUndoDelay = .milliseconds(50)
+        let undone = model.submissionPreviews![0]
+        let staged = model.submissionPreviews![1]
+
+        // An undone batch's countdown must not commit the next one early.
+        model.stageSubmissionPreviewsDeletion([undone])
+        model.undoStagedSubmissionPreviewsDeletion()
+        model.stagedDeletionUndoDelay = .seconds(1)
+        model.stageSubmissionPreviewsDeletion([staged])
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(mock.deletedSubmissionPreviewBatches.isEmpty)
+
+        try await Task.sleep(for: .seconds(1))
+        #expect(mock.deletedSubmissionPreviewBatches == [[staged]])
+        #expect(model.stagedSubmissionPreviewsDeletion.isEmpty)
+    }
+
+    @Test func stageSubmissionPreviewsDeletion_commitsPreviousBatch() async throws {
+        let (model, mock) = try await makeModelWithSubmissions([3, 2, 1])
+        let first = model.submissionPreviews![0]
+        let second = model.submissionPreviews![2]
+
+        model.stageSubmissionPreviewsDeletion([first])
+        model.stageSubmissionPreviewsDeletion([second])
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        #expect(mock.deletedSubmissionPreviewBatches == [[first]])
+        #expect(model.stagedSubmissionPreviewsDeletion == [second])
+        #expect(model.submissionPreviews?.map(\.sid) == [2])
+    }
+
     @Test func defaultsWriteFromBackgroundDoesNotCrashModelObservers() async {
         // Model.init runs two @MainActor loops over Defaults.updates (the Defaults
         // library observes the standard suite via KVO). Writing an observed key off the

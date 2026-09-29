@@ -96,17 +96,13 @@ struct AndroidRootView: View {
             } else {
                 TabView(selection: $selectedTab) {
                     NavigationStack(path: $path) {
-                        SubmissionsFeedView()
-                            .navigationTitle("Submissions")
+                        SubmissionsTabView()
                             .navigationDestination(for: FATarget.self) { target in
                                 view(for: target)
                             }
                     }
-                    // SkipUI maps a fixed set of SF Symbols onto Material icons and
-                    // draws a warning triangle for the rest, so these two don't match
-                    // LoggedInView's `rectangle.grid.2x2` / `slider.horizontal.3`.
                     .tabItem {
-                        Label("Submissions", systemImage: "list.bullet")
+                        Label("Submissions", systemImage: "rectangle.grid.2x2")
                     }
                     .tag(Tab.submissions)
 
@@ -116,7 +112,7 @@ struct AndroidRootView: View {
                         // Same "an update is available" dot as LoggedInView's.
                         .badge(model.appInfo.isUpToDate == false ? " " : nil)
                         .tabItem {
-                            Label("Settings", systemImage: "gearshape")
+                            Label("Settings", systemImage: "slider.horizontal.3")
                         }
                         .tag(Tab.settings)
                 }

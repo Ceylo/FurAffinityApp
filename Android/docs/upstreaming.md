@@ -36,8 +36,16 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `ad375fb` `.subheadline` → `bodyMedium` | skip-ui | no | one token; carries a measured screenshot argument |
 | `eaa6abe` resume animation across disposal | skip-ui | no | the recycling-boundary fix; largest single non-text patch |
 | `4b30753` `ScrollView` fills its scrolled axis | skip-ui | no | state the large-title side effect in the body — `forks.md` already names it |
-| `f4776db` `glassEffect` / `AnyTransition.animation` pass-throughs | skip-fuse-ui | no | fuse-ui only |
-| `ef2f9e3` `GlassEffectContainer` pass-through | skip-fuse-ui | no | send with `f4776db`: same argument, same file |
+| `f4776db` `glassEffect` / `AnyTransition.animation` pass-throughs | skip-fuse-ui | no | fuse-ui only; `glassEffect`'s half is superseded by `9b8671b` + `6c66c8d` |
+| `ef2f9e3` `GlassEffectContainer` pass-through | skip-fuse-ui | no | send with `f4776db`: same argument, same file. Drew nothing until `e0600ec` bridged it as a `Group` — squash the two |
+| `9b8671b` + `6c66c8d` `glassEffect` draws the M3 floating surface; `glassEffectUnion`/`glassEffectID` pass-throughs | skip-ui + skip-fuse-ui | yes | a design call (opaque `surfaceContainer` + 3 dp shadow, not a blur) — argue it from M3's floating toolbar/FAB |
+| `f54f6e8` `rectangle.grid.2x2` / `slider.horizontal.3` mappings | skip-ui | no | same shape as #525 |
+| `001f4ec` tab re-tap pops to root, then scrolls to top | skip-ui | no | Material and iOS parity; adds internal `Navigator.navigateToRoot()` |
+| `ca5fad0` `List` under the status bar with the nav bar hidden | skip-ui | no | bug fix plus its two `List` follow-ons (`scrollTo` offset, late header) |
+| `1335ebf` bridged `.task(id:)` is really cancelled | skip-ui | no | bug fix with app-wide effect; send `22ff079` with it, the test showing `RefreshAction(bridgedAction:)` is not affected |
+| `88ac81d` `.updatesFrequently` → polite live region | skip-ui | no | the trait already bridges; argue it from Material's snackbar. Name the pitfall: a live region that stays mounted while hidden is read again, so apply it only while shown |
+| `84586ee` shadow copy out of the accessibility tree | skip-ui | no | bug fix; the Robolectric test fails with 2 nodes without it |
+| `d1905bc` `AccessibilityTraits()` recursion | skip-fuse-ui | no | already upstream as PR #132 (not ours), cherry-picked; drop it from the fork when #132 merges |
 | `d9ad308` + `15a34f4` `#Preview` / `@Previewable` stubs | skip-fuse-ui | no | fixes skiptools/skip#439 (no maintainer reply since 2025-06). Squash the two; topic branch `feature/preview-macro` is cut from 1.18.2 and names upstream skip-ui. Expect pushback on the from-source swift-syntax build |
 | `60671f0` → `1d56dc9` + `f0e4d6c` runs encoder | skip-ui + skip-fuse-ui | yes | **collides**, see below. `60671f0`/`79dc36f` are the superseded markdown cut — do not send them |
 | `59f7693` + `de02184` inline content + its link | skip-ui + `737dcfa` | yes | **collides** |

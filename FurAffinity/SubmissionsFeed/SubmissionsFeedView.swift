@@ -122,12 +122,24 @@ struct SubmissionsFeedView: View {
     ///
     /// The first row is resolved live rather than captured per row: a refresh moves
     /// rows without rebuilding them, so a captured flag can end up on the wrong one.
+    ///
+    /// A later row near the top also clears the flag. Rows prepended above the
+    /// scroll anchor get composed for one frame, report "at top", then are recycled
+    /// without another report; the anchor settling back at the top is what says so.
     private func trackFirstItemTop(_ preview: FASubmissionPreview, frame: CGRect?) {
         #if FA_SKIP_MODULE
-        guard preview.id == model.submissionPreviews?.first?.id else { return }
-        // A nil frame means the row left the list, which is decidedly not "at top".
-        let isAtTop = (frame?.minY ?? -1) > 0
-        // Only on change: this runs for every scroll frame the first row is visible.
+        let isAtTop: Bool
+        if preview.id == model.submissionPreviews?.first?.id {
+            // A nil frame means the row left the list, which is decidedly not "at top".
+            isAtTop = (frame?.minY ?? -1) > 0
+        } else if let frame, frame.minY < 32 {
+            // Were the first row at top, every later one would sit at least a row
+            // (32 pt, SkipUI's floor) lower.
+            isAtTop = false
+        } else {
+            return
+        }
+        // Only on change: this runs for every scroll frame of every visible row.
         if isAtTop != firstItemIsAtTop {
             firstItemIsAtTop = isAtTop
         }
@@ -155,7 +167,14 @@ struct SubmissionsFeedView: View {
                         itemView(for: preview, geometry: geometry, scrollProxy: scrollProxy)
                     }
                     .onDelete { offsets in
-                        model.deleteSubmissionPreviews(offsets.map { items[$0] })
+                        let previews = offsets.map { items[$0] }
+                        // Android: a full swipe commits at the end of the gesture, so
+                        // Material's Undo snackbar holds the deletion back instead.
+                        #if FA_SKIP_MODULE
+                        model.stageSubmissionPreviewsDeletion(previews)
+                        #else
+                        model.deleteSubmissionPreviews(previews)
+                        #endif
                     }
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
@@ -197,8 +216,22 @@ struct SubmissionsFeedView: View {
                 // 35, not 40: the badge now carries 5pt of transparent shadow inset.
                 .offset(y: 35)
         }
+        // Only Android stages a deletion (see `onDelete`).
+        #if FA_SKIP_MODULE
+        .overlay(alignment: .bottom) {
+            StagedDeletionUndoSnackbar()
+        }
+        #endif
         .autorefreshingOnForeground {
             autorefreshIfNeeded()
+        }
+        // A new first row may never be composed (prepended above a restored anchor),
+        // so it is not at top until it reports otherwise. An empty feed has no row to
+        // report, and is at its top.
+        .onChange(of: model.submissionPreviews?.first?.id) { _, firstID in
+            #if FA_SKIP_MODULE
+            firstItemIsAtTop = firstID == nil
+            #endif
         }
         // One-shot newer-submissions check after a cold-launch restore, reusing the
         // foreground autorefresh's scroll-preserving choreography. `initial: true`
@@ -330,6 +363,7 @@ extension SubmissionsFeedView {
     ///   from a refresh already in flight, which only starts from the top — so
     ///   this can never yank a scrolled-down user.
     func autorefreshIfNeeded(ignoreScrollPosition: Bool = false) {
+        logger.info("Feed autorefresh: atTop=\(scrollViewIsAtTop), ignoreScrollPosition=\(ignoreScrollPosition)")
         guard ignoreScrollPosition || scrollViewIsAtTop else {
             return
         }
