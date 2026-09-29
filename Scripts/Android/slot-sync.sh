@@ -52,10 +52,11 @@ owned() {
     esac
 }
 
-# Never copied, tracked or not (nothing tracked matches).
+# Never copied, tracked or not (nothing tracked matches). The same list as
+# signing_material() in Scripts/cleanup-worktree.sh.
 signing() {
     case "${1##*/}" in
-        *.p12|*.mobileprovision|*.jks|*.keystore|.sentryclirc) return 0 ;;
+        *.p12|*.mobileprovision|*.jks|*.keystore|keystore.properties|.sentryclirc) return 0 ;;
     esac
     return 1
 }
