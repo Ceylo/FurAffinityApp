@@ -25,8 +25,9 @@
 #               It also reports the Android build slots, slot tokens of removed
 #               worktrees, and each worktree's .build/{plugins,checkouts,
 #               repositories,arm64-apple-ios}, which Gradle builds in a slot don't use
-#   --reclaim   with --orphans, also delete those tokens and directories; `skip
-#               android build` and `swift package update` recreate the latter cold
+#   --reclaim   with --orphans, also delete those tokens and directories, but not
+#               a worktree's while a build tool runs in it; `skip android build`
+#               and `swift package update` recreate the latter cold
 #
 # A bare name is a directory under ../FurAffinity-worktrees. The worktree may
 # already be gone (ExitWorktree, `git worktree remove`): its leftovers are still
@@ -56,7 +57,7 @@ TARGETS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)   sed -n '3,41p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)   sed -n '3,42p' "$0" | cut -c3-; exit 0 ;;
         --dry-run)   DRY_RUN=1 ;;
         --force)     FORCE=1 ;;
         --orphans)   ORPHANS=1 ;;
@@ -507,11 +508,39 @@ report_slots() {
     end_section_lines "$found" "${lines[@]}"
 }
 
+# "<cwd|file> <command> <path>" for what build tools hold: their working
+# directory, and open files under a .build. A Gradle daemon's cwd is
+# ~/.gradle/daemon, so only its open files tell.
+build_tool_paths() {
+    lsof -w -n -P -c java -c swift -c skip -c xcodebuild -Fcfn 2>/dev/null | awk '
+        /^c/ { cmd = substr($0, 2) }
+        /^f/ { fd = substr($0, 2) }
+        /^n/ { path = substr($0, 2)
+               if (fd == "cwd") print "cwd " cmd " " path
+               else if (index(path, "/.build/")) print "file " cmd " " path }' || true
+}
+
+# The build tool working in worktree $1 or holding a file under one of $2…, if any.
+building_in() {
+    local wt="$1" kind cmd path d
+    shift
+    while read -r kind cmd path; do
+        if [[ "$kind" == cwd && ( "$path" == "$wt" || "$path" == "$wt/"* ) ]]; then
+            echo "$cmd"; return 0
+        fi
+        for d in "$@"; do
+            if [[ "$kind" == file && "$path" == "$d/"* ]]; then echo "$cmd"; return 0; fi
+        done
+    done <<< "$BUILD_TOOL_PATHS"
+    return 1
+}
+
 # What the prebuild leaves in each checkout's .build. A Gradle build of a branch
 # with build slots no longer uses them, but `skip android build`, `swift package
 # update` and build-release-apk.sh still do, and recreate them cold.
 report_legacy_build() {
-    local i wt dirs names d kb found=0 lines=()
+    local i wt dirs names d kb tool found=0 lines=()
+    (( ! RECLAIM )) || BUILD_TOOL_PATHS="$(build_tool_paths)"
     echo "Per-worktree Android .build directories"
     for i in "${!LIVE[@]}"; do
         wt="${LIVE[$i]}" dirs=() names="" kb=0
@@ -525,6 +554,8 @@ report_legacy_build() {
         # By a tracked file: ignored build output under Android/build-slots survives a checkout.
         if ! git -C "$wt" ls-files --error-unmatch -- Android/build-slots/build.gradle.kts >/dev/null 2>&1; then
             lines+=("  kept $names ($(human "$kb")) — in use: ${LIVE_BRANCHES[$i]} predates build slots")
+        elif (( RECLAIM )) && tool="$(building_in "$wt" "${dirs[@]}")"; then
+            lines+=("  kept $names ($(human "$kb")) — $tool is building there")
         elif (( RECLAIM )); then
             for d in "${dirs[@]}"; do remove_tree "$d" "$(basename "$wt")/.build/$(basename "$d")"; done
             found=1
