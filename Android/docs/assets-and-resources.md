@@ -19,11 +19,13 @@ to an opaque default, so a 10%-alpha border renders as a solid grey one instead 
 erroring. After changing a catalog, confirm the entry actually landed:
 
 ```
-ls -R .build/plugins/outputs/*/FurAffinityUI/destination/skipstone/FurAffinityUI/src/main/assets
+ls -R "$(cat .build/.fa-slot)"/.build/plugins/outputs/*/FurAffinityUI/destination/skipstone/FurAffinityUI/src/main/assets
 ```
 
-The path segment after `outputs/` is the **checkout directory's name**, not the word
-`android` — it differs per worktree, hence the glob.
+That is the [build slot](build-and-run.md#build-slots) the last Gradle build used; drop
+the prefix when slots are off. The path segment after `outputs/` is the **checkout
+directory's name** (`android-slot-<n>` in a slot), not the word `android` — hence the
+glob.
 
 ## Reaching a catalog image from shared code
 
@@ -70,8 +72,8 @@ solid colour sampled from the art's yellow field, visible only in the parallax b
 Skip's template `<monochrome>` layer is gone — keeping it would leave Skip's sun as
 the themed-icon variant.
 
-`Android/settings.gradle.kts` runs the script at configuration time (first statement
-in `pluginManagement`, same `providers.exec` mechanism as `skip plugin --prebuild`),
+The `fa.build-slots` settings plugin runs the script at configuration time (first
+thing it does, same `providers.exec` mechanism as `skip plugin --prebuild`),
 so a Gradle build or an Android Studio sync regenerates everything. That is the one
 place that orders correctly for *both* consumers — the app module's resource merge
 and the skipstone included build's resource copy — since an `app:preBuild` task

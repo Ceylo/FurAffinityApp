@@ -13,8 +13,9 @@
 # finds no tests cannot pass. Raise a floor when tests are added.
 #
 # The root package tests build in their own scratch path, .build/android-test:
-# in the shared .build they rewrite the skipstone plugin outputs the Gradle app
-# build reads, and the next `run.sh` fails in Kotlin until those are wiped.
+# in the worktree's .build they rewrite the skipstone plugin outputs that a Gradle
+# build reads when build slots are off (CI, FA_ANDROID_SLOTS=0), and that build
+# then fails in Kotlin until those are wiped.
 #
 # XDG_CACHE_HOME: an `adb shell` process has none, so Foundation's caches
 # directory resolves to an unwritable /.cache (the app gets context.cacheDir).
@@ -35,7 +36,7 @@ LOG_DIR=""
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,23p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,24p' "$0" | cut -c3-; exit 0 ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;
         --log-dir)    LOG_DIR="$2"; shift ;;

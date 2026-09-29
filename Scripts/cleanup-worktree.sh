@@ -8,9 +8,10 @@
 # info.plist, so nothing can tell whose they are but the path hash) and its
 # XcodeBuildMCP workspace. This removes the worktree first, so a removal git
 # refuses leaves everything else in place, then all of them, then its branch.
+# The Android build slots stay: any worktree reuses them.
 #
 # Usage: Scripts/cleanup-worktree.sh [--dry-run] [--force] [--base <branch>]… <worktree name|path>…
-#        Scripts/cleanup-worktree.sh [--dry-run] --orphans
+#        Scripts/cleanup-worktree.sh [--dry-run] [--reclaim] --orphans
 #
 #   --dry-run   print what would be removed, and its size, without removing it
 #   --force     remove an unmerged worktree and branch (a squash-merged one);
@@ -19,7 +20,13 @@
 #               replaces the default `android` and `main`
 #   --orphans   sweep what worktrees removed without this script left behind,
 #               list what it kept and what still uses it, and total the storage
-#               of each branch; it assumes every checkout is a worktree of this repo
+#               of each branch; it assumes every checkout is a worktree of this repo.
+#               It also reports the Android build slots, and each worktree's
+#               .build but its Android/ (the :app outputs) and .fa-slot* files,
+#               which Gradle builds in a slot don't use
+#   --reclaim   with --orphans, also delete that .build content, but not a
+#               worktree's while a build tool runs in it; `skip android build`
+#               and `swift package update` recreate it cold
 #
 # A bare name is a directory under ../FurAffinity-worktrees. The worktree may
 # already be gone (ExitWorktree, `git worktree remove`): its leftovers are still
@@ -30,7 +37,8 @@
 # are content-addressed or self-pruning, and not any one worktree's.
 #
 # Environment: ANDROID_HOME / ANDROID_SDK_ROOT (SDK location), ANDROID_SERIAL
-# (which device, when several are attached).
+# (which device, when several are attached), FA_ANDROID_SLOTS_DIR (the build
+# slots' parent, default ~/Library/Developer/Xcode/DerivedData).
 
 set -eo pipefail
 
@@ -42,15 +50,17 @@ ROOT="${FA_CLEANUP_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)}"
 DRY_RUN=0
 FORCE=0
 ORPHANS=0
+RECLAIM=0
 BASES=()
 TARGETS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)   sed -n '3,33p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)   sed -n '3,41p' "$0" | cut -c3-; exit 0 ;;
         --dry-run)   DRY_RUN=1 ;;
         --force)     FORCE=1 ;;
         --orphans)   ORPHANS=1 ;;
+        --reclaim)   RECLAIM=1 ;;
         --base)      [[ -n "$2" ]] || die "--base takes a branch"; BASES+=("$2"); shift ;;
         --base=*)    BASES+=("${1#*=}") ;;
         --)          shift; TARGETS+=("$@"); break ;;
@@ -68,6 +78,7 @@ if (( ORPHANS )); then
     (( ${#TARGETS[@]} == 0 )) || die "--orphans takes no worktree"
 else
     (( ${#TARGETS[@]} )) || die "no worktree given (see --help)"
+    (( ! RECLAIM )) || die "--reclaim goes with --orphans"
 fi
 
 # --- where things are -------------------------------------------------------
@@ -80,10 +91,15 @@ WORKTREES="$(dirname "$MAIN")/FurAffinity-worktrees"
 DERIVED_DATA="$HOME/Library/Developer/Xcode/DerivedData"
 MCP_WORKSPACES="$HOME/Library/Developer/XcodeBuildMCP/workspaces"
 SIM_DEVICES="$HOME/Library/Developer/CoreSimulator/Devices"
+SLOTS_DIR="${FA_ANDROID_SLOTS_DIR:-$DERIVED_DATA}"
 
 SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 ADB="$SDK/platform-tools/adb"
 LOCK_SCRIPT="${FA_CLEANUP_LOCK:-$ROOT/Scripts/Android/with-emulator-lock.sh}"
+SLOTS_HELPER="$ROOT/Scripts/Android/slots.py"
+SIGNING_HELPER="${FA_CLEANUP_SIGNING:-$ROOT/Scripts/signing-material.sh}"
+# shellcheck source=Scripts/signing-material.sh
+source "$SIGNING_HELPER" || die "no $SIGNING_HELPER"
 
 # Subdirectories an agent may start XcodeBuildMCP in, or Xcode may open as a package.
 SUBDIRS=(FAKit FALogging Android Darwin FurAffinity)
@@ -123,12 +139,14 @@ if (( ! ORPHANS )) && [[ -z "$FA_CLEANUP_REEXEC" ]]; then
         TMP="$(mktemp -d "${TMPDIR:-/tmp}/fa-cleanup.XXXXXX")"
         cp "${BASH_SOURCE[0]}" "$TMP/cleanup-worktree.sh"
         [[ -x "$LOCK_SCRIPT" ]] && cp "$LOCK_SCRIPT" "$TMP/with-emulator-lock.sh"
+        cp "$SIGNING_HELPER" "$TMP/signing-material.sh"
         ARGS=()
         (( DRY_RUN )) && ARGS+=(--dry-run)
         (( FORCE )) && ARGS+=(--force)
         for b in "${BASES[@]}"; do ARGS+=(--base "$b"); done
         cd "$MAIN"
         FA_CLEANUP_REEXEC="$TMP" FA_CLEANUP_ROOT="$MAIN" FA_CLEANUP_LOCK="$TMP/with-emulator-lock.sh" \
+            FA_CLEANUP_SIGNING="$TMP/signing-material.sh" \
             FA_CLEANUP_CALLER_DIR="$HERE" \
             exec bash "$TMP/cleanup-worktree.sh" "${ARGS[@]}" -- "${RESOLVED[@]}"
     fi
@@ -217,14 +235,21 @@ size_kb() {
     echo "${kb:-0}"
 }
 
-# Remove a file tree, reporting its size.
+# remove_tree [--kb <size>] <label> <path>…: remove file trees, reporting their
+# size, measured unless given.
 remove_tree() {
-    local path="$1" label="$2" kb
-    kb="$(size_kb "$path")"
+    local label path kb=""
+    if [[ "$1" == --kb ]]; then kb="$2"; shift 2; fi
+    label="$1"
+    shift
+    if [[ -z "$kb" ]]; then
+        kb=0
+        for path in "$@"; do kb=$(( kb + $(size_kb "$path") )); done
+    fi
     TOTAL_KB=$(( TOTAL_KB + kb ))
     if (( DRY_RUN )); then
         echo "  would remove $label ($(human "$kb"))"
-    elif rm -rf "$path"; then
+    elif rm -rf "$@"; then
         echo "  removed $label ($(human "$kb"))"
     else
         TOTAL_KB=$(( TOTAL_KB - kb ))
@@ -385,10 +410,10 @@ clean_derived_data() {
     local wt="$1" dir path found=0
     compute_keys dd "$(derived_data_paths "$wt")"
     for dir in "$DERIVED_DATA"/*-*; do
-        [[ -d "$dir" ]] || continue
+        [[ -d "$dir" && "$(basename "$dir")" != android-slot-* ]] || continue
         if contains "${dir##*-}" "${KEYS[@]}" \
             || { path="$(workspace_path "$dir")"; [[ -n "$path" && "$path/" == "$wt/"* ]]; }; then
-            remove_tree "$dir" "DerivedData/$(basename "$dir")"
+            remove_tree "DerivedData/$(basename "$dir")" "$dir"
             found=1
         fi
     done
@@ -400,11 +425,98 @@ clean_mcp_workspaces() {
     compute_keys mcp "$(mcp_roots "$wt")"
     for key in "${KEYS[@]}"; do
         if [[ -d "$MCP_WORKSPACES/$key" ]]; then
-            remove_tree "$MCP_WORKSPACES/$key" "XcodeBuildMCP workspace $key"
+            remove_tree "XcodeBuildMCP workspace $key" "$MCP_WORKSPACES/$key"
             found=1
         fi
     done
     (( found )) || echo "  no XcodeBuildMCP workspace"
+}
+
+# --- Android build slots ----------------------------------------------------
+
+slots_py() { python3 "$SLOTS_HELPER" "$@"; }
+
+# The slots, kept whatever their owner: any worktree reuses them, and
+# FA_ANDROID_SLOTS_MAX already caps them. Clean.sh --all deletes the idle ones.
+report_slots() {
+    local out kind path state owner used kb when
+    [[ -d "$SLOTS_DIR" ]] || return 0
+    if ! out="$(slots_py list "$SLOTS_DIR")"; then
+        warn "python3 failed reading the Android build slots"; FAILED=1; return 0
+    fi
+    echo "Android build slots (any worktree reuses them; Scripts/Android/clean.sh --all deletes the idle ones)"
+    while IFS=$'\x1f' read -r kind path state owner used; do
+        [[ "$kind" == slot ]] || continue
+        kb="$(size_kb "$path")"
+        when="never used"
+        [[ "$used" =~ ^[0-9]+$ ]] && (( used > 0 )) \
+            && when="last used $(date -r $(( used / 1000 )) '+%Y-%m-%d %H:%M')"
+        [[ -z "$owner" || -d "$owner" ]] || owner="$owner (gone)"
+        KEPT+=("  kept $(basename "$path") ($(human "$kb")) — $state, $when${owner:+ by $(tilde "$owner")}")
+    done <<< "$out"
+    end_section 0
+}
+
+# "<cwd|file> <command> <path>" for what build tools hold: their working
+# directory, and open files under a .build. A Gradle daemon's cwd is
+# ~/.gradle/daemon, so only its open files tell.
+build_tool_paths() {
+    lsof -w -n -P -c java -c swift -c skip -c clang -c xcodebuild -Fcfn 2>/dev/null | awk '
+        /^c/ { cmd = substr($0, 2) }
+        /^f/ { fd = substr($0, 2) }
+        /^n/ { path = substr($0, 2)
+               if (fd == "cwd") print "cwd " cmd " " path
+               else if (index(path, "/.build/")) print "file " cmd " " path }' || true
+}
+
+# The build tool working in worktree $1 or holding a file under one of $2…, if any.
+building_in() {
+    local wt="$1" kind cmd path d
+    shift
+    while read -r kind cmd path; do
+        if [[ "$kind" == cwd && ( "$path" == "$wt" || "$path" == "$wt/"* ) ]]; then
+            echo "$cmd"; return 0
+        fi
+        for d in "$@"; do
+            if [[ "$kind" == file && ( "$path" == "$d" || "$path" == "$d/"* ) ]]; then echo "$cmd"; return 0; fi
+        done
+    done <<< "$BUILD_TOOL_PATHS"
+    return 1
+}
+
+# Each checkout's .build but Android/ (the :app outputs) and the .fa-slot* files
+# (the slot's path, and the clean token, without which the next build wipes the
+# slot). A Gradle build of a branch with build slots no longer uses it, but `skip
+# android build`, `swift package update` and build-release-apk.sh still do, and
+# recreate it cold. Removing only part of it leaves the stale state behind
+# "missing required module" errors.
+report_legacy_build() {
+    local i wt entries names d kb tool found=0
+    (( ! RECLAIM )) || BUILD_TOOL_PATHS="$(build_tool_paths)"
+    echo "Per-worktree .build content Gradle builds in a slot don't use (all but Android/ and .fa-slot*)"
+    for i in "${!LIVE[@]}"; do
+        wt="${LIVE[$i]}" entries=() names="" kb=0
+        for d in "$wt"/.build/* "$wt"/.build/.[!.]*; do
+            [[ -e "$d" || -L "$d" ]] || continue
+            case "${d##*/}" in Android|.fa-slot*) continue ;; esac
+            entries+=("$d") names+="${names:+,}${d##*/}"
+            kb=$(( kb + $(size_kb "$d") ))
+        done
+        (( ${#entries[@]} )) || continue
+        names="$(basename "$wt")/.build/{$names}"
+        # By a tracked file: ignored build output under Android/build-slots survives a checkout.
+        if ! git -C "$wt" ls-files --error-unmatch -- Android/build-slots/build.gradle.kts >/dev/null 2>&1; then
+            KEPT+=("  kept $names ($(human "$kb")) — in use: ${LIVE_BRANCHES[$i]} predates build slots")
+        elif (( RECLAIM )) && tool="$(building_in "$wt" "${entries[@]}")"; then
+            KEPT+=("  kept $names ($(human "$kb")) — $tool is building there")
+        elif (( RECLAIM )); then
+            remove_tree --kb "$kb" "$names" "${entries[@]}"
+            found=1
+        else
+            KEPT+=("  kept $names ($(human "$kb")) — not used by Gradle builds; \`skip android build\` recreates it cold (--reclaim removes it)")
+        fi
+    done
+    end_section "$found"
 }
 
 # --- one worktree -----------------------------------------------------------
@@ -439,10 +551,7 @@ signing_material() {
     local f
     git -C "$1" ls-files --others --ignored --exclude-standard --directory 2>/dev/null \
         | while IFS= read -r f; do
-            case "$(basename "$f")" in
-                *.jks|*.keystore|keystore.properties|*.p12|*.mobileprovision|.sentryclirc)
-                    [[ -L "$1/$f" ]] || echo "$f" ;;
-            esac
+            if is_signing_material "$f" && [[ ! -L "$1/$f" ]]; then echo "$f"; fi
         done
 }
 
@@ -830,7 +939,7 @@ clean_orphans() {
                 esac
             fi
         fi
-        remove_tree "$dir" "DerivedData/$name"
+        remove_tree "DerivedData/$name" "$dir"
         found=1
     done
     end_section "$found"
@@ -847,7 +956,7 @@ clean_orphans() {
         [[ -d "$dir" ]] || continue
         key="$(basename "$dir")"
         if i="$(index_of "$key" "${KEYS[@]}")"; then
-            remove_tree "$dir" "XcodeBuildMCP workspace $key ($(tilde "${KEY_PATHS[$i]}"))"
+            remove_tree "XcodeBuildMCP workspace $key ($(tilde "${KEY_PATHS[$i]}"))" "$dir"
             found=1
         elif i="$(index_of "$key" "${live_mcp_keys[@]}")"; then
             keep $MCP_COL "${live_mcp_paths[$i]}" "$key" "$(user_of "${live_mcp_paths[$i]}")" "$dir"
@@ -874,6 +983,8 @@ clean_orphans() {
 
     cat "$tmp/emulator" "$tmp/simulators" "$tmp/derived_data" "$tmp/mcp"
     rm -rf "$tmp"
+    report_slots
+    report_legacy_build
 
     report_usage
 }

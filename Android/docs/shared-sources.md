@@ -231,9 +231,12 @@ never the iOS app target — so:
   recomposes):
 
   ```
-  .build/plugins/outputs/<worktree>/FurAffinityUI/destination/skipstone/FurAffinityUI/\
+  <slot>/.build/plugins/outputs/android-slot-<n>/FurAffinityUI/destination/skipstone/FurAffinityUI/\
   build/swift/plugins/outputs/fakit/FAKit/destination/skipstone/SkipBridgeGenerated/
   ```
+
+  `<slot>` is in `.build/.fa-slot` (see
+  [build slots](build-and-run.md#build-slots)).
 - **`import os` needs `#if canImport(os)`.** Android's Swift SDK has no `os`
   module, so the `FALogging` package ships `OSCompat`
   (`FALogging/Sources/OSCompat/`), which re-exports `AndroidLogging`'s `Logger` and
@@ -326,7 +329,8 @@ aarch64-unknown-linux-android28/debug/FurAffinityUI.build/<File>.swift.o \
   extended. To check whether a property got bridged, grep the generated bridge:
 
 ```
-grep Java_initState_ .build/plugins/outputs/*/FurAffinityUI/destination/skipstone/SkipBridgeGenerated/<View>_Bridge.swift
+grep Java_initState_ "$(cat .build/.fa-slot)"/.build/plugins/outputs/*/FurAffinityUI/destination/skipstone/\
+FurAffinityUI/build/swift/plugins/outputs/*/FurAffinityUI/destination/skipstone/SkipBridgeGenerated/<View>_Bridge.swift
 ```
 
   A custom wrapper can still work if it **owns its own box** instead of relying on

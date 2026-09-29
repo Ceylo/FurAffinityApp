@@ -51,14 +51,15 @@ emulator settles around 10GB; restart it rather than shrink it.
 ## Build
 
 ```
-skip android build           # transpile + compile via SwiftPM (fast inner loop)
-skip export                  # release artifacts
+skip android build                     # transpile + compile via SwiftPM (fast inner loop)
+Scripts/Android/build-release-apk.sh   # release APK, see releasing.md
 ```
 
 Transpiled Kotlin lands under `.build/` (e.g.
-`.build/plugins/outputs/android/FurAffinityUI/…/skipstone/`). Delete
-`.build/plugins/outputs`, `.build/Darwin`, and `.build/Android` after changing
-`Skip.env` — the generated Gradle module namespace is cached there.
+`.build/plugins/outputs/android/FurAffinityUI/…/skipstone/`) — the worktree's for
+`skip android build`, a [build slot](#build-slots)'s for a Gradle build. Run
+`Scripts/Android/clean.sh` after changing `Skip.env`: the generated Gradle module
+namespace is cached in both, though a slot also notices the change itself.
 
 ### Build cache
 
@@ -68,13 +69,135 @@ Transpiled Kotlin lands under `.build/` (e.g.
 SkipLib, FAKit, …) and the dex merges, which took a fresh worktree from 314 s to
 204 s. The transpiled Kotlin carries no absolute paths, so an entry built in one
 worktree fits another. It does not cover the Swift: `buildAndroidSwiftPackageDebug`
-declares no outputs and always runs, and the `skip plugin --prebuild` in
-`settings.gradle.kts` runs on every build too. `:app:compileDebugKotlin` misses on a
-new worktree because its BuildConfig carries the worktree's app id suffix.
-`Scripts/Android/prune-build-cache.sh`, which `settings.gradle.kts` runs before each
-build, caps the cache at 1.5× a clean `.build` by dropping the least recently read
-entries. If a cached task looks suspect, bypass the cache with
-`./gradlew --no-build-cache …`.
+declares no outputs and always runs, and so does `skip plugin --prebuild`; the
+[build slots](#build-slots) cover that side. `:app:compileDebugKotlin` misses on a
+new worktree because its BuildConfig carries the worktree's app id suffix, and every
+`:app` task misses once after any change to `Android/build-slots/`, which changes the
+settings classloader's hash. `Scripts/Android/prune-build-cache.sh`, which the
+settings plugin runs before each build, caps the cache at 1.5× a clean `.build` by
+dropping the least recently read entries. If a cached task looks suspect, bypass the
+cache with `./gradlew --no-build-cache …`.
+
+### Build slots
+
+A Gradle build — `run.sh`, `debug.sh`, `./gradlew`, Android Studio — compiles the
+Swift side in a **slot** shared by every worktree rather than in the worktree's own
+`.build`, whose SwiftPM state is keyed by its path and so started cold in each new
+worktree. `:app:assembleDebug`, measured 2026-09-28:
+
+| Build | Wall | |
+|---|---|---|
+| a new worktree's first, own `.build` (before) | 134–235 s | prebuild 77 s, `buildAndroidSwiftPackageDebug` 97 s |
+| the probe: a fresh checkout synced into a built copy | 15.1 s | its Gradle root in the copy too, so warm execution history |
+| a new worktree's first, warm slot | 18.0 s at load 14, 24.3 s at 48 | sync 0 copied, prebuild 0.23 s; 34 tasks run, 10 from cache |
+| rebuild in its slot | 8.9–16.8 s | a one-file body edit: 1 copied, that file compiled, 16.5 s |
+| after `clean.sh` | 206.9 s | cold, as it should be; the next one is warm |
+
+`Android/settings.gradle.kts` applies `fa.build-slots` (`Android/build-slots/`), which
+replaces Skip's `skip-plugin` settings plugin and its paths hard-coded to
+`rootDir/..`. The Gradle root, the `:app` outputs (`.build/Android/app`), the app id
+suffix and `GIT_COMMIT` stay the worktree's. Each build:
+
+1. **Leases a slot**, `~/Library/Developer/Xcode/DerivedData/android-slot-<n>/`: a
+   source copy with its own `.build`, which keeps skipstone's upward search for
+   `Package.swift` working. Under the pool lock (`DerivedData/.android-slot-pool.lock`,
+   waited on with no timeout) it takes the idle slot this worktree used last, else,
+   preferring one last built with the same `Skip.env`, the one whose recorded commit is
+   fewest files away, else the least recently used; if every slot is busy it creates
+   one, cold. An unleased slot a Swift build still runs in counts as busy: a `swift*`,
+   `skip` or `clang` process with its cwd in the slot or a file open under its
+   `.build`, as a cancelled build or a dead daemon leaves behind. The build names its
+   pid; the one `lsof` costs 30–80 ms. Idle slots beyond `FA_ANDROID_SLOTS_MAX`
+   (default 3) are deleted, least recently used first.
+2. **Syncs** the worktree into it (`Scripts/Android/slot-sync.sh`): git's tracked and
+   untracked-unignored files plus the generated catalog entries, never signing
+   material.
+3. **Prebuilds** there, with cwd and `PWD` set to the slot and no `OLDPWD`: SwiftPM
+   keys its manifest cache on the environment, and the caller's `PWD` recompiled ~30
+   manifests on every worktree switch (11–13 s). Other variables still count, so moving
+   between the terminal and Android Studio, or setting `CI`, can cost ~11 s once.
+   Before it, a base last built with another `Skip.env` drops its
+   `.build/{plugins/outputs,Darwin,Android}`, where skipstone caches the package name
+   and app id; the hash is in `.build/.skip-env-hash`, and a `.build` with a transpile
+   but no hash counts as another. The base is the slot, or the worktree where slots are
+   off.
+4. **Includes** the slot's skipstone build and `skip-gradle`.
+
+The lease is a `FileChannel` lock on `<slot>/.lock`, held by a build service that is
+also a task-completion listener, which Gradle keeps open until the end of every build
+— failed ones and IDE syncs included — and dropped by the OS if the daemon dies; a
+compile error, a settings failure and `kill -9` of the daemon all left it free. These
+are POSIX locks, which `flock(1)` does not see: probe them with Python's
+`fcntl.lockf`, as `clean.sh` does. A deleted slot is first renamed to
+`DerivedData/.android-slot-trash-*` and removed in the background, since Finder drops
+`.DS_Store` files into it mid-`rm`; the next lease sweeps what is left.
+
+Two measured rules shape the sync:
+
+- **llbuild recompiles on an inode or mtime change alone**, so the copy is
+  `rsync -rlp --checksum --no-times`: an identical file is not rewritten, and
+  `.slot-manifest` only when the list changed.
+- **`/usr/bin/rsync` is openrsync** (protocol 29), which ignored `--delete` and
+  dir-merge filters and wiped a slot's `.build`. So nothing deletes through rsync:
+  `<slot>/.slot-manifest` holds the last list, and a path that leaves it is removed.
+  Nothing outside the list is ever touched.
+
+**`rm -rf .build` is still a clean build**, in every slot the worktree built in. A
+worktree has an id, in `$(git rev-parse --absolute-git-dir)/fa-slot-id`, which git
+deletes with the worktree, and a token issued per clean, in `.build/.fa-slot-token`;
+each slot it built in holds that token in `<slot>/.build/.slot-tokens/<id>`. The build
+deletes the chosen slot's `.build`, and says so, when the worktree has an id but no
+token (`.build` was deleted), or when the slot holds a token for its id other than the
+worktree's (it predates that clean). A worktree with no id is new: it gets one, and a
+token, and reuses a warm slot. The chosen slot then holds the worktree's token. The
+tokens live in the slot's `.build`, so a wipe for any worktree takes them all along: a
+stale one survives only in a slot the worktree has not built in since its clean.
+`Scripts/Android/clean.sh` is the same wipe by name; `--all` also deletes
+every idle slot and names the busy ones.
+
+**Where slots are off**, the base is the worktree, as before:
+
+- `FA_ANDROID_SLOTS=0`, set by `build-release-apk.sh`: it clears
+  `.build/plugins/outputs` for the release app id, and its Sentry uploads are
+  path-sensitive;
+- `CI` (the GitHub workflows);
+- `BUILT_PRODUCTS_DIR`, i.e. Xcode's "Run skip gradle" phase, whose transpiled output
+  is already in Xcode's DerivedData;
+- a relative `.package(path:)` in a synced `Package.swift` whose package the slot's
+  copy lacks: its `Package.swift` is not among the synced ones, because it leaves the
+  worktree, such as a [local fork clone](forks.md), or is git-ignored, missing or a
+  nested repository. The build names it. An absolute path, `SKIPLOCAL` included, works
+  from a slot.
+
+`skip android build` and `test.sh` do not go through Gradle settings, so they build in
+the worktree's `.build` (and `.build/android-test`, and FAKit's), cold in each new
+worktree. `skip export` does run Gradle, with nothing in its environment that marks it,
+so it takes a slot; release builds go through `build-release-apk.sh`, or
+`FA_ANDROID_SLOTS=0 skip export`.
+`FA_ANDROID_SLOTS_DIR` moves the slots' parent directory.
+
+What this changes day to day:
+
+- **Errors and DWARF paths name the slot.** Clicking a compiler error in Android
+  Studio opens the slot's copy, and the next sync overwrites an edit made there. Edit
+  the worktree. `debug.sh` maps the slot back to the worktree for LLDB, except
+  `<slot>/.build`, where the package checkouts are. It takes the slot from the debug
+  library's DWARF, since `.build/.fa-slot` names whichever slot Gradle configured last.
+- **Generated output is in the slot.** Wherever these docs say
+  `.build/plugins/outputs` or `.build/Android/skip-gradle`, a Gradle build's is under
+  `$(cat .build/.fa-slot)/.build/`, and its segment after `outputs/` is
+  `android-slot-<n>`. Android Studio indexes that Kotlin too: if another worktree has
+  built in the slot since, the index shows its code until your next sync.
+- **Disk.** A slot is ~3.0 GB, ~6.2 GB once a `profile` build has run in it
+  (`run.sh --profile`, `check-crash-reporting.sh android`). A worktree's own `.build`
+  (~1–7 GB), but its `Android/` (the `:app` outputs) and `.fa-slot*` files, is not used
+  by Gradle builds, only by `skip android build`, `swift package update` and
+  `build-release-apk.sh`, which recreate it cold:
+  `Scripts/cleanup-worktree.sh --orphans` reports it and the slots, `--reclaim`
+  deletes it, all of it, since a partial `.build` is what fails with "missing required
+  module". Xcode's "Delete Derived Data" deletes the slots too, which only makes
+  the next build cold; the script's own DerivedData sweep matches Xcode's 28-letter
+  hashes and never takes a slot.
 
 ### Two sources of the Gradle version
 
@@ -182,7 +305,9 @@ old `source.skip.tools/*` is gone from the graph (see
 project's `Package.resolved` the same way, and build from a clean `.build`. The
 generated `SkipBridgeGenerated/*_Bridge.swift` for FurAffinityUI, FAKit and
 Kingfisher are worth diffing against the previous build: a skipstone codegen change
-shows up there first.
+shows up there first. If the build warns that Skip's `SkipSettingsPlugin` changed,
+port the change to `Android/build-slots` and record the new hash it prints in
+`SKIP_SETTINGS_PLUGIN_SHA256`.
 
 The root `Package.resolved` **is** committed, so a branch-pinned fork needs its
 refresh committed too — see [Forks](forks.md).
@@ -435,9 +560,10 @@ on **any** `@MainActor` test — a trap in libdispatch's main-queue drain, which
 drives from the Looper — so `ModelTests` waits on that.
 
 The root package tests build in **their own scratch path**, `.build/android-test`.
-In the shared `.build` they rewrite the skipstone plugin outputs the Gradle build
-reads, and the next `run.sh` fails in Kotlin (`Unresolved reference 'ProcessInfo'`)
-until `.build/plugins/outputs`, `.build/Darwin` and `.build/Android` are wiped.
+In the worktree's `.build` they rewrite the skipstone plugin outputs that a Gradle
+build reads when [slots](#build-slots) are off (CI, `FA_ANDROID_SLOTS=0`), and that
+build then fails in Kotlin (`Unresolved reference 'ProcessInfo'`) until
+`.build/plugins/outputs`, `.build/Darwin` and `.build/Android` are wiped.
 
 A native test is an `adb shell` process, not an app: it has no `context.cacheDir`,
 so the script sets `XDG_CACHE_HOME` for Kingfisher's disk cache. And `UserDefaults`
@@ -485,16 +611,25 @@ explained.
 ## Wiping the build state
 
 If a build fails with `missing required module 'CJNI'` across unrelated packages, the
-incremental state is stale (typically after a `Package.swift` or FAKit change). Wipe it:
+incremental state is stale (typically after a `Package.swift` or FAKit change).
+`Scripts/Android/clean.sh` always fixes it, at the price of a cold build. A partial
+wipe is quicker but has to reach the slot, which only deleting the whole `.build`
+does by itself (see [Build slots](#build-slots)). `S` is the slot the last Gradle
+build used, or the worktree when slots are off; wipe it while no build runs there.
+The three caches are the ones a `Skip.env` change clears:
 
 ```
-rm -rf .build/plugins/outputs .build/Darwin .build/Android
+S="$(cat .build/.fa-slot 2>/dev/null || pwd)"
+rm -rf "$S"/.build/{plugins/outputs,Darwin,Android}
 ```
+
+Under slots the worktree's own `.build/Android` is not among them: it holds the `:app`
+outputs, which Gradle keeps up to date. With slots off it is the same directory, and
+goes too.
 
 If that is not enough (it is not, for a FAKit source or manifest change), drop the
 SwiftPM build description too — it keeps `.build/checkouts`, so nothing is re-fetched:
 
 ```
-rm -rf .build/aarch64-unknown-linux-android28 .build/plugins .build/build.db \
-       .build/debug.yaml .build/Darwin .build/Android
+rm -rf "$S"/.build/{aarch64-unknown-linux-android28,plugins,build.db,debug.yaml,Darwin,Android}
 ```
