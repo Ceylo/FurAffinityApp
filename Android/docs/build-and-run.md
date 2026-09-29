@@ -613,17 +613,21 @@ incremental state is stale (typically after a `Package.swift` or FAKit change).
 `Scripts/Android/clean.sh` always fixes it, at the price of a cold build. A partial
 wipe is quicker but has to reach the slot, which only deleting the whole `.build`
 does by itself (see [Build slots](#build-slots)). `S` is the slot the last Gradle
-build used, or the worktree when slots are off; wipe it while no build runs there:
+build used, or the worktree when slots are off; wipe it while no build runs there.
+The three caches are the ones a `Skip.env` change clears:
 
 ```
 S="$(cat .build/.fa-slot 2>/dev/null || pwd)"
-rm -rf "$S"/.build/plugins/outputs "$S"/.build/Android .build/Darwin .build/Android
+rm -rf "$S"/.build/{plugins/outputs,Darwin,Android}
 ```
+
+Under slots the worktree's own `.build/Android` is not among them: it holds the `:app`
+outputs, which Gradle keeps up to date. With slots off it is the same directory, and
+goes too.
 
 If that is not enough (it is not, for a FAKit source or manifest change), drop the
 SwiftPM build description too — it keeps `.build/checkouts`, so nothing is re-fetched:
 
 ```
-rm -rf "$S"/.build/aarch64-unknown-linux-android28 "$S"/.build/plugins "$S"/.build/build.db \
-       "$S"/.build/debug.yaml "$S"/.build/Android .build/Darwin .build/Android
+rm -rf "$S"/.build/{aarch64-unknown-linux-android28,plugins,build.db,debug.yaml,Darwin,Android}
 ```
