@@ -1,10 +1,14 @@
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.initialization.Settings
+import org.gradle.api.logging.Logging
 import org.gradle.kotlin.dsl.apply
 import java.io.File
 import java.io.FileReader
+import java.security.MessageDigest
 import java.util.Properties
+
+private val logger = Logging.getLogger(BuildSlotsPlugin::class.java)
 
 /**
  * Replaces Skip's `skip-plugin` settings plugin (SkipSettingsPlugin in the generated
@@ -69,7 +73,16 @@ private fun leaseSlot(settings: Settings, pool: SlotPool, worktree: File): File 
 private fun includeSkip(settings: Settings, worktree: File, base: File) = with(settings) {
     // SwiftPM keys its manifest cache on the environment, PWD included: run from the
     // base, not the caller's directory, or every worktree switch recompiles ~30 manifests (~11 s).
-    runCommand("/usr/bin/env", "skip", "plugin", "--prebuild", "--package-path", base.path, workingDir = base)
+    val pluginRef = File.createTempFile("skip-plugin-path", ".tmp")
+    val skipGradle = try {
+        runCommand(
+            "/usr/bin/env", "skip", "plugin", "--prebuild", "--package-path", base.path,
+            "--plugin-ref", pluginRef.path, workingDir = base,
+        )
+        File(pluginRef.readText().trim())
+    } finally {
+        pluginRef.delete()
+    }
 
     val env = loadSkipEnv(worktree.resolve("Skip.env"))
     rootProject.name = env.skipEnv("ANDROID_PACKAGE_NAME")
@@ -89,11 +102,30 @@ private fun includeSkip(settings: Settings, worktree: File, base: File) = with(s
     include(":app")
 
     // `:app` applies id("skip-build-plugin") from here.
-    val skipGradle = base.resolve(".build/Android/skip-gradle")
     if (!skipGradle.resolve("settings.gradle.kts").isFile) {
         throw GradleException("`skip plugin --prebuild` left no Gradle plugin project at $skipGradle.")
     }
+    warnOnSkipSettingsDrift(skipGradle)
     includeBuild(skipGradle) { name = "skip-plugins" }
+}
+
+/** SHA-256 of the `class SkipSettingsPlugin` block this plugin was last reviewed against (Skip 1.9.11). */
+private const val SKIP_SETTINGS_PLUGIN_SHA256 = "60f3bb29932700466582e0b5d167d2374264e42458061b1a4681164a69cafc75"
+
+/** This plugin stands in for SkipSettingsPlugin, so a Skip release that changes it needs a look. */
+private fun warnOnSkipSettingsDrift(skipGradle: File) {
+    val source = skipGradle.resolve("src/main/kotlin/SkipGradlePlugins.kt")
+    val lines = source.takeIf { it.isFile }?.readLines().orEmpty()
+        .dropWhile { !it.startsWith("class SkipSettingsPlugin") }
+    val block = lines.take(lines.indexOf("}") + 1).joinToString("") { "$it\n" }
+    val hash = MessageDigest.getInstance("SHA-256").digest(block.toByteArray())
+        .joinToString("") { "%02x".format(it) }
+    if (hash != SKIP_SETTINGS_PLUGIN_SHA256) {
+        logger.warn(
+            "fa.build-slots: warning: Skip's SkipSettingsPlugin changed; review Android/build-slots against it " +
+                "($source, sha256 $hash)."
+        )
+    }
 }
 
 /** The transpiled module's skipstone project, looked up the way SkipSettingsPlugin does. */

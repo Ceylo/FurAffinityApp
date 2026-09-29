@@ -289,7 +289,9 @@ old `source.skip.tools/*` is gone from the graph (see
 project's `Package.resolved` the same way, and build from a clean `.build`. The
 generated `SkipBridgeGenerated/*_Bridge.swift` for FurAffinityUI, FAKit and
 Kingfisher are worth diffing against the previous build: a skipstone codegen change
-shows up there first.
+shows up there first. If the build warns that Skip's `SkipSettingsPlugin` changed,
+port the change to `Android/build-slots` and record the new hash it prints in
+`SKIP_SETTINGS_PLUGIN_SHA256`.
 
 The root `Package.resolved` **is** committed, so a branch-pinned fork needs its
 refresh committed too — see [Forks](forks.md).
