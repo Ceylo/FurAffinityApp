@@ -205,6 +205,10 @@ grep -qE 'static let sentryDSN = "(Your Sentry DSN)?"' "$ROOT/FurAffinity/Secret
 
 # --- build ------------------------------------------------------------------
 
+# In the worktree, not a shared build slot (Android/build-slots): the clearing
+# below has to reach the Swift side, and the Sentry uploads are path-sensitive.
+export FA_ANDROID_SLOTS=0
+
 # The applicationId just changed, and these three cache it.
 step "Clearing .build/{plugins/outputs,Darwin,Android}"
 rm -rf .build/plugins/outputs .build/Darwin .build/Android

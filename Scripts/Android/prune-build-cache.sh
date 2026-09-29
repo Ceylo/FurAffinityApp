@@ -3,7 +3,7 @@
 # Keep Gradle's local build cache under a size cap, least recently used first.
 #
 # The cache is shared by every worktree (Android/gradle.properties), and Gradle
-# only expires entries by age (7 days unused), not by size. settings.gradle.kts
+# only expires entries by age (7 days unused), not by size. Android/build-slots
 # runs this before the build writes anything, so it prunes to the cap minus one
 # build's writes.
 #

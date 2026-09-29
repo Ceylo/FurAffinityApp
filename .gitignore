@@ -10,6 +10,10 @@ buildServer.json
 Android/.gradle/
 Android/.kotlin/
 Android/app/build/
+Android/build-slots/.gradle/
+Android/build-slots/.kotlin/
+Android/build-slots/build/
+Android/build-slots/local.properties
 Android/gradle/gradle-daemon-jvm.properties
 DerivedData/
 Package.resolved

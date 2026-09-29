@@ -22,7 +22,10 @@ Defaults and Kingfisher, the Xcode project too). While iterating, re-point the r
 
 The clone's directory must carry the repo's name: SwiftPM takes the package identity from
 the last path component, so `skip-fuse-ui-preview/` would clash with the URL every other
-package names. Then push to the `android` branch before the step's gate.
+package names. Then push to the `android` branch before the step's gate. A relative path
+out of the worktree makes Gradle builds skip the
+[build slot](build-and-run.md#build-slots) and build in the worktree, cold the first
+time; an absolute one, like `SKIPLOCAL`'s, keeps the slot.
 
 The root `Package.resolved` **is** committed (`.gitignore` carries a `!/Package.resolved`
 negation), as is the Xcode workspace's copy; only `FAKit/Package.resolved` stays ignored.
@@ -440,8 +443,8 @@ Five things the port needed beyond the guards:
   result was a view that downloaded its image and drew nothing at all — no error
   anywhere. `KFImage` also has to name `View` in its conformance list rather than inherit
   it through `KFImageProtocol`, which the generator does not follow. The symptom to
-  recognise: an empty `<Type>_Bridge.swift` under
-  `.build/plugins/outputs/…/SkipBridgeGenerated/`.
+  recognise: an empty `<Type>_Bridge.swift` under the
+  [build slot](build-and-run.md#build-slots)'s `.build/plugins/outputs/…/SkipBridgeGenerated/`.
 - **The rendered image comes out of an `ImageHolder`, not out of the view value.** A
   SwiftUI `Image` is a value, so its bitmap reaches the screen only through a
   recomposition — and `KFImageRenderer` starts its load from the placeholder's `onAppear`,

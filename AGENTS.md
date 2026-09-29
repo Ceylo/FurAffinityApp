@@ -234,9 +234,14 @@ FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, 
   `Scripts/Android/with-emulator-lock.sh`. Release is untouched on both platforms.
   The cost of all this: each worktree's app has its **own container**, so a separate
   FA login, cookie jar and (on Android) Cloudflare clearance.
-  Gradle's build cache is shared, so a new worktree's Android build reuses the
-  others' Kotlin compiles (`Android/docs/build-and-run.md` § Build cache); on iOS,
-  so does Xcode's compilation cache once the FA Compilation Cache toolchain is
+  A new worktree's Android build reuses the others' work: Gradle's build cache holds
+  the Kotlin compiles, and a Gradle build compiles the Swift side in a leased
+  **build slot** (`DerivedData/android-slot-<n>`, a synced source copy shared by all
+  worktrees), ~18 s instead of 2–4 min (`Android/docs/build-and-run.md` § Build
+  cache, § Build slots). Compiler errors therefore point into the slot: edit the
+  worktree's file, never the slot's, which the next sync overwrites. `rm -rf .build`
+  or `Scripts/Android/clean.sh` still gives a clean build. On iOS, Xcode's
+  compilation cache is shared too once the FA Compilation Cache toolchain is
   selected (`COMPILATION_CACHE.md`).
   Run `Scripts/install-git-hooks.sh` once per clone: a new worktree's `post-checkout`
   then seeds its DerivedData/SourcePackages from a sibling's pinned to the same
