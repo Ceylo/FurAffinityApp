@@ -24,12 +24,12 @@
 #               list what it kept and what still uses it, and total the storage
 #               of each branch; it assumes every checkout is a worktree of this repo.
 #               It also reports the Android build slots, slot tokens and registry
-#               entries of removed worktrees, and each worktree's .build/{plugins,
-#               checkouts,repositories,arm64-apple-ios}, which Gradle builds in a
-#               slot don't use
-#   --reclaim   with --orphans, also delete those tokens and directories, but not
-#               a worktree's while a build tool runs in it; `skip android build`
-#               and `swift package update` recreate the latter cold
+#               entries of removed worktrees, and each worktree's .build but its
+#               Android/ (the :app outputs) and .fa-slot* files, which Gradle builds
+#               in a slot don't use
+#   --reclaim   with --orphans, also delete those tokens and that .build content,
+#               but not a worktree's while a build tool runs in it; `skip android
+#               build` and `swift package update` recreate the latter cold
 #
 # A bare name is a directory under ../FurAffinity-worktrees. The worktree may
 # already be gone (ExitWorktree, `git worktree remove`): its leftovers are still
@@ -239,14 +239,15 @@ size_kb() {
     echo "${kb:-0}"
 }
 
-# Remove a file tree, reporting its size.
+# remove_tree <label> <path>…: remove file trees, reporting their size.
 remove_tree() {
-    local path="$1" label="$2" kb
-    kb="$(size_kb "$path")"
+    local label="$1" path kb=0
+    shift
+    for path in "$@"; do kb=$(( kb + $(size_kb "$path") )); done
     TOTAL_KB=$(( TOTAL_KB + kb ))
     if (( DRY_RUN )); then
         echo "  would remove $label ($(human "$kb"))"
-    elif rm -rf "$path"; then
+    elif rm -rf "$@"; then
         echo "  removed $label ($(human "$kb"))"
     else
         TOTAL_KB=$(( TOTAL_KB - kb ))
@@ -410,7 +411,7 @@ clean_derived_data() {
         [[ -d "$dir" && "$(basename "$dir")" != android-slot-* ]] || continue
         if contains "${dir##*-}" "${KEYS[@]}" \
             || { path="$(workspace_path "$dir")"; [[ -n "$path" && "$path/" == "$wt/"* ]]; }; then
-            remove_tree "$dir" "DerivedData/$(basename "$dir")"
+            remove_tree "DerivedData/$(basename "$dir")" "$dir"
             found=1
         fi
     done
@@ -422,7 +423,7 @@ clean_mcp_workspaces() {
     compute_keys mcp "$(mcp_roots "$wt")"
     for key in "${KEYS[@]}"; do
         if [[ -d "$MCP_WORKSPACES/$key" ]]; then
-            remove_tree "$MCP_WORKSPACES/$key" "XcodeBuildMCP workspace $key"
+            remove_tree "XcodeBuildMCP workspace $key" "$MCP_WORKSPACES/$key"
             found=1
         fi
     done
@@ -518,7 +519,7 @@ report_slots() {
 # directory, and open files under a .build. A Gradle daemon's cwd is
 # ~/.gradle/daemon, so only its open files tell.
 build_tool_paths() {
-    lsof -w -n -P -c java -c swift -c skip -c xcodebuild -Fcfn 2>/dev/null | awk '
+    lsof -w -n -P -c java -c swift -c skip -c clang -c xcodebuild -Fcfn 2>/dev/null | awk '
         /^c/ { cmd = substr($0, 2) }
         /^f/ { fd = substr($0, 2) }
         /^n/ { path = substr($0, 2)
@@ -535,38 +536,42 @@ building_in() {
             echo "$cmd"; return 0
         fi
         for d in "$@"; do
-            if [[ "$kind" == file && "$path" == "$d/"* ]]; then echo "$cmd"; return 0; fi
+            if [[ "$kind" == file && ( "$path" == "$d" || "$path" == "$d/"* ) ]]; then echo "$cmd"; return 0; fi
         done
     done <<< "$BUILD_TOOL_PATHS"
     return 1
 }
 
-# What the prebuild leaves in each checkout's .build. A Gradle build of a branch
-# with build slots no longer uses them, but `skip android build`, `swift package
-# update` and build-release-apk.sh still do, and recreate them cold.
+# Each checkout's .build but Android/ (the :app outputs) and the .fa-slot* files
+# (the slot's path, and the clean token, without which the next build wipes the
+# slot). A Gradle build of a branch with build slots no longer uses it, but `skip
+# android build`, `swift package update` and build-release-apk.sh still do, and
+# recreate it cold. Removing only part of it leaves the stale state behind
+# "missing required module" errors.
 report_legacy_build() {
-    local i wt dirs names d kb tool found=0 lines=()
+    local i wt entries names d kb tool found=0 lines=()
     (( ! RECLAIM )) || BUILD_TOOL_PATHS="$(build_tool_paths)"
-    echo "Per-worktree Android .build directories"
+    echo "Per-worktree .build content Gradle builds in a slot don't use (all but Android/ and .fa-slot*)"
     for i in "${!LIVE[@]}"; do
-        wt="${LIVE[$i]}" dirs=() names="" kb=0
-        for d in plugins checkouts repositories arm64-apple-ios; do
-            [[ -d "$wt/.build/$d" ]] || continue
-            dirs+=("$wt/.build/$d") names+="${names:+,}$d"
-            kb=$(( kb + $(size_kb "$wt/.build/$d") ))
+        wt="${LIVE[$i]}" entries=() names="" kb=0
+        for d in "$wt"/.build/* "$wt"/.build/.[!.]*; do
+            [[ -e "$d" || -L "$d" ]] || continue
+            case "${d##*/}" in Android|.fa-slot*) continue ;; esac
+            entries+=("$d") names+="${names:+,}${d##*/}"
+            kb=$(( kb + $(size_kb "$d") ))
         done
-        (( ${#dirs[@]} )) || continue
+        (( ${#entries[@]} )) || continue
         names="$(basename "$wt")/.build/{$names}"
         # By a tracked file: ignored build output under Android/build-slots survives a checkout.
         if ! git -C "$wt" ls-files --error-unmatch -- Android/build-slots/build.gradle.kts >/dev/null 2>&1; then
             lines+=("  kept $names ($(human "$kb")) — in use: ${LIVE_BRANCHES[$i]} predates build slots")
-        elif (( RECLAIM )) && tool="$(building_in "$wt" "${dirs[@]}")"; then
+        elif (( RECLAIM )) && tool="$(building_in "$wt" "${entries[@]}")"; then
             lines+=("  kept $names ($(human "$kb")) — $tool is building there")
         elif (( RECLAIM )); then
-            for d in "${dirs[@]}"; do remove_tree "$d" "$(basename "$wt")/.build/$(basename "$d")"; done
+            remove_tree "$names" "${entries[@]}"
             found=1
         else
-            lines+=("  kept $names ($(human "$kb")) — not used by Gradle builds; \`skip android build\` recreates them cold (--reclaim removes them)")
+            lines+=("  kept $names ($(human "$kb")) — not used by Gradle builds; \`skip android build\` recreates it cold (--reclaim removes it)")
         fi
     done
     end_section_lines "$found" "${lines[@]}"
@@ -1000,7 +1005,7 @@ clean_orphans() {
                 esac
             fi
         fi
-        remove_tree "$dir" "DerivedData/$name"
+        remove_tree "DerivedData/$name" "$dir"
         found=1
     done
     end_section "$found"
@@ -1017,7 +1022,7 @@ clean_orphans() {
         [[ -d "$dir" ]] || continue
         key="$(basename "$dir")"
         if i="$(index_of "$key" "${KEYS[@]}")"; then
-            remove_tree "$dir" "XcodeBuildMCP workspace $key ($(tilde "${KEY_PATHS[$i]}"))"
+            remove_tree "XcodeBuildMCP workspace $key ($(tilde "${KEY_PATHS[$i]}"))" "$dir"
             found=1
         elif i="$(index_of "$key" "${live_mcp_keys[@]}")"; then
             keep $MCP_COL "${live_mcp_paths[$i]}" "$key" "$(user_of "${live_mcp_paths[$i]}")" "$dir"

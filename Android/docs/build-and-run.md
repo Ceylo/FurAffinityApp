@@ -187,12 +187,13 @@ What this changes day to day:
   `android-slot-<n>`. Android Studio indexes that Kotlin too: if another worktree has
   built in the slot since, the index shows its code until your next sync.
 - **Disk.** A slot is ~3.0 GB, ~6.2 GB once a `profile` build has run in it
-  (`run.sh --profile`, `check-crash-reporting.sh android`). A worktree's own
-  `.build/{plugins,checkouts,repositories,arm64-apple-ios}` (~1–7 GB) is not used by
-  Gradle builds, only by `skip android build`, `swift package update` and
+  (`run.sh --profile`, `check-crash-reporting.sh android`). A worktree's own `.build`
+  (~1–7 GB), but its `Android/` (the `:app` outputs) and `.fa-slot*` files, is not used
+  by Gradle builds, only by `skip android build`, `swift package update` and
   `build-release-apk.sh`, which recreate it cold:
   `Scripts/cleanup-worktree.sh --orphans` reports it and the slots, `--reclaim`
-  deletes it. Xcode's "Delete Derived Data" deletes the slots too, which only makes
+  deletes it, all of it, since a partial `.build` is what fails with "missing required
+  module". Xcode's "Delete Derived Data" deletes the slots too, which only makes
   the next build cold; the script's own DerivedData sweep matches Xcode's 28-letter
   hashes and never takes a slot.
 
