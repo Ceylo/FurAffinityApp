@@ -15,8 +15,9 @@
 # a slot's .build; hence the manifest, and no deleting option here.
 #
 # The caller holds the slot's lease. Prints one summary line; exits non-zero on any
-# failure, with rsync's own status if the copy fails; a listed file deleted before
-# the copy is not one.
+# failure, with rsync's own status if the copy fails. A listed file that vanishes
+# mid-copy is dropped and the copy retried, three attempts in all; if files still
+# vanish on the last one, the sync fails.
 
 set -euo pipefail
 export LC_ALL=C   # one byte order for sort and [[ < ]]
@@ -24,7 +25,7 @@ export LC_ALL=C   # one byte order for sort and [[ < ]]
 die() { echo "error: $*" >&2; exit 1; }
 
 case "${1:-}" in
-    -h|--help) sed -n '3,19p' "$0" | cut -c3-; exit 0 ;;
+    -h|--help) sed -n '3,20p' "$0" | cut -c3-; exit 0 ;;
 esac
 (( $# == 2 )) || { echo "usage: $0 <worktree> <slot>" >&2; exit 2; }
 
