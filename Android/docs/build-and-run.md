@@ -550,9 +550,9 @@ drives from the Looper — so `ModelTests` waits on that.
 
 The root package tests build in **their own scratch path**, `.build/android-test`.
 In the worktree's `.build` they rewrite the skipstone plugin outputs that a Gradle
-build reads when [slots](#build-slots) are off (CI), and that build then fails in Kotlin
-(`Unresolved reference 'ProcessInfo'`) until `.build/plugins/outputs`, `.build/Darwin`
-and `.build/Android` are wiped.
+build reads when [slots](#build-slots) are off (CI, `FA_ANDROID_SLOTS=0`), and that
+build then fails in Kotlin (`Unresolved reference 'ProcessInfo'`) until
+`.build/plugins/outputs`, `.build/Darwin` and `.build/Android` are wiped.
 
 A native test is an `adb shell` process, not an app: it has no `context.cacheDir`,
 so the script sets `XDG_CACHE_HOME` for Kingfisher's disk cache. And `UserDefaults`
