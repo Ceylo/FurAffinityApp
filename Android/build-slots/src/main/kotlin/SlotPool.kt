@@ -5,7 +5,6 @@ import java.nio.channels.FileChannel
 import java.nio.channels.OverlappingFileLockException
 import java.nio.file.StandardOpenOption.CREATE
 import java.nio.file.StandardOpenOption.WRITE
-import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -52,7 +51,7 @@ class SlotPool(private val dir: File, private val max: Int) {
         val owner get() = state["owner"]
         val commit get() = state["commit"]
         val lastUsed get() = state["lastUsed"]?.toLongOrNull() ?: 0L
-        val skipEnv get() = state["skipEnv"]
+        val skipEnv get() = dir.resolve(".build/$SKIP_ENV_HASH").takeIf { it.isFile }?.readText()?.trim()
     }
 
     fun acquire(worktree: File): SlotLock {
@@ -81,7 +80,6 @@ class SlotPool(private val dir: File, private val max: Int) {
                     SlotLock.tryAcquire(chosen.dir) ?: error("Could not lock the new build slot ${chosen.dir}.")
                 }
                 checkToken(chosen, worktree)
-                checkSkipEnv(chosen, worktree)
                 writeState(chosen.dir, worktree, commit = null)
                 evict(idle - chosen, total = slots.size + if (chosen in idle) 0 else 1)
                 held.remove(chosen)
@@ -186,18 +184,6 @@ class SlotPool(private val dir: File, private val max: Int) {
 
     private fun File.readToken() = takeIf { it.isFile }?.readText()?.trim()?.takeIf { it.isNotEmpty() }
 
-    /**
-     * skipstone caches Skip.env's package name and app id in these, so a slot last built
-     * with another Skip.env drops them. A slot that recorded no hash keeps them.
-     */
-    private fun checkSkipEnv(chosen: Slot, worktree: File) {
-        val recorded = chosen.skipEnv ?: return
-        if (recorded == skipEnvHash(worktree)) return
-        for (path in listOf(".build/plugins/outputs", ".build/Darwin", ".build/Android")) {
-            wipe(chosen, path, reason = "${chosen.dir.name} was last built with another Skip.env")
-        }
-    }
-
     private fun wipe(slot: Slot, path: String, reason: String) {
         val file = slot.dir.resolve(path)
         if (!file.exists()) return
@@ -255,7 +241,6 @@ class SlotPool(private val dir: File, private val max: Int) {
             "owner" to worktree.path,
             commit?.let { "commit" to it },
             "lastUsed" to System.currentTimeMillis().toString(),
-            skipEnvHash(worktree)?.let { "skipEnv" to it },
         )
         writeAtomically(slot.resolve(STATE), state.joinToString("") { (key, value) -> "$key=$value\n" })
     }
@@ -266,11 +251,6 @@ class SlotPool(private val dir: File, private val max: Int) {
         tmp.writeText(text)
         if (!tmp.renameTo(file)) error("Could not write $file.")
     }
-
-    private fun sha1(bytes: ByteArray) =
-        MessageDigest.getInstance("SHA-1").digest(bytes).joinToString("") { "%02x".format(it) }
-
-    private fun skipEnvHash(worktree: File) = worktree.resolve("Skip.env").takeIf { it.isFile }?.readBytes()?.let { sha1(it) }
 
     /** How many files differ between [commit] and the worktree; null if git can't tell. */
     private fun distance(worktree: File, commit: String): Int? =

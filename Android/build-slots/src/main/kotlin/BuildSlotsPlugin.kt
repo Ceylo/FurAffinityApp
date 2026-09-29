@@ -113,6 +113,7 @@ private fun leaseSlot(settings: Settings, pool: SlotPool, worktree: File, buildE
 
 /** Prebuilds the Swift package at [base] and includes its transpiled Gradle builds. */
 private fun includeSkip(settings: Settings, worktree: File, base: File) = with(settings) {
+    checkSkipEnv(worktree, base)
     // SwiftPM keys its manifest cache on the environment, PWD included: run from the
     // base, not the caller's directory, or every worktree switch recompiles ~30 manifests (~11 s).
     val pluginRef = File.createTempFile("skip-plugin-path", ".tmp")
@@ -150,6 +151,43 @@ private fun includeSkip(settings: Settings, worktree: File, base: File) = with(s
     warnOnSkipSettingsDrift(skipGradle)
     includeBuild(skipGradle) { name = "skip-plugins" }
 }
+
+/**
+ * skipstone caches Skip.env's package name and app id in these, so a base last built with
+ * another Skip.env drops them, as build-release-apk.sh does. The hash is in `.build`, so
+ * `rm -rf .build` takes it along with them.
+ */
+private fun checkSkipEnv(worktree: File, base: File) {
+    val hash = skipEnvHash(worktree) ?: return
+    val build = base.resolve(".build")
+    val recorded = build.resolve(SKIP_ENV_HASH)
+    val last = recorded.takeIf { it.isFile }?.readText()?.trim()
+    // No hash but a transpile: built before the hash was recorded, with whichever Skip.env.
+    val stale = if (last == null) build.resolve("plugins/outputs").exists() else last != hash
+    val caches = listOf("plugins/outputs", "Darwin", "Android").map(build::resolve).filter { it.exists() }
+    if (stale && caches.isNotEmpty()) {
+        val why = if (last == null) "recorded no Skip.env hash" else "was last built with another Skip.env"
+        logger.lifecycle("fa.build-slots: ${base.name} $why; deleting its .build/{plugins/outputs,Darwin,Android}.")
+        // rm never follows the symlinks skipstone leaves in .build; a second try outlasts
+        // a .DS_Store Finder writes mid-rm.
+        val rm = listOf("/bin/rm", "-rf") + caches.map { it.path }
+        if ((1..2).none { ProcessBuilder(rm).inheritIO().start().waitFor() == 0 }) {
+            throw GradleException("Could not delete ${caches.joinToString()}.")
+        }
+    }
+    if (last != hash) {
+        build.mkdirs()
+        recorded.writeText("$hash\n")
+    }
+}
+
+internal const val SKIP_ENV_HASH = ".skip-env-hash"
+
+internal fun skipEnvHash(worktree: File) =
+    worktree.resolve("Skip.env").takeIf { it.isFile }?.readBytes()?.let { hexDigest("SHA-1", it) }
+
+internal fun hexDigest(algorithm: String, bytes: ByteArray) =
+    MessageDigest.getInstance(algorithm).digest(bytes).joinToString("") { "%02x".format(it) }
 
 /** SHA-256 of the `class SkipSettingsPlugin` block this plugin was last reviewed against (Skip 1.9.11). */
 private const val SKIP_SETTINGS_PLUGIN_SHA256 = "60f3bb29932700466582e0b5d167d2374264e42458061b1a4681164a69cafc75"

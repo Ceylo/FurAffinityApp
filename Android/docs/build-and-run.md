@@ -108,10 +108,7 @@ suffix and `GIT_COMMIT` stay the worktree's. Each build:
    `skip` or `clang` process with its cwd in the slot or a file open under its
    `.build`, as a cancelled build or a dead daemon leaves behind. The build names its
    pid; the one `lsof` costs 30–80 ms. Idle slots beyond `FA_ANDROID_SLOTS_MAX`
-   (default 3) are deleted, least recently used first. A slot last built with another
-   `Skip.env` (its hash is in `<slot>/.slot-state`) drops its
-   `.build/{plugins/outputs,Darwin,Android}`, where skipstone caches the package name
-   and app id.
+   (default 3) are deleted, least recently used first.
 2. **Syncs** the worktree into it (`Scripts/Android/slot-sync.sh`): git's tracked and
    untracked-unignored files plus the generated catalog entries, never signing
    material.
@@ -119,6 +116,11 @@ suffix and `GIT_COMMIT` stay the worktree's. Each build:
    keys its manifest cache on the environment, and the caller's `PWD` recompiled ~30
    manifests on every worktree switch (11–13 s). Other variables still count, so moving
    between the terminal and Android Studio, or setting `CI`, can cost ~11 s once.
+   Before it, a base last built with another `Skip.env` drops its
+   `.build/{plugins/outputs,Darwin,Android}`, where skipstone caches the package name
+   and app id; the hash is in `.build/.skip-env-hash`, and a `.build` with a transpile
+   but no hash counts as another. The base is the slot, or the worktree where slots are
+   off.
 4. **Includes** the slot's skipstone build and `skip-gradle`.
 
 The lease is a `FileChannel` lock on `<slot>/.lock`, held by a build service that is
