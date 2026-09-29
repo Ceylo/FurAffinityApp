@@ -2,11 +2,13 @@ import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.initialization.Settings
 import org.gradle.api.logging.Logging
+import org.gradle.build.event.BuildEventsListenerRegistry
 import org.gradle.kotlin.dsl.apply
 import java.io.File
 import java.io.FileReader
 import java.security.MessageDigest
 import java.util.Properties
+import javax.inject.Inject
 
 private val logger = Logging.getLogger(BuildSlotsPlugin::class.java)
 
@@ -17,7 +19,9 @@ private val logger = Logging.getLogger(BuildSlotsPlugin::class.java)
  * [SlotPool], or the worktree itself. The Gradle root and the `:app` outputs stay in
  * the worktree.
  */
-class BuildSlotsPlugin : Plugin<Settings> {
+abstract class BuildSlotsPlugin @Inject constructor(
+    private val buildEvents: BuildEventsListenerRegistry,
+) : Plugin<Settings> {
     override fun apply(settings: Settings) {
         val worktree = settings.rootDir.parentFile.canonicalFile
 
@@ -37,7 +41,7 @@ class BuildSlotsPlugin : Plugin<Settings> {
         } == null
         if (inSlot) {
             val pool = slotPool(settings)
-            val slot = leaseSlot(settings, pool, worktree)
+            val slot = leaseSlot(settings, pool, worktree, buildEvents)
             includeSkip(settings, worktree, base = slot)
             pool.markPrebuilt(slot, worktree)
         } else {
@@ -89,11 +93,11 @@ private fun escapingPathDependency(settings: Settings, worktree: File): String? 
 private val PATH_DEPENDENCY = Regex("""\.package\(\s*(?:name:\s*"[^"]*"\s*,\s*)?path:\s*"([^"\\]*)"""")
 
 /** Leases a slot for this build and mirrors the worktree into it. */
-private fun leaseSlot(settings: Settings, pool: SlotPool, worktree: File): File {
-    val slot = settings.gradle.sharedServices
-        .registerIfAbsent("faSlotLease", SlotLease::class.java) {}
-        .get()
-        .acquire(pool, worktree)
+private fun leaseSlot(settings: Settings, pool: SlotPool, worktree: File, buildEvents: BuildEventsListenerRegistry): File {
+    val lease = settings.gradle.sharedServices.registerIfAbsent("faSlotLease", SlotLease::class.java) {}
+    // No task uses the lease, so only a listener keeps it open until the build ends.
+    buildEvents.onTaskCompletion(lease)
+    val slot = lease.get().acquire(pool, worktree)
 
     settings.runCommand("$worktree/Scripts/Android/slot-sync.sh", worktree.path, slot.path)
     // For debug.sh's source map.

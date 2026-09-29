@@ -117,13 +117,14 @@ suffix and `GIT_COMMIT` stay the worktree's. Each build:
    between the terminal and Android Studio, or setting `CI`, can cost ~11 s once.
 4. **Includes** the slot's skipstone build and `skip-gradle`.
 
-The lease is a `FileChannel` lock on `<slot>/.lock`, held by a build service Gradle
-closes at the end of every build — failed ones and IDE syncs included — and dropped
-by the OS if the daemon dies; a compile error, a settings failure and `kill -9` of the
-daemon all left it free. These are POSIX locks, which `flock(1)` does not see:
-probe them with Python's `fcntl.lockf`, as `clean.sh` does. A deleted slot is first
-renamed to `DerivedData/.android-slot-trash-*` and removed in the background, since
-Finder drops `.DS_Store` files into it mid-`rm`; the next lease sweeps what is left.
+The lease is a `FileChannel` lock on `<slot>/.lock`, held by a build service that is
+also a task-completion listener, which Gradle keeps open until the end of every build
+— failed ones and IDE syncs included — and dropped by the OS if the daemon dies; a
+compile error, a settings failure and `kill -9` of the daemon all left it free. These
+are POSIX locks, which `flock(1)` does not see: probe them with Python's
+`fcntl.lockf`, as `clean.sh` does. A deleted slot is first renamed to
+`DerivedData/.android-slot-trash-*` and removed in the background, since Finder drops
+`.DS_Store` files into it mid-`rm`; the next lease sweeps what is left.
 
 Two measured rules shape the sync:
 
