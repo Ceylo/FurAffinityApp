@@ -89,11 +89,15 @@ class SlotPool(private val dir: File, private val max: Int) {
             logger.info("fa.build-slots: ${it.dir.name}, which this worktree used last")
             return it
         }
+        // Then one built with this Skip.env, and only among those, the fewest files away.
         val skipEnv = skipEnvHash(worktree)
-        val byDistance = idle.associateWith { slot -> slot.commit?.let { distance(worktree, it) } }
-        return idle.minWithOrNull(
-            compareBy({ it.skipEnv != null && it.skipEnv != skipEnv }, { byDistance[it] ?: Int.MAX_VALUE }, { it.lastUsed })
-        )?.also {
+        val tied = idle.filter { it.skipEnv == null || it.skipEnv == skipEnv }.ifEmpty { idle.toList() }
+        if (tied.size == 1) {
+            logger.info("fa.build-slots: ${tied[0].dir.name}, the only candidate")
+            return tied[0]
+        }
+        val byDistance = tied.associateWith { slot -> slot.commit?.let { distance(worktree, it) } }
+        return tied.minWithOrNull(compareBy({ byDistance[it] ?: Int.MAX_VALUE }, { it.lastUsed }))?.also {
             val files = byDistance[it]
             logger.info(
                 if (files != null) "fa.build-slots: ${it.dir.name}, $files files away from this worktree"
