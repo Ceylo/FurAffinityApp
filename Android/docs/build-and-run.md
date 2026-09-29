@@ -153,7 +153,11 @@ idle slot and names the busy ones.
   path-sensitive;
 - `CI` (the GitHub workflows);
 - `BUILT_PRODUCTS_DIR`, i.e. Xcode's "Run skip gradle" phase, whose transpiled output
-  is already in Xcode's DerivedData.
+  is already in Xcode's DerivedData;
+- a `.package(path:)` in a synced `Package.swift` whose relative path leaves the
+  worktree, such as a [local fork clone](forks.md): from the slot's copy it would
+  resolve elsewhere. The build names it. An absolute path, `SKIPLOCAL` included, works
+  from a slot.
 
 `skip android build` and `test.sh` do not go through Gradle settings, so they build in
 the worktree's `.build` (and `.build/android-test`, and FAKit's), cold in each new

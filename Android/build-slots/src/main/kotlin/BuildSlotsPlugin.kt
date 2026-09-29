@@ -29,7 +29,13 @@ class BuildSlotsPlugin : Plugin<Settings> {
         // Cap the build cache before this build adds to it.
         settings.runCommand("$worktree/Scripts/Android/prune-build-cache.sh")
 
-        if (slotsEnabled(settings)) {
+        val inSlot = slotsEnabled(settings) && escapingPathDependency(settings, worktree)?.also {
+            logger.lifecycle(
+                "fa.build-slots: building in the worktree, not a slot: $it leaves the worktree, " +
+                    "so it would resolve elsewhere from a slot's copy."
+            )
+        } == null
+        if (inSlot) {
             val pool = slotPool(settings)
             val slot = leaseSlot(settings, pool, worktree)
             includeSkip(settings, worktree, base = slot)
@@ -54,6 +60,33 @@ private fun slotPool(settings: Settings) = SlotPool(
         ?: File(System.getProperty("user.home"), "Library/Developer/Xcode/DerivedData"),
     max = settings.env("FA_ANDROID_SLOTS_MAX")?.toIntOrNull()?.coerceAtLeast(1) ?: 3,
 )
+
+/**
+ * The first `.package(path: "…")` in a synced manifest whose relative path climbs out of
+ * the worktree, for the log. An absolute one resolves the same from a slot.
+ */
+private fun escapingPathDependency(settings: Settings, worktree: File): String? {
+    val listed = settings.providers.exec {
+        commandLine("git", "-C", worktree.path, "ls-files", "-z", "-co", "--exclude-standard", "--", "*Package.swift")
+    }.standardOutput.asText.get()
+    val root = worktree.toPath()
+    for (path in listed.split('\u0000').filter { it == "Package.swift" || it.endsWith("/Package.swift") }) {
+        val manifest = worktree.resolve(path)
+        val code = manifest.takeIf { it.isFile }?.readLines().orEmpty()
+            .filterNot { it.trimStart().startsWith("//") }.joinToString("\n")
+        for (match in PATH_DEPENDENCY.findAll(code)) {
+            val dependency = match.groupValues[1]
+            if (dependency.startsWith("/")) continue
+            if (!manifest.parentFile.toPath().resolve(dependency).normalize().startsWith(root)) {
+                return "$path's .package(path: \"$dependency\")"
+            }
+        }
+    }
+    return null
+}
+
+// A literal path only: an interpolated one (`\(…)`) can't be resolved here.
+private val PATH_DEPENDENCY = Regex("""\.package\(\s*(?:name:\s*"[^"]*"\s*,\s*)?path:\s*"([^"\\]*)"""")
 
 /** Leases a slot for this build and mirrors the worktree into it. */
 private fun leaseSlot(settings: Settings, pool: SlotPool, worktree: File): File {
