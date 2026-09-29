@@ -478,8 +478,9 @@ clean_slot_tokens() {
 report_slots() {
     local out kind path state owner used kb lines=() stale=() when found=0
     [[ -d "$SLOTS_DIR" && -f "$SLOTS_HELPER" ]] || return 0
-    out="$(printf '%s\n' "${LIVE[@]}" | slots_py list "$SLOTS_DIR")" \
-        || die "python3 failed reading the Android build slots"
+    if ! out="$(printf '%s\n' "${LIVE[@]}" | slots_py list "$SLOTS_DIR")"; then
+        warn "python3 failed reading the Android build slots"; FAILED=1; return 0
+    fi
     echo "Android build slots (any worktree reuses them; Scripts/Android/clean.sh --all deletes the idle ones)"
     while IFS=$'\x1f' read -r kind path state owner used; do
         [[ -n "$kind" ]] || continue
@@ -499,8 +500,9 @@ report_slots() {
         lines+=("  kept $(basename "$path") ($(human "$kb")) — $state, $when${owner:+ by $(tilde "$owner")}")
     done <<< "$out"
     if (( ${#stale[@]} )); then
-        out="$(slots_py drop-tokens "${DRY_FLAG[@]}" "$SLOTS_DIR" "${stale[@]}")" \
-            || die "python3 failed removing Android build slot tokens"
+        if ! out="$(slots_py drop-tokens "${DRY_FLAG[@]}" "$SLOTS_DIR" "${stale[@]}")"; then
+            warn "python3 failed removing Android build slot tokens"; FAILED=1; out=""
+        fi
         while IFS=$'\x1f' read -r kind path; do
             case "$kind" in
                 would)   echo "  would remove token $(pool_path "$path"), of a removed worktree"; found=1 ;;
