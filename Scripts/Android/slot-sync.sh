@@ -6,7 +6,8 @@
 # Usage: Scripts/Android/slot-sync.sh <worktree> <slot>
 #
 # The file list is git's (tracked plus untracked-not-ignored) plus the generated,
-# git-ignored asset catalog entries skipstone needs, minus signing material.
+# git-ignored asset catalog entries skipstone needs, minus signing material and
+# editor scratch files.
 # <slot>/.slot-manifest records it, and a file that leaves the list is removed from
 # the slot. Nothing else in the slot is touched — above all not its .build.
 #
@@ -14,7 +15,8 @@
 # a slot's .build; hence the manifest, and no deleting option here.
 #
 # The caller holds the slot's lease. Prints one summary line; exits non-zero on any
-# failure, with rsync's own status if the copy fails.
+# failure, with rsync's own status if the copy fails; a listed file deleted before
+# the copy is not one.
 
 set -euo pipefail
 export LC_ALL=C   # one byte order for sort and [[ < ]]
@@ -22,7 +24,7 @@ export LC_ALL=C   # one byte order for sort and [[ < ]]
 die() { echo "error: $*" >&2; exit 1; }
 
 case "${1:-}" in
-    -h|--help) sed -n '3,17p' "$0" | cut -c3-; exit 0 ;;
+    -h|--help) sed -n '3,19p' "$0" | cut -c3-; exit 0 ;;
 esac
 (( $# == 2 )) || { echo "usage: $0 <worktree> <slot>" >&2; exit 2; }
 
@@ -56,13 +58,21 @@ owned() {
 # shellcheck source=Scripts/signing-material.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../signing-material.sh"
 
+# Editor swap, lock and backup files, which come and go mid-sync.
+editor_scratch() {
+    case "${1##*/}" in
+        *.swp|.#*|*~) return 0 ;;
+    esac
+    return 1
+}
+
 # --- the new list -----------------------------------------------------------
 
 {
     git -C "$worktree" ls-files -z -co --exclude-standard
     git -C "$worktree" ls-files -z -oi --exclude-standard -- FurAffinity/Resources/Assets.xcassets
 } | while IFS= read -r -d '' path; do
-    if ! owned "$path" || is_signing_material "$path"; then continue; fi
+    if ! owned "$path" || is_signing_material "$path" || editor_scratch "$path"; then continue; fi
     # -c also lists tracked files deleted from the working tree.
     [[ -e "$worktree/$path" || -L "$worktree/$path" ]] || continue
     printf '%s\0' "$path"
@@ -105,11 +115,36 @@ fi
 
 # --- copy -------------------------------------------------------------------
 
+# A listed file deleted since (an editor's): rsync exits 24, openrsync 23 with only
+# stat errors naming it.
+vanished_only() {
+    local line path
+    [[ -s "$tmp/errors" ]] || return 1
+    while IFS= read -r line; do
+        [[ "$line" =~ ^rsync\([0-9]+\):\ error:\ (.*):\ stat:\ No\ such\ file\ or\ directory$ ]] || return 1
+        path="${BASH_REMATCH[1]}"
+        [[ ! -e "$worktree/$path" && ! -L "$worktree/$path" ]] || return 1
+    done < "$tmp/errors"
+}
+
 # --checksum --no-times: an identical file keeps its inode and mtime.
-status=0
-/usr/bin/rsync -rlp --checksum --no-times --itemize-changes --from0 --files-from="$tmp/new" \
-    "$worktree/" "$slot/" > "$tmp/itemized" || status=$?
-if (( status )); then
+list="$tmp/new"
+: > "$tmp/itemized"
+for attempt in 1 2 3; do
+    status=0
+    /usr/bin/rsync -rlp --checksum --no-times --itemize-changes --from0 --files-from="$list" \
+        "$worktree/" "$slot/" >> "$tmp/itemized" 2> "$tmp/errors" || status=$?
+    if (( status != 23 || attempt == 3 )) || ! vanished_only; then break; fi
+    # openrsync then also skips files in directories it had yet to create: copy
+    # again, without what vanished.
+    cat "$tmp/errors" >&2
+    while IFS= read -r -d '' path; do
+        if [[ -e "$worktree/$path" || -L "$worktree/$path" ]]; then printf '%s\0' "$path"; fi
+    done < "$list" > "$tmp/retry$attempt"
+    list="$tmp/retry$attempt"
+done
+cat "$tmp/errors" >&2
+if (( status && status != 24 )); then
     cat "$tmp/itemized" >&2
     echo "error: rsync failed with status $status" >&2
     exit "$status"
