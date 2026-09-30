@@ -10,7 +10,8 @@ on:
 # both artifacts built and checked, symbols uploaded to Sentry, no release.
 jobs:
   ios:
-    runs-on: macos-26
+    # xcode-27 is a preview label and may queue; use macos-27 once GitHub ships it.
+    runs-on: xcode-27
     permissions:
       contents: read
     steps:
@@ -67,7 +68,7 @@ jobs:
       - uses: mxcl/xcodebuild@v3
         with:
           action: none
-          xcode: ~26.5
+          xcode: ~27.0
       - name: Install sentry-cli
         run: |
           # The archive's "Upload dSYMs" target needs it, and fails

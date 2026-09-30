@@ -9,7 +9,8 @@ concurrency:
 jobs:
   Build-iOS-App:
     name: Build iOS App
-    runs-on: macos-26
+    # xcode-27 is a preview label and may queue; use macos-27 once GitHub ships it.
+    runs-on: xcode-27
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -62,19 +63,19 @@ jobs:
       - uses: mxcl/xcodebuild@v3
         with:
           action: none
-          xcode: ~26.5
+          xcode: ~27.0
       - name: Trust package plugins and macros
         run: Scripts/iOS/trust-swiftpm-extensions.sh
       - name: Build App
         run: |
-          NSUnbufferedIO=YES set -o pipefail && xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17' -configuration Debug build 2>&1 | tee BuildLogs.txt | xcbeautify
+          NSUnbufferedIO=YES set -o pipefail && xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17,OS=27.0' -configuration Debug build 2>&1 | tee BuildLogs.txt | xcbeautify
       - name: Run Tests
         run: |
           git_hash=$(git rev-parse --short "$GITHUB_SHA")
           fsfriendly_git_ref=$(echo "${GITHUB_REF_NAME}" | tr '/' '-')
           qualified_app_name="FurAffinity-${fsfriendly_git_ref}-${git_hash}"
           results_path=$(pwd)/${qualified_app_name}.xcresult
-          NSUnbufferedIO=YES set -o pipefail && xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17' -resultBundlePath "${results_path}" test 2>&1 | tee TestLogs.txt | xcbeautify
+          NSUnbufferedIO=YES set -o pipefail && xcodebuild -disableAutomaticPackageResolution -scheme FurAffinity -destination 'platform=iOS Simulator,name=iPhone 17,OS=27.0' -resultBundlePath "${results_path}" test 2>&1 | tee TestLogs.txt | xcbeautify
           zip -rq "${qualified_app_name}.xcresult.zip" "${qualified_app_name}.xcresult"
       - name: Upload Logs
         if: always()
