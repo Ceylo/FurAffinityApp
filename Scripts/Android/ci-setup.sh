@@ -12,7 +12,8 @@
 #   - swiftly, from swift.org's package — `skip android sdk install` uses it for
 #     the host toolchain the Swift Android SDK must match;
 #   - the skip CLI at the manifests' pin (check-skip-version.sh --install);
-#   - the Swift Android SDK, SWIFT_ANDROID_SDK_VERSION (default 6.3.3).
+#   - the Swift Android SDK, SWIFT_ANDROID_SDK_VERSION (default 6.4.0,
+#     the Swift of Xcode 27; see Android/docs/build-and-run.md § Toolchain vs. Xcode).
 #
 # The JDK comes from actions/setup-java, Gradle from the project's wrapper and the
 # Android SDK from the runner image. Exports what later steps need through
@@ -26,7 +27,7 @@ step() { echo; echo "==> $*"; }
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 [[ -n "$GITHUB_ENV" && -n "$GITHUB_PATH" ]] || die "this sets up a GitHub Actions runner"
 TMP="${RUNNER_TEMP:?}"
-SDK_VERSION="${SWIFT_ANDROID_SDK_VERSION:-6.3.3}"
+SDK_VERSION="${SWIFT_ANDROID_SDK_VERSION:-6.4.0}"
 
 step "swiftly"
 if ! command -v swiftly >/dev/null; then

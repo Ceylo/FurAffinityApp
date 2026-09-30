@@ -571,6 +571,24 @@ in a test file means SkipAndroidBridge's JNI-backed store (skipstone's typealias
 arrives through `@testable import`) — reach the Foundation one `Defaults` uses as
 `key.suite`.
 
+### Toolchain vs. Xcode
+
+The Swift toolchain and the Swift Android SDK (one version, installed together by
+`skip android sdk install --version X`) must be at least as new as the Swift in
+the Xcode that `xcode-select` points to: host code (the skipstone plugin,
+manifests, the Darwin-side compile) builds against that Xcode's macOS SDK. Xcode 27
+needs Swift **6.4**. A 6.3 toolchain on Xcode 27 fails in one of two ways: the
+plugin can't import Foundation (`unknown argument: '-target-arch-variant'`, then
+`cannot find 'URL'` and "build planning stopped due to build-tool plugin
+failures"), or swift-frontend segfaults in `getObjCMethodCallee`
+(skiptools/skip#733). Keep only one `*_android` SDK installed (`swift sdk list`):
+with two, `skip android test` stops because the triple matches more than one SDK.
+
+SwiftPM 6.4 defaults to the `swiftbuild` build system, which makes the Fuse
+graph's "linked as a static library by …" duplication a hard error
+(skiptools/skip#735), our `OSCompat` included. `test.sh` therefore passes
+`--build-system native`. The Gradle build already uses native.
+
 ### CI
 
 `build.yml`'s `Build Android App` job runs beside the iOS one, with no secrets:
