@@ -185,7 +185,7 @@
 		9D9673BCD0A3A58360370D7B /* ExplorationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F4DE8504EE8E5896B9AA6A /* ExplorationView.swift */; };
 		A5C8D8E39F388B8044875B83 /* PendingNotificationRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = E47802CF8DFEA36285E68BE4 /* PendingNotificationRecord.swift */; };
 		AA033C746B0A65D536D8E296 /* CrashReportingConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A264CEDCBC3A6A5E7A2CA5AC /* CrashReportingConfigurationTests.swift */; };
-		B6F6089270D2553003E41E74 /* NotificationContent.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 12CC924CA9E594B2F3D1049C /* NotificationContent.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B6F6089270D2553003E41E74 /* NotificationContent.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 12CC924CA9E594B2F3D1049C /* NotificationContent.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B910E02605EEB533F4A7AE4D /* ForegroundAutorefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 035B5AEBEA2399F8715F2744 /* ForegroundAutorefresh.swift */; };
 		B955B3A262FCFEE6696E3642 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5984ACB60D47CABBFCF22AD3 /* AppDelegate.swift */; };
 		BD22E9CCD18A265D042410EA /* InAppLinkConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE0FE3ECD383602E8F75046C /* InAppLinkConversion.swift */; };
@@ -237,15 +237,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		24D624ECE810BFABCAFC42C8 /* Embed App Extensions */ = {
+		24D624ECE810BFABCAFC42C8 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				B6F6089270D2553003E41E74 /* NotificationContent.appex in Embed App Extensions */,
+				B6F6089270D2553003E41E74 /* NotificationContent.appex in Embed Foundation Extensions */,
 			);
-			name = "Embed App Extensions";
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -853,7 +853,7 @@
 				8716E7E4271C659C00C0BC4A /* Sources */,
 				8716E7E5271C659C00C0BC4A /* Frameworks */,
 				8716E7E6271C659C00C0BC4A /* Resources */,
-				24D624ECE810BFABCAFC42C8 /* Embed App Extensions */,
+				24D624ECE810BFABCAFC42C8 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -920,7 +920,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1420;
-				LastUpgradeCheck = 2600;
+				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					8716E7E7271C659C00C0BC4A = {
 						CreatedOnToolsVersion = 13.0;
@@ -1659,6 +1659,8 @@
 				kind = upToNextMajorVersion;
 				minimumVersion = 9.29.0;
 			};
+			traits = (
+			);
 		};
 /* End XCRemoteSwiftPackageReference section */
 
