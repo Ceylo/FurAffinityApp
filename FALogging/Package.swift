@@ -19,12 +19,11 @@ let package = Package(
     name: "FALogging",
     platforms: [.iOS(.v18), .macOS(.v14)],
     products: [
+        // OSCompat (empty off Android) rides along so it has one image — see
+        // Android/docs/shared-sources.md § One module, one image.
         .library(
             name: "FALogging",
-            targets: ["FALogging"]),
-        .library(
-            name: "OSCompat",
-            targets: ["OSCompat"]),
+            targets: ["FALogging", "OSCompat"]),
     ],
     dependencies: [
         // Android-only: AndroidLogging backs the `os` compatibility module.

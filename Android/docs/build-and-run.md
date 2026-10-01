@@ -205,7 +205,13 @@ What this changes day to day:
 `PATH` — the Homebrew one — and ignores `gradlew`. Android Studio uses the wrapper,
 `Android/gradle/wrapper/gradle-wrapper.properties`. **Keep the two equal** (9.6.1
 today); Skip also reads `distributionUrl` out of that file. Skip's catalog pins
-AGP 9.2.0 / Kotlin 2.3.0 / compileSdk 36 / JVM 17.
+Kotlin 2.3.0 / compileSdk 36 / JVM 17, and AGP 9.2.0, which we override to **9.4.1**.
+
+That catalog is generated: skipstone writes it into `skipstone/settings.gradle.kts`
+from skip-unit's `skip.yml`, so Android Studio's AGP Upgrade Assistant has nothing of
+ours to edit. `FurAffinity/Skip/skip.yml` registers `android-gradle-plugin` ahead of
+the default instead (skip-unit merges its catalog with `prepend`, and the first
+registration wins). Bump it there.
 
 ### Why settings.gradle.kts writes local.properties
 
@@ -586,8 +592,11 @@ with two, `skip android test` stops because the triple matches more than one SDK
 
 SwiftPM 6.4 defaults to the `swiftbuild` build system, which makes the Fuse
 graph's "linked as a static library by …" duplication a hard error
-(skiptools/skip#735), our `OSCompat` included. `test.sh` therefore passes
-`--build-system native`. The Gradle build already uses native.
+(skiptools/skip#735). The Gradle build runs it since skip-bridge 0.18
+(skiptools/skip-bridge#119), so every module of ours sits in exactly one image —
+see [One module, one image](shared-sources.md#one-module-one-image). `test.sh` still
+passes `--build-system native`: under swiftbuild, `skip android test` runs only the
+first test target's runner it finds, and FAKit has three.
 
 ### CI
 
