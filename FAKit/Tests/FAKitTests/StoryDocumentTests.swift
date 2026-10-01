@@ -346,7 +346,8 @@ struct StoryDocumentTests {
         // Capitalized monologue beats whose previous visual line ended well short of the margin
         // each start their own paragraph, even when PDFKit splits their first word into a narrow
         // head fragment (which used to be blanket-joined).
-        #expect(text.contains("better.\nOk TV , let’s see"), "#1 'Ok TV' beat didn't break: \(text.prefix(60))")
+        // Whether PDFKit puts a space before the comma varies by version.
+        #expect(text.contains("better.\nOk TV"), "#1 'Ok TV' beat didn't break: \(text.prefix(60))")
         #expect(text.contains("\nTool.\nOk, yeah time to start walking away"), "#3 'Tool.'/'Ok, yeah' didn't break")
         #expect(text.contains("\nThere’s people here.. Don’t make a scene"), "#4 'There's people here' didn't break")
         #expect(text.contains("thanks.“\nThat’s"), "#5 'That's ok' beat didn't break")

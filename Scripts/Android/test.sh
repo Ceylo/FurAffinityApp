@@ -65,7 +65,9 @@ run() {
     local log="$LOG_DIR/$name.log"
     echo; echo "==> skip android test in $name (log: $log)"
     local status=0
-    ( cd "$dir" && skip android test --testing-library testing "$@" ) 2>&1 | tee "$log" || status=$?
+    # Native: Swift 6.4's default swiftbuild makes the Fuse graph's static-library
+    # duplication a hard error (skiptools/skip#735).
+    ( cd "$dir" && skip android test --testing-library testing --build-system native "$@" ) 2>&1 | tee "$log" || status=$?
 
     # The summary line, stripped of colour and the spinner's carriage returns.
     local summary
