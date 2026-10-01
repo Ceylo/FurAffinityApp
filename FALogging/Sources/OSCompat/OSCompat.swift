@@ -4,7 +4,7 @@
 //
 //  Android has no `os` module, so this vends the `Logger`/`OSSignposter` surface
 //  shared code uses. Call sites pick between the two with `#if canImport(os)`;
-//  this target is only ever a dependency `.when(platforms: [.android])`, so
+//  off Android this module is empty (it still ships in FALogging's product), so
 //  Darwin always resolves the real system module.
 //
 //  It must NOT be named `os`. A module by that name lands in the shared Modules

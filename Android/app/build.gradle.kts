@@ -82,7 +82,6 @@ android {
                 keepDebugSymbols += setOf(
                     "**/libFurAffinityUI.so",
                     "**/libFAKit.so",
-                    "**/libFAPages.so",
                     "**/libFALogging.so",
                 )
             }
