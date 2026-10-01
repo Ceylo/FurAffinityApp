@@ -65,8 +65,8 @@ run() {
     local log="$LOG_DIR/$name.log"
     echo; echo "==> skip android test in $name (log: $log)"
     local status=0
-    # Native: Swift 6.4's default swiftbuild makes the Fuse graph's static-library
-    # duplication a hard error (skiptools/skip#735).
+    # Native: under swiftbuild, `skip android test` runs only the first test target's
+    # runner it finds (FAKit has three), and the case-count floor would catch that.
     ( cd "$dir" && skip android test --testing-library testing --build-system native "$@" ) 2>&1 | tee "$log" || status=$?
 
     # The summary line, stripped of colour and the spinner's carriage returns.

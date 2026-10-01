@@ -586,8 +586,11 @@ with two, `skip android test` stops because the triple matches more than one SDK
 
 SwiftPM 6.4 defaults to the `swiftbuild` build system, which makes the Fuse
 graph's "linked as a static library by …" duplication a hard error
-(skiptools/skip#735), our `OSCompat` included. `test.sh` therefore passes
-`--build-system native`. The Gradle build already uses native.
+(skiptools/skip#735). The Gradle build runs it since skip-bridge 0.18
+(skiptools/skip-bridge#119), so every module of ours sits in exactly one image —
+see [One module, one image](shared-sources.md#one-module-one-image). `test.sh` still
+passes `--build-system native`: under swiftbuild, `skip android test` runs only the
+first test target's runner it finds, and FAKit has three.
 
 ### CI
 

@@ -1,5 +1,5 @@
 {
-  "originHash" : "5bf36f4b4353956c1cbf792ba9d63d524548ff0caf40dd408de37fe02643caf7",
+  "originHash" : "6d4f04ee4eaaebc3c5cd700ed4198f15988e6229f8451c2104d2319eec1847b7",
   "pins" : [
     {
       "identity" : "amplitude-swift",
@@ -52,7 +52,7 @@
       "location" : "https://github.com/Ceylo/Kingfisher.git",
       "state" : {
         "branch" : "android",
-        "revision" : "097d8580cd42155c472308bfb7b9e4efa6347eb9"
+        "revision" : "5b57fa216b4da3cc9d8a0da258c542826f12f4aa"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/skiptools/skip.git",
       "state" : {
-        "revision" : "211ad40b5828e418ecb1c033d6a502a900f1be31",
-        "version" : "1.9.11"
+        "revision" : "8a0d6667d1aec1e6fa832f73ae99a6008b3f794f",
+        "version" : "1.9.12"
       }
     },
     {
@@ -115,7 +115,7 @@
       "location" : "https://github.com/Ceylo/skip-fuse-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "48ff7167b1b581c7b94010ec2f0b89fd1e744c38"
+        "revision" : "9bf2e195b57b74034067682fd45d7534f139353d"
       }
     },
     {
@@ -142,7 +142,7 @@
       "location" : "https://github.com/Ceylo/skip-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "62c5b3b54758e27a49813fce3428e858680e6b63"
+        "revision" : "c5e8482ed3e3660cb11bc15296364215c08add6b"
       }
     },
     {

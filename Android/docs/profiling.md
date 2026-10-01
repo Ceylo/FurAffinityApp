@@ -109,8 +109,8 @@ shows up as a slice on the thread that parsed, named `<category>: <name>`
 (`FAPages: Submission Parsing`, `FAKit: AttributedString.init(FAHTML:)`, …). The
 category prefix is what `focus-trace.py` filters on.
 
-In `profile.sh cpu`, the parsers are not under `libFAPages.so`: in the release build
-their code, and SwiftSoup's, lands in `libFAKit.so`. Search the call tree for
+In `profile.sh cpu`, the parsers are under `libFAKit.so`, which carries FAPages and
+SwiftSoup. Search the call tree for
 `Page.init` rather than by library.
 
 **An interval must not span an `await`.** ATrace sections are a per-thread stack, and

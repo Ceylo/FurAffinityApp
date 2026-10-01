@@ -116,8 +116,8 @@ sends us to diagnose a bug. Rotation would have been worse: three `currentSize` 
 against one cap, and the first to rotate leaves the other two writing an unlinked inode.
 
 The fix is structural, not a logic change: `FALogging` is its own package at the repo
-root, so `FAKit` and `FAPages` reach it — and `OSCompat`, which moved with it, a
-cross-package *target* dependency being impossible — as products. **The `.dynamic`
+root, so `FAKit` and `FAPages` reach it — and `OSCompat`, which moved with it and
+rides in the same product — as a product. **The `.dynamic`
 rewrite under `SKIP_BRIDGE` is the load-bearing half** and the new manifest carries its
 own copy: with an automatic (static) product no `libFALogging.so` is produced at all and
 both consumers define their own again.
@@ -136,9 +136,14 @@ It counts, per image, the defined `OBJECT` symbols mangled into each listed modu
 (`$s9FALogging…`) and fails naming every extra definer and the `vpZ` static storage it
 duplicates. `Scripts/Android/run.sh` runs it after the Gradle build. Its module list is
 the modules that own mutable process-global state *and* are consumed by more than one
-image; add to it when a module grows some. `FAPages` is deliberately not on it: it is
-absorbed by `libFAKit.so` too, but everything it defines is an immutable `let`, so the
-copies are indistinguishable.
+image; add to it when a module grows some.
+
+Since skip-bridge 0.18 the Gradle build runs SwiftPM's `swiftbuild` engine, which turns
+"linked as a static library by … and …" from a warning into an error, so the rule now
+holds for stateless modules too. Hence `FAKit`'s single product carrying both `FAKit`
+and `FAPages` (and with them SwiftSoup and OrderedCollections, all in `libFAKit.so`),
+`FALogging`'s carrying `OSCompat`, and a root target with no `FAPages` or
+`OrderedCollections` edge of its own: it imports both through `FAKit`.
 
 ### What the split costs the Xcode project
 
@@ -151,7 +156,7 @@ pull against each other:
   `project.pbxproj`; `FALogging` cannot be, because `FAKit` reaches it as
   `.package(path: "../FALogging")` first. Xcode then builds its targets but exposes
   none of its *products*, and every target that links one fails with
-  `Missing package product 'FALogging'` / `'OSCompat'` — while `xcodebuild` resolves
+  `Missing package product 'FALogging'` — while `xcodebuild` resolves
   the same tree happily. The fix is an explicit `XCLocalSwiftPackageReference`
   (`relativePath = FALogging`) in `packageReferences`, which needs
   `objectVersion = 60` / `compatibilityVersion = "Xcode 14.0"`. **FALogging must have

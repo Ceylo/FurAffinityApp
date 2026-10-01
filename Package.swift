@@ -23,7 +23,7 @@ let package = Package(
         // Exact, not `from:`: a floating pin silently drifts past the installed
         // `skip` CLI and the build fails inside a dependency (`AndroidUserDefaults`
         // … "must use a 'required' initializer"). Keep this equal to `skip version`.
-        .package(url: "https://github.com/skiptools/skip.git", exact: "1.9.11"),
+        .package(url: "https://github.com/skiptools/skip.git", exact: "1.9.12"),
         // Forked for `listRowInsets`, `Text(AttributedString)`, `FlowRow` and a few
         // unavailable-to-passthrough fixes — see Android/docs/forks.md. skip-web is
         // forked for its dependency locations alone. One location per package
@@ -38,7 +38,6 @@ let package = Package(
         .package(path: "FAKit"),
         .package(path: "FALogging"),
         .package(url: "https://github.com/Ceylo/Defaults.git", branch: "android"),
-        .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.3"),
         .package(url: "https://github.com/mxcl/Version.git", from: "2.0.0"),
         // Unused here: pins skip-fuse-ui's Android-only `#Preview` macro dependency, which a
         // Darwin `swift package update` would otherwise prune. Keep the range equal to the fork's.
@@ -50,12 +49,12 @@ let package = Package(
             dependencies: [
                 .product(name: "SkipFuseUI", package: "skip-fuse-ui"),
                 .product(name: "SkipWeb", package: "skip-web"),
+                // Also vends FAPages and OrderedCollections, which must not get edges of
+                // their own here: swiftbuild refuses a module linked into two images.
                 .product(name: "FAKit", package: "FAKit"),
                 .product(name: "FALogging", package: "FALogging"),
-                .product(name: "FAPages", package: "FAKit"),
                 .product(name: "Defaults", package: "Defaults"),
                 .product(name: "Kingfisher", package: "Kingfisher"),
-                .product(name: "OrderedCollections", package: "swift-collections"),
                 .product(name: "Version", package: "Version"),
             ],
             path: "FurAffinity",

@@ -7,12 +7,13 @@ let package = Package(
     name: "FAKit",
     platforms: [.iOS(.v18), .macOS(.v14)],
     products: [
+        // One product for both targets: as two, FAPages (and SwiftSoup and
+        // OrderedCollections under it) was linked into libFAKit.so and libFAPages.so
+        // alike, which swiftbuild refuses — see Android/docs/shared-sources.md
+        // § One module, one image.
         .library(
             name: "FAKit",
-            targets: ["FAKit"]),
-        .library(
-            name: "FAPages",
-            targets: ["FAPages"]),
+            targets: ["FAKit", "FAPages"]),
     ],
     dependencies: [
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.5"),
@@ -29,7 +30,7 @@ let package = Package(
         // skip-web is forked for its dependency locations alone. One location per
         // package identity: the forks name Ceylo/skip-ui between them, so this
         // manifest must not re-declare it.
-        .package(url: "https://github.com/skiptools/skip.git", exact: "1.9.11"),
+        .package(url: "https://github.com/skiptools/skip.git", exact: "1.9.12"),
         .package(url: "https://github.com/Ceylo/skip-fuse-ui.git", branch: "android"),
         .package(url: "https://github.com/Ceylo/skip-web.git", branch: "android"),
     ],
@@ -40,7 +41,6 @@ let package = Package(
                 "SwiftSoup",
                 .product(name: "FALogging", package: "FALogging"),
                 .product(name: "OrderedCollections", package: "swift-collections"),
-                .product(name: "OSCompat", package: "FALogging", condition: .when(platforms: [.android])),
             ]
         ),
         // FALogging's tests live here, not in its own package: the Xcode project
@@ -70,7 +70,6 @@ let package = Package(
                 // DOCX reader — both out of scope on Android.
                 .product(name: "Cache", package: "Cache", condition: .when(platforms: [.iOS, .macOS])),
                 .product(name: "ZIPFoundation", package: "ZIPFoundation", condition: .when(platforms: [.iOS, .macOS])),
-                .product(name: "OSCompat", package: "FALogging", condition: .when(platforms: [.android])),
                 // Unconditional on purpose: SKIP_BRIDGE is unset in the pass that runs
                 // plugins, so gating either edge makes skipstone emit a stub
                 // build.gradle.kts and Gradle dies on "Unresolved reference 'android'".
