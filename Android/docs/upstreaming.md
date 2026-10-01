@@ -29,7 +29,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 |---|---|---|---|
 | `22e8919` `listRowInsets` | skip-ui + `0d5d47a` | yes | un-`unavailable`s API in both repos |
 | `5110e81` innermost `listRow*` wins | skip-ui | no | bug fix; SwiftUI-parity argument stands alone |
-| `5eee865` + `80c72b4` SF Symbol mappings | skip-ui | no | same shape as merged #476. Sent as #525 (topic branch `feature/sf-symbol-mappings`), remapped by shape rather than by the app's meaning, with showcase `feature/symbol-playground-rows`; the fork took the upstream mapping back in `301cfcc`. `text.badge.star` stays fork-only |
+| `5eee865` + `80c72b4` SF Symbol mappings | skip-ui | no | same shape as merged #476. Merged as #525 on 2026-10-01 (topic branch `feature/sf-symbol-mappings`), remapped by shape rather than by the app's meaning, with showcase `feature/symbol-playground-rows`; the fork took the upstream mapping back in `301cfcc`, and fork merge `c5e8482` contains the merge commit `d132af0`. `text.badge.star` stays fork-only |
 | `1b25638` `FlowRow` | skip-ui + `09a3e69` | yes | new container; `Layout` cannot be emulated, so argue the container |
 | `6f06ae4` `.disabled` on menu items | skip-ui | no | fixes skip-ui #246 (filed by marcprux). Topic branch `fix/menu-item-disabled` adds what the fork lacks — the dimming, a disabled nested `Menu` opening with its items disabled (iOS 26.5 parity), and Robolectric tests — plus showcase `feature/menu-disabled-playground`. Merged upstream as #524 on 2026-09-23; taken back in fork merge `0a6d781` |
 | `23ac3bd` menu body text + visible divider | skip-ui | no | **split into two PRs** — the text/icon size and the `outlineVariant` divider are separate fixes |
@@ -388,8 +388,10 @@ State is one of draft / opened / merged / rejected; fetch the PR for anything mo
 | Kingfisher [#2579](https://github.com/onevcat/Kingfisher/pull/2579) | `47267203`, API half | merged |
 | skip-ui [#524](https://github.com/skiptools/skip-ui/pull/524) | `6f06ae4` | merged |
 | skipapp-showcase [#122](https://github.com/skiptools/skipapp-showcase/pull/122) | playground for skip-ui #524 | opened |
-| skip-ui [#525](https://github.com/skiptools/skip-ui/pull/525) | `5eee865` + `80c72b4`, remapped | opened; upstream `main` merged in `ede18d9`, CI green |
+| skip-ui [#525](https://github.com/skiptools/skip-ui/pull/525) | `5eee865` + `80c72b4`, remapped | merged 2026-10-01 as `d132af0`; taken back in fork merge `c5e8482` |
 | skipapp-showcase [#123](https://github.com/skiptools/skipapp-showcase/pull/123) | playground rows for skip-ui #525 | opened |
+| skip-fuse-ui [#151](https://github.com/skiptools/skip-fuse-ui/pull/151) | private `@State`/`@Environment` bridging, runtime half (write-up on branch `android-skip-private`) | opened; merges before skipstone #282 |
+| skipstone [#282](https://github.com/skiptools/skipstone/pull/282) | private `@State`/`@Environment` bridging, generator half | opened |
 
 ## Defaults
 
