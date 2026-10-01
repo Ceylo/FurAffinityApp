@@ -205,13 +205,13 @@ What this changes day to day:
 `PATH` — the Homebrew one — and ignores `gradlew`. Android Studio uses the wrapper,
 `Android/gradle/wrapper/gradle-wrapper.properties`. **Keep the two equal** (9.6.1
 today); Skip also reads `distributionUrl` out of that file. Skip's catalog pins
-AGP 9.2.0 / Kotlin 2.3.0 / compileSdk 36 / JVM 17.
+Kotlin 2.3.0 / compileSdk 36 / JVM 17, and AGP 9.2.0, which we override to **9.4.1**.
 
 That catalog is generated: skipstone writes it into `skipstone/settings.gradle.kts`
 from skip-unit's `skip.yml`, so Android Studio's AGP Upgrade Assistant has nothing of
 ours to edit. `FurAffinity/Skip/skip.yml` registers `android-gradle-plugin` ahead of
 the default instead (skip-unit merges its catalog with `prepend`, and the first
-registration wins), which is how AGP is at **9.4.1**. Bump it there.
+registration wins). Bump it there.
 
 ### Why settings.gradle.kts writes local.properties
 

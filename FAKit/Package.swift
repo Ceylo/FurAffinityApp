@@ -7,10 +7,8 @@ let package = Package(
     name: "FAKit",
     platforms: [.iOS(.v18), .macOS(.v14)],
     products: [
-        // One product for both targets: as two, FAPages (and SwiftSoup and
-        // OrderedCollections under it) was linked into libFAKit.so and libFAPages.so
-        // alike, which swiftbuild refuses — see Android/docs/shared-sources.md
-        // § One module, one image.
+        // One product for both targets, so FAPages, SwiftSoup and OrderedCollections get
+        // one image — see Android/docs/shared-sources.md § One module, one image.
         .library(
             name: "FAKit",
             targets: ["FAKit", "FAPages"]),

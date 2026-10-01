@@ -19,9 +19,8 @@ let package = Package(
     name: "FALogging",
     platforms: [.iOS(.v18), .macOS(.v14)],
     products: [
-        // OSCompat rides in this product rather than its own: swiftbuild refuses a
-        // module linked into more than one image, and FAKit and FAPages both import
-        // it. It is empty off Android.
+        // OSCompat (empty off Android) rides along so it has one image — see
+        // Android/docs/shared-sources.md § One module, one image.
         .library(
             name: "FALogging",
             targets: ["FALogging", "OSCompat"]),

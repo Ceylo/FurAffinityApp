@@ -198,7 +198,7 @@ internal fun skipEnvHash(worktree: File) =
 internal fun hexDigest(algorithm: String, bytes: ByteArray) =
     MessageDigest.getInstance(algorithm).digest(bytes).joinToString("") { "%02x".format(it) }
 
-/** SHA-256 of the `class SkipSettingsPlugin` block this plugin was last reviewed against (Skip 1.9.11). */
+/** SHA-256 of the `class SkipSettingsPlugin` block this plugin was last reviewed against (Skip 1.9.12). */
 private const val SKIP_SETTINGS_PLUGIN_SHA256 = "60f3bb29932700466582e0b5d167d2374264e42458061b1a4681164a69cafc75"
 
 /** This plugin stands in for SkipSettingsPlugin, so a Skip release that changes it needs a look. */

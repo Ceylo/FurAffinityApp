@@ -37,8 +37,8 @@ bridges that layer needs from the app come back as hooks installed in
 `FurAffinityUIAppDelegate.onInit`. The iOS app pays 37 MB Release instead of 27, and 11
 embedded frameworks instead of 1.
 Logging works on both platforms via `#if canImport(os) import os #else import OSCompat`:
-the sibling `FALogging/` package ships an Android-only `OSCompat` target
-(`FALogging/Sources/OSCompat/`) vending `Logger` (→ logcat) and an ATrace-backed
+the sibling `FALogging/` package ships an `OSCompat` module, empty off Android
+(`FALogging/Sources/OSCompat/`), vending `Logger` (→ logcat) and an ATrace-backed
 `OSSignposter` (→ Perfetto).
 It must **not** be named `os` — a module by that name makes `canImport(os)` true for
 the whole Android build; see `Android/docs/build-and-run.md` § Module-name poisoning,

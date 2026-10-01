@@ -106,7 +106,7 @@ class FACrashReportingBridge {
         /// and the checker's run id (set by CrashTest.swift).
         private val KEPT_TAGS = setOf(COMMIT_TAG, "crash_test_run")
 
-        /// Workaround for sentry-android 8.57.0: `TombstoneParser.createDebugMeta`
+        /// Workaround for sentry-android 8.57.0 through 8.59.0: `TombstoneParser.createDebugMeta`
         /// starts a module at the *first* mapping carrying its build id, and a large
         /// `base.apk` mapping below the real ELF carries ours — so the image base lands
         /// tens of MB too low, the module ends up covering addresses it does not own,

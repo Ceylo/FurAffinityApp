@@ -49,8 +49,8 @@ let package = Package(
             dependencies: [
                 .product(name: "SkipFuseUI", package: "skip-fuse-ui"),
                 .product(name: "SkipWeb", package: "skip-web"),
-                // Also vends FAPages and OrderedCollections, which must not get edges of
-                // their own here: swiftbuild refuses a module linked into two images.
+                // Also vends FAPages and OrderedCollections: no edges of their own here, see
+                // Android/docs/shared-sources.md § One module, one image.
                 .product(name: "FAKit", package: "FAKit"),
                 .product(name: "FALogging", package: "FALogging"),
                 .product(name: "Defaults", package: "Defaults"),

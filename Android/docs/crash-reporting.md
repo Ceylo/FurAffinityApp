@@ -184,7 +184,7 @@ an invalid one from `release` and the event arrives with an `invalid_data` error
 
 ### Repairing the debug image bases
 
-`TombstoneParser.createDebugMeta` (sentry-android 8.57.0) starts a module at the
+`TombstoneParser.createDebugMeta` (sentry-android 8.57.0 through 8.59.0) starts a module at the
 **first** mapping carrying a build id and extends it over every later mapping with
 the same name and id. On Android every library is mapped out of `base.apk`, and a
 large `base.apk` mapping below the real ELF carries our build id — so the module
@@ -203,8 +203,8 @@ the frame's `rel_pc 0x10e7dc` intact.
 
 Which library gets inflated moves between runs — the same run symbolicated
 `swiftFatalError` fine and lost `swiftBackgroundThread` — so the repair trusts no
-image. 8.57.0 is the latest release and `main` carries the identical parser, so
-there is nothing to upgrade to.
+image. 8.59.0, the latest release, carries the identical parser, so there is
+nothing to upgrade to.
 
 ## Symbols
 
