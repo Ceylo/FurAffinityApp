@@ -207,6 +207,12 @@ What this changes day to day:
 today); Skip also reads `distributionUrl` out of that file. Skip's catalog pins
 AGP 9.2.0 / Kotlin 2.3.0 / compileSdk 36 / JVM 17.
 
+That catalog is generated: skipstone writes it into `skipstone/settings.gradle.kts`
+from skip-unit's `skip.yml`, so Android Studio's AGP Upgrade Assistant has nothing of
+ours to edit. `FurAffinity/Skip/skip.yml` registers `android-gradle-plugin` ahead of
+the default instead (skip-unit merges its catalog with `prepend`, and the first
+registration wins), which is how AGP is at **9.4.1**. Bump it there.
+
 ### Why settings.gradle.kts writes local.properties
 
 AGP resolves the Android SDK **per build**, and Skip's transpiled modules are *included*

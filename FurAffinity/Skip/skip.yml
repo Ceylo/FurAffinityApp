@@ -3,3 +3,14 @@
 # this is a natively-compiled Skip Fuse module
 skip:
   mode: 'native'
+
+# AGP above skip-unit's catalog default; drop once that default reaches it.
+settings:
+  contents:
+    - block: 'dependencyResolutionManagement'
+      contents:
+        - block: 'versionCatalogs'
+          contents:
+            - block: 'create("libs")'
+              contents:
+                - 'version("android-gradle-plugin", "9.4.1")'
