@@ -392,10 +392,10 @@ State is one of draft / opened / merged / rejected; fetch the PR for anything mo
 | skipapp-showcase [#123](https://github.com/skiptools/skipapp-showcase/pull/123) | playground rows for skip-ui #525 | opened |
 | skip-fuse-ui [#151](https://github.com/skiptools/skip-fuse-ui/pull/151) | private `@State`/`@Environment` bridging, runtime half (write-up on branch `android-skip-private`) | opened; merges before skipstone #282 |
 | skipstone [#282](https://github.com/skiptools/skipstone/pull/282) | private `@State`/`@Environment` bridging, generator half | opened |
-| skip-ui [#538](https://github.com/skiptools/skip-ui/pull/538) | `84586ee` | draft |
-| skip-ui [#539](https://github.com/skiptools/skip-ui/pull/539) | `88ac81d` | draft |
-| skip-ui [#540](https://github.com/skiptools/skip-ui/pull/540) | `1335ebf` + `22ff079`, reworked in review | draft |
-| skip-ui [#541](https://github.com/skiptools/skip-ui/pull/541) | `4b30753`, vertical half | draft |
+| skip-ui [#538](https://github.com/skiptools/skip-ui/pull/538) | `84586ee` | opened |
+| skip-ui [#539](https://github.com/skiptools/skip-ui/pull/539) | `88ac81d` | opened |
+| skip-ui [#540](https://github.com/skiptools/skip-ui/pull/540) | `1335ebf` + `22ff079`, reworked in review | opened |
+| skip-ui [#541](https://github.com/skiptools/skip-ui/pull/541) | `4b30753`, vertical half | opened |
 
 ## Defaults
 
