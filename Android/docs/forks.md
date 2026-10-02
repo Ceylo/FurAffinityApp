@@ -659,7 +659,7 @@ skip-fuse-ui:
   unbuildable is worse than ignoring an effect Compose can't express. `glassEffect` itself
   now draws — see [§ The feed-gaps patches](#the-feed-gaps-patches).
 - **SF Symbol mappings** for the symbols this app uses. Unmapped names render as a
-  warning triangle. Six are now the mapping sent as skip-ui #525, picked by the symbol's
+  warning triangle. Six are now the mapping merged upstream as skip-ui #525, picked by the symbol's
   *shape* rather than by what the app means by it: `bubble` → ChatBubbleOutline,
   `message` → Chat, `safari` → Explore (was Public), `exclamationmark.bubble` → Feedback
   (was CommentsDisabled), `ellipsis.bubble` → Sms (was Forum), `square.and.arrow.down` →
