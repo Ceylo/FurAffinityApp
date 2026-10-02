@@ -35,16 +35,16 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `23ac3bd` menu body text + visible divider | skip-ui | no | **split into two PRs** — the text/icon size and the `outlineVariant` divider are separate fixes |
 | `ad375fb` `.subheadline` → `bodyMedium` | skip-ui | no | one token; carries a measured screenshot argument |
 | `eaa6abe` resume animation across disposal | skip-ui | no | the recycling-boundary fix; largest single non-text patch |
-| `4b30753` `ScrollView` fills its scrolled axis | skip-ui | no | state the large-title side effect in the body — `forks.md` already names it |
+| `4b30753` `ScrollView` fills its scrolled axis | skip-ui | no | sent as #541 (topic `fix/scrollview-fills-scrolled-axis`), **vertical half only**: review dropped the `fillMaxWidth()` before `horizontalScroll`, which the vertical pull never needed and which only took horizontal drags from parent gestures. Adds a Robolectric pull-below-short-content test. Large title, measured: a drag on short content already collapsed it; the patch only extends where the drag can start. `ScrollView { LazyVStack }` has the same gap, unfixed — a likely follow-up |
 | `f4776db` `glassEffect` / `AnyTransition.animation` pass-throughs | skip-fuse-ui | no | fuse-ui only; `glassEffect`'s half is superseded by `9b8671b` + `6c66c8d` |
 | `ef2f9e3` `GlassEffectContainer` pass-through | skip-fuse-ui | no | send with `f4776db`: same argument, same file. Drew nothing until `e0600ec` bridged it as a `Group` — squash the two |
 | `9b8671b` + `6c66c8d` `glassEffect` draws the M3 floating surface; `glassEffectUnion`/`glassEffectID` pass-throughs | skip-ui + skip-fuse-ui | yes | a design call (opaque `surfaceContainer` + 3 dp shadow, not a blur) — argue it from M3's floating toolbar/FAB |
 | `f54f6e8` `rectangle.grid.2x2` / `slider.horizontal.3` mappings | skip-ui | no | same shape as #525 |
 | `001f4ec` tab re-tap pops to root, then scrolls to top | skip-ui | no | Material and iOS parity; adds internal `Navigator.navigateToRoot()` |
 | `ca5fad0` `List` under the status bar with the nav bar hidden | skip-ui | no | bug fix plus its two `List` follow-ons (`scrollTo` offset, late header) |
-| `1335ebf` bridged `.task(id:)` is really cancelled | skip-ui | no | bug fix with app-wide effect; send `22ff079` with it, the test showing `RefreshAction(bridgedAction:)` is not affected |
-| `88ac81d` `.updatesFrequently` → polite live region | skip-ui | no | the trait already bridges; argue it from Material's snackbar. Name the pitfall: a live region that stays mounted while hidden is read again, so apply it only while shown |
-| `84586ee` shadow copy out of the accessibility tree | skip-ui | no | bug fix; the Robolectric test fails with 2 nodes without it |
+| `1335ebf` bridged `.task(id:)` is really cancelled | skip-ui | no | sent as #540 (topic `fix/bridged-task-cancellation`, with `22ff079` squashed in). **Upstream differs from the fork**: review found `1335ebf` could run `onCancel` twice (handler and re-check both fire) from an unsynchronised captured var; the PR awaits a completion `Job` under `withTaskCancellationHandler`, registered after the action, and captures the effect's own `bridgedAction` instead of `rememberUpdatedState`. Take #540's version back into the fork. Regression from #420 |
+| `88ac81d` `.updatesFrequently` → polite live region | skip-ui | no | sent as #539 (topic `fix/updates-frequently-live-region`). Not VoiceOver's meaning — Apple's trait lets the client *poll*, TalkBack reads every change (a 1 Hz `Text` queued 8 times in 8 s); the PR puts that trade-off first, and keeping the mapping is Ceylo's call. Pitfall, measured: a region that stays mounted while it **animates** out is read again (3–4×); without the animation it isn't, so apply it only while shown, as M3's `SnackbarHost` does. The trait doesn't reach a container's children |
+| `84586ee` shadow copy out of the accessibility tree | skip-ui | no | sent as #538 (topic `fix/shadow-accessibility`), with a second test for a shadowed button's click node. Compose already drops a semantics node a sibling fully covers, so a zero-offset copy was never announced; the copy leaks only where the shadow extends past the content (an offset: label twice, plus an unlabelled click target). The copy still takes touches |
 | `d1905bc` `AccessibilityTraits()` recursion | skip-fuse-ui | no | already upstream as PR #132 (not ours), cherry-picked; drop it from the fork when #132 merges |
 | `d9ad308` + `15a34f4` `#Preview` / `@Previewable` stubs | skip-fuse-ui | no | fixes skiptools/skip#439 (no maintainer reply since 2025-06). Squash the two; topic branch `feature/preview-macro` is cut from 1.18.2 and names upstream skip-ui. Expect pushback on the from-source swift-syntax build |
 | `60671f0` → `1d56dc9` + `f0e4d6c` runs encoder | skip-ui + skip-fuse-ui | yes | **collides**, see below. `60671f0`/`79dc36f` are the superseded markdown cut — do not send them |
@@ -392,6 +392,10 @@ State is one of draft / opened / merged / rejected; fetch the PR for anything mo
 | skipapp-showcase [#123](https://github.com/skiptools/skipapp-showcase/pull/123) | playground rows for skip-ui #525 | opened |
 | skip-fuse-ui [#151](https://github.com/skiptools/skip-fuse-ui/pull/151) | private `@State`/`@Environment` bridging, runtime half (write-up on branch `android-skip-private`) | opened; merges before skipstone #282 |
 | skipstone [#282](https://github.com/skiptools/skipstone/pull/282) | private `@State`/`@Environment` bridging, generator half | opened |
+| skip-ui [#538](https://github.com/skiptools/skip-ui/pull/538) | `84586ee` | draft |
+| skip-ui [#539](https://github.com/skiptools/skip-ui/pull/539) | `88ac81d` | draft |
+| skip-ui [#540](https://github.com/skiptools/skip-ui/pull/540) | `1335ebf` + `22ff079`, reworked in review | draft |
+| skip-ui [#541](https://github.com/skiptools/skip-ui/pull/541) | `4b30753`, vertical half | draft |
 
 ## Defaults
 
