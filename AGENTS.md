@@ -19,7 +19,8 @@ is unaffected. Ported so far: the login screen (shared
 `HomeView` + autologin, over an Android `FALoginView`), the Followed feed (on the shared
 `SubmissionsFeedView` container, badge and refresh choreography included, inside the
 shared `SubmissionsTabView` with its glass drawn as the M3 floating surface, tab re-tap
-to pop and scroll to top, and an Android-only Undo snackbar for swipe-delete), the
+to pop and scroll to top, an Android-only scroll-to-top arrow revealed by scrolling up
+(`ScrollToTopReveal`), and an Android-only Undo snackbar for swipe-delete), the
 submission detail screen (shared `SubmissionMainImage`, a zoomable viewer presented from
 a `fadingSheet` and dismissed by pulling it down, favorite, Save/Share, rich-text
 description with in-app links, comments with posting and deep-link scroll, "Send a
