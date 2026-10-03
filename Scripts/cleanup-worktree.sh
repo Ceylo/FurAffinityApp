@@ -95,6 +95,8 @@ SLOTS_DIR="${FA_ANDROID_SLOTS_DIR:-$DERIVED_DATA}"
 
 SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 ADB="$SDK/platform-tools/adb"
+# shellcheck source=Scripts/Android/adb-state.sh
+source "$(dirname "${BASH_SOURCE[0]}")/Android/adb-state.sh"
 LOCK_SCRIPT="${FA_CLEANUP_LOCK:-$ROOT/Scripts/Android/with-emulator-lock.sh}"
 SLOTS_HELPER="$ROOT/Scripts/Android/slots.py"
 SIGNING_HELPER="${FA_CLEANUP_SIGNING:-$ROOT/Scripts/signing-material.sh}"
@@ -289,7 +291,7 @@ load_emulator() {
     [[ "$EMULATOR" == unknown ]] || return 0
     local p
     while IFS= read -r p; do [[ -n "$p" ]] && PREFIXES+=("$p"); done < <(app_prefixes)
-    if [[ -x "$ADB" && "$("$ADB" get-state 2>/dev/null | tr -d '\r')" == device \
+    if [[ -x "$ADB" && "$(adb_state)" == device \
         && "$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == 1 ]]; then
         EMULATOR=up
         while IFS= read -r p; do PACKAGES+=("$p"); done \
