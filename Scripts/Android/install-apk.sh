@@ -51,6 +51,8 @@ APK="$(cd "$(dirname "$APK")" && pwd)/$(basename "$APK")"
 
 SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 ADB="$SDK/platform-tools/adb"
+# shellcheck source=Scripts/Android/adb-state.sh
+source "$(dirname "${BASH_SOURCE[0]}")/adb-state.sh"
 [[ -x "$ADB" ]] || die "$ADB is missing — run \`skip android sdk install\`"
 
 # Newest build-tools, for the badging dump that names the app id and activity.
@@ -58,7 +60,7 @@ AAPT2="$(ls -d "$SDK"/build-tools/*/aapt2 2>/dev/null | sort -V | tail -1)"
 
 # --- require a booted device ------------------------------------------------
 
-[[ "$("$ADB" get-state 2>/dev/null | tr -d '\r')" == device ]] \
+[[ "$(adb_state)" == device ]] \
     || die "no device — run Scripts/Android/start-emulator.sh (or set ANDROID_SERIAL)"
 
 [[ "$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == 1 ]] \

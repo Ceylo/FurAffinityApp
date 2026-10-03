@@ -95,6 +95,8 @@ SLOTS_DIR="${FA_ANDROID_SLOTS_DIR:-$DERIVED_DATA}"
 
 SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 ADB="$SDK/platform-tools/adb"
+# shellcheck source=Scripts/Android/adb-state.sh
+source "$(dirname "${BASH_SOURCE[0]}")/Android/adb-state.sh"
 LOCK_SCRIPT="${FA_CLEANUP_LOCK:-$ROOT/Scripts/Android/with-emulator-lock.sh}"
 SLOTS_HELPER="$ROOT/Scripts/Android/slots.py"
 SIGNING_HELPER="${FA_CLEANUP_SIGNING:-$ROOT/Scripts/signing-material.sh}"
@@ -284,18 +286,6 @@ app_prefixes() {
 EMULATOR=unknown
 PACKAGES=()
 PREFIXES=()
-
-# A freshly started adb server reports a running emulator `offline` for about
-# half a second; only that state is waited out.
-adb_state() {
-    local state i
-    for (( i = 0; i < 20; i++ )); do
-        state="$("$ADB" get-state 2>&1 | tr -d '\r' | tail -n 1)"
-        [[ "$state" == *offline* ]] || break
-        sleep 0.25
-    done
-    echo "$state"
-}
 
 load_emulator() {
     [[ "$EMULATOR" == unknown ]] || return 0
