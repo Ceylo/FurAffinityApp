@@ -126,7 +126,7 @@ struct SubmissionControlsView: View {
                 if #available(iOS 26, *) {
                     $0.offset(y: -3)
                         .padding(-5)
-                        .glassEffect(.regular.interactive())
+                        .floatingGlass(.regular.interactive())
                 } else { $0 }
             }
             
@@ -143,7 +143,7 @@ struct SubmissionControlsView: View {
                 if #available(iOS 26, *) {
                     $0.offset(y: -3)
                         .padding(-5)
-                        .glassEffect(.regular.interactive())
+                        .floatingGlass(.regular.interactive())
                 } else { $0 }
             }
             

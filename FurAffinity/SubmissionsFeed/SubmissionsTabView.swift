@@ -107,10 +107,10 @@ struct SubmissionsTabView: View {
                 HStack(spacing: 10) {
                     #if !FA_SKIP_MODULE
                     modeSwitch
-                        .glassEffect()
+                        .floatingGlass()
                     #endif
                     contextAction
-                        .glassEffect()
+                        .floatingGlass()
                 }
                 #if !FA_SKIP_MODULE
                 .glassEffectUnion(id: "floatingControls", namespace: namespace)

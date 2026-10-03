@@ -17,7 +17,10 @@ which also has the three skip-ui fixes a hidden bar needed). Only Explore is lef
 `#if !FA_SKIP_MODULE`, and so is `@Namespace`, which SkipSwiftUI marks unavailable; its
 one use, `glassEffectUnion`, is a pass-through there. The refresh badge
 (`NotificationOverlay`) takes the shared glass branch too — its Android
-`.ultraThickMaterial` branch existed only because glass drew nothing.
+`.ultraThickMaterial` branch existed only because glass drew nothing. Every floating
+control goes through `floatingGlass` (`View extensions/View+floatingGlass.swift`), which
+on Android, in dark mode, adds a 1 pt white shadow at 50 % opacity: the surface's dark
+shadow vanishes over dark artwork. It is the app's, not the fork's.
 
 Re-tapping the selected tab pops to the root and, once there, scrolls to the top, as on
 iOS and in Material. Hiding the bar took away SkipUI's only other scroll-to-top gesture,

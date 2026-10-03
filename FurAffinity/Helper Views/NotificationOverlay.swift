@@ -59,7 +59,7 @@ struct NotificationOverlay: View {
                 .foregroundColor(Color.primary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .glassEffect()
+                .floatingGlass()
         } else {
             materialBadge(count)
         }
