@@ -130,6 +130,7 @@
 		87AA4444AABB444400444444 /* ModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87AA3333AABB333300333333 /* ModelTests.swift */; };
 		87AA6666AABB666600666666 /* CachedImageFileURLTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87AA5555AABB555500555555 /* CachedImageFileURLTests.swift */; };
 		87AA6666AABB666600666667 /* InFlightCoalescerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87AA5555AABB555500555556 /* InFlightCoalescerTests.swift */; };
+		968EE0B6CABE98FF4DF58CFD /* ScrollToTopRevealTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 085339753F4396E50CFF5CFC /* ScrollToTopRevealTests.swift */; };
 		87AB10E12CB19E4D00E7BD94 /* ImageBlur.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87AB10E22CB19E4D00E7BD94 /* ImageBlur.swift */; };
 		87B0233F2CD54F9200F4D400 /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 87B0233E2CD54F9200F4D400 /* Defaults */; };
 		87B0933A2AED6CEA008DFDE7 /* TitleHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B093392AED6CEA008DFDE7 /* TitleHeader.swift */; };
@@ -138,6 +139,7 @@
 		87B7972E2E08413D00F10339 /* RemoteNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B7972D2E08413D00F10339 /* RemoteNotesView.swift */; };
 		87BF362B306C65B700E67633 /* StagedDeletionUndoSnackbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87BF362A306C658600E67633 /* StagedDeletionUndoSnackbar.swift */; };
 		87BF3EE32C9329C8000A837E /* ListItemTracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87BF3EE22C9329C8000A837E /* ListItemTracking.swift */; };
+		6D4CB5C6AA2E7312794D0B23 /* ScrollToTopReveal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 975BF67388B39A4FFD13BFFC /* ScrollToTopReveal.swift */; };
 		87C13F8729FF0A89001C7CB2 /* CommentNotificationItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C13F8629FF0A89001C7CB2 /* CommentNotificationItemView.swift */; };
 		87C1A0AD284B6E5400529F8C /* Version in Frameworks */ = {isa = PBXBuildFile; productRef = 87C1A0AC284B6E5400529F8C /* Version */; };
 		87C2ADEA2F017C200061F837 /* RichLocalizedError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C2ADE92F017C200061F837 /* RichLocalizedError.swift */; };
@@ -355,6 +357,7 @@
 		87AA3333AABB333300333333 /* ModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelTests.swift; sourceTree = "<group>"; };
 		87AA5555AABB555500555555 /* CachedImageFileURLTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedImageFileURLTests.swift; sourceTree = "<group>"; };
 		87AA5555AABB555500555556 /* InFlightCoalescerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InFlightCoalescerTests.swift; sourceTree = "<group>"; };
+		085339753F4396E50CFF5CFC /* ScrollToTopRevealTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollToTopRevealTests.swift; sourceTree = "<group>"; };
 		87AB10E22CB19E4D00E7BD94 /* ImageBlur.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageBlur.swift; sourceTree = "<group>"; };
 		87B093392AED6CEA008DFDE7 /* TitleHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TitleHeader.swift; sourceTree = "<group>"; };
 		87B0933B2AED6D53008DFDE7 /* DatetimePair.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatetimePair.swift; sourceTree = "<group>"; };
@@ -362,6 +365,7 @@
 		87B7972D2E08413D00F10339 /* RemoteNotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteNotesView.swift; sourceTree = "<group>"; };
 		87BF362A306C658600E67633 /* StagedDeletionUndoSnackbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StagedDeletionUndoSnackbar.swift; sourceTree = "<group>"; };
 		87BF3EE22C9329C8000A837E /* ListItemTracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListItemTracking.swift; sourceTree = "<group>"; };
+		975BF67388B39A4FFD13BFFC /* ScrollToTopReveal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollToTopReveal.swift; sourceTree = "<group>"; };
 		87C13F8629FF0A89001C7CB2 /* CommentNotificationItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentNotificationItemView.swift; sourceTree = "<group>"; };
 		87C2ADE92F017C200061F837 /* RichLocalizedError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RichLocalizedError.swift; sourceTree = "<group>"; };
 		87C2ADEB2F017D230061F837 /* ErrorStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorStorage.swift; sourceTree = "<group>"; };
@@ -632,6 +636,7 @@
 				878892DA2B8B905A00F332EE /* Text+Markdown.swift */,
 				875EF2E72C1E1FF7000D4BFB /* Comparable.swift */,
 				87BF3EE22C9329C8000A837E /* ListItemTracking.swift */,
+				975BF67388B39A4FFD13BFFC /* ScrollToTopReveal.swift */,
 				875FDC7D2D21D2D300CF8AE5 /* DelayedToggle.swift */,
 				8774EE732DFB78B90074E015 /* Replying.swift */,
 				58119C7E67EC670409E1D1CC /* GeometryProxy+FASize.swift */,
@@ -722,6 +727,7 @@
 				87AA3333AABB333300333333 /* ModelTests.swift */,
 				87AA5555AABB555500555555 /* CachedImageFileURLTests.swift */,
 				87AA5555AABB555500555556 /* InFlightCoalescerTests.swift */,
+				085339753F4396E50CFF5CFC /* ScrollToTopRevealTests.swift */,
 				3F9D3B91DBCDF30C8FE6F26D /* UserProfileControlTests.swift */,
 			);
 			path = FurAffinityTests;
@@ -1132,6 +1138,7 @@
 				877929D02744386E003AE828 /* FASession+CanvasPreview.swift in Sources */,
 				878EBC992EDB8CFE006A68D3 /* ErrorDisplay.swift in Sources */,
 				87BF3EE32C9329C8000A837E /* ListItemTracking.swift in Sources */,
+				6D4CB5C6AA2E7312794D0B23 /* ScrollToTopReveal.swift in Sources */,
 				87346B372B0A658F000407C7 /* RemoteView.swift in Sources */,
 				87D252062C906AB700E07AE1 /* withAsync.swift in Sources */,
 				8750BF382ED9053800B860C8 /* View+throwingRefreshable.swift in Sources */,
@@ -1210,6 +1217,7 @@
 				87AA4444AABB444400444444 /* ModelTests.swift in Sources */,
 				87AA6666AABB666600666666 /* CachedImageFileURLTests.swift in Sources */,
 				87AA6666AABB666600666667 /* InFlightCoalescerTests.swift in Sources */,
+				968EE0B6CABE98FF4DF58CFD /* ScrollToTopRevealTests.swift in Sources */,
 				CA549BBA4B716355A7E765CF /* UserProfileControlTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

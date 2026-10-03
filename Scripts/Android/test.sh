@@ -26,7 +26,7 @@
 set -eo pipefail
 
 FAKIT_MIN_TESTS=189
-UI_MIN_TESTS=40
+UI_MIN_TESTS=59
 
 die() { echo "error: $*" >&2; exit 1; }
 
