@@ -8,9 +8,12 @@
 # cached job. This maps those too, before the frontend computes the key. A job
 # that is not cached is passed through untouched.
 
+PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"   # md5, perl, mkdir: Xcode may hand us a bare environment
 real="${BASH_SOURCE[0]%/*}/swift-frontend-real"
 llvm_cas="${BASH_SOURCE[0]%/*}/llvm-cas"
-scratch="$HOME/Library/Caches/FACompilationCache"
+# The canvas's compile runs with HOME unset: the toolchain's own path knows the home.
+home="${HOME:-${BASH_SOURCE[0]%%/Library/Developer/Toolchains/*}}"
+scratch="$home/Library/Caches/FACompilationCache"
 set -o pipefail   # a failed cat-blob must not memoize an empty module map
 
 [[ " $* " == *" -cache-compile-job "* ]] || exec -a "$0" "$real" "$@"
@@ -25,6 +28,55 @@ for (( i = 0; i < n; i++ )); do
         -cache-replay-prefix-map) pairs+=("${args[i+1]}" "${args[i+2]}") ;;
     esac
 done
+
+# A preview's thunk compile reuses the cached job's mapped command line but opens
+# its inputs from disk (-no-cache-compile-job, the later flag, wins), where no
+# /^src exists: map every placeholder back to its real path.
+if [[ " $* " == *" -no-cache-compile-job "* ]]; then
+    for (( i = 0; i < n; i++ )); do
+        s="${args[i]}"
+        [[ "$s" == llvmcas://* ]] && continue
+        for (( j = 0; j < ${#pairs[@]}; j += 2 )); do
+            ph="${pairs[j]}" r="${pairs[j+1]}" out=
+            while [[ "$s" == *"$ph"* ]]; do
+                rest="${s#*"$ph"}"
+                if [[ -z "$rest" || "$rest" == [/#]* ]]; then out+="${s%%"$ph"*}$r"; else out+="${s%%"$ph"*}$ph"; fi
+                s="$rest"
+            done
+            s="$out$s"
+        done
+        args[i]="$s"
+        # The source list is a file whose lines carry the placeholders too.
+        if (( i == 0 )) || [[ "$s" == *.swift || ${args[i-1]} != -filelist ]]; then continue; fi
+        mkdir -p "$scratch/filelists"
+        list="$scratch/filelists/$$.$i"
+        cp "$s" "$list" || continue
+        for (( j = 0; j < ${#pairs[@]}; j += 2 )); do
+            ph="${pairs[j]}" r="${pairs[j+1]}"
+            perl -i -pe 'BEGIN { ($p, $r) = splice @ARGV, 0, 2 } s/^\Q$p\E(?=\/|$)/$r/' "$ph" "$r" "$list"
+        done
+        stable="$scratch/filelists/$(md5 -q "$list").txt"   # named by content: no pile-up
+        mv -f "$list" "$stable" && args[i]="$stable"
+    done
+    # Cached .pcm files name their headers by placeholder too: remap those on disk.
+    mkdir -p "$scratch/vfs"
+    overlay="$scratch/vfs/$$.json"
+    {
+        printf '{"version":0,"roots":['
+        for (( j = 0; j < ${#pairs[@]}; j += 2 )); do
+            (( j )) && printf ','
+            printf '{"type":"directory-remap","name":"%s","external-contents":"%s"}' "${pairs[j]}" "${pairs[j+1]}"
+        done
+        printf ']}\n'
+    } > "$overlay"
+    stable="$scratch/vfs/$(md5 -q "$overlay").json"
+    mv -f "$overlay" "$stable"
+    # Ahead of Xcode's own overlay, which swaps the source for the thunk: a later
+    # overlay shadows it, the source compiles instead, and its #Preview registry
+    # duplicates the app's, so the canvas never finds the thunk's.
+    for (( i = 1; i < n; i++ )); do [[ "${args[i]}" == -vfsoverlay ]] && break; done
+    exec -a "$0" "$real" "${args[@]:0:i}" -vfsoverlay "$stable" "${args[@]:i}"
+fi
 
 for (( i = 0; i < n - 1; i++ )); do
     case "${args[i]}" in

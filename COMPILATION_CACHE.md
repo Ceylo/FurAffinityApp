@@ -78,6 +78,32 @@ last build used the toolchain. LLDB also rewrites a breakpoint's path through
 `target.source-map`, so mapping a build with real paths would leave every breakpoint
 Xcode sets unresolved.
 
+## Previews
+
+A SwiftUI preview's thunk compile reuses the cached Debug job's command line but
+appends `-no-cache-compile-job`, so the frontend opens its inputs from disk, where
+`/^src` does not exist. The shim sees that flag and maps every placeholder back to
+its real path (from the job's own `-cache-replay-prefix-map` pairs) instead of
+mapping the job further. The preview build is therefore uncached, and the shared
+cache is untouched. Three other inputs carry placeholders as well: the `-filelist`
+file, which the shim rewrites into a copy; and the cached `.pcm`s' header paths,
+which it serves through a `directory-remap` `-vfsoverlay`. The canvas also runs this
+compile with `HOME` unset, so the shim derives the home directory from its own path.
+
+That overlay must come **before** Xcode's own, which swaps the source for the
+thunk. A later overlay shadows Xcode's, so the plain source compiles instead. Its
+`#Preview` registry symbols are then identical to the app object's (they are named
+by line, and the thunk's lines are offset by its header). The canvas looks for the
+thunk's registry, misses it, and reports the preview as *excluded from the build*.
+To diagnose, compare the `line` of `performUpdate` with `Found preview registry:` in
+the preview simulator's log
+(`xcrun simctl --set ~/Library/Developer/Xcode/UserData/Previews/Simulator\ Devices
+spawn <udid> log stream …`). `RenderPreview` from the Xcode MCP is no proxy: it
+rendered while the canvas failed.
+
+Reinstalling the toolchain makes Xcode fall back to the default one: re-select it
+in Xcode ▸ Toolchains.
+
 ## Size
 
 `COMPILATION_CACHE_LIMIT_SIZE = 2500M` makes Xcode start a new CAS generation once the
