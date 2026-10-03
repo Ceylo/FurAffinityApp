@@ -39,9 +39,9 @@ struct NotificationOverlay: View {
     private static let animationDuration = 0.35
     /// Transparent room around the pill so its shadow stays inside the animated
     /// view's own bounds — Android clips to those bounds while opacity < 1.
-    private static let shadowRadius = 5.0
+    static let shadowRadius = 5.0
     /// The padded pill's height, so it falls in from exactly out of place.
-    private static let badgeHeight = 44.0 + 2 * shadowRadius
+    static let badgeHeight = 44.0 + 2 * shadowRadius
 
     private func text(count: Int) -> String {
         switch count {
@@ -59,7 +59,7 @@ struct NotificationOverlay: View {
                 .foregroundColor(Color.primary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .glassEffect()
+                .floatingGlass()
         } else {
             materialBadge(count)
         }

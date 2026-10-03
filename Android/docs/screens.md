@@ -17,11 +17,27 @@ which also has the three skip-ui fixes a hidden bar needed). Only Explore is lef
 `#if !FA_SKIP_MODULE`, and so is `@Namespace`, which SkipSwiftUI marks unavailable; its
 one use, `glassEffectUnion`, is a pass-through there. The refresh badge
 (`NotificationOverlay`) takes the shared glass branch too — its Android
-`.ultraThickMaterial` branch existed only because glass drew nothing.
+`.ultraThickMaterial` branch existed only because glass drew nothing. Every floating
+control goes through `floatingGlass` (`View extensions/View+floatingGlass.swift`), which
+on Android, in dark mode, adds a 1 pt white shadow at 50 % opacity: the surface's dark
+shadow vanishes over dark artwork. It is the app's, not the fork's.
 
 Re-tapping the selected tab pops to the root and, once there, scrolls to the top, as on
 iOS and in Material. Hiding the bar took away SkipUI's only other scroll-to-top gesture,
 tapping the bar.
+
+A floating arrow, Android only (iOS keeps its status-bar tap), makes that discoverable:
+`ScrollToTopButton` fades in at the top of the feed after 30 pt of scrolling up, under
+the refresh badge while that shows, and hides once the scrolling stops for 2.5 s, turns
+down or reaches the top. SkipUI has neither
+`onScrollGeometryChange` nor `onScrollPhaseChange`, so `ScrollToTopReveal` reads the
+direction from the row frame reports `onItemFrameChanged` already delivers — one
+reference row's `minY`, handed over when it leaves or goes silent, since a recycled
+row may never report leaving. A report moving it over 200 pt is a jump (the tab re-tap
+scroll), and the rows settling for 0.4 s after a `rebase` don't count either. Explore can
+adopt it with the same `@State`, one `record` call per row, `rebase` when its rows
+change, and one overlay. Both stay shared, so the reveal's tests run on iOS too; only
+their use in the feed is fenced `#if FA_SKIP_MODULE`.
 
 The scroll-preserving refresh choreography — a zero-height `fetchTrigger` row whose
 `onAppear` performs the fetch, wrapped in a `ScrollViewReader` — **runs on Android too**,

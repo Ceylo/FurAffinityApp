@@ -51,32 +51,19 @@ struct CloudflareResolutionOverlay: View {
         Button {
             CloudflareChallengeCoordinator.shared.markInteractionRequired()
         } label: {
-            // SkipUI has no Liquid Glass, and `#available(iOS 26, *)` is vacuously
-            // true off-Apple, so Android always takes the material branch.
-#if os(Android)
-            materialPill
-#else
             if #available(iOS 26, *) {
                 pillContent
-                    .glassEffect()
+                    .floatingGlass()
             } else {
                 materialPill
             }
-#endif
         }
         .buttonStyle(.plain)
     }
 
     private var materialPill: some View {
         pillContent
-            // Android has no blur — our skip-fuse-ui fork renders a material as a flat
-            // scrim, so thickness is literally opacity and thin is unreadable over
-            // artwork. On iOS the material is a real blur, so thin reads.
-#if os(Android)
-            .background(.ultraThickMaterial)
-#else
             .background(.thinMaterial)
-#endif
             .cornerRadius(16)
             .shadow(color: .black.opacity(0.33), radius: Self.shadowRadius, x: 0, y: 0)
     }

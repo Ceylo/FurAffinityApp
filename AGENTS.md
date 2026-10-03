@@ -19,7 +19,8 @@ is unaffected. Ported so far: the login screen (shared
 `HomeView` + autologin, over an Android `FALoginView`), the Followed feed (on the shared
 `SubmissionsFeedView` container, badge and refresh choreography included, inside the
 shared `SubmissionsTabView` with its glass drawn as the M3 floating surface, tab re-tap
-to pop and scroll to top, and an Android-only Undo snackbar for swipe-delete), the
+to pop and scroll to top, an Android-only scroll-to-top arrow revealed by scrolling up
+(`ScrollToTopReveal`), and an Android-only Undo snackbar for swipe-delete), the
 submission detail screen (shared `SubmissionMainImage`, a zoomable viewer presented from
 a `fadingSheet` and dismissed by pulling it down, favorite, Save/Share, rich-text
 description with in-app links, comments with posting and deep-link scroll, "Send a
@@ -137,7 +138,7 @@ Every in-app link routes **in-process** through `NavigationStream` (`Helper View
 
 ## Search / Explore
 
-The first tab is `SubmissionsTabView`, which hosts two modes — **Followed** (`SubmissionsFeedView`, the watched-users feed) and **Explore** (`ExplorationView`, furaffinity.net search). The mode switch and context action float as Liquid-Glass buttons over the list corner instead of a nav bar. `Model.searchSubmissions`/`loadMoreSearchResults` call `FASession.search(FASearchQuery)`; the query is persisted (`Defaults[.lastSearchQuery]`) so filters are remembered. Search inputs (tags via `TagSearchEditor`, author via `UsernameField`, rating/type/etc.) live in the `SearchFiltersView` sheet — `.searchable` can't be used here, see [[project_searchable_sibling_suppression]].
+The first tab is `SubmissionsTabView`, which hosts two modes — **Followed** (`SubmissionsFeedView`, the watched-users feed) and **Explore** (`ExplorationView`, furaffinity.net search). The mode switch and context action float as Liquid-Glass buttons over the list corner instead of a nav bar. Floating controls use `floatingGlass` rather than `glassEffect`: the same glass, plus a light shadow in dark mode on Android. `Model.searchSubmissions`/`loadMoreSearchResults` call `FASession.search(FASearchQuery)`; the query is persisted (`Defaults[.lastSearchQuery]`) so filters are remembered. Search inputs (tags via `TagSearchEditor`, author via `UsernameField`, rating/type/etc.) live in the `SearchFiltersView` sheet — `.searchable` can't be used here, see [[project_searchable_sibling_suppression]].
 
 ## Comment Threads
 

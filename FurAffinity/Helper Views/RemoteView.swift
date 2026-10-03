@@ -86,7 +86,7 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
             .padding(20)
             .applying {
                 if #available(iOS 26, *) {
-                    $0.glassEffect(in: RoundedRectangle(cornerRadius: 10))
+                    $0.floatingGlass(in: RoundedRectangle(cornerRadius: 10))
                 } else {
                     $0
                         .background(.thinMaterial)

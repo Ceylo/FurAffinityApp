@@ -32,9 +32,16 @@ struct SubmissionsFeedView: View {
     /// Whether the first row's top edge is still visible. Only tracked and read on
     /// Skip, which has no scroll view to ask. See `trackFirstItemTop`.
     @State var firstItemIsAtTop = true
+    /// Only fed and read on Skip: iOS keeps its status-bar tap instead of the arrow.
+    /// Unfenced all the same, like `firstItemIsAtTop`, for skipstone to bridge it.
+    @State var scrollToTopReveal = ScrollToTopReveal()
     #if !FA_SKIP_MODULE
     @Weak var scrollView: UIScrollView?
     #endif
+
+    /// The top slot of the new-submissions badge and the scroll-to-top arrow. 35, not
+    /// 40: the badge carries 5pt of transparent shadow inset.
+    private static let badgeOffset = 35.0
     
     var noPreview: some View {
         ScrollView {
@@ -151,6 +158,9 @@ struct SubmissionsFeedView: View {
             .onItemFrameChanged(listGeometry: geometry) { frame in
                 followItem(preview, frame: frame, geometry: geometry)
                 trackFirstItemTop(preview, frame: frame)
+                #if FA_SKIP_MODULE
+                scrollToTopReveal.record(id: preview.id, minY: frame.map { Double($0.minY) })
+                #endif
             }
             .overlay {
                 if preview == targetScrollItem {
@@ -202,6 +212,20 @@ struct SubmissionsFeedView: View {
                 }
                 .prefetchingPreviews(model.submissionPreviews, availableWidth: geometry.faSize.width)
             }
+            #if FA_SKIP_MODULE
+            .overlay(alignment: .top) {
+                // Unmounted over the empty state, where no row would report to hide it.
+                if let first = items.first {
+                    ScrollToTopButton(reveal: scrollToTopReveal, belowBadge: newSubmissionsCount != nil) {
+                        withAnimation {
+                            scrollProxy.scrollTo(first.id, anchor: .top)
+                        }
+                    }
+                    // The badge's slot, which it moves under while the badge shows.
+                    .offset(y: Self.badgeOffset)
+                }
+            }
+            #endif
         }
     }
     
@@ -213,8 +237,7 @@ struct SubmissionsFeedView: View {
         }
         .overlay(alignment: .top) {
             NotificationOverlay(itemCount: $newSubmissionsCount)
-                // 35, not 40: the badge now carries 5pt of transparent shadow inset.
-                .offset(y: 35)
+                .offset(y: Self.badgeOffset)
         }
         // Only Android stages a deletion (see `onDelete`).
         #if FA_SKIP_MODULE
@@ -233,6 +256,15 @@ struct SubmissionsFeedView: View {
             firstItemIsAtTop = firstID == nil
             #endif
         }
+        // Rows moved without any scrolling.
+        #if FA_SKIP_MODULE
+        .onChange(of: model.submissionPreviews?.first?.id, initial: true) { _, firstID in
+            scrollToTopReveal.rebase(firstID: firstID)
+        }
+        .onChange(of: model.submissionPreviews?.count) {
+            scrollToTopReveal.rebase(firstID: model.submissionPreviews?.first?.id)
+        }
+        #endif
         // One-shot newer-submissions check after a cold-launch restore, reusing the
         // foreground autorefresh's scroll-preserving choreography. `initial: true`
         // catches the flag whether it's set before or after this view appears.
