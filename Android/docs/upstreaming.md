@@ -417,6 +417,10 @@ State is one of draft / opened / merged / rejected; fetch the PR for anything mo
 | skip-ui [#551](https://github.com/skiptools/skip-ui/pull/551) | `ad375fb` | draft |
 | skipstone [#288](https://github.com/skiptools/skipstone/pull/288) | CI: wait for `sys.boot_completed == 1` ([CI instabilities](#ci-instabilities)) | opened |
 | skip-ffi [#14](https://github.com/skiptools/skip-ffi/pull/14) | CI: `SKIP_DYNAMIC_LIBRARIES` gate ([CI instabilities](#ci-instabilities)) | opened |
+| actions [#22](https://github.com/skiptools/actions/pull/22) | CI: emulator guard reads `runner.arch` ([Leaving Intel macOS](#leaving-intel-macos-runners)) | draft |
+| skip-ffi [#15](https://github.com/skiptools/skip-ffi/pull/15) | CI: `macos-26` + Ubuntu; needs actions #22 in `@v1` | draft |
+| skipstone [#289](https://github.com/skiptools/skipstone/pull/289) | CI: `android-ci` on `macos-26` + one `macos-26-intel` leg | draft |
+| skipstone [#290](https://github.com/skiptools/skipstone/pull/290) | 8 MiB thread stacks for the musl Linux binary | draft |
 
 ## CI instabilities
 
@@ -433,6 +437,30 @@ log signature:
 
 Not instabilities: skip-fuse-ui paired PRs compiling against the last skip-ui release
 (structural, see above); Kingfisher's red runs (workflow refused for fork PRs, zero jobs).
+
+### Leaving Intel macOS runners
+
+Skip's CI defaults to `macos-26-intel`; GitHub retires x86_64 macOS in fall 2027. Findings
+(2026-10-04), each from a fork run:
+
+- **No emulator on arm macOS runners.** `HVF error: HV_UNSUPPORTED` on `macos-15` and
+  `macos-26`, API 28 and 34; `emulator -accel-check` says HVF is fine regardless. Emulator work
+  goes to `ubuntu-24.04` (KVM).
+- **`skip-framework.yml`'s arm guard never worked**: `env.RUNNER_ARCH` is always empty in an
+  `if:` (the `env` context excludes runner variables). actions #22.
+- **Intel queues dominate.** skiptools shares one org macOS concurrency pool: Intel jobs waited
+  10–56 min (skip-ffi) and up to 7.9 h (skipstone) to start. Fork runs don't share that pool,
+  so their few-second arm queues predict nothing.
+- **skip-ui / skip-fuse-ui can't move yet.** The musl skip binary segfaulted transpiling SkipUI
+  (128 KiB thread stacks; skipstone #290 fixes it, and their Android build then takes 32 s /
+  57 s on Linux against 91 s / 180 s on Intel). Their host `swift test` still fails on Linux:
+  `no such module 'CoreGraphics'` (skip-ui), duplicate static Skip products (skip-fuse-ui).
+- **Fuse doesn't build on Linux** (skipstone `android-ci`): duplicate static products, then a
+  skip-android-bridge compile error with `SKIP_DYNAMIC_LIBRARIES=1`. Hence #289's Intel leg.
+- Coverage was checked per PR with `~/Development/SkipUpstream/ci-ledger.py OWNER/REPO RUN…`,
+  which counts executed tests per step and prints each step's summary sequence. Fork runs need
+  a fork-only commit (push trigger, or a caller pointed at `Ceylo/actions@<branch>`): the
+  skip-ffi and skipstone forks never registered upstream's workflows, so `gh workflow run` 404s.
 
 ## Defaults
 
