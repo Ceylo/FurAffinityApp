@@ -415,6 +415,24 @@ State is one of draft / opened / merged / rejected; fetch the PR for anything mo
 | skipapp-showcase [#139](https://github.com/skiptools/skipapp-showcase/pull/139) | Row Modifiers page for skip-ui #549 | draft |
 | skip-ui [#550](https://github.com/skiptools/skip-ui/pull/550) | `524153a`, reworked in review | draft |
 | skip-ui [#551](https://github.com/skiptools/skip-ui/pull/551) | `ad375fb` | draft |
+| skipstone [#288](https://github.com/skiptools/skipstone/pull/288) | CI: wait for `sys.boot_completed == 1` ([CI instabilities](#ci-instabilities)) | draft |
+| skip-ffi [#14](https://github.com/skiptools/skip-ffi/pull/14) | CI: `SKIP_DYNAMIC_LIBRARIES` gate ([CI instabilities](#ci-instabilities)) | draft |
+
+## CI instabilities
+
+Red CI unrelated to a PR costs the maintainer a check on every PR. Scope: the repositories we
+send PRs to. Every failed run from 2026-09-04 to 2026-10-04 was classified by failing step and
+log signature:
+
+| Instability | Hit | Root cause | Fix |
+|---|---|---|---|
+| skipstone `android-ci`: APK install on a half-booted emulator (`Can't find service: package`, `system providers not installed`) | ~110 jobs in a month | `waitForDeviceBoot` took a blank `sys.boot_completed` as booted (#224); blank means still booting, and adb errors are blank too because `run(permitFailure:)` reports exit 0 | skipstone #288; also raises the CI launch timeout 300 → 900 s, since Intel runners still read blank 4 min after launch |
+| skipapp-showcase Fuse "Export project": `SkipFFI-product` linked as a static library by three images | every Fuse run since 2026-09-27 | skip-ffi lacked the `SKIP_DYNAMIC_LIBRARIES`/`SKIP_BRIDGE` gate the other libraries got | skip-ffi #14. No skip-sql follow-on was needed: the patched Fuse Showcase builds and launches |
+| Network blips in `setup-skip` (tap clone, `skip android sdk install`) and in `skip export`'s package fetch | ~8 | no retries | setup-skip is being rewritten by actions#20: a comment there, not a PR; the export side fits skipstone #283's `runCommand(retryingOn:attempts:)` later |
+| A connected Android test hangs (skip-ui #548: 116 min against 13–22) | 1 | no step timeout in `skip-framework.yml` (job: 180 min) | branch `fix/connected-test-timeout` at 90 min, not sent: the slowest green connected step sampled across nine Skip repos took 50 min (skip-av), so the planned 60 was unsafe, and a timeout only fails a hung job sooner |
+
+Not instabilities: skip-fuse-ui paired PRs compiling against the last skip-ui release
+(structural, see above); Kingfisher's red runs (workflow refused for fork PRs, zero jobs).
 
 ## Defaults
 
