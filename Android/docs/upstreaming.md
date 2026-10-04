@@ -28,18 +28,18 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | Patch | Goes to | Paired | Note |
 |---|---|---|---|
 | `22e8919` `listRowInsets` | skip-ui + `0d5d47a` | yes | un-`unavailable`s API in both repos |
-| `5110e81` innermost `listRow*` wins | skip-ui | no | bug fix; SwiftUI-parity argument stands alone |
+| `5110e81` innermost `listRow*` wins | skip-ui | no | drafted as #549 (topic `fix/list-row-innermost-wins`), re-cut on `main` without `insets` (background and separator only), with Robolectric `testInnermostListRowBackgroundWins` and showcase #139 (a Row Modifiers page). iOS 26.5 confirmed innermost-wins for both. #532 edits the same lines; its new comment claims innermost-wins over unchanged outermost-wins code |
 | `5eee865` + `80c72b4` SF Symbol mappings | skip-ui | no | same shape as merged #476. Merged as #525 on 2026-10-01 (topic branch `feature/sf-symbol-mappings`), remapped by shape rather than by the app's meaning, with showcase `feature/symbol-playground-rows`; the fork took the upstream mapping back in `301cfcc`, and fork merge `c5e8482` contains the merge commit `d132af0`. `text.badge.star` stays fork-only |
 | `1b25638` `FlowRow` | skip-ui + `09a3e69` | yes | new container; `Layout` cannot be emulated, so argue the container |
 | `6f06ae4` `.disabled` on menu items | skip-ui | no | fixes skip-ui #246 (filed by marcprux). Topic branch `fix/menu-item-disabled` adds what the fork lacks — the dimming, a disabled nested `Menu` opening with its items disabled (iOS 26.5 parity), and Robolectric tests — plus showcase `feature/menu-disabled-playground`. Merged upstream as #524 on 2026-09-23; taken back in fork merge `0a6d781` |
 | `23ac3bd` menu body text + visible divider | skip-ui | no | **split into two PRs** — the text/icon size and the `outlineVariant` divider are separate fixes |
-| `ad375fb` `.subheadline` → `bodyMedium` | skip-ui | no | one token; carries a measured screenshot argument |
+| `ad375fb` `.subheadline` → `bodyMedium` | skip-ui | no | drafted as #551 (topic `fix/subheadline-body-token`) with `testSubheadlineIsRegularWeight`. Measured on the Text playground: ink per px of width 8.9 → 7.2 (`.body` 7.8, `.headline` 9.7). Side effect review found: `bodyMedium`'s letter spacing is 0.25sp vs 0.1sp, so text can rewrap |
 | `eaa6abe` resume animation across disposal | skip-ui | no | the recycling-boundary fix; largest single non-text patch |
 | `4b30753` `ScrollView` fills its scrolled axis | skip-ui | no | sent as #541 (topic `fix/scrollview-fills-scrolled-axis`), **vertical half only**: review dropped the `fillMaxWidth()` before `horizontalScroll`, which the vertical pull never needed and which only took horizontal drags from parent gestures. Adds a Robolectric pull-below-short-content test. Large title, measured: a drag on short content already collapsed it; the patch only extends where the drag can start. `ScrollView { LazyVStack }` has the same gap, unfixed — a likely follow-up |
 | `f4776db` `glassEffect` / `AnyTransition.animation` pass-throughs | skip-fuse-ui | no | fuse-ui only; `glassEffect`'s half is superseded by `9b8671b` + `6c66c8d` |
 | `ef2f9e3` `GlassEffectContainer` pass-through | skip-fuse-ui | no | send with `f4776db`: same argument, same file. Drew nothing until `e0600ec` bridged it as a `Group` — squash the two |
 | `9b8671b` + `6c66c8d` `glassEffect` draws the M3 floating surface; `glassEffectUnion`/`glassEffectID` pass-throughs | skip-ui + skip-fuse-ui | yes | a design call (opaque `surfaceContainer` + 3 dp shadow, not a blur) — argue it from M3's floating toolbar/FAB |
-| `f54f6e8` `rectangle.grid.2x2` / `slider.horizontal.3` mappings | skip-ui | no | same shape as #525 |
+| `f54f6e8` `rectangle.grid.2x2` / `slider.horizontal.3` mappings | skip-ui | no | drafted as #548 (topic `feature/sf-symbol-grid-tune`) with glyph comments 􀇷 / 􀌆; the rows were added to showcase #123 rather than a new PR |
 | `001f4ec` tab re-tap pops to root, then scrolls to top | skip-ui | no | Material and iOS parity; adds internal `Navigator.navigateToRoot()` |
 | `ca5fad0` `List` under the status bar with the nav bar hidden | skip-ui | no | bug fix plus its two `List` follow-ons (`scrollTo` offset, late header) |
 | `1335ebf` bridged `.task(id:)` is really cancelled | skip-ui | no | sent as #540 (topic `fix/bridged-task-cancellation`, with `22ff079` squashed in). **Upstream differs from the fork**: review found `1335ebf` could run `onCancel` twice (handler and re-check both fire) from an unsynchronised captured var; the PR awaits a completion `Job` under `withTaskCancellationHandler`, registered after the action, and captures the effect's own `bridgedAction` instead of `rememberUpdatedState`. Take #540's version back into the fork. Regression from #420 |
@@ -55,7 +55,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `9eb2c87` `@_disfavoredOverload` on `Text(AttributedString)` | skip-fuse-ui | no | belongs with whichever attributed-text PR lands; the trap is worth writing up either way |
 | `5a21355` `GeometryReader` composes on the measure pass | skip-ui | no | fidelity fix (no blank first frame). Before sending, check whether it causes the intrinsic-measurement crash under a scroll: `BoxWithConstraints` is a `SubcomposeLayout` and the old `Box` was not. Now rebased onto #500's `GeometryReaderState` in fork merge `0a6d781` |
 | `23154a0` `ImageHolder`, read in the draw phase | skip-ui + `c59b1a7` | yes | new API; its only caller today is the Kingfisher fork (`07f72deb`), so argue it from Coil's `AsyncImagePainter`, not from Kingfisher |
-| `524153a` `.id` resets state positionally | skip-ui | no | no API change; fixes a regression in upstream `4ed8380`/#330. Swapping in a fresh `ComposeStateSaver` strands every `Key` a descendant already saved, and a bridged `@State` then force-unwraps the nil. Argue it as Compose correctness: positional scoping is the documented reset mechanism, and `rememberSaveable`'s own `key` parameter is deprecated precisely for bypassing it |
+| `524153a` `.id` resets state positionally | skip-ui | no | no API change; fixes a regression in upstream `4ed8380`/#330. Swapping in a fresh `ComposeStateSaver` strands every `Key` a descendant already saved, and a bridged `@State` then force-unwraps the nil. Argue it as Compose correctness: positional scoping is the documented reset mechanism, and `rememberSaveable`'s own `key` parameter is deprecated precisely for bypassing it. Drafted as #550 (topic `fix/id-positional-reset`). **Upstream differs from the fork**: review found that a non-Bundle id restores as nil after activity recreation, and the fork's `Any?` typing counts that as a change, bumping the generation and dropping Bundle-safe subtree state (a list's scroll position) that `main` keeps; the PR treats nil as the same id (`testIdKeepsSavedStateAcrossRecreation`). Take #550's version back into the fork. Its repro test needs the `.id` inside a `ForEach` row: a static `List` row's `TagModifier` is evaluated in the List's own composition and never hits the stale entry |
 | `7ef63a0` geometry reports the laid-out frame, not the clipped one | skip-ui | no | no API change; SwiftUI parity in one helper (`onGloballyPositionedInRoot`). `boundsInRoot()` is `localBoundingBoxOf(this, clipBounds = true)` — an unexamined default since the first `GeometryReader`. Mention the one-argument alternative, `localBoundingBoxOf(this, clipBounds = false)`, and why not: it returns a bounding box, so a rotated node's size would differ, where `positionInRoot()` + `size` is SwiftUI's untransformed frame. Since #500 the *size* half is upstream's own; argue the frame against its `globalFrameReaderObservesMovementAndClipping`, which asserts the clip ([forks.md § After upstream #500](forks.md#after-upstream-500)) |
 | `7111bfa` drops #500's `.stretch` no-intrinsic `RenderPainter` branch | skip-ui | no | a regression report on #500 rather than a patch: a resizable asset image lays out greedy and stays that way after the load ([forks.md § After upstream #500](forks.md#after-upstream-500)). Needs a showcase repro before it goes |
 | `2b2dc459` + `66eb74df` + `ae0b4f07` Android port | Kingfisher | no | issue first; large parts can never leave the fork |
@@ -172,6 +172,20 @@ directory` in the iOS half is a race: re-run before reading anything into it.
 
 Take iOS screenshots with the app launched `-AppleLanguages "(en)"`; the simulator is French.
 
+Harness drift seen on 2026-10-04, all local to `~/Development/SkipUpstream/`:
+- Showcase `main` did not build against the dependencies' current `main`s (skip-kit #46 removed
+  `SBOMView`, which Showcase still uses; Fuse also failed on a duplicated static `SkipFFI`). The
+  evidence was built on Showcase `c2e4ab3` with the dependency checkouts at their clone commits.
+  The playgrounds touched are unchanged between the two, so the PR branches are still cut from
+  `main`.
+- `AlertPlayground` times out the type checker in this Xcode; it is stubbed in the working tree
+  (`logs/alert-playground-harness-stub.patch`), never committed.
+- This Xcode keeps SimulatorKit under `SharedFrameworks`, so `xcodebuildmcp ui-automation`
+  needs a `DEVELOPER_DIR` shadow of `Xcode.app` with a `PrivateFrameworks/SimulatorKit.framework`
+  symlink. `ios-tap.sh <sim> <label>` scrolls to a label and taps it.
+- `SKIP_UI_DIR=<checkout> mutation-run.sh …` runs the tests from another `skip-ui` worktree, so a
+  test run never swaps a file under a Showcase build. In `drive-android.sh` steps, `~` is a space.
+
 **Per patch:**
 
 1. **Write the Showcase playground** that exercises the patched surface — a
@@ -284,11 +298,11 @@ in the body so it is not read as a failure.
 ### Known collisions
 
 Re-check these before sending anything from the text stack; all four were open as of
-2026-09-23.
+2026-09-23. #453 merged on 2026-10-03.
 
 | PR | Overlaps |
 |---|---|
-| skip-ui [#453](https://github.com/skiptools/skip-ui/pull/453) + skip-fuse-ui [#118](https://github.com/skiptools/skip-fuse-ui/pull/118) | `cad81a8` / `967a19a` — an independent `Text + Text` run model, changes-requested already satisfied |
+| skip-ui [#453](https://github.com/skiptools/skip-ui/pull/453) + skip-fuse-ui [#118](https://github.com/skiptools/skip-fuse-ui/pull/118) | `cad81a8` / `967a19a` — an independent `Text + Text` run model. **Merged 2026-10-03** (`45bb604`): `cad81a8` now has to be rebased onto it or dropped |
 | skip-ui [#434](https://github.com/skiptools/skip-ui/pull/434) | `1d56dc9` / `f0e4d6c` — real `AttributedString` rendering (draft, depends on skip-foundation #122) |
 | skip-ui [#436](https://github.com/skiptools/skip-ui/pull/436) | `bf0c6ad` — rewrites `Text` link handling onto `LinkInteractionListener`, which our HTML path also relies on |
 
@@ -396,6 +410,11 @@ State is one of draft / opened / merged / rejected; fetch the PR for anything mo
 | skip-ui [#539](https://github.com/skiptools/skip-ui/pull/539) | `88ac81d` | opened |
 | skip-ui [#540](https://github.com/skiptools/skip-ui/pull/540) | `1335ebf` + `22ff079`, reworked in review | opened |
 | skip-ui [#541](https://github.com/skiptools/skip-ui/pull/541) | `4b30753`, vertical half | opened |
+| skip-ui [#548](https://github.com/skiptools/skip-ui/pull/548) | `f54f6e8`; rows added to showcase #123 | draft |
+| skip-ui [#549](https://github.com/skiptools/skip-ui/pull/549) | `5110e81`, re-cut without `insets` | draft |
+| skipapp-showcase [#139](https://github.com/skiptools/skipapp-showcase/pull/139) | Row Modifiers page for skip-ui #549 | draft |
+| skip-ui [#550](https://github.com/skiptools/skip-ui/pull/550) | `524153a`, reworked in review | draft |
+| skip-ui [#551](https://github.com/skiptools/skip-ui/pull/551) | `ad375fb` | draft |
 
 ## Defaults
 
