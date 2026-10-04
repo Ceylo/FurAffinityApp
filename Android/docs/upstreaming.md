@@ -417,6 +417,7 @@ State is one of draft / opened / merged / rejected; fetch the PR for anything mo
 | skip-ui [#551](https://github.com/skiptools/skip-ui/pull/551) | `ad375fb` | draft |
 | skipstone [#288](https://github.com/skiptools/skipstone/pull/288) | CI: wait for `sys.boot_completed == 1` ([CI instabilities](#ci-instabilities)) | opened |
 | skip-ffi [#14](https://github.com/skiptools/skip-ffi/pull/14) | CI: `SKIP_DYNAMIC_LIBRARIES` gate ([CI instabilities](#ci-instabilities)) | opened |
+| actions [#23](https://github.com/skiptools/actions/issues/23) (issue) | the plan every Intel-exit PR links to | opened |
 | actions [#22](https://github.com/skiptools/actions/pull/22) | CI: emulator guard reads `runner.arch` ([Leaving Intel macOS](#leaving-intel-macos-runners)) | draft |
 | skip-ffi [#15](https://github.com/skiptools/skip-ffi/pull/15) | CI: `macos-26` + Ubuntu; needs actions #22 in `@v1` | draft |
 | skipstone [#289](https://github.com/skiptools/skipstone/pull/289) | CI: `android-ci` on `macos-26` + one `macos-26-intel` leg | draft |
@@ -440,8 +441,10 @@ Not instabilities: skip-fuse-ui paired PRs compiling against the last skip-ui re
 
 ### Leaving Intel macOS runners
 
-Skip's CI defaults to `macos-26-intel`; GitHub retires x86_64 macOS in fall 2027. Findings
-(2026-10-04), each from a fork run:
+Skip's CI defaults to `macos-26-intel`. The plan is actions #23. GitHub's 2025 notice dated the end of
+x86_64 macOS at fall 2027, but `macos-26-intel` shipped since with no end date: argue speed and
+queues, not a deadline. Each PR opens with its purpose and gains, and says where its emulator
+tests run. Findings (2026-10-04), each from a fork run:
 
 - **No emulator on arm macOS runners.** `HVF error: HV_UNSUPPORTED` on `macos-15` and
   `macos-26`, API 28 and 34; `emulator -accel-check` says HVF is fine regardless. Emulator work
