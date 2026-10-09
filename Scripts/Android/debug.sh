@@ -49,13 +49,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/adb-state.sh"
 [[ -x "$ADB" ]] || die "$ADB is missing — run \`skip android sdk install\`"
 export ANDROID_HOME="$SDK"
 
-# Same probe as run.sh: macOS ships a `java` stub that errors out, so test it
-# rather than its existence.
-if [[ -z "$JAVA_HOME" ]] && ! java -version >/dev/null 2>&1; then
-    JBR="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-    [[ -x "$JBR/bin/java" ]] || die "no JDK — set JAVA_HOME (Android Studio's is $JBR)"
-    export JAVA_HOME="$JBR"
-fi
+# shellcheck source=Scripts/Android/java-home.sh
+source "$(dirname "${BASH_SOURCE[0]}")/java-home.sh"
 
 # --- require a booted device ------------------------------------------------
 

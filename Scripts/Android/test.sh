@@ -93,12 +93,8 @@ run() {
 if [[ -z "$BASE" ]]; then
     # As BuildSlotsPlugin's slotsEnabled(); faAndroidTest leases a slot and calls back with --base.
     if [[ "$FA_ANDROID_SLOTS" != 0 && -z "$CI" ]]; then
-        # gradlew needs a JDK, and macOS ships only a `java` stub that errors out.
-        if [[ -z "$JAVA_HOME" ]] && ! java -version >/dev/null 2>&1; then
-            JBR="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-            [[ -x "$JBR/bin/java" ]] || die "no JDK — set JAVA_HOME (Android Studio's is $JBR)"
-            export JAVA_HOME="$JBR"
-        fi
+        # shellcheck source=Scripts/Android/java-home.sh
+        source "$ROOT/Scripts/Android/java-home.sh"
         exec "$ROOT/Android/gradlew" -p "$ROOT/Android" faAndroidTest -PfaTestLogDir="$LOG_DIR"
     fi
     # `skip android test` never runs Gradle, which is what normally generates the
