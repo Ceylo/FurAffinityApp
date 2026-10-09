@@ -169,11 +169,13 @@ every idle slot and names the busy ones.
   nested repository. The build names it. An absolute path, `SKIPLOCAL` included, works
   from a slot.
 
-`skip android build` and `test.sh` do not go through Gradle settings, so they build in
-the worktree's `.build` (and `.build/android-test`, and FAKit's), cold in each new
-worktree. `skip export` does run Gradle, with nothing in its environment that marks it,
-so it takes a slot; release builds go through `build-release-apk.sh`, or
-`FA_ANDROID_SLOTS=0 skip export`.
+`skip android build` does not go through Gradle settings, so it builds in the
+worktree's `.build`, cold in each new worktree. `test.sh` runs inside Gradle's
+`faAndroidTest` task, so its tests build in the leased slot, which it holds for the
+whole run: an app build in another worktree meanwhile takes another slot, possibly
+cold. See [Test](#test). `skip export` does run Gradle, with nothing in its
+environment that marks it, so it takes a slot; release builds go through
+`build-release-apk.sh`, or `FA_ANDROID_SLOTS=0 skip export`.
 `FA_ANDROID_SLOTS_DIR` moves the slots' parent directory.
 
 What this changes day to day:
@@ -189,7 +191,9 @@ What this changes day to day:
   `android-slot-<n>`. Android Studio indexes that Kotlin too: if another worktree has
   built in the slot since, the index shows its code until your next sync.
 - **Disk.** A slot is ~3.0 GB, ~6.2 GB once a `profile` build has run in it
-  (`run.sh --profile`, `check-crash-reporting.sh android`). A worktree's own `.build`
+  (`run.sh --profile`, `check-crash-reporting.sh android`), and ~1.9 GB more once
+  `test.sh` has (`.build/android-test`, `.build/android-test-fakit`).
+  `FA_ANDROID_SLOTS_MAX` bounds the total. A worktree's own `.build`
   (~1–7 GB), but its `Android/` (the `:app` outputs) and `.fa-slot*` files, is not used
   by Gradle builds, only by `skip android build`, `swift package update` and
   `build-release-apk.sh`, which recreate it cold:
@@ -565,11 +569,22 @@ Left out of the root package, with the reason:
 on **any** `@MainActor` test — a trap in libdispatch's main-queue drain, which it
 drives from the Looper — so `ModelTests` waits on that.
 
-The root package tests build in **their own scratch path**, `.build/android-test`.
-In the worktree's `.build` they rewrite the skipstone plugin outputs that a Gradle
-build reads when [slots](#build-slots) are off (CI, `FA_ANDROID_SLOTS=0`), and that
-build then fails in Kotlin (`Unresolved reference 'ProcessInfo'`) until
-`.build/plugins/outputs`, `.build/Darwin` and `.build/Android` are wiped.
+The tests build in a [build slot](#build-slots), like the app: `test.sh` hands over
+to the Gradle task `faAndroidTest`, which leases and syncs the slot, then runs
+`test.sh --base <slot>`. So compiler errors and test failure paths name the slot;
+edit the worktree. Where slots are off (CI, `FA_ANDROID_SLOTS=0`) `test.sh` builds in
+the worktree, with no Gradle. Measured 2026-10-09 (both packages, build only):
+121 s cold; 0.6–6 s in a slot where a sibling at the same pins last tested (a new
+worktree's whole first run took 62 s wall, tests included); ~65 s, under load, after
+one 20 Swift files and 9 fork pins away. Gradle adds ~5 s on a warm daemon.
+
+Each package builds in **its own scratch path**, `.build/android-test` and
+`.build/android-test-fakit`, so a clean (`rm -rf .build`) takes them along. The
+native build in `.build` itself rewrites the skipstone plugin outputs that a Gradle
+build reads, and that build then fails in Kotlin (`Unresolved reference
+'ProcessInfo'`) until `.build/plugins/outputs`, `.build/Darwin` and `.build/Android`
+are wiped. A worktree from before test builds moved to the slots keeps a stale `FAKit/.build` and
+`.build/android-test`: `rm -rf` them.
 
 A native test is an `adb shell` process, not an app: it has no `context.cacheDir`,
 so the script sets `XDG_CACHE_HOME` for Kingfisher's disk cache. And `UserDefaults`
