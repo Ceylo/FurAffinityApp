@@ -4,11 +4,12 @@
 # package (FAPages, FAKit, FALogging) and the root package's FurAffinityUITests,
 # which are the FurAffinityTests files that build for Android.
 #
-# Usage: Scripts/Android/test.sh [--timeout SECONDS] [--log-dir DIR]
+# Usage: Scripts/Android/test.sh [--timeout SECONDS] [--log-dir DIR] [--base DIR]
 #
 #   --timeout   how long to wait for the emulator lock, default 1800s
 #   --log-dir   where the two runs' logs go, default a temporary directory
-#   --base DIR  run from DIR, a copy of the worktree, rather than the worktree
+#   --base DIR  internal, for faAndroidTest: run from DIR, a copy of the worktree
+#               whose catalog entries the caller generated
 #
 # The tests build in a leased build slot, as Gradle builds do: this hands over
 # to Gradle's faAndroidTest task, which holds the lease and calls back with
@@ -35,25 +36,29 @@ UI_MIN_TESTS=59
 
 die() { echo "error: $*" >&2; exit 1; }
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 LOCK_ARGS=()
 LOG_DIR=""
 BASE=""
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,29p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,30p' "$0" | cut -c3-; exit 0 ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;
         --log-dir)    LOG_DIR="$2"; shift ;;
         --log-dir=*)  LOG_DIR="${1#*=}" ;;
         --base)       BASE="$2"; shift ;;
+        --base=*)     BASE="${1#*=}" ;;
         *)            die "unknown argument: $1" ;;
     esac
     shift
 done
 
 command -v skip >/dev/null || die "\`skip\` is not on PATH"
+if [[ -n "$BASE" ]]; then
+    BASE="$(cd "$BASE" 2>/dev/null && pwd -P)" || die "--base: no such directory"
+fi
 [[ -n "$LOG_DIR" ]] || LOG_DIR="$(mktemp -d -t fa-android-test)"
 mkdir -p "$LOG_DIR"
 LOG_DIR="$(cd "$LOG_DIR" && pwd)"
