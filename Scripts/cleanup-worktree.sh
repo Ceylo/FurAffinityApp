@@ -81,6 +81,14 @@ else
     (( ! RECLAIM )) || die "--reclaim goes with --orphans"
 fi
 
+# What is or would be removed, painted: yellow on a dry run, green for real.
+# Decided once, since --orphans buffers its sections to files.
+if [[ -t 1 && -z "$NO_COLOR" ]]; then
+    if (( DRY_RUN )); then PAINT=$'\033[33m'; else PAINT=$'\033[32m'; fi
+    RESET=$'\033[0m'
+fi
+painted() { echo "$PAINT$*$RESET"; }
+
 # --- where things are -------------------------------------------------------
 
 COMMON="$(git -C "$ROOT" rev-parse --path-format=absolute --git-common-dir)" \
@@ -250,9 +258,9 @@ remove_tree() {
     fi
     TOTAL_KB=$(( TOTAL_KB + kb ))
     if (( DRY_RUN )); then
-        echo "  would remove $label ($(human "$kb"))"
+        painted "  would remove $label ($(human "$kb"))"
     elif rm -rf "$@"; then
-        echo "  removed $label ($(human "$kb"))"
+        painted "  removed $label ($(human "$kb"))"
     else
         TOTAL_KB=$(( TOTAL_KB - kb ))
         warn "could not remove all of $label"; FAILED=1
@@ -318,7 +326,7 @@ uninstall_app() {
     app_size "$id"
     TOTAL_KB=$(( TOTAL_KB + APP_KB ))
     if (( DRY_RUN )); then
-        echo "  would uninstall $id ($APP_SIZE)"
+        painted "  would uninstall $id ($APP_SIZE)"
         return
     fi
     local lock=()
@@ -328,7 +336,7 @@ uninstall_app() {
         warn "no $LOCK_SCRIPT — uninstalling without the emulator lock"
     fi
     if "${lock[@]}" "$ADB" uninstall "$id" >/dev/null; then
-        echo "  uninstalled $id ($APP_SIZE)"
+        painted "  uninstalled $id ($APP_SIZE)"
     else
         TOTAL_KB=$(( TOTAL_KB - APP_KB ))
         warn "could not uninstall $id"; FAILED=1
@@ -377,12 +385,12 @@ remove_simulator() {
     kb="$(size_kb "$SIM_DEVICES/$udid")"
     TOTAL_KB=$(( TOTAL_KB + kb ))
     if (( DRY_RUN )); then
-        echo "  would delete simulator FA $name ($(human "$kb"))"
+        painted "  would delete simulator FA $name ($(human "$kb"))"
         return
     fi
     [[ "$state" == Shutdown ]] || xcrun simctl shutdown "$udid" 2>/dev/null || true
     if xcrun simctl delete "$udid"; then
-        echo "  deleted simulator FA $name ($(human "$kb"))"
+        painted "  deleted simulator FA $name ($(human "$kb"))"
     else
         TOTAL_KB=$(( TOTAL_KB - kb ))
         warn "could not delete simulator FA $name"; FAILED=1
@@ -599,9 +607,9 @@ remove_worktree() {
     kb="$(size_kb "$wt")"
     TOTAL_KB=$(( TOTAL_KB + kb ))
     if (( DRY_RUN )); then
-        echo "  would remove worktree $wt ($(human "$kb"))"
+        painted "  would remove worktree $wt ($(human "$kb"))"
     elif git_main worktree remove "$wt"; then
-        echo "  removed worktree $wt ($(human "$kb"))"
+        painted "  removed worktree $wt ($(human "$kb"))"
         if [[ -n "$FA_CLEANUP_CALLER_DIR" && "$FA_CLEANUP_CALLER_DIR/" == "$wt/"* ]]; then
             CALLER_REMOVED=1
         fi
@@ -616,9 +624,9 @@ delete_branch() {
     if [[ -n "$WT_BRANCH" ]]; then
         # -D: -d checks against the current HEAD, and the gate already checked the bases.
         if (( DRY_RUN )); then
-            echo "  would delete branch $WT_BRANCH"
+            painted "  would delete branch $WT_BRANCH"
         elif git_main branch -D "$WT_BRANCH" >/dev/null; then
-            echo "  deleted branch $WT_BRANCH"
+            painted "  deleted branch $WT_BRANCH"
         else
             warn "could not delete branch $WT_BRANCH"; FAILED=1
         fi
@@ -1003,9 +1011,9 @@ else
 fi
 
 if (( DRY_RUN )); then
-    echo "would reclaim $(human "$TOTAL_KB")"
+    painted "would reclaim $(human "$TOTAL_KB")"
 else
-    echo "reclaimed $(human "$TOTAL_KB")"
+    painted "reclaimed $(human "$TOTAL_KB")"
 fi
 
 if (( CALLER_REMOVED )); then
