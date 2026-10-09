@@ -8,14 +8,15 @@
 #
 #   --timeout   how long to wait for the emulator lock, default 1800s
 #   --log-dir   where the two runs' logs go, default a temporary directory
+#   --base DIR  run from DIR, a copy of the worktree, rather than the worktree
 #
 # Each run must report at least the case count below, so a run that silently
 # finds no tests cannot pass. Raise a floor when tests are added.
 #
-# The root package tests build in their own scratch path, .build/android-test:
-# in the worktree's .build they rewrite the skipstone plugin outputs that a Gradle
-# build reads when build slots are off (CI, FA_ANDROID_SLOTS=0), and that build
-# then fails in Kotlin until those are wiped.
+# Each package builds in its own scratch path under .build, android-test and
+# android-test-fakit, which a clean (rm -rf .build) takes along. In .build itself
+# they would rewrite the plugin outputs a Gradle build reads, and that build then
+# fails in Kotlin until those are wiped.
 #
 # XDG_CACHE_HOME: an `adb shell` process has none, so Foundation's caches
 # directory resolves to an unwritable /.cache (the app gets context.cacheDir).
@@ -33,14 +34,16 @@ die() { echo "error: $*" >&2; exit 1; }
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 LOCK_ARGS=()
 LOG_DIR=""
+BASE=""
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,24p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,25p' "$0" | cut -c3-; exit 0 ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;
         --log-dir)    LOG_DIR="$2"; shift ;;
         --log-dir=*)  LOG_DIR="${1#*=}" ;;
+        --base)       BASE="$2"; shift ;;
         *)            die "unknown argument: $1" ;;
     esac
     shift
@@ -54,7 +57,7 @@ LOG_DIR="$(cd "$LOG_DIR" && pwd)"
 if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
     export FA_EMULATOR_LOCK_HELD=1
     exec "$(dirname "${BASH_SOURCE[0]}")/with-emulator-lock.sh" "${LOCK_ARGS[@]}" \
-        "${BASH_SOURCE[0]}" --log-dir "$LOG_DIR"
+        "${BASH_SOURCE[0]}" --log-dir "$LOG_DIR" ${BASE:+--base "$BASE"}
 fi
 
 # Runs `skip android test` for suite $1 in $2, logging to $LOG_DIR/$1.log, and
@@ -83,14 +86,20 @@ run() {
     [[ "$summary" == *" passed after "* ]] || die "$name: $summary"
 }
 
-# `skip android test` never runs Gradle, which is what normally generates the
-# catalog entries the root package's resource bundle carries.
-"$ROOT/Scripts/Android/generate-assets.sh" > /dev/null
+if [[ -z "$BASE" ]]; then
+    # `skip android test` never runs Gradle, which is what normally generates the
+    # catalog entries the root package's resource bundle carries; a --base caller does.
+    "$ROOT/Scripts/Android/generate-assets.sh" > /dev/null
+    BASE="$ROOT"
+fi
+
+[[ "$BASE" == "$ROOT" ]] || echo "test.sh: building in $BASE"
 
 CI_ENV=()
 [[ -n "$CI" ]] && CI_ENV=(--env FA_NOISY_TIMING=1)
 
-run FAKit "$ROOT/FAKit" "$FAKIT_MIN_TESTS" "${CI_ENV[@]}"
-run FurAffinityUI "$ROOT" "$UI_MIN_TESTS" "${CI_ENV[@]}" \
+run FAKit "$BASE/FAKit" "$FAKIT_MIN_TESTS" "${CI_ENV[@]}" \
+    --scratch-path ../.build/android-test-fakit
+run FurAffinityUI "$BASE" "$UI_MIN_TESTS" "${CI_ENV[@]}" \
     --scratch-path .build/android-test \
     --env XDG_CACHE_HOME=/data/local/tmp/FurAffinityUITests-cache
