@@ -2,6 +2,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.initialization.Settings
 import org.gradle.api.logging.Logging
+import org.gradle.api.tasks.Exec
 import org.gradle.build.event.BuildEventsListenerRegistry
 import org.gradle.kotlin.dsl.apply
 import java.io.File
@@ -52,14 +53,36 @@ abstract class BuildSlotsPlugin @Inject constructor(
                     "(it leaves the worktree, or is git-ignored, missing or its own repository)."
             )
         }
-        if (enabled && unsynced == null) {
+        val base = if (enabled && unsynced == null) {
             val pool = slotPool(settings)
             val slot = leaseSlot(settings, pool, worktree, buildEvents)
             includeSkip(settings, worktree, base = slot, builtProducts)
             pool.markPrebuilt(slot, worktree)
+            slot
         } else {
             worktree.resolve(".build/.fa-slot").delete()
             includeSkip(settings, worktree, base = worktree, builtProducts)
+            worktree
+        }
+        registerTestTask(settings, worktree, base)
+    }
+}
+
+/**
+ * `faAndroidTest`: Scripts/Android/test.sh from [base], so the tests build in the leased
+ * slot, which stays this build's until the task ends. test.sh runs it under the emulator lock.
+ */
+private fun registerTestTask(settings: Settings, worktree: File, base: File) {
+    val logDir = settings.providers.gradleProperty("faTestLogDir").orNull
+    settings.gradle.rootProject {
+        tasks.register("faAndroidTest", Exec::class.java) {
+            group = "verification"
+            description = "Runs the Android test suites (Scripts/Android/test.sh) from this build's slot."
+            commandLine(
+                listOf("$worktree/Scripts/Android/test.sh", "--base", base.path) +
+                    listOfNotNull(logDir).flatMap { listOf("--log-dir", it) }
+            )
+            environment("FA_EMULATOR_LOCK_HELD", "1")
         }
     }
 }

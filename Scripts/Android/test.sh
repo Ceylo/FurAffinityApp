@@ -10,6 +10,10 @@
 #   --log-dir   where the two runs' logs go, default a temporary directory
 #   --base DIR  run from DIR, a copy of the worktree, rather than the worktree
 #
+# The tests build in a leased build slot, as Gradle builds do: this hands over
+# to Gradle's faAndroidTest task, which holds the lease and calls back with
+# --base. Where slots are off (CI, FA_ANDROID_SLOTS=0) they build in place.
+#
 # Each run must report at least the case count below, so a run that silently
 # finds no tests cannot pass. Raise a floor when tests are added.
 #
@@ -38,7 +42,7 @@ BASE=""
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,25p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,29p' "$0" | cut -c3-; exit 0 ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;
         --log-dir)    LOG_DIR="$2"; shift ;;
@@ -87,6 +91,16 @@ run() {
 }
 
 if [[ -z "$BASE" ]]; then
+    # As BuildSlotsPlugin's slotsEnabled(); faAndroidTest leases a slot and calls back with --base.
+    if [[ "$FA_ANDROID_SLOTS" != 0 && -z "$CI" ]]; then
+        # gradlew needs a JDK, and macOS ships only a `java` stub that errors out.
+        if [[ -z "$JAVA_HOME" ]] && ! java -version >/dev/null 2>&1; then
+            JBR="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+            [[ -x "$JBR/bin/java" ]] || die "no JDK — set JAVA_HOME (Android Studio's is $JBR)"
+            export JAVA_HOME="$JBR"
+        fi
+        exec "$ROOT/Android/gradlew" -p "$ROOT/Android" faAndroidTest -PfaTestLogDir="$LOG_DIR"
+    fi
     # `skip android test` never runs Gradle, which is what normally generates the
     # catalog entries the root package's resource bundle carries; a --base caller does.
     "$ROOT/Scripts/Android/generate-assets.sh" > /dev/null
