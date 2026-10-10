@@ -59,6 +59,13 @@ import SwiftUI
         )
         // Before the first image load; Kingfisher's own default bounds nothing here.
         configureImageCacheForAndroid()
+        // Rich text measures its images through the same cache FAImage draws from,
+        // as FurAffinityApp.init() does on iOS. Application.onCreate is the main thread.
+        MainActor.assumeIsolated {
+            FAImageInliner.dataProvider = {
+                try? await KingfisherManager.shared.retrieveFAImageData(with: $0)
+            }
+        }
         // Before any `Defaults.Key` is created: a key captures its suite and registers
         // its default value at construction, so one touched earlier lands in the orphan
         // store.

@@ -24,14 +24,20 @@ public struct FAInlineImage: Hashable, Sendable, Codable {
     public var alt: String?
     /// FA's `.iconusername` avatars, which the site's CSS caps at 50×50.
     public var isAvatar: Bool
+    /// The image's own pixel size, once its bytes have been fetched.
+    public var naturalWidth: Double?
+    public var naturalHeight: Double?
 
     public init(url: URL, width: Double? = nil, height: Double? = nil,
-                alt: String? = nil, isAvatar: Bool = false) {
+                alt: String? = nil, isAvatar: Bool = false,
+                naturalWidth: Double? = nil, naturalHeight: Double? = nil) {
         self.url = url
         self.width = width
         self.height = height
         self.alt = alt
         self.isAvatar = isAvatar
+        self.naturalWidth = naturalWidth
+        self.naturalHeight = naturalHeight
     }
 }
 
