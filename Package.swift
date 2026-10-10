@@ -39,7 +39,7 @@ let package = Package(
         .package(path: "FALogging"),
         .package(url: "https://github.com/Ceylo/Defaults.git", branch: "android"),
         .package(url: "https://github.com/mxcl/Version.git", from: "2.0.0"),
-        // Unused here: pins skip-fuse-ui's Android-only `#Preview` macro dependency, which a
+        // Unused here: pins skip-fuse-ui's Android-only macro target's dependency, which a
         // Darwin `swift package update` would otherwise prune. Keep the range equal to the fork's.
         .package(url: "https://github.com/swiftlang/swift-syntax.git", "600.0.0"..<"700.0.0"),
     ],
