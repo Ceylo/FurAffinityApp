@@ -146,22 +146,40 @@ must not use the global form. Kingfisher's own `ImageBinder` had the same call, 
 Android fork moves the load animation to `KFImageRenderer`'s `.animation(_:value:)` for
 exactly this reason.
 
-`.transition(…)` is not a substitute: SkipUI resolves transitions in the *container*
-(`VStack.swift`, via `Animation.current(isAnimating:)`, evaluated before it recurses into the
-child's own modifiers), so it only ever sees an ambient animation set above the container or
-the global mark. A scoped `.animation(_:value:)` on the transitioning view cannot reach it —
-which is why the refresh badge briefly lost its animation on Android.
+**`.transition(…)` works under one contract**: the transitioning view must be an
+`.id`'d child of an `HStack`/`VStack`/`ZStack`, and the stack itself must carry the
+`.animation(_:value:)`. With any un-id'd child, the stack composes a plain `Box` and
+nothing transitions (`ZStack.swift`, `ids.size < renderables.size`). Otherwise it uses
+`AnimatedContent`, whose `Animation.current(isAnimating:)` reads the ambient
+`EnvironmentValues._animation` that the stack's own `.animation` installs. A bare `if` in
+an `.overlay`, or an `.animation` placed on the child, never reaches it. That is why the
+refresh badge once lost its animation. `NotificationOverlay` and
+`CloudflareResolutionOverlay` are the worked examples:
 
-**State-driven properties do animate from a scoped animation**, because `.opacity`,
+```swift
+ZStack {
+    if let itemCount {
+        badge(itemCount)
+            .id("badge")            // constant: a new count updates in place
+            .transition(.fallAndFade)
+    }
+}
+.animation(.easeInOut(duration: 0.35), value: itemCount != nil)
+```
+
+Two limits remain. A stack that recomposed before an insertion had played used to strip
+its enter transition (the Cloudflare pill's `Button` triggered it), fixed in skip-ui
+`ebe6bfa`. And during an exit the stack holds its size for a fixed 0.35 s
+(`defaultAnimationDuration`), not the animation's own duration, so a slower exit jumps
+sideways once that runs out.
+
+**State-driven properties also animate from a scoped animation**, because `.opacity`,
 `.offset` and `.scaleEffect` each read `EnvironmentValues._animation` themselves
-(`AdditionalViewModifiers.swift` → `Animatable.asAnimatable`). Since the animation-resume
+(`AdditionalViewModifiers.swift` → `Animatable.asAnimatable`). That suits a view that
+stays mounted, like `ScrollToTopButton`. Since the animation-resume
 patch (see [Why skip-ui / skip-fuse-ui are forked](forks.md#why-skip-ui--skip-fuse-ui-are-forked))
 that also holds across recycling: an animation interrupted by a `List` row leaving the
 composed window resumes at the right point instead of dying at its end state.
-`NotificationOverlay` is the worked example: it stays mounted and moves through a
-`hidden → shown → fading → hidden`
-phase with `.opacity`/`.offset` and `.animation(_:value:)`, which reproduces `fallAndFade` —
-including its asymmetry, since fading holds the offset at 0 — on both platforms.
 
 **Key `.animation(_:value:)` on a value Kotlin can compare.** SkipUI installs the animation
 only on the composition where `value` differs from the remembered one
@@ -170,7 +188,9 @@ only on the composition where `value` differs from the remembered one
 placed within one 33 ms frame, measured on a 30 fps capture — while `value: phase == .shown`
 animates. Keep such keys to bridged primitives (`Bool`, `Int`, `String`), and prove any new
 animation on the emulator with a deliberately slow duration first: at 0.35 s the difference
-between "animating" and "snapping" is 10 frames, and easy to miss.
+between "animating" and "snapping" is 10 frames, and easy to miss. Capture on a quiet host,
+after one warm-up launch: right after an install, with builds running, `screenrecord`
+dropped to one frame every 5 s.
 
 ## Submission screen
 
