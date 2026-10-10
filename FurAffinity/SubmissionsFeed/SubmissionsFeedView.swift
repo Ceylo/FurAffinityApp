@@ -337,7 +337,7 @@ extension SubmissionsFeedView {
     }
 
     func refresh(pulled: Bool) {
-        Task {
+        _ = Task {
             // The delay gives time for the pull-to-refresh to go back
             // to its position and prevents interrupting animation
             if pulled {
