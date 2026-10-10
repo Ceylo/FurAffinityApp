@@ -31,7 +31,7 @@
 
 set -eo pipefail
 
-FAKIT_MIN_TESTS=189
+FAKIT_MIN_TESTS=198
 UI_MIN_TESTS=59
 
 die() { echo "error: $*" >&2; exit 1; }
@@ -114,7 +114,8 @@ CI_ENV=()
 [[ -n "$CI" ]] && CI_ENV=(--env FA_NOISY_TIMING=1)
 
 run FAKit "$BASE/FAKit" "$FAKIT_MIN_TESTS" "${CI_ENV[@]}" \
-    --scratch-path ../.build/android-test-fakit
+    --scratch-path ../.build/android-test-fakit \
+    --env XDG_CACHE_HOME=/data/local/tmp/FAKitTests-cache
 run FurAffinityUI "$BASE" "$UI_MIN_TESTS" "${CI_ENV[@]}" \
     --scratch-path .build/android-test \
     --env XDG_CACHE_HOME=/data/local/tmp/FurAffinityUITests-cache

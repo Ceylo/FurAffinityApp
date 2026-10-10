@@ -403,3 +403,33 @@ struct FAHTMLNormalizerPassthroughTests {
         #expect(try normalize("<marquee>kept</marquee>").html.contains("kept"))
     }
 }
+
+// MARK: - Stylesheet
+
+struct FAHTMLNormalizerStylesheetTests {
+    @Test
+    func aRuleInsideAStyledElementSplitsItsWrappersToo() async throws {
+        // The resolver runs before rules are hoisted, so the `<i>` it adds has to be
+        // split like any other wrapper, or the text after the rule loses its slant.
+        let stylesheet = FAStylesheet(css: await CSSInliner.shared.fallbackCSS(for: .dark))
+        let fragments = try FAHTMLNormalizer.fragments(
+            of: #"<span class="bbcode bbcode_quote">before<hr class="bbcode bbcode_hr">after</span>"#,
+            stylesheet: stylesheet
+        )
+        try #require(fragments.count == 2)
+        #expect(fragments[0].html.contains("<i>before</i>"))
+        #expect(fragments[1].html.contains("<i>after</i>"))
+    }
+
+    @Test
+    func aCentredBlockStillAlignsOnceStyled() async throws {
+        let stylesheet = FAStylesheet(css: await CSSInliner.shared.fallbackCSS(for: .dark))
+        let html = try FAHTMLNormalizer.normalized(
+            #"<code class="bbcode bbcode_center"><h4 class="bbcode bbcode_h4">Title</h4></code>"#,
+            stylesheet: stylesheet
+        ).html
+        #expect(html.contains("text-align:center"))
+        #expect(!html.contains("<code"))
+        #expect(html.contains(#"<span style="color:#add8f5">Title</span>"#))
+    }
+}

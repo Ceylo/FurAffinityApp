@@ -57,14 +57,18 @@ public struct FANormalizedHTML: Hashable, Sendable {
 public enum FAHTMLNormalizer {
     /// What the renderer actually needs: the markup already cut at its rules. The
     /// whole-document view below re-serialises the tree and walks it again for nothing.
-    public static func fragments(of html: String) throws -> [FANormalizedHTML.Fragment] {
-        try fragments(of: try normalizedRoot(html))
+    ///
+    /// - Parameter stylesheet: FA's theme, resolved into the markup when given.
+    public static func fragments(
+        of html: String, stylesheet: FAStylesheet? = nil
+    ) throws -> [FANormalizedHTML.Fragment] {
+        try fragments(of: try normalizedRoot(html, stylesheet: stylesheet))
     }
 
     /// The whole normalised document. Only the tests read it — production goes through
     /// `fragments(of:)`.
-    static func normalized(_ html: String) throws -> FANormalizedHTML {
-        let root = try normalizedRoot(html)
+    static func normalized(_ html: String, stylesheet: FAStylesheet? = nil) throws -> FANormalizedHTML {
+        let root = try normalizedRoot(html, stylesheet: stylesheet)
         return FANormalizedHTML(
             html: try root.html(),
             images: try images(in: root),
@@ -72,10 +76,13 @@ public enum FAHTMLNormalizer {
         )
     }
 
-    private static func normalizedRoot(_ html: String) throws -> Element {
+    private static func normalizedRoot(_ html: String, stylesheet: FAStylesheet?) throws -> Element {
         let document = try SwiftSoup.parse(html)
         let root = document.body() ?? document
         try dropUnrenderableImages(in: root)
+        // Before alignment: a `[center]` carrier must still be a `<code>` for the
+        // stylesheet's selectors, and the `<span>`s this adds go inside it.
+        try stylesheet?.resolver.apply(to: root)
         try rewriteAlignment(in: root)
         try hoistRules(in: root)
         return root
@@ -293,7 +300,7 @@ extension String {
     }
 }
 
-private extension Element {
+extension Element {
     var faClassNames: Set<String> {
         guard let value = try? attr("class"), !value.isEmpty else { return [] }
         return Set(value.split(whereSeparator: \.isWhitespace).map(String.init))
@@ -303,7 +310,7 @@ private extension Element {
     /// Values keep their original case — a lowercased `url(…/AbC.png)` is a 404 on the
     /// CDN — but a duplicated property keeps only its last declaration, since
     /// `setTextAlign` writes the whole attribute back.
-    var faStyle: [String: String] {
+    fileprivate var faStyle: [String: String] {
         guard let style = try? attr("style"), !style.isEmpty else { return [:] }
         return style.faTopLevelDeclarations.reduce(into: [:]) { result, declaration in
             let parts = declaration.split(separator: ":", maxSplits: 1)
@@ -314,7 +321,7 @@ private extension Element {
     }
 }
 
-private extension String {
+extension String {
     /// The `;`-separated declarations of a `style` attribute, splitting only at top
     /// level: a `;` inside `( … )` or a quoted string belongs to the value it sits in
     /// (`url(data:image/png;base64,…)` is one declaration, not two).
