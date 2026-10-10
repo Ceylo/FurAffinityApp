@@ -45,7 +45,7 @@ done
 # `simctl list` has no exact-name lookup, so match the "<name> (<udid>) (<state>)"
 # line. Requiring the "(" right after the name is what keeps `FA android` from
 # also matching `FA android-nested-observable`.
-NAME_RE="$(printf '%s' "$NAME" | sed 's@[][\.*^$/]@\\&@g')"
+NAME_RE="$(printf '%s' "$NAME" | sed 's|[][\.*^$/@]|\\&|g')"
 
 device_udid() {
     xcrun simctl list devices available \
