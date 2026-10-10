@@ -33,7 +33,8 @@ final class NavigationStream {
 }
 
 extension EnvironmentValues {
-    @Entry var navigationStream = NavigationStream()
+    static private let defaultNavigationStream = NavigationStream()
+    @Entry var navigationStream = Self.defaultNavigationStream
 }
 
 /// - Warning: This view should be avoided in scrolling content,
