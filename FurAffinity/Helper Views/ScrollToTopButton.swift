@@ -32,8 +32,8 @@ struct ScrollToTopButton: View {
         }
         // Room for the shadow, as in `NotificationOverlay`.
         .padding(NotificationOverlay.shadowRadius)
-        // State-driven rather than a transition, for the same reason as
-        // `NotificationOverlay`: these animate on both platforms.
+        // State-driven: `.opacity`/`.offset` animate from a scoped animation on both
+        // platforms, without the id'd stack a transition needs on SkipUI.
         .opacity(reveal.isShown ? 1 : 0)
         .offset(y: reveal.isShown ? 0 : -12)
         .animation(.easeInOut(duration: 0.25), value: reveal.isShown)

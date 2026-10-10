@@ -16,34 +16,30 @@ struct CloudflareResolutionOverlay: View {
     /// Only a preview passes anything but the default.
     var revealDelay: TimeInterval = 1
     // Not private: skipstone can't bridge a private @State/@Environment.
-    @State var phase = NotificationOverlayPhase.hidden
+    @State var showPill = false
 
     private static let animationDuration = 0.35
     /// Transparent room around the pill so its shadow stays inside the animated
     /// view's own bounds — Android clips to those bounds while opacity < 1.
     private static let shadowRadius = 5.0
-    /// The padded pill's height, so it falls in from exactly out of place.
-    private static let pillHeight = 60.0 + 2 * shadowRadius
 
-    /// Same state-driven `fallAndFade` as `NotificationOverlay`: SkipUI resolves a
-    /// `.transition` in the container, where it only sees a process-global
-    /// `withAnimation` mark — and this pill shows precisely while a feed is loading,
-    /// so that mark would animate the feed too.
+    /// Same contract as `NotificationOverlay`: an `.id`'d child and the stack's own
+    /// animation, never `withAnimation` — this pill shows precisely while a feed is
+    /// loading, and on SkipUI that mark would animate the feed too.
     var body: some View {
-        pill
-            .padding(Self.shadowRadius)
-            .opacity(phase == .shown ? 1 : 0)
-            .offset(y: phase == .hidden ? -Self.pillHeight : 0)
-            .animation(.easeInOut(duration: Self.animationDuration), value: phase == .shown)
-            .accessibilityHidden(phase != .shown)
-            // Unlike NotificationOverlay this one must stay hit-testable once shown:
-            // tapping it is the only way to reach the interactive sheet on demand.
-            // Not while transparent though, or it eats taps meant for what it floats over.
-            .allowsHitTesting(phase == .shown)
-            .task {
-                try? await Task.sleep(for: .seconds(revealDelay))
-                phase = .shown
+        ZStack {
+            if showPill {
+                pill
+                    .padding(Self.shadowRadius)
+                    .id("pill")
+                    .transition(.fallAndFade)
             }
+        }
+        .animation(.easeInOut(duration: Self.animationDuration), value: showPill)
+        .task {
+            try? await Task.sleep(for: .seconds(revealDelay))
+            showPill = true
+        }
     }
 
     @ViewBuilder
