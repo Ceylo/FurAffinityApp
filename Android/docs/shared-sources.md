@@ -224,7 +224,7 @@ never the iOS app target — so:
   `AndroidRootView` and `LoginCookies+Android` name them, so the bridge compile needs
   the declarations for `arm64-apple-ios` — and so, therefore, does the iOS app, which
   is the price of the arrangement. Only `iOS/` files whose *frameworks* are Darwin-only
-  (UIKit, WebKit, PDFKit, Cache) can be guarded on the platform.
+  (UIKit, WebKit, PDFKit) can be guarded on the platform.
 
   A **third** case, beside the app-module `AndroidDefault` exception: when the Darwin
   twin is in *this same module*. `FALoginView+Android.swift` and

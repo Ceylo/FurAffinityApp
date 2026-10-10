@@ -9,7 +9,6 @@ import Foundation
 
 extension String {
     #if !os(Android)
-    static private let cssInliner = CSSInliner()
     static private let imageInliner = ImageInliner()
     #endif
 
@@ -29,11 +28,11 @@ extension String {
             .replacingOccurrences(of: "src=\"/", with: "src=\"https://www.furaffinity.net/")
     }
 
-    #if !os(Android)
     public func inliningCSS() async throws -> String {
-        try await Self.cssInliner.inlineCSS(in: self)
+        try await CSSInliner.shared.inlineCSS(in: self)
     }
 
+    #if !os(Android)
     public func inliningImages() async -> String {
         await Self.imageInliner.inlineImages(in: self)
     }
@@ -73,7 +72,6 @@ extension String {
     
     public var selfContainedFAHtmlUserDescription: String { selfContainedFAHtmlComment }
     
-    #if !os(Android)
     func using(theme: FATheme) -> String {
         if theme == .light {
             return replacingOccurrences(of: "ui_theme_dark.css", with: "ui_theme_light.css")
@@ -81,5 +79,4 @@ extension String {
             return self
         }
     }
-    #endif
 }

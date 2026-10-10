@@ -299,6 +299,9 @@ public final class FAWebSession {
             nativeTransport: Self.nativeTransport
         )
 
+        // FA's stylesheet rides the same cleared pool; a bare URLSession gets a 403.
+        CSSInliner.fetch = { url in try await dataSource.httpData(from: url, cookies: nil) }
+
         return try await OnlineFASession(cookies: authCookies, dataSource: dataSource)
     }
 }
