@@ -8,6 +8,15 @@
 import SwiftUI
 import FAKit
 
+/// `fallAndFade` as state rather than a transition.
+enum NotificationOverlayPhase {
+    /// Above its place and transparent — where the pill falls in from.
+    case hidden
+    case shown
+    /// Transparent again, without moving.
+    case fading
+}
+
 /// Non-modal top overlay shown during background CloudFlare resolution.
 /// Appears after a short delay so sub-second passive resolutions stay silent.
 /// Tapping it opens the interactive sheet immediately.
