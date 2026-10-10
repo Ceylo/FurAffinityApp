@@ -14,6 +14,7 @@
 package fur.affinity.ui
 
 import android.content.pm.ApplicationInfo
+import android.content.res.Configuration
 import android.util.Log
 import android.webkit.WebSettings
 import skip.foundation.ProcessInfo
@@ -44,6 +45,12 @@ class FAAppInfoBridge {
     /// The Android release version, e.g. "17". `ProcessInfo` can't answer this: it
     /// reports the Linux kernel, not the Android release.
     fun osRelease(): String = android.os.Build.VERSION.RELEASE ?: ""
+
+    /// Whether the system is in dark mode right now. Read on every call: the user can
+    /// switch it while the app runs.
+    fun isNightMode(): Boolean =
+        (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
 
     /// The stock WebView User-Agent, before any customUserAgent override. Reading
     /// it needs no WebView instance, so it is safe at any point in startup.
