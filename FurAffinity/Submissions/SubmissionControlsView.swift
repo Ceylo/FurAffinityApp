@@ -123,7 +123,7 @@ struct SubmissionControlsView: View {
                 )
             }
             .applying {
-                if #available(iOS 26, *) {
+                if #available(iOS 26, *), !isAndroidBuild {
                     $0.offset(y: -3)
                         .padding(-5)
                         .floatingGlass(.regular.interactive())
@@ -140,7 +140,7 @@ struct SubmissionControlsView: View {
             }
             .frame(height: buttonsSize)
             .applying {
-                if #available(iOS 26, *) {
+                if #available(iOS 26, *), !isAndroidBuild {
                     $0.offset(y: -3)
                         .padding(-5)
                         .floatingGlass(.regular.interactive())
