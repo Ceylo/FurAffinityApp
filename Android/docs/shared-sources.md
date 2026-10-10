@@ -351,7 +351,8 @@ FurAffinityUI/build/swift/plugins/outputs/*/FurAffinityUI/destination/skipstone/
   generates `<View>_Bridge.swift`, so the property gets no `StateSupport`: writes land in
   the box and the view never redraws, silently. Declare it outside the guard. To check a
   view, `grep Java_initState_ $(find .build -name "<View>_Bridge.swift")`.
-- SkipUI has no `@Entry` macro: write the `EnvironmentKey` by hand.
+- `@Entry` works, from the skip-fuse-ui fork, but only in an `EnvironmentValues` extension:
+  SkipSwiftUI has no `Transaction`, `FocusedValues` or `ContainerValues` keys to target.
 - **`CGSize` is fine to use** — but the module has more than one type named `CGSize`
   in scope: `Foundation.CGSize` (which FAKit extends and its APIs take) and the one
   SkipSwiftUI's SwiftUI façade vendors (returned by `GeometryProxy.size` etc.). Rules:
