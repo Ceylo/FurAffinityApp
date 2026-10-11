@@ -10,11 +10,12 @@
 # Currently installs one hook:
 #
 #   post-checkout   seeds a brand-new worktree's DerivedData/SourcePackages from
-#                   a sibling's (Scripts/iOS/seed-source-packages.sh), so it
+#                   a sibling's (Scripts/iOS/seed-source-packages.py), so it
 #                   skips SwiftPM's package resolution and ~29 checkouts. Runs
 #                   only for a new worktree or clone (previous HEAD is the null
 #                   ref) and only if that worktree carries an executable
-#                   seed-source-packages.sh. Never fails the checkout.
+#                   seed-source-packages script — .py, or the .sh it replaced on
+#                   older branches. Never fails the checkout.
 
 set -euo pipefail
 
@@ -37,7 +38,10 @@ install_hook() {
 
 install_hook post-checkout '
 prev_head="$1"
-if [ "$prev_head" = "0000000000000000000000000000000000000000" ] \
-    && [ -x Scripts/iOS/seed-source-packages.sh ]; then
-  Scripts/iOS/seed-source-packages.sh || true
-fi'
+[ "$prev_head" = "0000000000000000000000000000000000000000" ] || exit 0
+for seed in Scripts/iOS/seed-source-packages.py Scripts/iOS/seed-source-packages.sh; do
+  if [ -x "$seed" ]; then
+    "$seed" || true
+    break
+  fi
+done'

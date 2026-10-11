@@ -247,7 +247,7 @@ FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, 
   selected (`COMPILATION_CACHE.md`).
   Run `Scripts/install-git-hooks.sh` once per clone: a new worktree's `post-checkout`
   then seeds its DerivedData/SourcePackages from a sibling's pinned to the same
-  `Package.resolved` (`Scripts/iOS/seed-source-packages.sh`), skipping SwiftPM's
+  `Package.resolved` (`Scripts/iOS/seed-source-packages.py`), skipping SwiftPM's
   package resolution and ~29 checkouts.
   Removing a worktree leaves behind what is keyed by its path or name elsewhere:
   its emulator app, simulator, DerivedData dirs (the Skip project's have no
