@@ -6,15 +6,14 @@
 | `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; `.glass`/`.glassProminent` drawn as bordered and `buttonBorderShape`; `glassEffect` drawn as the M3 floating surface; tab re-tap popping to root, then scrolling to top; a `List` under the status bar when the navigation bar is hidden; a bridged `.task(id:)` that is really cancelled; `.updatesFrequently` as a polite live region; a shadow whose copy of its content is kept out of the accessibility tree; a sheet that calls its content only while presented and keeps the last one while it animates away; a `ScrollViewReader` proxy that resolves its scroll action when used; a stack insertion that keeps its enter transition when the stack recomposes before it has played; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, `ButtonBorderShape`, `sheet`/`fullScreenCover` content passed as a builder, a `JavaBackedView` holding a global JNI reference, `glassEffect` bridged to SkipUI's surface, `GlassEffectContainer` bridged as a `Group`, an `AccessibilityTraits()` that doesn't recurse (upstream #132), plus `glassEffectUnion`/`glassEffectID`/`AnyTransition.animation`/`.glass`/`.glassProminent` un-`unavailable`d and `controlSize`/`contentShape` as pass-throughs; `#Preview` / `@Previewable` stubs (skiptools/skip#439) and `@Entry` |
 | `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, and a rendered image that comes out of an `ImageHolder` rather than out of the view value |
-| `Ceylo/Cache` | image API (`Image`, `forImage()`, `transformImage()`, `ImageWrapper`) guarded to platforms with an image type, so the rest builds on Android, where FAKit caches FA's theme stylesheet with it. Upstream declined Linux support (hyperoslo/Cache#137) |
 | `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
 
 Sending any of these patches back to its origin project — the gates each project sets, what
 its own merged and rejected PRs show, and the shape a PR must take — is
 [upstreaming.md](upstreaming.md).
 
-All on an `android` branch, referenced by URL + branch from `Package.swift` (Cache from
-`FAKit/Package.swift`; and, for Defaults and Kingfisher, the Xcode project too). While iterating, re-point the root
+All on an `android` branch, referenced by URL + branch from `Package.swift` (and, for
+Defaults and Kingfisher, the Xcode project too). While iterating, re-point the root
 `Package.swift` at a local clone:
 
 ```
@@ -30,7 +29,7 @@ time; an absolute one, like `SKIPLOCAL`'s, keeps the slot.
 
 The root `Package.resolved` **is** committed (`.gitignore` carries a `!/Package.resolved`
 negation), as is the Xcode workspace's copy; only `FAKit/Package.resolved` stays ignored.
-Six deps resolve from mutable `branch: "android"` refs, so without the recorded
+Five deps resolve from mutable `branch: "android"` refs, so without the recorded
 revisions a release APK isn't reproducible. Refreshing a fork is
 `swift package update <dep>`, followed by committing the resulting diff. The root
 manifest declares swift-syntax, unused, only so that update keeps the pin that

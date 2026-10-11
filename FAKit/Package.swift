@@ -15,8 +15,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.5"),
-        // Forked to build on Android, which has no platform image type.
-        .package(url: "https://github.com/Ceylo/Cache.git", branch: "android"),
+        .package(url: "https://github.com/hyperoslo/Cache.git", from: "7.4.0"),
         .package(url: "https://github.com/davecom/SwiftGraph.git", from: "3.1.0"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.3"),
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19"),
@@ -65,9 +64,9 @@ let package = Package(
                 "SwiftSoup",
                 "SwiftGraph",
                 .product(name: "OrderedCollections", package: "swift-collections"),
-                // Cache keeps FA's theme stylesheet for a day on both platforms.
-                .product(name: "Cache", package: "Cache"),
-                // Apple-only: ZIPFoundation backs the DOCX reader, out of scope on Android.
+                // Apple-only: Cache backs the CSS/image inliners, ZIPFoundation the
+                // DOCX reader — both out of scope on Android.
+                .product(name: "Cache", package: "Cache", condition: .when(platforms: [.iOS, .macOS])),
                 .product(name: "ZIPFoundation", package: "ZIPFoundation", condition: .when(platforms: [.iOS, .macOS])),
                 // Unconditional on purpose: SKIP_BRIDGE is unset in the pass that runs
                 // plugins, so gating either edge makes skipstone emit a stub

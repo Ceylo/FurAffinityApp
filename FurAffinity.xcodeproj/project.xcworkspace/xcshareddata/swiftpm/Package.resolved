@@ -31,10 +31,10 @@
     {
       "identity" : "cache",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Ceylo/Cache.git",
+      "location" : "https://github.com/hyperoslo/Cache.git",
       "state" : {
-        "branch" : "android",
-        "revision" : "c5be109ec8b0329effdfd810fa8ef4f6c0651a44"
+        "revision" : "24e47109e31b2031cb26e25cc1b81b607496066c",
+        "version" : "7.4.0"
       }
     },
     {

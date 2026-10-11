@@ -114,8 +114,7 @@ CI_ENV=()
 [[ -n "$CI" ]] && CI_ENV=(--env FA_NOISY_TIMING=1)
 
 run FAKit "$BASE/FAKit" "$FAKIT_MIN_TESTS" "${CI_ENV[@]}" \
-    --scratch-path ../.build/android-test-fakit \
-    --env XDG_CACHE_HOME=/data/local/tmp/FAKitTests-cache
+    --scratch-path ../.build/android-test-fakit
 run FurAffinityUI "$BASE" "$UI_MIN_TESTS" "${CI_ENV[@]}" \
     --scratch-path .build/android-test \
     --env XDG_CACHE_HOME=/data/local/tmp/FurAffinityUITests-cache
