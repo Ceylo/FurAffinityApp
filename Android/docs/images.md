@@ -26,6 +26,12 @@ FAKingfisherDownloader
                        too, keyed by URL *and* processor identifier.
 ```
 
+Rich text fetches its images *before* it renders, as iOS does: `ImageInliner.measuring`
+asks `FAImageInliner.dataProvider` — `retrieveFAImageData`, the same Kingfisher path —
+for every `<img>` of a description or comment, avatars far down a comment list included,
+to learn each one's size. A description therefore waits for its images, and the
+`KFImage` that draws one later is a cache hit rather than a second fetch.
+
 One client is the premise, not a tidiness choice: Cloudflare judges a connection, so
 the fewer the app opens the fewer independent verdicts it draws, and a challenge on
 the one it has is *repairable* rather than a lost draw. See

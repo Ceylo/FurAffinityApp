@@ -326,15 +326,27 @@ crossfades a UIKit-backed `.sheet`; `View+pullableScreenCover.swift`),
 `SubmissionShims.swift`.
 
 `HTMLView` is the one that does real work rather than standing in. iOS renders FA's rich
-text through WebKit's HTML importer into a `UITextView`; here `FAKit` normalises the
-markup (`FAHTMLNormalizer`) and Compose parses it — see `Text(html:)` under
-[the other fork patches](forks.md#the-other-fork-patches). The view itself only puts back what
-that parser drops: a `Divider()` where each `<hr>` was, and an inline view at each
-`<img>`'s U+FFFC. Accepted losses, none of which FA's corpus exercises: `<ol>` numbering
+text through WebKit's HTML importer into a `UITextView`, after inlining FA's theme
+stylesheet and its images as `data:` URIs; here `FAKit` normalises the markup
+(`FAHTMLNormalizer`) and Compose parses it — see `Text(html:)` under
+[the other fork patches](forks.md#the-other-fork-patches). `fromHtml` reads neither
+`<style>` nor classes, so `FACSSResolver` resolves the same stylesheet (`CSSInliner`, light
+or dark per `FATheme.current`) into the markup first: each element's winning colour,
+background and underline/strike become a `<span style>` around its children, bold and
+italic become `<b>`/`<i>`. Links keep the app tint rather than FA's link colour, as
+`UITextView` gives them on iOS, and spoilers stay visible. Images are fetched before the
+text renders, as iOS does, through the same Kingfisher cache `FAImage` reads, and
+`FAImageHeader` reads each one's pixel size. The view itself only puts back what that
+parser drops: a `Divider()` where each `<hr>` was, and an inline view at each `<img>`'s
+U+FFFC, sized from the markup's `width`/`height` (completed by the image's aspect ratio)
+or else its natural size, capped at 50×50 for avatars and at the text's width for all —
+the 19×19 smilie square is left only for an image that couldn't be fetched. Accepted
+losses, none of which FA's corpus exercises: `<ol>` numbering
 degrades to bullets, `<blockquote>` loses its indent and bar, `<code>`/`<pre>` lose
 monospace, absolute px font sizes are ignored, and `<sub>` gets a baseline shift without
 the size reduction. Headings come out at Compose's `RelativeSizeSpan` steps rather than
-FA's exact pixel sizes. The one iOS feature not reachable is animated GIF avatars, which
+FA's exact pixel sizes, and bold: the stylesheet's `font-weight: 400` on `bbcode_h*` has
+no `fromHtml` form, since only `font-size` and weights of 600 and up are translated. The one iOS feature not reachable is animated GIF avatars, which
 stay on their first frame.
 
 Its padding is 3 dp vertical but **8 dp horizontal**, which looks asymmetric and is not.

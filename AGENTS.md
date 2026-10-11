@@ -28,9 +28,11 @@ Note", story submissions with a txt/md reader, music submissions without in-app 
 metadata) and the Settings tab (shared
 `SettingsView` / `NotificationSettingsView`, image-cache control, log sharing, logout).
 FA's rich text is rendered by Compose's own HTML parser: `FAKit/Sources/FAKit/RichText/`
-normalises the markup into the subset `AnnotatedString.fromHtml` understands (and cuts it
-at its `<hr>`s, which that parser drops), and `Helper Views/Android/HTMLView+Android.swift`
-hands each fragment to `Text(html:)`.
+normalises the markup into the subset `AnnotatedString.fromHtml` understands (resolving
+FA's theme stylesheet into it with `FACSSResolver`, and cutting it at its `<hr>`s, which
+that parser drops), `ImageInliner` fetches its images to learn their sizes as iOS
+fetches them to inline them, and `Helper Views/Android/HTMLView+Android.swift` hands each
+fragment to `Text(html:)`.
 FAKit carries the skipstone plugin too (`FAKit/Sources/FAKit/Skip/skip.yml`), which is
 what lets it own the Android web layer in `FAKit/Sources/FAKit/Android/`: a *bridged*
 view only gets its Kotlin `@State` glue from a plugin-carrying module. The two Kotlin
