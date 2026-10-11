@@ -252,7 +252,7 @@ FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, 
   Removing a worktree leaves behind what is keyed by its path or name elsewhere:
   its emulator app, simulator, DerivedData dirs (the Skip project's have no
   `info.plist`, only a path hash) and XcodeBuildMCP workspace.
-  `Scripts/cleanup-worktree.sh <name>` removes a merged worktree with all of them
+  `Scripts/cleanup-worktree.py <name>` removes a merged worktree with all of them
   and its branch; `--orphans` sweeps what worktrees removed without it left, and
   reports what it kept, why, and each branch's storage.
 - **A bridged view's `@State`/`@Environment` must not be `private`.** skipstone

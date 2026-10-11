@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The Android build slots (Android/build-slots), for clean.sh and cleanup-worktree.sh.
+"""The Android build slots (Android/build-slots), for clean.sh and cleanup-worktree.py.
 
 Usage: slots.py list <pool>
            a record per slot: slot, path, idle|busy, owner, lastUsed
@@ -55,13 +55,22 @@ def slots(pool):
     return sorted((int(m[1]), path) for m, path in found if os.path.isdir(path))
 
 
-def list_slots(pool):
+def describe(pool):
+    """(path, idle|busy, owner, lastUsed) of each slot, read under the pool lock."""
+    rows = []
     for _, slot in slots(pool):
         held = lock(os.path.join(slot, ".lock"), wait=False)
         if held:
             held.close()
         props = state(slot)
-        emit("slot", slot, "idle" if held else "busy", props.get("owner", ""), props.get("lastUsed", "0"))
+        rows.append((slot, "idle" if held else "busy", props.get("owner", ""), props.get("lastUsed", "0")))
+    pool_lock.close()
+    return rows
+
+
+def list_slots(pool):
+    for row in describe(pool):
+        emit("slot", *row)
 
 
 def delete_idle(pool):

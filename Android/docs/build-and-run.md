@@ -197,7 +197,7 @@ What this changes day to day:
   (~1–7 GB), but its `Android/` (the `:app` outputs) and `.fa-slot*` files, is not used
   by Gradle builds, only by `skip android build`, `swift package update` and
   `build-release-apk.sh`, which recreate it cold:
-  `Scripts/cleanup-worktree.sh --orphans` reports it and the slots, `--reclaim`
+  `Scripts/cleanup-worktree.py --orphans` reports it and the slots, `--reclaim`
   deletes it, all of it, since a partial `.build` is what fails with "missing required
   module". Xcode's "Delete Derived Data" deletes the slots too, which only makes
   the next build cold; the script's own DerivedData sweep matches Xcode's 28-letter
