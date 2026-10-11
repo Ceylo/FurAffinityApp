@@ -8,7 +8,7 @@
 //
 //  Almost all of FA's `bbcode_*` classes ride on a tag that already means the same thing
 //  (`bbcode_b` on `<strong>`, `bbcode_i` on `<i>`, `bbcode_hr` on `<hr>`…), which
-//  `android.text.Html` handles unaided. Only three things need rewriting:
+//  `android.text.Html` handles unaided. Only four things need rewriting:
 //
 //  1. `[left]`/`[center]`/`[right]`, which FA compiles to a class on `<code>` — a tag
 //     `android.text.Html` does not recognise at all. Alignment survives only as
@@ -18,6 +18,8 @@
 //     the string surgery having to reason about nesting.
 //  3. `<img>`, which survives as a bare U+FFFC in the text. The URLs it drops are
 //     collected here, in document order, so the renderer can splice views back in.
+//  4. The few rules of FA's theme stylesheet that change how text reads (quotes, dark
+//     headings and links), restated as tags, since `fromHtml` reads no classes.
 //
 //  Cross-platform on purpose: only Android renders through it, but it is built and
 //  unit-tested on iOS against the same captured pages the parser suites use.
@@ -58,17 +60,17 @@ public enum FAHTMLNormalizer {
     /// What the renderer actually needs: the markup already cut at its rules. The
     /// whole-document view below re-serialises the tree and walks it again for nothing.
     ///
-    /// - Parameter stylesheet: FA's theme, resolved into the markup when given.
+    /// - Parameter theme: the FA theme whose stylesheet rules to restate, if any.
     public static func fragments(
-        of html: String, stylesheet: FAStylesheet? = nil
+        of html: String, theme: FATheme? = nil
     ) throws -> [FANormalizedHTML.Fragment] {
-        try fragments(of: try normalizedRoot(html, stylesheet: stylesheet))
+        try fragments(of: try normalizedRoot(html, theme: theme))
     }
 
     /// The whole normalised document. Only the tests read it — production goes through
     /// `fragments(of:)`.
-    static func normalized(_ html: String, stylesheet: FAStylesheet? = nil) throws -> FANormalizedHTML {
-        let root = try normalizedRoot(html, stylesheet: stylesheet)
+    static func normalized(_ html: String, theme: FATheme? = nil) throws -> FANormalizedHTML {
+        let root = try normalizedRoot(html, theme: theme)
         return FANormalizedHTML(
             html: try root.html(),
             images: try images(in: root),
@@ -76,13 +78,13 @@ public enum FAHTMLNormalizer {
         )
     }
 
-    private static func normalizedRoot(_ html: String, stylesheet: FAStylesheet?) throws -> Element {
+    private static func normalizedRoot(_ html: String, theme: FATheme?) throws -> Element {
         let document = try SwiftSoup.parse(html)
         let root = document.body() ?? document
         try dropUnrenderableImages(in: root)
-        // Before alignment: a `[center]` carrier must still be a `<code>` for the
-        // stylesheet's selectors, and the `<span>`s this adds go inside it.
-        try stylesheet?.resolver.apply(to: root)
+        if let theme {
+            try applyThemeRules(in: root, theme: theme)
+        }
         try rewriteAlignment(in: root)
         try hoistRules(in: root)
         return root
@@ -117,6 +119,60 @@ public enum FAHTMLNormalizer {
         try flush()
         return result
     }
+
+    // MARK: Theme
+
+    /// Restates, as tags, what FA's theme stylesheet does to text: quotes are italic
+    /// with a bold name, and in dark only, headings are `#add8f5` and links in
+    /// descriptions weigh 600 (light's are the body colour and 500). An element's own
+    /// `color` beats the sheet, and is restated too where `fromHtml` would ignore it.
+    /// Spoilers stay visible and links keep the app's tint.
+    private static func applyThemeRules(in root: Element, theme: FATheme) throws {
+        for element in try root.getAllElements() where element !== root {
+            let tag = element.tagName().lowercased()
+            guard !voidTags.contains(tag), !element.getChildNodes().isEmpty else { continue }
+            let classes = element.faClassNames
+
+            var bold = classes.contains("bbcode_quote_name")
+            if theme == .dark, tag == "a",
+               element.parents().contains(where: { $0.hasClass("user-submitted-links") }) {
+                bold = true
+            }
+            let italic = classes.contains("bbcode_quote")
+            var color: String?
+            if tag != "a" {
+                if let own = element.faStyle["color"] {
+                    // `fromHtml` reads an own colour on `<span>` and `<p>` only.
+                    if tag != "span", tag != "p" { color = own }
+                } else if theme == .dark, !classes.isDisjoint(with: headingClasses) {
+                    color = "#add8f5"
+                }
+            }
+
+            var wrappers: [Element] = []
+            if bold, !["b", "strong"].contains(tag) { wrappers.append(try wrapper("b", for: element)) }
+            if italic, !["i", "em"].contains(tag) { wrappers.append(try wrapper("i", for: element)) }
+            if let color {
+                wrappers.append(try wrapper("span", for: element).attr("style", "color:\(color)"))
+            }
+            // Outermost first, the element's children moved into the innermost.
+            guard let innermost = wrappers.last else { continue }
+            for child in element.getChildNodes() {
+                try child.remove()
+                _ = try innermost.appendChild(child)
+            }
+            for (outer, inner) in zip(wrappers, wrappers.dropFirst()) {
+                _ = try outer.appendChild(inner)
+            }
+            _ = try element.appendChild(wrappers[0])
+        }
+    }
+
+    private static func wrapper(_ tag: String, for element: Element) throws -> Element {
+        Element(try Tag.valueOf(tag), element.getBaseUriUTF8())
+    }
+
+    private static let headingClasses = Set((1...5).map { "bbcode_h\($0)" })
 
     // MARK: Alignment
 
@@ -280,7 +336,7 @@ public enum FAHTMLNormalizer {
     /// that means nothing but alignment in the first place.
     private static let renameableTags: Set<String> = ["code", "center"]
     /// Elements that hold no content, so nothing about them is text alignment.
-    static let voidTags: Set<String> = [
+    private static let voidTags: Set<String> = [
         "img", "br", "hr", "input", "area", "col", "embed", "source", "track", "wbr",
     ]
     private static let centerClasses: Set<String> = ["bbcode_center", "aligncenter"]
@@ -300,7 +356,7 @@ extension String {
     }
 }
 
-extension Element {
+private extension Element {
     var faClassNames: Set<String> {
         guard let value = try? attr("class"), !value.isEmpty else { return [] }
         return Set(value.split(whereSeparator: \.isWhitespace).map(String.init))
@@ -310,20 +366,23 @@ extension Element {
     /// Values keep their original case — a lowercased `url(…/AbC.png)` is a 404 on the
     /// CDN — but a duplicated property keeps only its last declaration, since
     /// `setTextAlign` writes the whole attribute back.
-    fileprivate var faStyle: [String: String] {
+    var faStyle: [String: String] {
         guard let style = try? attr("style"), !style.isEmpty else { return [:] }
-        return style.faDeclarations.reduce(into: [:]) { result, declaration in
-            result[declaration.name] = declaration.value
+        return style.faTopLevelDeclarations.reduce(into: [:]) { result, declaration in
+            let parts = declaration.split(separator: ":", maxSplits: 1)
+            guard parts.count == 2 else { return }
+            result[parts[0].trimmingCharacters(in: .whitespaces).lowercased()] =
+                parts[1].trimmingCharacters(in: .whitespaces)
         }
     }
 }
 
-extension String {
-    /// The parts between each top-level `separator`: one inside `( … )`, `[ … ]` or a
-    /// quoted string belongs to the part it sits in (`url(data:image/png;base64,…)` is
-    /// one declaration, `[title="a,b"]` one selector). Blank parts are dropped.
-    func faTopLevelSplit(on separator: Character) -> [Substring] {
-        var parts: [Substring] = []
+private extension String {
+    /// The `;`-separated declarations of a `style` attribute, splitting only at top
+    /// level: a `;` inside `( … )` or a quoted string belongs to the value it sits in
+    /// (`url(data:image/png;base64,…)` is one declaration, not two).
+    var faTopLevelDeclarations: [Substring] {
+        var declarations: [Substring] = []
         var start = startIndex
         var depth = 0
         var quote: Character?
@@ -336,26 +395,15 @@ extension String {
             }
             switch character {
             case "'", "\"": quote = character
-            case "(", "[": depth += 1
-            case ")", "]": depth = max(0, depth - 1)
-            case separator where depth == 0:
-                parts.append(self[start..<index])
+            case "(": depth += 1
+            case ")": depth = max(0, depth - 1)
+            case ";" where depth == 0:
+                declarations.append(self[start..<index])
                 start = self.index(after: index)
             default: break
             }
         }
-        parts.append(self[start...])
-        return parts.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-    }
-
-    /// The declarations of a `style` attribute or a rule body, as lowercased property
-    /// names and trimmed values. Values keep their case.
-    var faDeclarations: [(name: String, value: String)] {
-        faTopLevelSplit(on: ";").compactMap { declaration in
-            let parts = declaration.split(separator: ":", maxSplits: 1)
-            guard parts.count == 2 else { return nil }
-            return (parts[0].trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
-                    parts[1].trimmingCharacters(in: .whitespacesAndNewlines))
-        }
+        declarations.append(self[start...])
+        return declarations.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
     }
 }

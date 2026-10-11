@@ -91,19 +91,6 @@ actor CSSInliner {
         return (downloadedCSS, true)
     }
 
-    /// `stylesheet(for:)`, parsed, and kept as long as the download is — or, for the
-    /// fallback, until a download is worth retrying. Every comment asks, so this skips
-    /// the download chain and the cache's expiry sweep until then.
-    func parsedStylesheet(for theme: FATheme) async -> FAStylesheet {
-        if let parsed = parsedStylesheets[theme], parsed.expiry > .now {
-            return parsed.stylesheet
-        }
-        let (css, isDownloaded) = await sourcedStylesheet(for: theme)
-        let stylesheet = FAStylesheet(css: css)
-        parsedStylesheets[theme] = (stylesheet, .now + (isDownloaded ? Self.cssLifetime : Self.retryDelay))
-        return stylesheet
-    }
-    private var parsedStylesheets: [FATheme: (stylesheet: FAStylesheet, expiry: Date)] = [:]
     private static let cssLifetime: TimeInterval = 60*60*24
     /// How long a failed download is trusted to fail again.
     private static let retryDelay: TimeInterval = 5*60

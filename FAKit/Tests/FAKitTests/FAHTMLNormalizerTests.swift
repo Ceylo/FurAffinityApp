@@ -404,17 +404,116 @@ struct FAHTMLNormalizerPassthroughTests {
     }
 }
 
-// MARK: - Stylesheet
+// MARK: - Theme
 
-struct FAHTMLNormalizerStylesheetTests {
+private func body(of html: String) throws -> Element {
+    try #require(try SwiftSoup.parse(html).body())
+}
+
+struct FAHTMLNormalizerThemeTests {
+    /// terriniss's profile in the wrapper submissions and journals get, the one that
+    /// carries `.user-submitted-links`.
+    private func terrinissSubmission() throws -> String {
+        let data = testData("www.furaffinity.net:user:terriniss.html")
+        let url = try #require(URL(string: "https://www.furaffinity.net/user/terriniss"))
+        return try FAUserPage(data: data, url: url)
+            .htmlDescription
+            .selfContainedFAHtmlSubmission
+    }
+
+    private let quote = """
+    <span class="bbcode bbcode_quote"><span class="bbcode_quote_name">someone wrote:</span>quoted</span>
+    """
+
+    @Test(arguments: [FATheme.light, .dark])
+    func quoteIsItalicAndItsNameBold(theme: FATheme) throws {
+        let root = try body(of: FAHTMLNormalizer.normalized(quote, theme: theme).html)
+        let quote = try #require(try root.select(".bbcode_quote").first())
+        #expect(try quote.child(0).tagName() == "i")
+        let name = try #require(try quote.select(".bbcode_quote_name").first())
+        #expect(try name.child(0).tagName() == "b")
+    }
+
     @Test
-    func aRuleInsideAStyledElementSplitsItsWrappersToo() async throws {
-        // The resolver runs before rules are hoisted, so the `<i>` it adds has to be
-        // split like any other wrapper, or the text after the rule loses its slant.
-        let stylesheet = FAStylesheet(css: await CSSInliner.shared.fallbackCSS(for: .dark))
+    func noThemeLeavesTheMarkupAlone() throws {
+        #expect(try !normalize(quote).html.contains("<i>"))
+    }
+
+    @Test
+    func darkHeadingTakesTheThemeColour() throws {
+        let html = try FAHTMLNormalizer.normalized(
+            #"<h4 class="bbcode bbcode_h4">Heading</h4>"#, theme: .dark
+        ).html
+        #expect(html.contains(#"<span style="color:#add8f5">Heading</span>"#))
+    }
+
+    @Test
+    func lightHeadingKeepsTheBodyColour() throws {
+        let html = try FAHTMLNormalizer.normalized(
+            #"<h4 class="bbcode bbcode_h4">Heading</h4>"#, theme: .light
+        ).html
+        #expect(!html.contains("color:"))
+    }
+
+    @Test
+    func ownColourBeatsTheThemeAndIsRestated() throws {
+        // terriniss colours her own headings; `fromHtml` reads no `color` on an <h4>.
+        let html = try FAHTMLNormalizer.normalized(
+            #"<h4 class="bbcode bbcode_h4" style="color: #C92A2A;">Heading</h4>"#, theme: .dark
+        ).html
+        #expect(!html.contains("#add8f5"))
+        #expect(html.contains(#"<span style="color:#C92A2A">Heading</span>"#))
+    }
+
+    @Test
+    func spanKeepsItsOwnColourUnwrapped() throws {
+        let html = try FAHTMLNormalizer.normalized(
+            #"<span style="color: #C92A2A;">red</span>"#, theme: .dark
+        ).html
+        #expect(html.contains(#"<span style="color: #C92A2A;">red</span>"#))
+    }
+
+    @Test
+    func spoilerIsLeftVisible() throws {
+        let source = #"<span class="bbcode bbcode_spoiler">hidden</span>"#
+        let html = try FAHTMLNormalizer.normalized(source, theme: .dark).html
+        #expect(html.contains(source))
+    }
+
+    @Test
+    func darkDescriptionLinksAreBoldAndKeepTheAppTint() throws {
+        let html = try FAHTMLNormalizer.normalized(terrinissSubmission(), theme: .dark).html
+        let links = try body(of: html).select("a").array().filter { !$0.hasClass("iconusername") }
+        try #require(!links.isEmpty)
+        #expect(try links.allSatisfy { try $0.child(0).tagName() == "b" })
+        #expect(!html.contains("#d0e6f5"))
+    }
+
+    @Test
+    func lightDescriptionLinksStayRegular() throws {
+        // Light's weight is 500, which is not bold.
+        let html = try FAHTMLNormalizer.normalized(terrinissSubmission(), theme: .light).html
+        let links = try body(of: html).select("a").array().filter { !$0.hasClass("iconusername") }
+        try #require(!links.isEmpty)
+        #expect(try links.allSatisfy { $0.children().first()?.tagName() != "b" })
+    }
+
+    @Test
+    func darkCommentLinksStayRegular() throws {
+        // Comments carry no `.user-submitted-links`.
+        let html = try FAHTMLNormalizer.normalized(terrinissDescription(), theme: .dark).html
+        let links = try body(of: html).select("a").array().filter { !$0.hasClass("iconusername") }
+        try #require(!links.isEmpty)
+        #expect(try links.allSatisfy { $0.children().first()?.tagName() != "b" })
+    }
+
+    @Test
+    func aRuleInsideAStyledElementSplitsItsWrappersToo() throws {
+        // The theme runs before rules are hoisted, so the `<i>` it adds has to be split
+        // like any other wrapper, or the text after the rule loses its slant.
         let fragments = try FAHTMLNormalizer.fragments(
             of: #"<span class="bbcode bbcode_quote">before<hr class="bbcode bbcode_hr">after</span>"#,
-            stylesheet: stylesheet
+            theme: .dark
         )
         try #require(fragments.count == 2)
         #expect(fragments[0].html.contains("<i>before</i>"))
@@ -422,11 +521,10 @@ struct FAHTMLNormalizerStylesheetTests {
     }
 
     @Test
-    func aCentredBlockStillAlignsOnceStyled() async throws {
-        let stylesheet = FAStylesheet(css: await CSSInliner.shared.fallbackCSS(for: .dark))
+    func aCentredBlockStillAlignsOnceStyled() throws {
         let html = try FAHTMLNormalizer.normalized(
             #"<code class="bbcode bbcode_center"><h4 class="bbcode bbcode_h4">Title</h4></code>"#,
-            stylesheet: stylesheet
+            theme: .dark
         ).html
         #expect(html.contains("text-align:center"))
         #expect(!html.contains("<code"))
