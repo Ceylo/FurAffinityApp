@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """The Android build slots (Android/build-slots), for clean.sh and cleanup-worktree.py.
 
-Usage: slots.py list <pool>
-           a record per slot: slot, path, idle|busy, owner, lastUsed
-       slots.py delete-idle <pool>
+Usage: slots.py delete-idle <pool>
            renames each idle slot into the trash. Records: trash, path, slot
            (empty for trash already there) and busy, slot, owner
 
-Each command holds the pool lock. Records are fields joined by \\x1f, which, unlike
+It holds the pool lock throughout. Records are fields joined by \\x1f, which, unlike
 a tab, `IFS=$'\\x1f' read` keeps apart when one is empty.
 """
+import contextlib
 import fcntl
 import os
 import re
@@ -46,53 +45,49 @@ def lock(path, wait):
     return f
 
 
+@contextlib.contextmanager
 def slots(pool):
-    """(number, path) of each slot, taking the pool lock until exit."""
-    global pool_lock
-    pool_lock = lock(os.path.join(pool, ".android-slot-pool.lock"), wait=True)
-    found = ((m, os.path.join(pool, n)) for n in os.listdir(pool)
-             if (m := re.fullmatch(r"android-slot-([1-9][0-9]*)", n)))
-    return sorted((int(m[1]), path) for m, path in found if os.path.isdir(path))
+    """(number, path) of each slot, under the pool lock."""
+    held = lock(os.path.join(pool, ".android-slot-pool.lock"), wait=True)
+    try:
+        found = ((m, os.path.join(pool, n)) for n in os.listdir(pool)
+                 if (m := re.fullmatch(r"android-slot-([1-9][0-9]*)", n)))
+        yield sorted((int(m[1]), path) for m, path in found if os.path.isdir(path))
+    finally:
+        held.close()
 
 
 def describe(pool):
-    """(path, idle|busy, owner, lastUsed) of each slot, read under the pool lock."""
+    """(path, idle|busy, owner, lastUsed) of each slot."""
     rows = []
-    for _, slot in slots(pool):
-        held = lock(os.path.join(slot, ".lock"), wait=False)
-        if held:
-            held.close()
-        props = state(slot)
-        rows.append((slot, "idle" if held else "busy", props.get("owner", ""), props.get("lastUsed", "0")))
-    pool_lock.close()
+    with slots(pool) as listed:
+        for _, slot in listed:
+            held = lock(os.path.join(slot, ".lock"), wait=False)
+            if held:
+                held.close()
+            props = state(slot)
+            rows.append((slot, "idle" if held else "busy", props.get("owner", ""), props.get("lastUsed", "0")))
     return rows
 
 
-def list_slots(pool):
-    for row in describe(pool):
-        emit("slot", *row)
-
-
 def delete_idle(pool):
-    listed = slots(pool)
-    for name in sorted(os.listdir(pool)):
-        if name.startswith(".android-slot-trash-"):
-            emit("trash", os.path.join(pool, name), "")
-    for number, slot in listed:
-        held = lock(os.path.join(slot, ".lock"), wait=False)
-        if not held:
-            emit("busy", slot, state(slot).get("owner", ""))
-            continue
-        trash = os.path.join(pool, f".android-slot-trash-{number}-{time.time_ns()}")
-        os.rename(slot, trash)
-        held.close()
-        emit("trash", trash, slot)
+    with slots(pool) as listed:
+        for name in sorted(os.listdir(pool)):
+            if name.startswith(".android-slot-trash-"):
+                emit("trash", os.path.join(pool, name), "")
+        for number, slot in listed:
+            held = lock(os.path.join(slot, ".lock"), wait=False)
+            if not held:
+                emit("busy", slot, state(slot).get("owner", ""))
+                continue
+            trash = os.path.join(pool, f".android-slot-trash-{number}-{time.time_ns()}")
+            os.rename(slot, trash)
+            held.close()
+            emit("trash", trash, slot)
 
 
 def main(args):
-    if len(args) >= 2 and args[0] == "list":
-        list_slots(args[1])
-    elif len(args) >= 2 and args[0] == "delete-idle":
+    if len(args) >= 2 and args[0] == "delete-idle":
         delete_idle(args[1])
     else:
         sys.exit(__doc__)

@@ -1,6 +1,7 @@
 """Paths other tools key by this repo's location, for cleanup-worktree.py and
 iOS/seed-source-packages.py."""
 import hashlib
+import plistlib
 from pathlib import Path
 
 DERIVED_DATA = Path.home() / "Library/Developer/Xcode/DerivedData"
@@ -18,3 +19,12 @@ def derived_data_hash(path):
             letters = chr(ord("a") + r) + letters
         out += letters
     return out
+
+
+def workspace_path(dd_dir):
+    """The workspace or project a DerivedData directory was built for, from its
+    info.plist, or "" (Skip's projects write none)."""
+    try:
+        return plistlib.loads((Path(dd_dir) / "info.plist").read_bytes()).get("WorkspacePath") or ""
+    except (OSError, plistlib.InvalidFileException):
+        return ""

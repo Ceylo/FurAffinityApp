@@ -202,7 +202,7 @@ done
 # so collect them from the source instead of hardcoding a list that will drift.
 while IFS= read -r tag; do
     [[ -n "$tag" ]] && TAGS+=("$tag")
-done < <(grep -hoE 'val TAG[[:space:]]*=[[:space:]]*"[^"]+"' \
+done < <(grep -hoE 'val TAG[^=]*=[[:space:]]*"[^"]+"' \
     "$ROOT"/Android/app/src/main/kotlin/*.kt 2>/dev/null | cut -d'"' -f2 | sort -u)
 
 # --- sibling worktrees ------------------------------------------------------

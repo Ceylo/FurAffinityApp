@@ -42,22 +42,21 @@ slots' parent, default ~/Library/Developer/Xcode/DerivedData).
 import argparse
 import atexit
 import datetime
+import functools
 import hashlib
 import locale
 import os
-import plistlib
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
-import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE / "Android"))
-from fa_paths import DERIVED_DATA, derived_data_hash  # noqa: E402
+from fa_paths import DERIVED_DATA, derived_data_hash, workspace_path  # noqa: E402
 import slots  # noqa: E402
 
 locale.setlocale(locale.LC_NUMERIC, "")
@@ -71,6 +70,8 @@ SDK = Path(os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT")
            or HOME / "Library/Android/sdk")
 ADB = SDK / "platform-tools/adb"
 LOCK_SCRIPT = ROOT / "Scripts/Android/with-emulator-lock.sh"
+ADB_STATE = ROOT / "Scripts/Android/adb-state.sh"
+SIGNING_MATERIAL = ROOT / "Scripts/signing-material.sh"
 
 # Never removed, whatever --base says.
 PROTECTED = ["android", "main"]
@@ -80,20 +81,15 @@ USAGE_COLUMNS = ["emulator", "simulator", "DerivedData", "XcodeBuildMCP", "workt
 EMULATOR_COL, SIMULATOR_COL, DERIVED_DATA_COL, MCP_COL, WORKTREE_COL = range(5)
 
 
-def is_signing_material(path):
-    """Keystores, certificates, profiles and the Sentry token. Twin of
-    Scripts/signing-material.sh, which slot-sync.sh sources: keep them in step."""
-    name = path.rsplit("/", 1)[-1]
-    return name.endswith((".p12", ".mobileprovision", ".jks", ".keystore")) \
-        or name in ("keystore.properties", ".sentryclirc")
-
-
 # --- output -----------------------------------------------------------------
 
 args = None
 PAINT = RESET = ""
 total_kb = 0
 failed = False
+caller_removed = False
+# Set by main().
+MAIN = WORKTREES = CALLER_DIR = lock_script = ""
 
 
 def die(message):
@@ -149,27 +145,37 @@ def git_main(*cmd):
     return git(MAIN, *cmd)
 
 
+def reclaim(kb, would, did, out, action):
+    """Count kb as reclaimed and report it: on a dry run only `would`, else `did`
+    once action() — which reports its own failure — has succeeded."""
+    global total_kb
+    if not args.dry_run and not action():
+        return False
+    total_kb += kb
+    out.append(painted(f"  {would if args.dry_run else did}"))
+    return True
+
+
 def remove_tree(label, paths, out, kb=None):
     """Remove file trees, reporting their size, measured unless given."""
-    global total_kb, failed
     kb = size_kb(*paths) if kb is None else kb
-    if args.dry_run:
-        out.append(painted(f"  would remove {label} ({human(kb)})"))
-        total_kb += kb
-        return
-    for path in paths:
-        try:
-            if os.path.isdir(path) and not os.path.islink(path):
-                shutil.rmtree(path)
-            else:
-                os.unlink(path)
-        except FileNotFoundError:
-            pass
-        except OSError:
-            fail(f"could not remove all of {label}")
-            return
-    total_kb += kb
-    out.append(painted(f"  removed {label} ({human(kb)})"))
+
+    def remove():
+        for path in paths:
+            try:
+                if os.path.isdir(path) and not os.path.islink(path):
+                    shutil.rmtree(path)
+                else:
+                    os.unlink(path)
+            except FileNotFoundError:
+                pass
+            except OSError:
+                fail(f"could not remove all of {label}")
+                return False
+        return True
+
+    size = human(kb)
+    reclaim(kb, f"would remove {label} ({size})", f"removed {label} ({size})", out, remove)
 
 
 # --- path keys --------------------------------------------------------------
@@ -196,13 +202,6 @@ def derived_data_paths(wt):
 def mcp_roots(wt):
     """The paths XcodeBuildMCP may have been started in."""
     return [wt] + [f"{wt}/{sub}" for sub in SUBDIRS]
-
-
-def workspace_path(dd_dir):
-    try:
-        return plistlib.loads((dd_dir / "info.plist").read_bytes()).get("WorkspacePath") or ""
-    except (OSError, plistlib.InvalidFileException):
-        return ""
 
 
 def under(path, root):
@@ -243,27 +242,15 @@ class Emulator:
                              if line.startswith("package:")]
 
 
-_emulator = None
-
-
+@functools.cache
 def emulator():
-    global _emulator
-    _emulator = _emulator or Emulator()
-    return _emulator
+    return Emulator()
 
 
 def adb_state():
-    """`adb get-state`'s answer, or its error. A freshly started adb server
-    reports a running emulator `offline` for about half a second; only that
-    state is waited out. Twin of Android/adb-state.sh."""
-    for _ in range(20):
-        p = run(ADB, "get-state")
-        lines = (p.stdout + p.stderr).replace("\r", "").strip().splitlines()
-        state = lines[-1] if lines else ""
-        if "offline" not in state:
-            break
-        time.sleep(0.25)
-    return state
+    """`adb get-state`'s answer, waiting out the `offline` a fresh adb server
+    reports at first: Scripts/Android/adb-state.sh's, which the other scripts source."""
+    return run("bash", "-c", 'ADB="$1"; source "$2"; adb_state', "_", ADB, ADB_STATE).stdout.strip()
 
 
 def app_size(app_id):
@@ -278,20 +265,18 @@ def app_size(app_id):
 
 
 def uninstall_app(app_id, out):
-    global total_kb
     kb, size = app_size(app_id)
-    if args.dry_run:
-        total_kb += kb
-        out.append(painted(f"  would uninstall {app_id} ({size})"))
-        return
-    lock = [lock_script] if lock_script else []
-    if not lock:
-        warn(f"no {LOCK_SCRIPT} — uninstalling without the emulator lock")
-    if run(*lock, ADB, "uninstall", app_id).returncode == 0:
-        total_kb += kb
-        out.append(painted(f"  uninstalled {app_id} ({size})"))
-    else:
-        fail(f"could not uninstall {app_id}")
+
+    def uninstall():
+        lock = [lock_script] if lock_script else []
+        if not lock:
+            warn(f"no {LOCK_SCRIPT} — uninstalling without the emulator lock")
+        if run(*lock, ADB, "uninstall", app_id).returncode:
+            fail(f"could not uninstall {app_id}")
+            return False
+        return True
+
+    reclaim(kb, f"would uninstall {app_id} ({size})", f"uninstalled {app_id} ({size})", out, uninstall)
 
 
 def clean_emulator_app(suffix, out):
@@ -314,34 +299,29 @@ def clean_emulator_app(suffix, out):
 
 # --- the simulator ----------------------------------------------------------
 
-_simulators = None
-
-
+@functools.cache
 def simulators():
     """(udid, state, name) for every `FA <name>` device, listed once (simctl
     takes ~0.3 s) — a run only ever deletes devices it has listed."""
-    global _simulators
-    if _simulators is None:
-        listing = run("xcrun", "simctl", "list", "devices").stdout
-        _simulators = [(m[2], m[3], m[1]) for m in re.finditer(
-            r"^\s*FA (.+) \(([0-9A-Fa-f-]{36})\) \(([A-Za-z ]+)\)", listing, re.M)]
-    return _simulators
+    listing = run("xcrun", "simctl", "list", "devices").stdout
+    return [(m[2], m[3], m[1]) for m in re.finditer(
+        r"^\s*FA (.+) \(([0-9A-Fa-f-]{36})\) \(([A-Za-z ]+)\)", listing, re.M)]
 
 
 def remove_simulator(udid, state, name, out):
-    global total_kb
     kb = size_kb(SIM_DEVICES / udid)
-    if args.dry_run:
-        total_kb += kb
-        out.append(painted(f"  would delete simulator FA {name} ({human(kb)})"))
-        return
-    if state != "Shutdown":
-        run("xcrun", "simctl", "shutdown", udid)
-    if run("xcrun", "simctl", "delete", udid).returncode == 0:
-        total_kb += kb
-        out.append(painted(f"  deleted simulator FA {name} ({human(kb)})"))
-    else:
-        fail(f"could not delete simulator FA {name}")
+
+    def delete():
+        if state != "Shutdown":
+            run("xcrun", "simctl", "shutdown", udid)
+        if run("xcrun", "simctl", "delete", udid).returncode:
+            fail(f"could not delete simulator FA {name}")
+            return False
+        return True
+
+    size = human(kb)
+    reclaim(kb, f"would delete simulator FA {name} ({size})", f"deleted simulator FA {name} ({size})",
+            out, delete)
 
 
 def clean_simulator(name, out):
@@ -388,8 +368,9 @@ def clean_mcp_workspaces(wt, out):
 
 # --- one worktree -----------------------------------------------------------
 
+@functools.cache
 def worktree_blocks():
-    """`git worktree list --porcelain`, a dict per worktree."""
+    """`git worktree list --porcelain`, a dict per worktree; cleared by a removal."""
     blocks = []
     for block in git_main("worktree", "list", "--porcelain").stdout.split("\n\n"):
         info = {}
@@ -427,15 +408,24 @@ class Worktree:
 
 def signing_material(wt):
     """Ignored files that must not go with the worktree — real files, not the
-    links to another copy."""
-    out = git(wt, "ls-files", "--others", "--ignored", "--exclude-standard", "--directory").stdout
-    return [f for f in out.splitlines()
-            if is_signing_material(f) and not os.path.islink(os.path.join(wt, f))]
+    links to another copy. Scripts/signing-material.sh says which, for
+    slot-sync.sh too."""
+    ignored = git(wt, "ls-files", "--others", "--ignored", "--exclude-standard", "--directory").stdout
+    matched = run("bash", "-c", 'source "$1"; while IFS= read -r f; do'
+                  ' if is_signing_material "$f"; then echo "$f"; fi; done',
+                  "_", SIGNING_MATERIAL, input=ignored).stdout
+    return [f for f in matched.splitlines() if not os.path.islink(os.path.join(wt, f))]
 
 
 def refusal(w):
-    """Why removing the worktree would lose work, or None; --force waives only
-    the merge check."""
+    """Why the worktree must stay, or None; --force waives only the merge check."""
+    # Its app and simulator are keyed by the name alone, so they are that one's too.
+    if w.namesake:
+        return f"{w.namesake} shares its name"
+    if w.locked:
+        return f"locked (git worktree unlock {w.path})"
+    if w.branch in args.base + PROTECTED:
+        return f"{w.branch} is a base branch"
     if os.path.isdir(w.path) and w.registered:
         status = git(w.path, "status", "--porcelain", "--untracked-files=normal")
         if status.returncode:
@@ -462,28 +452,26 @@ def refusal(w):
     return f"{w.branch or w.head} is not merged into {' '.join(args.base)} (--force to drop it)"
 
 
-caller_removed = False
-
-
 def remove_worktree(w, out):
-    global total_kb, caller_removed
     if not w.registered:
         return True
     # Also unregisters one whose directory is already gone.
     kb = size_kb(w.path)
-    if args.dry_run:
-        total_kb += kb
-        out.append(painted(f"  would remove worktree {w.path} ({human(kb)})"))
+
+    def remove():
+        global caller_removed
+        flush(out)
+        if git_main("worktree", "remove", w.path).returncode:
+            print(f"  could not remove worktree {w.path}, so left everything else in place",
+                  file=sys.stderr)
+            return False
+        worktree_blocks.cache_clear()
+        caller_removed = caller_removed or under(CALLER_DIR, w.path)
         return True
-    flush(out)
-    if git_main("worktree", "remove", w.path).returncode:
-        print(f"  could not remove worktree {w.path}, so left everything else in place",
-              file=sys.stderr)
-        return False
-    total_kb += kb
-    out.append(painted(f"  removed worktree {w.path} ({human(kb)})"))
-    caller_removed = caller_removed or under(CALLER_DIR, w.path)
-    return True
+
+    size = human(kb)
+    return reclaim(kb, f"would remove worktree {w.path} ({size})", f"removed worktree {w.path} ({size})",
+                   out, remove)
 
 
 def delete_branch(w, out):
@@ -516,18 +504,11 @@ def clean_worktree(wt):
         return refuse("that is the main checkout")
     if os.path.isdir(wt) and not w.registered:
         return refuse(f"not a worktree of {MAIN}")
-    # Its app and simulator are keyed by the name alone, so they are that one's too.
-    if w.namesake:
-        return refuse(f"{w.namesake} shares its name")
-    if w.locked:
-        return refuse(f"locked (git worktree unlock {wt})")
     # A worktree removed by hand still leaves its branch behind under its name.
     if not w.registered and git_main("show-ref", "--verify", "-q", f"refs/heads/{w.name}").returncode == 0:
         w.branch = w.name
     if not w.registered and not w.branch:
         return refuse("neither a worktree nor a branch (--orphans sweeps what is left)")
-    if w.branch in args.base + PROTECTED:
-        return refuse(f"{w.branch} is a base branch")
     why = refusal(w)
     if why:
         return refuse(why)
@@ -538,11 +519,12 @@ def clean_worktree(wt):
     out = []
     if not remove_worktree(w, out):
         return False
-    for step in (lambda: clean_emulator_app(w.suffix, out), lambda: clean_simulator(w.name, out),
-                 lambda: clean_derived_data(wt, out), lambda: clean_mcp_workspaces(wt, out),
-                 lambda: delete_branch(w, out)):
-        step()
-        flush(out)
+    clean_emulator_app(w.suffix, out)
+    clean_simulator(w.name, out)
+    clean_derived_data(wt, out)
+    clean_mcp_workspaces(wt, out)
+    delete_branch(w, out)
+    flush(out)
     return True
 
 
@@ -565,13 +547,7 @@ class Orphans:
     def note(self, wt):
         """Whether a live worktree is merged and clean, so that what it holds is
         kept only for want of a cleanup-worktree.py run."""
-        if wt == MAIN:
-            return ""
-        w = Worktree(wt)
-        if w.locked or w.namesake or (w.branch and w.branch in args.base + PROTECTED) \
-                or refusal(w):
-            return ""
-        return " — merged and clean"
+        return "" if wt == MAIN or refusal(Worktree(wt)) else " — merged and clean"
 
     def live_index(self, path):
         """Index of the live checkout a path lies in."""
@@ -606,8 +582,9 @@ class Orphans:
 
     def run(self):
         live = self.live
-        live_names = [os.path.basename(wt) for wt in live]
-        live_suffixes = [app_suffix(wt) for wt in live]
+        # First one wins, as git lists them.
+        by_name = {os.path.basename(wt): wt for wt in reversed(live)}
+        by_suffix = {app_suffix(wt): wt for wt in reversed(live)}
         live_hashes = {derived_data_hash(p): p for wt in reversed(live) for p in derived_data_paths(wt)}
         live_mcp = {mcp_key(p): p for wt in reversed(live) for p in mcp_roots(wt)}
 
@@ -630,32 +607,28 @@ class Orphans:
         if not emu.up:
             warn("no booted emulator (or several, without ANDROID_SERIAL) — its apps are not swept")
         for app_id in emu.packages:
-            for prefix in emu.prefixes:
-                if app_id == prefix:
-                    self.keep(EMULATOR_COL, "", app_id, "the unsuffixed (release or distribution) build", app=app_id)
-                    break
-                if not app_id.startswith(f"{prefix}."):
-                    continue
-                suffix = app_id[len(prefix) + 1:]
-                if suffix == "test":
-                    self.keep(EMULATOR_COL, "", app_id, "the unsuffixed build's test APK", app=app_id)
-                elif not re.fullmatch(r"[A-Za-z0-9_]+(\.test)?", suffix):
-                    self.keep(EMULATOR_COL, "", app_id, "not a worktree's app id", app=app_id)
-                elif suffix.removesuffix(".test") in live_suffixes:
-                    wt = live[live_suffixes.index(suffix.removesuffix(".test"))]
-                    self.keep(EMULATOR_COL, wt, app_id, self.user_of(wt), app=app_id)
-                else:
-                    uninstall_app(app_id, out)
-                    found = True
-                break
+            prefix = next((p for p in emu.prefixes if app_id == p or app_id.startswith(f"{p}.")), None)
+            if prefix is None:
+                continue
+            suffix = app_id[len(prefix) + 1:]
+            if not suffix:
+                self.keep(EMULATOR_COL, "", app_id, "the unsuffixed (release or distribution) build", app=app_id)
+            elif suffix == "test":
+                self.keep(EMULATOR_COL, "", app_id, "the unsuffixed build's test APK", app=app_id)
+            elif not re.fullmatch(r"[A-Za-z0-9_]+(\.test)?", suffix):
+                self.keep(EMULATOR_COL, "", app_id, "not a worktree's app id", app=app_id)
+            elif wt := by_suffix.get(suffix.removesuffix(".test")):
+                self.keep(EMULATOR_COL, wt, app_id, self.user_of(wt), app=app_id)
+            else:
+                uninstall_app(app_id, out)
+                found = True
         self.end_section(out, found)
         sections += out
 
         out = ["Simulators"]
         found = False
         for udid, state, sim in simulators():
-            if sim in live_names:
-                wt = live[live_names.index(sim)]
+            if wt := by_name.get(sim):
                 self.keep(SIMULATOR_COL, wt, f"FA {sim}", self.user_of(wt), SIM_DEVICES / udid)
             else:
                 remove_simulator(udid, state, sim, out)
@@ -722,7 +695,7 @@ class Orphans:
         print("Merged and clean worktrees — safe to remove with cleanup-worktree.py <name>:")
         merged = [i for i, note in enumerate(self.notes) if note]
         for i in merged:
-            print(f"  {live_names[i]} ({human(sum(self.usage[i]))}) — {tilde(live[i])}")
+            print(f"  {os.path.basename(live[i])} ({human(sum(self.usage[i]))}) — {tilde(live[i])}")
         if not merged:
             print("  none")
 
@@ -768,7 +741,7 @@ class Orphans:
                 names = os.listdir(f"{wt}/.build")
             except OSError:
                 continue
-            names = sorted(n for n in names if not n.startswith(".")) + sorted(n for n in names if n.startswith("."))
+            names = sorted(names, key=lambda n: (n.startswith("."), n))
             entries = [f"{wt}/.build/{n}" for n in names if n != "Android" and not n.startswith(".fa-slot")]
             if not entries:
                 continue

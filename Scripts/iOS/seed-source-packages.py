@@ -17,14 +17,13 @@ existing SourcePackages.
 """
 import json
 import os
-import plistlib
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from fa_paths import DERIVED_DATA, derived_data_hash  # noqa: E402
+from fa_paths import DERIVED_DATA, derived_data_hash, workspace_path  # noqa: E402
 
 RESOLVED = "FurAffinity.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved"
 
@@ -52,10 +51,7 @@ def best_sibling(dst, resolved):
         dd_dir = info.parent
         if dd_dir == dst:
             continue
-        try:
-            workspace = plistlib.loads(info.read_bytes()).get("WorkspacePath")
-        except (OSError, plistlib.InvalidFileException):
-            continue
+        workspace = workspace_path(dd_dir)
         if not workspace:
             continue
         worktree = Path(workspace).parent
