@@ -10,8 +10,10 @@
 //  Android build of `AttributedString(FAHTML:)`. WebKit's HTML importer
 //  (`NSAttributedString(data:.html)`) doesn't exist here — and nothing needs to
 //  replace it, because Compose parses HTML itself. So the markup is normalised into
-//  the subset it understands and carried, verbatim, to `HTMLView`. The signature
-//  matches the Apple version so FAKit domain code is unchanged.
+//  the subset it understands, with FA's stylesheet resolved into it, and carried,
+//  verbatim, to `HTMLView`. Its images are fetched first, as iOS inlines them, so
+//  `HTMLView` knows their size before it lays anything out. The signature matches
+//  the Apple version so FAKit domain code is unchanged.
 //
 
 #if os(Android)
@@ -24,7 +26,8 @@ extension AttributedString {
         let token = signposter.beginInterval("AttributedString.init(FAHTML:)")
         defer { signposter.endInterval("AttributedString.init(FAHTML:)", token) }
 
-        self = AttributedString(faHTMLFragments: try FAHTMLNormalizer.fragments(of: FAHTML))
+        let fragments = try FAHTMLNormalizer.fragments(of: FAHTML, stylesheet: await FAStylesheet.current)
+        self = AttributedString(faHTMLFragments: await ImageInliner.shared.measuring(fragments))
     }
 }
 

@@ -24,6 +24,8 @@ struct HTMLView: View {
     var fragments: [FAHTMLFragment]
     @Environment(\.openURL) var openURL
     @Environment(\.navigationStream) var navigationStream
+    /// What an image may span, as FA caps `bbcode_img` at the description's width.
+    @State var availableWidth: CGFloat = 0
 
     init(text: AttributedString, initialHeight: CGFloat = 0) {
         self.fragments = text.faHTMLFragments
@@ -40,6 +42,7 @@ struct HTMLView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { availableWidth = $0 }
         // Matches what the iOS view insets text by: `textContainerInset = 3` on all
         // edges, plus the 5 pt `lineFragmentPadding` a `UITextView` keeps on its
         // leading/trailing edges by default (never zeroed in `makeUIView`).
@@ -52,12 +55,13 @@ struct HTMLView: View {
         Text(
             html: fragment.html,
             inlineViews: fragment.images.map { image in
-                TextInlineView(
+                let size = image.displaySize(maxWidth: Double(availableWidth))
+                return TextInlineView(
                     FAImage(image.url)
                         .resizable()
-                        .frame(width: image.displayWidth, height: image.displayHeight),
-                    width: image.displayWidth,
-                    height: image.displayHeight
+                        .frame(width: size.width, height: size.height),
+                    width: size.width,
+                    height: size.height
                 )
             },
             onLinkTap: { url in
@@ -89,19 +93,51 @@ struct HTMLView: View {
 
 private extension FAInlineImage {
     /// Compose reserves an inline placeholder's space before composing anything into
-    /// it, so every image needs a size up front — from the markup where it states one,
-    /// and otherwise from what FA's stylesheet would have given it.
-    var displayWidth: Double { statedSize?.width ?? fallbackExtent }
-    var displayHeight: Double { statedSize?.height ?? fallbackExtent }
-
-    /// Both or neither: a 300×19 slot squashes the image for good, which is worse than
-    /// the 19×19 one a fallback gives it.
-    private var statedSize: (width: Double, height: Double)? {
-        guard let width, let height else { return nil }
-        return (width, height)
+    /// it, so every image needs a size up front: the one the markup states, completed
+    /// or replaced by the image's own, then capped as FA's stylesheet caps it.
+    func displaySize(maxWidth: Double) -> (width: Double, height: Double) {
+        var size = intrinsicSize
+        // `.iconusername img` is capped at 50×50.
+        if isAvatar {
+            size = Self.fitting(size, maxWidth: 50, maxHeight: 50)
+        }
+        // `bbcode_img` is capped at the description's width; nothing is ever wider.
+        if maxWidth > 0 {
+            size = Self.fitting(size, maxWidth: maxWidth, maxHeight: .infinity)
+        }
+        return size
     }
 
-    /// `.iconusername` avatars are capped at 50×50; everything else left unsized is a
-    /// smilie, which sits on one line of text.
+    private var intrinsicSize: (width: Double, height: Double) {
+        let aspectRatio: Double? = {
+            guard let naturalWidth, let naturalHeight, naturalHeight > 0 else { return nil }
+            return naturalWidth / naturalHeight
+        }()
+        switch (width, height, aspectRatio) {
+        case let (width?, height?, _):
+            return (width, height)
+        case let (width?, nil, ratio?):
+            return (width, width / ratio)
+        case let (nil, height?, ratio?):
+            return (height * ratio, height)
+        case (nil, nil, _?):
+            return (naturalWidth!, naturalHeight!)
+        default:
+            // One side alone would squash the image for good, which is worse than the
+            // square a fallback gives it.
+            return (fallbackExtent, fallbackExtent)
+        }
+    }
+
+    /// Scales down, never up, keeping the aspect ratio.
+    private static func fitting(
+        _ size: (width: Double, height: Double), maxWidth: Double, maxHeight: Double
+    ) -> (width: Double, height: Double) {
+        let scale = min(1, maxWidth / size.width, maxHeight / size.height)
+        return (size.width * scale, size.height * scale)
+    }
+
+    /// What an image never fetched gets: `.iconusername` avatars are capped at 50×50,
+    /// and everything else is most likely a smilie, which sits on one line of text.
     private var fallbackExtent: Double { isAvatar ? 50 : 19 }
 }
