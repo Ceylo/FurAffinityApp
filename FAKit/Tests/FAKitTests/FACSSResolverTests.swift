@@ -110,3 +110,39 @@ struct FACSSResolverTests {
         #expect(html.contains("color:#555555"))
     }
 }
+
+struct FACSSResolverPrecedenceTests {
+    private func resolve(_ css: String, _ html: String) throws -> String {
+        let root = try #require(try SwiftSoup.parse(html).body())
+        try FACSSResolver(stylesheet: css).apply(to: root)
+        return try root.html()
+    }
+
+    @Test
+    func anImportantInlineStyleBeatsAnImportantRule() throws {
+        let html = try resolve(
+            ".x { color: #111111 !important }",
+            #"<span class="x" style="color: #222222 !important">a</span>"#
+        )
+        #expect(!html.contains("#111111"))
+    }
+
+    @Test
+    func anInlineStyleFromHtmlIgnoresIsRestated() throws {
+        // `android.text.Html` reads `color` from `style` on <span> and <p> only.
+        let html = try resolve(".x { color: #111111 }", #"<div class="x" style="color: #222222">a</div>"#)
+        #expect(html.contains(#"<span style="color:#222222">a</span>"#))
+        #expect(!html.contains("#111111"))
+    }
+
+    @Test
+    func aCombinatorCharacterInsideAnAttributeSelectorDoesNotSplitIt() throws {
+        let html = try resolve("a[rel~=nofollow] { font-weight: bold }", #"<a rel="nofollow" href="x">a</a>"#)
+        #expect(html.contains("<b>a</b>"))
+    }
+
+    @Test
+    func aDotInsideAnAttributeValueIsNoClass() {
+        #expect(FACSSResolver.specificity(of: #"a[href$=".png"]"#) == FACSSResolver.specificity(of: "a.x"))
+    }
+}

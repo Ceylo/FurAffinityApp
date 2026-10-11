@@ -90,25 +90,33 @@ actor CSSInliner {
 
     /// The theme's stylesheet: today's download when there is one, else the bundled copy.
     func stylesheet(for theme: FATheme) async -> String {
-        guard let downloadedCSS = await downloadedCSS(for: theme) else {
-            logger.warning("Could not download CSS for \(theme) theme, using local fallback")
-            return fallbackCSS(for: theme)
-        }
-        return downloadedCSS
+        await sourcedStylesheet(for: theme).css
     }
 
-    /// `stylesheet(for:)`, parsed, and kept as long as the download is: every comment
-    /// asks, so this skips the download chain and the cache's expiry sweep until then.
+    private func sourcedStylesheet(for theme: FATheme) async -> (css: String, isDownloaded: Bool) {
+        guard let downloadedCSS = await downloadedCSS(for: theme) else {
+            logger.warning("Could not download CSS for \(theme) theme, using local fallback")
+            return (fallbackCSS(for: theme), false)
+        }
+        return (downloadedCSS, true)
+    }
+
+    /// `stylesheet(for:)`, parsed, and kept as long as the download is — or, for the
+    /// fallback, until a download is worth retrying. Every comment asks, so this skips
+    /// the download chain and the cache's expiry sweep until then.
     func parsedStylesheet(for theme: FATheme) async -> FAStylesheet {
         if let parsed = parsedStylesheets[theme], parsed.expiry > .now {
             return parsed.stylesheet
         }
-        let stylesheet = FAStylesheet(css: await stylesheet(for: theme))
-        parsedStylesheets[theme] = (stylesheet, .now + Self.cssLifetime)
+        let (css, isDownloaded) = await sourcedStylesheet(for: theme)
+        let stylesheet = FAStylesheet(css: css)
+        parsedStylesheets[theme] = (stylesheet, .now + (isDownloaded ? Self.cssLifetime : Self.retryDelay))
         return stylesheet
     }
     private var parsedStylesheets: [FATheme: (stylesheet: FAStylesheet, expiry: Date)] = [:]
     private static let cssLifetime: TimeInterval = 60*60*24
+    /// How long a failed download is trusted to fail again.
+    private static let retryDelay: TimeInterval = 5*60
 
     func fallbackCSS(for theme: FATheme) -> String {
         switch theme {
@@ -139,19 +147,15 @@ actor CSSInliner {
                 return css
             }
 
-            if previousTask != nil {
-                // Previous task for the same theme has failed, no need to try again now
+            if let failedAt = lastFailures[theme], failedAt > .now - Self.retryDelay {
                 return nil
             }
 
-            guard let fetch = Self.fetch else { return nil }
-            let css = String(decoding: try await fetch(url(for: theme)), as: UTF8.self)
-            // Android's data source answers a challenged request with the WebView's
-            // rendering of the page, which for a stylesheet is HTML around escaped CSS.
-            guard !css.drop(while: \.isWhitespace).hasPrefix("<") else {
-                logger.error("\(self.url(for: theme)): css download returned HTML")
+            guard let css = await download(theme) else {
+                lastFailures[theme] = .now
                 return nil
             }
+            lastFailures[theme] = nil
             try cacheCSS(css, for: theme)
             return css
         }
@@ -159,6 +163,25 @@ actor CSSInliner {
         cssDownloadTasks[theme] = newTask
 
         return try? await newTask.result.get()
+    }
+
+    private var lastFailures: [FATheme: Date] = [:]
+
+    private func download(_ theme: FATheme) async -> String? {
+        guard let fetch = Self.fetch else { return nil }
+        do {
+            let css = String(decoding: try await fetch(url(for: theme)), as: UTF8.self)
+            // Android's data source answers a challenged request with the WebView's
+            // rendering of the page, which for a stylesheet is HTML around escaped CSS.
+            guard !css.drop(while: \.isWhitespace).hasPrefix("<") else {
+                logger.error("\(self.url(for: theme)): css download returned HTML")
+                return nil
+            }
+            return css
+        } catch {
+            logger.error("\(self.url(for: theme)): css download failed: \(error)")
+            return nil
+        }
     }
 
     private func cacheCSS(_ css: String, for theme: FATheme) throws {

@@ -11,8 +11,14 @@ import Foundation
 
 enum FAImageHeader {
     static func pixelSize(of data: Data) -> CGSize? {
-        let bytes = [UInt8](data.prefix(256 * 1024))
-        return png(bytes) ?? gif(bytes) ?? jpeg(bytes) ?? webp(bytes)
+        // Every header but a JPEG's sits at a fixed offset near the start; a JPEG's frame
+        // header follows its metadata segments, which only rarely run past this.
+        let head = 256 * 1024
+        let bytes = [UInt8](data.prefix(head))
+        if let size = png(bytes) ?? gif(bytes) ?? jpeg(bytes) ?? webp(bytes) {
+            return size
+        }
+        return data.count > head ? jpeg([UInt8](data)) : nil
     }
 
     private static func png(_ b: [UInt8]) -> CGSize? {

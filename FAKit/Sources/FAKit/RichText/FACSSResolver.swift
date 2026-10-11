@@ -116,15 +116,36 @@ struct FACSSResolver: Sendable {
             }
         }
 
+        // An element's own `style` takes part too, even where no rule matched: `fromHtml`
+        // reads it only in part, so what it skips is restated like a rule's.
+        for element in elements where !((try? element.attr("style")) ?? "").isEmpty {
+            if resolved[ObjectIdentifier(element)] == nil {
+                resolved[ObjectIdentifier(element)] = (element, [:])
+            }
+        }
+
         for (element, winners) in resolved.values {
-            // The element's own `style` beats every rule but an `!important` one, and
-            // `fromHtml` already reads it where it can.
+            let tag = element.tagName().lowercased()
             let inline = Self.translatableDeclarations(in: (try? element.attr("style")) ?? "")
-            let values = winners
-                .filter { property, winner in winner.declaration.important || inline[property] == nil }
-                .mapValues(\.declaration.value)
+            var values: [Property: String] = [:]
+            for property in Set(winners.keys).union(inline.keys) {
+                let sheet = winners[property]?.declaration
+                // The element's own `style` beats every rule but an `!important` one,
+                // unless it is `!important` itself.
+                if let own = inline[property], own.important || sheet?.important != true {
+                    if !Self.fromHtmlReads(property, on: tag) { values[property] = own.value }
+                } else if let sheet {
+                    values[property] = sheet.value
+                }
+            }
             try restate(values, on: element)
         }
+    }
+
+    /// Whether `android.text.Html` applies this property from the element's own `style`:
+    /// only colours and decoration, and only on `<span>` and `<p>`.
+    private static func fromHtmlReads(_ property: Property, on tag: String) -> Bool {
+        ["span", "p"].contains(tag) && [.color, .backgroundColor, .textDecoration].contains(property)
     }
 
     /// Whether `a` beats `b`: `!important` first, then specificity, then source order.
@@ -228,9 +249,24 @@ struct FACSSResolver: Sendable {
             .map { $0.split(whereSeparator: \.isWhitespace).joined(separator: " ") }
     }
 
-    /// A selector's compound selectors, its combinators dropped.
+    /// A selector's compound selectors, its combinators dropped. A combinator character
+    /// inside `[ … ]` (`[class~=x]`) belongs to the attribute selector.
     private static func compounds(of selector: String) -> [Substring] {
-        selector.split(whereSeparator: { " >+~".contains($0) })
+        var compounds: [Substring] = []
+        var start = selector.startIndex
+        var depth = 0
+        for index in selector.indices {
+            switch selector[index] {
+            case "[": depth += 1
+            case "]": depth = max(0, depth - 1)
+            case let character where depth == 0 && " >+~".contains(character):
+                compounds.append(selector[start..<index])
+                start = selector.index(after: index)
+            default: break
+            }
+        }
+        compounds.append(selector[start...])
+        return compounds.filter { !$0.isEmpty }
     }
 
     /// Whether a selector can describe rich text at all: no state (`:hover`), no
@@ -249,7 +285,18 @@ struct FACSSResolver: Sendable {
         var classes = 0
         var types = 0
         for compound in compounds(of: selector) {
-            classes += compound.filter { $0 == "." || $0 == "[" }.count
+            // Outside `[ … ]` only: a dot in an attribute value is no class.
+            var depth = 0
+            for character in compound {
+                switch character {
+                case "[":
+                    if depth == 0 { classes += 1 }
+                    depth += 1
+                case "]": depth = max(0, depth - 1)
+                case "." where depth == 0: classes += 1
+                default: break
+                }
+            }
             if compound.first?.isLetter == true { types += 1 }
         }
         return classes * 100 + types

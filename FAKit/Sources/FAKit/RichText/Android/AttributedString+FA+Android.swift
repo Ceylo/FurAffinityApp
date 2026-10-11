@@ -26,7 +26,12 @@ extension AttributedString {
         let token = signposter.beginInterval("AttributedString.init(FAHTML:)")
         defer { signposter.endInterval("AttributedString.init(FAHTML:)", token) }
 
-        let fragments = try FAHTMLNormalizer.fragments(of: FAHTML, stylesheet: await FAStylesheet.current)
+        let stylesheet = await FAStylesheet.current
+        // Off the main actor: the cascade runs SwiftSoup selectors over the whole tree,
+        // for every comment.
+        let fragments = try await Task.detached {
+            try FAHTMLNormalizer.fragments(of: FAHTML, stylesheet: stylesheet)
+        }.value
         self = AttributedString(faHTMLFragments: await ImageInliner.shared.measuring(fragments))
     }
 }

@@ -110,7 +110,8 @@ private extension FAInlineImage {
 
     private var intrinsicSize: (width: Double, height: Double) {
         let natural: (width: Double, height: Double)? = {
-            guard let naturalWidth, let naturalHeight, naturalHeight > 0 else { return nil }
+            guard let naturalWidth, let naturalHeight, naturalWidth > 0, naturalHeight > 0
+            else { return nil }
             return (naturalWidth, naturalHeight)
         }()
         switch (width, height, natural) {
