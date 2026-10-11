@@ -60,16 +60,16 @@ public enum FAHTMLNormalizer {
     /// What the renderer actually needs: the markup already cut at its rules. The
     /// whole-document view below re-serialises the tree and walks it again for nothing.
     ///
-    /// - Parameter theme: the FA theme whose stylesheet rules to restate, if any.
+    /// - Parameter theme: the FA theme whose stylesheet rules to restate.
     public static func fragments(
-        of html: String, theme: FATheme? = nil
+        of html: String, theme: FATheme
     ) throws -> [FANormalizedHTML.Fragment] {
         try fragments(of: try normalizedRoot(html, theme: theme))
     }
 
     /// The whole normalised document. Only the tests read it — production goes through
     /// `fragments(of:)`.
-    static func normalized(_ html: String, theme: FATheme? = nil) throws -> FANormalizedHTML {
+    static func normalized(_ html: String, theme: FATheme = .dark) throws -> FANormalizedHTML {
         let root = try normalizedRoot(html, theme: theme)
         return FANormalizedHTML(
             html: try root.html(),
@@ -78,13 +78,11 @@ public enum FAHTMLNormalizer {
         )
     }
 
-    private static func normalizedRoot(_ html: String, theme: FATheme?) throws -> Element {
+    private static func normalizedRoot(_ html: String, theme: FATheme) throws -> Element {
         let document = try SwiftSoup.parse(html)
         let root = document.body() ?? document
         try dropUnrenderableImages(in: root)
-        if let theme {
-            try applyThemeRules(in: root, theme: theme)
-        }
+        try applyThemeRules(in: root, theme: theme)
         try rewriteAlignment(in: root)
         try hoistRules(in: root)
         return root
@@ -133,11 +131,9 @@ public enum FAHTMLNormalizer {
             guard !voidTags.contains(tag), !element.getChildNodes().isEmpty else { continue }
             let classes = element.faClassNames
 
-            var bold = classes.contains("bbcode_quote_name")
-            if theme == .dark, tag == "a",
-               element.parents().contains(where: { $0.hasClass("user-submitted-links") }) {
-                bold = true
-            }
+            let bold = classes.contains("bbcode_quote_name")
+                || (theme == .dark && tag == "a"
+                    && element.parents().contains { $0.hasClass("user-submitted-links") })
             let italic = classes.contains("bbcode_quote")
             var color: String?
             if tag != "a" {

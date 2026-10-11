@@ -84,8 +84,7 @@ actor CSSInliner {
                 return css
             }
             
-            // A failure is trusted for a while, then retried.
-            if let failedAt = lastFailures[theme], failedAt > .now - 5*60 {
+            if let failedAt = lastFailures[theme], failedAt > .now - Self.retryDelay {
                 return nil
             }
             
@@ -112,6 +111,8 @@ actor CSSInliner {
     }
     
     private var lastFailures: [FATheme: Date] = [:]
+    /// How long a failed download is trusted to fail again.
+    private static let retryDelay: TimeInterval = 5*60
     
     private func cacheCSS(_ css: String, for theme: FATheme) throws {
         guard !cssCache.objectExists(forKey: theme) else {
