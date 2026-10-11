@@ -110,25 +110,15 @@ link statically, so their debug info is inside `Fur Affinity.app.dSYM`.
 
 ### Why two targets have the script sandbox off
 
-`ENABLE_USER_SCRIPT_SANDBOXING` is a per-target setting; Xcode has no per-phase
-switch. So the app target is sandboxed in both configurations, as is
-`NotificationContent`, and the two steps that cannot run sandboxed each live in an
-aggregate target of their own with it off: **Upload dSYMs** and **Commit Stamp**.
-No declaration can make either work: Xcode's profile denies `SRCROOT` and the
-build directories by *subpath* while granting declared inputs as `literal`, the
-node itself and not what is under it —
-
-```
-(deny file-read* file-write* (subpath (param "CONFIGURATION_BUILD_DIR")) …)
-(allow file-read* (literal (param "SCRIPT_INPUT_FILE_0")))
-```
-
-— and a dSYM is a bundle, so the DWARF file inside stays denied however it is
-declared, the whole folder included; `--include-sources` reads every source file
-under `SRCROOT` besides. Sandboxed, `sentry-cli` authenticates, reaches
-`chunk-upload/` and dies on `error: Operation not permitted (os error 1)`, with no
-kernel log entry because the profile denies without reporting. `git rev-parse`
-reads many files under `.git`, which no list of literals names ahead of time.
+`ENABLE_USER_SCRIPT_SANDBOXING` is a per-target setting, with no per-phase switch.
+So the app target and `NotificationContent` stay sandboxed, and the two steps that
+cannot run sandboxed each live in an aggregate target of their own with it off:
+**Upload dSYMs** and **Commit Stamp**. No input declaration can make them work: Xcode's
+profile denies the build directories and `SRCROOT` by *subpath* and grants declared
+inputs as `literal` nodes only, so the DWARF file inside a dSYM bundle stays denied, as
+do the sources `--include-sources` reads and the many files under `.git` that `git
+rev-parse` touches. Sandboxed, `sentry-cli` dies on `error: Operation not permitted
+(os error 1)`, with nothing in the kernel log.
 
 The stamp rewrites its header only when the hash changes and is always out of
 date, since HEAD moves without any declared input changing.
@@ -273,8 +263,8 @@ match, and the bridges declare `package fur.affinity.ui` while sitting flat in
 path. Moving them to `src/main/kotlin/fur/affinity/ui/` fixes the keys (measured:
 it does, for 27 ms of build time, a 21 KB upload and 58 bytes of APK).
 
-It is not done because the cost is not the build time: it is nine files leaving
-the flat directory that `Scripts/Android/logs.sh` globs for bridge `TAG`s and that
+It is not done because the cost is not the build time: it is every bridge file
+leaving the flat directory that `Scripts/Android/logs.sh` globs for bridge `TAG`s and that
 `check-crash-reporting.sh` names by path, bought for source text on frames that
 already carry file and line. Revisit if the Kotlin layer grows.
 
@@ -313,16 +303,5 @@ The cases live in `FurAffinity/Helpers/CrashTest.swift` and
 main-thread hang, there because non-fatal events take a path crashes do not — it
 is how the `culture` context was found.
 
-Last full run (iOS 2026-09-19, Android 2026-09-20: one event per crash, no
-symbolication errors, no location on any of them, and every event carrying the
-right `commit` tag). The lines are each run's markers, which move as the files
-change:
-
-| Case | Android | iOS |
-|---|---|---|
-| `swiftFatalError` | `CrashTest.swift:67` | `CrashTest.swift:67` |
-| `swiftForceUnwrapFAKit` | `CrashTestSite.swift:13` | `CrashTestSite.swift:13` |
-| `swiftBackgroundThread` | `CrashTest.swift:80`, non-main | `CrashTest.swift:80`, non-main |
-| `kotlinException` | `FACrashReportingBridge.kt:96` | — |
-| `appHang` | — | `CrashTest.swift:73` |
-| `optOut` | nothing reported | nothing reported |
+Last full run: iOS 2026-09-19, Android 2026-09-20, every case passing, each with
+the right `commit` tag.
