@@ -203,7 +203,8 @@ Scripts/Android/with-emulator-lock.sh ./gradlew :app:connectedDebugAndroidTest
 
 It waits (`--timeout`, default 1800 s), names the holder, and exits with the wrapped
 command's status; a lock left by a crashed run clears itself. `run.sh`, `test.sh`,
-`debug.sh`, `profile.sh` and `install-apk.sh` take it themselves.
+`debug.sh`, `profile.sh`, `install-apk.sh` and `check-crash-reporting.sh` take it
+themselves; wrapping one of them fails at once rather than deadlocking.
 
 ### Module-name poisoning
 
