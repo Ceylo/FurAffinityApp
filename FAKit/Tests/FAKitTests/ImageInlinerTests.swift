@@ -5,6 +5,8 @@
 //  Created by Ceylo on 28/05/2026.
 //
 
+#if !os(Android)
+
 import Testing
 import Foundation
 @testable import FAKit
@@ -12,7 +14,6 @@ import Foundation
 @Suite(.serialized)
 @MainActor
 struct ImageInlinerTests {
-    #if !os(Android)
     @Test
     func htmlWithoutImagesIsUnchanged() async {
         FAImageInliner.dataProvider = { _ in
@@ -106,48 +107,6 @@ struct ImageInlinerTests {
         #expect(result == "")
     }
 
-    #endif
-
-    @Test
-    func fetchImagesLeavesFailuresOut() async throws {
-        let good = try #require(URL(string: "https://example.com/good.png"))
-        let bad = try #require(URL(string: "https://example.com/bad.png"))
-        FAImageInliner.dataProvider = { url in
-            url == good ? (Data("x".utf8), "image/png") : nil
-        }
-        let images = await ImageInliner().fetchImages([good, bad, good])
-        #expect(Set(images.keys) == [good])
-    }
-
-    @Test
-    func measuringFillsTheNaturalSizeOncePerURL() async throws {
-        let png = try #require(URL(string: "https://example.com/a.png"))
-        let missing = try #require(URL(string: "https://example.com/missing.png"))
-        let callCount = CallCounter()
-        let bytes = testData("sample-7x5.png")
-        FAImageInliner.dataProvider = { url in
-            await callCount.increment()
-            return url == png ? (bytes, "image/png") : nil
-        }
-        let fragments = [
-            FANormalizedHTML.Fragment(html: "", images: [
-                FAInlineImage(url: png), FAInlineImage(url: missing),
-            ]),
-            FANormalizedHTML.Fragment(html: "", images: [FAInlineImage(url: png, width: 300)]),
-        ]
-
-        let measured = await ImageInliner().measuring(fragments)
-
-        #expect(await callCount.value == 2)
-        #expect(measured[0].images[0].naturalWidth == 7)
-        #expect(measured[0].images[0].naturalHeight == 5)
-        #expect(measured[0].images[1].naturalWidth == nil)
-        // The size the markup states is kept beside the natural one.
-        #expect(measured[1].images[0].width == 300)
-        #expect(measured[1].images[0].naturalWidth == 7)
-    }
-
-    #if !os(Android)
     @Test("mimeType infers from path extension", arguments: [
         ("https://example.com/foo.png", "image/png"),
         ("https://example.com/foo.gif", "image/gif"),
@@ -159,10 +118,11 @@ struct ImageInlinerTests {
         let url = try #require(URL(string: urlString))
         #expect(FAImageInliner.mimeType(for: url) == expected)
     }
-    #endif
 }
 
 private actor CallCounter {
     private(set) var value = 0
     func increment() { value += 1 }
 }
+
+#endif

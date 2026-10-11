@@ -189,10 +189,10 @@ extension KingfisherManager {
         )
     }
 
-    /// Image-data provider used by `FAImageInliner` to fetch images for HTML inlining
-    /// (iOS) or measuring (Android). Reuses Kingfisher's cache: a cache hit skips
-    /// download entirely, and a cache miss downloads through the FA downloader and
-    /// populates the cache the rendered `FAImage` reads from.
+#if !FA_SKIP_MODULE
+    /// Image-data provider used by `FAImageInliner` to fetch images for HTML inlining.
+    /// Reuses Kingfisher's cache: a cache hit skips download entirely, and a cache miss
+    /// downloads through `downloaderWithUserAgent` and populates the cache for later use.
     func retrieveFAImageData(with url: URL) async throws -> (data: Data, mimeType: String) {
         try await imageFetches.perform(url) {
             _ = try await KingfisherManager.shared.retrieveFAImageResult(with: url, waitForCache: true)
@@ -208,6 +208,7 @@ extension KingfisherManager {
 
         return (data, FAImageInliner.mimeType(for: url))
     }
+#endif
 
     /// Downloads `url` if needed and returns a copy of its bytes on disk. Backs the
     /// notification attachments on iOS and Save/Share of the full-resolution media on

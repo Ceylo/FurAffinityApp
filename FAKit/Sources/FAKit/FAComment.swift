@@ -169,7 +169,7 @@ extension FAComment {
             }
         }
         
-        // Each message converts independently, so they all wait on their images at once.
+        // Each message converts independently, so they convert concurrently.
         let converted = try await comments.parallelMap { try await FAComment($0) }
         let index = Dictionary(uniqueKeysWithValues: zip(comments.map(\.cid), converted))
         return rootCommentIDs.map { cid in

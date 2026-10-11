@@ -26,6 +26,9 @@ struct HTMLView: View {
     @Environment(\.navigationStream) var navigationStream
     /// What an image may span, as FA caps `bbcode_img` at the description's width.
     @State var availableWidth: CGFloat = 0
+    /// Each image's own size, once `FAImage` has loaded it. Until then it gets a
+    /// fallback, so the text never waits on an image.
+    @State var naturalSizes: [URL: Foundation.CGSize] = [:]
 
     init(text: AttributedString, initialHeight: CGFloat = 0) {
         self.fragments = text.faHTMLFragments
@@ -55,9 +58,20 @@ struct HTMLView: View {
         Text(
             html: fragment.html,
             inlineViews: fragment.images.map { image in
-                let size = image.displaySize(maxWidth: Double(availableWidth))
+                let size = image.displaySize(
+                    natural: naturalSizes[image.url], maxWidth: Double(availableWidth)
+                )
                 return TextInlineView(
                     FAImage(image.url)
+                        .onSuccess { result in
+                            let natural = Foundation.CGSize(
+                                width: Double(result.image.size.width),
+                                height: Double(result.image.size.height)
+                            )
+                            if naturalSizes[image.url] != natural {
+                                naturalSizes[image.url] = natural
+                            }
+                        }
                         .resizable()
                         .frame(width: size.width, height: size.height),
                     width: size.width,
@@ -94,9 +108,9 @@ struct HTMLView: View {
 private extension FAInlineImage {
     /// Compose reserves an inline placeholder's space before composing anything into
     /// it, so every image needs a size up front: the one the markup states, completed
-    /// or replaced by the image's own, then capped as FA's stylesheet caps it.
-    func displaySize(maxWidth: Double) -> (width: Double, height: Double) {
-        var size = intrinsicSize
+    /// or replaced by the image's own once loaded, then capped as FA's stylesheet caps it.
+    func displaySize(natural: Foundation.CGSize?, maxWidth: Double) -> (width: Double, height: Double) {
+        var size = intrinsicSize(natural: natural)
         // `.iconusername img` is capped at 50×50.
         if isAvatar {
             size = Self.fitting(size, maxWidth: 50, maxHeight: 50)
@@ -108,12 +122,8 @@ private extension FAInlineImage {
         return size
     }
 
-    private var intrinsicSize: (width: Double, height: Double) {
-        let natural: (width: Double, height: Double)? = {
-            guard let naturalWidth, let naturalHeight, naturalWidth > 0, naturalHeight > 0
-            else { return nil }
-            return (naturalWidth, naturalHeight)
-        }()
+    private func intrinsicSize(natural: Foundation.CGSize?) -> (width: Double, height: Double) {
+        let natural = natural.flatMap { $0.width > 0 && $0.height > 0 ? $0 : nil }
         switch (width, height, natural) {
         case let (width?, height?, _):
             return (width, height)
@@ -122,7 +132,7 @@ private extension FAInlineImage {
         case let (nil, height?, natural?):
             return (height * natural.width / natural.height, height)
         case let (nil, nil, natural?):
-            return natural
+            return (natural.width, natural.height)
         default:
             // One side alone would squash the image for good, which is worse than the
             // square a fallback gives it.
@@ -138,7 +148,7 @@ private extension FAInlineImage {
         return (size.width * scale, size.height * scale)
     }
 
-    /// What an image never fetched gets: `.iconusername` avatars are capped at 50×50,
+    /// What an image not loaded yet gets: `.iconusername` avatars are capped at 50×50,
     /// and everything else is most likely a smilie, which sits on one line of text.
     private var fallbackExtent: Double { isAvatar ? 50 : 19 }
 }

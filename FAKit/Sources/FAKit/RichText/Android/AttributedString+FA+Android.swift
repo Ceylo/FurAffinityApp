@@ -11,9 +11,8 @@
 //  (`NSAttributedString(data:.html)`) doesn't exist here — and nothing needs to
 //  replace it, because Compose parses HTML itself. So the markup is normalised into
 //  the subset it understands, with FA's theme restated into it, and carried,
-//  verbatim, to `HTMLView`. Its images are fetched first, as iOS inlines them, so
-//  `HTMLView` knows their size before it lays anything out. The signature matches
-//  the Apple version so FAKit domain code is unchanged.
+//  verbatim, to `HTMLView`. The signature matches the Apple version so FAKit domain
+//  code is unchanged.
 //
 
 #if os(Android)
@@ -31,7 +30,7 @@ extension AttributedString {
         let fragments = try await Task.detached {
             try FAHTMLNormalizer.fragments(of: FAHTML, theme: theme)
         }.value
-        self = AttributedString(faHTMLFragments: await ImageInliner.shared.measuring(fragments))
+        self = AttributedString(faHTMLFragments: fragments)
     }
 }
 

@@ -10,6 +10,7 @@ import Foundation
 extension String {
     #if !os(Android)
     static private let cssInliner = CSSInliner()
+    static private let imageInliner = ImageInliner()
     #endif
 
     /// Whether this `Cookie:` header carries a Cloudflare clearance.
@@ -34,7 +35,7 @@ extension String {
     }
 
     public func inliningImages() async -> String {
-        await ImageInliner.shared.inlineImages(in: self)
+        await Self.imageInliner.inlineImages(in: self)
     }
     #endif
 
