@@ -11,7 +11,7 @@ still built by `FurAffinity.xcodeproj` and none of its files move.
 | [docs/build-and-run.md](docs/build-and-run.md) | emulator, build, run, debug, test, CI, the build-environment traps, and the [build slots](docs/build-and-run.md#build-slots) the Swift side builds in, shared by every worktree |
 | [docs/shared-sources.md](docs/shared-sources.md) | guarding, and every rule for writing a file both platforms compile |
 | [docs/assets-and-resources.md](docs/assets-and-resources.md) | shared asset-catalog entries, generated launcher/app art |
-| [docs/forks.md](docs/forks.md) | the four forked dependencies and every patch in them |
+| [docs/forks.md](docs/forks.md) | the five forked dependencies and every patch in them |
 | [docs/upstreaming.md](docs/upstreaming.md) | sending a fork patch back to its origin project: gates, evidence, PR shape |
 | [docs/images.md](docs/images.md) | the Android image pipeline, the shared HTTP client, and why HTTP/2 does not ship |
 | [docs/cloudflare-and-login.md](docs/cloudflare-and-login.md) | login, the long-lived hidden WebView, Cloudflare challenges and how one is repaired |
@@ -61,35 +61,17 @@ Scripts/Android/generate-assets.sh  # derived art (see docs/assets-and-resources
 
 ## Quick start
 
-Boot an emulator — nothing in the Skip toolchain does it for you — then build,
-run and test. Each command is explained in
-[docs/build-and-run.md](docs/build-and-run.md).
+Boot an emulator (nothing in the Skip toolchain does it for you), then build, run and
+test. Every command is explained in [docs/build-and-run.md](docs/build-and-run.md).
 
 ```
 Scripts/Android/start-emulator.sh  # boots, waits, never touches the app
 Scripts/Android/run.sh             # builds, installs, starts this worktree's app
+Scripts/Android/test.sh            # both Android test packages on the emulator
 ```
 
 Each worktree installs its **own** debug app (its directory name becomes the
-`applicationIdSuffix` and the launcher label), which is why running it goes
-through that script: `skip app launch --android` installs the same APK and then
-starts the *unsuffixed* id. It still has its own use — it is the only command
-that compiles the Darwin bridge.
-
-```
-skip android build                           # transpile + compile via SwiftPM (fast inner loop)
-Scripts/Android/build-release-apk.sh         # the signed release APK (docs/releasing.md)
-Scripts/Android/clean.sh [--all]             # next build is clean; --all also drops idle slots
-```
-
-```
-Scripts/Android/logs.sh                      # our tags only, live
-Scripts/Android/debug.sh                     # attach a Swift debugger (docs/build-and-run.md)
-Scripts/Android/profile.sh cpu|trace|mem     # after run.sh --profile (docs/profiling.md)
-cd FAKit && skip android test --testing-library testing
-xcodebuild test -scheme FurAffinity -destination "id=$(Scripts/iOS/simulator.sh --udid)"
-```
-
-The iOS build must stay green at every step; `skip android build` being green
-does **not** mean the app still builds, since only `skip app launch` compiles the
-Darwin bridge.
+`applicationIdSuffix`), so run through `run.sh`, never `skip app launch --android`,
+which starts the *unsuffixed* id. `run.sh`'s Gradle build is also the one that compiles
+the Darwin bridge: `skip android build` being green does **not** mean the app builds.
+The iOS build must stay green at every step.
