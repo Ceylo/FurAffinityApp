@@ -54,7 +54,8 @@ def slots(pool):
                  if (m := re.fullmatch(r"android-slot-([1-9][0-9]*)", n)))
         yield sorted((int(m[1]), path) for m, path in found if os.path.isdir(path))
     finally:
-        held.close()
+        if held:
+            held.close()
 
 
 def describe(pool):

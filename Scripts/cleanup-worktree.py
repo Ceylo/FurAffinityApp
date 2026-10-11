@@ -59,7 +59,10 @@ sys.path.insert(0, str(HERE / "Android"))
 from fa_paths import DERIVED_DATA, derived_data_hash, workspace_path  # noqa: E402
 import slots  # noqa: E402
 
-locale.setlocale(locale.LC_NUMERIC, "")
+try:
+    locale.setlocale(locale.LC_NUMERIC, "")
+except locale.Error:
+    pass
 
 ROOT = HERE.parent
 HOME = Path.home()
@@ -90,6 +93,7 @@ failed = False
 caller_removed = False
 # Set by main().
 MAIN = WORKTREES = CALLER_DIR = lock_script = ""
+signing_helper = str(SIGNING_MATERIAL)
 
 
 def die(message):
@@ -411,9 +415,12 @@ def signing_material(wt):
     links to another copy. Scripts/signing-material.sh says which, for
     slot-sync.sh too."""
     ignored = git(wt, "ls-files", "--others", "--ignored", "--exclude-standard", "--directory").stdout
-    matched = run("bash", "-c", 'source "$1"; while IFS= read -r f; do'
-                  ' if is_signing_material "$f"; then echo "$f"; fi; done',
-                  "_", SIGNING_MATERIAL, input=ignored).stdout
+    p = run("bash", "-c", 'source "$1" || exit 2; while IFS= read -r f; do'
+            ' if is_signing_material "$f"; then echo "$f"; fi; done',
+            "_", signing_helper, input=ignored)
+    if p.returncode:
+        die(f"could not read {signing_helper}: {p.stderr.strip()}")
+    matched = p.stdout
     return [f for f in matched.splitlines() if not os.path.islink(os.path.join(wt, f))]
 
 
@@ -826,7 +833,7 @@ def target_path(arg):
 
 
 def main():
-    global args, PAINT, RESET, MAIN, WORKTREES, CALLER_DIR, lock_script
+    global args, PAINT, RESET, MAIN, WORKTREES, CALLER_DIR, lock_script, signing_helper
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-h", "--help", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
@@ -872,6 +879,7 @@ def main():
         tmp = tempfile.mkdtemp(prefix="fa-cleanup.")
         atexit.register(shutil.rmtree, tmp, True)
         lock_script = shutil.copy2(lock_script, tmp)
+        signing_helper = shutil.copy2(signing_helper, tmp)
     os.chdir(MAIN)
 
     status = 0

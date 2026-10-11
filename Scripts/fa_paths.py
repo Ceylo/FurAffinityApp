@@ -26,5 +26,5 @@ def workspace_path(dd_dir):
     info.plist, or "" (Skip's projects write none)."""
     try:
         return plistlib.loads((Path(dd_dir) / "info.plist").read_bytes()).get("WorkspacePath") or ""
-    except (OSError, plistlib.InvalidFileException):
+    except Exception:  # a plist Xcode left half-written
         return ""
