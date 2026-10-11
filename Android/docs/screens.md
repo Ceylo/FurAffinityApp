@@ -192,12 +192,20 @@ no-ops in `SubmissionShims.swift`.
 
 `HTMLView` does real work: `FAKit` normalises FA's markup (`FAHTMLNormalizer`) and
 Compose parses it (see `Text(html:)` under [the other fork
-patches](forks.md#the-other-fork-patches)). The view puts back what that parser drops: a
-`Divider()` per `<hr>`, and an inline view at each `<img>`'s U+FFFC. Accepted losses,
-none exercised by FA's corpus: `<ol>` numbering, `<blockquote>` indent, `<code>`
-monospace, px font sizes, `<sub>` size, exact heading sizes. GIF avatars stay on their
-first frame. Its padding is 3 dp vertical and **8 dp horizontal**, matching iOS, whose
-`UITextView` adds `lineFragmentPadding = 5` to the 3 pt inset.
+patches](forks.md#the-other-fork-patches)). `fromHtml` reads neither `<style>` nor
+classes, so the normaliser restates the theme rules that show, for `FATheme.current`:
+quotes in `<i>` with their name in `<b>`, and in dark only, headings in `#add8f5` and
+description links in `<b>`. An element's own `color` wins. Links keep the app tint and
+spoilers stay visible. The rules are copied by hand from `ui_theme_dark.css` and
+`ui_theme_light.css`; an iOS test pins them to the bundled sheets, so follow a restyle of
+FA's by hand. The view puts back what the parser drops: a `Divider()` per `<hr>`, and an
+inline view at each `<img>`'s U+FFFC. The text never waits for an image: each is sized
+from its `width`/`height`, else a fallback (50×50 avatar, 19×19 smilie), then from its
+own size once `FAImage` loads it, capped at 50×50 for avatars and the text width for all.
+Accepted losses, none exercised by FA's corpus: `<ol>` numbering, `<blockquote>` indent,
+`<code>` monospace, px font sizes, `<sub>` size, exact heading sizes. GIF avatars stay on
+their first frame. Its padding is 3 dp vertical and **8 dp horizontal**, matching iOS,
+whose `UITextView` adds `lineFragmentPadding = 5` to the 3 pt inset.
 
 Link taps never reach `openURL`: Compose hands them to `onLinkTap`, which pushes anything
 `FATarget(with:)` matches into `NavigationStream` through `MainActor.assumeIsolated` (a

@@ -12,19 +12,23 @@ import Testing
 @testable import FAKit
 @testable import FAPages
 
-private func normalize(_ html: String) throws -> FANormalizedHTML {
-    try FAHTMLNormalizer.normalized(html)
+private func normalize(_ html: String, theme: FATheme = .dark) throws -> FANormalizedHTML {
+    try FAHTMLNormalizer.normalized(html, theme: theme)
 }
 
 /// terriniss's profile is the densest bbcode in the fixture corpus: a centred `<code>`
 /// wrapper holding `bbcode_h4`, `bbcode_hr`, `bbcode_b`, `bbcode_u`, `bbcode_sub`,
 /// inline `style="color:"` spans and `.iconusername` avatars.
-private func terrinissDescription() throws -> String {
+///
+/// `asSubmission` embeds it as submissions and journals are, in the wrapper that carries
+/// `.user-submitted-links`, rather than as a profile.
+private func terrinissDescription(asSubmission: Bool = false) throws -> String {
     let data = testData("www.furaffinity.net:user:terriniss.html")
     let url = try #require(URL(string: "https://www.furaffinity.net/user/terriniss"))
-    return try FAUserPage(data: data, url: url)
-        .htmlDescription
-        .selfContainedFAHtmlUserDescription
+    let description = try FAUserPage(data: data, url: url).htmlDescription
+    return asSubmission
+        ? description.selfContainedFAHtmlSubmission
+        : description.selfContainedFAHtmlUserDescription
 }
 
 // MARK: - Alignment
@@ -245,7 +249,7 @@ struct FAHTMLNormalizerFragmentTests {
         // `AttributedString(FAHTML:)` reads nothing but the fragments, so it skips
         // re-serialising the document — it must still get exactly them.
         let source = try terrinissDescription()
-        #expect(try FAHTMLNormalizer.fragments(of: source) == normalize(source).fragments)
+        #expect(try FAHTMLNormalizer.fragments(of: source, theme: .dark) == normalize(source).fragments)
     }
 
     @Test
@@ -401,5 +405,143 @@ struct FAHTMLNormalizerPassthroughTests {
     func emptyAndUnknownMarkupSurvivesAsText() throws {
         #expect(try normalize("").html.isEmpty)
         #expect(try normalize("<marquee>kept</marquee>").html.contains("kept"))
+    }
+}
+
+// MARK: - Theme
+
+private func body(of html: String) throws -> Element {
+    try #require(try SwiftSoup.parse(html).body())
+}
+
+struct FAHTMLNormalizerThemeTests {
+    /// The links of terriniss's description, avatars aside, as normalised.
+    private func links(asSubmission: Bool, theme: FATheme) throws -> [Element] {
+        let html = try normalize(terrinissDescription(asSubmission: asSubmission), theme: theme).html
+        #expect(!html.contains("#d0e6f5"), "links keep the app's tint")
+        let links = try body(of: html).select("a").array().filter { !$0.hasClass("iconusername") }
+        try #require(!links.isEmpty)
+        return links
+    }
+
+    @Test(arguments: [FATheme.light, .dark])
+    func quoteIsItalicAndItsNameBold(theme: FATheme) throws {
+        let html = try normalize("""
+        <span class="bbcode bbcode_quote"><span class="bbcode_quote_name">someone wrote:</span>quoted</span>
+        """, theme: theme).html
+        let quote = try #require(try body(of: html).select(".bbcode_quote").first())
+        #expect(try quote.child(0).tagName() == "i")
+        let name = try #require(try quote.select(".bbcode_quote_name").first())
+        #expect(try name.child(0).tagName() == "b")
+    }
+
+    @Test(arguments: [
+        (FATheme.dark, #"<span style="color:#add8f5">Heading</span>"#),
+        // Light's heading colour is the body's.
+        (FATheme.light, "Heading</h4>"),
+    ])
+    func headingTakesTheThemeColour(theme: FATheme, expected: String) throws {
+        let html = try normalize(#"<h4 class="bbcode bbcode_h4">Heading</h4>"#, theme: theme).html
+        #expect(html.contains(expected))
+    }
+
+    @Test
+    func ownColourBeatsTheThemeAndIsRestated() throws {
+        // terriniss colours her own headings; `fromHtml` reads no `color` on an <h4>.
+        let html = try normalize(#"<h4 class="bbcode bbcode_h4" style="color: #C92A2A;">Heading</h4>"#).html
+        #expect(!html.contains("#add8f5"))
+        #expect(html.contains(#"<span style="color:#c92a2a">Heading</span>"#))
+    }
+
+    @Test(arguments: [
+        ("#f00", "#ff0000"),
+        ("#C92A2A !important", "#c92a2a"),
+    ])
+    func ownColourIsRestatedAsFromHtmlReadsIt(own: String, expected: String) throws {
+        let html = try normalize(#"<h4 class="bbcode bbcode_h4" style="color: \#(own)">x</h4>"#).html
+        #expect(html.contains(#"<span style="color:\#(expected)">x</span>"#))
+    }
+
+    @Test
+    func anOwnColourKeywordLeavesTheThemeColour() throws {
+        let html = try normalize(#"<h4 class="bbcode bbcode_h4" style="color: inherit">x</h4>"#).html
+        #expect(html.contains("#add8f5"))
+    }
+
+    @Test
+    func aDeclarationAfterANewlineIsStillRead() throws {
+        let html = try normalize("<h4 class=\"bbcode bbcode_h4\" style=\"text-align:left;\ncolor:#C92A2A\">x</h4>").html
+        #expect(html.contains("#c92a2a"))
+    }
+
+    #if !os(Android)
+    /// The rules above are copied from FA's stylesheets by hand; this fails when the
+    /// bundled copies stop declaring what they restate.
+    @Test
+    func theRulesStillMatchTheBundledStylesheets() async {
+        let inliner = CSSInliner()
+        let dark = await inliner.fallbackCSS(for: .dark).replacing(/\s+/, with: " ")
+        let light = await inliner.fallbackCSS(for: .light).replacing(/\s+/, with: " ")
+        let headings = ".bbcode_h1, .bbcode_h2, .bbcode_h3, .bbcode_h4, .bbcode_h5 { font-weight: 400; color:"
+        #expect(dark.contains(headings + " #add8f5;"))
+        #expect(light.contains(headings + " rgba(0, 0, 0, 0.87);"))
+        #expect(dark.contains(".user-submitted-links a { font-weight: 600 !important;"))
+        #expect(light.contains(".user-submitted-links a { font-weight: 500 !important;"))
+        for css in [dark, light] {
+            #expect(css.contains(".bbcode.bbcode_quote { display: block; border-left: 2px gray solid; font-style: italic;"))
+            #expect(css.contains(".bbcode.bbcode_quote .bbcode_quote_name { display: block; font-weight: bold;"))
+        }
+    }
+    #endif
+
+    @Test
+    func spanKeepsItsOwnColourUnwrapped() throws {
+        let source = #"<span style="color: #C92A2A;">red</span>"#
+        #expect(try normalize(source).html.contains(source))
+    }
+
+    @Test
+    func spoilerIsLeftVisible() throws {
+        let source = #"<span class="bbcode bbcode_spoiler">hidden</span>"#
+        #expect(try normalize(source).html.contains(source))
+    }
+
+    @Test
+    func darkDescriptionLinksAreBold() throws {
+        let links = try links(asSubmission: true, theme: .dark)
+        #expect(try links.allSatisfy { try $0.child(0).tagName() == "b" })
+    }
+
+    @Test(arguments: [
+        // Light's link weight is 500, which is not bold.
+        (true, FATheme.light),
+        // Only descriptions carry `.user-submitted-links`.
+        (false, FATheme.dark),
+    ])
+    func otherLinksStayRegular(asSubmission: Bool, theme: FATheme) throws {
+        let links = try links(asSubmission: asSubmission, theme: theme)
+        #expect(links.allSatisfy { $0.children().first()?.tagName() != "b" })
+    }
+
+    @Test
+    func aRuleInsideAStyledElementSplitsItsWrappersToo() throws {
+        // The theme runs before rules are hoisted, so the `<i>` it adds has to be split
+        // like any other wrapper, or the text after the rule loses its slant.
+        let fragments = try normalize(
+            #"<span class="bbcode bbcode_quote">before<hr class="bbcode bbcode_hr">after</span>"#
+        ).fragments
+        try #require(fragments.count == 2)
+        #expect(fragments[0].html.contains("<i>before</i>"))
+        #expect(fragments[1].html.contains("<i>after</i>"))
+    }
+
+    @Test
+    func aCentredBlockStillAlignsOnceStyled() throws {
+        let html = try normalize(
+            #"<code class="bbcode bbcode_center"><h4 class="bbcode bbcode_h4">Title</h4></code>"#
+        ).html
+        #expect(html.contains("text-align:center"))
+        #expect(!html.contains("<code"))
+        #expect(html.contains(#"<span style="color:#add8f5">Title</span>"#))
     }
 }

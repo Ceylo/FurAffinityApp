@@ -84,11 +84,12 @@ actor CSSInliner {
                 return css
             }
             
-            if previousTask != nil {
-                // Previous task for the same theme has failed, no need to try again now
+            if let failedAt = lastFailures[theme], failedAt > .now - Self.retryDelay {
                 return nil
             }
             
+            var succeeded = false
+            defer { lastFailures[theme] = succeeded ? nil : .now }
             let url = url(for: theme)
             let session = await URLSession.sharedForFARequests
             let (data, response) = try await session.data(from: url)
@@ -99,6 +100,7 @@ actor CSSInliner {
             }
             
             let css = String(decoding: data, as: UTF8.self)
+            succeeded = true
             try cacheCSS(css, for: theme)
             return css
         }
@@ -107,6 +109,10 @@ actor CSSInliner {
         
         return try? await newTask.result.get()
     }
+    
+    private var lastFailures: [FATheme: Date] = [:]
+    /// How long a failed download is trusted to fail again.
+    private static let retryDelay: TimeInterval = 5*60
     
     private func cacheCSS(_ css: String, for theme: FATheme) throws {
         guard !cssCache.objectExists(forKey: theme) else {
