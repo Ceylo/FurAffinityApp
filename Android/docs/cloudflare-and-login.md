@@ -52,9 +52,11 @@ the single source of truth; `[CFDIAG] User-Agent drifted=` compares the two. Set
 
 The suffix embeds the app version, so **an app update invalidates a persisted
 `cf_clearance`**: the first launch after one shows `[CFDIAG] cf_clearance drifted=true`
-and a round of 403s until it is re-minted. `Bundle.main.infoDictionary` is empty in a
-Skip Fuse module, so the version comes from `FAAppInfoBridge.versionName()`, installed
-into `FAUserAgent.appVersionOverride` from `onInit()`.
+and a round of 403s until it is re-minted.
+
+`Bundle.main.infoDictionary` is empty in a Skip Fuse module, so the version comes from
+the package manager (`AndroidAppInfo.versionName`, over `FAAppInfoBridge`), installed
+into `FAAppVersion.override` from `onInit()`.
 
 ## What draws a challenge, and what doesn't
 

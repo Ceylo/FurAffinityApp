@@ -10,7 +10,8 @@ the APK, and draft releases are invisible to `releases/latest`, so publishing
 stays manual.
 
 `Bundle.main.version` reads 0.0.0 on Android, which would silently invert the
-comparison; `FAAppVersion` is what makes it right (see the User-Agent section).
+comparison; `FAAppVersion` is what makes it right (see [cloudflare-and-login.md § The WebView
+User-Agent](cloudflare-and-login.md#the-webview-user-agent-carries-the-app-identifier)).
 
 The tab badge reads `model.appInfo.isUpToDate == false` directly, as on iOS. A
 nested `@Observable` is fine on Android; what once broke the badge was
@@ -24,8 +25,8 @@ The release `signingConfig` in `Android/app/build.gradle.kts` falls back to the
 **debug** key when `keystore.properties` is absent, so out of the box
 `assembleRelease` emits a debug-signed APK and exits 0. That is unrecoverable
 once shipped: everyone who installed it must uninstall before they can take a
-properly signed update. A `gradle.taskGraph.whenReady` check now fails any
-`assemble/bundle/package/installRelease` task while the file is missing. The debug
+properly signed update. So `preReleaseBuild` and every `package*Release` task fail
+while the file is missing. The debug
 variant is unaffected, and configuring the project without a keystore still works.
 
 Both files live beside the module (`storeFile` resolves relative to
