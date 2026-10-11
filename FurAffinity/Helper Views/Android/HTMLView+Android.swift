@@ -66,10 +66,12 @@ struct HTMLView: View {
                     FAImage(image.url)
                         .onSuccess { result in
                             let natural = Foundation.CGSize(result.image.size)
+                            // Recomposes the whole view: only when the layout changes.
+                            guard image.width == nil || image.height == nil,
+                                  (naturalSizes[image.url] ?? InlineImageSizes.known[image.url]) != natural
+                            else { return }
                             InlineImageSizes.known[image.url] = natural
-                            if naturalSizes[image.url] != natural {
-                                naturalSizes[image.url] = natural
-                            }
+                            naturalSizes[image.url] = natural
                         }
                         .resizable()
                         .frame(width: Double(size.width), height: Double(size.height)),

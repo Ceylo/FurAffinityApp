@@ -137,7 +137,7 @@ public enum FAHTMLNormalizer {
             let italic = classes.contains("bbcode_quote")
             var color: String?
             if tag != "a" {
-                if let own = element.faStyle["color"] {
+                if let own = element.faStyle["color"].flatMap(plainColor) {
                     // `fromHtml` reads an own colour on `<span>` and `<p>` only.
                     if tag != "span", tag != "p" { color = own }
                 } else if theme == .dark, !classes.isDisjoint(with: headingClasses) {
@@ -162,6 +162,26 @@ public enum FAHTMLNormalizer {
             }
             _ = try element.appendChild(wrappers[0])
         }
+    }
+
+    /// A colour `android.text.Html` parses: `#rrggbb` (a `#rgb` it would misread is
+    /// expanded) or a name. Keywords meaning no colour of its own are dropped.
+    private static func plainColor(_ value: String) -> String? {
+        let value = value.lowercased().replacingOccurrences(of: "!important", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if value.hasPrefix("#") {
+            let hex = value.dropFirst()
+            guard hex.allSatisfy(\.isHexDigit) else { return nil }
+            switch hex.count {
+            case 3: return "#" + hex.map { "\($0)\($0)" }.joined()
+            case 6: return value
+            default: return nil
+            }
+        }
+        guard !value.isEmpty, value.allSatisfy(\.isLetter),
+              !["transparent", "inherit", "initial", "unset", "none", "currentcolor", "revert"]
+                .contains(value) else { return nil }
+        return value
     }
 
     private static func wrapper(_ tag: String, for element: Element) throws -> Element {
@@ -367,8 +387,8 @@ private extension Element {
         return style.faTopLevelDeclarations.reduce(into: [:]) { result, declaration in
             let parts = declaration.split(separator: ":", maxSplits: 1)
             guard parts.count == 2 else { return }
-            result[parts[0].trimmingCharacters(in: .whitespaces).lowercased()] =
-                parts[1].trimmingCharacters(in: .whitespaces)
+            result[parts[0].trimmingCharacters(in: .whitespacesAndNewlines).lowercased()] =
+                parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
         }
     }
 }
@@ -400,6 +420,6 @@ private extension String {
             }
         }
         declarations.append(self[start...])
-        return declarations.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        return declarations.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
 }

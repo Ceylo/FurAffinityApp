@@ -450,8 +450,49 @@ struct FAHTMLNormalizerThemeTests {
         // terriniss colours her own headings; `fromHtml` reads no `color` on an <h4>.
         let html = try normalize(#"<h4 class="bbcode bbcode_h4" style="color: #C92A2A;">Heading</h4>"#).html
         #expect(!html.contains("#add8f5"))
-        #expect(html.contains(#"<span style="color:#C92A2A">Heading</span>"#))
+        #expect(html.contains(#"<span style="color:#c92a2a">Heading</span>"#))
     }
+
+    @Test(arguments: [
+        ("#f00", "#ff0000"),
+        ("#C92A2A !important", "#c92a2a"),
+    ])
+    func ownColourIsRestatedAsFromHtmlReadsIt(own: String, expected: String) throws {
+        let html = try normalize(#"<h4 class="bbcode bbcode_h4" style="color: \#(own)">x</h4>"#).html
+        #expect(html.contains(#"<span style="color:\#(expected)">x</span>"#))
+    }
+
+    @Test
+    func anOwnColourKeywordLeavesTheThemeColour() throws {
+        let html = try normalize(#"<h4 class="bbcode bbcode_h4" style="color: inherit">x</h4>"#).html
+        #expect(html.contains("#add8f5"))
+    }
+
+    @Test
+    func aDeclarationAfterANewlineIsStillRead() throws {
+        let html = try normalize("<h4 class=\"bbcode bbcode_h4\" style=\"text-align:left;\ncolor:#C92A2A\">x</h4>").html
+        #expect(html.contains("#c92a2a"))
+    }
+
+    #if !os(Android)
+    /// The rules above are copied from FA's stylesheets by hand; this fails when the
+    /// bundled copies stop declaring what they restate.
+    @Test
+    func theRulesStillMatchTheBundledStylesheets() async {
+        let inliner = CSSInliner()
+        let dark = await inliner.fallbackCSS(for: .dark).replacing(/\s+/, with: " ")
+        let light = await inliner.fallbackCSS(for: .light).replacing(/\s+/, with: " ")
+        let headings = ".bbcode_h1, .bbcode_h2, .bbcode_h3, .bbcode_h4, .bbcode_h5 { font-weight: 400; color:"
+        #expect(dark.contains(headings + " #add8f5;"))
+        #expect(light.contains(headings + " rgba(0, 0, 0, 0.87);"))
+        #expect(dark.contains(".user-submitted-links a { font-weight: 600 !important;"))
+        #expect(light.contains(".user-submitted-links a { font-weight: 500 !important;"))
+        for css in [dark, light] {
+            #expect(css.contains(".bbcode.bbcode_quote { display: block; border-left: 2px gray solid; font-style: italic;"))
+            #expect(css.contains(".bbcode.bbcode_quote .bbcode_quote_name { display: block; font-weight: bold;"))
+        }
+    }
+    #endif
 
     @Test
     func spanKeepsItsOwnColourUnwrapped() throws {
