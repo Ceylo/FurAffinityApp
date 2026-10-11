@@ -7,8 +7,7 @@
 //  its own queue hop, and `FAImageStore` for images, from inside the hop it already
 //  holds — because there is only one pool to evict and it should be asked for in one
 //  voice. The `[CFREPAIR] evicted …` / `evict skipped …` pair is logged here and
-//  nowhere else, which is what keeps `summarize-image-log.py` counting one line per
-//  repair.
+//  nowhere else, so the log holds one line per repair.
 //
 //  Unguarded on purpose — an Android substitution file must be, see
 //  Android/docs/shared-sources.md § Rules for shared sources. The JNI inside is

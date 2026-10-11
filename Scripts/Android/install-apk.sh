@@ -4,8 +4,7 @@
 #
 # `adb install -r -d`, never `adb uninstall`: a reinstall keeps the container,
 # and wiping it costs the FA login *and* the Cloudflare clearance, which on the
-# emulator can take a human tap to get back. `-d` is what lets an ordinary
-# worktree build (versionCode 1) land over an android-distribution one (11900).
+# emulator can take a human tap to get back. `-d` allows a downgrade.
 #
 # Usage: Scripts/Android/install-apk.sh [--start] [--timeout SECONDS] <app.apk>
 #
@@ -29,7 +28,7 @@ LOCK_ARGS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,21p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,19p' "$0" | cut -c3-; exit 0 ;;
         --start)      START=1 ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;

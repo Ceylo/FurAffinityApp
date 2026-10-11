@@ -12,7 +12,7 @@
 #   --out         directory the APK is added to, default <worktree>/out (never
 #                 wiped); it is named FurAffinity-<version>-<commit>.apk, and an
 #                 existing one is never overwritten
-#   --install     adb install -r -d the result on the running device
+#   --install     install the result on the running device (install-apk.sh)
 #   --keep-stash  leave the distribution stash applied in the working tree
 #                 (default: revert the working tree to HEAD on exit)
 #   --ci          the working tree already carries the distribution values (the
@@ -265,9 +265,7 @@ ls -lh "$APK" | awk '{ print $5 }'
 
 if (( INSTALL )); then
     step "Installing on the device"
-    # -d allows the downgrade when a higher versionCode is already installed.
-    "$(dirname "${BASH_SOURCE[0]}")/with-emulator-lock.sh" \
-        "$SDK/platform-tools/adb" install -r -d "$APK"
+    "$(dirname "${BASH_SOURCE[0]}")/install-apk.sh" "$APK"
     echo "launch it from the icon, or:"
     echo "  adb shell monkey -p $APP_ID -c android.intent.category.LAUNCHER 1"
 fi

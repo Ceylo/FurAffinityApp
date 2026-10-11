@@ -6,7 +6,7 @@
 //  a session exists, then the ported tabs — which stand in for `LoggedInView` and
 //  grow as screens are ported. The Submissions tab is a `NavigationStack` fed by the
 //  shared `NavigationStream`; pushed destinations come from `view(for:)` in
-//  AndroidNavigationDestination.swift.
+//  InAppNavigation+Android.swift.
 //
 //  HomeView owns the session on both platforms (it calls `model.setSession`), so
 //  this view only reads `model.session` — including for logout, which SettingsView

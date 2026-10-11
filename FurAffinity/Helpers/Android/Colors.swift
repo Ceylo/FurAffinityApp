@@ -2,8 +2,8 @@
 //  Colors.swift
 //  FurAffinityUI (Android)
 //
-//  The colorsets shared views reach for by name. Each single-sources the iOS entry
-//  through a symlinked `Contents.json` (see Android/docs/assets-and-resources.md §Sharing asset-catalog
+//  The colorsets shared views reach for by name. Each is a copy of the iOS entry's
+//  `Contents.json` (see Android/docs/assets-and-resources.md §Sharing asset-catalog
 //  entries) — only `bundle:` differs from the iOS declarations.
 //
 
