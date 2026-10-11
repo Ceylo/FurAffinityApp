@@ -37,22 +37,12 @@ actor CSSInliner {
         #endif
     }()
 
-    /// Nil when its directory can't be created, as in an `adb shell` test process
-    /// with no XDG_CACHE_HOME; downloads are then kept for this process only.
-    private let cssCache: Storage<FATheme, String>? = {
-        do {
-            return try Storage(
-                diskConfig: DiskConfig(name: "CSSInlinerCache"),
-                memoryConfig: MemoryConfig(),
-                fileManager: .default,
-                transformer: TransformerFactory.forCodable(ofType: String.self)
-            )
-        } catch {
-            logger.error("Could not create the CSS cache: \(error)")
-            return nil
-        }
-    }()
-    private var uncachedCSS: [FATheme: String] = [:]
+    private let cssCache: Storage<FATheme, String> = try! .init(
+        diskConfig: DiskConfig(name: "CSSInlinerCache"),
+        memoryConfig: MemoryConfig(),
+        fileManager: .default,
+        transformer: TransformerFactory.forCodable(ofType: String.self)
+    )
     private let lighThemeFallbackCSS = {
         let url = Bundle.module.url(forResource: "ui_theme_light", withExtension: "css")!
         return try! String(contentsOf: url, encoding: .utf8)
@@ -141,9 +131,9 @@ actor CSSInliner {
         let previousTask = cssDownloadTasks[theme]
         let newTask = Task { () -> String? in
             _ = await previousTask?.result
-            try cssCache?.removeExpiredObjects()
+            try cssCache.removeExpiredObjects()
 
-            if let css = (try? cssCache?.object(forKey: theme)) ?? uncachedCSS[theme] {
+            if let css = try? cssCache.object(forKey: theme) {
                 return css
             }
 
@@ -185,10 +175,6 @@ actor CSSInliner {
     }
 
     private func cacheCSS(_ css: String, for theme: FATheme) throws {
-        guard let cssCache else {
-            uncachedCSS[theme] = css
-            return
-        }
         guard !cssCache.objectExists(forKey: theme) else {
             return
         }
