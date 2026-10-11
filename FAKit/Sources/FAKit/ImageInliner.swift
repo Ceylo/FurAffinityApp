@@ -60,13 +60,11 @@ public enum FAImageInliner {
     }()
 
     public static func mimeType(for url: URL) -> String {
-        let ext = url.pathExtension.lowercased()
         #if os(Android)
-        // No UTType here; these are the formats FA serves.
-        let known = ["png": "image/png", "gif": "image/gif", "jpg": "image/jpeg",
-                     "jpeg": "image/jpeg", "webp": "image/webp", "bmp": "image/bmp"]
-        return known[ext] ?? "application/octet-stream"
+        // No UTType here, and nothing reads it: Android only measures the bytes.
+        return "application/octet-stream"
         #else
+        let ext = url.pathExtension
         if !ext.isEmpty, let type = UTType(filenameExtension: ext), let mime = type.preferredMIMEType {
             return mime
         }
@@ -92,7 +90,7 @@ actor ImageInliner {
             }
             return (url, image)
         }.compactMap { $0 }
-        return Dictionary(fetched, uniquingKeysWith: { first, _ in first })
+        return Dictionary(uniqueKeysWithValues: fetched)
     }
 
     #if !os(Android)

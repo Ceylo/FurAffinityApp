@@ -24,11 +24,11 @@ extension String {
             .replacingOccurrences(of: "src=\"/", with: "src=\"https://www.furaffinity.net/")
     }
 
+    #if !os(Android)
     public func inliningCSS() async throws -> String {
         try await CSSInliner.shared.inlineCSS(in: self)
     }
 
-    #if !os(Android)
     public func inliningImages() async -> String {
         await ImageInliner.shared.inlineImages(in: self)
     }
@@ -68,6 +68,7 @@ extension String {
     
     public var selfContainedFAHtmlUserDescription: String { selfContainedFAHtmlComment }
     
+    #if !os(Android)
     func using(theme: FATheme) -> String {
         if theme == .light {
             return replacingOccurrences(of: "ui_theme_dark.css", with: "ui_theme_light.css")
@@ -75,4 +76,5 @@ extension String {
             return self
         }
     }
+    #endif
 }

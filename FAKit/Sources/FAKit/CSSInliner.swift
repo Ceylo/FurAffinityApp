@@ -62,6 +62,7 @@ actor CSSInliner {
         return try! String(contentsOf: url, encoding: .utf8)
     }()
 
+    #if !os(Android)
     func inlineCSS(in html: String) async throws -> String {
         await html
             .replacingOccurrences(
@@ -85,6 +86,7 @@ actor CSSInliner {
     private func inlinedCSS(for theme: FATheme) async -> String {
         "<style>" + (await stylesheet(for: theme)) + "</style>"
     }
+    #endif
 
     /// The theme's stylesheet: today's download when there is one, else the bundled copy.
     func stylesheet(for theme: FATheme) async -> String {
@@ -95,18 +97,18 @@ actor CSSInliner {
         return downloadedCSS
     }
 
-    /// `stylesheet(for:)`, parsed. Re-parsed only when the text changes, which is when
-    /// a download replaces the fallback.
+    /// `stylesheet(for:)`, parsed, and kept as long as the download is: every comment
+    /// asks, so this skips the download chain and the cache's expiry sweep until then.
     func parsedStylesheet(for theme: FATheme) async -> FAStylesheet {
-        let css = await stylesheet(for: theme)
-        if let parsed = parsedStylesheets[theme], parsed.css == css {
+        if let parsed = parsedStylesheets[theme], parsed.expiry > .now {
             return parsed.stylesheet
         }
-        let stylesheet = FAStylesheet(css: css)
-        parsedStylesheets[theme] = (css, stylesheet)
+        let stylesheet = FAStylesheet(css: await stylesheet(for: theme))
+        parsedStylesheets[theme] = (stylesheet, .now + Self.cssLifetime)
         return stylesheet
     }
-    private var parsedStylesheets: [FATheme: (css: String, stylesheet: FAStylesheet)] = [:]
+    private var parsedStylesheets: [FATheme: (stylesheet: FAStylesheet, expiry: Date)] = [:]
+    private static let cssLifetime: TimeInterval = 60*60*24
 
     func fallbackCSS(for theme: FATheme) -> String {
         switch theme {
@@ -168,7 +170,7 @@ actor CSSInliner {
             return
         }
 
-        let expiry = Expiry.seconds(60*60*24)
+        let expiry = Expiry.seconds(Self.cssLifetime)
         try cssCache.setObject(css, forKey: theme, expiry: expiry)
         logger.info("Cached css for \(theme) theme")
     }

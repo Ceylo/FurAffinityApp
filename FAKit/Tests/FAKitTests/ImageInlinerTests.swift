@@ -147,6 +147,7 @@ struct ImageInlinerTests {
         #expect(measured[1].images[0].naturalWidth == 7)
     }
 
+    #if !os(Android)
     @Test("mimeType infers from path extension", arguments: [
         ("https://example.com/foo.png", "image/png"),
         ("https://example.com/foo.gif", "image/gif"),
@@ -158,6 +159,7 @@ struct ImageInlinerTests {
         let url = try #require(URL(string: urlString))
         #expect(FAImageInliner.mimeType(for: url) == expected)
     }
+    #endif
 }
 
 private actor CallCounter {

@@ -38,13 +38,11 @@ enum FAImageHeader {
             if marker == 0xFF { i += 1; continue }
             // Markers with no length: TEM and RST0–7.
             if marker == 0x01 || (0xD0...0xD7).contains(marker) { i += 2; continue }
-            let length = Int(b[i + 2]) << 8 | Int(b[i + 3])
+            let length = bigEndian16(b, i + 2)
             // SOF0–15, minus DHT (C4), JPG (C8) and DAC (CC), which share the range.
             if (0xC0...0xCF).contains(marker), ![0xC4, 0xC8, 0xCC].contains(marker) {
                 guard i + 8 < b.count else { return nil }
-                let height = Int(b[i + 5]) << 8 | Int(b[i + 6])
-                let width = Int(b[i + 7]) << 8 | Int(b[i + 8])
-                return size(width, height)
+                return size(bigEndian16(b, i + 7), bigEndian16(b, i + 5))
             }
             guard length >= 2 else { return nil }
             i += 2 + length
@@ -63,13 +61,11 @@ enum FAImageHeader {
         case "VP8L":
             // Lossless: a 0x2F signature, then width-1 and height-1 as 14-bit fields.
             guard b[20] == 0x2F else { return nil }
-            let bits = Int(b[21]) | Int(b[22]) << 8 | Int(b[23]) << 16 | Int(b[24]) << 24
+            let bits = littleEndian32(b, 21)
             return size((bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1)
         case "VP8X":
             // Extended: 24-bit canvas width-1 and height-1.
-            let width = Int(b[24]) | Int(b[25]) << 8 | Int(b[26]) << 16
-            let height = Int(b[27]) | Int(b[28]) << 8 | Int(b[29]) << 16
-            return size(width + 1, height + 1)
+            return size(littleEndian24(b, 24) + 1, littleEndian24(b, 27) + 1)
         default:
             return nil
         }
@@ -80,11 +76,23 @@ enum FAImageHeader {
         return CGSize(width: width, height: height)
     }
 
+    private static func bigEndian16(_ b: [UInt8], _ i: Int) -> Int {
+        Int(b[i]) << 8 | Int(b[i + 1])
+    }
+
     private static func bigEndian32(_ b: [UInt8], _ i: Int) -> Int {
-        Int(b[i]) << 24 | Int(b[i + 1]) << 16 | Int(b[i + 2]) << 8 | Int(b[i + 3])
+        bigEndian16(b, i) << 16 | bigEndian16(b, i + 2)
     }
 
     private static func littleEndian16(_ b: [UInt8], _ i: Int) -> Int {
         Int(b[i]) | Int(b[i + 1]) << 8
+    }
+
+    private static func littleEndian24(_ b: [UInt8], _ i: Int) -> Int {
+        littleEndian16(b, i) | Int(b[i + 2]) << 16
+    }
+
+    private static func littleEndian32(_ b: [UInt8], _ i: Int) -> Int {
+        littleEndian16(b, i) | littleEndian16(b, i + 2) << 16
     }
 }

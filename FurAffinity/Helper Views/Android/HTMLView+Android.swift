@@ -109,19 +109,19 @@ private extension FAInlineImage {
     }
 
     private var intrinsicSize: (width: Double, height: Double) {
-        let aspectRatio: Double? = {
+        let natural: (width: Double, height: Double)? = {
             guard let naturalWidth, let naturalHeight, naturalHeight > 0 else { return nil }
-            return naturalWidth / naturalHeight
+            return (naturalWidth, naturalHeight)
         }()
-        switch (width, height, aspectRatio) {
+        switch (width, height, natural) {
         case let (width?, height?, _):
             return (width, height)
-        case let (width?, nil, ratio?):
-            return (width, width / ratio)
-        case let (nil, height?, ratio?):
-            return (height * ratio, height)
-        case (nil, nil, _?):
-            return (naturalWidth!, naturalHeight!)
+        case let (width?, nil, natural?):
+            return (width, width * natural.height / natural.width)
+        case let (nil, height?, natural?):
+            return (height * natural.width / natural.height, height)
+        case let (nil, nil, natural?):
+            return natural
         default:
             // One side alone would squash the image for good, which is worse than the
             // square a fallback gives it.

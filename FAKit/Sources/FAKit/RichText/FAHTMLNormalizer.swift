@@ -280,7 +280,7 @@ public enum FAHTMLNormalizer {
     /// that means nothing but alignment in the first place.
     private static let renameableTags: Set<String> = ["code", "center"]
     /// Elements that hold no content, so nothing about them is text alignment.
-    private static let voidTags: Set<String> = [
+    static let voidTags: Set<String> = [
         "img", "br", "hr", "input", "area", "col", "embed", "source", "track", "wbr",
     ]
     private static let centerClasses: Set<String> = ["bbcode_center", "aligncenter"]
@@ -312,21 +312,18 @@ extension Element {
     /// `setTextAlign` writes the whole attribute back.
     fileprivate var faStyle: [String: String] {
         guard let style = try? attr("style"), !style.isEmpty else { return [:] }
-        return style.faTopLevelDeclarations.reduce(into: [:]) { result, declaration in
-            let parts = declaration.split(separator: ":", maxSplits: 1)
-            guard parts.count == 2 else { return }
-            result[parts[0].trimmingCharacters(in: .whitespaces).lowercased()] =
-                parts[1].trimmingCharacters(in: .whitespaces)
+        return style.faDeclarations.reduce(into: [:]) { result, declaration in
+            result[declaration.name] = declaration.value
         }
     }
 }
 
 extension String {
-    /// The `;`-separated declarations of a `style` attribute, splitting only at top
-    /// level: a `;` inside `( … )` or a quoted string belongs to the value it sits in
-    /// (`url(data:image/png;base64,…)` is one declaration, not two).
-    var faTopLevelDeclarations: [Substring] {
-        var declarations: [Substring] = []
+    /// The parts between each top-level `separator`: one inside `( … )`, `[ … ]` or a
+    /// quoted string belongs to the part it sits in (`url(data:image/png;base64,…)` is
+    /// one declaration, `[title="a,b"]` one selector). Blank parts are dropped.
+    func faTopLevelSplit(on separator: Character) -> [Substring] {
+        var parts: [Substring] = []
         var start = startIndex
         var depth = 0
         var quote: Character?
@@ -339,15 +336,26 @@ extension String {
             }
             switch character {
             case "'", "\"": quote = character
-            case "(": depth += 1
-            case ")": depth = max(0, depth - 1)
-            case ";" where depth == 0:
-                declarations.append(self[start..<index])
+            case "(", "[": depth += 1
+            case ")", "]": depth = max(0, depth - 1)
+            case separator where depth == 0:
+                parts.append(self[start..<index])
                 start = self.index(after: index)
             default: break
             }
         }
-        declarations.append(self[start...])
-        return declarations.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        parts.append(self[start...])
+        return parts.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+
+    /// The declarations of a `style` attribute or a rule body, as lowercased property
+    /// names and trimmed values. Values keep their case.
+    var faDeclarations: [(name: String, value: String)] {
+        faTopLevelSplit(on: ";").compactMap { declaration in
+            let parts = declaration.split(separator: ":", maxSplits: 1)
+            guard parts.count == 2 else { return nil }
+            return (parts[0].trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+                    parts[1].trimmingCharacters(in: .whitespacesAndNewlines))
+        }
     }
 }

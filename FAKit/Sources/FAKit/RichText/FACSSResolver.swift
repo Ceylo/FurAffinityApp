@@ -52,13 +52,12 @@ struct FACSSResolver: Sendable {
         var important: Bool
     }
 
-    enum Property: String, Sendable, CaseIterable {
-        case color
-        case backgroundColor = "background-color"
-        case textDecoration = "text-decoration"
-        case fontWeight = "font-weight"
-        case fontStyle = "font-style"
+    enum Property: Sendable {
+        case color, backgroundColor, textDecoration, fontWeight, fontStyle
     }
+
+    /// The declaration that currently wins a property, and where it came from.
+    private typealias Winner = (declaration: Declaration, specificity: Int, order: Int)
 
     let rules: [Rule]
 
@@ -97,7 +96,6 @@ struct FACSSResolver: Sendable {
             classes.formUnion(element.faClassNames)
         }
 
-        typealias Winner = (declaration: Declaration, specificity: Int, order: Int)
         var resolved: [ObjectIdentifier: (element: Element, winners: [Property: Winner])] = [:]
         for rule in rules {
             if let tag = rule.subjectTag, !tags.contains(tag) { continue }
@@ -130,10 +128,7 @@ struct FACSSResolver: Sendable {
     }
 
     /// Whether `a` beats `b`: `!important` first, then specificity, then source order.
-    private static func precedes(
-        _ a: (declaration: Declaration, specificity: Int, order: Int),
-        _ b: (declaration: Declaration, specificity: Int, order: Int)
-    ) -> Bool {
+    private static func precedes(_ a: Winner, _ b: Winner) -> Bool {
         if a.declaration.important != b.declaration.important { return a.declaration.important }
         if a.specificity != b.specificity { return a.specificity > b.specificity }
         return a.order > b.order
@@ -143,7 +138,7 @@ struct FACSSResolver: Sendable {
     /// `<span style>`, outermost first.
     private func restate(_ values: [Property: String], on element: Element) throws {
         let tag = element.tagName().lowercased()
-        guard !Self.voidTags.contains(tag), !element.getChildNodes().isEmpty else { return }
+        guard !FAHTMLNormalizer.voidTags.contains(tag), !element.getChildNodes().isEmpty else { return }
 
         var style: [String] = []
         // Links keep the app's tint, as `UITextView` gives them on iOS.
@@ -153,15 +148,18 @@ struct FACSSResolver: Sendable {
             style.append("text-decoration:\(decoration)")
         }
 
+        func wrapper(_ tag: String) throws -> Element {
+            Element(try Tag.valueOf(tag), element.getBaseUriUTF8())
+        }
         var wrappers: [Element] = []
         if values[.fontWeight] == "bold", tag != "b", tag != "strong" {
-            wrappers.append(Element(try Tag.valueOf("b"), element.getBaseUriUTF8()))
+            wrappers.append(try wrapper("b"))
         }
         if values[.fontStyle] == "italic", tag != "i", tag != "em" {
-            wrappers.append(Element(try Tag.valueOf("i"), element.getBaseUriUTF8()))
+            wrappers.append(try wrapper("i"))
         }
         if !style.isEmpty {
-            let span = Element(try Tag.valueOf("span"), element.getBaseUriUTF8())
+            let span = try wrapper("span")
             _ = try span.attr("style", style.joined(separator: ";"))
             wrappers.append(span)
         }
@@ -226,25 +224,13 @@ struct FACSSResolver: Sendable {
 
     /// The comma-separated selectors of a prelude, split only at top level.
     static func selectors(in prelude: String) -> [String] {
-        var selectors: [String] = []
-        var current = ""
-        var depth = 0
-        for character in prelude {
-            switch character {
-            case "(", "[": depth += 1
-            case ")", "]": depth = max(0, depth - 1)
-            case "," where depth == 0:
-                selectors.append(current)
-                current = ""
-                continue
-            default: break
-            }
-            current.append(character)
-        }
-        selectors.append(current)
-        return selectors
+        prelude.faTopLevelSplit(on: ",")
             .map { $0.split(whereSeparator: \.isWhitespace).joined(separator: " ") }
-            .filter { !$0.isEmpty }
+    }
+
+    /// A selector's compound selectors, its combinators dropped.
+    private static func compounds(of selector: String) -> [Substring] {
+        selector.split(whereSeparator: { " >+~".contains($0) })
     }
 
     /// Whether a selector can describe rich text at all: no state (`:hover`), no
@@ -253,18 +239,16 @@ struct FACSSResolver: Sendable {
     static func isSupported(_ selector: String) -> Bool {
         guard !selector.contains(":"), !selector.contains("#"),
               !selector.contains("bbcode_spoiler") else { return false }
-        let types = selector
-            .split(whereSeparator: { " >+~".contains($0) })
+        let types = compounds(of: selector)
             .map { $0.prefix(while: { $0.isLetter || $0.isNumber || $0 == "-" }).lowercased() }
         return !types.contains("body") && !types.contains("html")
     }
 
     /// (classes and attributes) × 100 + types; ids are never supported, so they don't count.
     static func specificity(of selector: String) -> Int {
-        let compounds = selector.split(whereSeparator: { " >+~".contains($0) })
         var classes = 0
         var types = 0
-        for compound in compounds {
+        for compound in compounds(of: selector) {
             classes += compound.filter { $0 == "." || $0 == "[" }.count
             if compound.first?.isLetter == true { types += 1 }
         }
@@ -273,7 +257,7 @@ struct FACSSResolver: Sendable {
 
     /// The classes and tag the rightmost compound selector requires.
     private static func subject(of selector: String) -> (classes: [String], tag: String?) {
-        guard let compound = selector.split(whereSeparator: { " >+~".contains($0) }).last
+        guard let compound = compounds(of: selector).last
         else { return ([], nil) }
         // `a.b[c=d]` → tag `a`, classes `b`; the attribute part is left to SwiftSoup.
         let base = compound.prefix(while: { $0 != "[" })
@@ -286,12 +270,9 @@ struct FACSSResolver: Sendable {
     /// `restate` writes: a plain colour, an underline or strike, `bold`, `italic`.
     static func translatableDeclarations(in block: String) -> [Property: Declaration] {
         var result: [Property: Declaration] = [:]
-        for raw in block.faTopLevelDeclarations {
-            let parts = raw.split(separator: ":", maxSplits: 1)
-            guard parts.count == 2 else { continue }
-            let name = parts[0].trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            var value = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
-            let important = value.lowercased().hasSuffix("!important")
+        for (name, rawValue) in block.faDeclarations {
+            var value = rawValue.lowercased()
+            let important = value.hasSuffix("!important")
             if important {
                 value = String(value.dropLast("!important".count))
                     .trimmingCharacters(in: .whitespaces)
@@ -304,24 +285,21 @@ struct FACSSResolver: Sendable {
             case "background-color", "background":
                 translated = plainColor(value).map { (.backgroundColor, $0) }
             case "text-decoration", "text-decoration-line":
-                let lowered = value.lowercased()
-                translated = lowered.contains("underline") ? (.textDecoration, "underline")
-                    : lowered.contains("line-through") ? (.textDecoration, "line-through")
-                    : lowered.hasPrefix("none") ? (.textDecoration, "none")
+                translated = value.contains("underline") ? (.textDecoration, "underline")
+                    : value.contains("line-through") ? (.textDecoration, "line-through")
+                    : value.hasPrefix("none") ? (.textDecoration, "none")
                     : nil
             case "font-weight":
-                let lowered = value.lowercased()
-                if lowered == "bold" || lowered == "bolder" || (Int(lowered) ?? 0) >= 600 {
+                if value == "bold" || value == "bolder" || (Int(value) ?? 0) >= 600 {
                     translated = (.fontWeight, "bold")
-                } else if lowered == "normal" || lowered == "lighter" || Int(lowered) != nil {
+                } else if value == "normal" || value == "lighter" || Int(value) != nil {
                     translated = (.fontWeight, "normal")
                 } else {
                     translated = nil
                 }
             case "font-style":
-                let lowered = value.lowercased()
-                translated = (lowered == "italic" || lowered == "oblique") ? (.fontStyle, "italic")
-                    : lowered == "normal" ? (.fontStyle, "normal")
+                translated = (value == "italic" || value == "oblique") ? (.fontStyle, "italic")
+                    : value == "normal" ? (.fontStyle, "normal")
                     : nil
             default:
                 translated = nil
@@ -338,8 +316,7 @@ struct FACSSResolver: Sendable {
     /// A colour `android.text.Html` can parse: `#rrggbb` (a `#rgb` is expanded) or a
     /// name. Keywords that mean "no colour of its own" and functional notations it
     /// doesn't read are dropped.
-    static func plainColor(_ value: String) -> String? {
-        let lowered = value.lowercased()
+    static func plainColor(_ lowered: String) -> String? {
         if lowered.hasPrefix("#") {
             let hex = lowered.dropFirst()
             guard hex.allSatisfy(\.isHexDigit) else { return nil }
@@ -354,8 +331,4 @@ struct FACSSResolver: Sendable {
                 .contains(lowered) else { return nil }
         return lowered
     }
-
-    private static let voidTags: Set<String> = [
-        "img", "br", "hr", "input", "area", "col", "embed", "source", "track", "wbr",
-    ]
 }
