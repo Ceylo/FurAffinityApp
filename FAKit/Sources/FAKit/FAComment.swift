@@ -136,25 +136,16 @@ extension FAComment {
         }
     }
     
-    static func childrenOf(comment: FAPageComment,
+    static func childrenOf(cid: Int,
                            in graph: UnweightedGraph<Int>,
-                           index: [Int: FAPageComment]) async throws -> [FAComment] {
-        let children = graph.edgesForVertex(comment.cid)!
-            .filter { $0.u == graph.indexOfVertex(comment.cid)! }
+                           index: [Int: FAComment]) -> [FAComment] {
+        graph.edgesForVertex(cid)!
+            .filter { $0.u == graph.indexOfVertex(cid)! }
             .map { graph.vertexAtIndex($0.v) }
-        
-        return try await children
-            .asyncMap { (try await FAComment(index[$0]!), index[$0]!) }
-            .asyncMap { comment, rawComment in
-                await comment.withAnswers(
-                    try childrenOf(comment: rawComment, in: graph, index: index)
-                )
-            }
+            .map { index[$0]!.withAnswers(childrenOf(cid: $0, in: graph, index: index)) }
     }
     
     static func buildCommentsTree(_ comments: [FAPageComment]) async throws -> [FAComment] {
-        let commentsIndex = Dictionary(uniqueKeysWithValues: comments
-            .map { ($0.cid, $0) })
         let graph = UnweightedGraph<Int>()
         var rootCommentIDs = [Int]()
         var lastCidAtIndentation = OrderedDictionary<Int, Int>()
@@ -178,10 +169,11 @@ extension FAComment {
             }
         }
         
-        return try await rootCommentIDs.asyncMap { cid in
-            try await FAComment(commentsIndex[cid]!)
-                .withAnswers(childrenOf(comment: commentsIndex[cid]!,
-                                        in: graph, index: commentsIndex))
+        // Each message converts independently, so they all wait on their images at once.
+        let converted = try await comments.parallelMap { try await FAComment($0) }
+        let index = Dictionary(uniqueKeysWithValues: zip(comments.map(\.cid), converted))
+        return rootCommentIDs.map { cid in
+            index[cid]!.withAnswers(childrenOf(cid: cid, in: graph, index: index))
         }
     }
 }
