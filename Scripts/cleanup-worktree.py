@@ -137,16 +137,19 @@ def size_kb(*paths):
     return kb
 
 
-def run(*cmd, **kwargs):
-    return subprocess.run([str(c) for c in cmd], capture_output=True, text=True, **kwargs)
+def run(*cmd, show_errors=False, **kwargs):
+    """The command's result, its stdout captured, and its stderr too unless
+    show_errors: what a failed removal says, or the emulator lock's wait."""
+    return subprocess.run([str(c) for c in cmd], stdout=subprocess.PIPE,
+                          stderr=None if show_errors else subprocess.PIPE, text=True, **kwargs)
 
 
 def git(repo, *cmd):
     return run("git", "-C", repo, *cmd)
 
 
-def git_main(*cmd):
-    return git(MAIN, *cmd)
+def git_main(*cmd, **kwargs):
+    return run("git", "-C", MAIN, *cmd, **kwargs)
 
 
 def reclaim(kb, would, did, out, action):
@@ -165,18 +168,27 @@ def remove_tree(label, paths, out, kb=None):
     kb = size_kb(*paths) if kb is None else kb
 
     def remove():
+        # Like rm -rf: past an entry that won't go (a .DS_Store Finder respawns
+        # mid-delete), on to the rest.
+        errors = []
+
+        def record(_, failed_path, exc_info):
+            if not isinstance(exc_info[1], FileNotFoundError):
+                errors.append(failed_path)
+
         for path in paths:
-            try:
-                if os.path.isdir(path) and not os.path.islink(path):
-                    shutil.rmtree(path)
-                else:
+            if os.path.isdir(path) and not os.path.islink(path):
+                shutil.rmtree(path, onerror=record)
+            else:
+                try:
                     os.unlink(path)
-            except FileNotFoundError:
-                pass
-            except OSError:
-                fail(f"could not remove all of {label}")
-                return False
-        return True
+                except FileNotFoundError:
+                    pass
+                except OSError:
+                    errors.append(path)
+        if errors:
+            fail(f"could not remove all of {label} ({len(errors)} left, first {errors[0]})")
+        return not errors
 
     size = human(kb)
     reclaim(kb, f"would remove {label} ({size})", f"removed {label} ({size})", out, remove)
@@ -275,7 +287,7 @@ def uninstall_app(app_id, out):
         lock = [lock_script] if lock_script else []
         if not lock:
             warn(f"no {LOCK_SCRIPT} — uninstalling without the emulator lock")
-        if run(*lock, ADB, "uninstall", app_id).returncode:
+        if run(*lock, ADB, "uninstall", app_id, show_errors=True).returncode:
             fail(f"could not uninstall {app_id}")
             return False
         return True
@@ -318,7 +330,7 @@ def remove_simulator(udid, state, name, out):
     def delete():
         if state != "Shutdown":
             run("xcrun", "simctl", "shutdown", udid)
-        if run("xcrun", "simctl", "delete", udid).returncode:
+        if run("xcrun", "simctl", "delete", udid, show_errors=True).returncode:
             fail(f"could not delete simulator FA {name}")
             return False
         return True
@@ -468,7 +480,7 @@ def remove_worktree(w, out):
     def remove():
         global caller_removed
         flush(out)
-        if git_main("worktree", "remove", w.path).returncode:
+        if git_main("worktree", "remove", w.path, show_errors=True).returncode:
             print(f"  could not remove worktree {w.path}, so left everything else in place",
                   file=sys.stderr)
             return False
@@ -487,7 +499,7 @@ def delete_branch(w, out):
     # -D: -d checks against the current HEAD, and the gate already checked the bases.
     if args.dry_run:
         out.append(painted(f"  would delete branch {w.branch}"))
-    elif git_main("branch", "-D", w.branch).returncode == 0:
+    elif git_main("branch", "-D", w.branch, show_errors=True).returncode == 0:
         out.append(painted(f"  deleted branch {w.branch}"))
     else:
         fail(f"could not delete branch {w.branch}")

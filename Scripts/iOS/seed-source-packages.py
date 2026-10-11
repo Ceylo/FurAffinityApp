@@ -74,7 +74,8 @@ def main(args):
     if args and args[0] in ("-h", "--help"):
         print(__doc__.strip())
         return
-    worktree = Path(args[0] if args else Path(__file__).resolve().parents[2]).resolve()
+    # Logical, not resolved: Xcode hashes the path it was opened through.
+    worktree = Path(os.path.abspath(args[0] if args else Path(os.path.abspath(__file__)).parents[2]))
     resolved = worktree / RESOLVED
     if not resolved.is_file():
         sys.exit(f"error: {resolved} not found")
