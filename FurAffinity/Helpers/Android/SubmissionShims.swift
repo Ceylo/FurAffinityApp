@@ -3,7 +3,7 @@
 //  FurAffinityUI (Android)
 //
 //  The small Android substitutes that let `RemoteView.swift` and `SubmissionView.swift`
-//  be symlinked *verbatim* from the iOS sources. Each keeps the iOS name and signature;
+//  be shared *verbatim* with iOS. Each keeps the iOS name and signature;
 //  what's missing on Android is the framework behind it, not the call site.
 //
 //  - `NSUserActivity` / `defaultScrollAnchor`: no Android equivalent, and neither
@@ -69,9 +69,9 @@ func exportToFiles(_ urls: [URL]) {
 // MARK: - Thumbnails
 
 extension DynamicThumbnail {
-    /// FAKit's `bestThumbnailUrl(for: GeometryProxy)` is `#if canImport(SwiftUI)`, and
-    /// FAKit doesn't depend on SkipSwiftUI — so on Android only the `CGSize` overload
-    /// exists. This restores the geometry one for symlinked callers.
+    /// FAKit's `bestThumbnailUrl(for: GeometryProxy)` is `#if !os(Android)`, since
+    /// FAKit can't compile SkipSwiftUI's façade — so on Android only the `CGSize`
+    /// overload exists. This restores the geometry one for shared callers.
     func bestThumbnailUrl(for geometry: GeometryProxy) -> URL {
         bestThumbnailUrl(for: geometry.faSize)
     }
