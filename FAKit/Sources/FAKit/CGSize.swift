@@ -14,7 +14,7 @@ extension CGSize {
         self.init(width: width, height: height)
     }
     
-    func fitting(in size: CGSize) -> CGSize {
+    public func fitting(in size: CGSize) -> CGSize {
         let wRatio = width / size.width
         let hRatio = height / size.height
         

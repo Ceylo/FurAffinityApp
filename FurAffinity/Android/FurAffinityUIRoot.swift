@@ -50,6 +50,8 @@ import SwiftUI
         // Page fetches join the image layer's connection pool. FAKit gains no JNI:
         // the transport is a struct of closures the app module fills in.
         FAWebSession.nativeTransport = OkHttpTransport.transport
+        // Picks the light or dark FA theme rich text is styled after.
+        FATheme.currentProvider = { AndroidAppInfo.isNightMode ? .dark : .light }
         // The counterpart of FurAffinityApp.init()'s line, same shared format.
         logAppLaunch(
             operatingSystem: AndroidAppInfo.operatingSystem,

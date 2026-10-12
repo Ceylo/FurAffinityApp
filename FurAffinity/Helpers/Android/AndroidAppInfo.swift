@@ -102,6 +102,24 @@ enum AndroidAppInfo {
         #endif
     }()
 
+    /// Whether the system is in dark mode. Computed, not cached: it can change while
+    /// the app runs. Dark off Android or when the bridge is unreachable, like FA's
+    /// own default.
+    static var isNightMode: Bool {
+        #if canImport(Android)
+        guard let bridge else { return true }
+        do {
+            let night: Bool? = try bridge.isNightMode()
+            return night ?? true
+        } catch {
+            logger.error("AndroidAppInfo.isNightMode threw: \(error)")
+            return true
+        }
+        #else
+        return true
+        #endif
+    }
+
     /// The OS as the launch log names it, e.g. "Android 17".
     static let operatingSystem: String = {
         #if canImport(Android)

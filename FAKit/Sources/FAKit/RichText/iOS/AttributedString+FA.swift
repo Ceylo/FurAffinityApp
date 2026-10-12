@@ -15,7 +15,7 @@ extension AttributedString {
     public init(FAHTML: String) async throws {
         let token = signposter.beginInterval("AttributedString.init(FAHTML:)")
         defer { signposter.endInterval("AttributedString.init(FAHTML:)", token) }
-        let theme = FATheme(style: UITraitCollection.current.userInterfaceStyle)
+        let theme = FATheme.current
         
         let data = try await FAHTML
             .using(theme: theme)
