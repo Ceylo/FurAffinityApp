@@ -10,17 +10,14 @@ the APK, and draft releases are invisible to `releases/latest`, so publishing
 stays manual.
 
 `Bundle.main.version` reads 0.0.0 on Android, which would silently invert the
-comparison; `FAAppVersion` is what makes it right (see the User-Agent section).
+comparison; `FAAppVersion` is what makes it right (see [cloudflare-and-login.md § The WebView
+User-Agent](cloudflare-and-login.md#the-webview-user-agent-carries-the-app-identifier)).
 
-The tab badge reads `model.appInfo.isUpToDate == false` directly, same expression
-as iOS. It used to go through a `Model.isUpdateAvailable` mirror, justified by
-"Skip's bridge doesn't see changes to a *nested* `@Observable`" — that diagnosis
-was wrong. Nesting has nothing to do with it: `AppInformation.swift` imported
-`Observation` rather than `SwiftUI`, so the object got the stdlib registrar and
-was inert. See [Every `@Observable` needs `SkipAndroidBridge` in
-scope](shared-sources.md#every-observable-needs-skipandroidbridge-in-scope). One import fixed the
-badge and Settings' "Latest available version" row together, and the mirror is
-gone.
+The tab badge reads `model.appInfo.isUpToDate == false` directly, as on iOS. A
+nested `@Observable` is fine on Android; what once broke the badge was
+`AppInformation.swift` importing `Observation` rather than `SwiftUI` (see [Every
+`@Observable` needs `SkipAndroidBridge` in
+scope](shared-sources.md#every-observable-needs-skipandroidbridge-in-scope)).
 
 ## Release signing
 
@@ -28,8 +25,8 @@ The release `signingConfig` in `Android/app/build.gradle.kts` falls back to the
 **debug** key when `keystore.properties` is absent, so out of the box
 `assembleRelease` emits a debug-signed APK and exits 0. That is unrecoverable
 once shipped: everyone who installed it must uninstall before they can take a
-properly signed update. A `gradle.taskGraph.whenReady` check now fails any
-`assemble/bundle/package/installRelease` task while the file is missing. The debug
+properly signed update. So `preReleaseBuild` and every `package*Release` task fail
+while the file is missing. The debug
 variant is unaffected, and configuring the project without a keystore still works.
 
 Both files live beside the module (`storeFile` resolves relative to
@@ -115,24 +112,10 @@ Two guards it adds over doing it by hand: `CURRENT_PROJECT_VERSION` must be the
 value `MARKETING_VERSION` derives, and `project.pbxproj`'s `MARKETING_VERSION`
 must agree with `Skip.env`'s. Both are silent-wrong-artifact bugs otherwise.
 
-What it runs:
-
-```
-git stash apply <the distribution stash>   # pbxproj id + Amplitude key + Skip.env id
-rm -rf .build/plugins/outputs .build/Darwin .build/Android    # applicationId changed
-(cd Android && FA_ANDROID_SLOTS=0 SKIP_EXPORT_ARCHS=aarch64 ./gradlew :app:assembleRelease)   # in the worktree, not a build slot
-mv .build/Android/app/outputs/apk/release/app-release.apk out/FurAffinity-<version>-<commit>.apk
-```
-
-Why not `skip export`, which this used to be: it runs a bare `assembleRelease`,
-and Skip's settings plugin both `include`s every transpiled module as a root
-project and `includeBuild`s the same directory, so everything — the Swift package
-and the SkipUI Kotlin compile included — is built twice, in parallel, plus an
-`.aab` nothing uses since Play is out. `:app:assembleRelease` builds only what the
-app needs: 275 s against 339 s, byte-identical file list. `SKIP_EXPORT_ARCHS` is
-what `skip export --arch` sets; without it Skip's `--arch automatic` compiles a
-release for all three ABIs, and the release `abiFilters` keeps only `arm64-v8a`
-(that alone took `skip export` from 703 s to 339 s).
+It builds with `:app:assembleRelease` in the worktree (`FA_ANDROID_SLOTS=0`), not
+`skip export`, which builds everything twice in parallel plus an unused `.aab`: 275 s
+against 339 s for a byte-identical file list. `SKIP_EXPORT_ARCHS=aarch64` keeps it to
+the one ABI the release `abiFilters` ships (that alone took 703 s to 339 s).
 
 `assembleRelease` writes `.build/Android/app/outputs/apk/release/app-release.apk`
 — note `.build/`, not `Android/app/build/`; Skip redirects `buildDir` — and the
@@ -141,27 +124,21 @@ script moves it to `out/FurAffinity-<version>-<commit>.apk` (send this;
 never wiped, so earlier APKs stay, and the script refuses to start if that exact
 file already exists.
 
-The build never touches adb — it only writes artifacts. To try the APK
-on a running emulator or device, install it by hand and launch it from the icon:
+The build never touches adb unless asked. To try the APK on a running emulator or
+device:
 
 ```
-adb install -r -d out/FurAffinity-<version>-<commit>.apk   # or: build-release-apk.sh --install
+Scripts/Android/install-apk.sh --start out/FurAffinity-<version>-<commit>.apk   # or: build-release-apk.sh --install
 ```
 
-`-d` (allow downgrade) in case an install with a higher versionCode is already
-there. A debug build no longer gets in the way: it carries a per-worktree
-`applicationIdSuffix` (see [Run](build-and-run.md#run)), so it is a different
-package and cannot raise `INSTALL_FAILED_UPDATE_INCOMPATIBLE` against the
-release id. Only another *release*-signed install of the same id can, and that
-one needs `adb uninstall ceylo.FurAffinity` first, which wipes the FA session
-cookies.
+It reinstalls with `adb install -r -d`, keeping the app's data. A debug build never
+gets in the way, being a different package (see [Run](build-and-run.md#run)); only an
+install of the same id signed with another key can, and the way out, `adb uninstall
+ceylo.FurAffinity`, wipes the FA login, so the script leaves that to you.
 The applicationId is `PRODUCT_BUNDLE_IDENTIFIER` (`ceylo.FurAffinity` with the stash
 applied), **not** `ANDROID_PACKAGE_NAME` (`fur.affinity.ui`, the module package).
-Without the stash it is `Skip.env`'s committed default, `com.example.id1234` — which
-is why a plain `skip app launch` build answers to *that* id (see
-[Debug](build-and-run.md#debug)) and a stashed release build to `ceylo.FurAffinity`. To
-launch from the shell rather than the icon:
-`adb shell monkey -p ceylo.FurAffinity -c android.intent.category.LAUNCHER 1`.
+Without the stash it is `Skip.env`'s committed default, `com.example.id1234`, which a
+debug build suffixes (see [Debug](build-and-run.md#debug)).
 
 Measured 2026-08-16, release, `arm64-v8a`: **94 MB** (108 MB at 1.19, with Skip 1.9.11 and Amplitude). A universal APK with debug
 symbols was 436 MB; stripping took it to 249 MB and the ABI filter to 94 MB. The
@@ -179,9 +156,9 @@ What to tell a tester:
 
 - **Android 9 or newer** (minSdk 28), **arm64 only** — a 32-bit-ARM phone will refuse
   to install it. 18+, and it needs a furaffinity.net account.
-- Not ported yet: Notes, Notifications, the Profile tab, Explore/search, story (text)
-  and audio submissions, and posting comments. Tapping an author or an avatar shows
-  "This screen isn't ported to Android yet."
+- Not ported yet: Notes, Notifications, the Profile tab and Explore/search. Music
+  plays in another app rather than in-app, and a story opens in-app only as txt or
+  md. Tapping an author or an avatar shows "This screen isn't ported to Android yet."
 - First launch shows Cloudflare's "Verify you are human" and needs a real tap.
 - Crashes and ANRs report themselves to Sentry, symbolicated down to the source
   line (see [crash-reporting.md](crash-reporting.md)); the toggle for that is

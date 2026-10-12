@@ -53,6 +53,8 @@ struct SubmissionsTabView: View {
             SubmissionsFeedView()
                 .opacity(mode == .followed ? 1 : 0)
                 .allowsHitTesting(mode == .followed)
+                // `.opacity(0)` alone leaves the feed to VoiceOver over Explore.
+                .accessibilityHidden(mode != .followed)
 
             #if !FA_SKIP_MODULE
             if mode == .explore {
@@ -107,10 +109,10 @@ struct SubmissionsTabView: View {
                 HStack(spacing: 10) {
                     #if !FA_SKIP_MODULE
                     modeSwitch
-                        .glassEffect()
+                        .floatingGlass()
                     #endif
                     contextAction
-                        .glassEffect()
+                        .floatingGlass()
                 }
                 #if !FA_SKIP_MODULE
                 .glassEffectUnion(id: "floatingControls", namespace: namespace)

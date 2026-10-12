@@ -1,5 +1,5 @@
 //
-//  AndroidNavigationDestination.swift
+//  InAppNavigation+Android.swift
 //  FurAffinityUI (Android)
 //
 //  The Android counterpart of the iOS `view(for:)` in InAppNavigation.swift. That

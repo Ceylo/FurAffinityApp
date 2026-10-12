@@ -395,10 +395,11 @@ func prefetchAvatars(for previews: some Collection<FASubmissionPreview>) {
 /// conversion keeps the iOS call sites unchanged.
 @MainActor
 func prefetchThumbnails(for previews: some Collection<FASubmissionPreview>, availableWidth: Double) {
-    // Load-bearing on Android: `Scripts/Android/cold-image-run.sh` reads this line to
-    // tell "the feed page never loaded" (a discard) from "the image layer collapsed"
-    // (the worst outcome there is, and one that issues few image GETs too).
+    // On Android this line tells "the feed page never loaded" from "the image layer
+    // collapsed" (the worst outcome there is, and one that issues few image GETs too).
     logger.debug("prefetchThumbnails count=\(previews.count) availableWidth=\(availableWidth)")
+    // Before the first layout every thumbnail would be sized for nothing.
+    guard availableWidth > 0 else { return }
     let thumbnails = previews.map { preview in
         let size = Foundation.CGSize(
             width: availableWidth,
@@ -427,6 +428,11 @@ extension View {
             guard let newValue else { return }
             prefetchThumbnails(for: newValue, availableWidth: availableWidth)
             prefetchAvatars(for: newValue)
+        }
+        // Previews can arrive before the first layout, which skips the thumbnails.
+        .onChange(of: availableWidth > 0) { _, hasWidth in
+            guard hasWidth, let previews else { return }
+            prefetchThumbnails(for: previews, availableWidth: availableWidth)
         }
     }
 }
@@ -520,7 +526,7 @@ actor DownloadDelegate: ImageDownloaderDelegate {
         }
 #endif
         // Android emits its own `[IMG] … request on …` from inside the permit instead,
-        // which is the line `summarize-image-log.py` counts.
+        // so it dates the request actually going out.
     }
 
     nonisolated func imageDownloader(

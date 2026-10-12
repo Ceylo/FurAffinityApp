@@ -2,389 +2,251 @@
 
 ## Followed feed
 
-The feed container is **shared**: `FurAffinity/SubmissionsFeed/SubmissionsFeedView.swift`
-is symlinked in, and the old `AndroidSubmissionsFeedView` is gone. Android therefore gets
-the refresh badge ("3 new submissions" / "No new submission"), swipe-to-delete, the
-cold-launch restore check and foreground autorefresh from the same source as iOS.
+The feed container is **shared**: `SubmissionsFeedView.swift` builds for both
+platforms, so Android gets the refresh badge, swipe-to-delete, the cold-launch restore
+check and foreground autorefresh from the same source as iOS.
 
 So is the tab around it: `AndroidRootView`'s first tab mounts `SubmissionsTabView`, as
-`LoggedInView` does. It hides the navigation bar, so the list scrolls under the status bar,
-and floats the "…" control (`SubmissionsFeedActionView`, Nuke All Submissions) over the
-top-trailing corner on the glass surface — on Android an opaque M3 `surfaceContainer`
-under a 3 dp shadow ([forks.md § The feed-gaps patches](forks.md#the-feed-gaps-patches),
-which also has the three skip-ui fixes a hidden bar needed). Only Explore is left out:
-`ExplorationView`, the mode switch, the filters button and its sheet are fenced
-`#if !FA_SKIP_MODULE`, and so is `@Namespace`, which SkipSwiftUI marks unavailable; its
-one use, `glassEffectUnion`, is a pass-through there. The refresh badge
-(`NotificationOverlay`) takes the shared glass branch too — its Android
-`.ultraThickMaterial` branch existed only because glass drew nothing.
+`LoggedInView` does. It hides the navigation bar and floats the "…" control
+(`SubmissionsFeedActionView`) over the top-trailing corner on the glass surface — on
+Android an opaque M3 `surfaceContainer` under a 3 dp shadow ([forks.md § The feed-gaps
+patches](forks.md#the-feed-gaps-patches)). Only Explore is left out: `ExplorationView`,
+the mode switch and the filters sheet are fenced `#if !FA_SKIP_MODULE`, as is
+`@Namespace`, which SkipSwiftUI marks unavailable. Every floating control goes through
+`floatingGlass` (`View+floatingGlass.swift`), which on Android in dark mode adds a 1 pt
+white shadow, since the surface's dark shadow vanishes over dark artwork.
 
-Re-tapping the selected tab pops to the root and, once there, scrolls to the top, as on
-iOS and in Material. Hiding the bar took away SkipUI's only other scroll-to-top gesture,
-tapping the bar.
+Re-tapping the selected tab pops to the root and, once there, scrolls to the top.
+Hiding the bar took away SkipUI's only other scroll-to-top gesture, tapping the bar, so
+an Android-only arrow makes it discoverable: `ScrollToTopButton` fades in after 30 pt of
+scrolling up and hides once scrolling stops for 2.5 s, turns down or reaches the top.
+SkipUI has neither `onScrollGeometryChange` nor `onScrollPhaseChange`, so
+`ScrollToTopReveal` reads the direction from one reference row's `minY` in the
+`onItemFrameChanged` reports; a report moving it over 200 pt is a jump (the re-tap
+scroll), not a scroll. Its tests run on iOS too.
 
-The scroll-preserving refresh choreography — a zero-height `fetchTrigger` row whose
-`onAppear` performs the fetch, wrapped in a `ScrollViewReader` — **runs on Android too**,
-and was measured working on the emulator: the pull fires the trigger, the fetch happens,
-the badge shows and fades, and the list holds its position.
+The scroll-preserving refresh choreography (a zero-height `fetchTrigger` row whose
+`onAppear` fetches, in a `ScrollViewReader`) **runs on Android too**: the pull fires
+the trigger, the badge shows, the list holds its position. Across a real *prepend*
+(scroll down, `am force-stop`, relaunch: the restore check prepends newer items) the
+anchor row now moves for one transient frame, 30–50 ms, where it used to walk back to
+the top over ~5 s; see [below](#withanimation-marks-the-whole-frame-process-wide).
 
-`ListItemTracking` **runs on Android too**, from one implementation with no `#if`. It
-writes `Defaults[.lastViewedSubmissionID]` as the row crossing 30% from the top scrolls
-by — and that value is not a scroll offset: `Model.fetchSubmissionPreviews()` reads it on
-the first fetch after launch to build `msg/submissions/new~<sid>@72`, so it is the
-server-side pagination anchor. Read depth is restored by *choosing what to fetch*; the
-list then renders from its natural top.
+`ListItemTracking` **runs on Android too**, with no `#if`. It writes
+`Defaults[.lastViewedSubmissionID]` as rows cross 30% from the top, and that value is
+the server-side pagination anchor, not a scroll offset: the first fetch after launch
+requests `msg/submissions/new~<sid>@72`, so the list renders from its natural top. It
+measures rows with `onGeometryChange` in `.global`, since
+`View.coordinateSpace(.named:)` is **absent from the SkipSwiftUI façade**, and
+`GeometryProxy.frame(in: .named(…))` compiles and is **silently wrong** (it returns the
+`.local` frame). Only `.local` and `.global` are real.
 
-It briefly was a no-op here, fenced because `onItemFrameChanged` measured the item in
-`coordinateSpace(.named:)`, which SkipUI does not have. The named space was never
-needed: the item rect is immediately made list-relative by subtracting a `.global` list
-origin, so measuring the item in `.global` too gives the same rect from two APIs Skip
-fully implements (`onGeometryChange` and `frame(in: .global)`, both through
-`onGloballyPositionedInRoot`). Measured on the emulator: the reported frame is stable for
-recycled `LazyColumn` rows, the tracked title follows the 30% line with the same ratios iOS
-reports, and after a force-stop the next cold launch fetched `new~<the tracked sid>@72`.
-Re-measured after SkipUI stopped clipping those frames
-([forks.md § A tenth patch](forks.md#a-tenth-patch-laid-out-frames)), 2026-09-22: a row's
-`minY` now goes negative as it passes the top, three slow drags moved the anchor to a row
-whose image spanned −115…370 dp at the stop, and the cold launch fetched
-`new~<that sid>@72` and put the row back at the top of the list.
+What Android gives up:
 
-Keep the named coordinate space in mind as its own gotcha: `View.coordinateSpace(.named:)`
-is **absent from the SkipSwiftUI façade**, so it fails to compile, while
-`GeometryProxy.frame(in: .named(…))` compiles and is **silently wrong** — the name is
-bridged across JNI and then discarded, and the call falls into the same branch as
-`.local`, returning `CGRect(origin: .zero, size: size)`. Only `.local` and `.global` are
-real.
-
-What Android gives up, and why:
-
-| Piece | Status on Android |
+| Piece | On Android |
 |---|---|
-| `@Weak var scrollView: UIScrollView?` + `.introspect(.scrollView…)` | Fenced `#if !FA_SKIP_MODULE` — SwiftUIIntrospect isn't a dependency of this module, and the Darwin bridge lacks it too, so `os(Android)` would be the wrong flag. The two reads of it sit behind `waitForPullToSettle()` and `scrollViewIsAtTop` so no `#if` reaches the refresh logic. |
-| `waitForPullToSettle()` | Returns immediately. Compose retracts its own indicator, and a blind 1 s sleep would just be a dead second before the fetch. The visible consequence: the pull spinner retracts *before* the fetch finishes (iOS's `refresh(pulled:)` is fire-and-forget) — the badge is the completion feedback. |
-| `scrollViewIsAtTop` | Backed by `firstItemIsAtTop`, which `trackFirstItemTop` derives from the first row's `minY` in the `onItemFrameChanged` reports the feed already receives — `> 0` while its top edge is visible, negative once it goes under the list, nil once it leaves it. So foreground autorefresh *does* skip on scroll position, as on iOS: measured, a drag of ~9 dp stays at top (the 10 pt inset is the slack), two flings down read `minY` −134 and the next foreground logged `atTop=false`, and scrolling back read `true` again. After a cold-launch restore, the rows prepended above the anchor *are* composed, for the one transient frame below: the new head reports "at top" and is then recycled without another report. The flag used to stay `true`, so the next foreground armed an autorefresh that fired mid-scroll once the user scrolled up. Two rules clear it now: a change of the first id (to a row; an emptied feed is at its top, with no row left to say so), and any later row reporting `minY < 32` (SkipUI's minimum row height), since the anchor settling back at the top means the head is above it. Measured on the restore repro below: `atTop=false`, with no fetch and no movement, where it logged `true`. |
+| `scrollView` + `.introspect(.scrollView…)` | Fenced `#if !FA_SKIP_MODULE`. The two reads sit behind `waitForPullToSettle()` and `scrollViewIsAtTop`, so no `#if` reaches the refresh logic. |
+| `waitForPullToSettle()` | Returns immediately: Compose retracts its own indicator, so the spinner retracts before the fetch finishes, and the badge is the completion feedback. |
+| `scrollViewIsAtTop` | Derived from the first row's `minY` in the frame reports (`trackFirstItemTop`), so foreground autorefresh skips on scroll position as on iOS. It is cleared by a change of the first id and by any later row reporting `minY < 32` (SkipUI's minimum row height), because after a restore the prepended head reports "at top" once and is then recycled silently. |
 
-`.onDelete` **works** on SkipUI, with one difference: iOS reveals a Delete button that
-must then be tapped, whereas Compose commits the delete at the end of the swipe. So on
-Android the feed *stages* the deletion instead (`Model.stageSubmissionPreviewsDeletion`),
-removing the row and showing Material's Undo snackbar (the shared `UndoSnackbar`). The
-`POST /msg/submissions/new~<sid>@<n>` goes out after 5 s (a timer `Model` starts when it
-stages, which undo and any commit cancel), when the feed disappears or the app goes to
-the background, or when another row is staged; Undo re-inserts
-the rows in order. Staged rows are filtered out of every fetch until committed, so a
-refresh cannot bring one back. iOS keeps its immediate delete, through the same
-stage-then-commit code, and mounts no snackbar.
+**Swipe-to-delete commits at the end of the swipe** on Compose, where iOS reveals a
+Delete button. So Android *stages* the deletion (`Model.stageSubmissionPreviewsDeletion`)
+and shows Material's Undo snackbar (the shared `UndoSnackbar`). The `POST` goes out
+after the timeout, when the feed disappears or the app backgrounds, or when another row
+is staged; staged rows are filtered out of every fetch until then. iOS goes through the
+same stage-then-commit code, committing at once, with no snackbar.
 
 The snackbar is accessible the way Material's is. Its 5 s become
 `AccessibilityManager.getRecommendedTimeoutMillis(5000, FLAG_CONTENT_TEXT |
-FLAG_CONTENT_CONTROLS)`, read at each stage (`AndroidAccessibility` over
-`FAAccessibilityBridge.kt`): the user's "Time to take action", or the 10 s TalkBack
-declares as its `interactiveUiTimeout`, whichever is longer. Below API 29 there is no such
-call, and like Compose's own snackbar it waits indefinitely (`Int.MAX_VALUE` ms) while touch
-exploration is on; that branch is untested, since the only emulator is API 37. It is a polite live region
-(`.accessibilityAddTraits(.updatesFrequently)`, see [forks.md](forks.md#the-feed-gaps-patches)),
-so TalkBack reads it as it appears. It is one only while shown: the view stays mounted
-to fade, and a live region that hides is read again. Measured offline on the API 37
-emulator (2026-09-28): the commit followed the stage by 5.3 s with the setting unset,
-30.2 s with `accessibility_interactive_ui_timeout_ms` at 30000 (set while the app ran), and
-10.1 s under TalkBack. TalkBack's verbose log shows it speaking "Submission deleted. Undo"
-once, about 5 s after the swipe, because it queues the region behind the speech already
-in progress, and nothing at the commit. The same run without the trait speaks nothing.
+FLAG_CONTENT_CONTROLS)`, read at each stage (`FAAccessibilityBridge.kt`): the user's
+"Time to take action", or TalkBack's 10 s. Below API 29 it waits indefinitely while
+touch exploration is on, as Compose's does (untested: the only emulator is API 37). It
+is a polite live region (`.accessibilityAddTraits(.updatesFrequently)`) only while
+shown, since a live region that hides is read again. Measured: 5.3 s with the setting
+unset, 30.2 s at 30000, 10.1 s under TalkBack, which speaks "Submission deleted. Undo"
+once.
 
-Holding scroll position across a real *prepend* is now measured too (2026-08-15). The
-repro needs no waiting for FA: scroll down a few cards, `am force-stop`, relaunch — the
-cold-launch restore fetches `new~<sid>@72`, then the restore check fetches `new@72`, whose
-newer items are prepended. Logging every `onItemFrameChanged` callback, the anchor row's
-`minY` used to leave the top and take **~5 s** walking back to it (66033206 → 65975822 →
-65949461 → 65940282), which is the "moves and then settles" the feed showed. After
-[§`withAnimation` marks the whole frame](#withanimation-marks-the-whole-frame-process-wide)
-it is one transient frame: the prepended head shows for **30–50 ms**, then the anchor is
-back at `minY≈10` and stays. On screen that is a single frame of placeholder rows before
-the list is where it was, with the new rows above it and the badge showing.
-
-The empty feed is reached with the login screen's second debug button, "Continue offline,
-empty (debug)" (`AndroidRootView`), which signs in with `OfflineFASession.empty` — no
-submissions, so `model.submissionPreviews` is `[]` and the feed mounts its `noPreview`
-placeholder for real rather than as a mock.
+The empty feed is reached with the login screen's "Continue offline, empty (debug)".
 
 ### `withAnimation` marks the whole frame, process-wide
 
-On iOS a `withAnimation` transaction reaches only the state written inside it. On SkipUI it
-sets a **static** marker (`Animation.recentWithAnimationAnimation`) cleared only on the next
-Compose frame, and `Animation.current` / `Animation.isInWithAnimation` fall back to it. So
-*any* state write animates *every* view that recomposes in that frame. For a `List` that
-means two things (`skip-ui/…/List.swift`): rows compose with `Modifier.animateItem()`, so a
-prepend animates row placement, and `ScrollToIDAction` uses `animateScrollToItem` instead of
-`scrollToItem`, so a `ScrollViewProxy.scrollTo` becomes an animated scroll.
+On iOS a `withAnimation` transaction reaches only the state written inside it. On SkipUI
+it sets a **static** marker cleared only on the next Compose frame, so *every* view that
+recomposes in that frame animates. For a `List` that means a prepend animates row
+placement, and `ScrollViewProxy.scrollTo` becomes `animateScrollToItem`. That is what
+made the feed slide after a refresh. **Use `.animation(_:value:)`**, which is scoped to
+one subtree. Anything on a hot path must not use the global form: the image fade on every
+thumbnail arrival was the second offender, and Kingfisher's `ImageBinder` the third (the
+fork moves it to `.animation(_:value:)`).
 
-That is what made the feed slide: `fetchSubmissionPreviews()` ended with
-`withAnimation { newSubmissionsCount = … }` in the same main-thread turn as the prepend and
-the choreography's `scrollTo`. **Prefer `.animation(_:value:)`**, which sets
-`EnvironmentValues._animation` for one subtree and never touches the marker.
+**Key `.animation(_:value:)` on a value Kotlin can compare.** SkipUI installs the
+animation only on the composition where `value` differs from the remembered one. Keyed
+on a **Swift enum** it silently never fires; `value: phase == .shown` does. Keep keys to
+`Bool`, `Int` or `String`, and prove a new animation with a deliberately slow duration
+first: at 0.35 s, animating and snapping differ by 10 frames. Capture on a quiet host,
+after a warm-up launch.
 
-Two callers had to change, and the second one is the lesson: the image view faded a freshly
-loaded image in with `withAnimation`, so *every thumbnail arrival* marked a frame. Removing
-only the feed's call cut the excursion from ~5 s to ~460 ms; the rest went away only when
-the image fade became scoped too. Anything on a hot path — image loads, list rows, badges —
-must not use the global form. Kingfisher's own `ImageBinder` had the same call, and the
-Android fork moves the load animation to `KFImageRenderer`'s `.animation(_:value:)` for
-exactly this reason.
+**`.transition(…)` works under one contract**: the transitioning view must be an
+`.id`'d child of an `HStack`/`VStack`/`ZStack`, and the stack itself carries the
+`.animation(_:value:)`. With any un-id'd child the stack composes a plain `Box` and
+nothing transitions; an `.animation` on the child never reaches it either.
+`NotificationOverlay` and `CloudflareResolutionOverlay` are the worked examples:
 
-`.transition(…)` is not a substitute: SkipUI resolves transitions in the *container*
-(`VStack.swift`, via `Animation.current(isAnimating:)`, evaluated before it recurses into the
-child's own modifiers), so it only ever sees an ambient animation set above the container or
-the global mark. A scoped `.animation(_:value:)` on the transitioning view cannot reach it —
-which is why the refresh badge briefly lost its animation on Android.
+```swift
+ZStack {
+    if let itemCount {
+        badge(itemCount)
+            .id("badge")            // constant: a new count updates in place
+            .transition(.fallAndFade)
+    }
+}
+.animation(.easeInOut(duration: 0.35), value: itemCount != nil)
+```
 
-**State-driven properties do animate from a scoped animation**, because `.opacity`,
-`.offset` and `.scaleEffect` each read `EnvironmentValues._animation` themselves
-(`AdditionalViewModifiers.swift` → `Animatable.asAnimatable`). Since the animation-resume
-patch (see [Why skip-ui / skip-fuse-ui are forked](forks.md#why-skip-ui--skip-fuse-ui-are-forked))
-that also holds across recycling: an animation interrupted by a `List` row leaving the
-composed window resumes at the right point instead of dying at its end state.
-`NotificationOverlay` is the worked example: it stays mounted and moves through a
-`hidden → shown → fading → hidden`
-phase with `.opacity`/`.offset` and `.animation(_:value:)`, which reproduces `fallAndFade` —
-including its asymmetry, since fading holds the offset at 0 — on both platforms.
+During an exit the stack holds its size for a fixed 0.35 s, not the animation's own
+duration, so a slower exit jumps sideways once that runs out.
 
-**Key `.animation(_:value:)` on a value Kotlin can compare.** SkipUI installs the animation
-only on the composition where `value` differs from the remembered one
-(`Animation.swift`, `isValueChange`); everywhere else the property snaps. Keying it on a
-**Swift enum** (`value: phase`) silently never fires — the pill jumped from absent to fully
-placed within one 33 ms frame, measured on a 30 fps capture — while `value: phase == .shown`
-animates. Keep such keys to bridged primitives (`Bool`, `Int`, `String`), and prove any new
-animation on the emulator with a deliberately slow duration first: at 0.35 s the difference
-between "animating" and "snapping" is 10 frames, and easy to miss.
+**State-driven `.opacity`, `.offset` and `.scaleEffect` also animate from a scoped
+animation**, which suits a view that stays mounted, like `ScrollToTopButton`. Since the
+animation-resume patch ([forks.md](forks.md#why-skip-ui--skip-fuse-ui-are-forked)) an
+animation interrupted by a `List` row recycling resumes at the right point.
 
 ## Submission screen
 
-Tapping a feed card pushes the same `RemoteSubmissionView` → `SubmissionView` the iOS app
-draws. Those, and `RemoteView`, `SubmissionPreviewView`, `SubmissionControlsView`,
-`SubmissionMetadataView` and all of `Comments/`, are symlinked **verbatim**. Its title is
-inline, as on iOS: `SubmissionsTabView`'s `.navigationBarTitleDisplayMode(.inline)` carries
-over to what it pushes.
+Tapping a feed card pushes the same `RemoteSubmissionView` → `SubmissionView` the iOS
+app draws, with `RemoteView`, `SubmissionPreviewView`, `SubmissionControlsView`,
+`SubmissionMetadataView` and all of `Comments/` shared verbatim. Ported: the image, the
+zoomable viewer, favorite (with the `UpdateHandler` rollback), Save, Share, the
+description with in-app links, threaded comments with the deep-linked one's highlight,
+comment posting, "Send a Note", and the metadata screen.
 
-Ported: the image, the zoomable full-screen viewer, favorite (with the optimistic
-`UpdateHandler` rollback), Save to gallery, Share, the description with in-app link
-routing, threaded comments including the deep-linked one's highlight pulse, comment
-posting (the shared `Replying` / `CommentEditor` sheet, reached from the controls, the
-toolbar and each comment's Reply action), "Send a Note" (the shared `NoteEditor`, its
-recipient pre-filled), scrolling a deep-linked comment into view, and the metadata screen.
+Comment posting needed two things from the forks: `.glass` / `.glassProminent` and
+`buttonBorderShape`, drawn as their bordered counterparts, and a sheet whose `content`
+is only called while presented (`Replying`'s `fatalError()` guard crashed on the extra
+calls).
 
-Comment posting needed two things from the forks. `.glass` / `.glassProminent` and
-`buttonBorderShape` now exist, drawn as their bordered counterparts and a Material
-shape, so the editor's `#available(iOS 26, *)` branch compiles as-is. And a sheet's
-`content` is now only called while it is presented, as in SwiftUI. skip-fuse-ui used to
-call the builder on every body evaluation, and SkipUI called it again while the sheet
-animated away. `Replying` unwraps its session with a `fatalError()` guard, so both
-calls crashed.
+`SubmissionMainImage` is shared, and so is its loader, one `configure(_:geometry:)` chain
+over `KFImageProtocol`; one `#if FA_SKIP_MODULE` seam is left, the viewer's content,
+where iOS's pixel sizing feeds its zoom ratios. The download-progress bar is shared too
+(see [images.md](images.md)). `AlignedLabel`'s optical nudges go through
+`symbolOpticalOffset(y:)`, a no-op on Android, where Material icons centre their glyph.
 
-`SubmissionMainImage` itself is *shared*, and since Kingfisher builds for Android the
-loader is shared too: one `configure(_:geometry:)` chain over `KFImageProtocol`, with
-Kingfisher's own `onSuccess` publishing the loaded image and the cached file URL on both
-platforms. One `#if FA_SKIP_MODULE` seam is left, the viewer's content, where iOS's
-pixel sizing is load-bearing for its zoom ratios.
+### The viewer
 
-The download-progress bar is shared too, `LinearProgress` included, down to its
-`GeometryReader` and `.spring`. The OkHttp transport's copy loop pushes progress, which
-reaches the bar through Kingfisher's `reportDownloadProgress` ([images.md](images.md)).
-
-The submission controls keep one body as well. `AlignedLabel`'s and the metadata
-link's optical nudges are tuned for SF Symbols, so they go through
-`symbolOpticalOffset(y:)`, which does nothing on Android: Material icons centre their
-glyph in the box.
-
-The viewer is
-presented from `fadingSheet` on both platforms, and behaves the same way: **a single
-tap** toggles fill/fit (matching iOS's `numberOfTapsRequired = 1`), and it is dismissed
-by **pulling it down** rather than by a close button. The system Back gesture still
-closes it.
-
-The pull is the presentation's on both platforms — `UISheetPresentationController`'s on
-iOS, `ModalBottomSheet`'s here. Getting Compose's took presenting with `.sheet`: SkipUI
-draws `sheet` and `fullScreenCover` as the same `ModalBottomSheet`, but passes
+The viewer is presented from `fadingSheet` on both platforms: **a single tap** toggles
+fill/fit, **pulling down** dismisses it, and system Back closes it. The pull is the
+presentation's own, `ModalBottomSheet`'s here, which takes `.sheet`: SkipUI passes
 `sheetGesturesEnabled: !(isFullScreen || interactiveDismissDisabled)`, so
-`fullScreenCover` is precisely what had switched the pull off and made `Zoomable` grow a
-hand-rolled one.
+`fullScreenCover` switches the pull off.
 
-What `Zoomable` still owns is the *negotiation* iOS gets free between `UIScrollView` and
-the sheet, declared through `.interactiveDismissDisabled` — a preference SkipUI feeds
-straight to `sheetGesturesEnabled`. Ownership is decided at the first drag event carrying
-a direction, ahead of Material3's ~8 dp *vertical* slop (SkipUI never consumes, so
-`draggable` behind the sheet sees the same events), and is never revised mid-gesture. The
-sheet gets only a **downward**, vertically dominant drag made with no vertical pan room
-left; a pinch claims the gesture outright; everything else is the content's, and the sheet
-is then locked out for the rest of that gesture — otherwise `draggable` would dismiss on
-any release past its 125 dp/s threshold, whatever the drag was for. A `sheetOwnsDrag`
-latch does the mirror job on the drag the sheet does get: the content ignores it on both
-axes, or it drifts sideways while the sheet travels down.
+`Zoomable` still owns the *negotiation* iOS gets free between `UIScrollView` and the
+sheet, through `.interactiveDismissDisabled`. Ownership is decided at the first drag
+event with a direction, ahead of Material3's ~8 dp slop, and never revised mid-gesture:
+the sheet gets only a downward, vertically dominant drag with no pan room left; a pinch
+claims the gesture; everything else is the content's, and the sheet is then locked out
+for that gesture. A `sheetOwnsDrag` latch makes the content ignore the drag the sheet
+does get.
 
-The backdrop deliberately does **not** fade to reveal the page: SkipUI hands
-`ModalBottomSheet` a `Color.Unspecified` container that paints an opaque grey, and
-`presentationBackground` is `@available(*, unavailable)` in skip-fuse-ui, so a fade
-reveals that grey rather than the submission. Compose's own scrim does the reveal instead.
+The backdrop does **not** fade to reveal the page: SkipUI's sheet container paints an
+opaque grey and `presentationBackground` is unavailable, so Compose's scrim does the
+reveal. The accepted cost of `.sheet`: an 18 pt band at the top, 16 pt rounded top
+corners, and a **640 pt width cap** in landscape and on tablets. Undoing all three is
+dropping `isFullScreen ||` from that line in `Ceylo/skip-ui` and presenting with
+`fullScreenCover` again.
 
-Accepted cost of `.sheet` over `fullScreenCover`, weighed and kept: an 18 pt band at the
-top (`presentationDragIndicator(.hidden)` suppresses the capsule but keeps its footprint)
-showing the scrimmed page, 16 pt rounded top corners, and `BottomSheetDefaults`'
-**640 pt width cap**, which boxes the viewer in landscape and on tablets. Undoing all
-three is one line in `Ceylo/skip-ui` — dropping `isFullScreen ||` from that
-`interactiveDismissDisabled`, then presenting with `fullScreenCover` again.
-
-A `UIScrollView` gives the iOS viewer inertia and edge behaviour for free; here both are
-hand-built. Releasing a pan runs Android's `OverScroller` spline — its closed forms
-reconstructed in Swift, since a Skip Fuse module has no Compose to borrow `splineBasedDecay`
-from — and the velocity that launches it is timed by hand from successive translations,
-because SkipUI builds every `DragGesture.Value` with `velocity: .zero`. Compose's 100 ms
-staleness window is applied at the release as well as between samples, or "pan, hold
-still, lift" would fling.
-
-At a bound the pan continues past with resistance and a critically damped spring brings it
-back, which is what Android's *zoomable image viewers* do (Google Photos, telephoto) —
-deliberately not the Android-12 stretch overscroll, which is a scroll container's own edge
-effect, and there is no scroll container here. Flings stay clamped, so one that reaches a
-limit simply arrives; only a drag can overscroll.
-
-The viewer also resets itself on each presentation — offset and zoom — because skipstone
-backs `@State` with `rememberSaveable`. The initial zoom is re-derived from **every**
-viewport measurement until the user first zooms or pans (`hasUserAdjusted`), not latched
-on the first one: the sheet reports a height ~129 px short of its final one before its
-insets settle, and `boundedFill` computed from that left the image visibly letterboxed
-where `fullScreenCover` had filled the screen.
+Inertia and edge behaviour are hand-built. Releasing a pan runs Android's `OverScroller`
+spline, its closed forms reconstructed in Swift, with a velocity timed by hand because
+SkipUI builds every `DragGesture.Value` with `velocity: .zero`; Compose's 100 ms
+staleness window applies at the release too, or "pan, hold still, lift" would fling. At
+a bound the pan continues with resistance and a critically damped spring brings it back,
+as Android's image viewers do; flings stay clamped. The viewer resets offset and zoom on
+each presentation, and re-derives the initial zoom from **every** viewport measurement
+until the user first adjusts it, since the sheet first reports a height ~129 px short.
 
 ### Stories and music
 
-A story's cover, its download and Save/Share come from the shared `SubmissionTextContent`.
-Only the reader is forked: `StoryReaderView` has an iOS build (`UITextView` reflow of
-txt, md, rtf, pdf and docx, with QuickLook for the original) and an Android one. Each
-builds its `Content` through `StoryReaderView.Content.load(data:filename:documentUrl:)`,
-so the shared view never sees what the reader holds. The Android reader shows txt and md
-from FAKit's `StoryText`, one `Text` per line in a `LazyVStack` so that Compose never
-measures a whole novel at once. Any other format gets "Open in another app"
-(`FAMediaBridge.open`, `ACTION_VIEW`).
+A story's cover, download and Save/Share come from the shared `SubmissionTextContent`.
+Only the reader is forked: `StoryReaderView` builds its `Content` through
+`StoryReaderView.Content.load(data:filename:documentUrl:)` on both platforms. The
+Android reader shows txt and md from FAKit's `StoryText`, one `Text` per line in a
+`LazyVStack` so Compose never measures a whole novel at once; other formats get "Open in
+another app" (`FAMediaBridge.open`).
 
-Music has an Android build of `SubmissionAudioContent` with the iOS signature. It shows
-the cover, and "Play in another app" downloads the mp3 and hands it to another app;
-Save/Share light up once it is downloaded. The Android `AudioPlaybackController` owns
-that download, as iOS's does, and lives in `SubmissionView`'s state, so row recycling
-never starts a second one. It only downloads when asked, whereas iOS downloads as the
-screen appears: the page transport can't cancel an exchange and holds one of its two
-permits for the whole transfer, so a download on every visit would stall page loads.
+Music has an Android `SubmissionAudioContent` with the iOS signature: the cover, and
+"Play in another app", which downloads the mp3 and hands it over; Save/Share light up
+once downloaded. It downloads only when asked, unlike iOS: the page transport can't
+cancel an exchange and holds a permit for the whole transfer.
 
-Not ported, because each is an Apple-only stack: in-app playback and lock-screen
-controls (AVPlayer, `MPNowPlayingInfoCenter`), pdf/rtf/docx reflow (PDFKit, UIKit's RTF
-importer, `UIFont` traits), the QuickLook "Original" view and the reader's
-landscape gate.
+Not ported, each an Apple-only stack: in-app playback and lock-screen controls,
+pdf/rtf/docx reflow, the QuickLook "Original" view and the reader's landscape gate.
 
-Downloads go through `FAHTTPDataSource` like pages, with one difference: a download that
-is still challenged after the repair fails instead of taking the WebView fallback. That
-fallback reads back the page the WebView lands on, so for a file it never returned: an
-mp3 challenged at launch left "Downloading…" up for good.
+A download still challenged after the repair fails instead of taking the WebView
+fallback, which reads back a page and so never returns a file.
 
 ### Android-only substitutes
 
-Each keeps the iOS name and signature so symlinked callers compile unchanged:
-`HTMLView`, `Zoomable`, `FlowLayout`, `MediaSaveHandler`, `fadingSheet` (the iOS one
-crossfades a UIKit-backed `.sheet`; `View+pullableScreenCover.swift`),
-`StoryReaderView`, `SubmissionAudioContent`, and the no-ops in
-`SubmissionShims.swift`.
+Each keeps the iOS name and signature so shared callers compile unchanged: `HTMLView`,
+`Zoomable`, `FlowLayout`, `MediaSaveHandler`, `fadingSheet`
+(`View+pullableScreenCover.swift`), `StoryReaderView`, `SubmissionAudioContent`, and the
+no-ops in `SubmissionShims.swift`.
 
-`HTMLView` is the one that does real work rather than standing in. iOS renders FA's rich
-text through WebKit's HTML importer into a `UITextView`; here `FAKit` normalises the
-markup (`FAHTMLNormalizer`) and Compose parses it — see `Text(html:)` under
-[the other fork patches](forks.md#the-other-fork-patches). The view itself only puts back what
-that parser drops: a `Divider()` where each `<hr>` was, and an inline view at each
-`<img>`'s U+FFFC. Accepted losses, none of which FA's corpus exercises: `<ol>` numbering
-degrades to bullets, `<blockquote>` loses its indent and bar, `<code>`/`<pre>` lose
-monospace, absolute px font sizes are ignored, and `<sub>` gets a baseline shift without
-the size reduction. Headings come out at Compose's `RelativeSizeSpan` steps rather than
-FA's exact pixel sizes. The one iOS feature not reachable is animated GIF avatars, which
-stay on their first frame.
+`HTMLView` does real work: `FAKit` normalises FA's markup (`FAHTMLNormalizer`) and
+Compose parses it (see `Text(html:)` under [the other fork
+patches](forks.md#the-other-fork-patches)). `fromHtml` reads neither `<style>` nor
+classes, so the normaliser restates the theme rules that show, for `FATheme.current`:
+quotes in `<i>` with their name in `<b>`, and in dark only, headings in `#add8f5` and
+description links in `<b>`. An element's own `color` wins. Links keep the app tint and
+spoilers stay visible. The rules are copied by hand from `ui_theme_dark.css` and
+`ui_theme_light.css`; an iOS test pins them to the bundled sheets, so follow a restyle of
+FA's by hand. The view puts back what the parser drops: a `Divider()` per `<hr>`, and an
+inline view at each `<img>`'s U+FFFC. The text never waits for an image: each is sized
+from its `width`/`height`, else a fallback (50×50 avatar, 19×19 smilie), then from its
+own size once `FAImage` loads it, capped at 50×50 for avatars and the text width for all.
+Accepted losses, none exercised by FA's corpus: `<ol>` numbering, `<blockquote>` indent,
+`<code>` monospace, px font sizes, `<sub>` size, exact heading sizes. GIF avatars stay on
+their first frame. Its padding is 3 dp vertical and **8 dp horizontal**, matching iOS,
+whose `UITextView` adds `lineFragmentPadding = 5` to the 3 pt inset.
 
-Its padding is 3 dp vertical but **8 dp horizontal**, which looks asymmetric and is not.
-The iOS view sets `textContainerInset = 3` on all edges, but a `UITextView` also keeps
-its default `textContainer.lineFragmentPadding = 5` on the leading and trailing edges,
-and `makeUIView` never zeroes it — so iOS insets text by 8 pt horizontally and 3 pt
-vertically. Copying only the inset left Android's text half as far from the edge. One
-fix covers two places: the submission description and every comment bubble
-(`CommentView`'s `textBubble`) go through this view.
-
-Link taps inside rich text never reach `openURL`: Compose hands them to this view's
-`onLinkTap`, which pushes anything `FATarget(with:)` matches into `NavigationStream` and
-sends the rest to the browser. The listener fires on the Compose UI thread, so it reaches
-the (main-actor) stream through `MainActor.assumeIsolated` — a `Task` hop would defer the
-push by a frame. Nothing rewrites URL schemes on either platform any more; Android
-registers no scheme at all, and `appNavigationScheme` (`InAppLinkConversion.swift`)
-survives only as iOS's external entry point.
-
-`view(for:)`, the half of `InAppNavigation.swift` that can't be shared at all (it names
-screens that don't exist here), lives in `AndroidNavigationDestination.swift`.
+Link taps never reach `openURL`: Compose hands them to `onLinkTap`, which pushes anything
+`FATarget(with:)` matches into `NavigationStream` through `MainActor.assumeIsolated` (a
+`Task` hop would defer it a frame) and sends the rest to the browser.
+`view(for:)` lives in `InAppNavigation+Android.swift`.
 
 ### Scrolling to a deep-linked comment
 
-The shared `scrollToItem` needed two fork fixes.
+The shared `scrollToItem` needed two fork fixes: a `ViewModifier`'s `content` used to be
+a JNI *local* reference, so deferring it into the `ScrollViewReader` closure aborted
+("jobject is an invalid JNI transition frame reference"; look for
+`SwiftBackedFunction*.invoke` if it returns), and the proxy now resolves the `List`'s
+scroll action at call time rather than at first composition. The anchor is still
+ignored: SkipUI brings the row to the top, where iOS centres it.
 
-**A `ViewModifier` may defer its `content`.** `ViewModifier.Content` reaches Swift as a
-`JavaBackedView`, which used to wrap the JNI *local* reference it was handed, valid only
-for the frame that built the modifier. `ScrollToItemModifier` uses it inside the
-`ScrollViewReader` closure Compose calls later, which aborted the process:
-
-```
-JNI DETECTED ERROR IN APPLICATION: jobject is an invalid JNI transition frame reference
-  from kotlin.Pair skip.bridge.SwiftBackedFunction1.Swift_invoke(long, java.lang.Object)
-```
-
-`JavaBackedView` now holds a global reference. If that abort comes back, look for
-`SwiftBackedFunction*.invoke` directly under the SkipUI container owning the closure.
-
-**The proxy resolves its action when used.** `ScrollViewReader` built its proxy from the
-scroll action collected at the time, and on the first composition the `List` has not
-contributed one yet. The proxy `onFirstAppear` captures was therefore a no-op, and nothing
-scrolled. It now reads the collected action at call time, as SwiftUI's does.
-
-The anchor is still ignored: SkipUI brings the target row to the top of the list, where
-iOS centres it.
-
-To reach a deep link without a notification, launch a debug build with
-`--es faOpenURL <url>`: `AndroidRootView` opens it in-app once there is a session, like
-`simctl openurl` on iOS.
+To reach a deep link without a notification, launch a debug build with `--es faOpenURL
+<url>`; `AndroidRootView` opens it once there is a session:
 
 ```
 adb shell am start -S -n <app id>/fur.affinity.ui.MainActivity \
   --es faOpenURL "https://www.furaffinity.net/view/48519387/#cid:166652794"
 ```
 
-Checked on the emulator on 2026-09-24: that comment scrolls into view, while
-`#cid:1` on the same submission leaves the list at the top.
-
 ### Save and Share
 
-`FAMediaBridge.kt` (app module, reached by name through `AnyDynamicObject` like
-`FAImageFetchBridge`) inserts images into MediaStore's `Pictures/FurAffinity` and
-documents into `Download/FurAffinity`, and starts `ACTION_SEND` (Share) and
-`ACTION_VIEW` (Open in another app). "Save to Files" (`exportToFiles`) saves without
-asking where, unlike iOS's document picker. A toast says where the file went, or that
-saving failed, since the iOS signature has no error storage to report through. Staged
-hand-off files in `cache/shared` expire after an hour rather than at the next hand-off:
-a player given an mp3 by Open re-opens the URI to seek. Each hand-off copies under a
-temporary name and renames, so such a reader keeps the inode it has open.
-`MediaStore.Downloads` needs API 29, so on API 28 it falls back to the share chooser.
-Two things the manifest must carry, both easy to lose in a regeneration:
+`FAMediaBridge.kt` inserts images into MediaStore's `Pictures/FurAffinity` and documents
+into `Download/FurAffinity`, and starts `ACTION_SEND` (Share) and `ACTION_VIEW` (Open in
+another app). "Save to Files" saves without asking where, and a toast says where it went
+or that it failed. Staged hand-off files in `cache/shared` expire after an hour, since a
+player re-opens the URI to seek, and are written under a temporary name and renamed, so
+such a reader keeps its inode. On API 28 Downloads falls back to the share chooser. The
+manifest must carry, and a regeneration easily loses:
 
-- `<provider android:name="androidx.core.content.FileProvider">` with
-  `${applicationId}.fileprovider` and `@xml/file_paths`. Shared files sit in the app
-  cache, which no other app may read, so they go out as `content://` URIs.
-- `WRITE_EXTERNAL_STORAGE` with `maxSdkVersion="28"` — the MediaStore insert needs no
-  permission under scoped storage, but does on API ≤28.
+- the `androidx.core.content.FileProvider` `<provider>` with
+  `${applicationId}.fileprovider` and `@xml/file_paths`: shared files sit in the app
+  cache and go out as `content://` URIs;
+- `WRITE_EXTERNAL_STORAGE` with `maxSdkVersion="28"`, needed by the MediaStore insert
+  before scoped storage.
 
-`cachedImageFileURL(for:)` copies the bytes out of Kingfisher's disk cache to a temp file
-named `<uuid>-<the media URL's last path component>` first — the same helper iOS uses for
-notification attachments. The cache names its entries by hash with **no extension**, so
-saving or sharing straight out of it yields a nameless file with no detectable MIME type.
-
-`FileManager.default.temporaryDirectory` is safe to share from and needs no platform
-branch: the Android build of corelibs Foundation resolves it through `XDG_CACHE_HOME`
-(that string is in `libFoundation.so`; `/tmp` and `TMPDIR` are not), and
-`AndroidBridgeBootstrap` points that at `context.cacheDir`. So the exported log
-(`generateLogFile` in `Logs.swift`) already lands inside the app cache `@xml/file_paths`
-exposes — no `/tmp` involved.
+`cachedImageFileURL(for:)` first copies the bytes out of Kingfisher's disk cache, whose
+entries have **no extension**, to `tmp/fa-media/<UUID>/<remote filename>` (see
+[images.md](images.md)). `temporaryDirectory` needs no platform branch: Skip's
+`AndroidBridgeBootstrap` points `XDG_CACHE_HOME` at `context.cacheDir`, which
+`@xml/file_paths` exposes.

@@ -34,6 +34,8 @@ public struct FASubmissionsPage: FAPage {
     public let submissions: [Submission?]
     public let nextPageUrl: URL?
     public let previousPageUrl: URL?
+    /// Nil when the page was served logged out.
+    public let loggedInUser: FALoggedInUser?
 }
 
 extension FASubmissionsPage {
@@ -44,6 +46,7 @@ extension FASubmissionsPage {
         do {
             let string = try String(data: data, encoding: .utf8).unwrap()
             let doc = try SwiftSoup.parse(string, url.absoluteString)
+            self.loggedInUser = try FALoggedInUser(doc)
             
             let itemsQuery = "body div#main-window div#site-content form div#messagecenter-new-submissions div#standardpage section div.section-body div#messages-comments-submission div#messagecenter-submissions section figure"
             let items = try doc.select(itemsQuery)

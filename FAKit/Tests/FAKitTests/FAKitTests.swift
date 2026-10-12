@@ -6,11 +6,22 @@ import FoundationNetworking
 import FAPages
 @testable import FAKit
 
-struct MockHTTPDataSource: HTTPDataSource {
-    var dataForUrl = [URL : Data]()
+/// Serves canned pages and counts the requests per URL.
+final class MockHTTPDataSource: HTTPDataSource, @unchecked Sendable {
+    let dataForUrl: [URL: Data]
+    private let lock = NSLock()
+    private var counts = [URL: Int]()
+
+    init(dataForUrl: [URL: Data] = [:]) {
+        self.dataForUrl = dataForUrl
+    }
+
+    var requestCount: Int { lock.withLock { counts.values.reduce(0, +) } }
+    func requestCount(for url: URL) -> Int { lock.withLock { counts[url, default: 0] } }
 
     func httpData(from url: URL, cookies: [HTTPCookie]?, method: HTTPMethod, parameters: [URLQueryItem]) async throws -> Data {
-        try dataForUrl[url].unwrap()
+        lock.withLock { counts[url, default: 0] += 1 }
+        return try dataForUrl[url].unwrap()
     }
 }
 

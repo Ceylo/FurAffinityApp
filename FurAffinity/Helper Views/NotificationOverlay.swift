@@ -16,32 +16,16 @@ extension AnyTransition {
     }
 }
 
-/// `fallAndFade` as state rather than a transition: SkipUI resolves transitions in
-/// the container, where it only sees a global `withAnimation` mark — but `.opacity`
-/// and `.offset` read the animation themselves, so these two animate on both
-/// platforms. Fading keeps the offset at 0, which is what made it asymmetric.
-enum NotificationOverlayPhase {
-    /// Above its place and transparent — where the badge falls in from.
-    case hidden
-    case shown
-    /// Transparent again, without moving.
-    case fading
-}
-
 struct NotificationOverlay: View {
     @Binding var itemCount: Int?
     var dismissAfter: TimeInterval = 3.0
-    // Not private: skipstone can't bridge a private @State/@Environment.
-    /// Outlives `itemCount` so the text survives the fade-out.
-    @State var lastCount = 0
-    @State var phase = NotificationOverlayPhase.hidden
 
     private static let animationDuration = 0.35
     /// Transparent room around the pill so its shadow stays inside the animated
     /// view's own bounds — Android clips to those bounds while opacity < 1.
-    private static let shadowRadius = 5.0
-    /// The padded pill's height, so it falls in from exactly out of place.
-    private static let badgeHeight = 44.0 + 2 * shadowRadius
+    static let shadowRadius = 5.0
+    /// The padded pill's height, which `ScrollToTopButton` steps below.
+    static let badgeHeight = 44.0 + 2 * shadowRadius
 
     private func text(count: Int) -> String {
         switch count {
@@ -59,7 +43,7 @@ struct NotificationOverlay: View {
                 .foregroundColor(Color.primary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .glassEffect()
+                .floatingGlass()
         } else {
             materialBadge(count)
         }
@@ -76,47 +60,31 @@ struct NotificationOverlay: View {
             .shadow(color: .black.opacity(0.33), radius: Self.shadowRadius, x: 0, y: 0)
     }
     
-    /// The badge stays mounted and drives itself, so it must not eat taps meant for
-    /// what it floats over.
     var body: some View {
-        badge(lastCount)
-            // Before `.opacity`, and here rather than in `materialBadge`, so both
-            // badge branches get the same geometry.
-            .padding(Self.shadowRadius)
-            .opacity(phase == .shown ? 1 : 0)
-            .offset(y: phase == .hidden ? -Self.badgeHeight : 0)
-            // Keyed on the visibility, not on `phase`: `fading → hidden` then carries no
-            // animation, which is exactly what should snap — both phases are transparent,
-            // so the offset going back up must not be animated.
-            // Same curve on both platforms: Skip maps `.easeInOut` to Compose's
-            // CubicBezierEasing(0.42, 0, 0.58, 1), which is SwiftUI's own.
-            .animation(.easeInOut(duration: Self.animationDuration), value: phase == .shown)
-            .allowsHitTesting(false)
-            // `.opacity(0)`, unlike `.hidden()`, leaves the badge in the accessibility
-            // tree — so VoiceOver found a stale count floating over the feed at all times.
-            .accessibilityHidden(phase != .shown)
-            .task(id: itemCount) {
-                guard let itemCount else { return }
-                lastCount = itemCount
-                phase = .shown
-
-                // On cancellation just return: a new count is about to restart this,
-                // and writing then would fight it.
-                do { try await Task.sleep(for: .seconds(dismissAfter)) } catch { return }
-                phase = .fading
-                // Only go back up once the fade has played, otherwise the reset rides
-                // along with it.
-                do { try await Task.sleep(for: .seconds(Self.animationDuration)) } catch { return }
-                phase = .hidden
-                self.itemCount = nil
+        // SkipUI animates a transition only between `.id`'d children of a stack, and
+        // reads the stack's own `.animation(_:value:)` for it — no global `withAnimation`,
+        // which would animate the feed under the badge too.
+        ZStack {
+            if let itemCount {
+                badge(itemCount)
+                    // Before the transition's opacity, and here rather than in
+                    // `materialBadge`, so both badge branches get the same geometry.
+                    .padding(Self.shadowRadius)
+                    // Constant, so a new count updates the text in place.
+                    .id("badge")
+                    .transition(.fallAndFade)
+                    .task {
+                        do {
+                            try await Task.sleep(for: .seconds(dismissAfter))
+                            self.itemCount = nil
+                        } catch is CancellationError {
+                            self.itemCount = nil
+                        } catch {}
+                    }
             }
-            .onDisappear {
-                // Teardown cancels the timer, so reset here: otherwise a half-played
-                // badge re-runs .task with an unchanged id and replays a stale count.
-                // (Being superseded by a new count goes through .task, not here.)
-                phase = .hidden
-                itemCount = nil
-            }
+        }
+        // Keyed on a Bool: SkipUI never sees a bridged optional/enum as changed.
+        .animation(.easeInOut(duration: Self.animationDuration), value: itemCount != nil)
     }
 }
 

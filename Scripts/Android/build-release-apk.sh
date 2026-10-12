@@ -12,7 +12,7 @@
 #   --out         directory the APK is added to, default <worktree>/out (never
 #                 wiped); it is named FurAffinity-<version>-<commit>.apk, and an
 #                 existing one is never overwritten
-#   --install     adb install -r -d the result on the running device
+#   --install     install the result on the running device (install-apk.sh)
 #   --keep-stash  leave the distribution stash applied in the working tree
 #                 (default: revert the working tree to HEAD on exit)
 #   --ci          the working tree already carries the distribution values (the
@@ -72,12 +72,8 @@ SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 [[ -d "$SDK" ]] || die "no Android SDK at $SDK — set ANDROID_HOME"
 export ANDROID_HOME="$SDK"
 
-# macOS ships a `java` stub that errors out, so probe it rather than its existence.
-if [[ -z "$JAVA_HOME" ]] && ! java -version >/dev/null 2>&1; then
-    JBR="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-    [[ -x "$JBR/bin/java" ]] || die "no JDK — set JAVA_HOME (Android Studio's is $JBR)"
-    export JAVA_HOME="$JBR"
-fi
+# shellcheck source=Scripts/Android/java-home.sh
+source "$(dirname "${BASH_SOURCE[0]}")/java-home.sh"
 
 # Without the NDK, AGP's stripReleaseDebugSymbols silently copies the .so files
 # through and the APK comes out ~2.5x too big.
@@ -269,9 +265,7 @@ ls -lh "$APK" | awk '{ print $5 }'
 
 if (( INSTALL )); then
     step "Installing on the device"
-    # -d allows the downgrade when a higher versionCode is already installed.
-    "$(dirname "${BASH_SOURCE[0]}")/with-emulator-lock.sh" \
-        "$SDK/platform-tools/adb" install -r -d "$APK"
+    "$(dirname "${BASH_SOURCE[0]}")/install-apk.sh" "$APK"
     echo "launch it from the icon, or:"
     echo "  adb shell monkey -p $APP_ID -c android.intent.category.LAUNCHER 1"
 fi

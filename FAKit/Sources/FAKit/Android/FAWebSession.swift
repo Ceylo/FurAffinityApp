@@ -160,6 +160,10 @@ public final class FAWebSession {
     /// comes from the request `Cookie:` header, so it carries no domain, path or
     /// expiry, and re-seeding what we wiped would downgrade the user's persistent
     /// login to session cookies. Expire the Cloudflare names in place instead.
+    ///
+    /// Measured to remove nothing: `cf_clearance` is HttpOnly, which
+    /// `CookieManager.setCookie` may not overwrite, and skip-web emits a `Domain=` for
+    /// the host-only `cf_chl_rc_ni`, so the expiry names a different cookie.
     func clearCloudflareCookies() async {
         for name in Self.cloudflareCookieNames {
             for domain in Self.cloudflareCookieDomains {
@@ -253,7 +257,7 @@ public final class FAWebSession {
     /// Returns nil when there is nothing to build one from — no FA auth cookie
     /// (logged out, or the WebView is still sitting on a challenge) or FA rejecting
     /// the cookies it does have.
-    func establishSession() async throws -> OnlineFASession? {
+    func establishSession(source: FASessionSource = .homePage) async throws -> OnlineFASession? {
         let webCookies = await navigator.cookies(for: FAURLs.homeUrl)
         // The "a" auth cookie is only present once logged in.
         guard webCookies.contains(where: { $0.name == "a" }) else {
@@ -299,7 +303,7 @@ public final class FAWebSession {
             nativeTransport: Self.nativeTransport
         )
 
-        return try await OnlineFASession(cookies: authCookies, dataSource: dataSource)
+        return try await OnlineFASession(cookies: authCookies, dataSource: dataSource, source: source)
     }
 }
 

@@ -11,87 +11,39 @@ Two main code areas:
 - `FAKit/`: Swift Package — `FAPages` (HTML parsers) and `FAKit` (domain models + session API).
 
 An in-progress **Android port** builds the same SwiftUI source with [Skip](https://skip.dev)
-Fuse (root `Package.swift` + `FurAffinityUI/` target + `Android/`/`Darwin/` scaffolding).
-Both platforms build the *same* directory — `FurAffinity/` — split by the `iOS/`/`Android/`
-convention below. The Skip target's `path:` is `FurAffinity`, so skipstone walks the whole
-tree and every source it must not build carries `#if !FA_SKIP_MODULE`. The iOS Xcode target
-is unaffected. Ported so far: the login screen (shared
-`HomeView` + autologin, over an Android `FALoginView`), the Followed feed (on the shared
-`SubmissionsFeedView` container, badge and refresh choreography included, inside the
-shared `SubmissionsTabView` with its glass drawn as the M3 floating surface, tab re-tap
-to pop and scroll to top, and an Android-only Undo snackbar for swipe-delete), the
-submission detail screen (shared `SubmissionMainImage`, a zoomable viewer presented from
-a `fadingSheet` and dismissed by pulling it down, favorite, Save/Share, rich-text
-description with in-app links, comments with posting and deep-link scroll, "Send a
-Note", story submissions with a txt/md reader, music submissions without in-app playback,
-metadata) and the Settings tab (shared
-`SettingsView` / `NotificationSettingsView`, image-cache control, log sharing, logout).
-FA's rich text is rendered by Compose's own HTML parser: `FAKit/Sources/FAKit/RichText/`
-normalises the markup into the subset `AnnotatedString.fromHtml` understands (and cuts it
-at its `<hr>`s, which that parser drops), and `Helper Views/Android/HTMLView+Android.swift`
-hands each fragment to `Text(html:)`.
-FAKit carries the skipstone plugin too (`FAKit/Sources/FAKit/Skip/skip.yml`), which is
-what lets it own the Android web layer in `FAKit/Sources/FAKit/Android/`: a *bridged*
-view only gets its Kotlin `@State` glue from a plugin-carrying module. The two Kotlin
-bridges that layer needs from the app come back as hooks installed in
-`FurAffinityUIAppDelegate.onInit`. The iOS app pays 37 MB Release instead of 27, and 11
-embedded frameworks instead of 1.
-Logging works on both platforms via `#if canImport(os) import os #else import OSCompat`:
-the sibling `FALogging/` package ships an `OSCompat` module, empty off Android
-(`FALogging/Sources/OSCompat/`), vending `Logger` (→ logcat) and an ATrace-backed
-`OSSignposter` (→ Perfetto).
-It must **not** be named `os` — a module by that name makes `canImport(os)` true for
-the whole Android build; see `Android/docs/build-and-run.md` § Module-name poisoning,
-which is also why FAKit gates SwiftUI on `#if !os(Android)` rather than `canImport`.
-`FALogging` is a package rather than a FAKit target so that FAKit and FAPages link it
-**dynamically**: a target dependency inside one package is absorbed statically into
-each of its products, which gave the app three copies of `PersistentLogStore.shared`
-destroying each other's writes in one log file. See `Android/docs/shared-sources.md`
-§ One module, one image; `Scripts/Android/check-shared-globals.sh`, run by
-`Scripts/Android/run.sh`, is the guard. Xcode reaches that package only through an
-`XCLocalSwiftPackageReference` and **must not** also have a folder reference for it,
-which is why `FALoggingTests` is declared in `FAKit/Package.swift` — same doc,
-§ What the split costs the Xcode project. Five dependencies are forked on
-`Ceylo/<repo>` `android` branches — `Defaults`, `skip-ui`/`skip-fuse-ui`
-(the latter two for `listRowInsets`, `Text(html:)`, `Text(AttributedString)` /
-`Text(_:inlineViews:)`, `Text + Text` and `FlowRow`, all unavailable or absent
-upstream; skip-fuse-ui alone also for `#Preview`), `skip-web` (dependency identity only: SwiftPM allows one location per
-package identity, so every chain must name `Ceylo/skip-ui` — see
-`Android/docs/forks.md` § One location per identity) and `Kingfisher`, which now
-builds for Android: its decoding is substituted onto SkipSwiftUI's `UIImage`
-rather than ImageIO, and its SwiftUI
-layer onto `@Observable`, so `FAImage(_:)` is a real `KFImage` on both platforms.
-Only the *transport* under it is Android-only — `FAOkHttpDownloader` over
-`FAImageStore` + `FAImageFetchBridge` — and Save/Share goes through `FAMediaBridge`.
-Pages and images share **one** `OkHttpClient` and one connection
-pool (`FAHttpClient.kt`, reached from FAKit through `FAWebSession.nativeTransport`),
-because Cloudflare judges a connection: a challenge on it is repaired — evict, solve
-in the WebView, redial — rather than retried into. HTTP/2 is measured and off; see
-`Android/docs/images.md`. `Android/README.md` orients and indexes the topic docs under
-`Android/docs/`. Profile Android with `Scripts/Android/run.sh --profile` then
-`Scripts/Android/profile.sh cpu|trace|mem` — see `Android/docs/profiling.md`.
+Fuse: the root `Package.swift` declares the `FurAffinityUI` target with `path: "FurAffinity"`,
+next to the `Android/` (Gradle) and `Darwin/` scaffolding. Both platforms build the *same*
+`FurAffinity/` directory, split by the `iOS/`/`Android/` convention below; skipstone walks
+the whole tree, so every source it must not build carries `#if !FA_SKIP_MODULE`. Ported so
+far: login (shared `HomeView` + autologin), the Followed feed, the submission screen
+(images, stories, music, comments, Save/Share, "Send a Note") and Settings. Not ported:
+Notes, Notifications, Profile, Explore. `Android/README.md` indexes the topic docs under
+`Android/docs/`; read the relevant one before touching Android code. What every session
+needs to know:
 
-Crashes and ANRs report to **Sentry** on both platforms, one project split by
-`os.name`: shared config in `FurAffinity/Helpers/CrashReporting.swift`,
-sentry-cocoa on iOS and sentry-android (tombstones on Android 12+, the NDK signal
-handler below) behind `FACrashReportingBridge`. Three distribution channels each
-need a DSN and their symbols on the server: the DSN comes from the distribution
-stash for both local channels and from a CI secret for the release workflow, which
-builds the IPA and the APK from a tag, while
-dSYMs go up from an archive-only `Upload dSYMs` aggregate target (`ACTION=install`)
-and the `.so` files and R8 mapping from the Sentry Gradle plugin. Our packages
-build release with `-disable-cmo`, because Swift's
-cross-module optimization copies functions between modules *without a line table*
-and a crash inside one loses its file and line. Every event carries a `commit` tag,
-HEAD's short hash, stamped by the unsandboxed `Commit Stamp` target into
-`Info.plist` on iOS and by `BuildConfig.GIT_COMMIT` on Android; the app target itself
-keeps the script sandbox. Consent is a Settings toggle, on by
-default; the application log is never sent. `Scripts/check-crash-reporting.sh
-ios|android` crashes the app on purpose and asserts the resulting Sentry event has
-the right `File.swift:line`. See `Android/docs/crash-reporting.md`.
-Amplitude runs on both too, with one configuration: AmplitudeSwift on iOS, the
-Kotlin SDK behind `FAAnalyticsBridge` on Android, and neither with the placeholder
-key. See `Android/docs/analytics.md`.
+- **FAKit carries the skipstone plugin too**, so it owns the Android web layer
+  (`FAKit/Sources/FAKit/Android/`); its basenames share the uniqueness rule below. The
+  iOS app pays 37 MB Release instead of 27 for it.
+- **Logging**: `#if canImport(os) import os #else import OSCompat`. `OSCompat` (in the
+  sibling `FALogging/` package) must **not** be named `os`, and FAKit gates SwiftUI on
+  `#if !os(Android)`, never `canImport` — `build-and-run.md` § Module-name poisoning.
+- **`FALogging` is its own package** so FAKit and FAPages link it dynamically: a target
+  dependency inside one package is copied into each product, which once gave three
+  `PersistentLogStore.shared`s in one log file. `Scripts/Android/check-shared-globals.sh`
+  guards it; Xcode reaches the package only through an `XCLocalSwiftPackageReference`,
+  never also a folder reference — `shared-sources.md` § One module, one image.
+- **Five dependencies are forked** on `Ceylo/<repo>` `android` branches: `Defaults`,
+  `skip-ui`, `skip-fuse-ui`, `skip-web` (dependency identity only) and `Kingfisher`, which
+  builds for Android, so `FAImage` is a real `KFImage` on both platforms — `forks.md`.
+- **Pages and images share one `OkHttpClient`** on Android (`FAHttpClient.kt`), because
+  Cloudflare judges a connection and a challenge is repaired by evicting it — `images.md`,
+  `cloudflare-and-login.md`. HTTP/2 is measured and off.
+- **Sentry** (crashes and ANRs, both platforms, consent toggle on by default, never the
+  log) and **Amplitude** run on both — `crash-reporting.md`, `analytics.md`.
+  `Scripts/check-crash-reporting.sh ios|android` is the proof a symbolicated crash still
+  arrives. Our packages build release with `-disable-cmo` so crash frames keep their lines.
+- Profile Android with `Scripts/Android/run.sh --profile`, then
+  `Scripts/Android/profile.sh cpu|trace|mem` — `profiling.md`.
 
 ## Architecture
 
@@ -137,7 +89,7 @@ Every in-app link routes **in-process** through `NavigationStream` (`Helper View
 
 ## Search / Explore
 
-The first tab is `SubmissionsTabView`, which hosts two modes — **Followed** (`SubmissionsFeedView`, the watched-users feed) and **Explore** (`ExplorationView`, furaffinity.net search). The mode switch and context action float as Liquid-Glass buttons over the list corner instead of a nav bar. `Model.searchSubmissions`/`loadMoreSearchResults` call `FASession.search(FASearchQuery)`; the query is persisted (`Defaults[.lastSearchQuery]`) so filters are remembered. Search inputs (tags via `TagSearchEditor`, author via `UsernameField`, rating/type/etc.) live in the `SearchFiltersView` sheet — `.searchable` can't be used here, see [[project_searchable_sibling_suppression]].
+The first tab is `SubmissionsTabView`, which hosts two modes — **Followed** (`SubmissionsFeedView`, the watched-users feed) and **Explore** (`ExplorationView`, furaffinity.net search). The mode switch and context action float as Liquid-Glass buttons over the list corner instead of a nav bar. Floating controls use `floatingGlass` rather than `glassEffect`: the same glass, plus a light shadow in dark mode on Android. `Model.searchSubmissions`/`loadMoreSearchResults` call `FASession.search(FASearchQuery)`; the query is persisted (`Defaults[.lastSearchQuery]`) so filters are remembered. Search inputs (tags via `TagSearchEditor`, author via `UsernameField`, rating/type/etc.) live in the `SearchFiltersView` sheet — `.searchable` can't be used here, see [[project_searchable_sibling_suppression]].
 
 ## Comment Threads
 
@@ -190,7 +142,8 @@ Scripts/Android/test.sh
 
 It runs FAKit's package and the root package's `FurAffinityUITests` — the
 `FurAffinityTests` files that build for Android, picking their `@testable import` on
-`FA_SKIP_MODULE` — and fails below a case-count floor. CI's `Build Android App` job runs
+`FA_SKIP_MODULE` — and fails below a case-count floor. Outside CI it builds in a
+leased build slot, through Gradle's `faAndroidTest` (see Working Notes). CI's `Build Android App` job runs
 the same script. Which files stay iOS-only, and why: `Android/docs/build-and-run.md`
 § Test.
 
@@ -245,12 +198,12 @@ FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, 
   selected (`COMPILATION_CACHE.md`).
   Run `Scripts/install-git-hooks.sh` once per clone: a new worktree's `post-checkout`
   then seeds its DerivedData/SourcePackages from a sibling's pinned to the same
-  `Package.resolved` (`Scripts/iOS/seed-source-packages.sh`), skipping SwiftPM's
+  `Package.resolved` (`Scripts/iOS/seed-source-packages.py`), skipping SwiftPM's
   package resolution and ~29 checkouts.
   Removing a worktree leaves behind what is keyed by its path or name elsewhere:
   its emulator app, simulator, DerivedData dirs (the Skip project's have no
   `info.plist`, only a path hash) and XcodeBuildMCP workspace.
-  `Scripts/cleanup-worktree.sh <name>` removes a merged worktree with all of them
+  `Scripts/cleanup-worktree.py <name>` removes a merged worktree with all of them
   and its branch; `--orphans` sweeps what worktrees removed without it left, and
   reports what it kept, why, and each branch's storage.
 - **A bridged view's `@State`/`@Environment` must not be `private`.** skipstone

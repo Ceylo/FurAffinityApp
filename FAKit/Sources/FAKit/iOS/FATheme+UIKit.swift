@@ -1,5 +1,5 @@
 //
-//  FATheme.swift
+//  FATheme+UIKit.swift
 //  FAKit
 //
 //  Created by Ceylo on 10/09/2024.
@@ -9,21 +9,6 @@
 #if !os(Android)
 
 import UIKit
-
-enum FATheme: CustomStringConvertible {
-    case light
-    case dark
-    
-    var description: String {
-        switch self {
-        case .light:
-            "light"
-        case .dark:
-            "dark"
-        }
-    }
-}
-
 
 extension FATheme {
     init(style: UIUserInterfaceStyle) {

@@ -1,5 +1,5 @@
 # Sourced by Scripts/Android/slot-sync.sh, which never copies these files, and
-# Scripts/cleanup-worktree.sh, which won't remove a worktree holding them:
+# Scripts/cleanup-worktree.py, which won't remove a worktree holding them:
 # keystores, certificates, profiles and the Sentry token.
 # shellcheck shell=bash
 is_signing_material() {

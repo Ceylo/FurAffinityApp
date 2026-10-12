@@ -42,7 +42,7 @@ struct ProgressiveLoadItem<DataType: ProgressiveData>: View {
         }
         .onChange(of: currentData) { _, newData in
             if needsMoreData && newData.canLoadMore {
-                Task {
+                _ = Task {
                     guard needsMoreData else { return }
                     try await Task.sleep(for: crawlingDelay)
                     guard needsMoreData else { return }

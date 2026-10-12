@@ -8,7 +8,7 @@
 //
 //  Almost all of FA's `bbcode_*` classes ride on a tag that already means the same thing
 //  (`bbcode_b` on `<strong>`, `bbcode_i` on `<i>`, `bbcode_hr` on `<hr>`…), which
-//  `android.text.Html` handles unaided. Only three things need rewriting:
+//  `android.text.Html` handles unaided. Only four things need rewriting:
 //
 //  1. `[left]`/`[center]`/`[right]`, which FA compiles to a class on `<code>` — a tag
 //     `android.text.Html` does not recognise at all. Alignment survives only as
@@ -18,6 +18,8 @@
 //     the string surgery having to reason about nesting.
 //  3. `<img>`, which survives as a bare U+FFFC in the text. The URLs it drops are
 //     collected here, in document order, so the renderer can splice views back in.
+//  4. The few rules of FA's theme stylesheet that change how text reads (quotes, dark
+//     headings and links), restated as tags, since `fromHtml` reads no classes.
 //
 //  Cross-platform on purpose: only Android renders through it, but it is built and
 //  unit-tested on iOS against the same captured pages the parser suites use.
@@ -57,14 +59,18 @@ public struct FANormalizedHTML: Hashable, Sendable {
 public enum FAHTMLNormalizer {
     /// What the renderer actually needs: the markup already cut at its rules. The
     /// whole-document view below re-serialises the tree and walks it again for nothing.
-    public static func fragments(of html: String) throws -> [FANormalizedHTML.Fragment] {
-        try fragments(of: try normalizedRoot(html))
+    ///
+    /// - Parameter theme: the FA theme whose stylesheet rules to restate.
+    public static func fragments(
+        of html: String, theme: FATheme
+    ) throws -> [FANormalizedHTML.Fragment] {
+        try fragments(of: try normalizedRoot(html, theme: theme))
     }
 
     /// The whole normalised document. Only the tests read it — production goes through
     /// `fragments(of:)`.
-    static func normalized(_ html: String) throws -> FANormalizedHTML {
-        let root = try normalizedRoot(html)
+    static func normalized(_ html: String, theme: FATheme = .dark) throws -> FANormalizedHTML {
+        let root = try normalizedRoot(html, theme: theme)
         return FANormalizedHTML(
             html: try root.html(),
             images: try images(in: root),
@@ -72,10 +78,11 @@ public enum FAHTMLNormalizer {
         )
     }
 
-    private static func normalizedRoot(_ html: String) throws -> Element {
+    private static func normalizedRoot(_ html: String, theme: FATheme) throws -> Element {
         let document = try SwiftSoup.parse(html)
         let root = document.body() ?? document
         try dropUnrenderableImages(in: root)
+        try applyThemeRules(in: root, theme: theme)
         try rewriteAlignment(in: root)
         try hoistRules(in: root)
         return root
@@ -110,6 +117,78 @@ public enum FAHTMLNormalizer {
         try flush()
         return result
     }
+
+    // MARK: Theme
+
+    /// Restates, as tags, what FA's theme stylesheet does to text: quotes are italic
+    /// with a bold name, and in dark only, headings are `#add8f5` and links in
+    /// descriptions weigh 600 (light's are the body colour and 500). An element's own
+    /// `color` beats the sheet, and is restated too where `fromHtml` would ignore it.
+    /// Spoilers stay visible and links keep the app's tint.
+    private static func applyThemeRules(in root: Element, theme: FATheme) throws {
+        for element in try root.getAllElements() where element !== root {
+            let tag = element.tagName().lowercased()
+            guard !voidTags.contains(tag), !element.getChildNodes().isEmpty else { continue }
+            let classes = element.faClassNames
+
+            let bold = classes.contains("bbcode_quote_name")
+                || (theme == .dark && tag == "a"
+                    && element.parents().contains { $0.hasClass("user-submitted-links") })
+            let italic = classes.contains("bbcode_quote")
+            var color: String?
+            if tag != "a" {
+                if let own = element.faStyle["color"].flatMap(plainColor) {
+                    // `fromHtml` reads an own colour on `<span>` and `<p>` only.
+                    if tag != "span", tag != "p" { color = own }
+                } else if theme == .dark, !classes.isDisjoint(with: headingClasses) {
+                    color = "#add8f5"
+                }
+            }
+
+            var wrappers: [Element] = []
+            if bold, !["b", "strong"].contains(tag) { wrappers.append(try wrapper("b", for: element)) }
+            if italic, !["i", "em"].contains(tag) { wrappers.append(try wrapper("i", for: element)) }
+            if let color {
+                wrappers.append(try wrapper("span", for: element).attr("style", "color:\(color)"))
+            }
+            // Outermost first, the element's children moved into the innermost.
+            guard let innermost = wrappers.last else { continue }
+            for child in element.getChildNodes() {
+                try child.remove()
+                _ = try innermost.appendChild(child)
+            }
+            for (outer, inner) in zip(wrappers, wrappers.dropFirst()) {
+                _ = try outer.appendChild(inner)
+            }
+            _ = try element.appendChild(wrappers[0])
+        }
+    }
+
+    /// A colour `android.text.Html` parses: `#rrggbb` (a `#rgb` it would misread is
+    /// expanded) or a name. Keywords meaning no colour of its own are dropped.
+    private static func plainColor(_ value: String) -> String? {
+        let value = value.lowercased().replacingOccurrences(of: "!important", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if value.hasPrefix("#") {
+            let hex = value.dropFirst()
+            guard hex.allSatisfy(\.isHexDigit) else { return nil }
+            switch hex.count {
+            case 3: return "#" + hex.map { "\($0)\($0)" }.joined()
+            case 6: return value
+            default: return nil
+            }
+        }
+        guard !value.isEmpty, value.allSatisfy(\.isLetter),
+              !["transparent", "inherit", "initial", "unset", "none", "currentcolor", "revert"]
+                .contains(value) else { return nil }
+        return value
+    }
+
+    private static func wrapper(_ tag: String, for element: Element) throws -> Element {
+        Element(try Tag.valueOf(tag), element.getBaseUriUTF8())
+    }
+
+    private static let headingClasses = Set((1...5).map { "bbcode_h\($0)" })
 
     // MARK: Alignment
 
@@ -308,8 +387,8 @@ private extension Element {
         return style.faTopLevelDeclarations.reduce(into: [:]) { result, declaration in
             let parts = declaration.split(separator: ":", maxSplits: 1)
             guard parts.count == 2 else { return }
-            result[parts[0].trimmingCharacters(in: .whitespaces).lowercased()] =
-                parts[1].trimmingCharacters(in: .whitespaces)
+            result[parts[0].trimmingCharacters(in: .whitespacesAndNewlines).lowercased()] =
+                parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
         }
     }
 }
@@ -341,6 +420,6 @@ private extension String {
             }
         }
         declarations.append(self[start...])
-        return declarations.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        return declarations.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
 }

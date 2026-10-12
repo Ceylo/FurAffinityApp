@@ -32,16 +32,9 @@ final class NavigationStream {
     }
 }
 
-// A hand-written EnvironmentKey rather than @Entry: SkipUI doesn't provide that macro.
-private struct NavigationStreamKey: EnvironmentKey {
-    static var defaultValue: NavigationStream { .init() }
-}
-
 extension EnvironmentValues {
-    var navigationStream: NavigationStream {
-        get { self[NavigationStreamKey.self] }
-        set { self[NavigationStreamKey.self] = newValue }
-    }
+    static private let defaultNavigationStream = NavigationStream()
+    @Entry var navigationStream = Self.defaultNavigationStream
 }
 
 /// - Warning: This view should be avoided in scrolling content,

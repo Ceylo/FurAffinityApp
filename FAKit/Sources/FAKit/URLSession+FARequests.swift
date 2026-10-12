@@ -12,6 +12,9 @@ import FoundationNetworking
 #if canImport(WebKit)
 import WebKit
 #endif
+#if canImport(UIKit)
+import UIKit
+#endif
 
 @MainActor
 public enum FAUserAgent {
@@ -40,32 +43,68 @@ public enum FAUserAgent {
     /// `applicationNameForUserAgent = applicationName`. URLSession requests must use
     /// this identical string so the `cf_clearance` cookie obtained inside the login
     /// WKWebView remains valid for subsequent network requests.
+    ///
+    /// Building that WKWebView costs ~750 ms of a cold launch, so the string is
+    /// stored per OS build, device model and app version: all it depends on.
     public static func current() async -> String {
         if let cached { return cached }
         if let pendingTask { return await pendingTask.value }
 
-        let task = Task<String, Never> { @MainActor in
-            let config = WKWebViewConfiguration()
-            config.applicationNameForUserAgent = applicationName
-            let webView = WKWebView(frame: .zero, configuration: config)
+        if let stored = storedUserAgent() {
+            cached = stored
+            return stored
+        }
 
-            do {
-                let result = try await webView.evaluateJavaScript("navigator.userAgent")
-                if let ua = result as? String, !ua.isEmpty {
-                    logger.info("Resolved User-Agent: \(ua)")
-                    return ua
-                }
-                logger.error("FAUserAgent: navigator.userAgent returned unexpected value \(String(describing: result))")
-            } catch {
-                logger.error("FAUserAgent: evaluateJavaScript failed: \(error)")
-            }
-            return applicationName
+        let task = Task<String, Never> { @MainActor in
+            guard let ua = await resolveFromWebView() else { return applicationName }
+            store(ua)
+            return ua
         }
         pendingTask = task
         let ua = await task.value
         cached = ua
         pendingTask = nil
         return ua
+    }
+
+    private static func resolveFromWebView() async -> String? {
+        let config = WKWebViewConfiguration()
+        config.applicationNameForUserAgent = applicationName
+        let webView = WKWebView(frame: .zero, configuration: config)
+
+        do {
+            let result = try await webView.evaluateJavaScript("navigator.userAgent")
+            if let ua = result as? String, !ua.isEmpty {
+                logger.info("Resolved User-Agent: \(ua)")
+                return ua
+            }
+            logger.error("FAUserAgent: navigator.userAgent returned unexpected value \(String(describing: result))")
+        } catch {
+            logger.error("FAUserAgent: evaluateJavaScript failed: \(error)")
+        }
+        return nil
+    }
+
+    private static let storageKey = "FAUserAgent.resolved"
+
+    /// What the WebView's User-Agent depends on, besides `applicationName`.
+    private static var storageScope: String {
+        #if canImport(UIKit)
+        let model = UIDevice.current.model
+        #else
+        let model = "Mac"
+        #endif
+        return "\(ProcessInfo.processInfo.operatingSystemVersionString) \(model) \(applicationName)"
+    }
+
+    private static func storedUserAgent() -> String? {
+        guard let stored = UserDefaults.standard.dictionary(forKey: storageKey) as? [String: String],
+              stored["scope"] == storageScope else { return nil }
+        return stored["userAgent"]
+    }
+
+    private static func store(_ userAgent: String) {
+        UserDefaults.standard.set(["scope": storageScope, "userAgent": userAgent], forKey: storageKey)
     }
     #else
     /// The User-Agent the platform WebView reports. Resolved live (never

@@ -9,9 +9,7 @@
 //  reads that file natively and unlinks it, so nothing full-size crosses JNI and
 //  nothing is left behind.
 //
-//  Caching is Kingfisher's, above `FAOkHttpDownloader`. The image lines are the `[IMG]`
-//  ones `Scripts/Android/summarize-image-log.py` counts; it also still reads the `[Coil]`
-//  prefix these carried before, so runs recorded then stay re-analysable.
+//  Caching is Kingfisher's, above `FAOkHttpDownloader`. Image lines carry `[IMG]`.
 //
 //  Credentials (FA UA + Cloudflare cookie header) are seeded once via `configure`
 //  after login; `fetchImageData` then just fetches.
@@ -105,9 +103,8 @@ enum ImageFetchBridge {
         case bytes(Data)
         /// `attempts`/`reasons` come along so that a caller which ultimately gives up
         /// can log the same `failed after …` line an exhausted fetch does. Without it
-        /// a challenged image that is never recovered is invisible to
-        /// `summarize-image-log.py` — and "images lost" is the number every
-        /// measurement here turns on.
+        /// a challenged image that is never recovered is invisible in the log — and
+        /// "images lost" is the number every measurement here turns on.
         case challenged(epoch: UInt64, attempts: Int, reasons: String)
         /// The origin's own 404, e.g. an author with no avatar: not worth asking again.
         case notFound
@@ -144,8 +141,8 @@ enum ImageFetchBridge {
                 // One outcome line per *completed* fetch, not just per retried one.
                 // This drops the "silent on the common case" convention iOS keeps, and
                 // costs ~160 log lines on a cold run instead of ~85 — the price of
-                // counting connections. It also makes the summarizer's completion span
-                // exact: without it only retried and failed fetches are dated.
+                // counting connections. It also dates every completion, not just
+                // retried and failed fetches.
                 // The retry line first, so a URL's draws appear in attempt order:
                 // the failed attempts are inside `reasons`, the winning one is next.
                 if result.attempts > 1 {
@@ -157,8 +154,7 @@ enum ImageFetchBridge {
                 defer { try? FileManager.default.removeItem(at: file) }
                 guard let bytes = try? Data(contentsOf: file) else {
                     logger.error("[IMG] \(url): staged bytes unreadable at \(path)")
-                    // The image is lost, so it has to say so in the shape
-                    // `summarize-image-log.py` counts.
+                    // The image is lost, so it has to say so in the usual shape.
                     logAbandoned(url, attempts: result.attempts,
                                  reasons: reasons.isEmpty ? "staged bytes unreadable"
                                                           : "\(reasons), staged bytes unreadable")
@@ -197,8 +193,8 @@ enum ImageFetchBridge {
     }
 
     /// The line a lost image logs — an exhausted fetch here, and a challenged one that
-    /// `FAImageStore` finally gives up on. One spelling, so `summarize-image-log.py`
-    /// counts both as the same thing: an image that never came back.
+    /// `FAImageStore` finally gives up on. One spelling, so the log counts both as
+    /// the same thing: an image that never came back.
     static func logAbandoned(_ url: URL, attempts: Int, reasons: String) {
         let plural = attempts == 1 ? "attempt" : "attempts"
         logger.error("[IMG] \(url): failed after \(attempts) \(plural) (\(reasons))")

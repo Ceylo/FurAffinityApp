@@ -213,19 +213,20 @@ struct ModelTests {
 
     @Test func stageSubmissionPreviewsDeletion_commitsAfterUndoDelay() async throws {
         let (model, mock) = try await makeModelWithSubmissions([3, 2, 1])
-        model.stagedDeletionUndoDelay = .milliseconds(50)
+        model.stagedDeletionUndoDelay = .seconds(1)
         let undone = model.submissionPreviews![0]
         let staged = model.submissionPreviews![1]
 
-        // An undone batch's countdown must not commit the next one early.
+        // An undone batch's countdown must not commit the next one early. Nothing
+        // suspends before the await, so its timer runs with `staged` already staged.
         model.stageSubmissionPreviewsDeletion([undone])
+        let undoneTimer = model.stagedDeletionCommitTimer
         model.undoStagedSubmissionPreviewsDeletion()
-        model.stagedDeletionUndoDelay = .seconds(1)
         model.stageSubmissionPreviewsDeletion([staged])
-        try await Task.sleep(for: .milliseconds(200))
+        await undoneTimer?.value
         #expect(mock.deletedSubmissionPreviewBatches.isEmpty)
 
-        try await Task.sleep(for: .seconds(1))
+        await model.stagedDeletionCommitTimer?.value
         #expect(mock.deletedSubmissionPreviewBatches == [[staged]])
         #expect(model.stagedSubmissionPreviewsDeletion.isEmpty)
     }

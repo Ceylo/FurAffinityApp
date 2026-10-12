@@ -14,10 +14,14 @@
 #
 # Exits with the wrapped command's status. Wrap anything that drives the
 # emulator from a second worktree — `skip android test`, `skip app launch`, a
-# bare `./gradlew` — but not Scripts/Android/run.sh, which takes the
-# lock itself.
+# bare `./gradlew` — but not these, which take the lock themselves:
+# Scripts/Android/{run,test,debug,profile,install-apk}.sh and
+# Scripts/check-crash-reporting.sh. Wrapping one fails at once instead of
+# deadlocking on its own caller's lock.
 #
-# Environment: FA_EMULATOR_LOCK (the lock file, default /tmp/fa-emulator.lock).
+# Environment: FA_EMULATOR_LOCK (the lock file, default /tmp/fa-emulator.lock);
+# FA_EMULATOR_LOCK_OWNER (set by this script to the holder's pid, for the
+# wrapped command's subtree).
 
 set -eo pipefail
 
@@ -28,7 +32,7 @@ TIMEOUT=1800
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,20p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,25p' "$0" | cut -c3-; exit 0 ;;
         --timeout)    TIMEOUT="$2"; shift ;;
         --timeout=*)  TIMEOUT="${1#*=}" ;;
         --)           shift; break ;;
@@ -46,6 +50,13 @@ done
 SHLOCK=/usr/bin/shlock
 [[ -x "$SHLOCK" ]] || die "$SHLOCK is missing"
 
+# A nested call would wait forever on its own caller's lock. Matching the lock
+# file's live pid keeps a stale inherited value from failing a real wait.
+holder="$(head -1 "$LOCK" 2>/dev/null | tr -dc '0-9' || true)"
+if [[ -n "$holder" && "${FA_EMULATOR_LOCK_OWNER:-}" == "$holder" ]] && kill -0 "$holder" 2>/dev/null; then
+    die "the emulator lock is already held by this command's caller (pid $holder: $(ps -o command= -p "$holder" 2>/dev/null)); $1 takes the lock itself, so run it without with-emulator-lock.sh"
+fi
+
 deadline=$(( SECONDS + TIMEOUT ))
 announced=0
 
@@ -55,7 +66,7 @@ until "$SHLOCK" -f "$LOCK" -p $$; do
     # Only worth saying once, and only if this is a real wait rather than two
     # commands brushing past each other.
     if (( announced == 0 && SECONDS >= 5 )); then
-        holder="$(head -1 "$LOCK" 2>/dev/null | tr -dc '0-9')"
+        holder="$(head -1 "$LOCK" 2>/dev/null | tr -dc '0-9' || true)"
         if [[ -n "$holder" ]]; then
             echo "waiting for the emulator lock — held by pid $holder: $(ps -o command= -p "$holder" 2>/dev/null)" >&2
         else
@@ -68,6 +79,7 @@ until "$SHLOCK" -f "$LOCK" -p $$; do
 done
 
 trap 'rm -f "$LOCK"' EXIT
+export FA_EMULATOR_LOCK_OWNER=$$
 
 # --- run --------------------------------------------------------------------
 

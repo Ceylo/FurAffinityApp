@@ -1,5 +1,5 @@
 {
-  "originHash" : "334c23d3a76b958c4d11cde7250efd3634f16e8b4489af3e156bb773c189ef70",
+  "originHash" : "ecac54b2172264c472f0d553eee7fcf2420ca879b85ec2ebce0e3ebf45eddfa4",
   "pins" : [
     {
       "identity" : "cache",
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/skiptools/skip-android-bridge.git",
       "state" : {
-        "revision" : "668d4177f7662ddd2881afb2b93ad31bac7ddd51",
-        "version" : "0.6.7"
+        "revision" : "743c850bc4b29350873063606ff1614fa71de294",
+        "version" : "0.7.0"
       }
     },
     {
@@ -79,7 +79,7 @@
       "location" : "https://github.com/Ceylo/skip-fuse-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "9bf2e195b57b74034067682fd45d7534f139353d"
+        "revision" : "c9f44da22481ac32ff1142856e4b4842eb3314c1"
       }
     },
     {
@@ -106,7 +106,7 @@
       "location" : "https://github.com/Ceylo/skip-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "c5e8482ed3e3660cb11bc15296364215c08add6b"
+        "revision" : "ebe6bfac12d4e1fdd67ae6bfea1fb9b36c83668e"
       }
     },
     {

@@ -63,9 +63,11 @@ esac
 
 SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 ADB="$SDK/platform-tools/adb"
+# shellcheck source=Scripts/Android/adb-state.sh
+source "$(dirname "${BASH_SOURCE[0]}")/adb-state.sh"
 [[ -x "$ADB" ]] || die "$ADB is missing — run \`skip android sdk install\`"
 
-"$ADB" get-state >/dev/null 2>&1 \
+[[ "$(adb_state)" == device ]] \
     || die "no device — run Scripts/Android/start-emulator.sh (or set ANDROID_SERIAL)"
 
 # Value of a Skip.env key, ignoring the `//`-commented lines.
@@ -200,8 +202,8 @@ done
 # so collect them from the source instead of hardcoding a list that will drift.
 while IFS= read -r tag; do
     [[ -n "$tag" ]] && TAGS+=("$tag")
-done < <(sed -nE 's@.*\bTAG[[:space:]]*=[[:space:]]*"([^"]+)".*@\1@p' \
-    "$ROOT"/Android/app/src/main/kotlin/*.kt 2>/dev/null | sort -u)
+done < <(grep -hoE 'val TAG[^=]*=[[:space:]]*"[^"]+"' \
+    "$ROOT"/Android/app/src/main/kotlin/*.kt 2>/dev/null | cut -d'"' -f2 | sort -u)
 
 # --- sibling worktrees ------------------------------------------------------
 #

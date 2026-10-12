@@ -55,7 +55,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `9eb2c87` `@_disfavoredOverload` on `Text(AttributedString)` | skip-fuse-ui | no | belongs with whichever attributed-text PR lands; the trap is worth writing up either way |
 | `5a21355` `GeometryReader` composes on the measure pass | skip-ui | no | fidelity fix (no blank first frame). Before sending, check whether it causes the intrinsic-measurement crash under a scroll: `BoxWithConstraints` is a `SubcomposeLayout` and the old `Box` was not. Now rebased onto #500's `GeometryReaderState` in fork merge `0a6d781` |
 | `23154a0` `ImageHolder`, read in the draw phase | skip-ui + `c59b1a7` | yes | new API; its only caller today is the Kingfisher fork (`07f72deb`), so argue it from Coil's `AsyncImagePainter`, not from Kingfisher |
-| `524153a` `.id` resets state positionally | skip-ui | no | no API change; fixes a regression in upstream `4ed8380`/#330. Swapping in a fresh `ComposeStateSaver` strands every `Key` a descendant already saved, and a bridged `@State` then force-unwraps the nil. Argue it as Compose correctness: positional scoping is the documented reset mechanism, and `rememberSaveable`'s own `key` parameter is deprecated precisely for bypassing it. Drafted as #550 (topic `fix/id-positional-reset`). **Upstream differs from the fork**: review found that a non-Bundle id restores as nil after activity recreation, and the fork's `Any?` typing counts that as a change, bumping the generation and dropping Bundle-safe subtree state (a list's scroll position) that `main` keeps; the PR treats nil as the same id (`testIdKeepsSavedStateAcrossRecreation`). Take #550's version back into the fork. Its repro test needs the `.id` inside a `ForEach` row: a static `List` row's `TagModifier` is evaluated in the List's own composition and never hits the stale entry |
+| `524153a` `.id` resets state positionally | skip-ui | no | no API change; fixes a regression in upstream `4ed8380`/#330. Swapping in a fresh `ComposeStateSaver` strands every `Key` a descendant already saved, and a bridged `@State` then force-unwraps the nil. Argue it as Compose correctness: positional scoping is the documented reset mechanism, and `rememberSaveable`'s own `key` parameter is deprecated precisely for bypassing it. Sent as #550 (draft) |
 | `7ef63a0` geometry reports the laid-out frame, not the clipped one | skip-ui | no | no API change; SwiftUI parity in one helper (`onGloballyPositionedInRoot`). `boundsInRoot()` is `localBoundingBoxOf(this, clipBounds = true)` — an unexamined default since the first `GeometryReader`. Mention the one-argument alternative, `localBoundingBoxOf(this, clipBounds = false)`, and why not: it returns a bounding box, so a rotated node's size would differ, where `positionInRoot()` + `size` is SwiftUI's untransformed frame. Since #500 the *size* half is upstream's own; argue the frame against its `globalFrameReaderObservesMovementAndClipping`, which asserts the clip ([forks.md § After upstream #500](forks.md#after-upstream-500)) |
 | `7111bfa` drops #500's `.stretch` no-intrinsic `RenderPainter` branch | skip-ui | no | a regression report on #500 rather than a patch: a resizable asset image lays out greedy and stays that way after the load ([forks.md § After upstream #500](forks.md#after-upstream-500)). Needs a showcase repro before it goes |
 | `2b2dc459` + `66eb74df` + `ae0b4f07` Android port | Kingfisher | no | issue first; large parts can never leave the fork |
@@ -68,30 +68,21 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 ## Before any PR
 
 - **Draft only.** Repeated because it is the rule most easily read past.
-- **All four PR-raising repositories are real forks and are PR-ready.** `Ceylo/Defaults` and
-  `Ceylo/Kingfisher` were not, until 2026-09-06: created by push rather than forked, they had
-  an empty `parent` and sat outside the upstream repository network, and GitHub opens a
-  cross-repo PR only inside a network — making them public would not have joined one. They
-  were deleted and recreated with `gh repo fork`, then the `android` branch pushed back; URLs
-  and commit SHAs are unchanged, so `Package.resolved` still resolves. If either is ever
-  recreated by push again, the same fix applies.
-  `Ceylo/skip-web` is the one non-fork left, and never needs to raise a PR — see
-  [skip-web](#skip-web).
+- **A fork must be a real GitHub fork** (a `parent`, inside upstream's repository
+  network), or GitHub cannot open a cross-repo PR from it. All four PR-raising forks are.
+  A repository created by push is fixed by recreating it with `gh repo fork` and pushing
+  `android` back; URLs and SHAs are unchanged. `Ceylo/skip-web` is not a fork and never
+  raises a PR — see [skip-web](#skip-web).
 - **Never PR the `android` branch.** One topic branch per patch, cut from the current upstream
   default, rebased onto it — not merged. A PR carrying seventeen unrelated commits is the
   single most reliable way to be ignored.
 - **Strip the `Claude-Session:` trailer** from commits that go upstream: those URLs are dead
-  links for a maintainer. Keep `Co-Authored-By`. As of 2026-09-06 five commits carry one —
-  three in Kingfisher, one in skip-web, one in skip-fuse-ui; skip-ui's seventeen and
-  Defaults' four are clean. Every commit is authored as
-  `451334+Ceylo@users.noreply.github.com`, so no personal address is exposed.
-  **Recounted 2026-09-12: ten.** Kingfisher 6 (`66eb74df`, `b01358ef`, `ae0b4f07`, `07f72deb`,
-  `731194ee`, `47267203`), skip-fuse-ui 2 (`cfa7d82`, `c59b1a7`), skip-ui 1 (`23154a0`),
-  skip-web 1; Defaults is still clean. The fork commits keep their trailers. Only the
-  topic-branch copy loses it (`git commit --amend --reset-author`, message rewritten).
+  links for a maintainer. Keep `Co-Authored-By`. The fork commits keep their trailers; only
+  the topic-branch copy loses it (`git commit --amend --reset-author`, message rewritten).
+  Check with `git log upstream/main.. --format=%B | grep Claude-Session`. Commits are
+  authored as `451334+Ceylo@users.noreply.github.com`, so no personal address is exposed.
   **Exception, by Ceylo's decision:** skip-ui #524 and skipapp-showcase #122 carry no
-  `Co-Authored-By` either. For those, AI use is disclosed in the template's checkbox
-  instead, naming Claude Code.
+  `Co-Authored-By` either; AI use is disclosed in the template's checkbox instead.
 - **Rewrite the app-specific comments.** The Kingfisher fork's `Sources/` names FurAffinity
   in one place since #2576 replaced the `DownloadTask` doc comment (2026-09-13): a
   `KFImage.swift` comment about cap insets. A library shouldn't know about one app, so
@@ -297,14 +288,13 @@ in the body so it is not read as a failure.
 
 ### Known collisions
 
-Re-check these before sending anything from the text stack; all four were open as of
-2026-09-23. #453 merged on 2026-10-03.
+Re-check these before sending anything from the text stack (states as of 2026-10-11).
 
 | PR | Overlaps |
 |---|---|
-| skip-ui [#453](https://github.com/skiptools/skip-ui/pull/453) + skip-fuse-ui [#118](https://github.com/skiptools/skip-fuse-ui/pull/118) | `cad81a8` / `967a19a` — an independent `Text + Text` run model. **Merged 2026-10-03** (`45bb604`): `cad81a8` now has to be rebased onto it or dropped |
-| skip-ui [#434](https://github.com/skiptools/skip-ui/pull/434) | `1d56dc9` / `f0e4d6c` — real `AttributedString` rendering (draft, depends on skip-foundation #122) |
-| skip-ui [#436](https://github.com/skiptools/skip-ui/pull/436) | `bf0c6ad` — rewrites `Text` link handling onto `LinkInteractionListener`, which our HTML path also relies on |
+| skip-ui [#453](https://github.com/skiptools/skip-ui/pull/453) (merged 2026-10-03) + skip-fuse-ui [#118](https://github.com/skiptools/skip-fuse-ui/pull/118) (open) | `cad81a8` / `967a19a` — an independent `Text + Text` run model; ours now has to rebase onto #453's, not compete with it |
+| skip-ui [#434](https://github.com/skiptools/skip-ui/pull/434) (draft) | `1d56dc9` / `f0e4d6c` — real `AttributedString` rendering, depends on skip-foundation #122 |
+| skip-ui [#436](https://github.com/skiptools/skip-ui/pull/436) (open) | `bf0c6ad` — rewrites `Text` link handling onto `LinkInteractionListener`, which our HTML path also relies on |
 
 ## Kingfisher
 
@@ -394,7 +384,8 @@ result. Read the state with
 
 ## Opened PRs
 
-State is one of draft / opened / merged / rejected; fetch the PR for anything more.
+State is one of draft / opened / merged / rejected, as of 2026-10-11; refresh it with
+`gh pr view <n> -R <repo> --json state,isDraft`.
 
 | PR | Patch | State |
 |---|---|---|
@@ -507,11 +498,9 @@ resolved by him shipping his own release). Keep it to one public symbol plus its
 ## skip-web
 
 Nothing to upstream, and this fork never raises a PR — but it is **required**, and it is not
-a scratch repository. Its `android` branch is upstream plus dependency locations, no
-source: upstream skip-web names `github.com/skiptools/skip-ui`, and SwiftPM allows a package identity exactly one
-location across the whole graph. Since `Ceylo/skip-fuse-ui` calls fork-only `SkipUI` API
-outside `#if SKIP`, every chain must name `github.com/Ceylo/skip-ui` — which is the whole
-reason this fork exists. See [forks.md § One location per identity](forks.md#one-location-per-identity).
+a scratch repository. Its `android` branch is upstream plus dependency locations, no source,
+for the reason in [forks.md § One location per
+identity](forks.md#one-location-per-identity).
 
 So it retires exactly when the skip-ui and skip-fuse-ui patches land upstream and the graph
 can name upstream skip-ui again — not before. `Ceylo/Kingfisher` and `FAKit` carry the same

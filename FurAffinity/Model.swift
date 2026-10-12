@@ -37,7 +37,8 @@ class Model: NotificationsNuker, NotificationsDeleter {
     private(set) var stagedSubmissionPreviewsDeletion = [FASubmissionPreview]()
     /// How long a staged deletion can be undone before it is committed.
     @ObservationIgnored var stagedDeletionUndoDelay: Duration = .seconds(5)
-    @ObservationIgnored private var stagedDeletionCommitTimer: Task<Void, Never>?
+    /// Finishes once the deletion it commits has been sent. Not private so tests can await it.
+    @ObservationIgnored var stagedDeletionCommitTimer: Task<Void, Never>?
     private(set) var lastSubmissionPreviewsFetchDate: Date?
     /// Set once after a cold-launch restore from a persisted scroll position, to
     /// ask SubmissionsFeedView to run a scroll-preserving newer-submissions check.
@@ -210,12 +211,16 @@ class Model: NotificationsNuker, NotificationsDeleter {
     }
     
     // MARK: - Submissions feed
+    /// Where the feed's first fetch starts. Autologin establishes the session from
+    /// that same page, so the fetch costs no request.
+    var firstFeedPosition: Int? { Defaults[.lastViewedSubmissionID] }
+
     func fetchSubmissionPreviews() async throws -> Int {
         let session = try getSession()
         
         var firstWantedSubmissionID: Int?
         if submissionPreviews == nil {
-            firstWantedSubmissionID = Defaults[.lastViewedSubmissionID]
+            firstWantedSubmissionID = firstFeedPosition
         }
         
         var latestSubmissions = try await session.submissionPreviews(from: firstWantedSubmissionID)
@@ -272,7 +277,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
         stagedDeletionCommitTimer = Task {
             try? await Task.sleep(for: delay)
             guard !Task.isCancelled else { return }
-            commitStagedSubmissionPreviewsDeletion()
+            await commitStagedSubmissionPreviewsDeletion()?.value
         }
         logger.info("Staged deletion of \(previews.count) submission previews")
     }
