@@ -257,7 +257,7 @@ public final class FAWebSession {
     /// Returns nil when there is nothing to build one from — no FA auth cookie
     /// (logged out, or the WebView is still sitting on a challenge) or FA rejecting
     /// the cookies it does have.
-    func establishSession() async throws -> OnlineFASession? {
+    func establishSession(source: FASessionSource = .homePage) async throws -> OnlineFASession? {
         let webCookies = await navigator.cookies(for: FAURLs.homeUrl)
         // The "a" auth cookie is only present once logged in.
         guard webCookies.contains(where: { $0.name == "a" }) else {
@@ -303,7 +303,7 @@ public final class FAWebSession {
             nativeTransport: Self.nativeTransport
         )
 
-        return try await OnlineFASession(cookies: authCookies, dataSource: dataSource)
+        return try await OnlineFASession(cookies: authCookies, dataSource: dataSource, source: source)
     }
 }
 

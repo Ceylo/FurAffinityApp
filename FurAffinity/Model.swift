@@ -211,12 +211,16 @@ class Model: NotificationsNuker, NotificationsDeleter {
     }
     
     // MARK: - Submissions feed
+    /// Where the feed's first fetch starts. Autologin establishes the session from
+    /// that same page, so the fetch costs no request.
+    var firstFeedPosition: Int? { Defaults[.lastViewedSubmissionID] }
+
     func fetchSubmissionPreviews() async throws -> Int {
         let session = try getSession()
         
         var firstWantedSubmissionID: Int?
         if submissionPreviews == nil {
-            firstWantedSubmissionID = Defaults[.lastViewedSubmissionID]
+            firstWantedSubmissionID = firstFeedPosition
         }
         
         var latestSubmissions = try await session.submissionPreviews(from: firstWantedSubmissionID)

@@ -31,6 +31,13 @@ login sheet just earned. `makeSession()` (autologin) first `awaitReady()`s its f
 `onNavigationFinished`: a navigator with no attached engine returns an *empty cookie
 list*, not an error, so skipping the wait silently looks logged out.
 
+Waiting for the engine alone is not enough, though it would save ~1.8 s. Measured
+2026-10-11 on a cold-booted emulator: a feed request sent once the engine attached,
+before that first page load, got a 403 on all 10 launches, carrying the same
+`cf_clearance` that got a 200 right after the load. The challenge repair then cost
+4–5 s (first thumbnail 3.5 s → 5.6 s). The hidden WebView's page load is what renews
+Cloudflare's trust; it is not just a readiness check.
+
 It is **full-size, occluded by the opaque app background**, not 1×1: in a 1×1 frame the
 viewport is 4 CSS pixels wide, Turnstile's container measures 0 × 69, and a managed
 (passive) challenge can never complete. Cost: the hidden view loads FA's home page,

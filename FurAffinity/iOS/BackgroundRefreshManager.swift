@@ -212,7 +212,8 @@ enum BackgroundRefreshManager {
 
     // MARK: Fetch & Notify
     static func performFetchAndNotify() async throws {
-        guard let session = try await FALoginView.makeSession() else {
+        // The feed below is the latest one, so the session's own page serves it.
+        guard let session = try await FALoginView.makeSession(source: .submissionsFeed(from: nil)) else {
             logger.info("No valid FA session for background refresh (user likely logged out)")
             return
         }

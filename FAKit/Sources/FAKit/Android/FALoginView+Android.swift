@@ -82,14 +82,17 @@ extension FALoginView {
     /// `cookies` is accepted for signature parity with the iOS declaration and
     /// ignored — Android's cookies come from `CookieManager`, not from a cache this
     /// app keeps.
-    public static func makeSession(cookies: [HTTPCookie]? = nil) async throws -> OnlineFASession? {
+    public static func makeSession(
+        cookies: [HTTPCookie]? = nil,
+        source: FASessionSource = .homePage
+    ) async throws -> OnlineFASession? {
         // The hidden WebView needs its engine attached before its cookie jar reads
         // as anything but empty, and on a cold launch this call races that.
         guard await FAWebSession.shared.awaitReady() else {
             logger.warning("Autologin: the hidden WebView never finished loading")
             return nil
         }
-        return try await FAWebSession.shared.establishSession()
+        return try await FAWebSession.shared.establishSession(source: source)
     }
 }
 

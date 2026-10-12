@@ -63,7 +63,9 @@ struct HomeView: View {
         if let localSession {
             session = localSession
         } else {
-            session = try await FALoginView.makeSession()
+            session = try await FALoginView.makeSession(
+                source: .submissionsFeed(from: model.firstFeedPosition)
+            )
         }
 
         let task = Task.detached(name: "Session init") {
