@@ -32,6 +32,11 @@ the trigger, the badge shows, the list holds its position. Across a real *prepen
 anchor row now moves for one transient frame, 30–50 ms, where it used to walk back to
 the top over ~5 s; see [below](#withanimation-marks-the-whole-frame-process-wide).
 
+Opening a submission and coming back, or switching tabs, returns the feed to the same
+row and offset. Compose saves only an index, and the list's safe-area header arrives a
+pass late, so the feed used to come back one row lower ([forks.md § The feed-gaps
+patches](forks.md#the-feed-gaps-patches)).
+
 `ListItemTracking` **runs on Android too**, with no `#if`. It writes
 `Defaults[.lastViewedSubmissionID]` as rows cross 30% from the top, and that value is
 the server-side pagination anchor, not a scroll offset: the first fetch after launch
