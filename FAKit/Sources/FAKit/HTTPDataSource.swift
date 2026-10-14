@@ -6,6 +6,16 @@
 //
 
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
+public struct CloudflareChallengeRequired: LocalizedError {
+    public init() {}
+    public var errorDescription: String? {
+        "furaffinity.net is requiring a CloudFlare challenge to continue browsing."
+    }
+}
 
 public enum HTTPMethod: String, CustomStringConvertible, Sendable {
     public var description: String { rawValue }

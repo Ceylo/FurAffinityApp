@@ -4,12 +4,26 @@
 //
 //  Created by Ceylo on 05/10/2024.
 //
+//  One file for both platforms. Kingfisher's caches, options and prefetcher are the
+//  same everywhere; what forks is the transport — URLSession plus a Cloudflare cookie
+//  on iOS, `FAOkHttpDownloader` over the shared OkHttp pool on Android — and the few
+//  entry points that are still iOS-only (`KFImage` itself, HTML inlining and
+//  notification attachments).
+//
 
 import FAKit
 import Foundation
 import Kingfisher
 import SwiftUI
-import os
+
+/// Kingfisher takes download priority as a plain `Float`. Spelled out rather than
+/// read off `URLSessionTask`, whose name SkipFoundation shadows with an `AnyObject`
+/// alias inside this module — the values are Foundation's own.
+enum FADownloadPriority {
+    static let low: Float = 0.25
+    static let normal: Float = 0.5
+    static let high: Float = 0.75
+}
 
 enum KFError: LocalizedError {
     case missingFile(String)
@@ -22,15 +36,56 @@ enum KFError: LocalizedError {
     }
 }
 
+/// The downloader every FA load goes through. Kingfisher's own `URLSession` is never
+/// used on Android; `FAOkHttpDownloader` overrides the transport so images ride the
+/// same OkHttp connection pool as pages, which is what makes a Cloudflare clearance
+/// apply to both.
+@MainActor
+private var faImageDownloader: ImageDownloader {
+    #if os(Android)
+    FAOkHttpDownloader.shared
+    #else
+    downloaderWithCloudFlareCookie
+    #endif
+}
+
+// `FA_SKIP_MODULE`, not `os(Android)`: the Darwin bridge pass compiles the caller in
+// `FurAffinityUIRoot` and evaluates `os(Android)` as false.
+#if FA_SKIP_MODULE
+/// Bounds the memory cache. Idempotent; called from `FurAffinityUIRoot.onInit`.
+///
+/// Kingfisher's default is `physicalMemory / 4`, which bounds nothing here: a
+/// `physicalMemory` of 0 leaves `totalCostLimit` at 0, meaning *unlimited*, and
+/// `MemoryStorage`'s `cleanTimer` never fires without a run loop. 64 MB is what
+/// `FAImageMemoryCache` carried before Kingfisher, so the runs in
+/// `Android/docs/images.md` stay comparable. iOS needs none of this: NSCache purges
+/// under memory pressure there and corelibs' does not.
+func configureImageCacheForAndroid() {
+    ImageCache.default.memoryStorage.config.totalCostLimit = 64 * 1024 * 1024
+}
+#endif
+
 extension KingfisherOptionsInfo {
     @MainActor
     static var defaultsForFA: Self {
-        [
-            .downloader(downloaderWithCloudFlareCookie),
+        var options: Self = [
+            .downloader(faImageDownloader),
             .requestModifier(FAUserAgentRequestModifier()),
             .diskCacheExpiration(.days((7...14).randomElement()!)),
             .diskCacheAccessExtendingExpiration(.none),
         ]
+
+        #if FA_SKIP_MODULE
+        // Skip's Android UIImage has no animated-image metadata, so
+        // DefaultCacheSerializer cannot re-encode a downloaded GIF: its GIF
+        // representation is always nil. Preserve the original bytes instead so
+        // avatar GIFs use the same Kingfisher disk cache as JPEG/PNG images.
+        var serializer = DefaultCacheSerializer()
+        serializer.preferCacheOriginalData = true
+        options.append(.cacheSerializer(serializer))
+        #endif
+
+        return options
     }
 }
 
@@ -39,10 +94,17 @@ extension KFImageProtocol {
         self
             .backgroundDecode()
             .reducePriorityOnDisappear(true)
-            .downloader(downloaderWithCloudFlareCookie)
+            .downloader(faImageDownloader)
             .requestModifier(FAUserAgentRequestModifier())
             .diskCacheExpiration(.days((7...14).randomElement()!))
             .diskCacheAccessExtending(.none)
+            #if FA_SKIP_MODULE
+            .serialize(by: {
+                var serializer = DefaultCacheSerializer()
+                serializer.preferCacheOriginalData = true
+                return serializer
+            }())
+            #endif
             .onFailure { error in
                 logger.error("\(error)")
             }
@@ -60,23 +122,46 @@ struct FAUserAgentRequestModifier: AsyncImageDownloadRequestModifier {
 }
 
 /// Coalesces concurrent work for the same key: callers arriving while an operation is
-/// in flight await that one instead of starting their own.
-actor InFlightCoalescer<Key: Hashable & Sendable> {
-    private var inFlight = [Key: Task<Void, any Error>]()
+/// in flight await that one instead of starting their own. The one coalescer for the
+/// whole image path — downloads keyed by URL, decodes by URL plus processor.
+actor InFlightCoalescer<Key: Hashable & Sendable, Value: Sendable> {
+    private var inFlight = [Key: Task<Value, Never>]()
 
-    func run(_ key: Key, operation: @escaping @Sendable () async throws -> Void) async throws {
+    /// `priority` is the starter's — the visible/prefetch split `FAImageStore`'s two
+    /// FIFOs rely on rides on it.
+    func run(
+        _ key: Key,
+        priority: TaskPriority? = nil,
+        operation: @escaping @Sendable () async -> Value
+    ) async -> Value {
         if let existing = inFlight[key] {
-            return try await existing.value
+            return await existing.value
         }
 
         // Unstructured on purpose: one caller cancelling must not cancel the shared
         // work out from under the others.
-        let task = Task { try await operation() }
+        let task = Task(priority: priority) { await operation() }
         inFlight[key] = task
         // Only the caller that started the task clears it; late joiners already hold
         // the task reference, so clearing here is harmless for them.
         defer { inFlight[key] = nil }
-        try await task.value
+        return await task.value
+    }
+}
+
+extension InFlightCoalescer where Value == Result<Void, any Error> {
+    /// Distinct name, not an overload: a non-throwing closure is a subtype of a
+    /// throwing one, so two `run`s would be ambiguous at the call site.
+    func perform(_ key: Key, operation: @escaping @Sendable () async throws -> Void) async throws {
+        let result = await run(key) { () async -> Result<Void, any Error> in
+            do {
+                try await operation()
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
+        }
+        try result.get()
     }
 }
 
@@ -84,7 +169,7 @@ actor InFlightCoalescer<Key: Hashable & Sendable> {
 /// per joined callback, so N callers for one URL run N `ImageCache.store` writes, and
 /// `DiskStorage.store` writes non-atomically. A store landing while another caller
 /// copies the cache file yields a truncated copy.
-private let imageFetches = InFlightCoalescer<URL>()
+private let imageFetches = InFlightCoalescer<URL, Result<Void, any Error>>()
 
 extension KingfisherManager {
     func retrieveFAImage(with url: URL) async throws -> KFCrossPlatformImage {
@@ -104,11 +189,12 @@ extension KingfisherManager {
         )
     }
 
+#if !FA_SKIP_MODULE
     /// Image-data provider used by `FAImageInliner` to fetch images for HTML inlining.
     /// Reuses Kingfisher's cache: a cache hit skips download entirely, and a cache miss
     /// downloads through `downloaderWithUserAgent` and populates the cache for later use.
     func retrieveFAImageData(with url: URL) async throws -> (data: Data, mimeType: String) {
-        try await imageFetches.run(url) {
+        try await imageFetches.perform(url) {
             _ = try await KingfisherManager.shared.retrieveFAImageResult(with: url, waitForCache: true)
         }
         // Original bytes live in the disk cache; the memory cache holds the decoded image.
@@ -122,22 +208,36 @@ extension KingfisherManager {
 
         return (data, FAImageInliner.mimeType(for: url))
     }
-    
+#endif
+
+    /// Downloads `url` if needed and returns a copy of its bytes on disk. Backs the
+    /// notification attachments on iOS and Save/Share of the full-resolution media on
+    /// Android.
     func retrieveFAImageFile(with url: URL) async throws -> URL {
         // Only the retrieve-and-cache step is shared; the copy stays per-caller because
         // `UNNotificationAttachment` takes ownership of the file it is handed.
-        try await imageFetches.run(url) {
+        try await imageFetches.perform(url) {
             _ = try await KingfisherManager.shared.retrieveFAImageResult(with: url, waitForCache: true)
         }
         return try cachedImageFileURL(for: url)
     }
 }
 
+/// Where `cachedImageFileURL` puts its copies. A directory of their own rather than
+/// `tmp/` itself, so Android can sweep it — `temporaryDirectory` there resolves to the
+/// app's `cacheDir`, which the system only clears under storage pressure, where iOS
+/// purges `tmp/` on its own.
+private let mediaCopiesDirectory = URL.temporaryDirectory
+    .appending(component: "fa-media", directoryHint: .isDirectory)
+
 /// Copies the (already disk-cached) image for `url` to a fresh temp file and returns
-/// it; `nil` when not cached or the copy fails. The destination is UUID-prefixed so
-/// concurrent calls — or distinct URLs sharing a filename, e.g. each author's
-/// `<username>.gif` avatar — can't collide on one path and race their copies. The
-/// extension is preserved since iOS infers the image type from it.
+/// it; throws when not cached or the copy fails.
+///
+/// The UUID is the *directory*, not a filename prefix, so concurrent calls and
+/// distinct URLs sharing a name (each author's `<username>.gif` avatar) stay apart
+/// while the file keeps the remote name — which the user sees, since `MediaBridge`
+/// hands `lastPathComponent` to MediaStore and to the share sheet.
+/// `FAFileStaging.safeFileName` is what keeps a hostile one from failing the copy.
 func cachedImageFileURL(for url: URL) throws -> URL {
     let cacheKey = url.cacheKey
     let cache = ImageCache.default
@@ -147,11 +247,76 @@ func cachedImageFileURL(for url: URL) throws -> URL {
 
     let path = cache.cachePath(forKey: cacheKey)
     let fileManager = FileManager.default
-    let pathWithExtension = URL.temporaryDirectory
-        .appending(component: "\(UUID().uuidString)-\(url.lastPathComponent)")
-    try fileManager.copyItem(atPath: path, toPath: pathWithExtension.path(percentEncoded: false))
-    return pathWithExtension
+    let directory = mediaCopiesDirectory
+        .appending(component: UUID().uuidString, directoryHint: .isDirectory)
+    try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+    let name = FAFileStaging.safeFileName(url.lastPathComponent)
+        ?? (url.pathExtension.isEmpty ? "image" : "image.\(url.pathExtension)")
+    let destination = directory.appending(component: name)
+    try fileManager.copyItem(atPath: path, toPath: destination.path(percentEncoded: false))
+    return destination
 }
+
+// `FA_SKIP_MODULE`, not `os(Android)`: the Darwin bridge pass compiles the caller and
+// evaluates `os(Android)` as false.
+#if FA_SKIP_MODULE
+/// Drop media copies older than a day.
+///
+/// A copy is only needed while the screen that asked for it is up, so a day is already
+/// generous; without a sweep every submission ever opened leaves a full-resolution file
+/// behind forever — `temporaryDirectory` on Android is the app's `cacheDir`. iOS needs
+/// no counterpart: `tmp/` is the system's to purge, and a notification attachment there
+/// is handed to `UNNotificationAttachment`, which takes ownership of it. Blocking file
+/// I/O — call it through `FAImageStore.shared.performingFileIO`.
+///
+/// The entries are the per-copy directories `cachedImageFileURL` makes; the date
+/// check reads the same on a directory as on a file.
+func pruneMediaCopies() {
+    let fileManager = FileManager.default
+    guard let copies = try? fileManager.contentsOfDirectory(
+        at: mediaCopiesDirectory, includingPropertiesForKeys: nil
+    ) else { return }
+
+    let cutoff = Date().addingTimeInterval(-24 * 60 * 60)
+    var removed = 0
+    for copy in copies {
+        let modified = (try? fileManager.attributesOfItem(atPath: copy.path)[.modificationDate]) as? Date
+        guard let modified, modified < cutoff else { continue }
+        try? fileManager.removeItem(at: copy)
+        removed += 1
+    }
+    if removed > 0 {
+        logger.info("Pruned \(removed) media copies older than a day")
+    }
+}
+
+/// Total bytes of the staged media copies. Settings adds this to Kingfisher's own
+/// disk size, since `clear()` removes both. Blocking file I/O, but the directory
+/// holds one file per submission whose viewer was opened.
+func mediaCopiesDiskSize() -> UInt {
+    let fileManager = FileManager.default
+    guard let copies = try? fileManager.contentsOfDirectory(
+        at: mediaCopiesDirectory, includingPropertiesForKeys: nil
+    ) else { return 0 }
+
+    // One file per copy directory, but read the directory rather than assume it.
+    return copies.reduce(0) { total, copy in
+        let files = (try? fileManager.contentsOfDirectory(
+            at: copy, includingPropertiesForKeys: [.fileSizeKey]
+        )) ?? []
+        return files.reduce(total) { subtotal, file in
+            let size = (try? file.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+            return subtotal + UInt(size)
+        }
+    }
+}
+
+/// Removes every staged media copy, so Settings' Clear reclaims the number
+/// `mediaCopiesDiskSize` displayed. Blocking file I/O.
+func clearMediaCopies() {
+    try? FileManager.default.removeItem(at: mediaCopiesDirectory)
+}
+#endif
 
 #if DEBUG
     /// Test seam: seeds the disk cache so `cachedImageFileURL` can be tested without a
@@ -170,6 +335,15 @@ func FAImage(_ url: URL?) -> KFImage {
         .defaultConfiguration()
 }
 
+#if FA_SKIP_MODULE
+/// The same static view. `KFAnimatedImage` renders through `AnimatedImageView`, which
+/// is UIKit-backed and not built for the Skip module — and Android's decode seam has no
+/// animated path either, so a GIF shows its first frame.
+@MainActor
+func FAAnimatedImage(_ url: URL?) -> KFImage {
+    FAImage(url)
+}
+#else
 @MainActor
 func FAAnimatedImage(_ url: URL?) -> KFAnimatedImage {
     KFAnimatedImage(url)
@@ -178,9 +352,12 @@ func FAAnimatedImage(_ url: URL?) -> KFAnimatedImage {
             view.framePreloadCount = .max
         }
 }
+#endif
+
+// MARK: - Prefetching
 
 @MainActor
-func prefetch(_ urls: [URL], priority: Float = URLSessionTask.lowPriority) {
+func prefetch(_ urls: [URL], priority: Float = FADownloadPriority.low) {
     let prefetcher = ImagePrefetcher(
         urls: urls,
         options: .defaultsForFA + [
@@ -213,19 +390,27 @@ func prefetchAvatars(for previews: some Collection<FASubmissionPreview>) {
     prefetch(avatars)
 }
 
+/// `Double`, not `CGFloat`: two `CGFloat` typealiases (both aka `Double`) are visible
+/// on Android and the bare name is ambiguous as a type annotation. SE-0307's implicit
+/// conversion keeps the iOS call sites unchanged.
 @MainActor
-func prefetchThumbnails(for previews: some Collection<FASubmissionPreview>, availableWidth: CGFloat) {
+func prefetchThumbnails(for previews: some Collection<FASubmissionPreview>, availableWidth: Double) {
+    // On Android this line tells "the feed page never loaded" from "the image layer
+    // collapsed" (the worst outcome there is, and one that issues few image GETs too).
+    logger.debug("prefetchThumbnails count=\(previews.count) availableWidth=\(availableWidth)")
+    // Before the first layout every thumbnail would be sized for nothing.
+    guard availableWidth > 0 else { return }
     let thumbnails = previews.map { preview in
-        let size = CGSize(
+        let size = Foundation.CGSize(
             width: availableWidth,
             // thumbnailWidthOnHeightRatio = width / height
             // 1/ratio = height / width
             // width / ratio = height
-            height: availableWidth / CGFloat(preview.thumbnailWidthOnHeightRatio)
+            height: availableWidth / Double(preview.thumbnailWidthOnHeightRatio)
         )
         return preview.dynamicThumbnail.bestThumbnailUrl(for: size)
     }
-    prefetch(Array(thumbnails.prefix(3)), priority: URLSessionTask.highPriority)
+    prefetch(Array(thumbnails.prefix(3)), priority: FADownloadPriority.high)
     prefetch(thumbnails)
 }
 
@@ -233,20 +418,26 @@ extension View {
     /// Prefetches thumbnails and avatars for `previews` whenever they change (and
     /// once on appear), so a feed/results list has its images warming before the
     /// user scrolls. `availableWidth` sizes the thumbnail requests; callers inside
-    /// a `GeometryReader` pass `geometry.size.width`.
+    /// a `GeometryReader` pass `geometry.faSize.width`.
     @MainActor
     func prefetchingPreviews<C: Collection<FASubmissionPreview> & Equatable>(
         _ previews: C?,
-        availableWidth: CGFloat
+        availableWidth: Double
     ) -> some View {
         onChange(of: previews, initial: true) { _, newValue in
             guard let newValue else { return }
             prefetchThumbnails(for: newValue, availableWidth: availableWidth)
             prefetchAvatars(for: newValue)
         }
+        // Previews can arrive before the first layout, which skips the thumbnails.
+        .onChange(of: availableWidth > 0) { _, hasWidth in
+            guard hasWidth, let previews else { return }
+            prefetchThumbnails(for: previews, availableWidth: availableWidth)
+        }
     }
 }
 
+#if !FA_SKIP_MODULE
 struct Prefetch: View {
     init(_ url: URL) {
         prefetch([url])
@@ -256,6 +447,7 @@ struct Prefetch: View {
         EmptyView()
     }
 }
+#endif
 
 @MainActor
 private let downloaderWithCloudFlareCookie: ImageDownloader = {
@@ -264,16 +456,14 @@ private let downloaderWithCloudFlareCookie: ImageDownloader = {
     return downloader
 }()
 
+/// Records when each download started, so a feed row can report whether its thumbnail
+/// is in flight, cached, or not started. On iOS it also seeds the Cloudflare cookie
+/// onto the downloader's session; Android has no session to seed — its credentials go
+/// through `FAWebSession.imageCredentialsSink` → `ImageFetchBridge.configure`.
 actor DownloadDelegate: ImageDownloaderDelegate {
     @MainActor static let shared = DownloadDelegate()
 
     private init() {}
-
-    // Serializes the read-of-shared-storage + write-to-downloader-storage in
-    // setCloudflareCookie. That method is nonisolated and Kingfisher invokes it
-    // concurrently (one Task per download, no lock) right before resuming the
-    // request, so without this guard concurrent loads corrupt the cookie array.
-    nonisolated private let cookieLock = OSAllocatedUnfairLock()
 
     private var downloadStartDates = [URL: Date]()
     // Get/set boilerplate needed for actor isolation
@@ -283,6 +473,13 @@ actor DownloadDelegate: ImageDownloaderDelegate {
     public func downloadStartDate(for url: URL) -> Date? {
         downloadStartDates[url]
     }
+
+#if !os(Android)
+    // Serializes the read-of-shared-storage + write-to-downloader-storage in
+    // setCloudflareCookie. That method is nonisolated and Kingfisher invokes it
+    // concurrently (one Task per download, no lock) right before resuming the
+    // request, so without this guard concurrent loads corrupt the cookie array.
+    nonisolated private let cookieLock = NSLock()
 
     nonisolated private func setCloudflareCookie(for url: URL, on downloader: ImageDownloader) {
         guard let downloaderCookieStorage = downloader.sessionConfiguration.httpCookieStorage
@@ -306,25 +503,30 @@ actor DownloadDelegate: ImageDownloaderDelegate {
             downloaderCookieStorage.setCookie(cf_clearance)
         }
     }
+#endif
 
     nonisolated func imageDownloader(
         _ downloader: ImageDownloader,
         willDownloadImageForURL url: URL,
         with request: URLRequest?
     ) {
-        setCloudflareCookie(for: url, on: downloader)
-
         let startDate = Date()
         Task {
             await setDownloadStartDate(startDate, for: url)
         }
 
+#if !os(Android)
+        setCloudflareCookie(for: url, on: downloader)
+
         if let request {
             let method = request.httpMethod ?? "GET"
-            logger.info("[KF] \(method) request on \(url)")
+            logger.info("[IMG] \(method) request on \(url)")
         } else {
-            logger.info("[KF] Request on \(url)")
+            logger.info("[IMG] Request on \(url)")
         }
+#endif
+        // Android emits its own `[IMG] … request on …` from inside the permit instead,
+        // so it dates the request actually going out.
     }
 
     nonisolated func imageDownloader(

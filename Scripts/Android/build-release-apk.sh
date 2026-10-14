@@ -1,0 +1,271 @@
+#!/bin/bash
+#
+# Build the signed, distributable release APK.
+#
+# Wraps the sequence in Android/docs/releasing.md § Handing a build to testers:
+# apply the distribution stash (real app id + Amplitude key + Sentry DSN), drop the
+# build dirs the changed applicationId invalidates, `gradlew :app:assembleRelease`,
+# then check what the APK actually got signed with.
+#
+# Usage: Scripts/Android/build-release-apk.sh [--out DIR] [--install] [--keep-stash] [--ci]
+#
+#   --out         directory the APK is added to, default <worktree>/out (never
+#                 wiped); it is named FurAffinity-<version>-<commit>.apk, and an
+#                 existing one is never overwritten
+#   --install     install the result on the running device (install-apk.sh)
+#   --keep-stash  leave the distribution stash applied in the working tree
+#                 (default: revert the working tree to HEAD on exit)
+#   --ci          the working tree already carries the distribution values (the
+#                 release workflow seds them in, as for the IPA): no stash, no
+#                 clean-tree check, nothing reverted; keystore.properties must be
+#                 in this checkout, and a missing NDK is an error
+#
+# The stash is applied by *message*, never by stash@{0} — the stack is shared
+# with every other worktree and another session may be pushing to it.
+#
+# Environment: ANDROID_HOME / ANDROID_SDK_ROOT, JAVA_HOME, ANDROID_SERIAL, and
+# SENTRY_AUTH_TOKEN — the Sentry Gradle plugin uploads the R8 mapping and the
+# unstripped Swift .so files during the build, and without them a crash from
+# this APK cannot be symbolicated. Required, so a release cannot silently ship
+# without symbols; unset, it is read from `[auth] token=` in <worktree>/.sentryclirc
+# or ~/.sentryclirc (what `sentry-cli login` writes, shared by every worktree).
+#
+# The DSN comes from the stash (or, with --ci, the SENTRY_DSN secret), with the
+# app id and the Amplitude key; the build refuses to start if the placeholder
+# app id or DSN is still there.
+
+set -eo pipefail
+
+die() { echo "error: $*" >&2; exit 1; }
+step() { echo; echo "==> $*"; }
+# A warning locally; with --ci, which ships the result, an error.
+soft_fail() { (( CI_MODE )) && die "$*"; echo "warning: $*" >&2; }
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+STASH_MSG="📱For App Store distribution"
+
+OUT="$ROOT/out"
+INSTALL=0
+KEEP_STASH=0
+CI_MODE=0
+
+while (( $# )); do
+    case "$1" in
+        -h|--help)   sed -n '3,36p' "$0" | cut -c3-; exit 0 ;;
+        --out)       OUT="$2"; shift ;;
+        --out=*)     OUT="${1#*=}" ;;
+        --install)   INSTALL=1 ;;
+        --keep-stash) KEEP_STASH=1 ;;
+        --ci)        CI_MODE=1 ;;
+        *)           die "unknown argument: $1" ;;
+    esac
+    shift
+done
+
+cd "$ROOT"
+
+# --- toolchain --------------------------------------------------------------
+
+command -v skip >/dev/null || die "\`skip\` is not on PATH"
+
+SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
+[[ -d "$SDK" ]] || die "no Android SDK at $SDK — set ANDROID_HOME"
+export ANDROID_HOME="$SDK"
+
+# shellcheck source=Scripts/Android/java-home.sh
+source "$(dirname "${BASH_SOURCE[0]}")/java-home.sh"
+
+# Without the NDK, AGP's stripReleaseDebugSymbols silently copies the .so files
+# through and the APK comes out ~2.5x too big.
+if [[ ! -d "$SDK/ndk" ]]; then
+    soft_fail "no NDK in $SDK/ndk — debug symbols will not be stripped"
+fi
+
+# --- signing key ------------------------------------------------------------
+
+# Gitignored, so it exists in whichever checkout it was generated in. Link it
+# rather than making the user copy the one irreplaceable file in the project.
+if [[ ! -f Android/app/keystore.properties ]]; then
+    (( CI_MODE )) && die "Android/app/keystore.properties is missing — a release build without it
+    would be signed with the DEBUG key. Decode it from the ANDROID_KEYSTORE_* secrets."
+    found=""
+    while read -r wt; do
+        [[ "$wt" == "$ROOT" ]] && continue
+        [[ -f "$wt/Android/app/keystore.properties" && -f "$wt/Android/app/keystore.jks" ]] || continue
+        found="$wt"; break
+    done < <(git worktree list --porcelain | awk '/^worktree /{print $2}')
+
+    [[ -n "$found" ]] || die "Android/app/keystore.properties is missing and no other worktree has one.
+    A release build without it would be signed with the DEBUG key, which is
+    unrecoverable once shipped. See Android/docs/releasing.md § Release signing."
+
+    echo "linking signing key from $found"
+    ln -s "$found/Android/app/keystore.jks" Android/app/keystore.jks
+    ln -s "$found/Android/app/keystore.properties" Android/app/keystore.properties
+fi
+
+# --- version sanity ---------------------------------------------------------
+
+skip_env() {
+    sed -nE "s@^[[:space:]]*$1[[:space:]]*=[[:space:]]*([^[:space:]]+).*@\1@p" Skip.env | awk 'NR == 1'
+}
+
+VERSION="$(skip_env MARKETING_VERSION)"
+BUILD="$(skip_env CURRENT_PROJECT_VERSION)"
+[[ -n "$VERSION" && -n "$BUILD" ]] || die "MARKETING_VERSION / CURRENT_PROJECT_VERSION missing from Skip.env"
+
+# versionCode must never regress, so it is derived: major*10000 + minor*100 + patch.
+IFS=. read -r maj min pat <<< "$VERSION"
+EXPECTED=$(( 10#${maj:-0} * 10000 + 10#${min:-0} * 100 + 10#${pat:-0} ))
+[[ "$BUILD" == "$EXPECTED" ]] \
+    || die "Skip.env: CURRENT_PROJECT_VERSION is $BUILD but $VERSION derives $EXPECTED"
+
+XCODE_VERSION="$(sed -nE 's@^[[:space:]]*MARKETING_VERSION = ([^;]+);@\1@p' \
+    FurAffinity.xcodeproj/project.pbxproj | awk 'NR == 1')"
+[[ "$XCODE_VERSION" == "$VERSION" ]] \
+    || die "version mismatch: Skip.env says $VERSION, project.pbxproj says $XCODE_VERSION"
+
+# HEAD, as in the `commit` tag Sentry events carry; `stash apply` does not move it.
+COMMIT="$(git rev-parse --short HEAD)"
+APK="$OUT/FurAffinity-$VERSION-$COMMIT.apk"
+[[ -e "$APK" ]] && die "$APK already exists — move it away or pass another --out"
+
+# --- the distribution stash -------------------------------------------------
+
+if (( CI_MODE )); then
+    step "Using the distribution values already in the working tree (--ci)"
+else
+    STASH="$(git stash list --format='%H %gs' | awk -v m="$STASH_MSG" 'f { next } index($0, m) { print $1; f = 1 }')"
+    [[ -n "$STASH" ]] || die "no stash whose message contains \"$STASH_MSG\" — it carries the
+    real app id and the Amplitude key, and without it this builds com.example.id1234."
+
+    # The stash is applied into the working tree and reverted afterwards, so the
+    # tree has to start clean: that is what makes `git checkout -- .` the exact
+    # inverse.
+    DIRTY="$(git status --porcelain --untracked-files=no)"
+    [[ -z "$DIRTY" ]] || die "the working tree has uncommitted changes — commit them first.
+$DIRTY"
+
+    restore() {
+        if (( KEEP_STASH )); then
+            echo; echo "distribution stash left applied (--keep-stash)"
+        else
+            git -C "$ROOT" checkout -- .
+        fi
+    }
+    # EXIT alone would not fire on a Ctrl-C or a kill, leaving the Amplitude key in
+    # the working tree.
+    trap restore EXIT
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+
+    step "Applying \"$STASH_MSG\" ($(git rev-parse --short "$STASH"))"
+    git stash apply "$STASH"
+fi
+
+APP_ID="$(skip_env ANDROID_APPLICATION_ID)"
+[[ -n "$APP_ID" ]] || APP_ID="$(skip_env PRODUCT_BUNDLE_IDENTIFIER)"
+echo "app id $APP_ID, version $VERSION ($BUILD)"
+[[ -n "$APP_ID" ]] || die "Skip.env has an empty PRODUCT_BUNDLE_IDENTIFIER"
+[[ "$APP_ID" == com.example.* ]] \
+    && die "the app id is still the placeholder $APP_ID — this would not update the shipped app"
+
+# Both halves of crash reporting, checked after the stash is applied: it is what
+# carries the DSN. See Android/docs/crash-reporting.md.
+# Unset, the token comes from sentry-cli's own config — the checkout's gitignored
+# .sentryclirc, then ~/.sentryclirc — as for the iOS archive's upload. The Gradle
+# plugin reads only the environment, hence the export.
+sentryclirc_token() {
+    awk -F= '
+        /^[[:space:]]*\[/ { auth = ($0 ~ /^[[:space:]]*\[auth\][[:space:]]*$/) }
+        auth && $1 ~ /^[[:space:]]*token[[:space:]]*$/ {
+            sub(/^[^=]*=[[:space:]]*/, ""); sub(/[[:space:]]*$/, ""); print; exit
+        }' "$1"
+}
+if [[ -z "$SENTRY_AUTH_TOKEN" ]]; then
+    for rc in "$ROOT/.sentryclirc" "$HOME/.sentryclirc"; do
+        [[ -f "$rc" ]] || continue
+        SENTRY_AUTH_TOKEN="$(sentryclirc_token "$rc")"
+        [[ -n "$SENTRY_AUTH_TOKEN" ]] && { echo "Sentry auth token from $rc"; break; }
+    done
+    export SENTRY_AUTH_TOKEN
+fi
+[[ -n "$SENTRY_AUTH_TOKEN" ]] \
+    || die "no Sentry auth token — the build would upload no symbols, and crashes
+    from this APK could not be symbolicated. Put the org auth token (project:releases
+    scope) in ~/.sentryclirc as \`[auth]\` / \`token=…\` (or run \`sentry-cli login\`),
+    or export SENTRY_AUTH_TOKEN, and rerun."
+grep -qE 'static let sentryDSN = "(Your Sentry DSN)?"' "$ROOT/FurAffinity/Secrets.swift" \
+    && die "no Sentry DSN — this APK would report no crashes at all. Add it to
+    \"$STASH_MSG\" and rerun."
+
+# --- build ------------------------------------------------------------------
+
+# In the worktree, not a shared build slot (Android/build-slots): the clearing
+# below has to reach the Swift side, and the Sentry uploads are path-sensitive.
+export FA_ANDROID_SLOTS=0
+
+# The applicationId just changed, and these three cache it.
+step "Clearing .build/{plugins/outputs,Darwin,Android}"
+rm -rf .build/plugins/outputs .build/Darwin .build/Android
+
+# Not `skip export`: its bare `assembleRelease` also builds every transpiled
+# module a second time as a root project (Skip's settings plugin both includes
+# them and includeBuild()s them), plus an .aab nothing uses — 339s against 275s.
+# SKIP_EXPORT_ARCHS: a release otherwise compiles the Swift for all three ABIs,
+# and the release abiFilters (Android/app/build.gradle.kts) ships only arm64-v8a.
+step "gradlew :app:assembleRelease"
+( cd Android && SKIP_EXPORT_ARCHS=aarch64 ./gradlew :app:assembleRelease )
+
+EXPORTED="$ROOT/.build/Android/app/outputs/apk/release/app-release.apk"
+[[ -f "$EXPORTED" ]] || die "the build produced no $EXPORTED"
+mkdir -p "$OUT"
+mv -n "$EXPORTED" "$APK"
+[[ -f "$APK" && ! -e "$EXPORTED" ]] || die "could not move $EXPORTED to $APK"
+
+# --- verify the signature ---------------------------------------------------
+
+APKSIGNER="$(ls -d "$SDK"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1 || true)"
+if [[ -x "$APKSIGNER" ]]; then
+    step "Signing certificate"
+    CERTS="$("$APKSIGNER" verify --print-certs "$APK")"
+    echo "$CERTS"
+    if grep -q "CN=Android Debug" <<< "$CERTS"; then
+        die "the APK is DEBUG-signed — do not ship it. See Android/docs/releasing.md § Release signing."
+    fi
+else
+    soft_fail "no apksigner in $SDK/build-tools — signature unverified"
+fi
+
+# --- verify the stripping ---------------------------------------------------
+
+# AGP strips with *its* NDK version, and quietly copies the libraries through when
+# that one is missing, whatever else is installed: check the result, not the SDK.
+# The same lookup as check-shared-globals.sh: the newest NDK's llvm-readelf.
+NDK="$(ls -d "$SDK"/ndk/* 2>/dev/null | sort -V | tail -1 || true)"
+READELF="$(ls "$NDK"/toolchains/llvm/prebuilt/*/bin/llvm-readelf 2>/dev/null | head -1 || true)"
+if [[ -x "$READELF" ]]; then
+    SO="$(mktemp -t fa-apk-so)"
+    unzip -p "$APK" lib/arm64-v8a/libFurAffinityUI.so > "$SO"
+    SECTIONS="$("$READELF" --section-headers "$SO")"
+    rm -f "$SO"
+    if grep -q '\.debug_info' <<< "$SECTIONS"; then
+        soft_fail "the APK's Swift libraries still carry debug info — AGP's NDK is missing"
+    else
+        echo "native libraries stripped"
+    fi
+else
+    soft_fail "no llvm-readelf in $SDK/ndk — stripping unverified"
+fi
+
+# --- done -------------------------------------------------------------------
+
+step "$APK"
+ls -lh "$APK" | awk '{ print $5 }'
+
+if (( INSTALL )); then
+    step "Installing on the device"
+    "$(dirname "${BASH_SOURCE[0]}")/install-apk.sh" "$APK"
+    echo "launch it from the icon, or:"
+    echo "  adb shell monkey -p $APP_ID -c android.intent.category.LAUNCHER 1"
+fi

@@ -7,7 +7,11 @@
 
 import Testing
 import Foundation
+#if FA_SKIP_MODULE
+@testable import FurAffinityUI
+#else
 @testable import Fur_Affinity
+#endif
 
 struct FATargetTests {
     @Test

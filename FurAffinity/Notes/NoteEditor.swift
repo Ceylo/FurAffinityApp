@@ -13,10 +13,11 @@ struct NoteEditor: View {
     var defaultContents: NoteReplySession.DefaultContents
     var handler: (_ action: ReplyEditorAction) async -> Void
     
-    @FocusState private var destinationUserHasFocus: Bool
-    @FocusState private var subjectHasFocus: Bool
-    @FocusState private var textEditorHasFocus: Bool
-    @State private var actionInProgress: ReplyEditorAction?
+    // Not private: skipstone can't bridge a private @State/@FocusState.
+    @FocusState var destinationUserHasFocus: Bool
+    @FocusState var subjectHasFocus: Bool
+    @FocusState var textEditorHasFocus: Bool
+    @State var actionInProgress: ReplyEditorAction?
 
     var canCancel: Bool { actionInProgress == nil }
     var canSubmit: Bool {

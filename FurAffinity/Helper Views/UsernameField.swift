@@ -16,12 +16,13 @@ struct UsernameField: View {
     @Binding var username: String
     var placeholder: String = "static, lowercase user name"
 
-    @State private var avatarUrl: URL?
+    // Not private: skipstone can't bridge a private @State.
+    @State var avatarUrl: URL?
 
     // Drives the text color via an independent @State flip so SwiftUI re-applies
     // the TextField's foreground style live while it's first responder.
     // https://www.hackingwithswift.com/forums/swiftui/textfield-foregroundcolor-not-updating-live/
-    @State private var isValid = false
+    @State var isValid = false
 
     var body: some View {
         HStack {

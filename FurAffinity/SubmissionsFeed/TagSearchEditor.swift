@@ -5,6 +5,8 @@
 //  Created by Ceylo on 02/07/2026.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import OrderedCollections
 
@@ -215,3 +217,5 @@ struct TagSearchEditor: View {
         }
     }
 }
+
+#endif

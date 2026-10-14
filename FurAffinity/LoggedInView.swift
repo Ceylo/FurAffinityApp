@@ -5,6 +5,8 @@
 //  Created by Ceylo on 13/11/2021.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -114,7 +116,7 @@ struct LoggedInView: View {
                 }
                 
                 SettingsView()
-                    .badge(model.appInfo.isUpToDate ?? true ? nil : " ")
+                    .badge(model.appInfo.isUpToDate == false ? " " : nil)
                     .tabItem {
                         Label("Settings", systemImage: "slider.horizontal.3")
                     }
@@ -141,6 +143,9 @@ struct LoggedInView: View {
             tabBarAppearance.configureWithDefaultBackground()
             UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
         }
+        .autorefreshingOnForeground {
+            await model.autorefreshIfNeeded()
+        }
         .backgroundRefreshLifecycle()
     }
 }
@@ -162,3 +167,5 @@ extension LoggedInView.Tab {
             .environment(NotificationCoordinator.shared)
     }
 }
+
+#endif

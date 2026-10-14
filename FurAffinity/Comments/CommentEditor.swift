@@ -31,8 +31,9 @@ struct CommentEditor: View {
     @Bindable var reply: CommentReply
     var parentComment: FAComment?
     var handler: (_ action: ReplyEditorAction) async -> Void
-    @FocusState private var editorHasFocus: Bool
-    @State private var actionInProgress: ReplyEditorAction?
+    // Not private: skipstone can't bridge a private @State/@FocusState.
+    @FocusState var editorHasFocus: Bool
+    @State var actionInProgress: ReplyEditorAction?
     
     var body: some View {
         VStack(spacing: 0) {

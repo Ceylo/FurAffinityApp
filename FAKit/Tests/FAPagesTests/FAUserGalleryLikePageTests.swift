@@ -18,13 +18,13 @@ extension [FAFolderGroup] {
 extension FAFolderGroup {
     func ignoringUUID() -> Self {
         let folders = self.folders.map { $0.ignoringUUID() }
-        return Self.init(title: title, folders: folders, id: UUID(uuid: UUID_NULL))
+        return Self.init(title: title, folders: folders, id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!)
     }
 }
 
 extension FAFolder {
     func ignoringUUID() -> Self {
-        Self.init(title: title, url: url, isActive: isActive, id: UUID(uuid: UUID_NULL))
+        Self.init(title: title, url: url, isActive: isActive, id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!)
     }
 }
 

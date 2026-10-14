@@ -5,6 +5,8 @@
 //  Created by Ceylo on 03/09/2024.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -45,3 +47,5 @@ struct RemoteWatchlistView: View {
         .environment($0.errorStorage)
     }
 }
+
+#endif

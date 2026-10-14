@@ -5,14 +5,16 @@
 //  Created by Ceylo on 10/09/2024.
 //
 
-
+import Foundation
+#if !os(Android)
 import UIKit
+#endif
 
-enum FATheme: CustomStringConvertible {
+public enum FATheme: CustomStringConvertible, Sendable {
     case light
     case dark
     
-    var description: String {
+    public var description: String {
         switch self {
         case .light:
             "light"
@@ -22,16 +24,17 @@ enum FATheme: CustomStringConvertible {
     }
 }
 
-
 extension FATheme {
-    init(style: UIUserInterfaceStyle) {
-        switch style {
-        case .unspecified, .dark:
-            self = .dark
-        case .light:
-            self = .light
-        @unknown default: // Also the website default when not logged in
-            self = .dark
-        }
+    /// The app's current theme where `UITraitCollection` doesn't exist: the Android
+    /// app installs it at launch, before anything reads it — hence no isolation, like
+    /// `FAWebViewUserAgent.platformProvider`. Nil means dark, the website default.
+    nonisolated(unsafe) public static var currentProvider: (@Sendable () -> FATheme)?
+
+    @MainActor static var current: FATheme {
+        #if os(Android)
+        currentProvider?() ?? .dark
+        #else
+        FATheme(style: UITraitCollection.current.userInterfaceStyle)
+        #endif
     }
 }

@@ -5,6 +5,8 @@
 //  Created by Ceylo on 15/04/2023.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -55,14 +57,6 @@ extension ListedSection {
 }
 
 extension FANotificationPreview: FANavigable {}
-
-@MainActor
-protocol NotificationsDeleter: Sendable {
-    func deleteSubmissionCommentNotifications(_ items: [FANotificationPreview]) -> Void
-    func deleteJournalCommentNotifications(_ items: [FANotificationPreview]) -> Void
-    func deleteShoutNotifications(_ items: [FANotificationPreview]) -> Void
-    func deleteJournalNotifications(_ items: [FANotificationPreview]) -> Void
-}
 
 struct NotificationsView: View {
     var notifications: FANotificationPreviews
@@ -191,3 +185,5 @@ private struct DummyActions: NotificationsNuker, NotificationsDeleter {
         .environment($0.errorStorage)
     }
 }
+
+#endif

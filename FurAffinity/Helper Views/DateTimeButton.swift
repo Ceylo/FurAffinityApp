@@ -16,7 +16,8 @@ struct DateTimeButton: View {
     var datetime: String
     var naturalDatetime: String
     var initialDisplayedDate: DisplayedDate = .natural
-    @State private var showExactDatetime = false
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var showExactDatetime = false
     
     private var dateToDisplay: String {
         (initialDisplayedDate == .natural) == showExactDatetime ? datetime : naturalDatetime

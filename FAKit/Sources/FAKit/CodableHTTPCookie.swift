@@ -5,6 +5,9 @@
 //
 
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// A `subclass` of `HTTPCookie` conforming to `Codable`.
 public final class CodableHTTPCookie: HTTPCookie, Codable, @unchecked Sendable {

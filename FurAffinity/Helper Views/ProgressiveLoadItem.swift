@@ -5,6 +5,8 @@
 //  Created by Ceylo on 04/09/2024.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -40,7 +42,7 @@ struct ProgressiveLoadItem<DataType: ProgressiveData>: View {
         }
         .onChange(of: currentData) { _, newData in
             if needsMoreData && newData.canLoadMore {
-                Task {
+                _ = Task {
                     guard needsMoreData else { return }
                     try await Task.sleep(for: crawlingDelay)
                     guard needsMoreData else { return }
@@ -73,3 +75,5 @@ extension [Int]: ProgressiveData {
     }
     .listStyle(.plain)
 }
+
+#endif

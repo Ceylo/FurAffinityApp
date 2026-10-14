@@ -7,6 +7,9 @@
 
 import Testing
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 @testable import FAKit
 
 /// Drives the coordinator's two-stage state machine deterministically: the parked
@@ -114,6 +117,30 @@ struct CloudflareChallengeCoordinatorTests {
         await #expect(throws: CloudflareChallengeRequired.self) {
             try await task.value
         }
+    }
+
+    /// What makes "every challenged worker calls `awaitResolution()`" safe: six image
+    /// fetches plus a page fetch or two all park on the same challenge, and one
+    /// solve releases the lot. If any of them could be stranded, the image layer
+    /// would hold its permits forever.
+    @Test func concurrentWaitersAllReleasedByOneResolution() async throws {
+        let coordinator = CloudflareChallengeCoordinator(
+            isInBackground: { false },
+            cookieProvider: Self.authCookies,
+            safetyTimeout: .seconds(60)
+        )
+
+        let waiters = (0..<8).map { _ in Task { try await coordinator.awaitResolution() } }
+        while !coordinator.backgroundResolutionPending { await Task.yield() }
+        // Let every one of them reach the park before anything is resolved.
+        for _ in 0..<64 { await Task.yield() }
+
+        coordinator.markResolved()
+        for waiter in waiters {
+            try await waiter.value
+        }
+        #expect(coordinator.pending == false)
+        #expect(coordinator.backgroundResolutionPending == false)
     }
 
     @Test func cancellationThrowsAndClearsFlags() async {

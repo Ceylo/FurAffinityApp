@@ -50,7 +50,7 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
         _ updateHandler: any UpdateHandler<Data>
     ) -> ContentsView
     
-    private enum DataState: Equatable {
+    enum DataState: Equatable {
         case notLoadingYet
         case loading
         case loaded(Data)
@@ -67,10 +67,11 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
             }
         }
     }
-    @State private var dataState: DataState = .notLoadingYet
-    @State private var showUpdateLoadingView = false
-    @State private var activity: NSUserActivity?
-    @Environment(ErrorStorage.self) private var errorStorage
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var dataState: DataState = .notLoadingYet
+    @State var showUpdateLoadingView = false
+    @State var activity: NSUserActivity?
+    @Environment(ErrorStorage.self) var errorStorage
     
     var loadingView: some View {
         VStack(spacing: 20) {
@@ -85,7 +86,7 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
             .padding(20)
             .applying {
                 if #available(iOS 26, *) {
-                    $0.glassEffect(in: RoundedRectangle(cornerRadius: 10))
+                    $0.floatingGlass(in: RoundedRectangle(cornerRadius: 10))
                 } else {
                     $0
                         .background(.thinMaterial)

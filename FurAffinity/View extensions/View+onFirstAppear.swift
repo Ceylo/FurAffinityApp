@@ -8,10 +8,12 @@
 
 import SwiftUI
 
-private struct OnFirstAppearModifier: ViewModifier {
+// Not private: skipstone doesn't bridge a private type.
+struct OnFirstAppearModifier: ViewModifier {
 
     private let onFirstAppearAction: () -> ()
-    @State private var hasAppeared = false
+    // Not private: skipstone can't bridge a private @State.
+    @State var hasAppeared = false
     
     public init(_ onFirstAppearAction: @escaping () -> ()) {
         self.onFirstAppearAction = onFirstAppearAction

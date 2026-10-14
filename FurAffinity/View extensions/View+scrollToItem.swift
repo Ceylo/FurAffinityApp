@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-private struct ScrollToItemModifier<ID: Hashable>: ViewModifier {
+// Not private: skipstone doesn't bridge a private type.
+struct ScrollToItemModifier<ID: Hashable>: ViewModifier {
     var targetId: ID?
     
     func body(content: Content) -> some View {
@@ -30,4 +31,3 @@ extension View {
         modifier(ScrollToItemModifier(targetId: id))
     }
 }
-

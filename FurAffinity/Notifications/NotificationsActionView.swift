@@ -5,15 +5,9 @@
 //  Created by Ceylo on 01/05/2023.
 //
 
-import SwiftUI
+#if !FA_SKIP_MODULE
 
-@MainActor
-protocol NotificationsNuker: Sendable {
-    func nukeAllSubmissionCommentNotifications() async throws -> Void
-    func nukeAllJournalCommentNotifications() async throws -> Void
-    func nukeAllShoutNotifications() async throws -> Void
-    func nukeAllJournalNotifications() async throws -> Void
-}
+import SwiftUI
 
 struct NotificationsActionView: View {
     var hasSubmissionComments: Bool
@@ -82,7 +76,7 @@ struct NotificationsActionView: View {
             .applying { control in
                 if #available(iOS 26, *) {
                     GlassEffectContainer {
-                        control.glassEffect()
+                        control.floatingGlass()
                     }
                 } else {
                     control
@@ -111,3 +105,5 @@ private struct DummyNuker: NotificationsNuker {
     )
     .environment(errorStorage)
 }
+
+#endif

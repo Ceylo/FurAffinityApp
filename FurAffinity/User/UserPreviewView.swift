@@ -5,14 +5,20 @@
 //  Created by Ceylo on 30/03/2023.
 //
 
-import SwiftUI
-import FAKit
+import Foundation
 
+/// Outside the guard below: `FATarget` and `TitleAuthorHeader` are shared with the
+/// Android build and carry this, while the view itself is not ported.
 struct UserPreviewData: Hashable {
     var username: String
     var displayName: String?
     var avatarUrl: URL?
 }
+
+#if !FA_SKIP_MODULE
+
+import SwiftUI
+import FAKit
 
 struct UserPreviewView: View {
     var preview: UserPreviewData
@@ -73,3 +79,5 @@ struct UserPreviewView: View {
         }
     }
 }
+
+#endif

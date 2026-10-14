@@ -65,7 +65,7 @@ struct ActionControl: View {
                 }
                 .applying { control in
                     if #available(iOS 26, *) {
-                        GlassEffectContainer { control.glassEffect() }
+                        GlassEffectContainer { control.floatingGlass() }
                     } else {
                         control
                     }

@@ -128,7 +128,7 @@ struct UserNameView: View {
                 .label {
                     WatchingPill()
                 }
-                .border(.tertiary)
+                .border(.secondary.opacity(0.5))
             }
         }
     }

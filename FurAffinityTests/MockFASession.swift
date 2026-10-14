@@ -17,6 +17,8 @@ final class MockFASession: FASession {
     var mockNotePreviews: [FANotePreview]
     var mockNotificationPreviews: FANotificationPreviews
     var shouldDeleteFail: Bool
+    /// Every `deleteSubmissionPreviews` batch received, in order.
+    private(set) var deletedSubmissionPreviewBatches: [[FASubmissionPreview]] = []
 
     nonisolated static func == (lhs: MockFASession, rhs: MockFASession) -> Bool {
         lhs === rhs
@@ -116,6 +118,7 @@ final class MockFASession: FASession {
     }
 
     func deleteSubmissionPreviews(_ previews: [FASubmissionPreview]) async throws {
+        deletedSubmissionPreviewBatches.append(previews)
         if shouldDeleteFail {
             throw ModelError.disconnected
         }

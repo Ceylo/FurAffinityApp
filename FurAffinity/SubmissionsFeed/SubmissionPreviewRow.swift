@@ -16,6 +16,15 @@ struct SubmissionPreviewRow: View {
     let preview: FASubmissionPreview
 
     var body: some View {
+        #if os(Android)
+        // SkipUI lays the opacity-0 NavigationLink out at its intrinsic (empty) size
+        // rather than stretching it behind the card, so only a narrow leading strip
+        // of the row reacts. FALink's button covers the whole row instead.
+        FALink(destination: .submission(url: preview.url, previewData: preview)) {
+            SubmissionFeedItemView<TitleAuthorHeader>(submission: preview)
+        }
+        .withFullWidthTapArea()
+        #else
         ZStack(alignment: .leading) {
             NavigationLink(value: FATarget.submission(
                 url: preview.url, previewData: preview
@@ -27,7 +36,7 @@ struct SubmissionPreviewRow: View {
             .opacity(0)
 
             SubmissionFeedItemView<TitleAuthorHeader>(submission: preview)
-                .id(preview.sid)
         }
+        #endif
     }
 }

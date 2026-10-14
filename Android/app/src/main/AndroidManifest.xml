@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <!-- Needed by both the WebView and the HTTP layer. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Saving to Pictures/FurAffinity needs no permission under scoped storage (API 29+);
+         the same MediaStore insert on API ≤28 does. See FAMediaBridge.kt. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <!-- .sensoryFeedback(…) reaches android.os.Vibrator through SkipUI, which calls it
+         unguarded; without this the first haptic throws SecurityException and takes the
+         process down. Normal (install-time) permission — never requested at runtime. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- allowBackup is off deliberately: there are no backup rules, so the WebView's
+         cookie jar — the FA auth cookies and cf_clearance — would otherwise be eligible
+         for Google cloud backup, and restoring it onto another device would hand over a
+         live session. -->
+    <application
+        android:label="@string/app_name"
+        android:name=".AndroidAppMain"
+        android:supportsRtl="true"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher">
+        <!-- Sentry starts from Swift (CrashReporting.start), once it knows there is a
+             DSN and the user hasn't opted out. -->
+        <meta-data android:name="io.sentry.auto-init" android:value="false" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Shared files live in the app cache, which no other app may read directly;
+             FAMediaBridge stages them here and shares a content:// URI. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+    </application>
+</manifest>

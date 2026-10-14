@@ -19,6 +19,8 @@ The application does not collect any identifying data.
 
 The application collects anonymous analytics data for the sole purpose of knowing how many users regularly use the app.
 
+When the application crashes or stops responding, it sends a crash report for the sole purpose of fixing the defect. A crash report contains the call stack of the crash, the model of the device, its operating system version, the version of the application, and a random identifier generated at installation, which is not linked to your furaffinity.net account or to you. It does not contain your account name, the contents you were viewing, or the application log. You can turn crash reports off at any time in Settings → Advanced → « Send crash reports »; reports of crashes that happened while they were turned off are never sent.
+
 For operating purposes, the application performs requests to the following websites:
 - furaffinity.net: requests performed to this website allow the application to provide its contents.
 - github.com: requests performed to this website allow the application to know if a newer version of the application is available, and inform the user of it.
@@ -29,16 +31,17 @@ Each of these websites have their own privacy policy:
 
 ## Lawful Bases
 ‍
-We will only collect and process personal data where we have lawful bases. Lawful bases include consent (where you have given consent) and contract (where processing is necessary for the performance of a contract with you, e.g. to operate the application or deliver any products or services you have requested). If you have questions about the lawful bases of how we process your personal information, contact us at contact@furaffinity.app.
+We will only collect and process personal data where we have lawful bases. Lawful bases include consent (where you have given consent), contract (where processing is necessary for the performance of a contract with you, e.g. to operate the application or deliver any products or services you have requested), and legitimate interest. Crash reports are processed on the basis of our legitimate interest in keeping the application working (GDPR Art. 6(1)(f)), which is why they contain no more than described above and can be turned off at any time. If you have questions about the lawful bases of how we process your personal information, contact us at contact@furaffinity.app.
 
 ## Who the application shares your information with
 
 - Up to version « 1.8 » of the application, the anonymous data collected by the application is processed by Microsoft (appcenter.ms).
 - In version « 1.9 » and later of the application, the anonymous data collected by the application is processed by Amplitude (amplitude.com, https://amplitude.com/privacy).
+- In version « 1.19 » and later of the application, crash reports are processed by Sentry (sentry.io, https://sentry.io/privacy/), stored in the European Union. IP address storage is disabled on our Sentry project, and no location is derived from it.
 
 ## Where the application stores your information
 
-The application does not store any personal information and doesn’t share any personal information with us.
+The application does not store any personal information and doesn’t share any personal information with us, apart from the crash reports described above, which are sent to Sentry and which we can read.
 
 ## How long the application keeps your information
 

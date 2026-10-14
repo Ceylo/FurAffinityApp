@@ -29,7 +29,9 @@ struct ReplyButton: View {
             Button {
                 replyAction()
             } label: {
-                AlignedLabel(value: repliesCount, systemImage: "bubble", imageYOffset: -1)
+                // Material's bubble sits its body above the box's centre to make room for
+                // the tail; this puts the body level with the count's digits.
+                AlignedLabel(value: repliesCount, systemImage: "bubble", imageYOffset: -1, materialImageYOffset: 2.67)
                     .tint(Color.buttonTint)
             }
             .frame(height: buttonsSize-4)
@@ -37,7 +39,8 @@ struct ReplyButton: View {
             Menu {
                 Text("Comment posting has been disabled")
             } label: {
-                AlignedLabel(value: repliesCount, systemImage: "exclamationmark.bubble", imageYOffset: -1)
+                // Feedback, its Material icon, is the same bubble as above.
+                AlignedLabel(value: repliesCount, systemImage: "exclamationmark.bubble", imageYOffset: -1, materialImageYOffset: 2.67)
                     .tint(.orange)
             }
             .frame(height: buttonsSize-3)
@@ -74,7 +77,8 @@ struct SubmissionControlsView: View {
         self.saveHandler = MediaSaveHandler(errorStorage: errorStorage)
     }
 
-    @State private var saveHandler: MediaSaveHandler
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var saveHandler: MediaSaveHandler
     
     var body: some View {
         HStack {
@@ -86,7 +90,9 @@ struct SubmissionControlsView: View {
                     AlignedLabel(
                         value: favoritesCount,
                         systemImage: isFavorite ? "heart.fill" : "heart",
-                        imageYOffset: -2
+                        imageYOffset: -2,
+                        // Top of the heart level with the digits' top, as on iOS.
+                        materialImageYOffset: 1.9
                     )
                     .tint(Color.buttonTint)
                 }
@@ -117,10 +123,10 @@ struct SubmissionControlsView: View {
                 )
             }
             .applying {
-                if #available(iOS 26, *) {
+                if #available(iOS 26, *), !isAndroidBuild {
                     $0.offset(y: -3)
                         .padding(-5)
-                        .glassEffect(.regular.interactive())
+                        .floatingGlass(.regular.interactive())
                 } else { $0 }
             }
             
@@ -129,15 +135,15 @@ struct SubmissionControlsView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .padding()
-                    .offset(y: 2)
+                    .symbolOpticalOffset(y: 2)
                     .foregroundStyle(Color.buttonTint)
             }
             .frame(height: buttonsSize)
             .applying {
-                if #available(iOS 26, *) {
+                if #available(iOS 26, *), !isAndroidBuild {
                     $0.offset(y: -3)
                         .padding(-5)
-                        .glassEffect(.regular.interactive())
+                        .floatingGlass(.regular.interactive())
                 } else { $0 }
             }
             

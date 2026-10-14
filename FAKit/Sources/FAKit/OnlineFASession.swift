@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 import FAPages
 
 public class OnlineFASession: FASession {
@@ -41,6 +44,11 @@ public class OnlineFASession: FASession {
     private let cookies: [HTTPCookie]
     private let dataSource: HTTPDataSource
 
+    /// The feed page the session was established from, if any. The first
+    /// `submissionPreviews(from:)` takes it, and gets it only for the same `sid`.
+    private let prefetchLock = NSLock()
+    private var prefetchedFeed: (sid: Int?, previews: [FASubmissionPreview])?
+
     public init(
         username: String,
         displayUsername: String,
@@ -73,15 +81,34 @@ public class OnlineFASession: FASession {
 
     // MARK: - Submissions feed
     public func submissionPreviews(from sid: Int?) async throws -> [FASubmissionPreview] {
+        if let prefetched = takePrefetchedFeed(from: sid) {
+            return prefetched
+        }
+        let page = try await Self.submissionsPage(from: sid, cookies: cookies, dataSource: dataSource)
+        return previews(from: page.submissions, label: "submission previews")
+    }
+
+    private func takePrefetchedFeed(from sid: Int?) -> [FASubmissionPreview]? {
+        prefetchLock.withLock {
+            defer { prefetchedFeed = nil }
+            guard let prefetchedFeed, prefetchedFeed.sid == sid else { return nil }
+            logger.info("Serving the submission previews prefetched with the session")
+            return prefetchedFeed.previews
+        }
+    }
+
+    private static func submissionsPage(
+        from sid: Int?,
+        cookies: [HTTPCookie],
+        dataSource: HTTPDataSource
+    ) async throws -> FASubmissionsPage {
         let url = if let sid {
             FAURLs.submissionsUrl(from: sid)
         } else {
             FAURLs.latest72SubmissionsUrl
         }
         let data = try await dataSource.httpData(from: url, cookies: cookies)
-        let page = try await make(FASubmissionsPage.self, with: data, url: url)
-
-        return previews(from: page.submissions, label: "submission previews")
+        return try await make(FASubmissionsPage.self, with: data, url: url)
     }
     
     public func deleteSubmissionPreviews(_ previews: [FASubmissionPreview]) async throws {
@@ -371,33 +398,72 @@ public class OnlineFASession: FASession {
     }
 }
 
+/// The page establishing a session reads the logged-in user from.
+public enum FASessionSource: Sendable, Equatable {
+    /// The home page, fetched for nothing else.
+    case homePage
+    /// The submissions feed from `sid` (nil: the latest), which every logged-in
+    /// page names the user in too. The session keeps the page for the feed's
+    /// first `submissionPreviews(from: sid)`, which then costs no request.
+    case submissionsFeed(from: Int?)
+}
+
 extension OnlineFASession {
     /// Initialize a FASession from the given session cookies.
     /// - Parameter cookies: The auth cookies for furaffinity.net after the user
     /// is logged in. The caller is responsible for stripping any transport-layer
     /// cookies (e.g. `cf_clearance`) and depositing them in
     /// `HTTPCookieStorage.shared` itself.
-    public convenience init?(cookies: [HTTPCookie], dataSource: HTTPDataSource? = nil) async throws {
+    /// - Parameter dataSource: required rather than defaulted: Android has no default
+    /// to fall back on, since its requests must replay a Cloudflare clearance only the
+    /// WebView can obtain. Apple callers pass `URLSession.sharedForFARequests`.
+    /// - Parameter source: the page to learn the logged-in user from.
+    public convenience init?(
+        cookies: [HTTPCookie],
+        dataSource: HTTPDataSource,
+        source: FASessionSource = .homePage
+    ) async throws {
         guard cookies.map(\.name).contains("a") else {
             return nil
         }
 
-        let resolvedDataSource: HTTPDataSource
-        if let dataSource {
-            resolvedDataSource = dataSource
-        } else {
-            resolvedDataSource = await URLSession.sharedForFARequests
+        var user: FALoggedInUser?
+        var feed: (sid: Int?, page: FASubmissionsPage)?
+        if case let .submissionsFeed(sid) = source {
+            // A feed FA changed under the parser must not cost the session: the home
+            // page decides, as it did before. Network and challenge errors would only
+            // fail again there.
+            do {
+                let page = try await Self.submissionsPage(from: sid, cookies: cookies, dataSource: dataSource)
+                if let pageUser = page.loggedInUser {
+                    user = pageUser
+                    feed = (sid, page)
+                } else {
+                    // Logged out, or a system message: both still parse, as an empty feed.
+                    logger.error("The submissions feed names no user; trying the home page")
+                }
+            } catch let error as Error {
+                guard case .parsingError = error else { throw error }
+                logger.error("Establishing the session from the feed failed: \(error); trying the home page")
+            }
         }
-        let data = try await resolvedDataSource.httpData(from: FAURLs.homeUrl, cookies: cookies)
-        let page = try await make(FAHomePage.self, with: data, url: FAURLs.homeUrl)
+        if user == nil {
+            let data = try await dataSource.httpData(from: FAURLs.homeUrl, cookies: cookies)
+            let page = try await make(FAHomePage.self, with: data, url: FAURLs.homeUrl)
+            user = FALoggedInUser(username: page.username, displayUsername: page.displayUsername)
+        }
+        guard let user else { throw Error.internalInconsistency }
         logger.info("User is logged in")
 
         self.init(
-            username: page.username,
-            displayUsername: page.displayUsername,
+            username: user.username,
+            displayUsername: user.displayUsername,
             cookies: cookies,
-            dataSource: resolvedDataSource
+            dataSource: dataSource
         )
+        if let feed {
+            prefetchedFeed = (feed.sid, previews(from: feed.page.submissions, label: "submission previews"))
+        }
     }
 }
 

@@ -9,8 +9,9 @@ import SwiftUI
 import FAKit
 
 struct RemoteSubmissionView: View {
-    @Environment(Model.self) private var model
-    @Environment(ErrorStorage.self) private var errorStorage
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(Model.self) var model
+    @Environment(ErrorStorage.self) var errorStorage
     
     var url: URL
     var previewData: FASubmissionPreview?

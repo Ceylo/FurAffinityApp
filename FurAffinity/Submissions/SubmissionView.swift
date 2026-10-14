@@ -9,7 +9,8 @@ import SwiftUI
 import FAKit
 
 struct SubmissionView: View {
-    @Environment(ErrorStorage.self) private var errorStorage
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(ErrorStorage.self) var errorStorage
     
     var submission: FASubmission
     var avatarUrl: URL?
@@ -23,11 +24,11 @@ struct SubmissionView: View {
     struct ReplySession {
         let parentCid: Int?
     }
-    @State private var replySession: CommentReplySession?
-    @State private var fullResolutionMediaFileUrl: URL?
-    @State private var documentFileUrl: URL?
-    @State private var noteReplySession: NoteReplySession?
-    @State private var audioController: AudioPlaybackController?
+    @State var replySession: CommentReplySession?
+    @State var fullResolutionMediaFileUrl: URL?
+    @State var documentFileUrl: URL?
+    @State var noteReplySession: NoteReplySession?
+    @State var audioController: AudioPlaybackController?
 
     /// True for content kinds saved as a document (to Files) rather than an
     /// image (to Photos): text and audio.
@@ -38,9 +39,14 @@ struct SubmissionView: View {
         }
     }
 
-    /// The downloaded file backing Save/Share, whichever content kind applies.
+    /// The downloaded file backing Save/Share, whichever content kind applies. Audio's
+    /// is read off its controller, which outlives the row that shows it.
     private var savableFileUrl: URL? {
-        savesToFiles ? documentFileUrl : fullResolutionMediaFileUrl
+        switch submission.content {
+        case .image: fullResolutionMediaFileUrl
+        case .text: documentFileUrl
+        case .audio: audioController?.documentFileUrl
+        }
     }
 
     private var imageResolution: String? {
@@ -86,7 +92,6 @@ struct SubmissionView: View {
                 thumbnail: thumbnail,
                 thumbnailWidthOnHeightRatio: thumbnailWidthOnHeightRatio,
                 controller: $audioController,
-                documentFileUrl: $documentFileUrl,
                 downloadDocument: downloadDocument
             )
         }

@@ -22,9 +22,10 @@ struct CommentsView: View {
 
     /// Avatar + spacing + a readable minimum bubble; scales with Dynamic Type so the cutoff
     /// falls shallower as the font grows.
-    @ScaledMetric private var minContentWidth: CGFloat = 220
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @ScaledMetric var minContentWidth: CGFloat = 220
     /// Stable container width from the host `List` (see `measuringCommentsAvailableWidth()`).
-    @Environment(\.commentsAvailableWidth) private var availableWidth
+    @Environment(\.commentsAvailableWidth) var availableWidth
 
     /// Deepest reply depth rendered inline. Past it, a comment's replies collapse into a
     /// tappable "Continue thread" row that pushes a focused screen re-based to depth 0.

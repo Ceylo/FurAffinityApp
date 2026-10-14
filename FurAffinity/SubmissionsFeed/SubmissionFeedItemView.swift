@@ -5,6 +5,7 @@
 //  Created by Ceylo on 14/11/2021.
 //
 
+import Foundation
 import SwiftUI
 import FAKit
 import Kingfisher
@@ -17,12 +18,13 @@ protocol SubmissionHeaderView: View {
 struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
     var submission: FASubmissionPreview
     
-    @State private var errorMessage: String?
+    @State var errorMessage: String?
     
     var previewImage: some View {
         GeometryReader { geometry in
-            if geometry.size.maxDimension > 0 {
-                let url = submission.dynamicThumbnail.bestThumbnailUrl(for: geometry)
+            let size = geometry.faSize
+            if size.maxDimension > 0 {
+                let url = submission.dynamicThumbnail.bestThumbnailUrl(for: size)
                 if let errorMessage {
                     Centered {
                         VStack(spacing: 10) {
@@ -49,7 +51,7 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
                 }
             }
         }
-        .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
+        .aspectRatio(Double(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
     }
     
     var body: some View {
@@ -60,13 +62,14 @@ struct SubmissionFeedItemView<HeaderView: SubmissionHeaderView>: View {
         }
     }
     
+    /// Diagnostic only: is this row's thumbnail in flight, cached, or not started?
     func controlCacheBehavior(for url: URL) async {
-        let cacheType = ImageCache.default.imageCachedType(forKey: url.cacheKey)
         let downloadStartDate = await DownloadDelegate.shared.downloadStartDate(for: url)
+        let isCached = ImageCache.default.imageCachedType(forKey: url.cacheKey) != .none
         if let downloadStartDate {
             let elapsedMs = Int(abs(downloadStartDate.timeIntervalSinceNow * 1000))
             logger.info("Thumbnail download for \"\(submission.title)\" started \(elapsedMs)ms ago")
-        } else if cacheType == .none {
+        } else if !isCached {
             logger.info("Thumbnail for \"\(submission.title)\" isn't downloading yet")
         }
     }

@@ -9,13 +9,20 @@ import Foundation
 import Testing
 import Defaults
 
+#if FA_SKIP_MODULE
+@testable import FurAffinityUI
+#else
 @testable import Fur_Affinity
+#endif
 
 @Suite(.serialized)
 struct SettingsMigrationTests {
+    // Through each key's own suite, not `UserDefaults.standard`: on Android that
+    // name is SkipAndroidBridge's JNI-backed store, which a test executable has no
+    // JVM for, while the keys use the plain Foundation one.
     private func clearAllKeys() {
         for key in Defaults.Keys.all {
-            UserDefaults.standard.removeObject(forKey: key.name)
+            key.suite.removeObject(forKey: key.name)
         }
     }
 
@@ -27,7 +34,7 @@ struct SettingsMigrationTests {
     @Test func freshInstall_keepsBadgeDefaults() {
         clearAllKeys()
         defer { clearAllKeys() }
-        UserDefaults.standard.register(defaults: [Defaults.Keys.badgeNotes.name: true])
+        Defaults.Keys.badgeNotes.suite.register(defaults: [Defaults.Keys.badgeNotes.name: true])
 
         Defaults.runSettingsMigrations()
 
@@ -38,7 +45,9 @@ struct SettingsMigrationTests {
     }
 
     // Legacy user with stored data but no schema version and not yet badge-migrated:
-    // the badge toggles get seeded from the notification toggles.
+    // the badge toggles get seeded from the notification toggles. iOS-only: no
+    // pre-versioning Android install exists (see Defaults.startingSchemaVersion).
+    #if !FA_SKIP_MODULE
     @Test func legacyUnmigrated_seedsBadgesFromNotifications() {
         clearAllKeys()
         defer { clearAllKeys() }
@@ -54,6 +63,7 @@ struct SettingsMigrationTests {
         #expect(Defaults[.didMigrateBadgeSettings] == true)
         #expect(Defaults[.settingsSchemaVersion] == Defaults.currentSettingsSchemaVersion)
     }
+    #endif
 
     // Already at the current schema version: running migrations is a no-op.
     @Test func alreadyCurrent_isNoOp() {

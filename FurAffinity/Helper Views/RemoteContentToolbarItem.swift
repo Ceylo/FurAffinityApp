@@ -8,6 +8,12 @@
 import SwiftUI
 import Defaults
 
+#if FA_SKIP_MODULE
+private let sharePlatformName = "Android"
+#else
+private let sharePlatformName = "iPhone"
+#endif
+
 struct RemoteContentToolbarItem<ContentsView: View>: ToolbarContent {
     init(url: URL, @ViewBuilder additionalToolbarItems: @escaping () -> ContentsView = { EmptyView() }) {
         self.url = url
@@ -22,7 +28,7 @@ struct RemoteContentToolbarItem<ContentsView: View>: ToolbarContent {
         guard addMessageToSharedItems else {
             return nil
         }
-        return Text("Sent from the FurAffinity unofficial App for iPhone (https://furaffinity.app/)")
+        return Text("Sent from the FurAffinity unofficial App for \(sharePlatformName) (https://furaffinity.app/)")
     }
     
     var body: some ToolbarContent {

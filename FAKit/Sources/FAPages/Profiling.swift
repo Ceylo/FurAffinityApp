@@ -1,14 +1,22 @@
 //
 //  Profiling.swift
-//  
+//
 //
 //  Created by Ceylo on 22/09/2022.
 //
 
-import os
 import Foundation
 import FALogging
+#if canImport(os)
+import os
+#else
+// Android has no `os`; OSCompat vends the same surface, and its name matters —
+// see OSCompat.swift.
+import OSCompat
+#endif
 
-let logger = PersistentLogger(subsystem: Bundle.main.bundleIdentifier!, category: "FAPages")
-private let signpostLog = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "FAPages")
+private let subsystem = FALogSubsystem.identifier
+let logger = PersistentLogger(subsystem: subsystem, category: "FAPages")
+
+private let signpostLog = Logger(subsystem: subsystem, category: "FAPages")
 let signposter = OSSignposter(logger: signpostLog)

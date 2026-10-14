@@ -16,11 +16,17 @@ extension AnyTransition {
     }
 }
 
-
 struct NotificationOverlay: View {
     @Binding var itemCount: Int?
     var dismissAfter: TimeInterval = 3.0
-    
+
+    private static let animationDuration = 0.35
+    /// Transparent room around the pill so its shadow stays inside the animated
+    /// view's own bounds — Android clips to those bounds while opacity < 1.
+    static let shadowRadius = 5.0
+    /// The padded pill's height, which `ScrollToTopButton` steps below.
+    static let badgeHeight = 44.0 + 2 * shadowRadius
+
     private func text(count: Int) -> String {
         switch count {
         case 0: return "No new submission"
@@ -37,35 +43,48 @@ struct NotificationOverlay: View {
                 .foregroundColor(Color.primary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .glassEffect()
+                .floatingGlass()
         } else {
-            Text(text(count: count))
-                .font(.callout)
-                .foregroundColor(Color.primary)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(.thinMaterial)
-                .cornerRadius(16)
-                .shadow(color: .black.opacity(0.33) , radius: 5, x: 0, y: 0)
+            materialBadge(count)
         }
+    }
+
+    func materialBadge(_ count: Int) -> some View {
+        Text(text(count: count))
+            .font(.callout)
+            .foregroundColor(Color.primary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(.thinMaterial)
+            .cornerRadius(16)
+            .shadow(color: .black.opacity(0.33), radius: Self.shadowRadius, x: 0, y: 0)
     }
     
     var body: some View {
-        if let itemCount = itemCount {
-            badge(itemCount)
-                .task {
-                    do {
-                        let nano = UInt64(dismissAfter * 1e9)
-                        try await Task.sleep(nanoseconds: nano)
-                        withAnimation {
+        // SkipUI animates a transition only between `.id`'d children of a stack, and
+        // reads the stack's own `.animation(_:value:)` for it — no global `withAnimation`,
+        // which would animate the feed under the badge too.
+        ZStack {
+            if let itemCount {
+                badge(itemCount)
+                    // Before the transition's opacity, and here rather than in
+                    // `materialBadge`, so both badge branches get the same geometry.
+                    .padding(Self.shadowRadius)
+                    // Constant, so a new count updates the text in place.
+                    .id("badge")
+                    .transition(.fallAndFade)
+                    .task {
+                        do {
+                            try await Task.sleep(for: .seconds(dismissAfter))
                             self.itemCount = nil
-                        }
-                    } catch is CancellationError {
-                        self.itemCount = nil
-                    } catch {}
-                }
-                .transition(.fallAndFade)
+                        } catch is CancellationError {
+                            self.itemCount = nil
+                        } catch {}
+                    }
+            }
         }
+        // Keyed on a Bool: SkipUI never sees a bridged optional/enum as changed.
+        .animation(.easeInOut(duration: Self.animationDuration), value: itemCount != nil)
     }
 }
 

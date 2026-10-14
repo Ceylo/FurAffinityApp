@@ -8,20 +8,21 @@
 import SwiftUI
 import FAKit
 import FALogging
-import Kingfisher
 import Defaults
 
 struct SettingsView: View {
-    @Environment(Model.self) private var model
-    @State private var dumpingLogs = false
-    
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(Model.self) var model
+    @State var dumpingLogs = false
+
     @Default(.animateAvatars) private var animateAvatars: Bool
-    @Default(.addMessageToSharedItems) private var addMessageToSharedItems
-    
-    @State private var cachedFileSize = "unknown"
-    
-    @State private var cleaningCache = false
-    
+    @Default(.addMessageToSharedItems) private var addMessageToSharedItems: Bool
+    @Default(.crashReportingEnabled) private var crashReportingEnabled: Bool
+
+    @State var cachedFileSize = "unknown"
+
+    @State var cleaningCache = false
+
     var body: some View {
         NavigationStack {
             content
@@ -35,9 +36,10 @@ struct SettingsView: View {
                 Link("Website", destination: URL(string: "https://furaffinity.app")!)
                 Link("Privacy policy", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/blob/main/Privacy%20Policy.md")!)
                 Link("Feature request & bug report", destination: URL(string: "https://github.com/Ceylo/FurAffinityApp/issues")!)
-                LabeledContent("Current version", value: model.appInfo.currentVersion.shortDescription)
+                LabeledContent("Current version", value: model.appInfo.currentVersion?.shortDescription ?? "Unknown")
+
                 LabeledContent("Latest available version", value:  (model.appInfo.latestRelease?.version.shortDescription ?? "…"))
-                
+
                 if let latestRelease = model.appInfo.latestRelease,
                    let isUpToDate = model.appInfo.isUpToDate,
                    !isUpToDate {
@@ -53,8 +55,10 @@ struct SettingsView: View {
             }
             
             Section("Display") {
-                NavigationLink("Notifications & Badges") {
-                    NotificationSettingsView()
+                if NotificationDelivery.isSupported {
+                    NavigationLink("Notifications & Badges") {
+                        NotificationSettingsView()
+                    }
                 }
                 Toggle("Animate avatars", isOn: $animateAvatars)
             }
@@ -75,6 +79,17 @@ struct SettingsView: View {
                 }
             }
             
+            Section {
+                Toggle("Send crash reports", isOn: $crashReportingEnabled)
+                    .onChange(of: crashReportingEnabled) { _, enabled in
+                        CrashReporting.settingChanged(enabled: enabled)
+                    }
+            } header: {
+                Text("Advanced")
+            } footer: {
+                Text("Sends the app's call stack, device model, system and app version when it crashes, with no account information. Turning it back on applies from the next launch.")
+            }
+
             Section {
                 Menu {
                     Button("Last hour") { exportLogs(range: .lastHour) }
@@ -99,14 +114,12 @@ struct SettingsView: View {
                     cleaningCache = true
                     
                     Task {
-                        await ImageCache.default.clearCache()
+                        await ImageCacheControl.clear()
                         updateCachedFileSize()
                         cleaningCache = false
                     }
                 }
                 .disabled(cleaningCache)
-            } header: {
-                Text("Advanced")
             } footer: {
                 Text("This cache allows faster contents display. Clearing it will cause images to be downloaded again from furaffinity.net when needed.")
             }
@@ -124,18 +137,18 @@ struct SettingsView: View {
                     dumpingLogs = false
                 }
             }
-            if let fileUrl = try? generateLogFile(range: range) {
+            do {
+                let fileUrl = try generateLogFile(range: range)
                 await share([fileUrl])
+            } catch {
+                logger.error("Could not export logs: \(error)")
             }
         }
     }
 
     func updateCachedFileSize() {
-        if let size = try? ImageCache.default.diskStorage.totalSize() {
-            cachedFileSize = ByteCountFormatter.string(
-                fromByteCount: Int64(size),
-                countStyle: .file
-            )
+        if let size = ImageCacheControl.formattedDiskSize() {
+            cachedFileSize = size
         }
     }
     
@@ -143,7 +156,7 @@ struct SettingsView: View {
         Task { @MainActor in
             await withTaskCancellationHandler {
                 do {
-                    await FALoginView.logout()
+                    await clearLoginCookies()
                     try await Task.sleep(for: .milliseconds(100))
                     try await model.setSession(nil)
                 } catch {

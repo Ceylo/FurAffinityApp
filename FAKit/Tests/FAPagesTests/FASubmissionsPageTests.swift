@@ -30,6 +30,21 @@ struct FASubmissionsPageTests {
     }
 
     @Test
+    func submissionsPage_namesLoggedInUser() throws {
+        let data = testData("www.furaffinity.net:msg:submissions-firstpage.html")
+        let page = try FASubmissionsPage(data: data, url: FAURLs.latest72SubmissionsUrl)
+        #expect(page.loggedInUser == FALoggedInUser(username: "furrycount", displayUsername: "Furrycount"))
+    }
+
+    @Test
+    func loggedOutPage_hasNoLoggedInUser() throws {
+        let data = testData("www.furaffinity.net:loggedout.html")
+        let page = try FASubmissionsPage(data: data, url: FAURLs.latest72SubmissionsUrl)
+        #expect(page.loggedInUser == nil)
+        #expect(page.submissions.isEmpty)
+    }
+
+    @Test
     func firstSubmissionsPage_NextPageUrlParsed() throws {
         let data = testData("www.furaffinity.net:msg:submissions-firstpage.html")
         let page = try FASubmissionsPage(data: data, url: FAURLs.submissionsUrl)

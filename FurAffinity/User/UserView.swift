@@ -5,6 +5,8 @@
 //  Created by Ceylo on 30/03/2023.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 import Kingfisher
@@ -140,3 +142,5 @@ struct UserView: View {
     }
     //        .preferredColorScheme(.dark)
 }
+
+#endif

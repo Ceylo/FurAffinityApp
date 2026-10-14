@@ -32,6 +32,13 @@ class Model: NotificationsNuker, NotificationsDeleter {
     /// After a fetch it contains all found submissions, or an empty array if none was found.
     private(set) var submissionPreviews: OrderedSet<FASubmissionPreview>?
     private var submissionPreviewsPendingDeletion = Set<FASubmissionPreview>()
+    /// Rows removed locally whose deletion isn't sent to FA yet, so it can be undone.
+    /// Unlike `submissionPreviewsPendingDeletion`, fetches don't clear it.
+    private(set) var stagedSubmissionPreviewsDeletion = [FASubmissionPreview]()
+    /// How long a staged deletion can be undone before it is committed.
+    @ObservationIgnored var stagedDeletionUndoDelay: Duration = .seconds(5)
+    /// Finishes once the deletion it commits has been sent. Not private so tests can await it.
+    @ObservationIgnored var stagedDeletionCommitTimer: Task<Void, Never>?
     private(set) var lastSubmissionPreviewsFetchDate: Date?
     /// Set once after a cold-launch restore from a persisted scroll position, to
     /// ask SubmissionsFeedView to run a scroll-preserving newer-submissions check.
@@ -81,7 +88,6 @@ class Model: NotificationsNuker, NotificationsDeleter {
     var errorStorage = ErrorStorage()
     
     @ObservationIgnored private var observationTasks: [Task<Void, Never>] = []
-    @ObservationIgnored private var autorefreshTask: Task<Void, Never>?
     /// Last logged UserDefaults snapshot, so state-update logs show only the diff.
     @ObservationIgnored private var lastLoggedDefaults: [String: Any] = [:]
     init() {
@@ -109,7 +115,6 @@ class Model: NotificationsNuker, NotificationsDeleter {
 
     deinit {
         observationTasks.forEach { $0.cancel() }
-        autorefreshTask?.cancel()
     }
 
     func setSession(_ session: (any FASession)?) async throws {
@@ -144,14 +149,13 @@ class Model: NotificationsNuker, NotificationsDeleter {
             lastSubmissionPreviewsFetchDate = nil
             submissionPreviews = nil
             submissionPreviewsPendingDeletion = []
+            stagedSubmissionPreviewsDeletion = []
             lastInboxNotePreviewsFetchDate = nil
             notePreviews = [:]
             displayedUnreadNoteCount = 0
             notificationPreviews = nil
             lastNotificationPreviewsFetchDate = nil
             displayedNotificationCount = 0
-            autorefreshTask?.cancel()
-            autorefreshTask = nil
             shouldCheckForNewerSubmissionsAfterRestore = false
             searchResults = nil
             searchCanLoadMore = false
@@ -165,14 +169,6 @@ class Model: NotificationsNuker, NotificationsDeleter {
         _ = try await fetchNotePreviews(from: .inbox)
         try await fetchNotificationPreviews()
         await updateAppInfo()
-        
-        autorefreshTask = Task { [weak self] in
-            let events = NotificationCenter.default
-                .notifications(named: UIApplication.willEnterForegroundNotification)
-            for await _ in events {
-                await self?.autorefreshIfNeeded()
-            }
-        }
     }
     
     static func shouldAutoRefresh(with lastRefreshDate: Date?) -> Bool {
@@ -185,13 +181,18 @@ class Model: NotificationsNuker, NotificationsDeleter {
         return true
     }
     
-    private func autorefreshIfNeeded() async {
+    /// Re-checks stale data when the app returns to the foreground, driven by
+    /// `ForegroundAutorefresh` on each platform's logged-in root.
+    func autorefreshIfNeeded() async {
+        // Without this, a foreground event while logged out raises an error banner.
+        guard session != nil else { return }
+
         // Note how submission previews are not checked here. This is for two reasons:
         // - SubmissionsFeedView has special scroll handling and needs to control
         // when refresh happens
         // - SubmissionsFeedView is always loaded first, so there's no risk that it
         // cannot subscribe to willEnterForegroundNotification
-        
+
         if Self.shouldAutoRefresh(with: lastInboxNotePreviewsFetchDate) {
             await storeLocalizedError(in: errorStorage, action: "Notes Auto-Refresh", webBrowserURL: FAURLs.notesInboxUrl) {
                 _ = try await fetchNotePreviews(from: .inbox)
@@ -210,12 +211,16 @@ class Model: NotificationsNuker, NotificationsDeleter {
     }
     
     // MARK: - Submissions feed
+    /// Where the feed's first fetch starts. Autologin establishes the session from
+    /// that same page, so the fetch costs no request.
+    var firstFeedPosition: Int? { Defaults[.lastViewedSubmissionID] }
+
     func fetchSubmissionPreviews() async throws -> Int {
         let session = try getSession()
         
         var firstWantedSubmissionID: Int?
         if submissionPreviews == nil {
-            firstWantedSubmissionID = Defaults[.lastViewedSubmissionID]
+            firstWantedSubmissionID = firstFeedPosition
         }
         
         var latestSubmissions = try await session.submissionPreviews(from: firstWantedSubmissionID)
@@ -237,6 +242,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             .filter { $0.sid > lastKnownSid }
         // We also take into account any preview deletion that may have happened since the fetch started
             .filter { !submissionPreviewsPendingDeletion.contains($0) }
+            .filter { !stagedSubmissionPreviewsDeletion.contains($0) }
         submissionPreviewsPendingDeletion.removeAll()
         
         if !newSubmissions.isEmpty {
@@ -248,24 +254,66 @@ class Model: NotificationsNuker, NotificationsDeleter {
     }
     
     func deleteSubmissionPreviews(_ previews: [FASubmissionPreview]) {
+        stageSubmissionPreviewsDeletion(previews)
+        commitStagedSubmissionPreviewsDeletion()
+    }
+
+    /// Removes the rows locally only; `commit…` sends the deletion, which happens by
+    /// itself after `stagedDeletionUndoDelay`, and `undo…` restores them. Staging a new
+    /// batch commits the previous one first.
+    func stageSubmissionPreviewsDeletion(_ previews: [FASubmissionPreview]) {
         precondition(submissionPreviews != nil)
-        submissionPreviewsPendingDeletion.formUnion(previews)
-        
+        commitStagedSubmissionPreviewsDeletion()
+        stagedSubmissionPreviewsDeletion = previews
         for preview in previews {
             submissionPreviews!.remove(preview)
         }
-        
-        Task {
+        #if FA_SKIP_MODULE
+        // Android's snackbar honours the "Time to take action" setting, as Material's does.
+        let delay = AndroidAccessibility.recommendedTimeout(stagedDeletionUndoDelay)
+        #else
+        let delay = stagedDeletionUndoDelay
+        #endif
+        stagedDeletionCommitTimer = Task {
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled else { return }
+            await commitStagedSubmissionPreviewsDeletion()?.value
+        }
+        logger.info("Staged deletion of \(previews.count) submission previews")
+    }
+
+    /// - Returns: the deletion request, rolled back if it fails; `nil` if nothing was staged.
+    @discardableResult
+    func commitStagedSubmissionPreviewsDeletion() -> Task<Void, Never>? {
+        stagedDeletionCommitTimer?.cancel()
+        guard !stagedSubmissionPreviewsDeletion.isEmpty else { return nil }
+        let previews = stagedSubmissionPreviewsDeletion
+        stagedSubmissionPreviewsDeletion = []
+        submissionPreviewsPendingDeletion.formUnion(previews)
+        logger.info("Committing deletion of \(previews.count) submission previews")
+
+        return Task {
             do {
                 try await getSession().deleteSubmissionPreviews(previews)
             } catch {
                 logger.error("Submission previews deletion failed with error \"\(error)\", rolling back")
-                let rollback = ((submissionPreviews ?? []) + previews)
-                    .sorted()
-                    .reversed()
-                submissionPreviews = OrderedSet(rollback)
+                reinsertSubmissionPreviews(previews)
             }
         }
+    }
+
+    func undoStagedSubmissionPreviewsDeletion() {
+        stagedDeletionCommitTimer?.cancel()
+        let previews = stagedSubmissionPreviewsDeletion
+        stagedSubmissionPreviewsDeletion = []
+        reinsertSubmissionPreviews(previews)
+    }
+
+    private func reinsertSubmissionPreviews(_ previews: [FASubmissionPreview]) {
+        let rows = ((submissionPreviews ?? []) + previews)
+            .sorted()
+            .reversed()
+        submissionPreviews = OrderedSet(rows)
     }
     
     func nukeAllSubmissions() async {
@@ -273,6 +321,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             try await getSession().nukeSubmissions()
             lastSubmissionPreviewsFetchDate = Date()
             submissionPreviews = []
+            stagedSubmissionPreviewsDeletion = []
         } catch {
             logger.error("Failed nuking submissions: \(error)")
         }

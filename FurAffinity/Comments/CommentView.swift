@@ -15,7 +15,8 @@ struct CommentView: View {
     @Environment(\.colorScheme) var colorScheme
     private let avatarSize = 42.0
     private let contentVerticalPadding = 5.0
-    @State private var rowBackgroundAnimated = false
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var rowBackgroundAnimated = false
     
     var overlayStyle: some ShapeStyle {
         switch colorScheme {
@@ -94,7 +95,12 @@ struct CommentView: View {
                 .animation(
                     .easeInOut
                         .speed(0.333)
-                        .repeatCount(5, autoreverses: true)
+                        .repeatCount(5, autoreverses: true),
+                    // Keyed on the flag rather than left to the value-less overload: SkipSwiftUI
+                    // has no unconditional `animation(_:)`, so on Android that form resolves to
+                    // the `Self: Equatable` one and keys on the `Color` itself, compared over JNI
+                    // once per composition.
+                    value: rowBackgroundAnimated
                 )
         }
     }

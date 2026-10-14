@@ -7,7 +7,11 @@ import FAKit
 import Foundation
 import Testing
 
+#if FA_SKIP_MODULE
+@testable import FurAffinityUI
+#else
 @testable import Fur_Affinity
+#endif
 
 @MainActor
 struct NavigationStreamTests {

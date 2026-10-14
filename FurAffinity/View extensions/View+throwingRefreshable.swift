@@ -7,11 +7,12 @@
 
 import SwiftUI
 
-private struct RefreshableWithError: ViewModifier {
+// Not private: skipstone can't bridge a private @State/@Environment.
+struct RefreshableWithError: ViewModifier {
     var action: String
     var webBrowserURL: URL?
     var closure: () async throws -> Void
-    @Environment(ErrorStorage.self) private var errorStorage
+    @Environment(ErrorStorage.self) var errorStorage
 
     func body(content: Content) -> some View {
         content

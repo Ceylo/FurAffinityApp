@@ -12,18 +12,33 @@ import FAKit
 /// Appears after a short delay so sub-second passive resolutions stay silent.
 /// Tapping it opens the interactive sheet immediately.
 struct CloudflareResolutionOverlay: View {
-    @State private var showPill = false
+    /// How long a passive resolution gets to finish before the pill says anything.
+    /// Only a preview passes anything but the default.
+    var revealDelay: TimeInterval = 1
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var showPill = false
 
+    private static let animationDuration = 0.35
+    /// Transparent room around the pill so its shadow stays inside the animated
+    /// view's own bounds — Android clips to those bounds while opacity < 1.
+    private static let shadowRadius = 5.0
+
+    /// Same contract as `NotificationOverlay`: an `.id`'d child and the stack's own
+    /// animation, never `withAnimation` — this pill shows precisely while a feed is
+    /// loading, and on SkipUI that mark would animate the feed too.
     var body: some View {
         ZStack {
             if showPill {
                 pill
+                    .padding(Self.shadowRadius)
+                    .id("pill")
                     .transition(.fallAndFade)
             }
         }
+        .animation(.easeInOut(duration: Self.animationDuration), value: showPill)
         .task {
-            try? await Task.sleep(for: .seconds(1))
-            withAnimation { showPill = true }
+            try? await Task.sleep(for: .seconds(revealDelay))
+            showPill = true
         }
     }
 
@@ -34,15 +49,19 @@ struct CloudflareResolutionOverlay: View {
         } label: {
             if #available(iOS 26, *) {
                 pillContent
-                    .glassEffect()
+                    .floatingGlass()
             } else {
-                pillContent
-                    .background(.thinMaterial)
-                    .cornerRadius(16)
-                    .shadow(color: .black.opacity(0.33), radius: 5, x: 0, y: 0)
+                materialPill
             }
         }
         .buttonStyle(.plain)
+    }
+
+    private var materialPill: some View {
+        pillContent
+            .background(.thinMaterial)
+            .cornerRadius(16)
+            .shadow(color: .black.opacity(0.33), radius: Self.shadowRadius, x: 0, y: 0)
     }
 
     private var pillContent: some View {
@@ -76,6 +95,6 @@ struct CloudflareResolutionOverlay: View {
 }
 
 #Preview(traits: .sizeThatFitsLayout) {
-    CloudflareResolutionOverlay()
+    CloudflareResolutionOverlay(revealDelay: 0)
         .padding()
 }

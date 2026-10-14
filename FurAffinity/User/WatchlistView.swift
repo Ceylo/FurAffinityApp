@@ -5,6 +5,8 @@
 //  Created by Ceylo on 03/09/2024.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -114,3 +116,5 @@ struct WatchlistView: View {
         loadMoreUsers: { _ in }
     )
 }
+
+#endif

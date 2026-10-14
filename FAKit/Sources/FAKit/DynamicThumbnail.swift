@@ -5,7 +5,15 @@
 //  Created by Ceylo on 17/06/2024.
 //
 
+import Foundation
+// `!os(Android)`, not `canImport(SwiftUI)`: on Android `SwiftUI` resolves to
+// SkipSwiftUI's façade, which requires CJNI through SkipAndroidBridge/SwiftJNI —
+// modules a plain package like FAKit can't see. Whether canImport answers true
+// depends on whether SkipSwiftUI happens to have compiled first, so gating on it
+// built fine in debug and failed in release with "missing required module 'CJNI'".
+#if !os(Android)
 import SwiftUI
+#endif
 
 public struct DynamicThumbnail: Hashable, Sendable {
     private let thumbnailUrl: URL
@@ -44,8 +52,10 @@ public struct DynamicThumbnail: Hashable, Sendable {
         let size = size.fitting(in: Self.maximumThumbnailSize)
         return bestThumbnailUrl(for: UInt(size.maxDimension))
     }
-    
+
+    #if !os(Android)
     public func bestThumbnailUrl(for geometry: GeometryProxy) -> URL {
         bestThumbnailUrl(for: geometry.size)
     }
+    #endif
 }

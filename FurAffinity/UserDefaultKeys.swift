@@ -82,6 +82,13 @@ extension Defaults.Keys {
     
     // MARK: - Sharing
     static let addMessageToSharedItems = Key<Bool>("addMessageToSharedItems", default: true)
+
+    // MARK: - Privacy
+    /// Read once at launch by `CrashReporting.start`.
+    static let crashReportingEnabled = Key<Bool>("crashReportingEnabled", default: true)
+    /// When reporting was last switched on (seconds since 1970, 0 = never started).
+    /// Older crashes are never sent, see `CrashReportingConfiguration.reportsSince`.
+    static let crashReportingEnabledSince = Key<Double>("crashReportingEnabledSince", default: 0)
     
     // MARK: - Convenience
     static let all = [
@@ -125,8 +132,19 @@ extension Defaults {
     /// registration domain — so `object(forKey:)` is never `nil` and cannot tell a fresh
     /// install from a real one.
     private static func startingSchemaVersion() -> Int {
-        guard let bundleID = Bundle.main.bundleIdentifier,
-              let persisted = UserDefaults.standard.persistentDomain(forName: bundleID)
+#if os(Android)
+        // SkipFoundation marks `persistentDomain(forName:)` unavailable, so a fresh
+        // install is detected by value instead: no pre-versioning Android install exists,
+        // so an unstamped store (0) is always a fresh one and any other value is a real
+        // version to resume from. Don't reach for `object(forKey:)` here — SkipFoundation's
+        // `register(defaults:)` *replaces* its registration dictionary instead of merging,
+        // and `object(forKey:)` falls back to it, so which keys it answers for depends on
+        // `Defaults.Key` construction order.
+        let persisted = Defaults[.settingsSchemaVersion]
+        return persisted == 0 ? currentSettingsSchemaVersion : persisted
+#else
+        guard let persisted = UserDefaults.standard
+            .persistentDomain(forName: Bundle.main.bundleIdentifier!)
         else { return currentSettingsSchemaVersion }
 
         if let version = persisted[Keys.settingsSchemaVersion.name] as? Int {
@@ -137,6 +155,7 @@ extension Defaults {
             return currentSettingsSchemaVersion   // fresh install
         }
         return persisted[Keys.didMigrateBadgeSettings.name] as? Bool == true ? 1 : 0
+#endif
     }
 
     /// v1: seed the per-content badge toggles from the legacy notification toggles so that

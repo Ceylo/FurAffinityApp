@@ -8,8 +8,20 @@
 import Foundation
 
 extension String {
+    #if !os(Android)
     static private let cssInliner = CSSInliner()
     static private let imageInliner = ImageInliner()
+    #endif
+
+    /// Whether this `Cookie:` header carries a Cloudflare clearance.
+    ///
+    /// Splits on `;` and matches the cookie *name* exactly — a plain
+    /// `contains("cf_clearance=")` would also accept `xcf_clearance=`.
+    public var carriesCloudflareClearance: Bool {
+        split(separator: ";").contains { pair in
+            pair.drop(while: { $0 == " " }).hasPrefix("cf_clearance=")
+        }
+    }
 
     private var fixingLinks: String {
         self.replacingOccurrences(of: "href=\"/", with: "href=\"https://www.furaffinity.net/")
@@ -17,6 +29,7 @@ extension String {
             .replacingOccurrences(of: "src=\"/", with: "src=\"https://www.furaffinity.net/")
     }
 
+    #if !os(Android)
     public func inliningCSS() async throws -> String {
         try await Self.cssInliner.inlineCSS(in: self)
     }
@@ -24,7 +37,9 @@ extension String {
     public func inliningImages() async -> String {
         await Self.imageInliner.inlineImages(in: self)
     }
-    
+    #endif
+
+
     public var selfContainedFAHtmlSubmission: String {
         let htmlPrefix = """
         <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -58,6 +73,7 @@ extension String {
     
     public var selfContainedFAHtmlUserDescription: String { selfContainedFAHtmlComment }
     
+    #if !os(Android)
     func using(theme: FATheme) -> String {
         if theme == .light {
             return replacingOccurrences(of: "ui_theme_dark.css", with: "ui_theme_light.css")
@@ -65,4 +81,5 @@ extension String {
             return self
         }
     }
+    #endif
 }

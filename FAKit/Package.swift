@@ -7,12 +7,11 @@ let package = Package(
     name: "FAKit",
     platforms: [.iOS(.v18), .macOS(.v14)],
     products: [
+        // One product for both targets, so FAPages, SwiftSoup and OrderedCollections get
+        // one image — see Android/docs/shared-sources.md § One module, one image.
         .library(
             name: "FAKit",
-            targets: ["FAKit"]),
-        .library(
-            name: "FALogging",
-            targets: ["FALogging"]),
+            targets: ["FAKit", "FAPages"]),
     ],
     dependencies: [
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.5"),
@@ -20,18 +19,35 @@ let package = Package(
         .package(url: "https://github.com/davecom/SwiftGraph.git", from: "3.1.0"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.3"),
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19"),
+        // Its own package, not a target here: a target dependency would be linked
+        // statically into every product, duplicating FALogging's globals — see
+        // Android/docs/shared-sources.md § One module, one image.
+        .package(path: "../FALogging"),
+        // FAKit is a skipstone bridging module so it can own the Android web layer —
+        // see Android/docs/shared-sources.md. Keep `skip` equal to the root manifest's.
+        // skip-web is forked for its dependency locations alone. One location per
+        // package identity: the forks name Ceylo/skip-ui between them, so this
+        // manifest must not re-declare it.
+        .package(url: "https://github.com/skiptools/skip.git", exact: "1.9.12"),
+        .package(url: "https://github.com/Ceylo/skip-fuse-ui.git", branch: "android"),
+        .package(url: "https://github.com/Ceylo/skip-web.git", branch: "android"),
     ],
     targets: [
         .target(
-            name: "FALogging"
+            name: "FAPages",
+            dependencies: [
+                "SwiftSoup",
+                .product(name: "FALogging", package: "FALogging"),
+                .product(name: "OrderedCollections", package: "swift-collections"),
+            ]
         ),
+        // FALogging's tests live here, not in its own package: the Xcode project
+        // reaches package test targets only through a folder reference, and
+        // FALogging needs an XCLocalSwiftPackageReference instead — see
+        // Android/docs/shared-sources.md § One module, one image.
         .testTarget(
             name: "FALoggingTests",
-            dependencies: ["FALogging"]
-        ),
-        .target(
-            name: "FAPages",
-            dependencies: ["SwiftSoup", "FALogging", .product(name: "OrderedCollections", package: "swift-collections")]
+            dependencies: [.product(name: "FALogging", package: "FALogging")]
         ),
         .testTarget(
             name: "FAPagesTests",
@@ -42,8 +58,24 @@ let package = Package(
         ),
         .target(
             name: "FAKit",
-            dependencies: ["FAPages", "FALogging", "Cache", "SwiftGraph", .product(name: "OrderedCollections", package: "swift-collections"), "ZIPFoundation"],
-            resources: [.process("Resources")]
+            dependencies: [
+                "FAPages",
+                .product(name: "FALogging", package: "FALogging"),
+                "SwiftSoup",
+                "SwiftGraph",
+                .product(name: "OrderedCollections", package: "swift-collections"),
+                // Apple-only: Cache backs the CSS/image inliners, ZIPFoundation the
+                // DOCX reader — both out of scope on Android.
+                .product(name: "Cache", package: "Cache", condition: .when(platforms: [.iOS, .macOS])),
+                .product(name: "ZIPFoundation", package: "ZIPFoundation", condition: .when(platforms: [.iOS, .macOS])),
+                // Unconditional on purpose: SKIP_BRIDGE is unset in the pass that runs
+                // plugins, so gating either edge makes skipstone emit a stub
+                // build.gradle.kts and Gradle dies on "Unresolved reference 'android'".
+                .product(name: "SkipFuseUI", package: "skip-fuse-ui"),
+                .product(name: "SkipWeb", package: "skip-web"),
+            ],
+            resources: [.process("Resources")],
+            plugins: [.plugin(name: "skipstone", package: "skip")]
         ),
         .testTarget(
             name: "FAKitTests",
@@ -54,3 +86,24 @@ let package = Package(
         ),
     ]
 )
+
+// No cross-module optimization out of our own code. With it, a release build copies
+// small public functions (specialized or inlined) into the calling module, and the
+// copies carry no line table: a crash there symbolicates to the right function but
+// `<compiler-generated>:0`. See Android/docs/crash-reporting.md § Line numbers.
+for target in package.targets where ["FAKit", "FAPages"].contains(target.name) {
+    target.swiftSettings = (target.swiftSettings ?? []) + [.unsafeFlags(["-disable-cmo"], .when(configuration: .release))]
+}
+
+// Android build only. Unset in Xcode and in the Darwin bridge pass, so neither sees
+// FA_SKIP_MODULE — the plugin above must stay outside this block.
+if Context.environment["SKIP_BRIDGE"] ?? "0" != "0" {
+    for target in package.targets where target.name == "FAKit" {
+        target.swiftSettings = (target.swiftSettings ?? []) + [.define("FA_SKIP_MODULE")]
+    }
+    // all library types must be dynamic to support bridging
+    package.products = package.products.map { product in
+        guard let library = product as? Product.Library else { return product }
+        return .library(name: library.name, type: .dynamic, targets: library.targets)
+    }
+}

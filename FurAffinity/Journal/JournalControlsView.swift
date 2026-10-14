@@ -5,6 +5,8 @@
 //  Created by Ceylo on 27/11/2021.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -29,7 +31,7 @@ struct JournalControlsView: View {
                 if #available(iOS 26, *) {
                     $0.offset(y: -3)
                         .padding(-5)
-                        .glassEffect(.regular.interactive())
+                        .floatingGlass(.regular.interactive())
                 } else { $0 }
             }
             
@@ -77,3 +79,5 @@ struct JournalControlsView: View {
         }
     }
 }
+
+#endif

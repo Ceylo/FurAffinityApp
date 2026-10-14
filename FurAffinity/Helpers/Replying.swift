@@ -41,9 +41,10 @@ protocol ReplyEditor<SomeReplyStorage>: View {
 struct Replying<SomeReplyEditor: ReplyEditor>: ViewModifier {
     @Binding var replySession: SomeReplyEditor.SomeReplySession?
     var replyAction: @MainActor (_ replySession: SomeReplyEditor.SomeReplySession, _ text: SomeReplyEditor.SomeReplyStorage) async throws -> Void
-    @State private var replyStorage = SomeReplyEditor.SomeReplyStorage()
-    @State private var replySent: Bool?
-    @State private var localErrorStorage = ErrorStorage()
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var replyStorage = SomeReplyEditor.SomeReplyStorage()
+    @State var replySent: Bool?
+    @State var localErrorStorage = ErrorStorage()
     
     func body(content: Content) -> some View {
         content

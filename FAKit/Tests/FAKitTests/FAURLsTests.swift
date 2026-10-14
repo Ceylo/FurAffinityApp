@@ -154,6 +154,28 @@ struct FAURLsTests {
         #expect(items["q"] == "cat @keywords male wolf !bird")
     }
 
+    @Test("isFAHost", arguments: [
+        ("furaffinity.net", true),
+        ("www.furaffinity.net", true),
+        ("a.furaffinity.net", true),
+        ("A.FurAffinity.NET", true),
+        // The whole point: `hasSuffix(domain)` says true for these three.
+        ("evilfuraffinity.net", false),
+        ("notfuraffinity.net", false),
+        ("xfuraffinity.net", false),
+        ("furaffinity.net.attacker.com", false),
+        ("attacker.com", false),
+        ("", false),
+    ])
+    func isFAHost(host: String, expected: Bool) {
+        #expect(FAURLs.isFAHost(host) == expected)
+    }
+
+    @Test
+    func isFAHost_nilHostIsNotFA() {
+        #expect(!FAURLs.isFAHost(nil))
+    }
+
     private func queryItems(of url: URL) throws -> [String: String] {
         let components = try URLComponents(url: url, resolvingAgainstBaseURL: false).unwrap()
         return Dictionary(

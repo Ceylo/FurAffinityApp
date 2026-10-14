@@ -140,7 +140,12 @@ final class PersistentLogStoreTests {
     // These confirm the *caller*-observed cost of append() is negligible because
     // file I/O happens off-thread.
 
-    @Test
+    // An absolute budget means nothing on CI's software-emulated Android device,
+    // which shares a small runner with every other suite (Scripts/Android/test.sh).
+    @Test(.disabled(
+        if: ProcessInfo.processInfo.environment["FA_NOISY_TIMING"] != nil,
+        "timing on a shared CI emulator is noise"
+    ))
     func appendCallerLatency() {
         let store = PersistentLogStore(directory: tempDir, maxTotalBytes: 10 * 1024 * 1024)
         let message = "[CFDIAG] CloudFlare background resolution attempt for "

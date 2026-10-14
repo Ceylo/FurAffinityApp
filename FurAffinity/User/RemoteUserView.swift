@@ -5,6 +5,8 @@
 //  Created by Ceylo on 19/03/2023.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -87,3 +89,5 @@ struct RemoteUserView: View {
         //    .preferredColorScheme(.dark)
     }
 }
+
+#endif

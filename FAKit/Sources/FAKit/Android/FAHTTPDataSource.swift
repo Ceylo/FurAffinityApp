@@ -1,0 +1,515 @@
+//
+//  FAHTTPDataSource.swift
+//  FAKit (Android)
+//
+//  The Android backing for `HTTPDataSource`, opposite `iOS/URLSession+HTTPDataSource.swift`.
+//  Primary path is a plain URLSession that replays the WebView's Cloudflare clearance —
+//  the byte-exact WebView User-Agent plus its `Cookie:` header — since `cf_clearance` is
+//  bound to that UA and the device IP. A response that still says `cf-mitigated: challenge`
+//  falls back to a WebView-fetch closure. See Android/docs/cloudflare-and-login.md.
+//
+//  Android's by role, not by availability: it replays a clearance only the WebView can
+//  obtain, and the WebView itself stays in the app module, reaching this type as the
+//  three closures the initializer takes.
+//
+//  Deliberately *unguarded*, unlike its `iOS/` siblings. The app module's
+//  `FAWebSession` constructs it and is itself unguarded, so it is also compiled by the
+//  Darwin bridge pass (`swift build --triple arm64-apple-ios` over the root package,
+//  where `os(Android)` is false). Guarding it on the platform fails that pass with
+//  "cannot find 'FAHTTPDataSource' in scope" — see Android/docs/shared-sources.md
+//  § Rules for shared sources. Nothing on Apple platforms uses it; `URLSession`
+//  conforms to `HTTPDataSource` there instead.
+//
+//  The exchange seam it runs on — `FANativeTransport` and its request/response pair —
+//  is platform-neutral and lives in the base, in `FANativeTransport.swift`.
+//
+
+import Foundation
+import FAPages
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
+/// Drops the FA credentials when a redirect leaves FA.
+///
+/// URLSession copies `allHTTPHeaderFields` onto the redirect request, so a 302 off
+/// furaffinity.net would carry the auth cookies and the clearance to the target.
+/// URLSession's own cookie store would have re-scoped them by domain; a manual
+/// header — which this data source uses, since HTTPCookieStorage's no-arg init
+/// isn't public on Android — has to be re-scoped by hand.
+///
+/// Stateless, so it can be a shared per-task delegate: no session delegate means no
+/// retain cycle and no invalidate lifecycle to manage.
+private final class FARedirectPolicy: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    static let shared = FARedirectPolicy()
+
+    func urlSession(
+        _ session: URLSession, task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest,
+        completionHandler: @escaping (URLRequest?) -> Void
+    ) {
+        var redirected = request
+        if !FAURLs.isFAHost(request.url?.host) {
+            logger.warning("Dropping FA cookies on redirect to \(request.url?.host ?? "?")")
+            redirected.setValue(nil, forHTTPHeaderField: "Cookie")
+        } else {
+            logger.info("willPerformHTTPRedirection to \(request.url?.host ?? "?"), keeping cookies")
+        }
+        completionHandler(redirected)
+    }
+}
+
+public struct FAHTTPDataSource: HTTPDataSource {
+    /// Navigates the cleared WebView to `url` and returns the page's decoded HTML.
+    public typealias WebViewFetch = @Sendable (URL) async throws -> Data
+    /// Reads the WebView's `Cookie:` header *now*. Every request prefers this over
+    /// the header frozen at session creation, since `cf_clearance` rotates.
+    public typealias CookieHeaderProbe = @Sendable () async -> String?
+    /// Reads the WebView's `navigator.userAgent` *now*, same idea.
+    public typealias UserAgentProbe = @Sendable () async -> String?
+    /// Blocks until a fresh `cf_clearance` has landed, or throws
+    /// `CloudflareChallengeRequired`.
+    typealias ChallengeResolver = @Sendable () async throws -> Void
+
+    private let session: URLSession
+    private let userAgent: String
+    /// The WebView's `Cookie:` header for FA (cf_clearance + __cf_bm + auth) as of
+    /// session creation. Only a fallback: `liveCookieHeader` is what requests use,
+    /// and this covers the window where the engine isn't attached to answer.
+    private let baseCookieHeader: String
+    private let webViewFetch: WebViewFetch?
+    private let liveCookieHeader: CookieHeaderProbe?
+    private let liveUserAgent: UserAgentProbe?
+    /// `nil` keeps the URLSession path below. The app installs one to move the
+    /// exchange onto its own HTTP client.
+    private let nativeTransport: FANativeTransport?
+    /// Injectable so a test can observe *when* resolution is asked for without
+    /// touching the main-actor singleton the app uses.
+    private let awaitChallengeResolution: ChallengeResolver
+
+    /// Whether one blind redraw is worth taking after a challenge, before anything
+    /// is repaired.
+    ///
+    /// Under HTTP/1.1 a challenge carries `Connection: close`, so a retry
+    /// necessarily opens a new connection and draws a genuinely fresh verdict —
+    /// worth one attempt. HTTP/2 has no such header: the retry rides the same
+    /// poisoned connection, which is exactly how the earlier h2 arm reached 100%
+    /// 403 on new *and* reused connections. So it is protocol-conditional, and the
+    /// post-repair retry gets none either way — a second failure there means the
+    /// solve didn't produce a passing connection, and the next move is the WebView
+    /// fallback, not another sample of the same mechanism.
+    static func blindRedrawIsWorthIt(after response: FANativeHTTPResponse) -> Bool {
+        response.networkProtocol != "h2"
+    }
+
+    /// Pause before a blind redraw, matching what the five-retry loop used to open with.
+    private static let blindRedrawDelay = Duration.milliseconds(250)
+
+    // A top-level-navigation header set consistent with a Chrome-on-Android UA.
+    // Deliberately no `sec-ch-ua*` Client Hints: they must agree with the UA's
+    // platform/mobile/version or Cloudflare reads the contradiction as a bot
+    // signal, so they are omitted entirely.
+    static let browserHeaders: [(String, String)] = [
+        ("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"),
+        ("Accept-Language", "en-US,en;q=0.9"),
+        ("sec-fetch-dest", "document"),
+        ("sec-fetch-mode", "navigate"),
+        ("sec-fetch-site", "none"),
+        ("sec-fetch-user", "?1"),
+        ("Upgrade-Insecure-Requests", "1"),
+    ]
+
+    public init(
+        userAgent: String,
+        cookieHeader: String,
+        webViewFetch: WebViewFetch? = nil,
+        liveCookieHeader: CookieHeaderProbe? = nil,
+        liveUserAgent: UserAgentProbe? = nil,
+        nativeTransport: FANativeTransport? = nil
+    ) {
+        self.init(
+            userAgent: userAgent, cookieHeader: cookieHeader, webViewFetch: webViewFetch,
+            liveCookieHeader: liveCookieHeader, liveUserAgent: liveUserAgent,
+            nativeTransport: nativeTransport,
+            awaitChallengeResolution: { try await CloudflareChallengeCoordinator.shared.awaitResolution() }
+        )
+    }
+
+    init(
+        userAgent: String,
+        cookieHeader: String,
+        webViewFetch: WebViewFetch? = nil,
+        liveCookieHeader: CookieHeaderProbe? = nil,
+        liveUserAgent: UserAgentProbe? = nil,
+        nativeTransport: FANativeTransport? = nil,
+        awaitChallengeResolution: @escaping ChallengeResolver
+    ) {
+        let config = URLSessionConfiguration.default
+        // Per-request Cookie header rather than a cookie store: HTTPCookieStorage's
+        // no-arg init isn't public on Android FoundationNetworking, and per-request
+        // headers are fully portable.
+        config.httpShouldSetCookies = false
+        self.session = URLSession(configuration: config)
+        self.userAgent = userAgent
+        self.baseCookieHeader = cookieHeader
+        self.webViewFetch = webViewFetch
+        self.liveCookieHeader = liveCookieHeader
+        self.liveUserAgent = liveUserAgent
+        self.nativeTransport = nativeTransport
+        self.awaitChallengeResolution = awaitChallengeResolution
+    }
+
+    public func httpData(
+        from url: URL,
+        cookies: [HTTPCookie]?,
+        method: HTTPMethod,
+        parameters: [URLQueryItem]
+    ) async throws -> Data {
+        try await httpData(
+            from: url, cookies: cookies, method: method,
+            parameters: parameters, hasAwaitedResolution: false
+        )
+    }
+
+    /// - Parameter hasAwaitedResolution: set on the one retry that follows a
+    ///   resolved challenge, so a still-challenged retry can't ask again and loop.
+    private func httpData(
+        from url: URL,
+        cookies: [HTTPCookie]?,
+        method: HTTPMethod,
+        parameters: [URLQueryItem],
+        hasAwaitedResolution: Bool
+    ) async throws -> Data {
+        let built = await makeRequest(from: url, cookies: cookies, method: method, parameters: parameters)
+        let request = built.request
+
+        // Same shape as iOS's line in URLSession+HTTPDataSource: the POST body and the
+        // clearance being sent are what answer "are we spamming FA?" and "which
+        // clearance did that request carry?" from an exported log alone.
+        let target = request.url.absoluteString
+        let bodyDesc = request.body.map { " with body \"\($0)\"" } ?? ""
+        let clearanceDesc = Self.cookieValue("cf_clearance", in: built.cookieHeader)
+            .map { " with cf_clearance=\($0.prefix(8))…" } ?? ""
+        logger.info("\(method) request on \(target)\(bodyDesc)\(hasAwaitedResolution ? " (retry post-challenge)" : "")\(clearanceDesc)")
+
+        // Cloudflare judges a *connection*, not a request, and it does not change
+        // its mind about one: a challenge is repaired — evict, solve, redial — not
+        // waited out. Only `cf-mitigated: challenge` goes down that path; unlike
+        // FAImageFetchBridge's image loop, which retries any non-2xx and so cannot tell a
+        // challenge from a 404 or a socket error.
+        var response = try await exchange(request, reporting: url)
+
+        if hasAwaitedResolution {
+            if response.isCloudflareChallenge {
+                logger.warning("[CFREPAIR] retry \(url) → still challenged, falling back")
+            } else {
+                logger.info("[CFREPAIR] retry \(url) → \(response.statusCode) \(response.connectionDescription)")
+            }
+        }
+
+        if response.isCloudflareChallenge {
+            logger.warning("[CFREPAIR] challenge \(url) \(response.connectionDescription) epoch=\(response.connectionEpoch)")
+            await logClearanceDiagnostics(sent: built.cookieHeader)
+
+            // One blind redraw under h1, where the challenge carries `Connection:
+            // close` so a retry genuinely redials, and none otherwise. The
+            // post-repair retry gets none either way.
+            if !hasAwaitedResolution, Self.blindRedrawIsWorthIt(after: response) {
+                try? await Task.sleep(for: Self.blindRedrawDelay)
+                response = try await exchange(request, reporting: url)
+                if response.isCloudflareChallenge {
+                    logger.warning("[CFREPAIR] challenge \(url) \(response.connectionDescription) epoch=\(response.connectionEpoch)")
+                }
+            }
+        }
+
+        if response.isCloudflareChallenge {
+            // Repair rather than retry: resolution puts a fresh clearance in the
+            // shared jar, which fixes every *subsequent* request too, whereas the
+            // WebView fallback below only rescues this one.
+            if !hasAwaitedResolution,
+               await repairAndResolve(url: url, observedEpoch: response.connectionEpoch, sent: built.cookieHeader) {
+                return try await httpData(
+                    from: url, cookies: cookies, method: method,
+                    parameters: parameters, hasAwaitedResolution: true
+                )
+            }
+
+            // Pages only: the WebView reads back the page it lands on, and a file on
+            // d.furaffinity.net never finishes loading as one. Entry and rescue both
+            // carry [CFFALLBACK], so an entry with no "rescued" line is a failure;
+            // fetchPageHTML logs its own navigations just above that.
+            if let webViewFetch, method == .GET, request.url.host != "d.furaffinity.net" {
+                logger.warning("[CFFALLBACK] \(url): still challenged; trying WebView fallback")
+                let startedAt = ContinuousClock.now
+                let html = try await webViewFetch(request.url)
+                logger.warning("[CFFALLBACK] \(url): rescued by WebView after \(ContinuousClock.now - startedAt)")
+                return html
+            }
+            throw CloudflareChallengeRequired()
+        }
+
+        guard (200...299).contains(response.statusCode) || (response.statusCode == 400 && !response.body.isEmpty) else {
+            let body = String(data: response.body, encoding: .utf8) ?? "<non-UTF8>"
+            logger.error("\(url): HTTP \(response.statusCode). Body prefix: \(body.prefix(200))")
+            throw FAHTTPError.failureStatus(url: url, code: response.statusCode)
+        }
+        return response.body
+    }
+
+    /// Evict, solve, evict again — the whole repair, in the one order that works.
+    ///
+    /// - Returns: `true` when a fresh clearance has landed and the caller should
+    ///   retry once. `false` when the challenge could not be solved, so the caller
+    ///   should fall through to the WebView fetch.
+    private func repairAndResolve(url: URL, observedEpoch: UInt64, sent: String) async -> Bool {
+        // 1. Evict *before* awaiting, not only after. A solve takes 1.5–3 s
+        //    typically and up to 25 s; every other page fetch and every image
+        //    worker keeps running in that window, and under h2 the poisoned
+        //    connection is still pooled and carries no `Connection: close`, so
+        //    anything starting then rides it and is challenged too.
+        let firstRepair = await repairConnections(observed: observedEpoch)
+        let startedAt = ContinuousClock.now
+
+        // 2. AndroidRootView.refreshCredentialsThenRelease() awaits
+        //    refreshedCookieHeader() *before* markResolved(), so by the time this
+        //    returns the fresh clearance is already in the live jar that step 5's
+        //    retry reads. That ordering is load-bearing and invisible here; the
+        //    other end carries the matching comment.
+        do {
+            try await awaitChallengeResolution()
+        } catch {
+            return false
+        }
+
+        // 3. Evict again. Between (1) and (2) another worker will have opened a
+        //    connection carrying the *old* clearance, which is equally suspect.
+        //    Cheap — the pool holds one to a handful.
+        _ = await repairConnections(observed: firstRepair.epoch)
+
+        // Only the clearance that *failed*. Reading the live one here costs two
+        // @MainActor WebView calls purely to format this line — on the thread that
+        // has just finished running challenge script, and microseconds before the
+        // retry's own `makeRequest` pulls the very same header. The retry's
+        // `… with cf_clearance=…` line names the replacement.
+        let before = Self.cookieValue("cf_clearance", in: sent).map { "\($0.prefix(8))…" } ?? "<none>"
+        logger.warning("[CFREPAIR] resolution took \(ContinuousClock.now - startedAt), replacing cf_clearance \(before)")
+        return true
+    }
+
+    /// A no-op returning the epoch unchanged when no native transport is installed,
+    /// which is what makes Step 4's ordering measurable before OkHttp exists.
+    ///
+    /// The `[CFREPAIR] evicted …` / `evict skipped …` line is the transport's to log —
+    /// it is the one that owns the pool, and the image pipeline evicts the same pool
+    /// without coming through here.
+    private func repairConnections(observed: UInt64) async -> FAConnectionRepairResult {
+        guard let nativeTransport else {
+            return FAConnectionRepairResult(didEvict: false, evictedConnections: 0, epoch: observed)
+        }
+        return await nativeTransport.repairConnections(observed)
+    }
+
+    /// The wire request, plus the cookie header that went into it — the logs and
+    /// the `[CFDIAG]` block both want that separately from the request.
+    private func makeRequest(
+        from url: URL,
+        cookies: [HTTPCookie]?,
+        method: HTTPMethod,
+        parameters: [URLQueryItem]
+    ) async -> (request: FANativeHTTPRequest, cookieHeader: String) {
+        var target = url
+        var headers = [String: String]()
+        var body: String?
+
+        switch method {
+        case .GET:
+            target = parameters.isEmpty ? url : url.appending(queryItems: parameters)
+        case .POST:
+            var components = URLComponents()
+            components.queryItems = parameters
+            if let query = components.percentEncodedQuery {
+                body = query
+                headers["Content-Type"] = "application/x-www-form-urlencoded"
+            }
+        }
+
+        // Only FA gets the credentials. On iOS these go in `httpCookieStorage`, which
+        // scopes them by domain for free; a manual header would go to whatever URL
+        // this is handed, so scope it here.
+        var userAgent: String?
+        var header = ""
+        if FAURLs.isFAHost(target.host) {
+            userAgent = self.userAgent
+            for (field, value) in Self.browserHeaders {
+                headers[field] = value
+            }
+            // Always the live jar, not the header frozen at session creation:
+            // `cf_clearance` rotates on every re-solve, and a stale one is challenged
+            // again — so a request starting from the frozen header burns all five
+            // attempts plus their backoff before it can even ask for resolution. The
+            // frozen header only covers the engine not being attached to answer yet.
+            var base = baseCookieHeader
+            if let liveCookieHeader, let live = await liveCookieHeader(), !live.isEmpty {
+                base = live
+            }
+            header = cookieHeader(merging: cookies, base: base)
+        } else {
+            // Nothing should route a non-FA URL through this data source; log rather
+            // than silently sending an anonymous request nobody expected.
+            logger.warning("\(url): non-FA host, sending without FA credentials")
+        }
+
+        let request = FANativeHTTPRequest(
+            url: target,
+            method: method,
+            headers: headers,
+            userAgent: userAgent,
+            cookieHeader: header.isEmpty ? nil : header,
+            body: body
+        )
+        return (request, header)
+    }
+
+    /// The one seam every exchange goes through. With no transport installed this
+    /// is the URLSession path, byte for byte what it always was.
+    ///
+    /// - Parameter url: the caller's original URL, so a failure reports what was
+    ///   asked for rather than the query-appended target.
+    private func exchange(_ request: FANativeHTTPRequest, reporting url: URL) async throws -> FANativeHTTPResponse {
+        if let nativeTransport {
+            return try await nativeTransport.perform(request)
+        }
+
+        var urlRequest = URLRequest(url: request.url)
+        urlRequest.httpMethod = request.method.rawValue
+        if request.method == .POST {
+            urlRequest.cachePolicy = .reloadIgnoringLocalCacheData
+        }
+        if let body = request.body {
+            urlRequest.httpBody = body.data(using: .utf8)
+        }
+        for (field, value) in request.headers {
+            urlRequest.setValue(value, forHTTPHeaderField: field)
+        }
+        if let userAgent = request.userAgent {
+            urlRequest.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+        }
+        if let cookieHeader = request.cookieHeader, !cookieHeader.isEmpty {
+            urlRequest.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
+        }
+
+        let (body, response) = try await session.data(for: urlRequest, delegate: FARedirectPolicy.shared)
+        guard let http = response as? HTTPURLResponse else {
+            throw FAHTTPError.nonHTTPResponse(url)
+        }
+
+        var headers = [String: String]()
+        for name in FANativeHTTPResponse.carriedHeaders {
+            if let value = http.value(forHTTPHeaderField: name) {
+                headers[name] = value
+            }
+        }
+        return FANativeHTTPResponse(
+            statusCode: http.statusCode,
+            headers: headers,
+            body: body,
+            // URLSession on Android is HTTP/1.1 by absence — its libcurl carries no
+            // nghttp2 — but it reports nothing, so say where the bytes came from
+            // rather than guess a protocol.
+            networkProtocol: "urlsession"
+        )
+    }
+
+    /// The cookies and User-Agent actually sent, against what the WebView would send
+    /// right now. `cf_clearance` is bound to both, so either drifting explains a
+    /// challenge that nothing else does.
+    ///
+    /// The cookie line now reads `drifted=false` by construction — the request took
+    /// its header from the same live probe this compares against — so it is only
+    /// worth reading for *which* clearance went out. The User-Agent line keeps its
+    /// full diagnostic value: nothing re-reads that per request.
+    private func logClearanceDiagnostics(sent: String) async {
+        logger.warning("[CFDIAG] sent cookies: \(Self.cookieFingerprint(sent))")
+        if let liveUserAgent {
+            let live = await liveUserAgent() ?? "<none>"
+            logger.warning("[CFDIAG] User-Agent drifted=\(live != userAgent) sent=\(userAgent) live=\(live)")
+        } else {
+            logger.warning("[CFDIAG] no live User-Agent probe wired up")
+        }
+        guard let liveCookieHeader else {
+            logger.warning("[CFDIAG] no live cookie probe wired up")
+            return
+        }
+        let live = await liveCookieHeader() ?? ""
+        logger.warning("[CFDIAG] live cookies: \(Self.cookieFingerprint(live))")
+        let sentClearance = Self.cookieValue("cf_clearance", in: sent)
+        let liveClearance = Self.cookieValue("cf_clearance", in: live)
+        logger.warning("[CFDIAG] cf_clearance drifted=\(sentClearance != liveClearance) sentPresent=\(sentClearance != nil) livePresent=\(liveClearance != nil)")
+    }
+
+    /// Cookie names with the first 8 characters of each value — enough to tell
+    /// "same clearance as before" from "it rotated", without logging the token.
+    private static func cookieFingerprint(_ header: String) -> String {
+        var parts = [String]()
+        for pair in header.split(separator: ";") {
+            let trimmed = pair.trimmingCharacters(in: .whitespaces)
+            guard let separator = trimmed.firstIndex(of: "=") else { continue }
+            let name = String(trimmed[trimmed.startIndex..<separator])
+            let value = String(trimmed[trimmed.index(after: separator)...])
+            parts.append("\(name)=\(String(value.prefix(8)))…")
+        }
+        return parts.isEmpty ? "<none>" : parts.joined(separator: " ")
+    }
+
+    private static func cookieValue(_ name: String, in header: String) -> String? {
+        for pair in header.split(separator: ";") {
+            let trimmed = pair.trimmingCharacters(in: .whitespaces)
+            guard let separator = trimmed.firstIndex(of: "=") else { continue }
+            guard String(trimmed[trimmed.startIndex..<separator]) == name else { continue }
+            return String(trimmed[trimmed.index(after: separator)...])
+        }
+        return nil
+    }
+
+    /// Merge the base WebView cookie header with any per-request auth cookies,
+    /// keyed by name so nothing is sent twice.
+    ///
+    /// `OnlineFASession` hands the same auth cookies to every request, and those
+    /// are a subset of the WebView jar the base header came from — concatenating
+    /// sent every pair twice, which no browser does. The base header wins and
+    /// keeps its order, so the wire header stays byte-identical to what the
+    /// WebView itself would send; that is what Cloudflare compares against.
+    func cookieHeader(merging cookies: [HTTPCookie]?, base: String) -> String {
+        guard let cookies, !cookies.isEmpty else { return base }
+
+        var parts = [String]()
+        var names = Set<String>()
+        for pair in base.split(separator: ";") {
+            let trimmed = pair.trimmingCharacters(in: .whitespaces)
+            guard let separator = trimmed.firstIndex(of: "=") else { continue }
+            names.insert(String(trimmed[trimmed.startIndex..<separator]))
+            parts.append(trimmed)
+        }
+        for cookie in cookies where !names.contains(cookie.name) {
+            names.insert(cookie.name)
+            parts.append("\(cookie.name)=\(cookie.value)")
+        }
+        return parts.joined(separator: "; ")
+    }
+}
+
+public enum FAHTTPError: LocalizedError {
+    case nonHTTPResponse(URL)
+    case failureStatus(url: URL, code: Int)
+
+    public var errorDescription: String? {
+        switch self {
+        case let .nonHTTPResponse(url):
+            "\(url): request failed with a non-HTTP response"
+        case let .failureStatus(url, code):
+            "\(url): request failed with status \(code)"
+        }
+    }
+}

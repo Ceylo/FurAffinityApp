@@ -33,7 +33,8 @@ final class NavigationStream {
 }
 
 extension EnvironmentValues {
-    @Entry var navigationStream = NavigationStream()
+    static private let defaultNavigationStream = NavigationStream()
+    @Entry var navigationStream = Self.defaultNavigationStream
 }
 
 /// - Warning: This view should be avoided in scrolling content,
@@ -44,7 +45,7 @@ struct FALink<ContentView: View>: View {
     var contentView: ContentView
     
     private var fullWidthTapArea = false
-    @Environment(\.navigationStream) private var navigationStream
+    @Environment(\.navigationStream) var navigationStream
     
     func withFullWidthTapArea() -> Self {
         var copy = self

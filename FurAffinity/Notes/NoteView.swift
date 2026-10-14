@@ -5,6 +5,8 @@
 //  Created by Ceylo on 11/04/2022.
 //
 
+#if !FA_SKIP_MODULE
+
 import SwiftUI
 import FAKit
 
@@ -101,3 +103,5 @@ struct NoteView: View {
     }
 //        .preferredColorScheme(.dark)
 }
+
+#endif

@@ -30,8 +30,9 @@ func commentInlineCutoff(availableWidth: CGFloat, minContentWidth: CGFloat) -> I
     return max(1, Int((availableWidth - 20 - minContentWidth) / CommentsView.indentationStep))
 }
 
-private struct CommentsWidthMeasuringModifier: ViewModifier {
-    @State private var width: CGFloat = 0
+// Not private: skipstone can't bridge a private @State/@Environment.
+struct CommentsWidthMeasuringModifier: ViewModifier {
+    @State var width: CGFloat = 0
     var writeBack: Binding<CGFloat>?
     func body(content: Content) -> some View {
         content
