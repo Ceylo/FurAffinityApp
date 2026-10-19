@@ -8,19 +8,18 @@
 
 import SwiftUI
 
-/// The Undo snackbar for the model's staged deletion, and the commits that end it
-/// early. A view of its own, so the feed body depends on neither.
+/// The Undo snackbar for a `StagedDeletion`, and the commits that end it early.
 struct StagedDeletionUndoSnackbar: View {
+    var count: Int
+    var message: String
+    var onUndo: () -> Void
+    var onCommit: () -> Void
     // Not private: skipstone can't bridge a private @State/@Environment.
-    @Environment(Model.self) var model
     @Environment(\.scenePhase) var scenePhase
 
     var body: some View {
-        let count = model.stagedSubmissionPreviewsDeletion.count
         let isShown = count > 0
-        UndoSnackbar(message: count > 1 ? "\(count) submissions deleted" : "Submission deleted") {
-            model.undoStagedSubmissionPreviewsDeletion()
-        }
+        UndoSnackbar(message: message, onUndo: onUndo)
         // Stays mounted so it can fade: `.transition` gets a hard cut on SkipUI.
         .opacity(isShown ? 1 : 0)
         .offset(y: isShown ? 0 : 16)
@@ -34,12 +33,12 @@ struct StagedDeletionUndoSnackbar: View {
         // Undo can't be reached from the background, and the process may not outlive it.
         .onChange(of: scenePhase) { _, phase in
             if phase == .background {
-                model.commitStagedSubmissionPreviewsDeletion()
+                onCommit()
             }
         }
-        // Nor from a covered feed.
+        // Nor from a covered list.
         .onDisappear {
-            model.commitStagedSubmissionPreviewsDeletion()
+            onCommit()
         }
     }
 }

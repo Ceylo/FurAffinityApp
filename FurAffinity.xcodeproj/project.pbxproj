@@ -46,6 +46,7 @@
 		6863F20D55CCBA999B4BF92D /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 8A95ED7DF8B078BBE10E20C5 /* Sentry */; };
 		69C72E0CA41C86B6DF5E1726 /* SubmissionPreviewRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D28B447376CAFDB034915BBD /* SubmissionPreviewRow.swift */; };
 		6D4CB5C6AA2E7312794D0B23 /* ScrollToTopReveal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 975BF67388B39A4FFD13BFFC /* ScrollToTopReveal.swift */; };
+		A1F3C0DF5D1E7E0000C0FFEE /* StagedDeletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3C0DE5D1E7E0000C0FFEE /* StagedDeletion.swift */; };
 		76DD1A515EB54A13BA763698 /* CloudflareResolutionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */; };
 		7861E9BBEEAE05821E3E9B5B /* CrashTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CA6CC10C93CFDA14205099B /* CrashTest.swift */; };
 		8100B7C9FB003874702EC4E9 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3033B05A545010E29F30F1FD /* FlowLayout.swift */; };
@@ -186,6 +187,7 @@
 		87FE0DA72974609E005713DB /* SubmissionsFeedActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FE0DA62974609E005713DB /* SubmissionsFeedActionView.swift */; };
 		87FE0DA929747C0C005713DB /* AppInformation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FE0DA829747C0C005713DB /* AppInformation.swift */; };
 		968EE0B6CABE98FF4DF58CFD /* ScrollToTopRevealTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 085339753F4396E50CFF5CFC /* ScrollToTopRevealTests.swift */; };
+		A1F3C0E15D1E7E0000C0FFEE /* StagedDeletionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3C0E05D1E7E0000C0FFEE /* StagedDeletionTests.swift */; };
 		9D6D2A76FD5B02CB4A37F1BA /* CrashReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF3D71C0280E404172EB9D4B /* CrashReporting.swift */; };
 		9D9673BCD0A3A58360370D7B /* ExplorationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F4DE8504EE8E5896B9AA6A /* ExplorationView.swift */; };
 		A5C8D8E39F388B8044875B83 /* PendingNotificationRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = E47802CF8DFEA36285E68BE4 /* PendingNotificationRecord.swift */; };
@@ -258,6 +260,7 @@
 /* Begin PBXFileReference section */
 		035B5AEBEA2399F8715F2744 /* ForegroundAutorefresh.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ForegroundAutorefresh.swift; sourceTree = "<group>"; };
 		085339753F4396E50CFF5CFC /* ScrollToTopRevealTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollToTopRevealTests.swift; sourceTree = "<group>"; };
+		A1F3C0E05D1E7E0000C0FFEE /* StagedDeletionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StagedDeletionTests.swift; sourceTree = "<group>"; };
 		12CC924CA9E594B2F3D1049C /* NotificationContent.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationContent.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		24EA1B59AE1F6A51D2D71E4C /* NotificationsProtocols.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationsProtocols.swift; sourceTree = "<group>"; };
 		3033B05A545010E29F30F1FD /* FlowLayout.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
@@ -410,6 +413,7 @@
 		87FE0DA62974609E005713DB /* SubmissionsFeedActionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionsFeedActionView.swift; sourceTree = "<group>"; };
 		87FE0DA829747C0C005713DB /* AppInformation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInformation.swift; sourceTree = "<group>"; };
 		975BF67388B39A4FFD13BFFC /* ScrollToTopReveal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollToTopReveal.swift; sourceTree = "<group>"; };
+		A1F3C0DE5D1E7E0000C0FFEE /* StagedDeletion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StagedDeletion.swift; sourceTree = "<group>"; };
 		99B6D6EA7F946B29E403A1C9 /* NotificationViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationViewController.swift; sourceTree = "<group>"; };
 		99DA99CD89D5D269A5D3BD27 /* SearchFiltersView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SearchFiltersView.swift; sourceTree = "<group>"; };
 		A264CEDCBC3A6A5E7A2CA5AC /* CrashReportingConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReportingConfigurationTests.swift; sourceTree = "<group>"; };
@@ -641,6 +645,7 @@
 				875EF2E72C1E1FF7000D4BFB /* Comparable.swift */,
 				87BF3EE22C9329C8000A837E /* ListItemTracking.swift */,
 				975BF67388B39A4FFD13BFFC /* ScrollToTopReveal.swift */,
+				A1F3C0DE5D1E7E0000C0FFEE /* StagedDeletion.swift */,
 				875FDC7D2D21D2D300CF8AE5 /* DelayedToggle.swift */,
 				8774EE732DFB78B90074E015 /* Replying.swift */,
 				58119C7E67EC670409E1D1CC /* GeometryProxy+FASize.swift */,
@@ -667,7 +672,6 @@
 				D56727047B968FBBC1AC85BB /* SubmissionsTabView.swift */,
 				7B0E85C4773BEEEEBD9B20CA /* TagSearchEditor.swift */,
 				D28B447376CAFDB034915BBD /* SubmissionPreviewRow.swift */,
-				87BF362A306C658600E67633 /* StagedDeletionUndoSnackbar.swift */,
 			);
 			path = SubmissionsFeed;
 			sourceTree = "<group>";
@@ -733,6 +737,7 @@
 				87AA5555AABB555500555555 /* CachedImageFileURLTests.swift */,
 				87AA5555AABB555500555556 /* InFlightCoalescerTests.swift */,
 				085339753F4396E50CFF5CFC /* ScrollToTopRevealTests.swift */,
+				A1F3C0E05D1E7E0000C0FFEE /* StagedDeletionTests.swift */,
 				3F9D3B91DBCDF30C8FE6F26D /* UserProfileControlTests.swift */,
 			);
 			path = FurAffinityTests;
@@ -756,6 +761,7 @@
 				87E7B0232788D4FC0053CFAA /* NotificationOverlay.swift */,
 				B79E11159F519494B0FF9A24 /* ScrollToTopButton.swift */,
 				87F0DE5A2F7C1A0000C0FFEE /* UndoSnackbar.swift */,
+				87BF362A306C658600E67633 /* StagedDeletionUndoSnackbar.swift */,
 				FB6B6865E633406E9F5BAFF5 /* CloudflareResolutionOverlay.swift */,
 				873E65F127529866009C8767 /* SaveButton.swift */,
 				8733DDFE28FAD58D00CD8BCF /* SwapView.swift */,
@@ -1145,6 +1151,7 @@
 				878EBC992EDB8CFE006A68D3 /* ErrorDisplay.swift in Sources */,
 				87BF3EE32C9329C8000A837E /* ListItemTracking.swift in Sources */,
 				6D4CB5C6AA2E7312794D0B23 /* ScrollToTopReveal.swift in Sources */,
+				A1F3C0DF5D1E7E0000C0FFEE /* StagedDeletion.swift in Sources */,
 				87346B372B0A658F000407C7 /* RemoteView.swift in Sources */,
 				87D252062C906AB700E07AE1 /* withAsync.swift in Sources */,
 				8750BF382ED9053800B860C8 /* View+throwingRefreshable.swift in Sources */,
@@ -1226,6 +1233,7 @@
 				87AA6666AABB666600666666 /* CachedImageFileURLTests.swift in Sources */,
 				87AA6666AABB666600666667 /* InFlightCoalescerTests.swift in Sources */,
 				968EE0B6CABE98FF4DF58CFD /* ScrollToTopRevealTests.swift in Sources */,
+				A1F3C0E15D1E7E0000C0FFEE /* StagedDeletionTests.swift in Sources */,
 				CA549BBA4B716355A7E765CF /* UserProfileControlTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

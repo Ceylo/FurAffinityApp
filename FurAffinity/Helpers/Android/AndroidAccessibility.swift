@@ -33,7 +33,8 @@ enum AndroidAccessibility {
     /// setting. Read on each call: the setting can change while the app runs.
     static func recommendedTimeout(_ timeout: Duration) -> Duration {
         #if canImport(Android)
-        guard let bridge else { return timeout }
+        // No JVM under `skip android test`.
+        guard isJNIInitialized, let bridge else { return timeout }
         do {
             let millis = Int64(timeout / .milliseconds(1))
             let recommended: Int64? = try bridge.recommendedTimeoutMillis(millis)
