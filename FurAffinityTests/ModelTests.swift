@@ -245,6 +245,70 @@ struct ModelTests {
         #expect(model.submissionPreviews?.map(\.sid) == [2])
     }
 
+    private func makeNotification(id: Int) -> FANotificationPreview {
+        .init(
+            id: id,
+            author: "author",
+            displayAuthor: "Author",
+            title: "Title \(id)",
+            datetime: "on Apr 30, 2023 09:50 PM",
+            naturalDatetime: "a few seconds ago",
+            url: URL(string: "https://www.furaffinity.net/view/\(1000 + id)/#cid:\(id)")!
+        )
+    }
+
+    private func makeModelWithNotifications() async throws -> (Model, MockFASession) {
+        let mock = MockFASession(mockNotificationPreviews: .init(
+            submissionComments: [makeNotification(id: 1)],
+            journalComments: [makeNotification(id: 2)],
+            shouts: [4, 5, 6, 7].map(makeNotification),
+            journals: [makeNotification(id: 3)]
+        ))
+        let model = Model()
+        try await model.setSession(mock)
+        return (model, mock)
+    }
+
+    @Test func commitNotificationsDeletion_callsMatchingSessionMethod() async throws {
+        let (model, mock) = try await makeModelWithNotifications()
+        let notifications = try #require(model.notificationPreviews)
+
+        for kind in NotificationKind.allCases {
+            model.stageNotificationsDeletion([notifications[kind][0]], of: kind)
+            await model.notificationDeletion.commit()?.value
+        }
+
+        #expect(mock.deletedNotificationBatches == NotificationKind.allCases.map {
+            .init(kind: $0, previews: [notifications[$0][0]])
+        })
+        #expect(model.notificationPreviews?.shouts.map(\.id) == [5, 6, 7])
+        #expect(model.notificationPreviews?.submissionComments.isEmpty == true)
+    }
+
+    @Test func undoNotificationsDeletion_restoresOrderInSection() async throws {
+        let (model, mock) = try await makeModelWithNotifications()
+        let shouts = try #require(model.notificationPreviews?.shouts)
+
+        model.stageNotificationsDeletion([shouts[1], shouts[3]], of: .shout)
+        #expect(model.notificationPreviews?.shouts.map(\.id) == [4, 6])
+        model.notificationDeletion.undo()
+
+        #expect(model.notificationPreviews?.shouts.map(\.id) == [4, 5, 6, 7])
+        #expect(model.notificationPreviews?.journals.map(\.id) == [3])
+        #expect(mock.deletedNotificationBatches.isEmpty)
+    }
+
+    @Test func fetchNotificationPreviews_doesNotBringBackStagedRows() async throws {
+        let (model, mock) = try await makeModelWithNotifications()
+        let shout = try #require(model.notificationPreviews?.shouts.first)
+
+        model.stageNotificationsDeletion([shout], of: .shout)
+        try await model.fetchNotificationPreviews()
+
+        #expect(model.notificationPreviews?.shouts.map(\.id) == [5, 6, 7])
+        #expect(mock.deletedNotificationBatches.isEmpty)
+    }
+
     @Test func defaultsWriteFromBackgroundDoesNotCrashModelObservers() async {
         // Model.init runs two @MainActor loops over Defaults.updates (the Defaults
         // library observes the standard suite via KVO). Writing an observed key off the

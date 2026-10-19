@@ -22,6 +22,19 @@ struct RemoteNotificationsView: View {
                 ProgressView()
             }
         }
+        // Only Android stages a deletion (see NotificationsView's `delete`).
+        #if FA_SKIP_MODULE
+        .overlay(alignment: .bottom) {
+            let deletion = model.notificationDeletion!
+            let count = deletion.staged.count
+            StagedDeletionUndoSnackbar(
+                count: count,
+                message: count > 1 ? "\(count) notifications deleted" : "Notification deleted",
+                onUndo: deletion.undo,
+                onCommit: { deletion.commit() }
+            )
+        }
+        #endif
         .refreshable(actionTitle: "Notifications Refresh", webBrowserURL: model.notificationPreviewsSourceUrl) {
             try await model.fetchNotificationPreviews()
         }

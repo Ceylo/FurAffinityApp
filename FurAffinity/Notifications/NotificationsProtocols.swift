@@ -19,10 +19,52 @@ protocol NotificationsNuker: Sendable {
 
 @MainActor
 protocol NotificationsDeleter: Sendable {
-    func deleteSubmissionCommentNotifications(_ items: [FANotificationPreview]) -> Void
-    func deleteJournalCommentNotifications(_ items: [FANotificationPreview]) -> Void
-    func deleteShoutNotifications(_ items: [FANotificationPreview]) -> Void
-    func deleteJournalNotifications(_ items: [FANotificationPreview]) -> Void
+    func deleteNotifications(_ items: [FANotificationPreview], of kind: NotificationKind) -> Void
+    func stageNotificationsDeletion(_ items: [FANotificationPreview], of kind: NotificationKind) -> Void
+}
+
+enum NotificationKind: CaseIterable {
+    case submissionComment
+    case journalComment
+    case shout
+    case journal
+}
+
+struct StagedNotification: Hashable {
+    let kind: NotificationKind
+    let preview: FANotificationPreview
+    let index: Int
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.kind == rhs.kind && lhs.preview == rhs.preview
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(kind)
+        hasher.combine(preview)
+    }
+}
+
+extension FANotificationPreviews {
+    subscript(kind: NotificationKind) -> [FANotificationPreview] {
+        switch kind {
+        case .submissionComment: submissionComments
+        case .journalComment: journalComments
+        case .shout: shouts
+        case .journal: journals
+        }
+    }
+
+    func mapSections(
+        _ transform: (NotificationKind, [FANotificationPreview]) -> [FANotificationPreview]
+    ) -> FANotificationPreviews {
+        FANotificationPreviews(
+            submissionComments: transform(.submissionComment, submissionComments),
+            journalComments: transform(.journalComment, journalComments),
+            shouts: transform(.shout, shouts),
+            journals: transform(.journal, journals)
+        )
+    }
 }
 
 /// Whether this platform delivers the notifications that `NotificationSettingsView`

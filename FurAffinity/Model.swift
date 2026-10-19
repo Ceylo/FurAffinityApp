@@ -72,6 +72,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
     private(set) var notificationPreviews: FANotificationPreviews?
     private(set) var lastNotificationPreviewsFetchDate: Date?
     private(set) var displayedNotificationCount = 0
+    @ObservationIgnored private(set) var notificationDeletion: StagedDeletion<StagedNotification>!
     
     private(set) var appInfo = AppInformation()
     private var lastAppInfoUpdate: Date?
@@ -90,6 +91,14 @@ class Model: NotificationsNuker, NotificationsDeleter {
             },
             restore: { [weak self] previews in
                 self?.reinsertSubmissionPreviews(previews)
+            }
+        )
+        notificationDeletion = StagedDeletion(
+            send: { [weak self] items in
+                try await self?.sendNotificationsDeletion(items)
+            },
+            restore: { [weak self] items in
+                self?.restoreNotifications(items)
             }
         )
         lastLoggedDefaults = DefaultsChangeLog.snapshot()
@@ -154,6 +163,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             notePreviews = [:]
             displayedUnreadNoteCount = 0
             notificationPreviews = nil
+            notificationDeletion.reset()
             lastNotificationPreviewsFetchDate = nil
             displayedNotificationCount = 0
             shouldCheckForNewerSubmissionsAfterRestore = false
@@ -409,121 +419,97 @@ class Model: NotificationsNuker, NotificationsDeleter {
         FAURLs.notificationsUrl
     }
     
-    func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) {
-        let oldNotificationPreviews = notificationPreviews
-        notificationPreviews = notificationPreviews.map { oldNotifications in
-            FANotificationPreviews(
-                submissionComments: oldNotifications.submissionComments.filter { !notifications.contains($0) },
-                journalComments: oldNotifications.journalComments,
-                shouts: oldNotifications.shouts,
-                journals: oldNotifications.journals
-            )
+    func deleteNotifications(_ notifications: [FANotificationPreview], of kind: NotificationKind) {
+        stageNotificationsDeletion(notifications, of: kind)
+        notificationDeletion.commit()
+    }
+
+    func stageNotificationsDeletion(_ notifications: [FANotificationPreview], of kind: NotificationKind) {
+        guard let notificationPreviews else { return }
+        let section = notificationPreviews[kind]
+        let staged = notifications.compactMap { preview in
+            section.firstIndex(of: preview).map {
+                StagedNotification(kind: kind, preview: preview, index: $0)
+            }
         }
-        
-        Task {
-            await storeLocalizedError(in: errorStorage, action: "Delete Submission Comment Notification(s)", webBrowserURL: nil) {
+        self.notificationPreviews = notificationPreviews.mapSections { sectionKind, section in
+            sectionKind == kind ? section.filter { !notifications.contains($0) } : section
+        }
+        updateDisplayedNotificationCount()
+        notificationDeletion.stage(staged)
+    }
+
+    private func sendNotificationsDeletion(_ items: [StagedNotification]) async throws {
+        for kind in NotificationKind.allCases {
+            let notifications = items.filter { $0.kind == kind }.map(\.preview)
+            guard !notifications.isEmpty else { continue }
+            do {
                 try await fetchNotificationPreviews { session in
-                    try await session.deleteSubmissionCommentNotifications(notifications)
+                    switch kind {
+                    case .submissionComment:
+                        try await session.deleteSubmissionCommentNotifications(notifications)
+                    case .journalComment:
+                        try await session.deleteJournalCommentNotifications(notifications)
+                    case .shout:
+                        try await session.deleteShoutNotifications(notifications)
+                    case .journal:
+                        try await session.deleteJournalNotifications(notifications)
+                    }
                 }
-            } onFailure: {
-                notificationPreviews = oldNotificationPreviews
+            } catch {
+                storeError(error, in: errorStorage, action: "Delete Notification(s)", webBrowserURL: nil)
+                throw error
             }
         }
     }
-    
-    func deleteJournalCommentNotifications(_ notifications: [FANotificationPreview]) {
-        let oldNotificationPreviews = notificationPreviews
-        notificationPreviews = notificationPreviews.map { oldNotifications in
-            FANotificationPreviews(
-                submissionComments: oldNotifications.submissionComments,
-                journalComments: oldNotifications.journalComments.filter { !notifications.contains($0) },
-                shouts: oldNotifications.shouts,
-                journals: oldNotifications.journals
-            )
-        }
-        
-        Task {
-            await storeLocalizedError(in: errorStorage, action: "Delete Journal Comment Notification(s)", webBrowserURL: nil) {
-                try await fetchNotificationPreviews { session in
-                    try await session.deleteJournalCommentNotifications(notifications)
-                }
-            } onFailure: {
-                notificationPreviews = oldNotificationPreviews
+
+    private func restoreNotifications(_ items: [StagedNotification]) {
+        guard let notificationPreviews else { return }
+        self.notificationPreviews = notificationPreviews.mapSections { kind, section in
+            var section = section
+            for item in items.filter({ $0.kind == kind }).sorted(by: { $0.index < $1.index })
+            where !section.contains(item.preview) {
+                section.insert(item.preview, at: min(item.index, section.count))
             }
+            return section
         }
+        updateDisplayedNotificationCount()
     }
-    
-    func deleteShoutNotifications(_ notifications: [FANotificationPreview]) {
-        let oldNotificationPreviews = notificationPreviews
-        notificationPreviews = notificationPreviews.map { oldNotifications in
-            FANotificationPreviews(
-                submissionComments: oldNotifications.submissionComments,
-                journalComments: oldNotifications.journalComments,
-                shouts: oldNotifications.shouts.filter { !notifications.contains($0) },
-                journals: oldNotifications.journals
-            )
-        }
-        
-        Task {
-            await storeLocalizedError(in: errorStorage, action: "Delete Shout Notification(s)", webBrowserURL: nil) {
-                try await fetchNotificationPreviews { session in
-                    try await session.deleteShoutNotifications(notifications)
-                }
-            } onFailure: {
-                notificationPreviews = oldNotificationPreviews
-            }
-        }
-    }
-    
-    func deleteJournalNotifications(_ notifications: [FANotificationPreview]) {
-        let oldNotificationPreviews = notificationPreviews
-        notificationPreviews = notificationPreviews.map { oldNotifications in
-            FANotificationPreviews(
-                submissionComments: oldNotifications.submissionComments,
-                journalComments: oldNotifications.journalComments,
-                shouts: oldNotifications.shouts,
-                journals: oldNotifications.journals.filter { !notifications.contains($0) }
-            )
-        }
-        
-        Task {
-            await storeLocalizedError(in: errorStorage, action: "Delete Journal Notification(s)", webBrowserURL: nil) {
-                try await fetchNotificationPreviews { session in
-                    try await session.deleteJournalNotifications(notifications)
-                }
-            } onFailure: {
-                notificationPreviews = oldNotificationPreviews
-            }
-        }
-    }
-    
+
     func nukeAllSubmissionCommentNotifications() async throws {
+        await notificationDeletion.commit()?.value
         try await fetchNotificationPreviews { session in
             try await session.nukeAllSubmissionCommentNotifications()
         }
     }
-    
+
     func nukeAllJournalCommentNotifications() async throws {
+        await notificationDeletion.commit()?.value
         try await fetchNotificationPreviews { session in
             try await session.nukeAllJournalCommentNotifications()
         }
     }
-    
+
     func nukeAllShoutNotifications() async throws {
+        await notificationDeletion.commit()?.value
         try await fetchNotificationPreviews { session in
             try await session.nukeAllShoutNotifications()
         }
     }
-    
+
     func nukeAllJournalNotifications() async throws {
+        await notificationDeletion.commit()?.value
         try await fetchNotificationPreviews { session in
             try await session.nukeAllJournalNotifications()
         }
     }
-    
-    
+
     private func fetchNotificationPreviews(fetcher: @MainActor (_ session: any FASession) async throws -> FANotificationPreviews) async throws {
-        notificationPreviews = try await fetcher(getSession())
+        notificationPreviews = try await fetcher(getSession()).mapSections { kind, section in
+            section.filter {
+                !notificationDeletion.hides(StagedNotification(kind: kind, preview: $0, index: 0))
+            }
+        }
         lastNotificationPreviewsFetchDate = Date()
         updateDisplayedNotificationCount()
     }
