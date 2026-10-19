@@ -24,21 +24,14 @@ struct NotificationSettingsView: View {
 
     var body: some View {
         Form {
-            Section {
-                Toggle("Submissions", isOn: $notifySubmissions)
-                Toggle("Notes", isOn: $notifyNotes)
-                Toggle("Submission comments", isOn: $notifySubmissionComments)
-                Toggle("Journal comments", isOn: $notifyJournalComments)
-                Toggle("Shouts", isOn: $notifyShouts)
-                Toggle("Journals", isOn: $notifyJournals)
-            } header: {
-                Text("Notifications")
-            } footer: {
-                Text("These notifications are not delivered in real-time and may be unavailable on CloudFlare challenge failure.")
+            if NotificationDelivery.isSupported {
+                deliverySection
             }
 
             Section {
+                #if !FA_SKIP_MODULE
                 Toggle("Notes", isOn: $badgeNotes)
+                #endif
                 Toggle("Submission comments", isOn: $badgeSubmissionComments)
                 Toggle("Journal comments", isOn: $badgeJournalComments)
                 Toggle("Shouts", isOn: $badgeShouts)
@@ -46,10 +39,29 @@ struct NotificationSettingsView: View {
             } header: {
                 Text("Tab Badges")
             } footer: {
+                #if FA_SKIP_MODULE
+                Text("These settings control which unread items are counted in the badge shown on the Notifications tab.")
+                #else
                 Text("These settings control which unread items are counted in the badges shown on the Notes and Notifications tabs.")
+                #endif
             }
         }
-        .navigationTitle("Notifications & Badges")
+        .navigationTitle(NotificationDelivery.isSupported ? "Notifications & Badges" : "Tab Badges")
+    }
+
+    private var deliverySection: some View {
+        Section {
+            Toggle("Submissions", isOn: $notifySubmissions)
+            Toggle("Notes", isOn: $notifyNotes)
+            Toggle("Submission comments", isOn: $notifySubmissionComments)
+            Toggle("Journal comments", isOn: $notifyJournalComments)
+            Toggle("Shouts", isOn: $notifyShouts)
+            Toggle("Journals", isOn: $notifyJournals)
+        } header: {
+            Text("Notifications")
+        } footer: {
+            Text("These notifications are not delivered in real-time and may be unavailable on CloudFlare challenge failure.")
+        }
     }
 }
 
