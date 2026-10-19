@@ -5,8 +5,6 @@
 //  Created by Ceylo on 30/03/2023.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
@@ -15,8 +13,9 @@ struct JournalView: View {
     var replyAction: @MainActor (_ parentCid: Int?, _ reply: CommentReply) async throws -> Void
     var sendNoteAction: (_ destinationUser: String, _ subject: String, _ text: String) async throws -> Void
     
-    @State private var replySession: CommentReplySession?
-    @State private var noteReplySession: NoteReplySession?
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var replySession: CommentReplySession?
+    @State var noteReplySession: NoteReplySession?
     
     var header: some View {
         TitleAuthorHeader(
@@ -131,5 +130,3 @@ struct JournalView: View {
         )
     }
 }
-
-#endif

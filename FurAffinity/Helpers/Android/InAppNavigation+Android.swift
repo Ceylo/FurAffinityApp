@@ -3,7 +3,7 @@
 //  FurAffinityUI (Android)
 //
 //  The Android counterpart of the iOS `view(for:)` in InAppNavigation.swift. That
-//  one can't be shared: it names eight `Remote*View`s that aren't ported yet. This
+//  one can't be shared: it names `Remote*View`s that aren't ported yet. This
 //  fan-out returns the ported screens and sends the rest to a placeholder, and grows
 //  a case at a time as screens land. Every case is listed on purpose — a `default:`
 //  would take a newly added `FATarget` silently, so Android would lose a screen iOS
@@ -20,7 +20,9 @@ func view(for target: FATarget) -> some View {
         RemoteSubmissionView(url: url, previewData: previewData)
     case let .submissionMetadata(metadata, resolution):
         SubmissionMetadataView(metadata: metadata, resolution: resolution)
-    case .note, .journal, .user, .gallery, .favorites, .journals, .watchlist:
+    case let .journal(url):
+        RemoteJournalView(url: url)
+    case .note, .user, .gallery, .favorites, .journals, .watchlist:
         notPortedYet
     }
 }
