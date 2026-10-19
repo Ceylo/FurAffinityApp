@@ -27,6 +27,7 @@ struct StagedDeletionTests {
     private func makeDeletion() -> (StagedDeletion<Int>, Recorder) {
         let recorder = Recorder()
         let deletion = StagedDeletion<Int>(
+            label: "items",
             send: { items in
                 recorder.sent.append(items)
                 if recorder.holdSend {
@@ -98,7 +99,7 @@ struct StagedDeletionTests {
         #expect(!deletion.hides { $0 == 1 })
     }
 
-    @Test func hides_whileSending() async {
+    @Test func hides_untilAFetchIsAppliedAfterSending() async {
         let (deletion, recorder) = makeDeletion()
         recorder.holdSend = true
         deletion.stage([1])
@@ -112,8 +113,29 @@ struct StagedDeletionTests {
 
         recorder.gate?.resume()
         await request?.value
-        #expect(!deletion.hides { $0 == 1 })
+        #expect(deletion.hides { $0 == 1 })
         #expect(recorder.restored.isEmpty)
+
+        deletion.fetchApplied()
+        #expect(!deletion.hides { $0 == 1 })
+    }
+
+    @Test func reset_whileSending_dropsTheRestore() async {
+        let (deletion, recorder) = makeDeletion()
+        recorder.holdSend = true
+        recorder.failSend = true
+        deletion.stage([1])
+
+        let request = deletion.commit()
+        while recorder.gate == nil {
+            await Task.yield()
+        }
+        deletion.reset()
+        recorder.gate?.resume()
+        await request?.value
+
+        #expect(recorder.restored.isEmpty)
+        #expect(!deletion.hides { $0 == 1 })
     }
 
     @Test func reset_dropsWithoutSending() async {

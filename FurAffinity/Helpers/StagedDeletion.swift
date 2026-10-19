@@ -17,11 +17,16 @@ final class StagedDeletion<Item: Hashable> {
     /// Finishes once the deletion it commits has been sent. Not private so tests can await it.
     @ObservationIgnored private(set) var commitTimer: Task<Void, Never>?
     @ObservationIgnored private var sending = Set<Item>()
+    @ObservationIgnored private var sent = Set<Item>()
+    @ObservationIgnored private var generation = 0
+    private let label: String
     private let send: @MainActor ([Item]) async throws -> Void
     private let restore: @MainActor ([Item]) -> Void
 
-    init(send: @escaping @MainActor ([Item]) async throws -> Void,
+    init(label: String,
+         send: @escaping @MainActor ([Item]) async throws -> Void,
          restore: @escaping @MainActor ([Item]) -> Void) {
+        self.label = label
         self.send = send
         self.restore = restore
     }
@@ -40,7 +45,7 @@ final class StagedDeletion<Item: Hashable> {
             guard !Task.isCancelled else { return }
             await commit()?.value
         }
-        logger.info("Staged deletion of \(items.count) items")
+        logger.info("Staged deletion of \(items.count) \(self.label)")
     }
 
     /// - Returns: the deletion request, rolled back if it fails; `nil` if nothing was staged.
@@ -48,13 +53,17 @@ final class StagedDeletion<Item: Hashable> {
     func commit() -> Task<Void, Never>? {
         guard let items = takeStaged() else { return nil }
         sending.formUnion(items)
-        logger.info("Committing deletion of \(items.count) items")
+        logger.info("Committing deletion of \(items.count) \(self.label)")
 
+        let generation = generation
         return Task {
             do {
                 try await send(items)
+                guard generation == self.generation else { return }
+                sent.formUnion(items)
             } catch {
-                logger.error("Deletion of \(items.count) items failed with error \"\(error)\", rolling back")
+                guard generation == self.generation else { return }
+                logger.error("Deletion of \(items.count) \(self.label) failed with error \"\(error)\", rolling back")
                 restore(items)
             }
             sending.subtract(items)
@@ -66,7 +75,11 @@ final class StagedDeletion<Item: Hashable> {
     }
 
     func hides(where predicate: (Item) -> Bool) -> Bool {
-        staged.contains(where: predicate) || sending.contains(where: predicate)
+        staged.contains(where: predicate) || sending.contains(where: predicate) || sent.contains(where: predicate)
+    }
+
+    func fetchApplied() {
+        sent = []
     }
 
     private func takeStaged() -> [Item]? {
@@ -78,7 +91,9 @@ final class StagedDeletion<Item: Hashable> {
 
     func reset() {
         commitTimer?.cancel()
+        generation += 1
         staged = []
         sending = []
+        sent = []
     }
 }

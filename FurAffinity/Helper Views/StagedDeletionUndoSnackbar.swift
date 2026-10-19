@@ -10,16 +10,17 @@ import SwiftUI
 
 /// The Undo snackbar for a `StagedDeletion`, and the commits that end it early.
 struct StagedDeletionUndoSnackbar: View {
-    var count: Int
-    var message: String
+    var count: () -> Int
+    var message: (_ count: Int) -> String
     var onUndo: () -> Void
     var onCommit: () -> Void
     // Not private: skipstone can't bridge a private @State/@Environment.
     @Environment(\.scenePhase) var scenePhase
 
     var body: some View {
+        let count = count()
         let isShown = count > 0
-        UndoSnackbar(message: message, onUndo: onUndo)
+        UndoSnackbar(message: message(count), onUndo: onUndo)
         // Stays mounted so it can fade: `.transition` gets a hard cut on SkipUI.
         .opacity(isShown ? 1 : 0)
         .offset(y: isShown ? 0 : 16)
@@ -44,10 +45,10 @@ struct StagedDeletionUndoSnackbar: View {
 }
 
 extension StagedDeletion {
-    func undoSnackbar(message: (_ count: Int) -> String) -> StagedDeletionUndoSnackbar {
+    func undoSnackbar(message: @escaping (_ count: Int) -> String) -> StagedDeletionUndoSnackbar {
         StagedDeletionUndoSnackbar(
-            count: staged.count,
-            message: message(staged.count),
+            count: { self.staged.count },
+            message: message,
             onUndo: undo,
             onCommit: { self.commit() }
         )

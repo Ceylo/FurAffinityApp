@@ -38,8 +38,9 @@ struct AndroidRootView: View {
         case .submissions:
             submissionsPath.append(target)
         case .settings:
-            selectedTab = .submissions
-            submissionsPath.append(target)
+            // As iOS's `LoggedInView.Tab.forDeepLink`.
+            selectedTab = .notifications
+            notificationsPath.append(target)
         }
     }
 
@@ -190,6 +191,12 @@ struct AndroidRootView: View {
         .onChange(of: navigationStream.latest) { _, event in
             guard let event else { return }
             handleTarget(event.target)
+        }
+        .onChange(of: model.session == nil) { _, loggedOut in
+            guard loggedOut else { return }
+            submissionsPath = []
+            notificationsPath = []
+            selectedTab = .submissions
         }
         // Held until there is a session to open it in.
         .task(id: "\(model.session != nil) \(pendingDebugDeepLink.url?.absoluteString ?? "")") {

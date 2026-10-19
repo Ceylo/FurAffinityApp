@@ -86,6 +86,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
     @ObservationIgnored private var lastLoggedDefaults: [String: Any] = [:]
     init() {
         submissionDeletion = StagedDeletion(
+            label: "submission previews",
             send: { [weak self] previews in
                 try await self?.getSession().deleteSubmissionPreviews(previews)
             },
@@ -94,6 +95,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             }
         )
         notificationDeletion = StagedDeletion(
+            label: "notifications",
             send: { [weak self] items in
                 try await self?.sendNotificationsDeletion(items)
             },
@@ -252,6 +254,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             .filter { $0.sid > lastKnownSid }
         // We also take into account any preview deletion that may have happened since the fetch started
             .filter { preview in !submissionDeletion.hides { $0 == preview } }
+        submissionDeletion.fetchApplied()
         
         if !newSubmissions.isEmpty {
             submissionPreviews = OrderedSet(newSubmissions).appending(contentsOf: submissionPreviews ?? [])
@@ -428,17 +431,18 @@ class Model: NotificationsNuker, NotificationsDeleter {
         guard let notificationPreviews else { return }
         let section = notificationPreviews[kind]
         let staged = notifications.compactMap { preview in
-            section.firstIndex(of: preview).map {
-                StagedNotification(kind: kind, preview: preview, index: $0)
+            section.firstIndex(where: { $0.id == preview.id }).map {
+                StagedNotification(kind: kind, preview: section[$0], index: $0)
             }
         }
-        self.notificationPreviews = notificationPreviews.removing(notifications, of: kind)
+        self.notificationPreviews = notificationPreviews.removing(staged.map(\.preview), of: kind)
         updateDisplayedNotificationCount()
         notificationDeletion.stage(staged)
     }
 
     private func sendNotificationsDeletion(_ items: [StagedNotification]) async throws {
         guard let kind = items.first?.kind else { return }
+        assert(items.allSatisfy { $0.kind == kind })
         let notifications = items.map(\.preview)
         do {
             try await fetchNotificationPreviews { session in
@@ -454,7 +458,13 @@ class Model: NotificationsNuker, NotificationsDeleter {
                 }
             }
         } catch {
-            storeError(error, in: errorStorage, action: "Delete Notification(s)", webBrowserURL: nil)
+            let action = switch kind {
+            case .submissionComment: "Delete Submission Comment Notification(s)"
+            case .journalComment: "Delete Journal Comment Notification(s)"
+            case .shout: "Delete Shout Notification(s)"
+            case .journal: "Delete Journal Notification(s)"
+            }
+            storeError(error, in: errorStorage, action: action, webBrowserURL: nil)
             throw error
         }
     }
@@ -499,6 +509,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
                 !notificationDeletion.hides { $0.kind == kind && $0.preview.id == preview.id }
             }
         }
+        notificationDeletion.fetchApplied()
         lastNotificationPreviewsFetchDate = Date()
         updateDisplayedNotificationCount()
     }

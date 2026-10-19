@@ -20,7 +20,6 @@ enum AndroidAccessibility {
     // `nonisolated(unsafe)`: AnyDynamicObject isn't Sendable but wraps a JNI global
     // ref that is safe to read from any thread.
     nonisolated(unsafe) private static let bridge: AnyDynamicObject? = {
-        guard isJNIInitialized else { return nil }
         do {
             return try AnyDynamicObject(className: "fur.affinity.ui.FAAccessibilityBridge")
         } catch {
@@ -34,7 +33,7 @@ enum AndroidAccessibility {
     /// setting. Read on each call: the setting can change while the app runs.
     static func recommendedTimeout(_ timeout: Duration) -> Duration {
         #if canImport(Android)
-        guard let bridge else { return timeout }
+        guard isJNIInitialized, let bridge else { return timeout }
         do {
             let millis = Int64(timeout / .milliseconds(1))
             let recommended: Int64? = try bridge.recommendedTimeoutMillis(millis)
