@@ -1,5 +1,5 @@
 {
-  "originHash" : "6d4f04ee4eaaebc3c5cd700ed4198f15988e6229f8451c2104d2319eec1847b7",
+  "originHash" : "2c726b2736a361d9f209974910f20138d2e5144b87e1a4907554b01153858a6e",
   "pins" : [
     {
       "identity" : "amplitude-swift",
@@ -142,7 +142,7 @@
       "location" : "https://github.com/Ceylo/skip-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "91826c2c708fcb7dccffaf73208ace3db44dfb3f"
+        "revision" : "69085b7bf7db62e47e0e49338930ef3d8df25969"
       }
     },
     {
