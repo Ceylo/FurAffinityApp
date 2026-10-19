@@ -15,7 +15,7 @@ still built by `FurAffinity.xcodeproj` and none of its files move.
 | [docs/upstreaming.md](docs/upstreaming.md) | sending a fork patch back to its origin project: gates, evidence, PR shape |
 | [docs/images.md](docs/images.md) | the Android image pipeline, the shared HTTP client, and why HTTP/2 does not ship |
 | [docs/cloudflare-and-login.md](docs/cloudflare-and-login.md) | login, the long-lived hidden WebView, Cloudflare challenges and how one is repaired |
-| [docs/screens.md](docs/screens.md) | Followed feed, submission screen, animation on SkipUI |
+| [docs/screens.md](docs/screens.md) | Followed feed, submission screen, notifications and journals, animation on SkipUI |
 | [docs/releasing.md](docs/releasing.md) | update check, release signing, handing a build to testers |
 | [docs/crash-reporting.md](docs/crash-reporting.md) | Sentry on both platforms: symbols, consent, tombstones, and how a crash report is verified |
 | [docs/analytics.md](docs/analytics.md) | Amplitude on both platforms, and what it does not collect |
