@@ -46,7 +46,7 @@ struct StagedDeletionTests {
         try await Task.sleep(for: .milliseconds(100))
 
         #expect(deletion.staged == [1, 2])
-        #expect(deletion.hides(1))
+        #expect(deletion.hides { $0 == 1 })
         #expect(recorder.sent.isEmpty)
     }
 
@@ -59,7 +59,7 @@ struct StagedDeletionTests {
 
         #expect(recorder.restored == [[1, 2]])
         #expect(deletion.staged.isEmpty)
-        #expect(!deletion.hides(1))
+        #expect(!deletion.hides { $0 == 1 })
         #expect(deletion.commit() == nil)
         #expect(recorder.sent.isEmpty)
     }
@@ -95,7 +95,7 @@ struct StagedDeletionTests {
 
         #expect(recorder.sent == [[1]])
         #expect(recorder.restored == [[1]])
-        #expect(!deletion.hides(1))
+        #expect(!deletion.hides { $0 == 1 })
     }
 
     @Test func hides_whileSending() async {
@@ -108,11 +108,11 @@ struct StagedDeletionTests {
             await Task.yield()
         }
         #expect(deletion.staged.isEmpty)
-        #expect(deletion.hides(1))
+        #expect(deletion.hides { $0 == 1 })
 
         recorder.gate?.resume()
         await request?.value
-        #expect(!deletion.hides(1))
+        #expect(!deletion.hides { $0 == 1 })
         #expect(recorder.restored.isEmpty)
     }
 

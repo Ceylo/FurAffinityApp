@@ -25,14 +25,9 @@ struct RemoteNotificationsView: View {
         // Only Android stages a deletion (see NotificationsView's `delete`).
         #if FA_SKIP_MODULE
         .overlay(alignment: .bottom) {
-            let deletion = model.notificationDeletion!
-            let count = deletion.staged.count
-            StagedDeletionUndoSnackbar(
-                count: count,
-                message: count > 1 ? "\(count) notifications deleted" : "Notification deleted",
-                onUndo: deletion.undo,
-                onCommit: { deletion.commit() }
-            )
+            model.notificationDeletion.undoSnackbar {
+                $0 > 1 ? "\($0) notifications deleted" : "Notification deleted"
+            }
         }
         #endif
         .refreshable(actionTitle: "Notifications Refresh", webBrowserURL: model.notificationPreviewsSourceUrl) {

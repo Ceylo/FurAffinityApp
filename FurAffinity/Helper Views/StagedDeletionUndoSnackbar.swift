@@ -42,3 +42,14 @@ struct StagedDeletionUndoSnackbar: View {
         }
     }
 }
+
+extension StagedDeletion {
+    func undoSnackbar(message: (_ count: Int) -> String) -> StagedDeletionUndoSnackbar {
+        StagedDeletionUndoSnackbar(
+            count: staged.count,
+            message: message(staged.count),
+            onUndo: undo,
+            onCommit: { self.commit() }
+        )
+    }
+}

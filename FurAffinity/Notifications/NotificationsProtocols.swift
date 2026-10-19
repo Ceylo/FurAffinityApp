@@ -34,15 +34,6 @@ struct StagedNotification: Hashable {
     let kind: NotificationKind
     let preview: FANotificationPreview
     let index: Int
-
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.kind == rhs.kind && lhs.preview == rhs.preview
-    }
-
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(kind)
-        hasher.combine(preview)
-    }
 }
 
 extension FANotificationPreviews {
@@ -64,6 +55,12 @@ extension FANotificationPreviews {
             shouts: transform(.shout, shouts),
             journals: transform(.journal, journals)
         )
+    }
+
+    func removing(_ previews: [FANotificationPreview], of kind: NotificationKind) -> FANotificationPreviews {
+        mapSections { sectionKind, section in
+            sectionKind == kind ? section.filter { !previews.contains($0) } : section
+        }
     }
 }
 

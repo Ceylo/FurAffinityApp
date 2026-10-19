@@ -242,14 +242,9 @@ struct SubmissionsFeedView: View {
         // Only Android stages a deletion (see `onDelete`).
         #if FA_SKIP_MODULE
         .overlay(alignment: .bottom) {
-            let deletion = model.submissionDeletion!
-            let count = deletion.staged.count
-            StagedDeletionUndoSnackbar(
-                count: count,
-                message: count > 1 ? "\(count) submissions deleted" : "Submission deleted",
-                onUndo: deletion.undo,
-                onCommit: { deletion.commit() }
-            )
+            model.submissionDeletion.undoSnackbar {
+                $0 > 1 ? "\($0) submissions deleted" : "Submission deleted"
+            }
         }
         #endif
         .autorefreshingOnForeground {

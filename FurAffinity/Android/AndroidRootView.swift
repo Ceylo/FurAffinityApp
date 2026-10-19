@@ -35,7 +35,10 @@ struct AndroidRootView: View {
         switch selectedTab {
         case .notifications:
             notificationsPath.append(target)
-        case .submissions, .settings:
+        case .submissions:
+            submissionsPath.append(target)
+        case .settings:
+            selectedTab = .submissions
             submissionsPath.append(target)
         }
     }

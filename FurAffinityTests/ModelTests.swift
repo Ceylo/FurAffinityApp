@@ -303,6 +303,14 @@ struct ModelTests {
         let shout = try #require(model.notificationPreviews?.shouts.first)
 
         model.stageNotificationsDeletion([shout], of: .shout)
+        // FA renews `naturalDatetime` on every fetch.
+        mock.mockNotificationPreviews = mock.mockNotificationPreviews.mapSections { _, section in
+            section.map {
+                FANotificationPreview(id: $0.id, author: $0.author, displayAuthor: $0.displayAuthor,
+                                      title: $0.title, datetime: $0.datetime,
+                                      naturalDatetime: "a minute ago", url: $0.url)
+            }
+        }
         try await model.fetchNotificationPreviews()
 
         #expect(model.notificationPreviews?.shouts.map(\.id) == [5, 6, 7])

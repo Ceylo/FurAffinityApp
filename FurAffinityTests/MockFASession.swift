@@ -152,9 +152,7 @@ final class MockFASession: FASession {
         if shouldDeleteFail {
             throw ModelError.disconnected
         }
-        mockNotificationPreviews = mockNotificationPreviews.mapSections { sectionKind, section in
-            sectionKind == kind ? section.filter { !notifications.contains($0) } : section
-        }
+        mockNotificationPreviews = mockNotificationPreviews.removing(notifications, of: kind)
         return mockNotificationPreviews
     }
 

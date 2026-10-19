@@ -46,10 +46,7 @@ final class StagedDeletion<Item: Hashable> {
     /// - Returns: the deletion request, rolled back if it fails; `nil` if nothing was staged.
     @discardableResult
     func commit() -> Task<Void, Never>? {
-        commitTimer?.cancel()
-        guard !staged.isEmpty else { return nil }
-        let items = staged
-        staged = []
+        guard let items = takeStaged() else { return nil }
         sending.formUnion(items)
         logger.info("Committing deletion of \(items.count) items")
 
@@ -65,15 +62,18 @@ final class StagedDeletion<Item: Hashable> {
     }
 
     func undo() {
-        commitTimer?.cancel()
-        guard !staged.isEmpty else { return }
-        let items = staged
-        staged = []
-        restore(items)
+        takeStaged().map(restore)
     }
 
-    func hides(_ item: Item) -> Bool {
-        staged.contains(item) || sending.contains(item)
+    func hides(where predicate: (Item) -> Bool) -> Bool {
+        staged.contains(where: predicate) || sending.contains(where: predicate)
+    }
+
+    private func takeStaged() -> [Item]? {
+        commitTimer?.cancel()
+        guard !staged.isEmpty else { return nil }
+        defer { staged = [] }
+        return staged
     }
 
     func reset() {

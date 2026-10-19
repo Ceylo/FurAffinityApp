@@ -251,7 +251,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
         let newSubmissions = OrderedSet(latestSubmissions)
             .filter { $0.sid > lastKnownSid }
         // We also take into account any preview deletion that may have happened since the fetch started
-            .filter { !submissionDeletion.hides($0) }
+            .filter { preview in !submissionDeletion.hides { $0 == preview } }
         
         if !newSubmissions.isEmpty {
             submissionPreviews = OrderedSet(newSubmissions).appending(contentsOf: submissionPreviews ?? [])
@@ -432,34 +432,30 @@ class Model: NotificationsNuker, NotificationsDeleter {
                 StagedNotification(kind: kind, preview: preview, index: $0)
             }
         }
-        self.notificationPreviews = notificationPreviews.mapSections { sectionKind, section in
-            sectionKind == kind ? section.filter { !notifications.contains($0) } : section
-        }
+        self.notificationPreviews = notificationPreviews.removing(notifications, of: kind)
         updateDisplayedNotificationCount()
         notificationDeletion.stage(staged)
     }
 
     private func sendNotificationsDeletion(_ items: [StagedNotification]) async throws {
-        for kind in NotificationKind.allCases {
-            let notifications = items.filter { $0.kind == kind }.map(\.preview)
-            guard !notifications.isEmpty else { continue }
-            do {
-                try await fetchNotificationPreviews { session in
-                    switch kind {
-                    case .submissionComment:
-                        try await session.deleteSubmissionCommentNotifications(notifications)
-                    case .journalComment:
-                        try await session.deleteJournalCommentNotifications(notifications)
-                    case .shout:
-                        try await session.deleteShoutNotifications(notifications)
-                    case .journal:
-                        try await session.deleteJournalNotifications(notifications)
-                    }
+        guard let kind = items.first?.kind else { return }
+        let notifications = items.map(\.preview)
+        do {
+            try await fetchNotificationPreviews { session in
+                switch kind {
+                case .submissionComment:
+                    try await session.deleteSubmissionCommentNotifications(notifications)
+                case .journalComment:
+                    try await session.deleteJournalCommentNotifications(notifications)
+                case .shout:
+                    try await session.deleteShoutNotifications(notifications)
+                case .journal:
+                    try await session.deleteJournalNotifications(notifications)
                 }
-            } catch {
-                storeError(error, in: errorStorage, action: "Delete Notification(s)", webBrowserURL: nil)
-                throw error
             }
+        } catch {
+            storeError(error, in: errorStorage, action: "Delete Notification(s)", webBrowserURL: nil)
+            throw error
         }
     }
 
@@ -468,7 +464,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
         self.notificationPreviews = notificationPreviews.mapSections { kind, section in
             var section = section
             for item in items.filter({ $0.kind == kind }).sorted(by: { $0.index < $1.index })
-            where !section.contains(item.preview) {
+            where !section.contains(where: { $0.id == item.preview.id }) {
                 section.insert(item.preview, at: min(item.index, section.count))
             }
             return section
@@ -477,37 +473,30 @@ class Model: NotificationsNuker, NotificationsDeleter {
     }
 
     func nukeAllSubmissionCommentNotifications() async throws {
-        await notificationDeletion.commit()?.value
-        try await fetchNotificationPreviews { session in
-            try await session.nukeAllSubmissionCommentNotifications()
-        }
+        try await nukeNotifications { try await $0.nukeAllSubmissionCommentNotifications() }
     }
 
     func nukeAllJournalCommentNotifications() async throws {
-        await notificationDeletion.commit()?.value
-        try await fetchNotificationPreviews { session in
-            try await session.nukeAllJournalCommentNotifications()
-        }
+        try await nukeNotifications { try await $0.nukeAllJournalCommentNotifications() }
     }
 
     func nukeAllShoutNotifications() async throws {
-        await notificationDeletion.commit()?.value
-        try await fetchNotificationPreviews { session in
-            try await session.nukeAllShoutNotifications()
-        }
+        try await nukeNotifications { try await $0.nukeAllShoutNotifications() }
     }
 
     func nukeAllJournalNotifications() async throws {
+        try await nukeNotifications { try await $0.nukeAllJournalNotifications() }
+    }
+
+    private func nukeNotifications(_ nuke: @MainActor (_ session: any FASession) async throws -> FANotificationPreviews) async throws {
         await notificationDeletion.commit()?.value
-        try await fetchNotificationPreviews { session in
-            try await session.nukeAllJournalNotifications()
-        }
+        try await fetchNotificationPreviews(fetcher: nuke)
     }
 
     private func fetchNotificationPreviews(fetcher: @MainActor (_ session: any FASession) async throws -> FANotificationPreviews) async throws {
         notificationPreviews = try await fetcher(getSession()).mapSections { kind, section in
-            section.filter {
-                !notificationDeletion.hides(StagedNotification(kind: kind, preview: $0, index: 0))
+            section.filter { preview in
+                !notificationDeletion.hides { $0.kind == kind && $0.preview.id == preview.id }
             }
         }
         lastNotificationPreviewsFetchDate = Date()
