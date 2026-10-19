@@ -385,7 +385,7 @@ result. Read the state with
 
 ## Opened PRs
 
-State is one of draft / opened / merged / rejected, as of 2026-10-11; refresh it with
+State is one of draft / opened / merged / rejected, as of 2026-10-19; refresh it with
 `gh pr view <n> -R <repo> --json state,isDraft`.
 
 | PR | Patch | State |
@@ -398,22 +398,22 @@ State is one of draft / opened / merged / rejected, as of 2026-10-11; refresh it
 | skipapp-showcase [#123](https://github.com/skiptools/skipapp-showcase/pull/123) | playground rows for skip-ui #525 | opened |
 | skip-fuse-ui [#151](https://github.com/skiptools/skip-fuse-ui/pull/151) | private `@State`/`@Environment` bridging, runtime half (write-up on branch `android-skip-private`) | opened; merges before skipstone #282 |
 | skipstone [#282](https://github.com/skiptools/skipstone/pull/282) | private `@State`/`@Environment` bridging, generator half | opened |
-| skip-ui [#538](https://github.com/skiptools/skip-ui/pull/538) | `84586ee` | opened |
-| skip-ui [#539](https://github.com/skiptools/skip-ui/pull/539) | `88ac81d` | opened |
-| skip-ui [#540](https://github.com/skiptools/skip-ui/pull/540) | `1335ebf` + `22ff079`, reworked in review | opened |
+| skip-ui [#538](https://github.com/skiptools/skip-ui/pull/538) | `84586ee` | merged 2026-10-17 as `6bcf54b` |
+| skip-ui [#539](https://github.com/skiptools/skip-ui/pull/539) | `88ac81d` | opened; conflicts with #538's test since 2026-10-17 |
+| skip-ui [#540](https://github.com/skiptools/skip-ui/pull/540) | `1335ebf` + `22ff079`, reworked in review | opened; conflicts with #538's test since 2026-10-17 |
 | skip-ui [#541](https://github.com/skiptools/skip-ui/pull/541) | `4b30753`, vertical half | opened |
 | skip-ui [#548](https://github.com/skiptools/skip-ui/pull/548) | `f54f6e8`; rows added to showcase #123 | draft |
 | skip-ui [#549](https://github.com/skiptools/skip-ui/pull/549) | `5110e81`, re-cut without `insets` | draft |
 | skipapp-showcase [#139](https://github.com/skiptools/skipapp-showcase/pull/139) | Row Modifiers page for skip-ui #549 | draft |
 | skip-ui [#550](https://github.com/skiptools/skip-ui/pull/550) | `524153a`, reworked in review | draft |
 | skip-ui [#551](https://github.com/skiptools/skip-ui/pull/551) | `ad375fb` | draft |
-| skipstone [#288](https://github.com/skiptools/skipstone/pull/288) | CI: wait for `sys.boot_completed == 1` ([CI instabilities](#ci-instabilities)) | opened |
+| skipstone [#288](https://github.com/skiptools/skipstone/pull/288) | CI: wait for `sys.boot_completed == 1` ([CI instabilities](#ci-instabilities)) | merged 2026-10-13 |
 | skip-ffi [#14](https://github.com/skiptools/skip-ffi/pull/14) | CI: `SKIP_DYNAMIC_LIBRARIES` gate ([CI instabilities](#ci-instabilities)) | opened |
 | actions [#23](https://github.com/skiptools/actions/issues/23) (issue) | the plan every Intel-exit PR links to | opened |
-| actions [#22](https://github.com/skiptools/actions/pull/22) | CI: emulator guard reads `runner.arch` ([Leaving Intel macOS](#leaving-intel-macos-runners)) | draft |
-| skip-ffi [#15](https://github.com/skiptools/skip-ffi/pull/15) | CI: `macos-26` + Ubuntu; needs actions #22 in `@v1` | draft |
-| skipstone [#289](https://github.com/skiptools/skipstone/pull/289) | CI: `android-ci` on `macos-26` + one `macos-26-intel` leg | draft |
-| skipstone [#290](https://github.com/skiptools/skipstone/pull/290) | 8 MiB thread stacks for the musl Linux binary | draft |
+| actions [#22](https://github.com/skiptools/actions/pull/22) | CI: emulator guard reads `runner.arch` ([Leaving Intel macOS](#leaving-intel-macos-runners)) | opened |
+| skip-ffi [#15](https://github.com/skiptools/skip-ffi/pull/15) | CI: `macos-26` + Ubuntu; needs actions #22 in `@v1` | opened |
+| skipstone [#289](https://github.com/skiptools/skipstone/pull/289) | CI: `android-ci` on `macos-26` + one `macos-26-intel` leg | closed 2026-10-12: folded unchanged, authorship kept, into piercifani's merged #300 |
+| skipstone [#290](https://github.com/skiptools/skipstone/pull/290) | 8 MiB thread stacks for the musl Linux binary | merged 2026-10-11 |
 
 ## CI instabilities
 
