@@ -25,9 +25,8 @@ protocol NotificationsDeleter: Sendable {
     func deleteJournalNotifications(_ items: [FANotificationPreview]) -> Void
 }
 
-/// Whether this platform delivers the notifications and tab badges that
-/// `NotificationSettingsView` configures. Android has neither: delivery needs
-/// `BackgroundRefreshManager`, and the badges sit on tabs that aren't ported.
+/// Whether this platform delivers the notifications that `NotificationSettingsView`
+/// configures. Android doesn't: delivery needs `BackgroundRefreshManager`.
 enum NotificationDelivery {
 #if os(Android)
     static let isSupported = false

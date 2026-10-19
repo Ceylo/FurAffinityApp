@@ -5,8 +5,6 @@
 //  Created by Ceylo on 28/10/2023.
 //
 
-#if !FA_SKIP_MODULE
-
 import Foundation
 
 extension URL {
@@ -18,5 +16,3 @@ extension URL {
         return displayString.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
     }
 }
-
-#endif

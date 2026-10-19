@@ -4,9 +4,9 @@
 //
 //  Root of the Android app, mirroring iOS's `RootView`: the shared `HomeView` until
 //  a session exists, then the ported tabs — which stand in for `LoggedInView` and
-//  grow as screens are ported. The Submissions tab is a `NavigationStack` fed by the
-//  shared `NavigationStream`; pushed destinations come from `view(for:)` in
-//  InAppNavigation+Android.swift.
+//  grow as screens are ported. The Submissions and Notifications tabs are each a
+//  `NavigationStack` fed by the shared `NavigationStream`; pushed destinations come
+//  from `view(for:)` in InAppNavigation+Android.swift.
 //
 //  HomeView owns the session on both platforms (it calls `model.setSession`), so
 //  this view only reads `model.session` — including for logout, which SettingsView
@@ -20,13 +20,24 @@ struct AndroidRootView: View {
     @State var model = Model()
     @State var navigationStream = NavigationStream()
     @State var challengeCoordinator = CloudflareChallengeCoordinator.shared
-    @State var path = [FATarget]()
+    @State var submissionsPath = [FATarget]()
+    @State var notificationsPath = [FATarget]()
     @State var selectedTab: Tab = .submissions
     @State var pendingDebugDeepLink = PendingDebugDeepLink.shared
 
     enum Tab {
         case submissions
+        case notifications
         case settings
+    }
+
+    private func handleTarget(_ target: FATarget) {
+        switch selectedTab {
+        case .notifications:
+            notificationsPath.append(target)
+        case .submissions, .settings:
+            submissionsPath.append(target)
+        }
     }
 
     var body: some View {
@@ -95,7 +106,7 @@ struct AndroidRootView: View {
                     }
             } else {
                 TabView(selection: $selectedTab) {
-                    NavigationStack(path: $path) {
+                    NavigationStack(path: $submissionsPath) {
                         SubmissionsTabView()
                             .navigationDestination(for: FATarget.self) { target in
                                 view(for: target)
@@ -105,6 +116,18 @@ struct AndroidRootView: View {
                         Label("Submissions", systemImage: "rectangle.grid.2x2")
                     }
                     .tag(Tab.submissions)
+
+                    NavigationStack(path: $notificationsPath) {
+                        RemoteNotificationsView()
+                            .navigationDestination(for: FATarget.self) { target in
+                                view(for: target)
+                            }
+                    }
+                    .badge(model.displayedNotificationCount)
+                    .tabItem {
+                        Label("Notifications", systemImage: "bell")
+                    }
+                    .tag(Tab.notifications)
 
                     // SettingsView brings its own NavigationStack, same as on iOS,
                     // and has no FATarget destinations.
@@ -161,13 +184,9 @@ struct AndroidRootView: View {
         .environment(model)
         .environment(model.errorStorage)
         .environment(\.navigationStream, navigationStream)
-        // Gap: an event raised from the Settings tab pushes onto the Submissions
-        // stack without selecting that tab, so the push isn't visible until the
-        // user switches. iOS's LoggedInView picks a stack per tab; nothing in
-        // Settings sends navigation events yet.
         .onChange(of: navigationStream.latest) { _, event in
             guard let event else { return }
-            path.append(event.target)
+            handleTarget(event.target)
         }
         // Held until there is a session to open it in.
         .task(id: "\(model.session != nil) \(pendingDebugDeepLink.url?.absoluteString ?? "")") {
