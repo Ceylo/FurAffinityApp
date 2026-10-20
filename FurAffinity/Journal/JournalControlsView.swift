@@ -26,7 +26,7 @@ struct JournalControlsView: View {
                 replyAction: replyAction
             )
             .applying {
-                if #available(iOS 26, *) {
+                if #available(iOS 26, *), !isAndroidBuild {
                     $0.offset(y: -3)
                         .padding(-5)
                         .floatingGlass(.regular.interactive())
