@@ -312,9 +312,10 @@ skip-fuse-ui:
 
   Left as Material intends: the type-scale sizes, letter tracking, the 48 dp menu row,
   and trailing menu-icon placement.
-- **A filled image is cropped by its frame's alignment** (`e844ccd`). `ImageLayout`
-  centred its own overflow, so the user page's banner (`.fill`, then
-  `.frame(…, alignment: .leading).clipped()`) showed its middle where iOS shows its left.
-  Frames now pass their alignment down as `_frameAlignment`. Passing the overflowing
-  size up instead doesn't survive `KFImage`'s id'd `ZStack`, which renders through
+- **A filled image is cropped by its frame's alignment** (`e844ccd`, `0e97371`,
+  `cca6f8a`). `ImageLayout` centred its own overflow, so the user page's banner (`.fill`,
+  then `.frame(…, alignment: .leading).clipped()`) showed its middle where iOS shows its
+  left. Frames now pass their alignment down as `_frameAlignment`, each only on the axes
+  it sizes; overlays and backgrounds pass their own. Passing the overflowing size up
+  instead doesn't survive `KFImage`'s id'd `ZStack`, which renders through
   `AnimatedContent` and clamps it.
