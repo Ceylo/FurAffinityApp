@@ -154,7 +154,7 @@ struct SubmissionsFeedView: View {
     }
 
     private func itemView(for preview: FASubmissionPreview, geometry: GeometryProxy, scrollProxy: ScrollViewProxy) -> some View {
-        SubmissionPreviewRow(preview: preview)
+        SubmissionPreviewRow<TitleAuthorHeader>(preview: preview)
             .onItemFrameChanged(listGeometry: geometry) { frame in
                 followItem(preview, frame: frame, geometry: geometry)
                 trackFirstItemTop(preview, frame: frame)

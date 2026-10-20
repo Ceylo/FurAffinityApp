@@ -56,18 +56,11 @@ struct UserGalleryLikeView: View {
             GeometryReader { geometry in
                 List {
                     ForEach(filteredPreviews) { preview in
-                        ZStack(alignment: .leading) {
-                            NavigationLink(
-                                value: FATarget.submission(url: preview.url, previewData: preview)
-                            ) {
-                                EmptyView()
-                            }
-                            .opacity(0)
-                            
+                        Group {
                             if galleryType.shouldDisplayAuthor {
-                                SubmissionFeedItemView<TitleAuthorHeader>(submission: preview)
+                                SubmissionPreviewRow<TitleAuthorHeader>(preview: preview)
                             } else {
-                                SubmissionFeedItemView<TitleHeader>(submission: preview)
+                                SubmissionPreviewRow<TitleHeader>(preview: preview)
                             }
                         }
                         .id(preview.sid)
