@@ -82,9 +82,13 @@ struct UserGalleryLikeView: View {
                 }
                 .listStyle(.plain)
                 .searchable(text: $searchText)
-                .onChange(of: filteredPreviews, initial: true) {
-                    prefetch(with: geometry)
-                }
+                // When user cancels search, the list can contain several thousands of previews.
+                // It's unlikely that they will scroll down this much. And if they do, avatars
+                // and thumbnails will download on the fly. Less optimal experience but still fine.
+                .prefetchingPreviews(
+                    Array(filteredPreviews.prefix(200)),
+                    availableWidth: geometry.faSize.width
+                )
             }
         }
         .navigationTitle("\(gallery.displayAuthor)'s \(galleryType.title)")
@@ -119,16 +123,6 @@ struct UserGalleryLikeView: View {
                 Label("Folders", systemImage: "folder")
             }
         }
-    }
-    
-    func prefetch(with geometry: GeometryProxy) {
-        let thumbnailsWidth = geometry.size.width
-        // When user cancels search, the list can contain several thousands of previews.
-        // It's unlikely that they will scroll down this much. And if they do, avatars
-        // and thumbnails will download on the fly. Less optimal experience but still fine.
-        let previews = Array(filteredPreviews.prefix(200))
-        prefetchThumbnails(for: previews, availableWidth: thumbnailsWidth)
-        prefetchAvatars(for: previews)
     }
 }
 
