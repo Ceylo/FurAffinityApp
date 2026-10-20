@@ -269,8 +269,7 @@ Open one with the deep link above, e.g. `faOpenURL
 live page: FA shows only the latest shouts.
 
 The gallery, favorites, journal list and watchlists are shared as they are, except for
-their rows. Gallery and favorites rows are `SubmissionPreviewRow`s, as in the feed: SkipUI
-lays the iOS row's hidden `NavigationLink` out at its empty size, so only a sliver of the
-card navigated, and the Android branch uses an `FALink` instead. A journal row opens the placeholder until journal display
+their rows. Gallery and favorites rows are `SubmissionPreviewRow`s, as in the feed, whose
+Android branch makes the whole card tappable. A journal row opens the placeholder until journal display
 is ported. SkipUI scrolls a searchable `List` one row down, so the search field shows
 only after a pull, where iOS 26 shows it from the start.
