@@ -3,7 +3,7 @@
 //  FurAffinityUI (Android)
 //
 //  The Android counterpart of the iOS `view(for:)` in InAppNavigation.swift. That
-//  one can't be shared: it names five `Remote*View`s that aren't ported yet. This
+//  one can't be shared: it names `Remote*View`s that aren't ported yet. This
 //  fan-out returns the ported screens and sends the rest to a placeholder, and grows
 //  a case at a time as screens land. Every case is listed on purpose — a `default:`
 //  would take a newly added `FATarget` silently, so Android would lose a screen iOS
