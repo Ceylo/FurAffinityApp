@@ -5,17 +5,16 @@
 //  Created by Ceylo on 06/09/2023.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
 struct RemoteUserGalleryLikeView: View {
     var galleryType: GalleryType
     var url: URL
-    @Environment(Model.self) private var model
-    @Environment(ErrorStorage.self) private var errorStorage
-    @State private var modifiedUrl: URL?
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(Model.self) var model
+    @Environment(ErrorStorage.self) var errorStorage
+    @State var modifiedUrl: URL?
     
     var body: some View {
         RemoteView(
@@ -60,5 +59,3 @@ struct RemoteUserGalleryLikeView: View {
         .environment($0.errorStorage)
     }
 }
-
-#endif

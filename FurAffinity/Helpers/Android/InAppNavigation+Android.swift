@@ -22,7 +22,11 @@ func view(for target: FATarget) -> some View {
         SubmissionMetadataView(metadata: metadata, resolution: resolution)
     case let .user(url, previewData):
         RemoteUserView(url: url, previewData: previewData)
-    case .note, .journal, .gallery, .favorites, .journals, .watchlist:
+    case let .gallery(url):
+        RemoteUserGalleryLikeView(galleryType: .gallery, url: url)
+    case let .favorites(url):
+        RemoteUserGalleryLikeView(galleryType: .favorites, url: url)
+    case .note, .journal, .journals, .watchlist:
         notPortedYet
     }
 }
