@@ -255,3 +255,15 @@ entries have **no extension**, to `tmp/fa-media/<UUID>/<remote filename>` (see
 [images.md](images.md)). `temporaryDirectory` needs no platform branch: Skip's
 `AndroidBridgeBootstrap` points `XDG_CACHE_HOME` at `context.cacheDir`, which
 `@xml/file_paths` exposes.
+
+## User page
+
+`UserView`, `RemoteUserView`, `UserHeader`, `UserPreviewView`, `WatchButton` and
+`UserProfileControlView` are shared as they are; only `.scrollClipDisabled()` stays
+iOS-only. SkipUI marks it unavailable, and all it does on iOS is keep the glass buttons'
+grow-on-touch and light-mode shadow from being clipped — Android draws neither. The
+banner needed one fork fix: a filled image cropped by its frame's alignment ([forks.md](forks.md#the-other-fork-patches)).
+
+Open one with the deep link above, e.g. `faOpenURL
+"https://www.furaffinity.net/user/<name>/#shout-<id>"`. A shout id must come from the
+live page: FA shows only the latest shouts.
