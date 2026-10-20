@@ -5,8 +5,6 @@
 //  Created by Ceylo on 30/03/2023.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 import Kingfisher
@@ -18,7 +16,8 @@ struct UserView: View {
     var sendNoteAction: (_ destinationUser: String, _ subject: String, _ text: String) async throws -> Void
     
     private let bannerHeight = 100.0
-    @State private var noteReplySession: NoteReplySession?
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var noteReplySession: NoteReplySession?
     
     var banner: some View {
         GeometryReader { geometry in
@@ -142,5 +141,3 @@ struct UserView: View {
     }
     //        .preferredColorScheme(.dark)
 }
-
-#endif
