@@ -3,8 +3,8 @@
 | Fork | Why |
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
-| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; `.glass`/`.glassProminent` drawn as bordered and `buttonBorderShape`; `glassEffect` drawn as the M3 floating surface; tab re-tap popping to root, then scrolling to top; a `List` under the status bar when the navigation bar is hidden; a `List` that restores its scroll position by the first visible keyed row and its offset; a plain `List`'s section header pinned below the status bar; no `List` row for an `EmptyView`; a `NavigationLink` in a `List` row drawn untinted; a tab badge's count in `onError`; a bridged `.task(id:)` that is really cancelled; `.updatesFrequently` as a polite live region; a shadow whose copy of its content is kept out of the accessibility tree; a sheet that calls its content only while presented and keeps the last one while it animates away; a `ScrollViewReader` proxy that resolves its scroll action when used; a stack insertion that keeps its enter transition when the stack recomposes before it has played; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
-| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, `ButtonBorderShape`, `sheet`/`fullScreenCover` content passed as a builder, a `JavaBackedView` holding a global JNI reference, `glassEffect` bridged to SkipUI's surface, `GlassEffectContainer` bridged as a `Group`, an `AccessibilityTraits()` that doesn't recurse (upstream #132), plus `glassEffectUnion`/`glassEffectID`/`AnyTransition.animation`/`.glass`/`.glassProminent` un-`unavailable`d and `controlSize`/`contentShape` as pass-throughs; `#Preview` / `@Previewable` stubs (skiptools/skip#439) and `@Entry` |
+| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; `.glass`/`.glassProminent` drawn as bordered and `buttonBorderShape`; `glassEffect` drawn as the M3 floating surface; tab re-tap popping to root, then scrolling to top; a `List` under the status bar when the navigation bar is hidden; a `List` that restores its scroll position by the first visible keyed row and its offset; a plain `List`'s section header pinned below the status bar; no `List` row for an `EmptyView`; a `NavigationLink` in a `List` row drawn untinted; a tab badge's count in `onError`; `Color.material(bridgedRole:)`; a bridged `.task(id:)` that is really cancelled; `.updatesFrequently` as a polite live region; a sheet that calls its content only while presented and keeps the last one while it animates away; a `ScrollViewReader` proxy that resolves its scroll action when used; a stack insertion that keeps its enter transition when the stack recomposes before it has played; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
+| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, `ButtonBorderShape`, `sheet`/`fullScreenCover` content passed as a builder, a `JavaBackedView` holding a global JNI reference, `glassEffect` bridged to SkipUI's surface, `GlassEffectContainer` bridged as a `Group`, an `AccessibilityTraits()` that doesn't recurse (upstream #132), `Color.material(_:)` for Material color roles SwiftUI has none for, plus `glassEffectUnion`/`glassEffectID`/`AnyTransition.animation`/`.glass`/`.glassProminent` un-`unavailable`d and `controlSize`/`contentShape` as pass-throughs; `#Preview` / `@Previewable` stubs (skiptools/skip#439) and `@Entry` |
 | `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, and a rendered image that comes out of an `ImageHolder` rather than out of the view value |
 | `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
 
@@ -125,10 +125,13 @@ went back to waiting for placement. The merge keeps #500's state and proxy, feed
 laid-out frame, and keeps the measure-pass `BoxWithConstraints`;
 `actualReaderReportsUnclippedGlobalFrame` pins the frame.
 
-The same merge brought one regression, since undone: #500 rendered a `.resizable()` asset
-image with no intrinsic size yet through a filling `RenderPainter`, and the layout outlived
-the load. `HomeView`'s app icon took its `VStack`'s whole height and pushed the login
-buttons 646 px down.
+The same merge brought one regression: #500 rendered a `.resizable()` asset image with no
+intrinsic size yet through a filling `RenderPainter`, and the layout outlived the load, so
+`HomeView`'s app icon took its `VStack`'s whole height. Upstream #543 fixed it (no fill
+when the image has a content mode), and the fork uses that fix since its 2026-10-19 merge.
+
+That merge also put the measure-pass reader's bounded constraints into the proxy's
+`sizePx`, which upstream `ed7437a` split out of the global frame.
 
 ## One location per identity
 
@@ -233,9 +236,9 @@ skip-ui:
   committed the next batch.
 - **`.updatesFrequently` is a polite live region**, which is what Material's snackbar
   sets; SkipUI declared the trait and dropped it.
-- **A shadow's copy of its content is out of the accessibility tree.** `Shadowed`
-  composes the content twice, and TalkBack read the snackbar as "Submission deleted.
-  Submission deleted. Unlabelled. Undo".
+- **A shadow's copy of its content is out of the accessibility tree** — upstream since
+  #538; TalkBack had read the snackbar as "Submission deleted. Submission deleted.
+  Unlabelled. Undo".
 
 skip-fuse-ui:
 
