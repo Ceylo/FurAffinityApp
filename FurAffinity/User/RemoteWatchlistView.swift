@@ -5,15 +5,14 @@
 //  Created by Ceylo on 03/09/2024.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
 struct RemoteWatchlistView: View {
     var url: URL
-    @Environment(Model.self) private var model
-    @Environment(ErrorStorage.self) private var errorStorage
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(Model.self) var model
+    @Environment(ErrorStorage.self) var errorStorage
     
     var body: some View {
         RemoteView(url: url) { url in
@@ -47,5 +46,3 @@ struct RemoteWatchlistView: View {
         .environment($0.errorStorage)
     }
 }
-
-#endif

@@ -26,7 +26,9 @@ func view(for target: FATarget) -> some View {
         RemoteUserGalleryLikeView(galleryType: .gallery, url: url)
     case let .favorites(url):
         RemoteUserGalleryLikeView(galleryType: .favorites, url: url)
-    case .note, .journal, .journals, .watchlist:
+    case let .watchlist(url):
+        RemoteWatchlistView(url: url)
+    case .note, .journal, .journals:
         notPortedYet
     }
 }
