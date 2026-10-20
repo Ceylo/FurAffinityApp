@@ -157,7 +157,7 @@ struct ModelTests {
         model.stageSubmissionPreviewsDeletion([staged])
 
         #expect(model.submissionPreviews?.map(\.sid) == [3, 1])
-        #expect(model.stagedSubmissionPreviewsDeletion == [staged])
+        #expect(model.submissionDeletion.staged == [staged])
         try await Task.sleep(nanoseconds: 100_000_000)
         #expect(mock.deletedSubmissionPreviewBatches.isEmpty)
     }
@@ -172,40 +172,40 @@ struct ModelTests {
         _ = try await model.fetchSubmissionPreviews()
 
         #expect(model.submissionPreviews?.map(\.sid) == [2, 1])
-        #expect(model.stagedSubmissionPreviewsDeletion == [staged])
+        #expect(model.submissionDeletion.staged == [staged])
     }
 
-    @Test func undoStagedSubmissionPreviewsDeletion_restoresOrder() async throws {
+    @Test func undoSubmissionDeletion_restoresOrder() async throws {
         let (model, mock) = try await makeModelWithSubmissions([4, 3, 2, 1])
         model.stageSubmissionPreviewsDeletion([model.submissionPreviews![1], model.submissionPreviews![3]])
         #expect(model.submissionPreviews?.map(\.sid) == [4, 2])
 
-        model.undoStagedSubmissionPreviewsDeletion()
+        model.submissionDeletion.undo()
 
         #expect(model.submissionPreviews?.map(\.sid) == [4, 3, 2, 1])
-        #expect(model.stagedSubmissionPreviewsDeletion.isEmpty)
-        #expect(model.commitStagedSubmissionPreviewsDeletion() == nil)
+        #expect(model.submissionDeletion.staged.isEmpty)
+        #expect(model.submissionDeletion.commit() == nil)
         #expect(mock.deletedSubmissionPreviewBatches.isEmpty)
     }
 
-    @Test func commitStagedSubmissionPreviewsDeletion_callsSession() async throws {
+    @Test func commitSubmissionDeletion_callsSession() async throws {
         let (model, mock) = try await makeModelWithSubmissions([3, 2, 1])
         let staged = model.submissionPreviews![1]
         model.stageSubmissionPreviewsDeletion([staged])
 
-        await model.commitStagedSubmissionPreviewsDeletion()?.value
+        await model.submissionDeletion.commit()?.value
 
         #expect(mock.deletedSubmissionPreviewBatches == [[staged]])
-        #expect(model.stagedSubmissionPreviewsDeletion.isEmpty)
+        #expect(model.submissionDeletion.staged.isEmpty)
         #expect(model.submissionPreviews?.map(\.sid) == [3, 1])
     }
 
-    @Test func commitStagedSubmissionPreviewsDeletion_rollsBackOnFailure() async throws {
+    @Test func commitSubmissionDeletion_rollsBackOnFailure() async throws {
         let (model, mock) = try await makeModelWithSubmissions([3, 2, 1])
         mock.shouldDeleteFail = true
         model.stageSubmissionPreviewsDeletion([model.submissionPreviews![1]])
 
-        await model.commitStagedSubmissionPreviewsDeletion()?.value
+        await model.submissionDeletion.commit()?.value
 
         #expect(mock.deletedSubmissionPreviewBatches.count == 1)
         #expect(model.submissionPreviews?.map(\.sid) == [3, 2, 1])
@@ -213,22 +213,22 @@ struct ModelTests {
 
     @Test func stageSubmissionPreviewsDeletion_commitsAfterUndoDelay() async throws {
         let (model, mock) = try await makeModelWithSubmissions([3, 2, 1])
-        model.stagedDeletionUndoDelay = .seconds(1)
+        model.submissionDeletion.undoDelay = .seconds(1)
         let undone = model.submissionPreviews![0]
         let staged = model.submissionPreviews![1]
 
         // An undone batch's countdown must not commit the next one early. Nothing
         // suspends before the await, so its timer runs with `staged` already staged.
         model.stageSubmissionPreviewsDeletion([undone])
-        let undoneTimer = model.stagedDeletionCommitTimer
-        model.undoStagedSubmissionPreviewsDeletion()
+        let undoneTimer = model.submissionDeletion.commitTimer
+        model.submissionDeletion.undo()
         model.stageSubmissionPreviewsDeletion([staged])
         await undoneTimer?.value
         #expect(mock.deletedSubmissionPreviewBatches.isEmpty)
 
-        await model.stagedDeletionCommitTimer?.value
+        await model.submissionDeletion.commitTimer?.value
         #expect(mock.deletedSubmissionPreviewBatches == [[staged]])
-        #expect(model.stagedSubmissionPreviewsDeletion.isEmpty)
+        #expect(model.submissionDeletion.staged.isEmpty)
     }
 
     @Test func stageSubmissionPreviewsDeletion_commitsPreviousBatch() async throws {
@@ -241,8 +241,80 @@ struct ModelTests {
         try await Task.sleep(nanoseconds: 100_000_000)
 
         #expect(mock.deletedSubmissionPreviewBatches == [[first]])
-        #expect(model.stagedSubmissionPreviewsDeletion == [second])
+        #expect(model.submissionDeletion.staged == [second])
         #expect(model.submissionPreviews?.map(\.sid) == [2])
+    }
+
+    private func makeNotification(id: Int) -> FANotificationPreview {
+        .init(
+            id: id,
+            author: "author",
+            displayAuthor: "Author",
+            title: "Title \(id)",
+            datetime: "on Apr 30, 2023 09:50 PM",
+            naturalDatetime: "a few seconds ago",
+            url: URL(string: "https://www.furaffinity.net/view/\(1000 + id)/#cid:\(id)")!
+        )
+    }
+
+    private func makeModelWithNotifications() async throws -> (Model, MockFASession) {
+        let mock = MockFASession(mockNotificationPreviews: .init(
+            submissionComments: [makeNotification(id: 1)],
+            journalComments: [makeNotification(id: 2)],
+            shouts: [4, 5, 6, 7].map(makeNotification),
+            journals: [makeNotification(id: 3)]
+        ))
+        let model = Model()
+        try await model.setSession(mock)
+        return (model, mock)
+    }
+
+    @Test func commitNotificationsDeletion_callsMatchingSessionMethod() async throws {
+        let (model, mock) = try await makeModelWithNotifications()
+        let notifications = try #require(model.notificationPreviews)
+
+        for kind in NotificationKind.allCases {
+            model.stageNotificationsDeletion([notifications[kind][0]], of: kind)
+            await model.notificationDeletion.commit()?.value
+        }
+
+        #expect(mock.deletedNotificationBatches == NotificationKind.allCases.map {
+            .init(kind: $0, previews: [notifications[$0][0]])
+        })
+        #expect(model.notificationPreviews?.shouts.map(\.id) == [5, 6, 7])
+        #expect(model.notificationPreviews?.submissionComments.isEmpty == true)
+    }
+
+    @Test func undoNotificationsDeletion_restoresOrderInSection() async throws {
+        let (model, mock) = try await makeModelWithNotifications()
+        let shouts = try #require(model.notificationPreviews?.shouts)
+
+        model.stageNotificationsDeletion([shouts[1], shouts[3]], of: .shout)
+        #expect(model.notificationPreviews?.shouts.map(\.id) == [4, 6])
+        model.notificationDeletion.undo()
+
+        #expect(model.notificationPreviews?.shouts.map(\.id) == [4, 5, 6, 7])
+        #expect(model.notificationPreviews?.journals.map(\.id) == [3])
+        #expect(mock.deletedNotificationBatches.isEmpty)
+    }
+
+    @Test func fetchNotificationPreviews_doesNotBringBackStagedRows() async throws {
+        let (model, mock) = try await makeModelWithNotifications()
+        let shout = try #require(model.notificationPreviews?.shouts.first)
+
+        model.stageNotificationsDeletion([shout], of: .shout)
+        // FA renews `naturalDatetime` on every fetch.
+        mock.mockNotificationPreviews = mock.mockNotificationPreviews.mapSections { _, section in
+            section.map {
+                FANotificationPreview(id: $0.id, author: $0.author, displayAuthor: $0.displayAuthor,
+                                      title: $0.title, datetime: $0.datetime,
+                                      naturalDatetime: "a minute ago", url: $0.url)
+            }
+        }
+        try await model.fetchNotificationPreviews()
+
+        #expect(model.notificationPreviews?.shouts.map(\.id) == [5, 6, 7])
+        #expect(mock.deletedNotificationBatches.isEmpty)
     }
 
     @Test func defaultsWriteFromBackgroundDoesNotCrashModelObservers() async {

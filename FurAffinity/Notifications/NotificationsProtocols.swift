@@ -19,15 +19,53 @@ protocol NotificationsNuker: Sendable {
 
 @MainActor
 protocol NotificationsDeleter: Sendable {
-    func deleteSubmissionCommentNotifications(_ items: [FANotificationPreview]) -> Void
-    func deleteJournalCommentNotifications(_ items: [FANotificationPreview]) -> Void
-    func deleteShoutNotifications(_ items: [FANotificationPreview]) -> Void
-    func deleteJournalNotifications(_ items: [FANotificationPreview]) -> Void
+    func deleteNotifications(_ items: [FANotificationPreview], of kind: NotificationKind) -> Void
+    func stageNotificationsDeletion(_ items: [FANotificationPreview], of kind: NotificationKind) -> Void
 }
 
-/// Whether this platform delivers the notifications and tab badges that
-/// `NotificationSettingsView` configures. Android has neither: delivery needs
-/// `BackgroundRefreshManager`, and the badges sit on tabs that aren't ported.
+enum NotificationKind: CaseIterable {
+    case submissionComment
+    case journalComment
+    case shout
+    case journal
+}
+
+struct StagedNotification: Hashable {
+    let kind: NotificationKind
+    let preview: FANotificationPreview
+    let index: Int
+}
+
+extension FANotificationPreviews {
+    subscript(kind: NotificationKind) -> [FANotificationPreview] {
+        switch kind {
+        case .submissionComment: submissionComments
+        case .journalComment: journalComments
+        case .shout: shouts
+        case .journal: journals
+        }
+    }
+
+    func mapSections(
+        _ transform: (NotificationKind, [FANotificationPreview]) -> [FANotificationPreview]
+    ) -> FANotificationPreviews {
+        FANotificationPreviews(
+            submissionComments: transform(.submissionComment, submissionComments),
+            journalComments: transform(.journalComment, journalComments),
+            shouts: transform(.shout, shouts),
+            journals: transform(.journal, journals)
+        )
+    }
+
+    func removing(_ previews: [FANotificationPreview], of kind: NotificationKind) -> FANotificationPreviews {
+        mapSections { sectionKind, section in
+            sectionKind == kind ? section.filter { !previews.contains($0) } : section
+        }
+    }
+}
+
+/// Whether this platform delivers the notifications that `NotificationSettingsView`
+/// configures. Android doesn't: delivery needs `BackgroundRefreshManager`.
 enum NotificationDelivery {
 #if os(Android)
     static let isSupported = false
