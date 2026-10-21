@@ -29,9 +29,7 @@ struct NotificationSettingsView: View {
             }
 
             Section {
-                #if !FA_SKIP_MODULE
                 Toggle("Notes", isOn: $badgeNotes)
-                #endif
                 Toggle("Submission comments", isOn: $badgeSubmissionComments)
                 Toggle("Journal comments", isOn: $badgeJournalComments)
                 Toggle("Shouts", isOn: $badgeShouts)
@@ -39,11 +37,7 @@ struct NotificationSettingsView: View {
             } header: {
                 Text("Tab Badges")
             } footer: {
-                #if FA_SKIP_MODULE
-                Text("These settings control which unread items are counted in the badge shown on the Notifications tab.")
-                #else
                 Text("These settings control which unread items are counted in the badges shown on the Notes and Notifications tabs.")
-                #endif
             }
         }
         .navigationTitle(NotificationDelivery.isSupported ? "Notifications & Badges" : "Tab Badges")

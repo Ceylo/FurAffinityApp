@@ -22,7 +22,9 @@ func view(for target: FATarget) -> some View {
         SubmissionMetadataView(metadata: metadata, resolution: resolution)
     case let .journal(url):
         RemoteJournalView(url: url)
-    case .note, .user, .gallery, .favorites, .journals, .watchlist:
+    case let .note(url):
+        RemoteNoteView(url: url)
+    case .user, .gallery, .favorites, .journals, .watchlist:
         notPortedYet
     }
 }

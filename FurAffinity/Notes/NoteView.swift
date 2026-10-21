@@ -5,8 +5,6 @@
 //  Created by Ceylo on 11/04/2022.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
@@ -61,7 +59,8 @@ struct NoteView: View {
     var note: FANote
     var replyAction: (_ destinationUser: String, _ subject: String, _ text: String) async throws -> Void
 
-    @State private var replySession: NoteReplySession?
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var replySession: NoteReplySession?
     
     var body: some View {
         ScrollView {
@@ -79,7 +78,8 @@ struct NoteView: View {
                         defaultContents: .init(
                             destinationUser: note.author,
                             subject: note.title,
-                            text: note.answerPlaceholderMessage
+                            text: note.answerPlaceholderMessage,
+                            destinationUserIsLocked: true
                         )
                     )
                 } label: {
@@ -103,5 +103,3 @@ struct NoteView: View {
     }
 //        .preferredColorScheme(.dark)
 }
-
-#endif

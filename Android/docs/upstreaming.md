@@ -38,6 +38,9 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `ef2f9e3` `GlassEffectContainer` pass-through | skip-fuse-ui | no | send with `f4776db`: same argument, same file. Drew nothing until `e0600ec` bridged it as a `Group` — squash the two |
 | `9b8671b` + `6c66c8d` `glassEffect` draws the M3 floating surface; `glassEffectUnion`/`glassEffectID` pass-throughs | skip-ui + skip-fuse-ui | yes | a design call (opaque `surfaceContainer` + 3 dp shadow, not a blur) — argue it from M3's floating toolbar/FAB |
 | `f54f6e8` `rectangle.grid.2x2` / `slider.horizontal.3` mappings | skip-ui | no | drafted as #548 (topic `feature/sf-symbol-grid-tune`) with glyph comments 􀇷 / 􀌆; the rows were added to showcase #123 rather than a new PR |
+| `3dcb579` Notes SF Symbol mappings | skip-ui | no | same shape as #525; both forms of the filter symbol map to `FilterList` |
+| `4479648` principal toolbar item in the title slot; flexible top-bar spacer as a fixed gap | skip-ui | no | **two PRs**, one fix each; Robolectric `ToolbarItemsTests`, mutation-checked |
+| `c8bff3d` `Picker` listed inline in a `Menu` | skip-ui | no | no Robolectric test yet: add one before sending |
 | `001f4ec` tab re-tap pops to root, then scrolls to top | skip-ui | no | Material and iOS parity; adds internal `Navigator.navigateToRoot()` |
 | `ca5fad0` `List` under the status bar with the nav bar hidden | skip-ui | no | bug fix plus its two `List` follow-ons (`scrollTo` offset, late header) |
 | `91826c2` `List` restores its scroll position by row key | skip-ui | no | Robolectric `testListRestoresFirstVisibleRowByKey`, mutation-checked. Upstream, argue it from rows inserted above while away, since the late header is `ca5fad0`'s; `LazyVStack` and the grids keep the index-only restore |

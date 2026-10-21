@@ -5,8 +5,6 @@
 //  Created by Ceylo on 03/08/2025.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
@@ -96,5 +94,3 @@ struct AuthorHeader: View {
     )
     .displayingStaticName()
 }
-
-#endif
