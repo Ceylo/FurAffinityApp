@@ -19,10 +19,8 @@ struct RemoteNoteView: View {
             view: { note, updateHandler in
                 NoteView(
                     note: note,
-                    replyAction: { destinationUser, subject, text in
+                    replyAction: { _, subject, text in
                         let session = try model.session.unwrap()
-                        assert(destinationUser == note.author)
-                        
                         return try await session.sendNote(
                             apiKey: note.answerKey,
                             toUsername: note.author,

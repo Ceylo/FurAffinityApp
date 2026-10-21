@@ -78,6 +78,7 @@ struct NoteEditor: View {
     var toField: some View {
         LabeledContent("To:") {
             UsernameField(username: $reply.destinationUser)
+                .disabled(defaultContents.destinationUserIsLocked)
         }
         .focused($destinationUserHasFocus)
         .foregroundStyle(.secondary)
@@ -100,7 +101,8 @@ struct NoteEditor: View {
     }
     
     func setDefaultFieldContents() {
-        if reply.destinationUser.isEmpty && !defaultContents.destinationUser.isEmpty {
+        if defaultContents.destinationUserIsLocked
+            || (reply.destinationUser.isEmpty && !defaultContents.destinationUser.isEmpty) {
             reply.destinationUser = defaultContents.destinationUser
         }
         

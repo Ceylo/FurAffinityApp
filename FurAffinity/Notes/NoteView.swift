@@ -78,7 +78,8 @@ struct NoteView: View {
                         defaultContents: .init(
                             destinationUser: note.author,
                             subject: note.title,
-                            text: note.answerPlaceholderMessage
+                            text: note.answerPlaceholderMessage,
+                            destinationUserIsLocked: true
                         )
                     )
                 } label: {
