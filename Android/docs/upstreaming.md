@@ -374,7 +374,7 @@ result. Read the state with
 
 ## Opened PRs
 
-State is one of draft / opened / merged / rejected, as of 2026-10-19; refresh it with
+State is one of draft / opened / merged / rejected / closed, as of 2026-10-21; refresh it with
 `gh pr view <n> -R <repo> --json state,isDraft`.
 
 | PR | Patch | State |
@@ -391,10 +391,10 @@ State is one of draft / opened / merged / rejected, as of 2026-10-19; refresh it
 | skipapp-showcase [#139](https://github.com/skiptools/skipapp-showcase/pull/139) | Row Modifiers page for skip-ui #549 | draft |
 | skip-ui [#550](https://github.com/skiptools/skip-ui/pull/550) | `524153a`, reworked in review | draft |
 | skip-ui [#551](https://github.com/skiptools/skip-ui/pull/551) | `ad375fb` | draft |
-| skip-ffi [#14](https://github.com/skiptools/skip-ffi/pull/14) | CI: `SKIP_DYNAMIC_LIBRARIES` gate ([CI instabilities](#ci-instabilities)) | opened |
+| skip-ffi [#14](https://github.com/skiptools/skip-ffi/pull/14) | CI: `SKIP_DYNAMIC_LIBRARIES` gate ([CI instabilities](#ci-instabilities)) | closed: Showcase went green without it |
 | actions [#23](https://github.com/skiptools/actions/issues/23) (issue) | the plan every Intel-exit PR links to | opened |
-| actions [#22](https://github.com/skiptools/actions/pull/22) | CI: emulator guard reads `runner.arch` ([Leaving Intel macOS](#leaving-intel-macos-runners)) | opened |
-| skip-ffi [#15](https://github.com/skiptools/skip-ffi/pull/15) | CI: `macos-26` + Ubuntu; needs actions #22 in `@v1` | opened |
+| actions [#22](https://github.com/skiptools/actions/pull/22) | CI: emulator guard reads `runner.arch` ([Leaving Intel macOS](#leaving-intel-macos-runners)) | merged 2026-10-21, in `v1` |
+| skip-ffi [#15](https://github.com/skiptools/skip-ffi/pull/15) | CI: `macos-26` + Ubuntu; actions #22 now in `@v1` | opened |
 
 ## CI instabilities
 
@@ -405,7 +405,7 @@ log signature:
 | Instability | Hit | Root cause | Fix |
 |---|---|---|---|
 | skipstone `android-ci`: APK install on a half-booted emulator (`Can't find service: package`, `system providers not installed`) | ~110 jobs in a month | a blank `sys.boot_completed` taken as booted | fixed by our skipstone #288 (merged 2026-10-13), which also raised the launch timeout 300 → 900 s: Intel launches waited 6–14 min, so that leaves under a minute of margin. Still unfixed: a post-boot `system_server` loss (`Can't find service: package` 30 min after boot) |
-| skipapp-showcase Fuse "Export project": `SkipFFI-product` linked as a static library by three images | every Fuse run since 2026-09-27 | skip-ffi lacked the `SKIP_DYNAMIC_LIBRARIES`/`SKIP_BRIDGE` gate the other libraries got | skip-ffi #14. No skip-sql follow-on was needed: the patched Fuse Showcase builds and launches |
+| skipapp-showcase Fuse "Export project": `SkipFFI-product` linked as a static library by three images | every Fuse run 2026-09-27 to 2026-10-19 | skip-ffi lacked the `SKIP_DYNAMIC_LIBRARIES`/`SKIP_BRIDGE` gate the other libraries got | gone since skipapp-showcase #141 (2026-10-19), skip-ffi still 1.2.3; our skip-ffi #14 closed as no longer needed |
 | Network blips in `setup-skip` (tap clone, `skip android sdk install`) and in `skip export`'s package fetch | ~8 | no retries | setup-skip is being rewritten by actions#20: a comment there, not a PR; the export side fits skipstone #283's `runCommand(retryingOn:attempts:)` later |
 | A connected Android test hangs (skip-ui #548: 116 min against 13–22) | 1 | no step timeout in `skip-framework.yml` (job: 180 min) | branch `fix/connected-test-timeout` at 90 min, not sent: the slowest green connected step sampled across nine Skip repos took 50 min (skip-av), so the planned 60 was unsafe, and a timeout only fails a hung job sooner |
 
