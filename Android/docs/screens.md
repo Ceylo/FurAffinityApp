@@ -264,8 +264,7 @@ views and `NotificationsActionView` (the floating "…" nuke menu and its alerts
 both platforms. `AndroidRootView` gives it its own `NavigationStack` path, as
 `LoggedInView` does, so a link pushes onto the selected tab's stack (Settings, which has
 none, sends it to Submissions). The badge is `Model.displayedNotificationCount`, set by
-the "Tab Badges" settings, which Android shows without the delivery section and without
-the Notes toggle.
+the "Tab Badges" settings, which Android shows without the delivery section.
 
 Swipe-to-delete works as in the feed: a full swipe stages the deletion
 (`Model.stageNotificationsDeletion`) behind the same snackbar, and iOS commits at once.
@@ -281,3 +280,8 @@ placeholder.
 The empty state ("Continue offline, empty (debug)") is `Text(markdown:)`, which on Android
 goes through `LocalizedStringKey`, since Android's Foundation has no
 `AttributedString(markdown:)`.
+
+## Notes
+
+Material has no circled filter icon, so the unread filter's button looks the same on and
+off; only its accent tint says the filter is on.
