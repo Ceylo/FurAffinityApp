@@ -62,6 +62,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `e844ccd` + `0e97371` + `cca6f8a` a filled image cropped by its frame's alignment | skip-ui | no | squash the three. Robolectric `testFilledImageOverflow*`, mutation-checked (leading/trailing fail without `e844ccd`; the one-axis-frame and overlay cases without `cca6f8a`). Adds the internal `_frameAlignment` environment value |
 | `908239e` `folder` mapping | skip-ui | no | Robolectric `testFolderSymbolMapsToMaterialIcon`; same shape as #548 |
 | `bb96c29` primary action trailing-most | skip-ui | no | Robolectric `ToolbarItemsTests.primaryActionStaysTrailingMost`, fails without the patch |
+| `69b4cb8` menu dividers only between items | skip-ui | no | Robolectric `MenuDividerTests.onlyDividersBetweenItemsAreDrawn`, fails without the patch (100 px vs 97) |
 | `2b2dc459` + `66eb74df` + `ae0b4f07` Android port | Kingfisher | no | issue first; large parts can never leave the fork |
 | `058eb5d4`, `2296a263`, `07f72deb`, `731194ee` Android first-frame work | Kingfisher | no | part of the port, and depends on skip-ui `23154a0`. `07f72deb` replaces most of the first two. `731194ee` sits on the *target*-cache-hit path; #2572/#2573 rewrote the *original*-cache-hit path beside it, and `239c970b` merged them without touching it |
 | `fb0ef04` `Defaults.defaultSuite` | Defaults | no | issue first; re-pitch without the Android rationale |
