@@ -19,7 +19,9 @@ enum ImageBlur {
     /// its URL, or `nil` on any failure.
     static func blurredImageFile(from fileURL: URL, radius: CGFloat = 40) async -> URL? {
         #if canImport(Android)
-        let outURL = URL.temporaryDirectory.appending(component: "blurred-\(fileURL.lastPathComponent)")
+        // Beside its source, a media copy, so `pruneMediaCopies()` sweeps both: `tmp/` is
+        // `cacheDir` here, which nothing else empties.
+        let outURL = fileURL.deletingLastPathComponent().appending(component: "blurred-\(fileURL.lastPathComponent)")
         let input = fileURL.path(percentEncoded: false)
         let output = outURL.path(percentEncoded: false)
         let ok = await callBridgeOffPool("FANotificationBridge", fallback: false) { bridge in

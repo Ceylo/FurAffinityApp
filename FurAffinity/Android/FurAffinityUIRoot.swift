@@ -31,7 +31,7 @@ import SwiftUI
     /* SKIP @bridge */public static let shared = FurAffinityUIAppDelegate()
 
     /// Between the activity's `onResume` and `onStop`.
-    private let isInForeground = LockedFlag()
+    private let foreground = ForegroundState()
 
     private init() {
     }
@@ -95,15 +95,23 @@ import SwiftUI
 
     /// From `FABackgroundRefreshWorker`. Stands down while an activity is in the
     /// foreground, where iOS never runs its BGAppRefreshTask: the user is seeing the
-    /// content, and `backgroundRefreshLifecycle()` is advancing the watermarks.
+    /// content, and `backgroundRefreshLifecycle()` is advancing the watermarks. An
+    /// activity resuming mid-run cancels it, as iOS expires its task.
     /* SKIP @bridge */public func performBackgroundRefresh() async -> Bool {
-        guard !isInForeground.value else {
+        guard let refresh = foreground.startBackgroundWork({
+            Task { try await BackgroundRefreshManager.performFetchAndNotify() }
+        }) else {
             logger.info("Skipping background refresh: the app is in the foreground")
             return true
         }
+        defer {
+            foreground.endBackgroundWork()
+            // A process the worker started never reaches `onStop`, where they're pruned otherwise.
+            Task { await FAImageStore.shared.performingFileIO { pruneMediaCopies() } }
+        }
         do {
-            try await BackgroundRefreshManager.performFetchAndNotify()
-            return !Task.isCancelled
+            try await refresh.value
+            return !refresh.isCancelled
         } catch {
             logger.error("Background refresh failed: \(error)")
             return false
@@ -122,7 +130,7 @@ import SwiftUI
 
     /* SKIP @bridge */public func onResume() {
         logger.debug("onResume")
-        isInForeground.value = true
+        foreground.enter()
     }
 
     /* SKIP @bridge */public func onPause() {
@@ -131,7 +139,7 @@ import SwiftUI
 
     /* SKIP @bridge */public func onStop() {
         logger.debug("onStop")
-        isInForeground.value = false
+        foreground.leave()
         // Android's "entered the background", the same moment Kingfisher sweeps its
         // disk cache on iOS — and off the launch path, which is why not onLaunch. iOS
         // gets this from `UIApplicationDidEnterBackground`, which `ImageCache` cannot
@@ -155,13 +163,36 @@ import SwiftUI
     }
 }
 
-/// A Bool the activity callbacks write and the background worker reads.
-private final class LockedFlag: @unchecked Sendable {
+/// Whether an activity is in the foreground, which the activity callbacks write, and the
+/// background refresh running meanwhile, which entering the foreground cancels.
+private final class ForegroundState: @unchecked Sendable {
     private let lock = NSLock()
-    private var _value = false
+    private var isInForeground = false
+    private var backgroundWork: Task<Void, any Error>?
 
-    var value: Bool {
-        get { lock.withLock { _value } }
-        set { lock.withLock { _value = newValue } }
+    func enter() {
+        let work = lock.withLock {
+            isInForeground = true
+            return backgroundWork
+        }
+        work?.cancel()
+    }
+
+    func leave() {
+        lock.withLock { isInForeground = false }
+    }
+
+    /// Starts and records the work `start` returns, unless an activity is in the foreground.
+    func startBackgroundWork(_ start: () -> Task<Void, any Error>) -> Task<Void, any Error>? {
+        lock.withLock {
+            guard !isInForeground else { return nil }
+            let work = start()
+            backgroundWork = work
+            return work
+        }
+    }
+
+    func endBackgroundWork() {
+        lock.withLock { backgroundWork = nil }
     }
 }

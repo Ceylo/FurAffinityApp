@@ -319,11 +319,15 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   fall back on, a challenge throws `CloudflareChallengeRequired`, and the run posts the
   "CloudFlare check required" notification with the queue left intact, as on iOS. Building
   the session fetches its first page, so that is usually where the challenge comes from.
-- **Images.** A submission's thumbnail is the large icon, and the expanded notification
-  shows it as a big picture. A mature one is blurred by `FANotificationBridge.blur`, a CPU
-  box blur matched to Kingfisher's radius (its Accelerate blur is compiled out here); the
-  clear image is the hidden attachment, so only the expanded view shows it. Notes, comments
-  and journals attach the author's avatar instead of iOS's communication notification.
+  It posts once per outage (`challengeNotificationPosted`), not on every 30-minute run, and
+  the next successful run removes it. An activity resuming cancels a run in flight.
+- **Images.** A submission's thumbnail is the large icon, and a general one's expanded
+  notification shows it as a big picture. A mature one is blurred by
+  `FANotificationBridge.blur`, a CPU box blur matched to Kingfisher's radius (its
+  Accelerate blur is compiled out here), and its clear image is left out entirely: Android
+  expands the top notification on its own, and on the lock screen, where iOS needs a
+  long-press. Notes, comments and journals attach the author's avatar as the large icon
+  instead of iOS's communication notification.
 - **Taps** reach `NotificationCenterDelegate`, then `NotificationCoordinator`, which
   `AndroidRootView` drains once there is a session, as it does `faOpenURL`. SkipUI holds a
   tap that cold-launched the app until the delegate is set in `onInit`. `MainActivity` is

@@ -130,6 +130,10 @@ enum BackgroundRefreshManager {
             submissions = try await session.submissionPreviews(from: nil)
             notes = try await session.notePreviews(from: .inbox)
             previews = try await session.notificationPreviews()
+            if Defaults[.challengeNotificationPosted] {
+                Defaults[.challengeNotificationPosted] = false
+                UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [challengeFailureNotificationIdentifier])
+            }
         } catch is CloudflareChallengeRequired {
             logger.warning("CF challenge not resolved in background; posting notification")
             // Leave the pending queue intact so a previously-stranded remainder isn't lost.
@@ -278,6 +282,10 @@ enum BackgroundRefreshManager {
     }
 
     private static func postChallengeFailureNotification(soundEnabled: Bool) async {
+        // Once per outage: a clearance that broke stays broken until the app is opened.
+        guard !Defaults[.challengeNotificationPosted] else {
+            return
+        }
         let content = buildChallengeFailureNotification()
         if soundEnabled {
             content.sound = .default
@@ -291,6 +299,7 @@ enum BackgroundRefreshManager {
         )
         do {
             try await UNUserNotificationCenter.current().add(request)
+            Defaults[.challengeNotificationPosted] = true
             logger.info("Posted CF challenge notification")
         } catch {
             logger.error("Failed to post CF challenge notification: \(error)")

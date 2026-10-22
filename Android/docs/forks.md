@@ -354,7 +354,8 @@ skip-fuse-ui `5b608cd`:
   `areNotificationsEnabled()`.
 - **Images where iOS draws them.** An image attachment became the small icon, which
   Android draws from its alpha alone: a white blob. A visible image is now the large
-  icon, a `ThumbnailHiddenKey` one the expanded `BigPictureStyle` picture, and
+  icon, and only a `ThumbnailHiddenKey` one the expanded `BigPictureStyle` picture (so an
+  avatar isn't blown up to full width), and
   `UNNotificationAttachment(identifier:url:options:)` infers the image type from the
   extension, as iOS does.
 - **Due requests post before `add` returns**, stamped `setWhen`. Each went through

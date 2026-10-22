@@ -333,6 +333,8 @@ public final class FAWebSession {
         // What the WebView is configured with, so the clearance it earned still holds.
         let userAgent = FAWebViewUserAgent.string ?? FAUserAgent.applicationName
         imageCredentialsSink?(userAgent, cookieHeader)
+        // In a process that also runs the app, the next refresh must repush the live pair.
+        shared.forgetPushedCredentials()
 
         let dataSource = FAHTTPDataSource(
             userAgent: userAgent,

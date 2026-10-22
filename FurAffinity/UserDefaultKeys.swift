@@ -40,6 +40,9 @@ extension Defaults.Keys {
     /// Notifications discovered by a background refresh but not yet posted. Persisted
     /// before the slow media+post phase so an expired run resumes the remainder.
     static let pendingNotificationQueue = Key<[PendingNotificationRecord]>("pendingNotificationQueue", default: [])
+    /// The CloudFlare-challenge notification was posted and no run has fetched since, so
+    /// later challenged runs don't alert again.
+    static let challengeNotificationPosted = Key<Bool>("challengeNotificationPosted", default: false)
     
     static let notifications = [
         notifySubmissions,
