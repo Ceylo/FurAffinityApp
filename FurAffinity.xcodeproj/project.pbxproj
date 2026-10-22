@@ -192,6 +192,7 @@
 		9D6D2A76FD5B02CB4A37F1BA /* CrashReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF3D71C0280E404172EB9D4B /* CrashReporting.swift */; };
 		9D9673BCD0A3A58360370D7B /* ExplorationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F4DE8504EE8E5896B9AA6A /* ExplorationView.swift */; };
 		A5C8D8E39F388B8044875B83 /* PendingNotificationRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = E47802CF8DFEA36285E68BE4 /* PendingNotificationRecord.swift */; };
+		CA19BAC695A56D83147D59BC /* BackgroundRefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E9A40409D52322946C2DDC0 /* BackgroundRefresh.swift */; };
 		AA033C746B0A65D536D8E296 /* CrashReportingConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A264CEDCBC3A6A5E7A2CA5AC /* CrashReportingConfigurationTests.swift */; };
 		B6F6089270D2553003E41E74 /* NotificationContent.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 12CC924CA9E594B2F3D1049C /* NotificationContent.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B910E02605EEB533F4A7AE4D /* ForegroundAutorefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 035B5AEBEA2399F8715F2744 /* ForegroundAutorefresh.swift */; };
@@ -430,6 +431,7 @@
 		DE0FE3ECD383602E8F75046C /* InAppLinkConversion.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InAppLinkConversion.swift; sourceTree = "<group>"; };
 		DF3D71C0280E404172EB9D4B /* CrashReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReporting.swift; sourceTree = "<group>"; };
 		E47802CF8DFEA36285E68BE4 /* PendingNotificationRecord.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PendingNotificationRecord.swift; sourceTree = "<group>"; };
+		8E9A40409D52322946C2DDC0 /* BackgroundRefresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefresh.swift; sourceTree = "<group>"; };
 		E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ImageCacheControl.swift; sourceTree = "<group>"; };
 		E6731320A5B4D6196E99F0F9 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		FA0000000000000000000007 /* SubmissionAudioContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionAudioContent.swift; sourceTree = "<group>"; };
@@ -500,7 +502,6 @@
 				5984ACB60D47CABBFCF22AD3 /* AppDelegate.swift */,
 				8716E7EB271C659C00C0BC4A /* FurAffinityApp.swift */,
 				87CCD2F12FC3441600768FDB /* BackgroundRefreshManager.swift */,
-				87CCD2F52FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift */,
 				871C66DE29B8C36700A2B2C2 /* Info.plist */,
 				87874B802FD0A3E90027CE46 /* FurAffinity.entitlements */,
 				87546E622EAE70430098BAA1 /* AppIconLG.icon */,
@@ -578,6 +579,8 @@
 				87C443592C73C59900200991 /* ShoutNotificationItemView.swift */,
 				877C8A9C2A0043D000B2F02B /* NotificationsActionView.swift */,
 				E47802CF8DFEA36285E68BE4 /* PendingNotificationRecord.swift */,
+				87CCD2F52FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift */,
+				8E9A40409D52322946C2DDC0 /* BackgroundRefresh.swift */,
 				24EA1B59AE1F6A51D2D71E4C /* NotificationsProtocols.swift */,
 			);
 			path = Notifications;
@@ -1210,6 +1213,7 @@
 				D17E358F6EBAEE2AB484011F /* UsernameField.swift in Sources */,
 				69C72E0CA41C86B6DF5E1726 /* SubmissionPreviewRow.swift in Sources */,
 				A5C8D8E39F388B8044875B83 /* PendingNotificationRecord.swift in Sources */,
+				CA19BAC695A56D83147D59BC /* BackgroundRefresh.swift in Sources */,
 				3A6366CC81F99000EEA67C28 /* NotificationsProtocols.swift in Sources */,
 				D1B7779E7CB722ADBFB21575 /* GeometryProxy+FASize.swift in Sources */,
 				DA348CE7A0CF8BABDB01FBFA /* ImageCacheControl.swift in Sources */,
