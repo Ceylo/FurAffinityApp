@@ -76,8 +76,8 @@ struct AndroidRootView: View {
                     // emulator window. Gated on `android:debuggable` rather than
                     // `#if DEBUG`: skipstone skips those blocks when it generates the
                     // view bridge, so a compile-time fence here would be inert. FA
-                    // image URLs still need the WebView's clearance, so images show
-                    // placeholders in this mode.
+                    // image URLs still need the WebView's clearance, so images other
+                    // than the demo user's avatar and banner show placeholders.
                     .overlay(alignment: .top) {
                         if AndroidAppInfo.isDebuggable {
                             VStack(spacing: 4) {
@@ -186,6 +186,7 @@ struct AndroidRootView: View {
 
     private func signIn(offlineWith session: OfflineFASession) {
         Task {
+            await session.seedDemoImages()
             await storeLocalizedError(in: model.errorStorage, action: "Sign In", webBrowserURL: nil) {
                 try await model.setSession(session)
             }

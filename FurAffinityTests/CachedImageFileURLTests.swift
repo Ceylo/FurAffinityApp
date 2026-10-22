@@ -21,7 +21,7 @@ struct CachedImageFileURLTests {
     func concurrentCopiesForSameURLAllSucceed() async throws {
         let url = URL(string: "https://a.furaffinity.net/tiaamaitol.gif")!
         let payload = Data("avatar-bytes".utf8)
-        try seedDiskCacheForTesting(payload, for: url)
+        try seedImageCache(payload, for: url)
 
         let results = await withTaskGroup(of: URL?.self) { group in
             for _ in 0 ..< 16 {
@@ -55,7 +55,7 @@ struct CachedImageFileURLTests {
     @Test
     func theStagedNameIsTheRemoteName() throws {
         let url = URL(string: "https://d.furaffinity.net/art/a/1/1634411740.artist.png")!
-        try seedDiskCacheForTesting(Data("bytes".utf8), for: url)
+        try seedImageCache(Data("bytes".utf8), for: url)
 
         let file = try cachedImageFileURL(for: url)
         defer { try? FileManager.default.removeItem(at: file.deletingLastPathComponent()) }
@@ -72,7 +72,7 @@ struct CachedImageFileURLTests {
     func aNameCarryingASeparatorStillYieldsAUsableFile() throws {
         let payload = Data("bytes".utf8)
         let url = URL(string: "https://d.furaffinity.net/art/a/1/..%2F..%2Fshared_prefs%2Fdefaults.xml")!
-        try seedDiskCacheForTesting(payload, for: url)
+        try seedImageCache(payload, for: url)
 
         let file = try cachedImageFileURL(for: url)
         defer { try? FileManager.default.removeItem(at: file.deletingLastPathComponent()) }
