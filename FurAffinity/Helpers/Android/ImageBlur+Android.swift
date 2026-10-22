@@ -22,18 +22,9 @@ enum ImageBlur {
         let outURL = URL.temporaryDirectory.appending(component: "blurred-\(fileURL.lastPathComponent)")
         let input = fileURL.path(percentEncoded: false)
         let output = outURL.path(percentEncoded: false)
-        // The bridge decodes and encodes synchronously: off the cooperative pool.
-        let ok = await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .utility).async {
-                do {
-                    let bridge = try AnyDynamicObject(className: "fur.affinity.ui.FANotificationBridge")
-                    let ok: Bool? = try bridge.blur(input, output, Double(radius))
-                    continuation.resume(returning: ok == true)
-                } catch {
-                    logger.error("ImageBlur: could not reach FANotificationBridge: \(error)")
-                    continuation.resume(returning: false)
-                }
-            }
+        let ok = await callBridgeOffPool("FANotificationBridge", fallback: false) { bridge in
+            let ok: Bool? = try bridge.blur(input, output, Double(radius))
+            return ok == true
         }
         return ok ? outURL : nil
         #else

@@ -284,7 +284,7 @@ public final class FAWebSession {
         pushedCookieHeader = cookieHeader
 
         let httpCookies = webCookies.map { $0.asHTTPCookie }.compactMap { $0 }
-        let authCookies = httpCookies.filter { $0.name != "cf_clearance" && $0.name != "__cf_bm" }
+        let authCookies = Self.authCookies(httpCookies)
         lastKnownAuthCookies = authCookies
 
         // Captures the *shared* navigator, not a screen's: the UA read has to keep
@@ -340,8 +340,12 @@ public final class FAWebSession {
             nativeTransport: nativeTransport,
             awaitChallengeResolution: { throw CloudflareChallengeRequired() }
         )
-        let authCookies = cookies.filter { $0.name != "cf_clearance" && $0.name != "__cf_bm" }
-        return try await OnlineFASession(cookies: authCookies, dataSource: dataSource, source: source)
+        return try await OnlineFASession(cookies: authCookies(cookies), dataSource: dataSource, source: source)
+    }
+
+    /// The FA session cookies, without Cloudflare's: those ride the `Cookie:` header.
+    private static func authCookies(_ cookies: [HTTPCookie]) -> [HTTPCookie] {
+        cookies.filter { $0.name != "cf_clearance" && $0.name != "__cf_bm" }
     }
 }
 

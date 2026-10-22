@@ -43,9 +43,11 @@ final class NotificationCoordinator {
     /// Parses an FA URL string into a navigable target. No-op (leaves
     /// `pendingDeepLink` unchanged at nil) for missing/unmappable URLs.
     func setPendingDeepLink(fromURLString urlString: String?) {
-        guard let urlString,
-              let url = URL(string: urlString),
-              let target = FATarget(with: url) else {
+        guard let urlString else {
+            return
+        }
+        guard let target = URL(string: urlString).flatMap(FATarget.init(with:)) else {
+            logger.error("Deep link is not an in-app target: \(urlString)")
             return
         }
         pendingDeepLink = target

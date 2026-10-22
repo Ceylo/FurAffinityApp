@@ -24,10 +24,10 @@ import SkipBridge
 #endif
 
 extension BackgroundRefreshManager {
-    /// WorkManager's floor is 15 minutes; iOS asks for 30.
-    static func schedule(earliestBeginAfter seconds: TimeInterval = 30 * 60) {
+    /// Every 30 minutes, the earliest iOS asks for.
+    static func schedule() {
         #if canImport(Android)
-        let minutes = Int64(seconds / 60)
+        let minutes: Int64 = 30
         do {
             let bridge = try AnyDynamicObject(className: "fur.affinity.ui.FANotificationBridge")
             let ok: Bool? = try bridge.scheduleBackgroundRefresh(minutes)
@@ -42,8 +42,6 @@ extension BackgroundRefreshManager {
         #endif
     }
 
-    /// The worker's process may have no WebView, so the session comes from the cookie
-    /// jar, and a challenge fails the run rather than waiting for one to be solved.
     static func makeBackgroundSession() async throws -> OnlineFASession? {
         try await FAWebSession.makeBackgroundSession(source: .submissionsFeed(from: nil))
     }

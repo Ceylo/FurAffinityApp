@@ -41,17 +41,9 @@ func clearLoginCookies() async {
 /// the two deadlock. Hopping to a global queue and *awaiting* leaves the main actor
 /// suspended and the UI thread free to deliver that callback.
 private func clearCookiesOffMain() async -> Bool {
-    await withCheckedContinuation { continuation in
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                let bridge = try AnyDynamicObject(className: "fur.affinity.ui.FACookieBridge")
-                let ok: Bool? = try bridge.clearCookies()
-                continuation.resume(returning: ok == true)
-            } catch {
-                logger.error("clearLoginCookies: could not reach FACookieBridge: \(error)")
-                continuation.resume(returning: false)
-            }
-        }
+    await callBridgeOffPool("FACookieBridge", qos: .userInitiated, fallback: false) { bridge in
+        let ok: Bool? = try bridge.clearCookies()
+        return ok == true
     }
 }
 #endif
@@ -61,18 +53,10 @@ private func clearCookiesOffMain() async -> Bool {
 /// ask. Installed as `FAWebSession.cookieJarHeaderProvider`.
 func cookieJarHeader(for url: URL) async -> String? {
     #if canImport(Android)
-    // `CookieManager` may block on its first use in a process: not on the cooperative pool.
-    await withCheckedContinuation { continuation in
-        DispatchQueue.global(qos: .utility).async {
-            do {
-                let bridge = try AnyDynamicObject(className: "fur.affinity.ui.FACookieBridge")
-                let header: String? = try bridge.cookieHeader(url.absoluteString)
-                continuation.resume(returning: header)
-            } catch {
-                logger.error("cookieJarHeader: could not reach FACookieBridge: \(error)")
-                continuation.resume(returning: nil)
-            }
-        }
+    // `CookieManager` may block on its first use in a process.
+    await callBridgeOffPool("FACookieBridge", fallback: nil) { bridge in
+        let header: String? = try bridge.cookieHeader(url.absoluteString)
+        return header
     }
     #else
     nil

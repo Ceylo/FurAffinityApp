@@ -109,20 +109,6 @@ enum BackgroundRefreshManager {
 
     // MARK: Fetch & Notify
     static func performFetchAndNotify() async throws {
-        let session: OnlineFASession?
-        do {
-            // Building the session fetches its first page, which can be challenged too.
-            session = try await makeBackgroundSession()
-        } catch is CloudflareChallengeRequired {
-            logger.warning("CF challenge not resolved in background; posting notification")
-            await postChallengeFailureNotification()
-            return
-        }
-        guard let session else {
-            logger.info("No valid FA session for background refresh (user likely logged out)")
-            return
-        }
-
         let settings = await UNUserNotificationCenter.current().notificationSettings()
         guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
             logger.info(
@@ -136,13 +122,18 @@ enum BackgroundRefreshManager {
         let notes: [FANotePreview]
         let previews: FANotificationPreviews
         do {
+            // Building the session fetches its first page, which can be challenged too.
+            guard let session = try await makeBackgroundSession() else {
+                logger.info("No valid FA session for background refresh (user likely logged out)")
+                return
+            }
             submissions = try await session.submissionPreviews(from: nil)
             notes = try await session.notePreviews(from: .inbox)
             previews = try await session.notificationPreviews()
         } catch is CloudflareChallengeRequired {
             logger.warning("CF challenge not resolved in background; posting notification")
             // Leave the pending queue intact so a previously-stranded remainder isn't lost.
-            await postChallengeFailureNotification()
+            await postChallengeFailureNotification(soundEnabled: soundEnabled)
             return
         }
 
@@ -277,7 +268,7 @@ enum BackgroundRefreshManager {
     static let challengeFailureNotificationIdentifier = "fa.background.cf-challenge"
 
     /// Builds the content for the CloudFlare-challenge failure notification.
-    /// Pure (no `UNUserNotificationCenter`), mirroring `buildNotifications`; sound
+    /// Pure (no `UNUserNotificationCenter`), so tests can read it; sound
     /// is applied at post time in `postChallengeFailureNotification`.
     static func buildChallengeFailureNotification() -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
@@ -286,15 +277,9 @@ enum BackgroundRefreshManager {
         return content
     }
 
-    private static func postChallengeFailureNotification() async {
-        let center = UNUserNotificationCenter.current()
-        let settings = await center.notificationSettings()
-        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
-            return
-        }
-
+    private static func postChallengeFailureNotification(soundEnabled: Bool) async {
         let content = buildChallengeFailureNotification()
-        if settings.soundSetting == .enabled {
+        if soundEnabled {
             content.sound = .default
         }
 
@@ -305,7 +290,7 @@ enum BackgroundRefreshManager {
             trigger: trigger
         )
         do {
-            try await center.add(request)
+            try await UNUserNotificationCenter.current().add(request)
             logger.info("Posted CF challenge notification")
         } catch {
             logger.error("Failed to post CF challenge notification: \(error)")

@@ -34,7 +34,7 @@ class FANotificationBridge {
     companion object {
         private const val TAG = "FANotificationBridge"
         private const val WORK_NAME = "fa.background-refresh"
-        /// The blur runs on a bitmap this many times smaller, then is scaled back up.
+        /// The blur runs on a bitmap this many times smaller (a power of two, for `inSampleSize`).
         private const val DOWNSCALE = 4
 
         /// UPDATE keeps the running schedule, so calling this on every trip to the
@@ -62,12 +62,13 @@ class FANotificationBridge {
 
         /// Writes a JPEG of the image at `inputPath` blurred about as Kingfisher's
         /// `blurred(withRadius:)` does on iOS, whose radius is the Gaussian's sigma: three
-        /// box passes of that radius approximate it, run on a downscaled copy.
+        /// box passes of that radius approximate it, run on a copy decoded downscaled. Only
+        /// the collapsed thumbnail shows it, so it is written at that size.
         fun blur(inputPath: String, outputPath: String, radius: Double): Boolean = try {
-            val source = BitmapFactory.decodeFile(inputPath) ?: throw IllegalArgumentException("undecodable image")
-            val width = max(1, source.width / DOWNSCALE)
-            val height = max(1, source.height / DOWNSCALE)
-            val small = Bitmap.createScaledBitmap(source, width, height, true)
+            val options = BitmapFactory.Options().apply { inSampleSize = DOWNSCALE }
+            val small = BitmapFactory.decodeFile(inputPath, options) ?: throw IllegalArgumentException("undecodable image")
+            val width = small.width
+            val height = small.height
             val pixels = IntArray(width * height)
             small.getPixels(pixels, 0, width, 0, 0, width, height)
             val boxRadius = max(1, (radius / DOWNSCALE).roundToInt())
@@ -76,8 +77,7 @@ class FANotificationBridge {
                 boxBlur(pixels, width, height, boxRadius, horizontal = false)
             }
             val blurred = Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888)
-            val output = Bitmap.createScaledBitmap(blurred, source.width, source.height, true)
-            FileOutputStream(outputPath).use { output.compress(Bitmap.CompressFormat.JPEG, 90, it) }
+            FileOutputStream(outputPath).use { blurred.compress(Bitmap.CompressFormat.JPEG, 90, it) }
         } catch (e: Exception) {
             Log.e(TAG, "blur failed: $e")
             false

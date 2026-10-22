@@ -89,11 +89,7 @@ import SwiftUI
     /// From `MainActivity`'s `faOpenURL` extra on a non-release build.
     /* SKIP @bridge */public func openDebugURL(_ url: String) {
         Task { @MainActor in
-            guard let target = URL(string: url).flatMap(FATarget.init(with:)) else {
-                logger.error("faOpenURL: not an in-app target: \(url)")
-                return
-            }
-            NotificationCoordinator.shared.pendingDeepLink = target
+            NotificationCoordinator.shared.setPendingDeepLink(fromURLString: url)
         }
     }
 

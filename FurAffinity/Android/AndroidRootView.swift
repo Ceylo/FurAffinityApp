@@ -221,7 +221,6 @@ struct AndroidRootView: View {
         }
         .environment(model)
         .environment(model.errorStorage)
-        .environment(notificationCoordinator)
         .environment(\.navigationStream, navigationStream)
         .onChange(of: navigationStream.latest) { _, event in
             guard let event else { return }
