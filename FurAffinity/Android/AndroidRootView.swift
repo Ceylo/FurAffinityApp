@@ -4,9 +4,9 @@
 //
 //  Root of the Android app, mirroring iOS's `RootView`: the shared `HomeView` until
 //  a session exists, then the ported tabs — which stand in for `LoggedInView` and
-//  grow as screens are ported. The Submissions, Notes and Notifications tabs are each
-//  a `NavigationStack` fed by the shared `NavigationStream`; pushed destinations come
-//  from `view(for:)` in InAppNavigation+Android.swift.
+//  grow as screens are ported. The Submissions, Notes, Notifications and Profile tabs
+//  are each a `NavigationStack` fed by the shared `NavigationStream`; pushed
+//  destinations come from `view(for:)` in InAppNavigation+Android.swift.
 //
 //  HomeView owns the session on both platforms (it calls `model.setSession`), so
 //  this view only reads `model.session` — including for logout, which SettingsView
@@ -23,6 +23,7 @@ struct AndroidRootView: View {
     @State var submissionsPath = [FATarget]()
     @State var notesPath = [FATarget]()
     @State var notificationsPath = [FATarget]()
+    @State var userpagePath = [FATarget]()
     @State var selectedTab: Tab = .submissions
     @State var pendingDebugDeepLink = PendingDebugDeepLink.shared
 
@@ -30,6 +31,7 @@ struct AndroidRootView: View {
         case submissions
         case notes
         case notifications
+        case userpage
         case settings
     }
 
@@ -41,6 +43,8 @@ struct AndroidRootView: View {
             submissionsPath.append(target)
         case .notes:
             notesPath.append(target)
+        case .userpage:
+            userpagePath.append(target)
         case .settings:
             // As iOS's `LoggedInView.Tab.forDeepLink`.
             selectedTab = .notifications
@@ -95,8 +99,8 @@ struct AndroidRootView: View {
                     // emulator window. Gated on `android:debuggable` rather than
                     // `#if DEBUG`: skipstone skips those blocks when it generates the
                     // view bridge, so a compile-time fence here would be inert. FA
-                    // image URLs still need the WebView's clearance, so images show
-                    // placeholders in this mode.
+                    // image URLs still need the WebView's clearance, so images other
+                    // than the demo user's avatar and banner show placeholders.
                     .overlay(alignment: .top) {
                         if AndroidAppInfo.isDebuggable {
                             VStack(spacing: 4) {
@@ -148,6 +152,17 @@ struct AndroidRootView: View {
                         Label("Notifications", systemImage: "bell")
                     }
                     .tag(Tab.notifications)
+
+                    NavigationStack(path: $userpagePath) {
+                        CurrentUserView()
+                            .navigationDestination(for: FATarget.self) { target in
+                                view(for: target)
+                            }
+                    }
+                    .tabItem {
+                        Label("Profile", systemImage: "person.crop.circle")
+                    }
+                    .tag(Tab.userpage)
 
                     // SettingsView brings its own NavigationStack, same as on iOS,
                     // and has no FATarget destinations.
@@ -208,11 +223,13 @@ struct AndroidRootView: View {
             guard let event else { return }
             handleTarget(event.target)
         }
+        // The tabs outlive the session here, unlike LoggedInView on iOS.
         .onChange(of: model.session == nil) { _, loggedOut in
             guard loggedOut else { return }
             submissionsPath = []
             notesPath = []
             notificationsPath = []
+            userpagePath = []
             selectedTab = .submissions
         }
         // Held until there is a session to open it in.
@@ -232,6 +249,7 @@ struct AndroidRootView: View {
 
     private func signIn(offlineWith session: OfflineFASession) {
         Task {
+            await session.seedDemoImages()
             await storeLocalizedError(in: model.errorStorage, action: "Sign In", webBrowserURL: nil) {
                 try await model.setSession(session)
             }

@@ -5,12 +5,10 @@
 //  Created by Ceylo on 06/09/2023.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
-enum GalleryType: CustomLocalizedStringResourceConvertible {
+enum GalleryType {
     case gallery
     case favorites
     
@@ -18,12 +16,10 @@ enum GalleryType: CustomLocalizedStringResourceConvertible {
         self == .favorites
     }
     
-    var localizedStringResource: LocalizedStringResource {
+    var title: String {
         switch self {
-        case .gallery:
-                .init(stringLiteral: "Gallery")
-        case .favorites:
-                .init(stringLiteral: "Favorites")
+        case .gallery: "Gallery"
+        case .favorites: "Favorites"
         }
     }
 }
@@ -39,7 +35,8 @@ struct UserGalleryLikeView: View {
     var gallery: FAUserGalleryLike
     var loadMore: (_ galleryLike: FAUserGalleryLike) async -> Void
     var updateSource: (_ url: URL) -> Void
-    @State private var searchText = ""
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var searchText = ""
     
     var filteredPreviews: [FASubmissionPreview] {
         guard !searchText.isEmpty else {
@@ -59,18 +56,11 @@ struct UserGalleryLikeView: View {
             GeometryReader { geometry in
                 List {
                     ForEach(filteredPreviews) { preview in
-                        ZStack(alignment: .leading) {
-                            NavigationLink(
-                                value: FATarget.submission(url: preview.url, previewData: preview)
-                            ) {
-                                EmptyView()
-                            }
-                            .opacity(0)
-                            
+                        Group {
                             if galleryType.shouldDisplayAuthor {
-                                SubmissionFeedItemView<TitleAuthorHeader>(submission: preview)
+                                SubmissionPreviewRow<TitleAuthorHeader>(preview: preview)
                             } else {
-                                SubmissionFeedItemView<TitleHeader>(submission: preview)
+                                SubmissionPreviewRow<TitleHeader>(preview: preview)
                             }
                         }
                         .id(preview.sid)
@@ -92,12 +82,16 @@ struct UserGalleryLikeView: View {
                 }
                 .listStyle(.plain)
                 .searchable(text: $searchText)
-                .onChange(of: filteredPreviews, initial: true) {
-                    prefetch(with: geometry)
-                }
+                // When user cancels search, the list can contain several thousands of previews.
+                // It's unlikely that they will scroll down this much. And if they do, avatars
+                // and thumbnails will download on the fly. Less optimal experience but still fine.
+                .prefetchingPreviews(
+                    Array(filteredPreviews.prefix(200)),
+                    availableWidth: geometry.faSize.width
+                )
             }
         }
-        .navigationTitle("\(gallery.displayAuthor)'s \(galleryType.localizedStringResource)")
+        .navigationTitle("\(gallery.displayAuthor)'s \(galleryType.title)")
         .toolbar { foldersMenu }
         
     }
@@ -129,16 +123,6 @@ struct UserGalleryLikeView: View {
                 Label("Folders", systemImage: "folder")
             }
         }
-    }
-    
-    func prefetch(with geometry: GeometryProxy) {
-        let thumbnailsWidth = geometry.size.width
-        // When user cancels search, the list can contain several thousands of previews.
-        // It's unlikely that they will scroll down this much. And if they do, avatars
-        // and thumbnails will download on the fly. Less optimal experience but still fine.
-        let previews = Array(filteredPreviews.prefix(200))
-        prefetchThumbnails(for: previews, availableWidth: thumbnailsWidth)
-        prefetchAvatars(for: previews)
     }
 }
 
@@ -182,5 +166,3 @@ struct UserGalleryLikeView: View {
         .environment($0)
     }
 }
-
-#endif

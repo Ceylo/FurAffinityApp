@@ -34,10 +34,11 @@ public struct FAUserGalleryLike: Sendable, Equatable {
     }
     
     public func appending(_ gallery: Self) -> Self {
-        .init(
+        let known = Set(previews.map(\.sid))
+        return .init(
             url: url,
             displayAuthor: displayAuthor,
-            previews: previews + gallery.previews,
+            previews: previews + gallery.previews.filter { !known.contains($0.sid) },
             nextPageUrl: gallery.nextPageUrl,
             folderGroups: folderGroups
         )

@@ -5,14 +5,13 @@
 //  Created by Ceylo on 11/10/2024.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
 struct RemoteUserJournalsView: View {
     var url: URL
-    @Environment(Model.self) private var model
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(Model.self) var model
     
     var body: some View {
         RemoteView(url: url) { url in
@@ -34,5 +33,3 @@ struct RemoteUserJournalsView: View {
         .environment($0.errorStorage)
     }
 }
-
-#endif

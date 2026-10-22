@@ -257,13 +257,32 @@ entries have **no extension**, to `tmp/fa-media/<UUID>/<remote filename>` (see
 `AndroidBridgeBootstrap` points `XDG_CACHE_HOME` at `context.cacheDir`, which
 `@xml/file_paths` exposes.
 
+## User page
+
+`UserView`, `RemoteUserView`, `UserHeader`, `UserPreviewView`, `WatchButton` and
+`UserProfileControlView` are shared as they are; only `.scrollClipDisabled()` stays
+iOS-only. SkipUI marks it unavailable, and all it does on iOS is keep the glass buttons'
+grow-on-touch and light-mode shadow from being clipped — Android draws neither. The
+banner needed one fork fix ([forks.md](forks.md#the-other-fork-patches)). The Profile
+tab is the shared `CurrentUserView`, the signed-in user's page in its own stack.
+
+Open one with the deep link above, e.g. `faOpenURL
+"https://www.furaffinity.net/user/<name>/#shout-<id>"`. A shout id must come from the
+live page: FA shows only the latest shouts.
+
+The gallery, favorites, journal list and watchlists are shared as they are, except for
+their rows. Gallery and favorites rows are `SubmissionPreviewRow`s, as in the feed, whose
+Android branch makes the whole card tappable. A journal row opens the journal screen.
+SkipUI scrolls a searchable `List` one row down, so the search field shows only after a
+pull, where iOS 26 shows it from the start.
+
 ## Notifications
 
 The tab is the iOS one: `RemoteNotificationsView`, `NotificationsView`, the three row
 views and `NotificationsActionView` (the floating "…" nuke menu and its alerts) build for
 both platforms. `AndroidRootView` gives it its own `NavigationStack` path, as
 `LoggedInView` does, so a link pushes onto the selected tab's stack (Settings, which has
-none, sends it to Submissions). The badge is `Model.displayedNotificationCount`, set by
+none, sends it to Notifications). The badge is `Model.displayedNotificationCount`, set by
 the "Tab Badges" settings, which Android shows without the delivery section.
 
 Swipe-to-delete works as in the feed: a full swipe stages the deletion
@@ -274,8 +293,7 @@ first.
 
 A journal or journal-comment row opens the **journal screen** (`RemoteJournalView`),
 shared too: it reuses the submission screen's `HTMLView`, comments, comment and note
-sheets. A shout row or an avatar opens a user page, which is not ported and shows the
-placeholder.
+sheets. A shout row or an avatar opens the user page.
 
 The empty state ("Continue offline, empty (debug)") is `Text(markdown:)`, which on Android
 goes through `LocalizedStringKey`, since Android's Foundation has no

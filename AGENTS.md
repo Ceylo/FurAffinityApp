@@ -17,8 +17,9 @@ next to the `Android/` (Gradle) and `Darwin/` scaffolding. Both platforms build 
 the whole tree, so every source it must not build carries `#if !FA_SKIP_MODULE`. Ported so
 far: login (shared `HomeView` + autologin), the Followed feed, the submission screen
 (images, stories, music, comments, Save/Share, "Send a Note"), Notifications (with the
-journal screen and swipe-to-delete behind an Undo snackbar), Notes and Settings. Not
-ported: Profile, Explore. `Android/README.md` indexes the topic docs under
+journal screen and swipe-to-delete behind an Undo snackbar), Notes, the user page with
+its gallery, favorites, journal list and watchlists, the Profile tab, and Settings. Not
+ported: Explore. `Android/README.md` indexes the topic docs under
 `Android/docs/`; read the relevant one before touching Android code. What every session
 needs to know:
 
@@ -167,10 +168,12 @@ FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, 
 - **`#if !FA_SKIP_MODULE` is what keeps a file out of the Android build.** skipstone walks
   the whole target directory and honors neither SwiftPM `sources:` nor `exclude:`, so
   anything it sees must either build for Android or be guarded. Porting a screen means
-  deleting its guard. It must be `FA_SKIP_MODULE`, never `os(Android)`: the module is
-  compiled twice for Skip — the Android cross-compile and a host build where `os(Android)`
-  is **false** — so an `os(Android)` guard leaves UIKit/Kingfisher/Photos imports to
-  resolve in a target that does not depend on them.
+  deleting its guard. That file guard must be `FA_SKIP_MODULE`, never `os(Android)`: the
+  module is compiled twice for Skip — the Android cross-compile and a host build where
+  `os(Android)` is **false** — so an `os(Android)` guard leaves UIKit/Kingfisher/Photos
+  imports to resolve in a target that does not depend on them. Inside a shared file,
+  `#if os(Android)` branches are fine, except around a bridged view's state or a
+  declaration shared code calls — `shared-sources.md` § Rules for shared sources.
 - **Basenames must be unique across the whole `FurAffinity/` tree — and across
   `FAKit/Sources/FAKit/`, which skipstone now processes too.** SwiftPM derives one
   object file per basename and skipstone one `<Name>_Bridge.swift`, both flattened, so a

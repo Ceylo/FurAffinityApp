@@ -156,9 +156,8 @@ What to tell a tester:
 
 - **Android 9 or newer** (minSdk 28), **arm64 only** — a 32-bit-ARM phone will refuse
   to install it. 18+, and it needs a furaffinity.net account.
-- Not ported yet: Notes, Notifications, the Profile tab and Explore/search. Music
-  plays in another app rather than in-app, and a story opens in-app only as txt or
-  md. Tapping an author or an avatar shows "This screen isn't ported to Android yet."
+- Not ported yet: Explore/search. Music plays in another app rather than
+  in-app, and a story opens in-app only as txt or md.
 - First launch shows Cloudflare's "Verify you are human" and needs a real tap.
 - Crashes and ANRs report themselves to Sentry, symbolicated down to the source
   line (see [crash-reporting.md](crash-reporting.md)); the toggle for that is

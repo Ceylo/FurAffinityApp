@@ -5,8 +5,6 @@
 //  Created by Ceylo on 03/09/2024.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
@@ -19,7 +17,8 @@ extension FAWatchlist: ProgressiveData {
 struct WatchlistView: View {
     var watchlist: FAWatchlist
     var loadMoreUsers: (_ watchlist: FAWatchlist) async -> Void
-    @State private var searchText = ""
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var searchText = ""
     
     var navigationTitle: String {
         switch watchlist.watchDirection {
@@ -116,5 +115,3 @@ struct WatchlistView: View {
         loadMoreUsers: { _ in }
     )
 }
-
-#endif

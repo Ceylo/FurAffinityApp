@@ -5,8 +5,6 @@
 //  Created by Ceylo on 04/09/2024.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
@@ -19,7 +17,8 @@ struct ProgressiveLoadItem<DataType: ProgressiveData>: View {
     var currentData: DataType
     var loadMoreData: (_ currentData: DataType) async -> Void
     var crawlingDelay: Duration = .seconds(1.0)
-    @State private var needsMoreData = false
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var needsMoreData = false
     
     var body: some View {
         Group {
@@ -75,5 +74,3 @@ extension [Int]: ProgressiveData {
     }
     .listStyle(.plain)
 }
-
-#endif

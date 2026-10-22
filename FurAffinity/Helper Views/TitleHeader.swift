@@ -5,8 +5,6 @@
 //  Created by Ceylo on 08/12/2021.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
@@ -35,5 +33,3 @@ extension TitleHeader: SubmissionHeaderView {
     TitleHeader(title: "Great Content")
         .preferredColorScheme(.dark)
 }
-
-#endif

@@ -5,17 +5,16 @@
 //  Created by Ceylo on 19/03/2023.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
 struct RemoteUserView: View {
     var url: URL
     var previewData: UserPreviewData?
-    @Environment(Model.self) private var model
-    @Environment(ErrorStorage.self) private var errorStorage
-    @State private var description: AttributedString?
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(Model.self) var model
+    @Environment(ErrorStorage.self) var errorStorage
+    @State var description: AttributedString?
     
     private func loadUser(from url: URL) async throws -> FAUser {
         let session = try model.session.unwrap()
@@ -89,5 +88,3 @@ struct RemoteUserView: View {
         //    .preferredColorScheme(.dark)
     }
 }
-
-#endif

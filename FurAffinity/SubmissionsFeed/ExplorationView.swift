@@ -39,7 +39,7 @@ struct ExplorationView: View {
                         .listRowSeparator(.hidden)
                 }
                 ForEach(Array(results)) { preview in
-                    SubmissionPreviewRow(preview: preview)
+                    SubmissionPreviewRow<TitleAuthorHeader>(preview: preview)
                 }
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))

@@ -215,3 +215,11 @@ tasks.configureEach {
         }
     }
 }
+
+// The offline demo's bundled images (FurAffinity/Resources/Demo) serve only the debug
+// "Continue offline" buttons, which a non-debuggable build never shows.
+androidComponents {
+    onVariants { variant ->
+        if (variant.buildType != "debug") variant.androidResources.ignoreAssetsPatterns.add("<dir>Demo")
+    }
+}

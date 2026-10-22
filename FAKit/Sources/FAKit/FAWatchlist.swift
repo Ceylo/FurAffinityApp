@@ -25,10 +25,11 @@ public struct FAWatchlist: Equatable, Sendable {
     }
     
     public func appending(_ watchlist: Self) -> Self {
-        .init(
+        let known = Set(users.map(\.name))
+        return .init(
             currentUser: currentUser,
             watchDirection: watchDirection,
-            users: users + watchlist.users,
+            users: users + watchlist.users.filter { !known.contains($0.name) },
             nextPageUrl: watchlist.nextPageUrl
         )
     }

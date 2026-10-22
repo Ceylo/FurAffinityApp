@@ -61,12 +61,14 @@ class OfflineFASession: FASession {
     }
     
     func galleryLike(for url: URL) async throws -> FAUserGalleryLike {
-        .init(
+        let isFavorites = if case .favorites = FATarget(with: url) { true } else { false }
+        return .init(
             url: url,
             displayAuthor: displayUsername,
             previews: submissionPreviews,
             nextPageUrl: nil,
-            folderGroups: [
+            // As on FA, favorites have no folders.
+            folderGroups: isFavorites ? [] : [
                 .init(title: "Gallery Folders", folders: [
                     .init(title: "Gallery", url: url, isActive: true),
                     .init(title: "Scraps", url: url, isActive: false)
@@ -246,6 +248,30 @@ extension OfflineFASession {
     )
     
     static let empty = OfflineFASession(sampleUsername: "Demo User", submissions: [], notes: [], notifications: .init())
+
+    /// Caches the bundled demo banner and avatar under the FA URLs the demo data uses,
+    /// so offline mode shows them without a network.
+    func seedDemoImages() async {
+        let user = await FAUser.demo
+        let images: [(resource: String, ext: String, urls: [URL])] = [
+            ("demo-banner", "jpg", [user.bannerUrl]),
+            ("demo-avatar", "png", [user.name, username].compactMap(FAURLs.avatarUrl(for:))),
+        ]
+        for image in images {
+            guard let file = Bundle.faAssets.url(forResource: image.resource, withExtension: image.ext, subdirectory: "Demo"),
+                  let data = try? Data(contentsOf: file) else {
+                logger.error("Missing demo image \(image.resource)")
+                continue
+            }
+            for url in image.urls {
+                do {
+                    try seedImageCache(data, for: url)
+                } catch {
+                    logger.error("Could not cache demo image \(image.resource): \(error)")
+                }
+            }
+        }
+    }
 }
 
 extension Model {
