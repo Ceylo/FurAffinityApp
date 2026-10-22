@@ -3,8 +3,8 @@
 | Fork | Why |
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
-| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; `.glass`/`.glassProminent` drawn as bordered and `buttonBorderShape`; `glassEffect` drawn as the M3 floating surface; tab re-tap popping to root, then scrolling to top; a `List` under the status bar when the navigation bar is hidden; a `List` that restores its scroll position by the first visible keyed row and its offset; a plain `List`'s section header pinned below the status bar; no `List` row for an `EmptyView`; a `NavigationLink` in a `List` row drawn untinted; a tab badge's count in `onError`; `Color.material(bridgedRole:)`; a bridged `.task(id:)` that is really cancelled; `.updatesFrequently` as a polite live region; a sheet that calls its content only while presented and keeps the last one while it animates away; a `ScrollViewReader` proxy that resolves its scroll action when used; a stack insertion that keeps its enter transition when the stack recomposes before it has played; a principal toolbar item in the title's place, and a flexible toolbar spacer that only separates top-bar groups; a `Picker` listed inline in a `Menu`; a filled image cropped by its frame's alignment; a primary action kept at the toolbar's trailing edge; menu dividers drawn only between items; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider) |
-| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, `ButtonBorderShape`, `sheet`/`fullScreenCover` content passed as a builder, a `JavaBackedView` holding a global JNI reference, `glassEffect` bridged to SkipUI's surface, `GlassEffectContainer` bridged as a `Group`, an `AccessibilityTraits()` that doesn't recurse (upstream #132), `Color.material(_:)` for Material color roles SwiftUI has none for, plus `glassEffectUnion`/`glassEffectID`/`AnyTransition.animation`/`.glass`/`.glassProminent` un-`unavailable`d and `controlSize`/`contentShape` as pass-throughs; `#Preview` / `@Previewable` stubs (skiptools/skip#439) and `@Entry` |
+| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; `.glass`/`.glassProminent` drawn as bordered and `buttonBorderShape`; `glassEffect` drawn as the M3 floating surface; tab re-tap popping to root, then scrolling to top; a `List` under the status bar when the navigation bar is hidden; a `List` that restores its scroll position by the first visible keyed row and its offset; a plain `List`'s section header pinned below the status bar; no `List` row for an `EmptyView`; a `NavigationLink` in a `List` row drawn untinted; a tab badge's count in `onError`; `Color.material(bridgedRole:)`; a bridged `.task(id:)` that is really cancelled; `.updatesFrequently` as a polite live region; a sheet that calls its content only while presented and keeps the last one while it animates away; a `ScrollViewReader` proxy that resolves its scroll action when used; a stack insertion that keeps its enter transition when the stack recomposes before it has played; a principal toolbar item in the title's place, and a flexible toolbar spacer that only separates top-bar groups; a `Picker` listed inline in a `Menu`; a filled image cropped by its frame's alignment; a primary action kept at the toolbar's trailing edge; menu dividers drawn only between items; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider); [local notifications posted as iOS posts them](#local-notifications) |
+| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, `ButtonBorderShape`, `sheet`/`fullScreenCover` content passed as a builder, a `JavaBackedView` holding a global JNI reference, `glassEffect` bridged to SkipUI's surface, `GlassEffectContainer` bridged as a `Group`, an `AccessibilityTraits()` that doesn't recurse (upstream #132), `Color.material(_:)` for Material color roles SwiftUI has none for, plus `glassEffectUnion`/`glassEffectID`/`AnyTransition.animation`/`.glass`/`.glassProminent` un-`unavailable`d and `controlSize`/`contentShape` as pass-throughs; `#Preview` / `@Previewable` stubs (skiptools/skip#439) and `@Entry`; notification attachment options and `soundSetting` |
 | `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, and a rendered image that comes out of an `ImageHolder` rather than out of the view value |
 | `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
 
@@ -338,3 +338,28 @@ skip-fuse-ui:
 - **A menu divider is drawn only between two items** (`69b4cb8`), as on iOS: a leading,
   trailing or repeated `Divider`, a `Section`'s included, draws nothing. The ⋮ menu ended
   with one, and the gallery's folders menu started with one.
+
+## Local notifications
+
+Upstream already posts without a delegate (#555, cherry-picked ahead of a full sync,
+since #583's `List` rewrite conflicts with the fork's) and delivers taps to
+`didReceive` (#566). What the background refresh still needed, in `dc39400` and
+skip-fuse-ui `5b608cd`:
+
+- **No activity required.** Settings, `add` and removals took
+  `UIApplication.shared.androidActivity`, so a WorkManager process posted nothing and
+  read `.notDetermined`. They use the application context; authorization is
+  `areNotificationsEnabled()`.
+- **Images where iOS draws them.** An image attachment became the small icon, which
+  Android draws from its alpha alone: a white blob. A visible image is now the large
+  icon, a `ThumbnailHiddenKey` one the expanded `BigPictureStyle` picture, and
+  `UNNotificationAttachment(identifier:url:options:)` infers the image type from the
+  extension, as iOS does.
+- **Due requests post before `add` returns**, stamped `setWhen`. Each went through
+  its own WorkManager job, which runs in no particular order, so the newest item
+  wasn't reliably on top; and the attachment files were read after the caller had
+  moved on.
+- **A tap keeps the running activity**: the intent adds `SINGLE_TOP` to
+  `CLEAR_TOP`, which alone recreates it and loses the root view's `@State`. #566's
+  new-intent listener then hands the tap to `didReceive`.
+- **`soundSetting` is `.enabled`** rather than unavailable: the channel decides.

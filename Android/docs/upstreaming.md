@@ -62,6 +62,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `908239e` `folder` mapping | skip-ui | no | Robolectric `testFolderSymbolMapsToMaterialIcon`; same shape as #548 |
 | `bb96c29` primary action trailing-most | skip-ui | no | Robolectric `ToolbarItemsTests.primaryActionStaysTrailingMost`, fails without the patch |
 | `69b4cb8` menu dividers only between items | skip-ui | no | Robolectric `MenuDividerTests.onlyDividersBetweenItemsAreDrawn`, fails without the patch (100 px vs 97) |
+| `dc39400` + `5b608cd` local notifications as iOS posts them | skip-ui + skip-fuse-ui | yes | **split into four PRs**: application context, attachments as large icon / big picture (with the options init), immediate post with `setWhen`, `SINGLE_TOP`. Robolectric `NotificationRequestTests` covers the post and the icons. `fb1c589` is #555 cherry-picked; drop it at the next sync |
 | `2b2dc459` + `66eb74df` + `ae0b4f07` Android port | Kingfisher | no | issue first; large parts can never leave the fork |
 | `058eb5d4`, `2296a263`, `07f72deb`, `731194ee` Android first-frame work | Kingfisher | no | part of the port, and depends on skip-ui `23154a0`. `07f72deb` replaces most of the first two. `731194ee` sits on the *target*-cache-hit path; #2572/#2573 rewrote the *original*-cache-hit path beside it, and `239c970b` merged them without touching it |
 | `fb0ef04` `Defaults.defaultSuite` | Defaults | no | issue first; re-pitch without the Android rationale |

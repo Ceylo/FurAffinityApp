@@ -1,5 +1,5 @@
 {
-  "originHash" : "2c726b2736a361d9f209974910f20138d2e5144b87e1a4907554b01153858a6e",
+  "originHash" : "faabcc27d1c050cbd874859ea97c108768ae2341081dd663db347075f36ba97c",
   "pins" : [
     {
       "identity" : "amplitude-swift",
@@ -115,7 +115,7 @@
       "location" : "https://github.com/Ceylo/skip-fuse-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "f76366e24e0c7f8f6164aadd2312df5126d3d877"
+        "revision" : "5b608cdd1c9159863c832d26104ce49d71d586ca"
       }
     },
     {
@@ -142,7 +142,7 @@
       "location" : "https://github.com/Ceylo/skip-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "d522c4318ac8294b7c721603d1679214ab264449"
+        "revision" : "dc394001830664200aec0d8bf926b076e280334d"
       }
     },
     {
