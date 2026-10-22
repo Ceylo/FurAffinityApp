@@ -260,7 +260,9 @@ The logged-out screen's **"Continue offline (debug)"** and **"Continue offline, 
 (debug)"** buttons drive ported screens without a Cloudflare solve, the latter with no
 submissions, notes or notifications. They are gated on `android:debuggable` at
 *runtime* (`AndroidAppInfo.isDebuggable`), not `#if DEBUG`, which skipstone drops when
-it generates the view bridge; so `OfflineFASession` ships in the release APK. The
+it generates the view bridge; so `OfflineFASession` ships in the release APK, but not
+its bundled `Resources/Demo` images, which `app/build.gradle.kts` drops from every
+non-debug variant. The
 shared `LaunchLog.swift` line says which side of the gate a build is on:
 
 ```
