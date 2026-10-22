@@ -5,8 +5,6 @@
 //  Created by Ceylo on 24/05/2026.
 //
 
-#if !FA_SKIP_MODULE
-
 import Defaults
 import FAKit
 import Foundation
@@ -111,7 +109,16 @@ enum BackgroundRefreshManager {
 
     // MARK: Fetch & Notify
     static func performFetchAndNotify() async throws {
-        guard let session = try await makeBackgroundSession() else {
+        let session: OnlineFASession?
+        do {
+            // Building the session fetches its first page, which can be challenged too.
+            session = try await makeBackgroundSession()
+        } catch is CloudflareChallengeRequired {
+            logger.warning("CF challenge not resolved in background; posting notification")
+            await postChallengeFailureNotification()
+            return
+        }
+        guard let session else {
             logger.info("No valid FA session for background refresh (user likely logged out)")
             return
         }
@@ -327,7 +334,7 @@ enum BackgroundRefreshManager {
                 let clear = try UNNotificationAttachment(identifier: "clear", url: file, options: nil)
                 return [clear]
             } else {
-                guard let blurredFile = ImageBlur.blurredImageFile(from: file) else {
+                guard let blurredFile = await ImageBlur.blurredImageFile(from: file) else {
                     return nil
                 }
                 // The blurred attachment is first, so it's the primary image on the
@@ -507,5 +514,3 @@ enum BackgroundRefreshManager {
         }
     }
 }
-
-#endif

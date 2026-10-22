@@ -89,7 +89,6 @@ let package = Package(
             dependencies: ["FurAffinityUI"],
             path: "FurAffinityTests",
             exclude: [
-                "BackgroundRefreshNotificationBuilderTests.swift",
                 "LoggedInViewTabTests.swift",
                 "MockFASession.swift",
                 "ModelTests.swift",

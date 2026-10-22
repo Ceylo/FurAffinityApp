@@ -174,6 +174,9 @@ struct AndroidRootView: View {
                         }
                         .tag(Tab.settings)
                 }
+                // As on LoggedInView: asks for the permission, advances the watermarks,
+                // and schedules the background refresh.
+                .backgroundRefreshLifecycle()
             }
         }
         // Above the TabView so they also cover pushed screens.

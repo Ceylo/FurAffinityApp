@@ -5,15 +5,14 @@
 //  Created by Ceylo on 24/05/2026.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 
-private struct BackgroundRefreshLifecycleModifier: ViewModifier {
-    @Environment(Model.self) private var model
-    @Environment(\.scenePhase) private var scenePhase
-    @State private var didRequestNotificationAuthorization = false
-    @State private var notificationAuthorizationTask: Task<Void, Never>?
+struct BackgroundRefreshLifecycleModifier: ViewModifier {
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(Model.self) var model
+    @Environment(\.scenePhase) var scenePhase
+    @State var didRequestNotificationAuthorization = false
+    @State var notificationAuthorizationTask: Task<Void, Never>?
 
     func body(content: Content) -> some View {
         content
@@ -76,5 +75,3 @@ extension View {
         modifier(BackgroundRefreshLifecycleModifier())
     }
 }
-
-#endif

@@ -20,7 +20,7 @@ enum ImageBlur {
     /// CPU. This is deliberate: this helper runs inside a `BGAppRefreshTask`, and iOS
     /// terminates apps that touch the GPU in the background. `CIGaussianBlur` renders
     /// through a GPU/Metal-backed `CIContext` by default, so it must not be used here.
-    static func blurredImageFile(from fileURL: URL, radius: CGFloat = 40) -> URL? {
+    static func blurredImageFile(from fileURL: URL, radius: CGFloat = 40) async -> URL? {
         guard let image = UIImage(contentsOfFile: fileURL.path(percentEncoded: false)) else {
             logger.error("ImageBlur: failed to load image at \(fileURL)")
             return nil

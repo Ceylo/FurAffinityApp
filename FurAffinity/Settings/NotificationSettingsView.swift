@@ -24,9 +24,7 @@ struct NotificationSettingsView: View {
 
     var body: some View {
         Form {
-            if NotificationDelivery.isSupported {
-                deliverySection
-            }
+            deliverySection
 
             Section {
                 Toggle("Notes", isOn: $badgeNotes)
@@ -40,7 +38,7 @@ struct NotificationSettingsView: View {
                 Text("These settings control which unread items are counted in the badges shown on the Notes and Notifications tabs.")
             }
         }
-        .navigationTitle(NotificationDelivery.isSupported ? "Notifications & Badges" : "Tab Badges")
+        .navigationTitle("Notifications & Badges")
     }
 
     private var deliverySection: some View {

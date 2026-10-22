@@ -42,6 +42,11 @@ public final class FAWebSession {
     /// `FAHTTPDataSource` keeps its URLSession path.
     nonisolated(unsafe) public static var nativeTransport: FANativeTransport?
 
+    /// The `Cookie:` header the process-wide cookie jar holds for a URL, installed at
+    /// launch like `imageCredentialsSink`. Unlike the navigator's, it needs no mounted
+    /// WebView, which a background worker's process doesn't have.
+    nonisolated(unsafe) public static var cookieJarHeaderProvider: (@Sendable (URL) async -> String?)?
+
     /// Drives the hidden root WebView. Handed to `FAHTTPDataSource` as its
     /// challenge fallback, so it must outlive every screen.
     let navigator = WebViewNavigator()
@@ -303,6 +308,39 @@ public final class FAWebSession {
             nativeTransport: Self.nativeTransport
         )
 
+        return try await OnlineFASession(cookies: authCookies, dataSource: dataSource, source: source)
+    }
+
+    /// A session for a process with no WebView, built from the cookie jar alone: the
+    /// background refresh's. It has no WebView to fall back on, so a challenge throws
+    /// `CloudflareChallengeRequired` rather than waiting for one to be solved.
+    ///
+    /// Returns nil when the jar holds no FA auth cookie.
+    public static func makeBackgroundSession(source: FASessionSource) async throws -> OnlineFASession? {
+        let cookieHeader = await cookieJarHeaderProvider?(FAURLs.homeUrl) ?? ""
+        let cookies = cookieHeader.split(separator: ";").compactMap { pair -> HTTPCookie? in
+            let parts = pair.split(separator: "=", maxSplits: 1)
+            guard parts.count == 2 else { return nil }
+            return HTTPCookie.plain(
+                name: parts[0].trimmingCharacters(in: .whitespaces), value: String(parts[1]),
+                domain: ".furaffinity.net", path: "/", expires: nil, isSecure: true
+            )
+        }
+        guard cookies.contains(where: { $0.name == "a" }) else {
+            logger.info("FAWebSession: no FA auth cookie in the jar")
+            return nil
+        }
+        // What the WebView is configured with, so the clearance it earned still holds.
+        let userAgent = FAWebViewUserAgent.string ?? FAUserAgent.applicationName
+        imageCredentialsSink?(userAgent, cookieHeader)
+
+        let dataSource = FAHTTPDataSource(
+            userAgent: userAgent,
+            cookieHeader: cookieHeader,
+            nativeTransport: nativeTransport,
+            awaitChallengeResolution: { throw CloudflareChallengeRequired() }
+        )
+        let authCookies = cookies.filter { $0.name != "cf_clearance" && $0.name != "__cf_bm" }
         return try await OnlineFASession(cookies: authCookies, dataSource: dataSource, source: source)
     }
 }

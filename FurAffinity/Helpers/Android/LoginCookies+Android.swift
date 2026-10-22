@@ -55,3 +55,26 @@ private func clearCookiesOffMain() async -> Bool {
     }
 }
 #endif
+
+/// The WebView jar's `Cookie:` header for `url`, HttpOnly cookies included, read
+/// straight from `CookieManager`: the background refresh's process has no WebView to
+/// ask. Installed as `FAWebSession.cookieJarHeaderProvider`.
+func cookieJarHeader(for url: URL) async -> String? {
+    #if canImport(Android)
+    // `CookieManager` may block on its first use in a process: not on the cooperative pool.
+    await withCheckedContinuation { continuation in
+        DispatchQueue.global(qos: .utility).async {
+            do {
+                let bridge = try AnyDynamicObject(className: "fur.affinity.ui.FACookieBridge")
+                let header: String? = try bridge.cookieHeader(url.absoluteString)
+                continuation.resume(returning: header)
+            } catch {
+                logger.error("cookieJarHeader: could not reach FACookieBridge: \(error)")
+                continuation.resume(returning: nil)
+            }
+        }
+    }
+    #else
+    nil
+    #endif
+}

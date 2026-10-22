@@ -30,6 +30,9 @@ import SwiftUI
 /* SKIP @bridge */public final class FurAffinityUIAppDelegate: Sendable {
     /* SKIP @bridge */public static let shared = FurAffinityUIAppDelegate()
 
+    /// Between the activity's `onResume` and `onStop`.
+    private let isInForeground = LockedFlag()
+
     private init() {
     }
 
@@ -50,6 +53,8 @@ import SwiftUI
         // Page fetches join the image layer's connection pool. FAKit gains no JNI:
         // the transport is a struct of closures the app module fills in.
         FAWebSession.nativeTransport = OkHttpTransport.transport
+        // The background refresh's session, built where no WebView may be mounted.
+        FAWebSession.cookieJarHeaderProvider = { await cookieJarHeader(for: $0) }
         // Picks the light or dark FA theme rich text is styled after.
         FATheme.currentProvider = { AndroidAppInfo.isNightMode ? .dark : .light }
         // The counterpart of FurAffinityApp.init()'s line, same shared format.
@@ -92,6 +97,23 @@ import SwiftUI
         }
     }
 
+    /// From `FABackgroundRefreshWorker`. Stands down while an activity is in the
+    /// foreground, where iOS never runs its BGAppRefreshTask: the user is seeing the
+    /// content, and `backgroundRefreshLifecycle()` is advancing the watermarks.
+    /* SKIP @bridge */public func performBackgroundRefresh() async -> Bool {
+        guard !isInForeground.value else {
+            logger.info("Skipping background refresh: the app is in the foreground")
+            return true
+        }
+        do {
+            try await BackgroundRefreshManager.performFetchAndNotify()
+            return !Task.isCancelled
+        } catch {
+            logger.error("Background refresh failed: \(error)")
+            return false
+        }
+    }
+
     /// Lets the script's opt-out control flip the setting without the UI.
     /* SKIP @bridge */public func setCrashReportingEnabled(_ enabled: Bool) {
         Defaults[.crashReportingEnabled] = enabled
@@ -104,6 +126,7 @@ import SwiftUI
 
     /* SKIP @bridge */public func onResume() {
         logger.debug("onResume")
+        isInForeground.value = true
     }
 
     /* SKIP @bridge */public func onPause() {
@@ -112,6 +135,7 @@ import SwiftUI
 
     /* SKIP @bridge */public func onStop() {
         logger.debug("onStop")
+        isInForeground.value = false
         // Android's "entered the background", the same moment Kingfisher sweeps its
         // disk cache on iOS — and off the launch path, which is why not onLaunch. iOS
         // gets this from `UIApplicationDidEnterBackground`, which `ImageCache` cannot
@@ -132,5 +156,16 @@ import SwiftUI
         // Decoded images are the app's largest reclaimable allocation; the disk cache
         // behind them is untouched, so this only costs a re-decode.
         ImageCache.default.clearMemoryCache()
+    }
+}
+
+/// A Bool the activity callbacks write and the background worker reads.
+private final class LockedFlag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _value = false
+
+    var value: Bool {
+        get { lock.withLock { _value } }
+        set { lock.withLock { _value = newValue } }
     }
 }

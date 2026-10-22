@@ -2,7 +2,8 @@
 //  FACookieBridge.kt
 //  FurAffinity (Android)
 //
-//  Kotlin helper for dropping the WebView's cookies at logout. skip-web exposes
+//  Kotlin helper for reading the WebView's cookie jar without a WebView, and for
+//  dropping its cookies at logout. skip-web exposes
 //  `clearCookies()` on `WebViewNavigator`, but only while a WebView is mounted and
 //  bound to it — Settings runs long after the login screen is gone — so logout goes
 //  straight to the process-wide `CookieManager` instead.
@@ -23,6 +24,9 @@ import java.util.concurrent.TimeUnit
 class FACookieBridge {
     // Boolean, not Unit: AnyDynamicObject can't resolve the void overload.
     fun clearCookies(): Boolean = Companion.clearCookies()
+
+    // The background refresh's session, in a process that may have no WebView.
+    fun cookieHeader(url: String): String = CookieManager.getInstance().getCookie(url) ?: ""
 
     companion object {
         private const val TAG = "FACookieBridge"

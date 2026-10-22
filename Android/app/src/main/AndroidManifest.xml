@@ -13,6 +13,10 @@
          process down. Normal (install-time) permission — never requested at runtime. -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- The background refresh's notifications; asked for at the first logged-in launch
+         (API 33+). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- allowBackup is off deliberately: there are no backup rules, so the WebView's
          cookie jar — the FA auth cookies and cf_clearance — would otherwise be eligible
          for Google cloud backup, and restoring it onto another device would hand over a
@@ -27,9 +31,12 @@
              DSN and the user hasn't opted out. -->
         <meta-data android:name="io.sentry.auto-init" android:value="false" />
 
+        <!-- singleTop: a notification group's summary opens the plain launcher intent, which
+             otherwise stacks a second, fresh activity on a task a notification tap started. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
             android:windowSoftInputMode="adjustResize">

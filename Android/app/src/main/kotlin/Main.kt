@@ -71,7 +71,9 @@ open class MainActivity: AppCompatActivity {
 
     /// `--ez faCrashReportingEnabled <bool>` and `--es faCrashTest <case> --es faCrashTestRun <id>`,
     /// from Scripts/check-crash-reporting.sh, and `--es faOpenURL <url>`, which opens an FA
-    /// URL in-app once signed in (the counterpart of `simctl openurl`). Never in release:
+    /// URL in-app once signed in (the counterpart of `simctl openurl`), and `--ei
+    /// faBackgroundRefreshIn <seconds>`, which runs the background refresh once after that
+    /// delay: go Home before it fires, since it stands down in the foreground. Never in release:
     /// this activity is exported, so any app could send them. Only on the launch that
     /// carried them: a recreation or a relaunch from Recents replays the same intent.
     private fun runDebugExtras(savedInstanceState: android.os.Bundle?) {
@@ -81,6 +83,9 @@ open class MainActivity: AppCompatActivity {
         if (intent.flags and android.content.Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
         val extras = intent.extras ?: return
         extras.getString("faOpenURL")?.let { AppDelegate.shared.openDebugURL(it) }
+        if (extras.containsKey("faBackgroundRefreshIn")) {
+            FANotificationBridge.runBackgroundRefresh(extras.getInt("faBackgroundRefreshIn").toLong())
+        }
         if (extras.containsKey("faCrashReportingEnabled")) {
             AppDelegate.shared.setCrashReportingEnabled(extras.getBoolean("faCrashReportingEnabled"))
         }

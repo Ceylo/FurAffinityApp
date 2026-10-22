@@ -9,9 +9,12 @@ import Defaults
 import FAKit
 import Foundation
 import Testing
+#if FA_SKIP_MODULE
+@testable import FurAffinityUI
+#else
 import UserNotifications
-
 @testable import Fur_Affinity
+#endif
 
 struct BackgroundRefreshNotificationBuilderTests {
     // MARK: - Helpers

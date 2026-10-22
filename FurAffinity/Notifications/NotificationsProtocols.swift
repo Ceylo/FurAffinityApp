@@ -63,13 +63,3 @@ extension FANotificationPreviews {
         }
     }
 }
-
-/// Whether this platform delivers the notifications that `NotificationSettingsView`
-/// configures. Android doesn't: delivery needs `BackgroundRefreshManager`.
-enum NotificationDelivery {
-#if os(Android)
-    static let isSupported = false
-#else
-    static let isSupported = true
-#endif
-}
