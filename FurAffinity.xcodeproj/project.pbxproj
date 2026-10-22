@@ -181,6 +181,7 @@
 		87FA100A271F5E570021A051 /* FALogging in Frameworks */ = {isa = PBXBuildFile; productRef = 87FA100B271F5E570021A051 /* FALogging */; };
 		87FA55E200000000000A55E2 /* AssetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FA55E100000000000A55E1 /* AssetBundle.swift */; };
 		87FACE0200000000000DEECF /* NotificationDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FACE0100000000000DEECF /* NotificationDeepLink.swift */; };
+		A51E1041C2BE41C506038232 /* NotificationCenterDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40295AF81A46078386ED70CD /* NotificationCenterDelegate.swift */; };
 		87FACE0400000000000DEECF /* NotificationCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FACE0300000000000DEECF /* NotificationCoordinatorTests.swift */; };
 		87FACE0600000000000DEECF /* LoggedInViewTabTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FACE0500000000000DEECF /* LoggedInViewTabTests.swift */; };
 		87FACE0800000000000DEECF /* NavigationStreamTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FACE0700000000000DEECF /* NavigationStreamTests.swift */; };
@@ -407,6 +408,7 @@
 		87F960CA2801EFF3000B30A3 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
 		87FA55E100000000000A55E1 /* AssetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AssetBundle.swift; sourceTree = "<group>"; };
 		87FACE0100000000000DEECF /* NotificationDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationDeepLink.swift; sourceTree = "<group>"; };
+		40295AF81A46078386ED70CD /* NotificationCenterDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCenterDelegate.swift; sourceTree = "<group>"; };
 		87FACE0300000000000DEECF /* NotificationCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCoordinatorTests.swift; sourceTree = "<group>"; };
 		87FACE0500000000000DEECF /* LoggedInViewTabTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggedInViewTabTests.swift; sourceTree = "<group>"; };
 		87FACE0700000000000DEECF /* NavigationStreamTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationStreamTests.swift; sourceTree = "<group>"; };
@@ -655,6 +657,7 @@
 				DE0FE3ECD383602E8F75046C /* InAppLinkConversion.swift */,
 				87098D372CB19E4D00E7BD94 /* Kingfisher+FA.swift */,
 				E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */,
+				87FACE0100000000000DEECF /* NotificationDeepLink.swift */,
 				C97C529B7292DB5FD30EAAB9 /* iOS */,
 				87E996C5307AB4B300BF2EDC /* Android.swift */,
 			);
@@ -847,7 +850,7 @@
 				87FA55E100000000000A55E1 /* AssetBundle.swift */,
 				8733DDFC28F75C1200CD8BCF /* Sharing.swift */,
 				873E66102752AAB2009C8767 /* MediaSaveHandler.swift */,
-				87FACE0100000000000DEECF /* NotificationDeepLink.swift */,
+				40295AF81A46078386ED70CD /* NotificationCenterDelegate.swift */,
 				3DAE7CF11945226ED5F47626 /* LoginCookies.swift */,
 				8791D60C29C4DCE6003FDBBE /* InAppNavigation.swift */,
 				FD256DE747CD74E1E90651F9 /* CrashReporting+iOS.swift */,
@@ -1077,6 +1080,7 @@
 				CE0000010000000000000002 /* NotificationSettingsView.swift in Sources */,
 				8791D60D29C4DCE6003FDBBE /* InAppNavigation.swift in Sources */,
 				87FACE0200000000000DEECF /* NotificationDeepLink.swift in Sources */,
+				A51E1041C2BE41C506038232 /* NotificationCenterDelegate.swift in Sources */,
 				87A185A02745A83B00B10D2A /* Debugging.swift in Sources */,
 				87C2ADEC2F017D5B0061F837 /* ErrorStorage.swift in Sources */,
 				87E0E2B82801D967005207A8 /* NotesView.swift in Sources */,

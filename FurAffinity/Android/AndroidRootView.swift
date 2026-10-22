@@ -25,7 +25,7 @@ struct AndroidRootView: View {
     @State var notificationsPath = [FATarget]()
     @State var userpagePath = [FATarget]()
     @State var selectedTab: Tab = .submissions
-    @State var pendingDebugDeepLink = PendingDebugDeepLink.shared
+    @State var notificationCoordinator = NotificationCoordinator.shared
 
     enum Tab {
         case submissions
@@ -218,6 +218,7 @@ struct AndroidRootView: View {
         }
         .environment(model)
         .environment(model.errorStorage)
+        .environment(notificationCoordinator)
         .environment(\.navigationStream, navigationStream)
         .onChange(of: navigationStream.latest) { _, event in
             guard let event else { return }
@@ -232,14 +233,10 @@ struct AndroidRootView: View {
             userpagePath = []
             selectedTab = .submissions
         }
-        // Held until there is a session to open it in.
-        .task(id: "\(model.session != nil) \(pendingDebugDeepLink.url?.absoluteString ?? "")") {
-            guard model.session != nil, let url = pendingDebugDeepLink.url else { return }
-            pendingDebugDeepLink.url = nil
-            guard let target = FATarget(with: url) else {
-                logger.error("faOpenURL: not an in-app target: \(url.absoluteString)")
-                return
-            }
+        // A notification tap or `faOpenURL`, held until there is a session to open it in.
+        .task(id: "\(model.session != nil) \(notificationCoordinator.pendingDeepLink != nil)") {
+            guard model.session != nil, let target = notificationCoordinator.pendingDeepLink else { return }
+            notificationCoordinator.pendingDeepLink = nil
             navigationStream.send(target)
         }
         .autorefreshingOnForeground {
@@ -292,13 +289,4 @@ struct AndroidRootView: View {
             .background(.thinMaterial)
         }
     }
-}
-
-/// A URL from `MainActivity`'s debug-only `faOpenURL` launch extra, waiting for a session.
-@MainActor
-@Observable
-final class PendingDebugDeepLink {
-    static let shared = PendingDebugDeepLink()
-
-    var url: URL?
 }

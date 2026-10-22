@@ -93,7 +93,6 @@ let package = Package(
                 "LoggedInViewTabTests.swift",
                 "MockFASession.swift",
                 "ModelTests.swift",
-                "NotificationCoordinatorTests.swift",
             ],
             swiftSettings: [.define("FA_SKIP_MODULE")]
         ),

@@ -153,11 +153,7 @@ struct HomeView: View {
         // !checkingConnection avoids racing the cold-launch autologin window.
         .onChange(of: checkingConnection) { _, checking in
             if !checking && model.session == nil {
-                // Nothing delivers notifications on Android, so there is no
-                // coordinator in that module.
-#if !FA_SKIP_MODULE
                 NotificationCoordinator.shared.pendingDeepLink = nil
-#endif
             }
         }
         .sheet(

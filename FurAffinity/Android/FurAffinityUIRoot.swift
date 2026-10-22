@@ -71,6 +71,8 @@ import SwiftUI
         // (see Defaults.startingSchemaVersion), but it stamps the schema version so a
         // later migration knows where to resume.
         Defaults.runSettingsMigrations()
+        // As FurAffinityApp.init() on iOS. SkipUI holds a tap that launched the app until then.
+        UNUserNotificationCenter.current().delegate = NotificationCenterDelegate.shared
     }
 
     /// From `MainActivity`'s intent extras on a non-release build; see
@@ -82,7 +84,11 @@ import SwiftUI
     /// From `MainActivity`'s `faOpenURL` extra on a non-release build.
     /* SKIP @bridge */public func openDebugURL(_ url: String) {
         Task { @MainActor in
-            PendingDebugDeepLink.shared.url = URL(string: url)
+            guard let target = URL(string: url).flatMap(FATarget.init(with:)) else {
+                logger.error("faOpenURL: not an in-app target: \(url)")
+                return
+            }
+            NotificationCoordinator.shared.pendingDeepLink = target
         }
     }
 

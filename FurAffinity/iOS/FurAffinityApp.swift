@@ -133,7 +133,7 @@ struct FurAffinityApp: App {
         FAImageInliner.dataProvider = {
             try? await KingfisherManager.shared.retrieveFAImageData(with: $0)
         }
-        UNUserNotificationCenter.current().delegate = NotificationCoordinator.shared
+        UNUserNotificationCenter.current().delegate = NotificationCenterDelegate.shared
     }
 
     var body: some Scene {
