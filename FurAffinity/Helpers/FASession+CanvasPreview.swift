@@ -61,12 +61,14 @@ class OfflineFASession: FASession {
     }
     
     func galleryLike(for url: URL) async throws -> FAUserGalleryLike {
-        .init(
+        let isFavorites = if case .favorites = FATarget(with: url) { true } else { false }
+        return .init(
             url: url,
             displayAuthor: displayUsername,
             previews: submissionPreviews,
             nextPageUrl: nil,
-            folderGroups: [
+            // As on FA, favorites have no folders.
+            folderGroups: isFavorites ? [] : [
                 .init(title: "Gallery Folders", folders: [
                     .init(title: "Gallery", url: url, isActive: true),
                     .init(title: "Scraps", url: url, isActive: false)
