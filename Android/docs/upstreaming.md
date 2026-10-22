@@ -21,6 +21,8 @@ is never described as submitted.
 | `Ceylo/Kingfisher` | the Android port, only if onevcat wants one | skipstone plugin, the unconditional `SkipFuseUI` edge, the `Documentation.docc` deletion, the dynamic-library manifest |
 | `Ceylo/Defaults` | `Defaults.defaultSuite`, pitched on its own merits | dropping `DefaultsMacros` + swift-syntax, the `#if !os(Android)` guards |
 | `Ceylo/skip-web` | nothing | `64de0f8` — dependency locations only; required today, retires when the two above land |
+| `Ceylo/skip-foundation` | both patches | — |
+| `Ceylo/skip-bridge`, `skip-model`, `skip-android-bridge`, `skip-fuse` | nothing | the `Package.swift` re-point to `Ceylo/skip-foundation`; retire with its patches |
 
 Per patch. "Paired" means the change touches API surface and so needs a matching
 `skip-fuse-ui` PR *and* a Showcase playground (see [Skip](#skip-ui--skip-fuse-ui) below).
@@ -63,18 +65,21 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `bb96c29` primary action trailing-most | skip-ui | no | Robolectric `ToolbarItemsTests.primaryActionStaysTrailingMost`, fails without the patch |
 | `69b4cb8` menu dividers only between items | skip-ui | no | Robolectric `MenuDividerTests.onlyDividersBetweenItemsAreDrawn`, fails without the patch (100 px vs 97) |
 | `dc39400` + `5b608cd` local notifications as iOS posts them | skip-ui + skip-fuse-ui | yes | **split into four PRs**: application context, attachments as large icon / big picture (with the options init), immediate post with `setWhen`, `SINGLE_TOP`. Robolectric `NotificationRequestTests` covers the post and the icons. `fb1c589` is #555 cherry-picked; drop it at the next sync |
+| `844f754` + `36c9bef` + `96a940d` `UserDefaults` arrays and dictionaries | skip-foundation | no | squash the three. Robolectric `test_setValue_Array` / `test_setValue_Dictionary`. Cut from 1.4.6 |
+| `6953840` `JSONSerialization` outside the BMP | skip-foundation | no | Robolectric `test_serializeStringOutsideTheBMP`; any Skip app's JSON loses its emoji today |
 | `2b2dc459` + `66eb74df` + `ae0b4f07` Android port | Kingfisher | no | issue first; large parts can never leave the fork |
 | `058eb5d4`, `2296a263`, `07f72deb`, `731194ee` Android first-frame work | Kingfisher | no | part of the port, and depends on skip-ui `23154a0`. `07f72deb` replaces most of the first two. `731194ee` sits on the *target*-cache-hit path; #2572/#2573 rewrote the *original*-cache-hit path beside it, and `239c970b` merged them without touching it |
 | `fb0ef04` `Defaults.defaultSuite` | Defaults | no | issue first; re-pitch without the Android rationale |
 | `4c1ad29` drop macros + guards | — | — | fork-only, permanently |
 | `e67bf25` + `4f7ad45` Android `@Default` | — | — | nothing to send: the second commit moved it out of the fork again, so the pair is a no-op against upstream |
 | `cfa7d82`, `64de0f8` fork re-points | — | — | fork-only, and load-bearing: they are what gives skip-ui one location across the graph. They retire with the patches above |
+| `9ed3eca`, `43ffce6`, `a6d70f1`, `b0fc5c2`, and the matching commits in skip-ui, skip-fuse-ui and skip-web | — | — | the same for skip-foundation, in skip-bridge, skip-model, skip-android-bridge and skip-fuse. They retire with the skip-foundation patches |
 
 ## Before any PR
 
 - **Draft only.** Repeated because it is the rule most easily read past.
 - **A fork must be a real GitHub fork** (a `parent`, inside upstream's repository
-  network), or GitHub cannot open a cross-repo PR from it. All four PR-raising forks are.
+  network), or GitHub cannot open a cross-repo PR from it. All five PR-raising forks are.
   A repository created by push is fixed by recreating it with `gh repo fork` and pushing
   `android` back; URLs and SHAs are unchanged. `Ceylo/skip-web` is not a fork and never
   raises a PR — see [skip-web](#skip-web).

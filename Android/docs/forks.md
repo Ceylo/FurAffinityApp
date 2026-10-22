@@ -6,7 +6,9 @@
 | `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; `.glass`/`.glassProminent` drawn as bordered and `buttonBorderShape`; `glassEffect` drawn as the M3 floating surface; tab re-tap popping to root, then scrolling to top; a `List` under the status bar when the navigation bar is hidden; a `List` that restores its scroll position by the first visible keyed row and its offset; a plain `List`'s section header pinned below the status bar; no `List` row for an `EmptyView`; a `NavigationLink` in a `List` row drawn untinted; a tab badge's count in `onError`; `Color.material(bridgedRole:)`; a bridged `.task(id:)` that is really cancelled; `.updatesFrequently` as a polite live region; a sheet that calls its content only while presented and keeps the last one while it animates away; a `ScrollViewReader` proxy that resolves its scroll action when used; a stack insertion that keeps its enter transition when the stack recomposes before it has played; a principal toolbar item in the title's place, and a flexible toolbar spacer that only separates top-bar groups; a `Picker` listed inline in a `Menu`; a filled image cropped by its frame's alignment; a primary action kept at the toolbar's trailing edge; menu dividers drawn only between items; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider); [local notifications posted as iOS posts them](#local-notifications) |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, `ButtonBorderShape`, `sheet`/`fullScreenCover` content passed as a builder, a `JavaBackedView` holding a global JNI reference, `glassEffect` bridged to SkipUI's surface, `GlassEffectContainer` bridged as a `Group`, an `AccessibilityTraits()` that doesn't recurse (upstream #132), `Color.material(_:)` for Material color roles SwiftUI has none for, plus `glassEffectUnion`/`glassEffectID`/`AnyTransition.animation`/`.glass`/`.glassProminent` un-`unavailable`d and `controlSize`/`contentShape` as pass-throughs; `#Preview` / `@Previewable` stubs (skiptools/skip#439) and `@Entry`; notification attachment options and `soundSetting` |
 | `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, and a rendered image that comes out of an `ImageHolder` rather than out of the view value |
+| `Ceylo/skip-foundation` | Android `UserDefaults` storing arrays and dictionaries; `JSONSerialization` keeping characters outside the BMP ([below](#why-skip-foundation-is-forked)) |
 | `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
+| `Ceylo/skip-bridge`, `Ceylo/skip-model`, `Ceylo/skip-android-bridge`, `Ceylo/skip-fuse` | dependency identity only, like skip-web: each names the forks above it, so the graph has one `skip-foundation` |
 
 Which commit is which patch, and where each stands upstream, is the inventory in
 [upstreaming.md](upstreaming.md), along with the gates each project sets for a PR.
@@ -26,7 +28,7 @@ skip the [build slot](build-and-run.md#build-slots); an absolute one, like
 
 The root `Package.resolved` **is** committed (a `!/Package.resolved` negation in
 `.gitignore`), as is the Xcode workspace's copy; only `FAKit/Package.resolved` stays
-ignored. Five dependencies resolve from mutable `branch: "android"` refs, so without
+ignored. Ten dependencies resolve from mutable `branch: "android"` refs, so without
 the recorded revisions a release isn't reproducible. Refreshing a fork is `swift package
 update <dep>`, then committing the diff. The root manifest declares swift-syntax, unused,
 only so that update keeps the pin skip-fuse-ui's Android-only macros need; building it
@@ -363,3 +365,30 @@ skip-fuse-ui `5b608cd`:
   `CLEAR_TOP`, which alone recreates it and loses the root view's `@State`. #566's
   new-intent listener then hands the tap to `didReceive`.
 - **`soundSetting` is `.enabled`** rather than unavailable: the channel decides.
+
+## Why skip-foundation is forked
+
+The notification queue (`Defaults[.pendingNotificationQueue]`, an array of JSON strings)
+never persisted on Android, and the flush read back an empty queue. Two bugs, both
+covered by Robolectric tests that fail without the patch:
+
+- **`UserDefaults.set(_: Any?)` dropped arrays and dictionaries** (`// we ignore`), with no
+  error, while reads in the same process returned nothing. They are now stored as JSON,
+  marked with an unrepresentable-type id (5, 6) that `object(forKey:)` decodes.
+- **`JSONSerialization` broke every emoji.** `JSONWriter` wrote each `Character`
+  separately, and on Kotlin that is one UTF-16 unit, so each surrogate was UTF-8-encoded
+  alone, as "?". The escaped string is now written in one piece.
+
+The fork is cut from the tag the app had pinned (1.4.6), not from `main`. Its own `swift
+test` resolves the newest Skip (1.9.16 when this was written), whose transpiler accepts
+`Data(string.utf8)` and `String(data:encoding:)` inside `UserDefaults`, where the app's
+pinned 1.9.12 does not: check a fork patch against the app's Skip, not only the fork's
+tests. After changing a skip-foundation file, `Scripts/Android/clean.sh` before building
+the app. Kotlin's incremental compile regenerates only that file and resolves it against
+stale state ("Unresolved reference 'utf8Data'" for an extension the module still declares).
+
+Identity costs four more forks. skip-foundation is named by skip-bridge, skip-model and
+skip-android-bridge, and skip-android-bridge by skip-fuse, so each of those, and skip-ui,
+skip-fuse-ui and skip-web, names the Ceylo URL. Like skip-web, the four new ones carry no
+source change and retire with the skip-foundation patches.
+

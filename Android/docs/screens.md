@@ -283,7 +283,7 @@ views and `NotificationsActionView` (the floating "…" nuke menu and its alerts
 both platforms. `AndroidRootView` gives it its own `NavigationStack` path, as
 `LoggedInView` does, so a link pushes onto the selected tab's stack (Settings, which has
 none, sends it to Notifications). The badge is `Model.displayedNotificationCount`, set by
-the "Tab Badges" settings, which Android shows without the delivery section.
+the badge settings in "Notifications & Badges".
 
 Swipe-to-delete works as in the feed: a full swipe stages the deletion
 (`Model.stageNotificationsDeletion`) behind the same snackbar, and iOS commits at once.
@@ -298,6 +298,56 @@ sheets. A shout row or an avatar opens the user page.
 The empty state ("Continue offline, empty (debug)") is `Text(markdown:)`, which on Android
 goes through `LocalizedStringKey`, since Android's Foundation has no
 `AttributedString(markdown:)`.
+
+### Local notifications
+
+The background refresh is shared: `Notifications/BackgroundRefresh.swift` fetches, keeps
+the watermarks and the pending queue, and posts through `UNUserNotificationCenter`, which
+SkipUI emulates ([forks.md § Local notifications](forks.md#local-notifications)). Each
+platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
+`attaching(_:to:)`; Android's are in `Android/BackgroundRefreshManager+Android.swift`.
+
+- **Scheduling.** `FABackgroundRefreshWorker` is a periodic WorkManager job (30 min,
+  network required), enqueued with `UPDATE` by `backgroundRefreshLifecycle()` each time
+  the app goes to the background. Periodic rather than iOS's self-rechaining one-shot:
+  replacing the work from inside the running worker would cancel it. The worker stands
+  down while an activity is resumed, where iOS never runs its task.
+- **A session without a WebView.** WorkManager may start the process cold, with no
+  `FAWebSessionView` mounted, so `FAWebSession.makeBackgroundSession` reads the jar
+  through `CookieManager` (`cookieJarHeaderProvider`, HttpOnly cookies included) and
+  replays the configured WebView User-Agent the clearance is bound to. With no WebView to
+  fall back on, a challenge throws `CloudflareChallengeRequired`, and the run posts the
+  "CloudFlare check required" notification with the queue left intact, as on iOS. Building
+  the session fetches its first page, so that is usually where the challenge comes from.
+- **Images.** A submission's thumbnail is the large icon, and the expanded notification
+  shows it as a big picture. A mature one is blurred by `FANotificationBridge.blur`, a CPU
+  box blur matched to Kingfisher's radius (its Accelerate blur is compiled out here); the
+  clear image is the hidden attachment, so only the expanded view shows it. Notes, comments
+  and journals attach the author's avatar instead of iOS's communication notification.
+- **Taps** reach `NotificationCenterDelegate`, then `NotificationCoordinator`, which
+  `AndroidRootView` drains once there is a session, as it does `faOpenURL`. SkipUI holds a
+  tap that cold-launched the app until the delegate is set in `onInit`. `MainActivity` is
+  `singleTop`: a group's summary row opens the plain launcher intent, which otherwise
+  stacked a fresh activity on a task a notification had started.
+- **The icon** is `res/drawable/ic_notification.xml`, Material's paw as a placeholder:
+  the status bar draws it from its alpha alone.
+
+To force a run, use the debug launch extra, a one-off run of the same worker. WorkManager
+won't force a periodic run before its period has elapsed ("being executed before
+schedule"), even through `cmd jobscheduler run -f`:
+
+```
+adb shell am start -S -n <pkg>/fur.affinity.ui.MainActivity --ei faBackgroundRefreshIn 180
+```
+
+Go Home before it fires, since the worker stands down in the foreground. For a cold process,
+also `kill <pid>` as root. `am force-stop` would cancel the job. The watermarks are the
+`latest*NotificationID` ints in `shared_prefs/defaults.xml`; lower them only while the
+process is dead, since a live one writes its own back.
+
+On the emulator, JobScheduler left the due one-off `READY` but undispatched while the
+process was dead. `cmd jobscheduler run -f -n androidx.work.systemjobscheduler <pkg> <id>`
+(the id from `dumpsys jobscheduler`) starts it; a one-off has no period to refuse it.
 
 ## Notes
 

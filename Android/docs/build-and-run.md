@@ -343,7 +343,6 @@ Left out of the root package:
 
 | iOS-only | Why |
 |---|---|
-| `BackgroundRefreshNotificationBuilderTests`, `NotificationCoordinatorTests` | BackgroundTasks, UserNotifications |
 | `LoggedInViewTabTests` | the UIKit tab bar; Android has `AndroidRootView.Tab` |
 | `ModelTests` (+ `MockFASession`) | `Model.init` observes `Defaults`, a Kotlin SharedPreferences listener on Android: it needs a JVM, which a native test executable lacks |
 | `SettingsMigrationTests.legacyUnmigrated…` | no pre-versioning Android install exists |

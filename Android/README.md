@@ -11,7 +11,7 @@ still built by `FurAffinity.xcodeproj` and none of its files move.
 | [docs/build-and-run.md](docs/build-and-run.md) | emulator, build, run, debug, test, CI, the build-environment traps, and the [build slots](docs/build-and-run.md#build-slots) the Swift side builds in, shared by every worktree |
 | [docs/shared-sources.md](docs/shared-sources.md) | guarding, and every rule for writing a file both platforms compile |
 | [docs/assets-and-resources.md](docs/assets-and-resources.md) | shared asset-catalog entries, generated launcher/app art |
-| [docs/forks.md](docs/forks.md) | the five forked dependencies and every patch in them |
+| [docs/forks.md](docs/forks.md) | the forked dependencies and every patch in them |
 | [docs/upstreaming.md](docs/upstreaming.md) | sending a fork patch back to its origin project: gates, evidence, PR shape |
 | [docs/images.md](docs/images.md) | the Android image pipeline, the shared HTTP client, and why HTTP/2 does not ship |
 | [docs/cloudflare-and-login.md](docs/cloudflare-and-login.md) | login, the long-lived hidden WebView, Cloudflare challenges and how one is repaired |

@@ -18,7 +18,8 @@ the whole tree, so every source it must not build carries `#if !FA_SKIP_MODULE`.
 far: login (shared `HomeView` + autologin), the Followed feed, the submission screen
 (images, stories, music, comments, Save/Share, "Send a Note"), Notifications (with the
 journal screen and swipe-to-delete behind an Undo snackbar), Notes, the user page with
-its gallery, favorites, journal list and watchlists, the Profile tab, and Settings. Not
+its gallery, favorites, journal list and watchlists, the Profile tab, Settings, and
+local notifications from a background refresh (`screens.md` § Local notifications). Not
 ported: Explore. `Android/README.md` indexes the topic docs under
 `Android/docs/`; read the relevant one before touching Android code. What every session
 needs to know:
@@ -34,9 +35,11 @@ needs to know:
   `PersistentLogStore.shared`s in one log file. `Scripts/Android/check-shared-globals.sh`
   guards it; Xcode reaches the package only through an `XCLocalSwiftPackageReference`,
   never also a folder reference — `shared-sources.md` § One module, one image.
-- **Five dependencies are forked** on `Ceylo/<repo>` `android` branches: `Defaults`,
-  `skip-ui`, `skip-fuse-ui`, `skip-web` (dependency identity only) and `Kingfisher`, which
-  builds for Android, so `FAImage` is a real `KFImage` on both platforms — `forks.md`.
+- **Ten dependencies are forked** on `Ceylo/<repo>` `android` branches: `Defaults`,
+  `skip-ui`, `skip-fuse-ui`, `skip-foundation` (Android `UserDefaults` arrays, emoji in
+  `JSONSerialization`), `Kingfisher`, which builds for Android, so `FAImage` is a real
+  `KFImage` on both platforms, and five for dependency identity only: `skip-web`,
+  `skip-bridge`, `skip-model`, `skip-android-bridge`, `skip-fuse` — `forks.md`.
 - **Pages and images share one `OkHttpClient`** on Android (`FAHttpClient.kt`), because
   Cloudflare judges a connection and a challenge is repaired by evicting it — `images.md`,
   `cloudflare-and-login.md`. HTTP/2 is measured and off.
@@ -115,7 +118,7 @@ Use `FAImage`/`FAAnimatedImage` (not raw Kingfisher views) — they apply projec
 
 ## Background Refresh
 
-`BackgroundRefreshManager` drives background refresh; `BackgroundRefreshLifecycleModifier` wires it into the SwiftUI scene lifecycle.
+`Notifications/BackgroundRefresh.swift` is the shared core of `BackgroundRefreshManager`: fetch, watermarks, pending queue, posting. Each platform schedules it and supplies its hooks: `iOS/BackgroundRefreshManager.swift` (BGAppRefreshTask, Intents) and `Android/BackgroundRefreshManager+Android.swift` (WorkManager, a WebView-less session). `BackgroundRefreshLifecycleModifier` wires it into the SwiftUI scene lifecycle. Taps go through each platform's `NotificationCenterDelegate` to the shared `NotificationCoordinator`.
 
 ## Tests
 

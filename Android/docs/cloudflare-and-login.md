@@ -6,7 +6,7 @@ each one of the general [rules for shared sources](shared-sources.md#rules-for-s
 | In HomeView | Guard |
 |---|---|
 | the Liquid Glass button branch | `#if FA_SKIP_MODULE` takes the pre-iOS-26 capsules (`legacyButtons`): `#available(iOS 26, *)` is true off-Apple, and `GlassButtonStyle` is unavailable |
-| `ErrorDisplay`, `NotificationCoordinator` | `#if !FA_SKIP_MODULE`; errors reach the user through `AndroidRootView`'s banner |
+| `ErrorDisplay` | `#if !FA_SKIP_MODULE`; errors reach the user through `AndroidRootView`'s banner |
 | the six `@State`/`@Environment` wrappers | internal, not private |
 | `UIApplication.shared.applicationState` | dropped from a log line that already carries `scenePhase` |
 
