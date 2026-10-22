@@ -257,12 +257,9 @@ extension OfflineFASession {
             ("demo-avatar", "png", ["demo", username].compactMap(FAURLs.avatarUrl(for:))),
         ]
         for image in images {
-            guard let file = Bundle.faAssets.url(forResource: image.resource, withExtension: image.ext, subdirectory: "Demo") else {
+            guard let file = Bundle.faAssets.url(forResource: image.resource, withExtension: image.ext, subdirectory: "Demo"),
+                  let data = try? Data(contentsOf: file) else {
                 logger.error("Missing demo image \(image.resource)")
-                continue
-            }
-            guard let data = try? Data(contentsOf: file) else {
-                logger.error("Unreadable demo image \(file)")
                 continue
             }
             for url in image.urls {
