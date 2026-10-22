@@ -5,8 +5,6 @@
 //  Created by Ceylo on 09/04/2022.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
@@ -44,8 +42,9 @@ struct NotesView: View {
     var sendNoteAction: (_ destinationUser: String, _ subject: String, _ message: String) async throws -> Void
     var moveNotesAction: (_ notes: [FANotePreview], _ destinationBox: NotesBox) -> Void
     var markUnreadAction: (_ notes: [FANotePreview]) -> Void
-    @State private var noteReplySession: NoteReplySession?
-    @State private var showUnreadNotesOnly = false
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var noteReplySession: NoteReplySession?
+    @State var showUnreadNotesOnly = false
     
     var filteredNotes: [FANotePreview] {
         if showUnreadNotesOnly {
@@ -187,5 +186,3 @@ struct NotesView: View {
         )
     }
 }
-
-#endif

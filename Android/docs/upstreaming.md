@@ -38,6 +38,9 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `ef2f9e3` `GlassEffectContainer` pass-through | skip-fuse-ui | no | send with `f4776db`: same argument, same file. Drew nothing until `e0600ec` bridged it as a `Group` — squash the two |
 | `9b8671b` + `6c66c8d` `glassEffect` draws the M3 floating surface; `glassEffectUnion`/`glassEffectID` pass-throughs | skip-ui + skip-fuse-ui | yes | a design call (opaque `surfaceContainer` + 3 dp shadow, not a blur) — argue it from M3's floating toolbar/FAB |
 | `f54f6e8` `rectangle.grid.2x2` / `slider.horizontal.3` mappings | skip-ui | no | drafted as #548 (topic `feature/sf-symbol-grid-tune`) with glyph comments 􀇷 / 􀌆; the rows were added to showcase #123 rather than a new PR |
+| `3dcb579` Notes SF Symbol mappings | skip-ui | no | same shape as #525; both forms of the filter symbol map to `FilterList` |
+| `4479648` principal toolbar item in the title slot; flexible top-bar spacer as a fixed gap | skip-ui | no | **two PRs**, one fix each; Robolectric `ToolbarItemsTests`, mutation-checked |
+| `c8bff3d` `Picker` listed inline in a `Menu` | skip-ui | no | no Robolectric test yet: add one before sending |
 | `001f4ec` tab re-tap pops to root, then scrolls to top | skip-ui | no | Material and iOS parity; adds internal `Navigator.navigateToRoot()` |
 | `ca5fad0` `List` under the status bar with the nav bar hidden | skip-ui | no | bug fix plus its two `List` follow-ons (`scrollTo` offset, late header) |
 | `91826c2` `List` restores its scroll position by row key | skip-ui | no | Robolectric `testListRestoresFirstVisibleRowByKey`, mutation-checked. Upstream, argue it from rows inserted above while away, since the late header is `ca5fad0`'s; `LazyVStack` and the grids keep the index-only restore |
@@ -375,7 +378,7 @@ result. Read the state with
 
 ## Opened PRs
 
-State is one of draft / opened / merged / rejected, as of 2026-10-19; refresh it with
+State is one of draft / opened / merged / rejected / closed, as of 2026-10-21; refresh it with
 `gh pr view <n> -R <repo> --json state,isDraft`.
 
 | PR | Patch | State |
@@ -392,10 +395,10 @@ State is one of draft / opened / merged / rejected, as of 2026-10-19; refresh it
 | skipapp-showcase [#139](https://github.com/skiptools/skipapp-showcase/pull/139) | Row Modifiers page for skip-ui #549 | draft |
 | skip-ui [#550](https://github.com/skiptools/skip-ui/pull/550) | `524153a`, reworked in review | draft |
 | skip-ui [#551](https://github.com/skiptools/skip-ui/pull/551) | `ad375fb` | draft |
-| skip-ffi [#14](https://github.com/skiptools/skip-ffi/pull/14) | CI: `SKIP_DYNAMIC_LIBRARIES` gate ([CI instabilities](#ci-instabilities)) | opened |
+| skip-ffi [#14](https://github.com/skiptools/skip-ffi/pull/14) | CI: `SKIP_DYNAMIC_LIBRARIES` gate ([CI instabilities](#ci-instabilities)) | closed: Showcase went green without it |
 | actions [#23](https://github.com/skiptools/actions/issues/23) (issue) | the plan every Intel-exit PR links to | opened |
-| actions [#22](https://github.com/skiptools/actions/pull/22) | CI: emulator guard reads `runner.arch` ([Leaving Intel macOS](#leaving-intel-macos-runners)) | opened |
-| skip-ffi [#15](https://github.com/skiptools/skip-ffi/pull/15) | CI: `macos-26` + Ubuntu; needs actions #22 in `@v1` | opened |
+| actions [#22](https://github.com/skiptools/actions/pull/22) | CI: emulator guard reads `runner.arch` ([Leaving Intel macOS](#leaving-intel-macos-runners)) | merged 2026-10-21, in `v1` |
+| skip-ffi [#15](https://github.com/skiptools/skip-ffi/pull/15) | CI: `macos-26` + Ubuntu; actions #22 now in `@v1` | opened |
 
 ## CI instabilities
 
@@ -406,7 +409,7 @@ log signature:
 | Instability | Hit | Root cause | Fix |
 |---|---|---|---|
 | skipstone `android-ci`: APK install on a half-booted emulator (`Can't find service: package`, `system providers not installed`) | ~110 jobs in a month | a blank `sys.boot_completed` taken as booted | fixed by our skipstone #288 (merged 2026-10-13), which also raised the launch timeout 300 → 900 s: Intel launches waited 6–14 min, so that leaves under a minute of margin. Still unfixed: a post-boot `system_server` loss (`Can't find service: package` 30 min after boot) |
-| skipapp-showcase Fuse "Export project": `SkipFFI-product` linked as a static library by three images | every Fuse run since 2026-09-27 | skip-ffi lacked the `SKIP_DYNAMIC_LIBRARIES`/`SKIP_BRIDGE` gate the other libraries got | skip-ffi #14. No skip-sql follow-on was needed: the patched Fuse Showcase builds and launches |
+| skipapp-showcase Fuse "Export project": `SkipFFI-product` linked as a static library by three images | every Fuse run 2026-09-27 to 2026-10-19 | skip-ffi lacked the `SKIP_DYNAMIC_LIBRARIES`/`SKIP_BRIDGE` gate the other libraries got | gone since skipapp-showcase #141 (2026-10-19), skip-ffi still 1.2.3; our skip-ffi #14 closed as no longer needed |
 | Network blips in `setup-skip` (tap clone, `skip android sdk install`) and in `skip export`'s package fetch | ~8 | no retries | setup-skip is being rewritten by actions#20: a comment there, not a PR; the export side fits skipstone #283's `runCommand(retryingOn:attempts:)` later |
 | A connected Android test hangs (skip-ui #548: 116 min against 13–22) | 1 | no step timeout in `skip-framework.yml` (job: 180 min) | branch `fix/connected-test-timeout` at 90 min, not sent: the slowest green connected step sampled across nine Skip repos took 50 min (skip-av), so the planned 60 was unsafe, and a timeout only fails a hung job sooner |
 

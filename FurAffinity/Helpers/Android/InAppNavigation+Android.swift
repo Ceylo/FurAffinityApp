@@ -2,10 +2,8 @@
 //  InAppNavigation+Android.swift
 //  FurAffinityUI (Android)
 //
-//  The Android counterpart of the iOS `view(for:)` in InAppNavigation.swift. That
-//  one can't be shared: it names `Remote*View`s that aren't ported yet. This
-//  fan-out returns the ported screens and sends the rest to a placeholder, and grows
-//  a case at a time as screens land. Every case is listed on purpose — a `default:`
+//  The Android counterpart of the iOS `view(for:)` in InAppNavigation.swift, an
+//  iOS-only file. Every case is listed on purpose — a `default:`
 //  would take a newly added `FATarget` silently, so Android would lose a screen iOS
 //  had gained without the build saying so.
 //
@@ -32,15 +30,7 @@ func view(for target: FATarget) -> some View {
         RemoteUserJournalsView(url: url)
     case let .journal(url):
         RemoteJournalView(url: url)
-    case .note:
-        notPortedYet
-    }
-}
-
-@MainActor
-private var notPortedYet: some View {
-    Centered {
-        Text("This screen isn't ported to Android yet.")
-            .foregroundStyle(.secondary)
+    case let .note(url):
+        RemoteNoteView(url: url)
     }
 }

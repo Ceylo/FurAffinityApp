@@ -4,9 +4,9 @@
 //
 //  Root of the Android app, mirroring iOS's `RootView`: the shared `HomeView` until
 //  a session exists, then the ported tabs — which stand in for `LoggedInView` and
-//  grow as screens are ported. The Submissions, Notifications and Profile tabs are each
-//  a `NavigationStack` fed by the shared `NavigationStream`; pushed destinations come
-//  from `view(for:)` in InAppNavigation+Android.swift.
+//  grow as screens are ported. The Submissions, Notes, Notifications and Profile tabs
+//  are each a `NavigationStack` fed by the shared `NavigationStream`; pushed
+//  destinations come from `view(for:)` in InAppNavigation+Android.swift.
 //
 //  HomeView owns the session on both platforms (it calls `model.setSession`), so
 //  this view only reads `model.session` — including for logout, which SettingsView
@@ -21,6 +21,7 @@ struct AndroidRootView: View {
     @State var navigationStream = NavigationStream()
     @State var challengeCoordinator = CloudflareChallengeCoordinator.shared
     @State var submissionsPath = [FATarget]()
+    @State var notesPath = [FATarget]()
     @State var notificationsPath = [FATarget]()
     @State var userpagePath = [FATarget]()
     @State var selectedTab: Tab = .submissions
@@ -28,6 +29,7 @@ struct AndroidRootView: View {
 
     enum Tab {
         case submissions
+        case notes
         case notifications
         case userpage
         case settings
@@ -39,6 +41,8 @@ struct AndroidRootView: View {
             notificationsPath.append(target)
         case .submissions:
             submissionsPath.append(target)
+        case .notes:
+            notesPath.append(target)
         case .userpage:
             userpagePath.append(target)
         case .settings:
@@ -124,6 +128,18 @@ struct AndroidRootView: View {
                         Label("Submissions", systemImage: "rectangle.grid.2x2")
                     }
                     .tag(Tab.submissions)
+
+                    NavigationStack(path: $notesPath) {
+                        RemoteNotesView()
+                            .navigationDestination(for: FATarget.self) { target in
+                                view(for: target)
+                            }
+                    }
+                    .badge(model.displayedUnreadNoteCount)
+                    .tabItem {
+                        Label("Notes", systemImage: "message")
+                    }
+                    .tag(Tab.notes)
 
                     NavigationStack(path: $notificationsPath) {
                         RemoteNotificationsView()
@@ -211,6 +227,7 @@ struct AndroidRootView: View {
         .onChange(of: model.session == nil) { _, loggedOut in
             guard loggedOut else { return }
             submissionsPath = []
+            notesPath = []
             notificationsPath = []
             userpagePath = []
             selectedTab = .submissions

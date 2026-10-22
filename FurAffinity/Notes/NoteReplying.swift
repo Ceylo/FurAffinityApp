@@ -34,15 +34,18 @@ struct NoteReplySession: ReplySession {
         let destinationUser: String
         let subject: String
         let text: String
+        let destinationUserIsLocked: Bool
         
         init(
             destinationUser: String = "",
             subject: String = "",
-            text: String = ""
+            text: String = "",
+            destinationUserIsLocked: Bool = false
         ) {
             self.destinationUser = destinationUser
             self.subject = subject
             self.text = text
+            self.destinationUserIsLocked = destinationUserIsLocked
         }
     }
     

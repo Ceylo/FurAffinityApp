@@ -5,13 +5,12 @@
 //  Created by Ceylo on 25/04/2025.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 
 struct RemoteNoteView: View {
     var url: URL
-    @Environment(Model.self) private var model
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(Model.self) var model
     
     var body: some View {
         PreviewableRemoteView<_, _, EmptyView>(
@@ -20,10 +19,8 @@ struct RemoteNoteView: View {
             view: { note, updateHandler in
                 NoteView(
                     note: note,
-                    replyAction: { destinationUser, subject, text in
+                    replyAction: { _, subject, text in
                         let session = try model.session.unwrap()
-                        assert(destinationUser == note.author)
-                        
                         return try await session.sendNote(
                             apiKey: note.answerKey,
                             toUsername: note.author,
@@ -51,5 +48,3 @@ struct RemoteNoteView: View {
         .environment($0.errorStorage)
     }
 }
-
-#endif

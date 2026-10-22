@@ -5,17 +5,16 @@
 //  Created by Ceylo on 09/04/2022.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
 struct RemoteNotesView: View {
-    @Environment(Model.self) private var model
-    @Environment(ErrorStorage.self) private var errorStorage
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(Model.self) var model
+    @Environment(ErrorStorage.self) var errorStorage
     
-    @State private var sourceUrl = FAURLs.notesInboxUrl
-    @State private var displayedBox: NotesBox = .inbox
+    @State var sourceUrl = FAURLs.notesInboxUrl
+    @State var displayedBox: NotesBox = .inbox
     
     var cachedInboxNotePreview: [FANotePreview] {
         model.notePreviews[displayedBox] ?? []
@@ -80,5 +79,3 @@ struct RemoteNotesView: View {
         .environment($0.errorStorage)
     }
 }
-
-#endif
