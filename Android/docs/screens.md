@@ -262,7 +262,8 @@ entries have **no extension**, to `tmp/fa-media/<UUID>/<remote filename>` (see
 `UserProfileControlView` are shared as they are; only `.scrollClipDisabled()` stays
 iOS-only. SkipUI marks it unavailable, and all it does on iOS is keep the glass buttons'
 grow-on-touch and light-mode shadow from being clipped — Android draws neither. The
-banner needed one fork fix ([forks.md](forks.md#the-other-fork-patches)).
+banner needed one fork fix ([forks.md](forks.md#the-other-fork-patches)). The Profile
+tab is the shared `CurrentUserView`, the signed-in user's page in its own stack.
 
 Open one with the deep link above, e.g. `faOpenURL
 "https://www.furaffinity.net/user/<name>/#shout-<id>"`. A shout id must come from the

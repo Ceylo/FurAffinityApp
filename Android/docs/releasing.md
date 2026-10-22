@@ -156,7 +156,7 @@ What to tell a tester:
 
 - **Android 9 or newer** (minSdk 28), **arm64 only** — a 32-bit-ARM phone will refuse
   to install it. 18+, and it needs a furaffinity.net account.
-- Not ported yet: Notes, Notifications, the Profile tab and Explore/search. Music
+- Not ported yet: Notes, Notifications and Explore/search. Music
   plays in another app rather than in-app, and a story opens in-app only as txt or
   md. Tapping a journal shows "This screen isn't ported to Android yet."
 - First launch shows Cloudflare's "Verify you are human" and needs a real tap.
