@@ -4,9 +4,9 @@
 //
 //  Root of the Android app, mirroring iOS's `RootView`: the shared `HomeView` until
 //  a session exists, then the ported tabs — which stand in for `LoggedInView` and
-//  grow as screens are ported. The Submissions and Profile tabs are `NavigationStack`s
-//  fed by the shared `NavigationStream`; pushed destinations come from `view(for:)` in
-//  InAppNavigation+Android.swift.
+//  grow as screens are ported. The Submissions, Notifications and Profile tabs are each
+//  a `NavigationStack` fed by the shared `NavigationStream`; pushed destinations come
+//  from `view(for:)` in InAppNavigation+Android.swift.
 //
 //  HomeView owns the session on both platforms (it calls `model.setSession`), so
 //  this view only reads `model.session` — including for logout, which SettingsView
@@ -21,14 +21,31 @@ struct AndroidRootView: View {
     @State var navigationStream = NavigationStream()
     @State var challengeCoordinator = CloudflareChallengeCoordinator.shared
     @State var submissionsPath = [FATarget]()
+    @State var notificationsPath = [FATarget]()
     @State var userpagePath = [FATarget]()
     @State var selectedTab: Tab = .submissions
     @State var pendingDebugDeepLink = PendingDebugDeepLink.shared
 
     enum Tab {
         case submissions
+        case notifications
         case userpage
         case settings
+    }
+
+    private func handleTarget(_ target: FATarget) {
+        switch selectedTab {
+        case .notifications:
+            notificationsPath.append(target)
+        case .submissions:
+            submissionsPath.append(target)
+        case .userpage:
+            userpagePath.append(target)
+        case .settings:
+            // As iOS's `LoggedInView.Tab.forDeepLink`.
+            selectedTab = .notifications
+            notificationsPath.append(target)
+        }
     }
 
     var body: some View {
@@ -108,6 +125,18 @@ struct AndroidRootView: View {
                     }
                     .tag(Tab.submissions)
 
+                    NavigationStack(path: $notificationsPath) {
+                        RemoteNotificationsView()
+                            .navigationDestination(for: FATarget.self) { target in
+                                view(for: target)
+                            }
+                    }
+                    .badge(model.displayedNotificationCount)
+                    .tabItem {
+                        Label("Notifications", systemImage: "bell")
+                    }
+                    .tag(Tab.notifications)
+
                     NavigationStack(path: $userpagePath) {
                         CurrentUserView()
                             .navigationDestination(for: FATarget.self) { target in
@@ -176,12 +205,13 @@ struct AndroidRootView: View {
         .environment(\.navigationStream, navigationStream)
         .onChange(of: navigationStream.latest) { _, event in
             guard let event else { return }
-            navigate(to: event.target)
+            handleTarget(event.target)
         }
         // The tabs outlive the session here, unlike LoggedInView on iOS.
         .onChange(of: model.session == nil) { _, loggedOut in
             guard loggedOut else { return }
             submissionsPath = []
+            notificationsPath = []
             userpagePath = []
             selectedTab = .submissions
         }
@@ -193,22 +223,10 @@ struct AndroidRootView: View {
                 logger.error("faOpenURL: not an in-app target: \(url.absoluteString)")
                 return
             }
-            navigate(to: target)
+            navigationStream.send(target)
         }
         .autorefreshingOnForeground {
             await model.autorefreshIfNeeded()
-        }
-    }
-
-    /// As in LoggedInView: onto the selected tab's stack, or Submissions' when
-    /// Settings, which has none, is selected.
-    private func navigate(to target: FATarget) {
-        switch selectedTab {
-        case .userpage:
-            userpagePath.append(target)
-        case .submissions, .settings:
-            selectedTab = .submissions
-            submissionsPath.append(target)
         }
     }
 

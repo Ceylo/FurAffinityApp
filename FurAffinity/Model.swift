@@ -31,14 +31,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
     /// `nil` until a fetch actually happened.
     /// After a fetch it contains all found submissions, or an empty array if none was found.
     private(set) var submissionPreviews: OrderedSet<FASubmissionPreview>?
-    private var submissionPreviewsPendingDeletion = Set<FASubmissionPreview>()
-    /// Rows removed locally whose deletion isn't sent to FA yet, so it can be undone.
-    /// Unlike `submissionPreviewsPendingDeletion`, fetches don't clear it.
-    private(set) var stagedSubmissionPreviewsDeletion = [FASubmissionPreview]()
-    /// How long a staged deletion can be undone before it is committed.
-    @ObservationIgnored var stagedDeletionUndoDelay: Duration = .seconds(5)
-    /// Finishes once the deletion it commits has been sent. Not private so tests can await it.
-    @ObservationIgnored var stagedDeletionCommitTimer: Task<Void, Never>?
+    @ObservationIgnored private(set) var submissionDeletion: StagedDeletion<FASubmissionPreview>!
     private(set) var lastSubmissionPreviewsFetchDate: Date?
     /// Set once after a cold-launch restore from a persisted scroll position, to
     /// ask SubmissionsFeedView to run a scroll-preserving newer-submissions check.
@@ -79,6 +72,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
     private(set) var notificationPreviews: FANotificationPreviews?
     private(set) var lastNotificationPreviewsFetchDate: Date?
     private(set) var displayedNotificationCount = 0
+    @ObservationIgnored private(set) var notificationDeletion: StagedDeletion<StagedNotification>!
     
     private(set) var appInfo = AppInformation()
     private var lastAppInfoUpdate: Date?
@@ -91,6 +85,24 @@ class Model: NotificationsNuker, NotificationsDeleter {
     /// Last logged UserDefaults snapshot, so state-update logs show only the diff.
     @ObservationIgnored private var lastLoggedDefaults: [String: Any] = [:]
     init() {
+        submissionDeletion = StagedDeletion(
+            label: "submission previews",
+            send: { [weak self] previews in
+                try await self?.getSession().deleteSubmissionPreviews(previews)
+            },
+            restore: { [weak self] previews in
+                self?.reinsertSubmissionPreviews(previews)
+            }
+        )
+        notificationDeletion = StagedDeletion(
+            label: "notifications",
+            send: { [weak self] items in
+                try await self?.sendNotificationsDeletion(items)
+            },
+            restore: { [weak self] items in
+                self?.restoreNotifications(items)
+            }
+        )
         lastLoggedDefaults = DefaultsChangeLog.snapshot()
         // Defaults yields from whichever thread mutates a key (KVO is synchronous, e.g.
         // background refresh writing latestNotificationIDs off the main actor), but these
@@ -148,12 +160,12 @@ class Model: NotificationsNuker, NotificationsDeleter {
         guard session != nil else {
             lastSubmissionPreviewsFetchDate = nil
             submissionPreviews = nil
-            submissionPreviewsPendingDeletion = []
-            stagedSubmissionPreviewsDeletion = []
+            submissionDeletion.reset()
             lastInboxNotePreviewsFetchDate = nil
             notePreviews = [:]
             displayedUnreadNoteCount = 0
             notificationPreviews = nil
+            notificationDeletion.reset()
             lastNotificationPreviewsFetchDate = nil
             displayedNotificationCount = 0
             shouldCheckForNewerSubmissionsAfterRestore = false
@@ -241,9 +253,8 @@ class Model: NotificationsNuker, NotificationsDeleter {
         let newSubmissions = OrderedSet(latestSubmissions)
             .filter { $0.sid > lastKnownSid }
         // We also take into account any preview deletion that may have happened since the fetch started
-            .filter { !submissionPreviewsPendingDeletion.contains($0) }
-            .filter { !stagedSubmissionPreviewsDeletion.contains($0) }
-        submissionPreviewsPendingDeletion.removeAll()
+            .filter { preview in !submissionDeletion.hides { $0 == preview } }
+        submissionDeletion.fetchApplied()
         
         if !newSubmissions.isEmpty {
             submissionPreviews = OrderedSet(newSubmissions).appending(contentsOf: submissionPreviews ?? [])
@@ -255,58 +266,15 @@ class Model: NotificationsNuker, NotificationsDeleter {
     
     func deleteSubmissionPreviews(_ previews: [FASubmissionPreview]) {
         stageSubmissionPreviewsDeletion(previews)
-        commitStagedSubmissionPreviewsDeletion()
+        submissionDeletion.commit()
     }
 
-    /// Removes the rows locally only; `commit…` sends the deletion, which happens by
-    /// itself after `stagedDeletionUndoDelay`, and `undo…` restores them. Staging a new
-    /// batch commits the previous one first.
     func stageSubmissionPreviewsDeletion(_ previews: [FASubmissionPreview]) {
         precondition(submissionPreviews != nil)
-        commitStagedSubmissionPreviewsDeletion()
-        stagedSubmissionPreviewsDeletion = previews
         for preview in previews {
             submissionPreviews!.remove(preview)
         }
-        #if FA_SKIP_MODULE
-        // Android's snackbar honours the "Time to take action" setting, as Material's does.
-        let delay = AndroidAccessibility.recommendedTimeout(stagedDeletionUndoDelay)
-        #else
-        let delay = stagedDeletionUndoDelay
-        #endif
-        stagedDeletionCommitTimer = Task {
-            try? await Task.sleep(for: delay)
-            guard !Task.isCancelled else { return }
-            await commitStagedSubmissionPreviewsDeletion()?.value
-        }
-        logger.info("Staged deletion of \(previews.count) submission previews")
-    }
-
-    /// - Returns: the deletion request, rolled back if it fails; `nil` if nothing was staged.
-    @discardableResult
-    func commitStagedSubmissionPreviewsDeletion() -> Task<Void, Never>? {
-        stagedDeletionCommitTimer?.cancel()
-        guard !stagedSubmissionPreviewsDeletion.isEmpty else { return nil }
-        let previews = stagedSubmissionPreviewsDeletion
-        stagedSubmissionPreviewsDeletion = []
-        submissionPreviewsPendingDeletion.formUnion(previews)
-        logger.info("Committing deletion of \(previews.count) submission previews")
-
-        return Task {
-            do {
-                try await getSession().deleteSubmissionPreviews(previews)
-            } catch {
-                logger.error("Submission previews deletion failed with error \"\(error)\", rolling back")
-                reinsertSubmissionPreviews(previews)
-            }
-        }
-    }
-
-    func undoStagedSubmissionPreviewsDeletion() {
-        stagedDeletionCommitTimer?.cancel()
-        let previews = stagedSubmissionPreviewsDeletion
-        stagedSubmissionPreviewsDeletion = []
-        reinsertSubmissionPreviews(previews)
+        submissionDeletion.stage(previews)
     }
 
     private func reinsertSubmissionPreviews(_ previews: [FASubmissionPreview]) {
@@ -321,7 +289,7 @@ class Model: NotificationsNuker, NotificationsDeleter {
             try await getSession().nukeSubmissions()
             lastSubmissionPreviewsFetchDate = Date()
             submissionPreviews = []
-            stagedSubmissionPreviewsDeletion = []
+            submissionDeletion.reset()
         } catch {
             logger.error("Failed nuking submissions: \(error)")
         }
@@ -454,121 +422,94 @@ class Model: NotificationsNuker, NotificationsDeleter {
         FAURLs.notificationsUrl
     }
     
-    func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) {
-        let oldNotificationPreviews = notificationPreviews
-        notificationPreviews = notificationPreviews.map { oldNotifications in
-            FANotificationPreviews(
-                submissionComments: oldNotifications.submissionComments.filter { !notifications.contains($0) },
-                journalComments: oldNotifications.journalComments,
-                shouts: oldNotifications.shouts,
-                journals: oldNotifications.journals
-            )
+    func deleteNotifications(_ notifications: [FANotificationPreview], of kind: NotificationKind) {
+        stageNotificationsDeletion(notifications, of: kind)
+        notificationDeletion.commit()
+    }
+
+    func stageNotificationsDeletion(_ notifications: [FANotificationPreview], of kind: NotificationKind) {
+        guard let notificationPreviews else { return }
+        let section = notificationPreviews[kind]
+        let staged = notifications.compactMap { preview in
+            section.firstIndex(where: { $0.id == preview.id }).map {
+                StagedNotification(kind: kind, preview: section[$0], index: $0)
+            }
         }
-        
-        Task {
-            await storeLocalizedError(in: errorStorage, action: "Delete Submission Comment Notification(s)", webBrowserURL: nil) {
-                try await fetchNotificationPreviews { session in
+        self.notificationPreviews = notificationPreviews.removing(staged.map(\.preview), of: kind)
+        updateDisplayedNotificationCount()
+        notificationDeletion.stage(staged)
+    }
+
+    private func sendNotificationsDeletion(_ items: [StagedNotification]) async throws {
+        guard let kind = items.first?.kind else { return }
+        assert(items.allSatisfy { $0.kind == kind })
+        let notifications = items.map(\.preview)
+        do {
+            try await fetchNotificationPreviews { session in
+                switch kind {
+                case .submissionComment:
                     try await session.deleteSubmissionCommentNotifications(notifications)
-                }
-            } onFailure: {
-                notificationPreviews = oldNotificationPreviews
-            }
-        }
-    }
-    
-    func deleteJournalCommentNotifications(_ notifications: [FANotificationPreview]) {
-        let oldNotificationPreviews = notificationPreviews
-        notificationPreviews = notificationPreviews.map { oldNotifications in
-            FANotificationPreviews(
-                submissionComments: oldNotifications.submissionComments,
-                journalComments: oldNotifications.journalComments.filter { !notifications.contains($0) },
-                shouts: oldNotifications.shouts,
-                journals: oldNotifications.journals
-            )
-        }
-        
-        Task {
-            await storeLocalizedError(in: errorStorage, action: "Delete Journal Comment Notification(s)", webBrowserURL: nil) {
-                try await fetchNotificationPreviews { session in
+                case .journalComment:
                     try await session.deleteJournalCommentNotifications(notifications)
-                }
-            } onFailure: {
-                notificationPreviews = oldNotificationPreviews
-            }
-        }
-    }
-    
-    func deleteShoutNotifications(_ notifications: [FANotificationPreview]) {
-        let oldNotificationPreviews = notificationPreviews
-        notificationPreviews = notificationPreviews.map { oldNotifications in
-            FANotificationPreviews(
-                submissionComments: oldNotifications.submissionComments,
-                journalComments: oldNotifications.journalComments,
-                shouts: oldNotifications.shouts.filter { !notifications.contains($0) },
-                journals: oldNotifications.journals
-            )
-        }
-        
-        Task {
-            await storeLocalizedError(in: errorStorage, action: "Delete Shout Notification(s)", webBrowserURL: nil) {
-                try await fetchNotificationPreviews { session in
+                case .shout:
                     try await session.deleteShoutNotifications(notifications)
-                }
-            } onFailure: {
-                notificationPreviews = oldNotificationPreviews
-            }
-        }
-    }
-    
-    func deleteJournalNotifications(_ notifications: [FANotificationPreview]) {
-        let oldNotificationPreviews = notificationPreviews
-        notificationPreviews = notificationPreviews.map { oldNotifications in
-            FANotificationPreviews(
-                submissionComments: oldNotifications.submissionComments,
-                journalComments: oldNotifications.journalComments,
-                shouts: oldNotifications.shouts,
-                journals: oldNotifications.journals.filter { !notifications.contains($0) }
-            )
-        }
-        
-        Task {
-            await storeLocalizedError(in: errorStorage, action: "Delete Journal Notification(s)", webBrowserURL: nil) {
-                try await fetchNotificationPreviews { session in
+                case .journal:
                     try await session.deleteJournalNotifications(notifications)
                 }
-            } onFailure: {
-                notificationPreviews = oldNotificationPreviews
+            }
+        } catch {
+            let action = switch kind {
+            case .submissionComment: "Delete Submission Comment Notification(s)"
+            case .journalComment: "Delete Journal Comment Notification(s)"
+            case .shout: "Delete Shout Notification(s)"
+            case .journal: "Delete Journal Notification(s)"
+            }
+            storeError(error, in: errorStorage, action: action, webBrowserURL: nil)
+            throw error
+        }
+    }
+
+    private func restoreNotifications(_ items: [StagedNotification]) {
+        guard let notificationPreviews else { return }
+        self.notificationPreviews = notificationPreviews.mapSections { kind, section in
+            var section = section
+            for item in items.filter({ $0.kind == kind }).sorted(by: { $0.index < $1.index })
+            where !section.contains(where: { $0.id == item.preview.id }) {
+                section.insert(item.preview, at: min(item.index, section.count))
+            }
+            return section
+        }
+        updateDisplayedNotificationCount()
+    }
+
+    func nukeAllSubmissionCommentNotifications() async throws {
+        try await nukeNotifications { try await $0.nukeAllSubmissionCommentNotifications() }
+    }
+
+    func nukeAllJournalCommentNotifications() async throws {
+        try await nukeNotifications { try await $0.nukeAllJournalCommentNotifications() }
+    }
+
+    func nukeAllShoutNotifications() async throws {
+        try await nukeNotifications { try await $0.nukeAllShoutNotifications() }
+    }
+
+    func nukeAllJournalNotifications() async throws {
+        try await nukeNotifications { try await $0.nukeAllJournalNotifications() }
+    }
+
+    private func nukeNotifications(_ nuke: @MainActor (_ session: any FASession) async throws -> FANotificationPreviews) async throws {
+        await notificationDeletion.commit()?.value
+        try await fetchNotificationPreviews(fetcher: nuke)
+    }
+
+    private func fetchNotificationPreviews(fetcher: @MainActor (_ session: any FASession) async throws -> FANotificationPreviews) async throws {
+        notificationPreviews = try await fetcher(getSession()).mapSections { kind, section in
+            section.filter { preview in
+                !notificationDeletion.hides { $0.kind == kind && $0.preview.id == preview.id }
             }
         }
-    }
-    
-    func nukeAllSubmissionCommentNotifications() async throws {
-        try await fetchNotificationPreviews { session in
-            try await session.nukeAllSubmissionCommentNotifications()
-        }
-    }
-    
-    func nukeAllJournalCommentNotifications() async throws {
-        try await fetchNotificationPreviews { session in
-            try await session.nukeAllJournalCommentNotifications()
-        }
-    }
-    
-    func nukeAllShoutNotifications() async throws {
-        try await fetchNotificationPreviews { session in
-            try await session.nukeAllShoutNotifications()
-        }
-    }
-    
-    func nukeAllJournalNotifications() async throws {
-        try await fetchNotificationPreviews { session in
-            try await session.nukeAllJournalNotifications()
-        }
-    }
-    
-    
-    private func fetchNotificationPreviews(fetcher: @MainActor (_ session: any FASession) async throws -> FANotificationPreviews) async throws {
-        notificationPreviews = try await fetcher(getSession())
+        notificationDeletion.fetchApplied()
         lastNotificationPreviewsFetchDate = Date()
         updateDisplayedNotificationCount()
     }

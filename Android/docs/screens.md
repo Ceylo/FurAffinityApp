@@ -55,8 +55,9 @@ What Android gives up:
 | `scrollViewIsAtTop` | Derived from the first row's `minY` in the frame reports (`trackFirstItemTop`), so foreground autorefresh skips on scroll position as on iOS. It is cleared by a change of the first id and by any later row reporting `minY < 32` (SkipUI's minimum row height), because after a restore the prepended head reports "at top" once and is then recycled silently. |
 
 **Swipe-to-delete commits at the end of the swipe** on Compose, where iOS reveals a
-Delete button. So Android *stages* the deletion (`Model.stageSubmissionPreviewsDeletion`)
-and shows Material's Undo snackbar (the shared `UndoSnackbar`). The `POST` goes out
+Delete button. So Android *stages* the deletion (`Model.stageSubmissionPreviewsDeletion`,
+through the shared `StagedDeletion`) and shows Material's Undo snackbar
+(`StagedDeletionUndoSnackbar` around the shared `UndoSnackbar`). The `POST` goes out
 after the timeout, when the feed disappears or the app backgrounds, or when another row
 is staged; staged rows are filtered out of every fetch until then. iOS goes through the
 same stage-then-commit code, committing at once, with no snackbar.
@@ -271,6 +272,30 @@ live page: FA shows only the latest shouts.
 
 The gallery, favorites, journal list and watchlists are shared as they are, except for
 their rows. Gallery and favorites rows are `SubmissionPreviewRow`s, as in the feed, whose
-Android branch makes the whole card tappable. A journal row opens the placeholder until journal display
-is ported. SkipUI scrolls a searchable `List` one row down, so the search field shows
-only after a pull, where iOS 26 shows it from the start.
+Android branch makes the whole card tappable. A journal row opens the journal screen.
+SkipUI scrolls a searchable `List` one row down, so the search field shows only after a
+pull, where iOS 26 shows it from the start.
+
+## Notifications
+
+The tab is the iOS one: `RemoteNotificationsView`, `NotificationsView`, the three row
+views and `NotificationsActionView` (the floating "…" nuke menu and its alerts) build for
+both platforms. `AndroidRootView` gives it its own `NavigationStack` path, as
+`LoggedInView` does, so a link pushes onto the selected tab's stack (Settings, which has
+none, sends it to Notifications). The badge is `Model.displayedNotificationCount`, set by
+the "Tab Badges" settings, which Android shows without the delivery section and without
+the Notes toggle.
+
+Swipe-to-delete works as in the feed: a full swipe stages the deletion
+(`Model.stageNotificationsDeletion`) behind the same snackbar, and iOS commits at once.
+Each staged row keeps its section and index, so Undo, or a send that fails, puts it back
+where it was; a fetch leaves staged and in-flight rows out. A nuke commits a staged batch
+first.
+
+A journal or journal-comment row opens the **journal screen** (`RemoteJournalView`),
+shared too: it reuses the submission screen's `HTMLView`, comments, comment and note
+sheets. A shout row or an avatar opens the user page.
+
+The empty state ("Continue offline, empty (debug)") is `Text(markdown:)`, which on Android
+goes through `LocalizedStringKey`, since Android's Foundation has no
+`AttributedString(markdown:)`.

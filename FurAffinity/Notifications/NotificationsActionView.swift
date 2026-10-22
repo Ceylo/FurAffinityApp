@@ -5,8 +5,6 @@
 //  Created by Ceylo on 01/05/2023.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 
 struct NotificationsActionView: View {
@@ -16,10 +14,11 @@ struct NotificationsActionView: View {
     var hasJournals: Bool
     var nuker: NotificationsNuker
     
-    @State private var showNukeSubmissionCommentsAlert = false
-    @State private var showNukeJournalCommentsAlert = false
-    @State private var showNukeShoutsAlert = false
-    @State private var showNukeJournalsAlert = false
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var showNukeSubmissionCommentsAlert = false
+    @State var showNukeJournalCommentsAlert = false
+    @State var showNukeShoutsAlert = false
+    @State var showNukeJournalsAlert = false
     
     var body: some View {
         if hasSubmissionComments || hasJournalComments || hasShouts || hasJournals {
@@ -105,5 +104,3 @@ private struct DummyNuker: NotificationsNuker {
     )
     .environment(errorStorage)
 }
-
-#endif

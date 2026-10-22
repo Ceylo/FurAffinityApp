@@ -30,7 +30,9 @@ func view(for target: FATarget) -> some View {
         RemoteWatchlistView(url: url)
     case let .journals(url):
         RemoteUserJournalsView(url: url)
-    case .note, .journal:
+    case let .journal(url):
+        RemoteJournalView(url: url)
+    case .note:
         notPortedYet
     }
 }

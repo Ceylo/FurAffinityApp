@@ -19,6 +19,13 @@ final class MockFASession: FASession {
     var shouldDeleteFail: Bool
     /// Every `deleteSubmissionPreviews` batch received, in order.
     private(set) var deletedSubmissionPreviewBatches: [[FASubmissionPreview]] = []
+    /// Every notification deletion received, in order.
+    private(set) var deletedNotificationBatches: [DeletedNotifications] = []
+
+    struct DeletedNotifications: Equatable {
+        let kind: NotificationKind
+        let previews: [FANotificationPreview]
+    }
 
     nonisolated static func == (lhs: MockFASession, rhs: MockFASession) -> Bool {
         lhs === rhs
@@ -125,19 +132,28 @@ final class MockFASession: FASession {
     }
 
     func deleteSubmissionCommentNotifications(_ notifications: [FANotificationPreview]) async throws -> FANotificationPreviews {
-        mockNotificationPreviews
+        try deleteNotifications(notifications, of: .submissionComment)
     }
 
     func deleteJournalCommentNotifications(_ notifications: [FANotificationPreview]) async throws -> FANotificationPreviews {
-        mockNotificationPreviews
+        try deleteNotifications(notifications, of: .journalComment)
     }
 
     func deleteShoutNotifications(_ notifications: [FANotificationPreview]) async throws -> FANotificationPreviews {
-        mockNotificationPreviews
+        try deleteNotifications(notifications, of: .shout)
     }
 
     func deleteJournalNotifications(_ notifications: [FANotificationPreview]) async throws -> FANotificationPreviews {
-        mockNotificationPreviews
+        try deleteNotifications(notifications, of: .journal)
+    }
+
+    private func deleteNotifications(_ notifications: [FANotificationPreview], of kind: NotificationKind) throws -> FANotificationPreviews {
+        deletedNotificationBatches.append(.init(kind: kind, previews: notifications))
+        if shouldDeleteFail {
+            throw ModelError.disconnected
+        }
+        mockNotificationPreviews = mockNotificationPreviews.removing(notifications, of: kind)
+        return mockNotificationPreviews
     }
 
     func nukeAllSubmissionCommentNotifications() async throws -> FANotificationPreviews {

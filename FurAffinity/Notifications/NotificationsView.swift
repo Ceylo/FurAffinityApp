@@ -5,8 +5,6 @@
 //  Created by Ceylo on 15/04/2023.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
@@ -84,10 +82,22 @@ struct NotificationsView: View {
         )
     }
     
+    private func delete(_ kind: NotificationKind) -> ([FANotificationPreview]) -> Void {
+        { items in
+            // Android: a full swipe commits at the end of the gesture, so the Undo
+            // snackbar holds the deletion back instead.
+            #if FA_SKIP_MODULE
+            actions.stageNotificationsDeletion(items, of: kind)
+            #else
+            actions.deleteNotifications(items, of: kind)
+            #endif
+        }
+    }
+
     var body: some View {
         List {
             ListedSection("Submission Comments", notifications.submissionComments,
-                          onDelete: actions.deleteSubmissionCommentNotifications) { item in
+                          onDelete: delete(.submissionComment)) { item in
                 CommentNotificationItemView(
                     notification: item,
                     target: userFATarget(for: item)
@@ -95,7 +105,7 @@ struct NotificationsView: View {
             }
             
             ListedSection("Journal Comments", notifications.journalComments,
-                          onDelete: actions.deleteJournalCommentNotifications) { item in
+                          onDelete: delete(.journalComment)) { item in
                 CommentNotificationItemView(
                     notification: item,
                     target: userFATarget(for: item)
@@ -103,7 +113,7 @@ struct NotificationsView: View {
             }
             
             ListedSection("Shouts", notifications.shouts,
-                          onDelete: actions.deleteShoutNotifications) { item in
+                          onDelete: delete(.shout)) { item in
                 ShoutNotificationItemView(
                     shout: item,
                     target: userFATarget(for: item)
@@ -111,7 +121,7 @@ struct NotificationsView: View {
             }
             
             ListedSection("Journals", notifications.journals,
-                          onDelete: actions.deleteJournalNotifications) { item in
+                          onDelete: delete(.journal)) { item in
                 JournalNotificationItemView(
                     journal: item,
                     target: userFATarget(for: item)
@@ -154,10 +164,8 @@ private struct DummyActions: NotificationsNuker, NotificationsDeleter {
     func nukeAllJournalCommentNotifications() async {}
     func nukeAllShoutNotifications() async {}
     func nukeAllJournalNotifications() async {}
-    func deleteSubmissionCommentNotifications(_ items: [FAKit.FANotificationPreview]) {}
-    func deleteJournalCommentNotifications(_ items: [FAKit.FANotificationPreview]) {}
-    func deleteShoutNotifications(_ items: [FAKit.FANotificationPreview]) {}
-    func deleteJournalNotifications(_ items: [FAKit.FANotificationPreview]) {}
+    func deleteNotifications(_ items: [FANotificationPreview], of kind: NotificationKind) {}
+    func stageNotificationsDeletion(_ items: [FANotificationPreview], of kind: NotificationKind) {}
 }
 
 #Preview {
@@ -185,5 +193,3 @@ private struct DummyActions: NotificationsNuker, NotificationsDeleter {
         .environment($0.errorStorage)
     }
 }
-
-#endif

@@ -55,10 +55,8 @@ struct SettingsView: View {
             }
             
             Section("Display") {
-                if NotificationDelivery.isSupported {
-                    NavigationLink("Notifications & Badges") {
-                        NotificationSettingsView()
-                    }
+                NavigationLink(NotificationDelivery.isSupported ? "Notifications & Badges" : "Tab Badges") {
+                    NotificationSettingsView()
                 }
                 Toggle("Animate avatars", isOn: $animateAvatars)
             }

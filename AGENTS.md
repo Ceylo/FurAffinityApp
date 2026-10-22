@@ -16,9 +16,10 @@ next to the `Android/` (Gradle) and `Darwin/` scaffolding. Both platforms build 
 `FurAffinity/` directory, split by the `iOS/`/`Android/` convention below; skipstone walks
 the whole tree, so every source it must not build carries `#if !FA_SKIP_MODULE`. Ported so
 far: login (shared `HomeView` + autologin), the Followed feed, the submission screen
-(images, stories, music, comments, Save/Share, "Send a Note"), the user page with its
+(images, stories, music, comments, Save/Share, "Send a Note"), Notifications (with the
+journal screen and swipe-to-delete behind an Undo snackbar), the user page with its
 gallery, favorites, journal list and watchlists, the Profile tab, and Settings. Not
-ported: Notes, Notifications, Explore and journals. `Android/README.md` indexes the topic docs under
+ported: Notes, Explore. `Android/README.md` indexes the topic docs under
 `Android/docs/`; read the relevant one before touching Android code. What every session
 needs to know:
 
