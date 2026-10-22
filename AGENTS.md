@@ -171,7 +171,8 @@ FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, 
   module is compiled twice for Skip — the Android cross-compile and a host build where
   `os(Android)` is **false** — so an `os(Android)` guard leaves UIKit/Kingfisher/Photos
   imports to resolve in a target that does not depend on them. Inside a shared file,
-  `#if os(Android)` branches are fine.
+  `#if os(Android)` branches are fine, except around a bridged view's state or a
+  declaration shared code calls — `shared-sources.md` § Rules for shared sources.
 - **Basenames must be unique across the whole `FurAffinity/` tree — and across
   `FAKit/Sources/FAKit/`, which skipstone now processes too.** SwiftPM derives one
   object file per basename and skipstone one `<Name>_Bridge.swift`, both flattened, so a

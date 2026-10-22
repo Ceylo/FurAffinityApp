@@ -318,8 +318,8 @@ func clearMediaCopies() {
 }
 #endif
 
-/// Stores `data` in the disk cache as if downloaded from `url`. Here rather than in its
-/// callers so neither the test target nor demo data needs to link Kingfisher.
+/// Stores `data` in the disk cache as if downloaded from `url`, for tests and offline
+/// demo data. Here so the test target needn't link Kingfisher.
 func seedImageCache(_ data: Data, for url: URL) throws {
     try ImageCache.default.diskStorage.store(value: data, forKey: url.cacheKey)
 }

@@ -252,9 +252,10 @@ extension OfflineFASession {
     /// Caches the bundled demo banner and avatar under the FA URLs the demo data uses,
     /// so offline mode shows them without a network.
     func seedDemoImages() async {
+        let user = await FAUser.demo
         let images: [(resource: String, ext: String, urls: [URL])] = [
-            ("demo-banner", "jpg", [await FAUser.demo.bannerUrl]),
-            ("demo-avatar", "png", ["demo", username].compactMap(FAURLs.avatarUrl(for:))),
+            ("demo-banner", "jpg", [user.bannerUrl]),
+            ("demo-avatar", "png", [user.name, username].compactMap(FAURLs.avatarUrl(for:))),
         ]
         for image in images {
             guard let file = Bundle.faAssets.url(forResource: image.resource, withExtension: image.ext, subdirectory: "Demo"),
@@ -263,7 +264,11 @@ extension OfflineFASession {
                 continue
             }
             for url in image.urls {
-                try? seedImageCache(data, for: url)
+                do {
+                    try seedImageCache(data, for: url)
+                } catch {
+                    logger.error("Could not cache demo image \(image.resource): \(error)")
+                }
             }
         }
     }

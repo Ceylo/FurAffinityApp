@@ -176,7 +176,14 @@ struct AndroidRootView: View {
         .environment(\.navigationStream, navigationStream)
         .onChange(of: navigationStream.latest) { _, event in
             guard let event else { return }
-            append(event.target, to: selectedTab)
+            navigate(to: event.target)
+        }
+        // The tabs outlive the session here, unlike LoggedInView on iOS.
+        .onChange(of: model.session == nil) { _, loggedOut in
+            guard loggedOut else { return }
+            submissionsPath = []
+            userpagePath = []
+            selectedTab = .submissions
         }
         // Held until there is a session to open it in.
         .task(id: "\(model.session != nil) \(pendingDebugDeepLink.url?.absoluteString ?? "")") {
@@ -186,20 +193,22 @@ struct AndroidRootView: View {
                 logger.error("faOpenURL: not an in-app target: \(url.absoluteString)")
                 return
             }
-            selectedTab = .submissions
-            append(target, to: .submissions)
+            navigate(to: target)
         }
         .autorefreshingOnForeground {
             await model.autorefreshIfNeeded()
         }
     }
 
-    /// As in LoggedInView, onto the tab's own stack. Settings has none, so its
-    /// events land on Submissions; nothing there sends any yet.
-    private func append(_ target: FATarget, to tab: Tab) {
-        switch tab {
-        case .userpage: userpagePath.append(target)
-        case .submissions, .settings: submissionsPath.append(target)
+    /// As in LoggedInView: onto the selected tab's stack, or Submissions' when
+    /// Settings, which has none, is selected.
+    private func navigate(to target: FATarget) {
+        switch selectedTab {
+        case .userpage:
+            userpagePath.append(target)
+        case .submissions, .settings:
+            selectedTab = .submissions
+            submissionsPath.append(target)
         }
     }
 
