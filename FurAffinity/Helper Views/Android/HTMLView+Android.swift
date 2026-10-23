@@ -16,6 +16,8 @@
 
 import SwiftUI
 import FAKit
+import Kingfisher
+import Defaults
 
 struct HTMLView: View {
     // Not private: skipstone can't bridge a private @State/@Environment.
@@ -26,6 +28,8 @@ struct HTMLView: View {
     @Environment(\.navigationStream) var navigationStream
     /// What an image may span, as FA caps `bbcode_img` at the description's width.
     @State var availableWidth: CGFloat = 0
+    /// GIF smilies animate under the same setting as avatars, as on iOS.
+    @Default(.animateAvatars) var animateAvatars
     /// Each image's own size, once `FAImage` has loaded it here. Until then it gets
     /// the size an earlier view learned, else a fallback: the text never waits on it.
     @State var naturalSizes: [URL: Foundation.CGSize] = [:]
@@ -63,17 +67,7 @@ struct HTMLView: View {
                     maxWidth: Double(availableWidth)
                 )
                 return TextInlineView(
-                    FAImage(image.url)
-                        .onSuccess { result in
-                            let natural = Foundation.CGSize(result.image.size)
-                            // Recomposes the whole view: only when the layout changes.
-                            guard image.width == nil || image.height == nil,
-                                  (naturalSizes[image.url] ?? InlineImageSizes.known[image.url]) != natural
-                            else { return }
-                            InlineImageSizes.known[image.url] = natural
-                            naturalSizes[image.url] = natural
-                        }
-                        .resizable()
+                    inlineImage(image)
                         .frame(width: Double(size.width), height: Double(size.height)),
                     width: Double(size.width),
                     height: Double(size.height)
@@ -103,6 +97,27 @@ struct HTMLView: View {
         // unguarded so shared callers still find it.
         Text(verbatim: fragment.html)
         #endif
+    }
+
+    @ViewBuilder
+    private func inlineImage(_ image: FAInlineImage) -> some View {
+        if animateAvatars && canAnimate(image.url) {
+            learningNaturalSize(FAAnimatedImage(image.url), of: image)
+        } else {
+            learningNaturalSize(FAImage(image.url), of: image)
+        }
+    }
+
+    private func learningNaturalSize(_ view: some KFImageProtocol, of image: FAInlineImage) -> some KFImageProtocol {
+        view.onSuccess { result in
+            let natural = Foundation.CGSize(result.image.size)
+            // Recomposes the whole view: only when the layout changes.
+            guard image.width == nil || image.height == nil,
+                  (naturalSizes[image.url] ?? InlineImageSizes.known[image.url]) != natural
+            else { return }
+            InlineImageSizes.known[image.url] = natural
+            naturalSizes[image.url] = natural
+        }
     }
 }
 

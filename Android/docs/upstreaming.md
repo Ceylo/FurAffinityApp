@@ -64,6 +64,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `69b4cb8` menu dividers only between items | skip-ui | no | Robolectric `MenuDividerTests.onlyDividersBetweenItemsAreDrawn`, fails without the patch (100 px vs 97) |
 | `2b2dc459` + `66eb74df` + `ae0b4f07` Android port | Kingfisher | no | issue first; large parts can never leave the fork |
 | `058eb5d4`, `2296a263`, `07f72deb`, `731194ee` Android first-frame work | Kingfisher | no | part of the port, and depends on skip-ui `23154a0`. `07f72deb` replaces most of the first two. `731194ee` sits on the *target*-cache-hit path; #2572/#2573 rewrote the *original*-cache-hit path beside it, and `239c970b` merged them without touching it |
+| `ad062ce0` Android `KFAnimatedImage` | Kingfisher | no | part of the port: the decode keeps a GIF's bytes on a `UIImage` subclass, and a Kotlin `Modifier.Node` plays them over the holder-drawn first frame, so it depends on skip-ui `23154a0` too |
 | `fb0ef04` `Defaults.defaultSuite` | Defaults | no | issue first; re-pitch without the Android rationale |
 | `4c1ad29` drop macros + guards | — | — | fork-only, permanently |
 | `e67bf25` + `4f7ad45` Android `@Default` | — | — | nothing to send: the second commit moved it out of the fork again, so the pair is a no-op against upstream |
