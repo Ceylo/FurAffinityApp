@@ -96,8 +96,12 @@ import SwiftUI
     /// From `FABackgroundRefreshWorker`. Stands down while an activity is in the
     /// foreground, where iOS never runs its BGAppRefreshTask: the user is seeing the
     /// content, and `backgroundRefreshLifecycle()` is advancing the watermarks. An
-    /// activity resuming mid-run cancels it, as iOS expires its task.
-    /* SKIP @bridge */public func performBackgroundRefresh() async -> Bool {
+    /// activity resuming mid-run cancels it, as iOS expires its task. Each run is logged
+    /// with `conditions`, the device state Android throttles the job by, so an exported
+    /// log tells how often it ran and why.
+    /* SKIP @bridge */public func performBackgroundRefresh(_ conditions: String) async -> Bool {
+        logger.info("Background refresh run started (\(conditions))")
+        let start = ContinuousClock.now
         guard let refresh = foreground.startBackgroundWork({
             Task { try await BackgroundRefreshManager.performFetchAndNotify() }
         }) else {
@@ -105,6 +109,7 @@ import SwiftUI
             return true
         }
         defer {
+            logger.info("Background refresh run ended after \(ContinuousClock.now - start)")
             foreground.endBackgroundWork()
             // A process the worker started never reaches `onStop`, where they're pruned otherwise.
             Task { await FAImageStore.shared.performingFileIO { pruneMediaCopies() } }
