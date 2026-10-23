@@ -144,10 +144,16 @@ private fun includeSkip(settings: Settings, worktree: File, base: File, builtPro
     // base, not the caller's directory, or every worktree switch recompiles ~30 manifests (~11 s).
     val pluginRef = File.createTempFile("skip-plugin-path", ".tmp")
     val skipGradle = try {
-        runCommand(
+        val output = runCommand(
             "/usr/bin/env", "skip", "plugin", "--prebuild", "--package-path", base.path,
             "--plugin-ref", pluginRef.path, workingDir = base,
         )
+        // The prebuild's host `swift build` (the Darwin bridge pass) can fail while skip
+        // still exits 0, and the APK then builds without it.
+        val errors = swiftCompileErrors(output)
+        if (errors.isNotEmpty()) {
+            throw GradleException("The host Swift build failed:\n" + errors.joinToString("\n"))
+        }
         File(pluginRef.readText().trim())
     } finally {
         pluginRef.delete()
@@ -256,7 +262,14 @@ private fun findSkipstone(base: File, module: String, builtProducts: String?): F
 private fun Settings.env(name: String) =
     providers.environmentVariable(name).orNull?.takeIf { it.isNotEmpty() }
 
-private fun Settings.runCommand(vararg command: String, workingDir: File? = null) {
+private val ansiEscape = Regex("\u001B\\[[0-9;]*m")
+private val swiftCompileError = Regex("""^\S.*\.swift:\d+:\d+: error: .*$""", RegexOption.MULTILINE)
+
+internal fun swiftCompileErrors(output: String): List<String> =
+    swiftCompileError.findAll(output.replace(ansiEscape, "")).map { it.value }.distinct().toList()
+
+/** Runs [command], echoing its output, and returns that output. */
+private fun Settings.runCommand(vararg command: String, workingDir: File? = null): String {
     val result = providers.exec {
         commandLine(*command)
         environment("PATH", "${System.getenv("PATH")}:/opt/homebrew/bin")
@@ -267,10 +280,13 @@ private fun Settings.runCommand(vararg command: String, workingDir: File? = null
         }
         isIgnoreExitValue = true
     }
-    print(result.standardOutput.asText.get())
-    print(result.standardError.asText.get())
+    val stdout = result.standardOutput.asText.get()
+    val stderr = result.standardError.asText.get()
+    print(stdout)
+    print(stderr)
     val status = result.result.get().exitValue
     if (status != 0) throw GradleException("`${command.joinToString(" ")}` exited with $status.")
+    return stdout + stderr
 }
 
 // Skip.env is xcconfig syntax; Properties reads its `//` comment lines as a "//" key.

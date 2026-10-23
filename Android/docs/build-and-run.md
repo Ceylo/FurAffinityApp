@@ -164,7 +164,9 @@ the suffixed APK and then starts an id that is not there.
 
 `run.sh` builds with `./gradlew :app:installDebug`, whose prebuild also compiles the
 **Darwin bridge** (`swift build --triple arm64-apple-ios`, where `os(Android)` is
-false) and fails on its errors. That is the build which catches a misplaced
+false) and fails on its errors: `skip plugin --prebuild` itself exits 0 when that
+compile fails, so the build-slots plugin fails on the `.swift:…: error:` lines in its
+output. That is the build which catches a misplaced
 `os(Android)` guard; `skip android build` and `skip android test` never compile it,
 so their being green does not mean the app builds. See [shared
 sources](shared-sources.md#why-everything-unported-is-guarded). `run.sh` then runs
