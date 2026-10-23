@@ -23,13 +23,6 @@ import UserNotifications
 import SkipBridge
 #endif
 
-#if !os(Android)
-// The Darwin bridge pass compiles this against Apple's UserNotifications, which lacks
-// the SkipUI fork's Android-only keys.
-private let UNNotificationAttachmentOptionsRevealActionTitleKey = "UNNotificationAttachmentOptionsRevealActionTitleKey"
-private let UNNotificationAttachmentOptionsConcealActionTitleKey = "UNNotificationAttachmentOptionsConcealActionTitleKey"
-#endif
-
 extension BackgroundRefreshManager {
     /// Every 30 minutes, the earliest iOS asks for.
     static func schedule() {
@@ -53,10 +46,42 @@ extension BackgroundRefreshManager {
         try await FAWebSession.makeBackgroundSession(source: .submissionsFeed(from: nil))
     }
 
+    /// A mature submission's notification starts blurred, in this category; its Show
+    /// button re-adds it revealed, in the other, whose Hide button blurs it again. iOS shows
+    /// the clear image on a long-press instead, but Android expands the top notification on
+    /// its own.
+    static let hiddenSubmissionCategoryIdentifier = "fa.submission.hidden"
+    static let revealedSubmissionCategoryIdentifier = "fa.submission.revealed"
+    private static let showActionIdentifier = "fa.show"
+    private static let hideActionIdentifier = "fa.hide"
+    /// The submission thumbnail Show reveals, fetched again from Kingfisher's cache.
+    private static let thumbnailURLKey = "fa.thumbnail.url"
+
+    static func registerNotificationCategories() {
+        UNUserNotificationCenter.current().setNotificationCategories([
+            UNNotificationCategory(
+                identifier: hiddenSubmissionCategoryIdentifier,
+                actions: [UNNotificationAction(identifier: showActionIdentifier, title: "Show", options: [.authenticationRequired])],
+                intentIdentifiers: [],
+                options: []
+            ),
+            UNNotificationCategory(
+                identifier: revealedSubmissionCategoryIdentifier,
+                actions: [UNNotificationAction(identifier: hideActionIdentifier, title: "Hide", options: [])],
+                intentIdentifiers: [],
+                options: []
+            ),
+        ])
+    }
+
     /// Attaches the author's avatar, which becomes the large icon, unless a submission
-    /// thumbnail will take that place.
+    /// thumbnail will take that place, whose URL is kept for Show.
     static func enrich(_ content: UNMutableNotificationContent, for record: PendingNotificationRecord) async -> UNNotificationContent {
-        guard record.thumbnailURLString == nil, let url = FAURLs.avatarUrl(for: record.author) else {
+        if let thumbnailURLString = record.thumbnailURLString {
+            content.userInfo[thumbnailURLKey] = thumbnailURLString
+            return content
+        }
+        guard let url = FAURLs.avatarUrl(for: record.author) else {
             return content
         }
         do {
@@ -68,25 +93,66 @@ extension BackgroundRefreshManager {
         return content
     }
 
-    /// A mature submission's hidden clear image, which iOS shows only on a long-press, waits
-    /// behind a Show button: Android expands the top notification on its own. A general
-    /// submission's clear image goes in hidden too, which makes it the expanded picture.
+    /// A general submission's clear image goes in hidden too, which makes it the expanded
+    /// picture. A mature one keeps only its blurred image, and gets the Show button.
     static func attaching(_ attachments: [UNNotificationAttachment], to content: UNNotificationContent) -> UNNotificationContent {
         guard let mutable = content as? UNMutableNotificationContent, let primary = attachments.first else {
             return content
         }
-        var options: [AnyHashable: Any] = [UNNotificationAttachmentOptionsThumbnailHiddenKey: true]
-        let hidden = attachments.dropFirst().first { $0.identifier == "clear" }
-        if hidden != nil {
-            options[UNNotificationAttachmentOptionsRevealActionTitleKey] = "Show"
-            options[UNNotificationAttachmentOptionsConcealActionTitleKey] = "Hide"
+        if attachments.dropFirst().contains(where: { $0.identifier == "clear" }) {
+            mutable.attachments = [primary]
+            mutable.categoryIdentifier = hiddenSubmissionCategoryIdentifier
+        } else {
+            mutable.attachments = [primary] + expandedCopy(of: primary)
         }
-        let source = hidden ?? primary
-        var kept = [primary]
-        if let expanded = try? UNNotificationAttachment(identifier: hidden == nil ? "expanded" : source.identifier, url: source.url, options: options) {
-            kept.append(expanded)
-        }
-        mutable.attachments = kept
         return mutable
+    }
+
+    private static func expandedCopy(of attachment: UNNotificationAttachment) -> [UNNotificationAttachment] {
+        guard let expanded = try? UNNotificationAttachment(identifier: "expanded", url: attachment.url, options: [UNNotificationAttachmentOptionsThumbnailHiddenKey: true]) else {
+            return []
+        }
+        return [expanded]
+    }
+
+    /// Answers Show and Hide by adding the notification again, silently, with the clear
+    /// thumbnail or a blurred one. Returns whether `response` was one of them.
+    static func handleAction(_ response: UNNotificationResponse) async -> Bool {
+        let revealing: Bool
+        switch response.actionIdentifier {
+        case showActionIdentifier: revealing = true
+        case hideActionIdentifier: revealing = false
+        default: return false
+        }
+        let request = response.notification.request
+        guard let urlString = request.content.userInfo[thumbnailURLKey] as? String, let url = URL(string: urlString) else {
+            logger.error("No thumbnail to \(revealing ? "show" : "hide") for \(request.identifier)")
+            return true
+        }
+        do {
+            // Downloaded when the notification was built, so this reads Kingfisher's cache.
+            let file = try await KingfisherManager.shared.retrieveFAImageFile(with: url)
+            let content = UNMutableNotificationContent()
+            content.title = request.content.title
+            content.body = request.content.body
+            content.userInfo = request.content.userInfo
+            content.interruptionLevel = .passive
+            if revealing {
+                let clear = try UNNotificationAttachment(identifier: "clear", url: file, options: nil)
+                content.attachments = [clear] + expandedCopy(of: clear)
+                content.categoryIdentifier = revealedSubmissionCategoryIdentifier
+            } else {
+                guard let blurred = await ImageBlur.blurredImageFile(from: file) else {
+                    logger.error("Could not blur the thumbnail of \(request.identifier) again")
+                    return true
+                }
+                content.attachments = [try UNNotificationAttachment(identifier: "blurred", url: blurred, options: nil)]
+                content.categoryIdentifier = hiddenSubmissionCategoryIdentifier
+            }
+            try await UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: request.identifier, content: content, trigger: nil))
+        } catch {
+            logger.error("Could not \(revealing ? "show" : "hide") the thumbnail of \(request.identifier): \(error)")
+        }
+        return true
     }
 }

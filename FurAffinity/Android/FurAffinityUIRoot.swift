@@ -78,6 +78,7 @@ import SwiftUI
         Defaults.runSettingsMigrations()
         // As FurAffinityApp.init() on iOS. SkipUI holds a tap that launched the app until then.
         UNUserNotificationCenter.current().delegate = NotificationCenterDelegate.shared
+        BackgroundRefreshManager.registerNotificationCategories()
     }
 
     /// From `MainActivity`'s intent extras on a non-release build; see

@@ -53,9 +53,8 @@ class FANotificationBridge {
         }
 
         /// A one-off run of the same worker, for testing: WorkManager won't force a
-        /// periodic run before its period has elapsed. MainActivity's debug extras. The
-        /// constraint matters beyond waiting for a network: on battery, a background job
-        /// without it gets none.
+        /// periodic run before its period has elapsed. MainActivity's debug extras. Same
+        /// constraint as the periodic job, so it runs under the same conditions.
         fun runBackgroundRefresh(delaySeconds: Long) {
             val request = OneTimeWorkRequestBuilder<FABackgroundRefreshWorker>()
                 .setConstraints(NETWORK_REQUIRED)

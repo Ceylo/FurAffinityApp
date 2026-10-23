@@ -330,11 +330,14 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   `FANotificationBridge.blur`, a CPU box blur matched to Kingfisher's radius (its
   Accelerate blur is compiled out here). Its clear image, which iOS's content extension
   draws on a long-press, waits behind a **Show** button instead: Android expands the top
-  notification on its own, and on the lock screen. The button posts the notification
-  again with the clear picture, from the copy SkipUI took when it was added, so nothing
-  is downloaded twice. On the lock screen it asks for an unlock first, and before
-  Android 12, which can't, it does nothing there; **Hide** puts the blur back. Notes, comments and journals attach the author's avatar as the large
-  icon instead of iOS's communication notification.
+  notification on its own, and on the lock screen. The button is a `UNNotificationAction`
+  of the `fa.submission.hidden` category, registered in `onInit`; the delegate answers it
+  (`BackgroundRefreshManager.handleAction`) by adding the request again, `.passive`, with
+  the clear thumbnail from Kingfisher's cache, so nothing is downloaded twice, in the
+  `fa.submission.revealed` category, whose **Hide** blurs it again. Show asks for an
+  unlock on the lock screen, and before Android 12, which can't, does nothing there.
+  Notes, comments and journals attach the author's avatar as the large icon instead of
+  iOS's communication notification.
 - **Taps** reach `NotificationCenterDelegate`, then `NotificationCoordinator`, which
   `AndroidRootView` drains once there is a session, as it does `faOpenURL`. SkipUI holds a
   tap that cold-launched the app until the delegate is set in `onInit`. `MainActivity` is
