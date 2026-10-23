@@ -311,7 +311,10 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   network required), enqueued with `UPDATE` by `backgroundRefreshLifecycle()` each time
   the app goes to the background. Periodic rather than iOS's self-rechaining one-shot:
   replacing the work from inside the running worker would cancel it. The worker stands
-  down while an activity is resumed, where iOS never runs its task.
+  down while an activity is resumed, where iOS never runs its task. Android decides how
+  often it really runs (Doze, the app's standby bucket), so each run logs a
+  `Background refresh run started (standby bucket: …, charging: …, device idle: …)` line
+  and an `ended after` one: a tester's exported log shows the actual frequency.
 - **A session without a WebView.** WorkManager may start the process cold, with no
   `FAWebSessionView` mounted, so `FAWebSession.makeBackgroundSession` reads the jar
   through `CookieManager` (`cookieJarHeaderProvider`, HttpOnly cookies included) and
@@ -324,10 +327,13 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
 - **Images.** A submission's thumbnail is the large icon, and a general one's expanded
   notification shows it as a big picture. A mature one is blurred by
   `FANotificationBridge.blur`, a CPU box blur matched to Kingfisher's radius (its
-  Accelerate blur is compiled out here), and its clear image is left out entirely: Android
-  expands the top notification on its own, and on the lock screen, where iOS needs a
-  long-press. Notes, comments and journals attach the author's avatar as the large icon
-  instead of iOS's communication notification.
+  Accelerate blur is compiled out here). Its clear image, which iOS's content extension
+  draws on a long-press, waits behind a **Show** button instead: Android expands the top
+  notification on its own, and on the lock screen. The button posts the notification
+  again with the clear picture, from the copy SkipUI took when it was added, so nothing
+  is downloaded twice; on the lock screen it asks for an unlock first, and **Hide** puts
+  the blur back. Notes, comments and journals attach the author's avatar as the large
+  icon instead of iOS's communication notification.
 - **Taps** reach `NotificationCenterDelegate`, then `NotificationCoordinator`, which
   `AndroidRootView` drains once there is a session, as it does `faOpenURL`. SkipUI holds a
   tap that cold-launched the app until the delegate is set in `onInit`. `MainActivity` is

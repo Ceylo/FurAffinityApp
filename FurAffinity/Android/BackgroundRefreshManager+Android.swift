@@ -61,20 +61,24 @@ extension BackgroundRefreshManager {
         return content
     }
 
-    /// Keeps only the first, primary image. Android expands the top notification on its
-    /// own, and on the lock screen, so a mature submission's clear image, hidden behind a
-    /// long-press on iOS, would show unasked. A general submission's clear image also
-    /// goes in hidden, which makes it the expanded picture.
+    /// A general submission's clear image also goes in hidden, which makes it the expanded
+    /// picture. A mature submission's clear image, which iOS shows only on a long-press,
+    /// waits behind a Show button: Android expands the top notification on its own.
     static func attaching(_ attachments: [UNNotificationAttachment], to content: UNNotificationContent) -> UNNotificationContent {
         guard let mutable = content as? UNMutableNotificationContent, let primary = attachments.first else {
             return content
         }
-        var kept = [primary]
-        if attachments.count == 1,
-           let expanded = try? UNNotificationAttachment(identifier: "expanded", url: primary.url, options: [UNNotificationAttachmentOptionsThumbnailHiddenKey: true]) {
-            kept.append(expanded)
+        let expanded: UNNotificationAttachment?
+        if attachments.count == 1 {
+            expanded = try? UNNotificationAttachment(identifier: "expanded", url: primary.url, options: [UNNotificationAttachmentOptionsThumbnailHiddenKey: true])
+        } else {
+            expanded = try? UNNotificationAttachment(identifier: attachments[1].identifier, url: attachments[1].url, options: [
+                UNNotificationAttachmentOptionsThumbnailHiddenKey: true,
+                UNNotificationAttachmentOptionsRevealActionTitleKey: "Show",
+                UNNotificationAttachmentOptionsConcealActionTitleKey: "Hide",
+            ])
         }
-        mutable.attachments = kept
+        mutable.attachments = [primary] + (expanded.map { [$0] } ?? [])
         return mutable
     }
 }

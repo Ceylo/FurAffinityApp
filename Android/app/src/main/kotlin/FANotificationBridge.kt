@@ -36,12 +36,13 @@ class FANotificationBridge {
         private const val WORK_NAME = "fa.background-refresh"
         /// The blur runs on a bitmap this many times smaller (a power of two, for `inSampleSize`).
         private const val DOWNSCALE = 4
+        private val NETWORK_REQUIRED = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 
         /// UPDATE keeps the running schedule, so calling this on every trip to the
         /// background doesn't push the next run further out.
         fun scheduleBackgroundRefresh(intervalMinutes: Long): Boolean = try {
             val request = PeriodicWorkRequestBuilder<FABackgroundRefreshWorker>(intervalMinutes, TimeUnit.MINUTES)
-                .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                .setConstraints(NETWORK_REQUIRED)
                 .build()
             WorkManager.getInstance(ProcessInfo.processInfo.androidContext)
                 .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, request)
@@ -52,9 +53,12 @@ class FANotificationBridge {
         }
 
         /// A one-off run of the same worker, for testing: WorkManager won't force a
-        /// periodic run before its period has elapsed. MainActivity's debug extras.
+        /// periodic run before its period has elapsed. MainActivity's debug extras. The
+        /// constraint matters beyond waiting for a network: on battery, a background job
+        /// without it gets none.
         fun runBackgroundRefresh(delaySeconds: Long) {
             val request = OneTimeWorkRequestBuilder<FABackgroundRefreshWorker>()
+                .setConstraints(NETWORK_REQUIRED)
                 .setInitialDelay(delaySeconds, TimeUnit.SECONDS)
                 .build()
             WorkManager.getInstance(ProcessInfo.processInfo.androidContext).enqueue(request)

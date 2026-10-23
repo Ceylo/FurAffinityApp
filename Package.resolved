@@ -79,7 +79,7 @@
       "location" : "https://github.com/Ceylo/skip-fuse-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "8935f8408efb418438c910987f20c99d764ee594"
+        "revision" : "bd03c7e94ed4fe419aec4e378fa7db4d6837a28b"
       }
     },
     {
@@ -106,7 +106,7 @@
       "location" : "https://github.com/Ceylo/skip-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "168d90d281e7cacb3a1f31e64509d6f3afb24700"
+        "revision" : "9edd40265eccf458604342a6520c0b10c90b6ff7"
       }
     },
     {
