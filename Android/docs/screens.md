@@ -314,7 +314,8 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   down while an activity is resumed, where iOS never runs its task. Android decides how
   often it really runs (Doze, the app's standby bucket), so each run logs a
   `Background refresh run started (standby bucket: …, charging: …, device idle: …)` line
-  and an `ended after` one: a tester's exported log shows the actual frequency.
+  and an `ended after` one, or a `Skipping` one while the app is in the foreground: a
+  tester's exported log shows the actual frequency.
 - **A session without a WebView.** WorkManager may start the process cold, with no
   `FAWebSessionView` mounted, so `FAWebSession.makeBackgroundSession` reads the jar
   through `CookieManager` (`cookieJarHeaderProvider`, HttpOnly cookies included) and
@@ -331,8 +332,8 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   draws on a long-press, waits behind a **Show** button instead: Android expands the top
   notification on its own, and on the lock screen. The button posts the notification
   again with the clear picture, from the copy SkipUI took when it was added, so nothing
-  is downloaded twice; on the lock screen it asks for an unlock first, and **Hide** puts
-  the blur back. Notes, comments and journals attach the author's avatar as the large
+  is downloaded twice. On the lock screen it asks for an unlock first, and before
+  Android 12, which can't, it does nothing there; **Hide** puts the blur back. Notes, comments and journals attach the author's avatar as the large
   icon instead of iOS's communication notification.
 - **Taps** reach `NotificationCenterDelegate`, then `NotificationCoordinator`, which
   `AndroidRootView` drains once there is a session, as it does `faOpenURL`. SkipUI holds a
@@ -342,7 +343,8 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
 - **The icon** is `res/drawable/ic_notification.xml`, Material's paw as a placeholder:
   the status bar draws it from its alpha alone.
 
-To force a run, use the debug launch extra, a one-off run of the same worker. WorkManager
+To force a run, use the debug launch extra, a one-off run of the same worker, with the
+same network constraint (so it waits while the device is offline). WorkManager
 won't force a periodic run before its period has elapsed ("being executed before
 schedule"), even through `cmd jobscheduler run -f`:
 

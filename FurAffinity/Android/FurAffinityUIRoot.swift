@@ -99,14 +99,14 @@ import SwiftUI
     /// activity resuming mid-run cancels it, as iOS expires its task. `conditions` is
     /// logged with each run.
     /* SKIP @bridge */public func performBackgroundRefresh(_ conditions: String) async -> Bool {
-        logger.info("Background refresh run started (\(conditions))")
-        let start = ContinuousClock.now
         guard let refresh = foreground.startBackgroundWork({
             Task { try await BackgroundRefreshManager.performFetchAndNotify() }
         }) else {
-            logger.info("Skipping background refresh: the app is in the foreground")
+            logger.info("Skipping background refresh: the app is in the foreground (\(conditions))")
             return true
         }
+        logger.info("Background refresh run started (\(conditions))")
+        let start = ContinuousClock.now
         defer {
             logger.info("Background refresh run ended after \(ContinuousClock.now - start)")
             foreground.endBackgroundWork()
