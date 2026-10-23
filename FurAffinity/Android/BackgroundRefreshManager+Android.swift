@@ -50,8 +50,8 @@ extension BackgroundRefreshManager {
     /// button re-adds it revealed, in the other, whose Hide button blurs it again. iOS shows
     /// the clear image on a long-press instead, but Android expands the top notification on
     /// its own.
-    static let hiddenSubmissionCategoryIdentifier = "fa.submission.hidden"
-    static let revealedSubmissionCategoryIdentifier = "fa.submission.revealed"
+    private static let hiddenSubmissionCategoryIdentifier = "fa.submission.hidden"
+    private static let revealedSubmissionCategoryIdentifier = "fa.submission.revealed"
     private static let showActionIdentifier = "fa.show"
     private static let hideActionIdentifier = "fa.hide"
     /// The submission thumbnail Show reveals, fetched again from Kingfisher's cache.
@@ -116,7 +116,8 @@ extension BackgroundRefreshManager {
     }
 
     /// Answers Show and Hide by adding the notification again, silently, with the clear
-    /// thumbnail or a blurred one. Returns whether `response` was one of them.
+    /// thumbnail or a blurred one, both built as the first post built them. Returns whether
+    /// `response` was one of them.
     static func handleAction(_ response: UNNotificationResponse) async -> Bool {
         let revealing: Bool
         switch response.actionIdentifier {
@@ -125,31 +126,23 @@ extension BackgroundRefreshManager {
         default: return false
         }
         let request = response.notification.request
-        guard let urlString = request.content.userInfo[thumbnailURLKey] as? String, let url = URL(string: urlString) else {
+        // Downloaded when the notification was built, so this reads Kingfisher's cache.
+        guard let urlString = request.content.userInfo[thumbnailURLKey] as? String, let url = URL(string: urlString),
+              let attachments = await submissionAttachment(thumbnailURL: url, needsBlur: !revealing) else {
             logger.error("No thumbnail to \(revealing ? "show" : "hide") for \(request.identifier)")
             return true
         }
+        let content = UNMutableNotificationContent()
+        content.title = request.content.title
+        content.body = request.content.body
+        content.userInfo = request.content.userInfo
+        content.interruptionLevel = .passive
+        let attached = attaching(attachments, to: content)
+        if revealing, let mutable = attached as? UNMutableNotificationContent {
+            mutable.categoryIdentifier = revealedSubmissionCategoryIdentifier
+        }
         do {
-            // Downloaded when the notification was built, so this reads Kingfisher's cache.
-            let file = try await KingfisherManager.shared.retrieveFAImageFile(with: url)
-            let content = UNMutableNotificationContent()
-            content.title = request.content.title
-            content.body = request.content.body
-            content.userInfo = request.content.userInfo
-            content.interruptionLevel = .passive
-            if revealing {
-                let clear = try UNNotificationAttachment(identifier: "clear", url: file, options: nil)
-                content.attachments = [clear] + expandedCopy(of: clear)
-                content.categoryIdentifier = revealedSubmissionCategoryIdentifier
-            } else {
-                guard let blurred = await ImageBlur.blurredImageFile(from: file) else {
-                    logger.error("Could not blur the thumbnail of \(request.identifier) again")
-                    return true
-                }
-                content.attachments = [try UNNotificationAttachment(identifier: "blurred", url: blurred, options: nil)]
-                content.categoryIdentifier = hiddenSubmissionCategoryIdentifier
-            }
-            try await UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: request.identifier, content: content, trigger: nil))
+            try await UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: request.identifier, content: attached, trigger: nil))
         } catch {
             logger.error("Could not \(revealing ? "show" : "hide") the thumbnail of \(request.identifier): \(error)")
         }

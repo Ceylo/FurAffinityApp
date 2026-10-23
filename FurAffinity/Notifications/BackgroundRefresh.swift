@@ -314,7 +314,7 @@ enum BackgroundRefreshManager {
     ///   `thumbnailHidden`) that the content extension reveals on long-press / expand.
     /// Returns `nil` if the thumbnail can't be fetched, or if blurring fails (so the
     /// unblurred NSFW image is never attached by accident).
-    private static func submissionAttachment(thumbnailURL url: URL, needsBlur: Bool) async -> [UNNotificationAttachment]? {
+    static func submissionAttachment(thumbnailURL url: URL, needsBlur: Bool) async -> [UNNotificationAttachment]? {
         let file: URL
         do {
             file = try await KingfisherManager.shared.retrieveFAImageFile(with: url)
