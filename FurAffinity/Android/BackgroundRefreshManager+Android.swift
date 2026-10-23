@@ -116,36 +116,39 @@ extension BackgroundRefreshManager {
     }
 
     /// Answers Show and Hide by adding the notification again, silently, with the clear
-    /// thumbnail or a blurred one, both built as the first post built them. Returns whether
-    /// `response` was one of them.
-    static func handleAction(_ response: UNNotificationResponse) async -> Bool {
+    /// thumbnail or a blurred one, both built as the first post built them. A Hide that can't
+    /// blur drops the image rather than leave it clear.
+    static func handleAction(_ response: UNNotificationResponse) async {
         let revealing: Bool
         switch response.actionIdentifier {
         case showActionIdentifier: revealing = true
         case hideActionIdentifier: revealing = false
-        default: return false
+        default: return
         }
         let request = response.notification.request
-        // Downloaded when the notification was built, so this reads Kingfisher's cache.
-        guard let urlString = request.content.userInfo[thumbnailURLKey] as? String, let url = URL(string: urlString),
-              let attachments = await submissionAttachment(thumbnailURL: url, needsBlur: !revealing) else {
-            logger.error("No thumbnail to \(revealing ? "show" : "hide") for \(request.identifier)")
-            return true
-        }
         let content = UNMutableNotificationContent()
         content.title = request.content.title
         content.body = request.content.body
         content.userInfo = request.content.userInfo
         content.interruptionLevel = .passive
-        let attached = attaching(attachments, to: content)
-        if revealing, let mutable = attached as? UNMutableNotificationContent {
-            mutable.categoryIdentifier = revealedSubmissionCategoryIdentifier
+        content.categoryIdentifier = hiddenSubmissionCategoryIdentifier
+        // Downloaded when the notification was built, so this reads Kingfisher's cache.
+        if let urlString = request.content.userInfo[thumbnailURLKey] as? String, let url = URL(string: urlString),
+           let attachments = await submissionAttachment(thumbnailURL: url, needsBlur: !revealing) {
+            _ = attaching(attachments, to: content)
+            if revealing {
+                content.categoryIdentifier = revealedSubmissionCategoryIdentifier
+            }
+        } else {
+            logger.error("No thumbnail to \(revealing ? "show" : "hide") for \(request.identifier)")
+            if revealing {
+                return
+            }
         }
         do {
-            try await UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: request.identifier, content: attached, trigger: nil))
+            try await UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: request.identifier, content: content, trigger: nil))
         } catch {
             logger.error("Could not \(revealing ? "show" : "hide") the thumbnail of \(request.identifier): \(error)")
         }
-        return true
     }
 }

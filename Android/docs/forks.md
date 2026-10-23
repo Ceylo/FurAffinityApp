@@ -366,7 +366,7 @@ skip-fuse-ui `5b608cd`:
   `CLEAR_TOP`, which alone recreates it and loses the root view's `@State`. #566's
   new-intent listener then hands the tap to `didReceive`.
 - **`soundSetting` is `.enabled`** rather than unavailable: the channel decides.
-- **Categories and actions** (`f496755` + `5e023c8`, skip-fuse-ui `1f0574a` + `6d8d80b`). `UNNotificationCategory`,
+- **Categories and actions** (`f496755` + `5e023c8` + `a616f6e`, skip-fuse-ui `1f0574a` + `6d8d80b` + `18ad2d9`). `UNNotificationCategory`,
   `UNNotificationAction` and their options, saved by `setNotificationCategories` as iOS
   keeps them. A request's category gives the notification a button per action: a
   `.foreground` one opens the app as a tap does, any other reaches
@@ -374,9 +374,10 @@ skip-fuse-ui `5b608cd`:
   response to `didReceive` without opening the app. Taps and buttons build the response
   from the notification's data, so it carries the request's content: title, body,
   category, `userInfo` and attachments. `.authenticationRequired` asks for an unlock
-  (Android 12+), `.customDismissAction` reports a swipe-away, and
-  `interruptionLevel = .passive` posts silently; `.destructive` and the other category
-  options have no Android effect. An Android-only reveal key came first
+  (Android 12+), `.customDismissAction` reports a swipe-away, and a chosen action removes
+  its notification unless the delegate posted it again. `interruptionLevel = .passive`
+  posts silently, and replacing a notification still showing keeps its place.
+  `.destructive` and the other category options have no Android effect. An Android-only reveal key came first
   (`9edd402` to `cca0169`); it was replaced by this real API, as the forks carry no
   API Apple's SDK lacks.
 - **Attachments outlive their files** for a request posted later: `add` copies them into

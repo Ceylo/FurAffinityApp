@@ -13,7 +13,8 @@ final class NotificationCenterDelegate: NSObject, UNUserNotificationCenterDelega
     static let shared = NotificationCenterDelegate()
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
-        if await BackgroundRefreshManager.handleAction(response) {
+        guard response.actionIdentifier == UNNotificationDefaultActionIdentifier else {
+            await BackgroundRefreshManager.handleAction(response)
             return
         }
         let urlString = NotificationCoordinator.deepLinkURLString(fromUserInfo: response.notification.request.content.userInfo)

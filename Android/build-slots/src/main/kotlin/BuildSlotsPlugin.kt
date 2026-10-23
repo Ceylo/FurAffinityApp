@@ -263,7 +263,9 @@ private fun Settings.env(name: String) =
     providers.environmentVariable(name).orNull?.takeIf { it.isNotEmpty() }
 
 private val ansiEscape = Regex("\u001B\\[[0-9;]*m")
-private val swiftCompileError = Regex("""^\S.*\.swift:\d+:\d+: error: .*$""", RegexOption.MULTILINE)
+// A located diagnostic (`File.swift:1:2: error:`, `<unknown>:0: error:`), or a driver,
+// linker or build-system one (`error: …`, `ld: …`).
+private val swiftCompileError = Regex("""^(\S.*:\d+(:\d+)?: error: |error: |ld: (?!warning)).*$""", RegexOption.MULTILINE)
 
 internal fun swiftCompileErrors(output: String): List<String> =
     swiftCompileError.findAll(output.replace(ansiEscape, "")).map { it.value }.distinct().toList()
