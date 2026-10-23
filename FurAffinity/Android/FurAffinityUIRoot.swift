@@ -96,9 +96,8 @@ import SwiftUI
     /// From `FABackgroundRefreshWorker`. Stands down while an activity is in the
     /// foreground, where iOS never runs its BGAppRefreshTask: the user is seeing the
     /// content, and `backgroundRefreshLifecycle()` is advancing the watermarks. An
-    /// activity resuming mid-run cancels it, as iOS expires its task. Each run is logged
-    /// with `conditions`, the device state Android throttles the job by, so an exported
-    /// log tells how often it ran and why.
+    /// activity resuming mid-run cancels it, as iOS expires its task. `conditions` is
+    /// logged with each run.
     /* SKIP @bridge */public func performBackgroundRefresh(_ conditions: String) async -> Bool {
         logger.info("Background refresh run started (\(conditions))")
         let start = ContinuousClock.now

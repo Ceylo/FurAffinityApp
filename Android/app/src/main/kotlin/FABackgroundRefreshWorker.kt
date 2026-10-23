@@ -23,13 +23,13 @@ class FABackgroundRefreshWorker(context: Context, params: WorkerParameters) : Co
 
     // What Android throttles the job by, so a tester's log shows why runs are sparse.
     private fun deviceConditions(): String {
-        val bucket = when (val bucket = applicationContext.getSystemService(UsageStatsManager::class.java)?.appStandbyBucket) {
+        val bucket = when (val raw = applicationContext.getSystemService(UsageStatsManager::class.java)?.appStandbyBucket) {
             UsageStatsManager.STANDBY_BUCKET_ACTIVE -> "active"
             UsageStatsManager.STANDBY_BUCKET_WORKING_SET -> "working set"
             UsageStatsManager.STANDBY_BUCKET_FREQUENT -> "frequent"
             UsageStatsManager.STANDBY_BUCKET_RARE -> "rare"
             UsageStatsManager.STANDBY_BUCKET_RESTRICTED -> "restricted"
-            else -> "$bucket"
+            else -> "$raw"
         }
         val charging = applicationContext.getSystemService(BatteryManager::class.java)?.isCharging
         val idle = applicationContext.getSystemService(PowerManager::class.java)?.isDeviceIdleMode

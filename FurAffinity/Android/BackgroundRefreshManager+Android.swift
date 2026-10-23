@@ -23,6 +23,13 @@ import UserNotifications
 import SkipBridge
 #endif
 
+#if !os(Android)
+// The Darwin bridge pass compiles this against Apple's UserNotifications, which lacks
+// the SkipUI fork's Android-only keys.
+private let UNNotificationAttachmentOptionsRevealActionTitleKey = "UNNotificationAttachmentOptionsRevealActionTitleKey"
+private let UNNotificationAttachmentOptionsConcealActionTitleKey = "UNNotificationAttachmentOptionsConcealActionTitleKey"
+#endif
+
 extension BackgroundRefreshManager {
     /// Every 30 minutes, the earliest iOS asks for.
     static func schedule() {
@@ -61,24 +68,25 @@ extension BackgroundRefreshManager {
         return content
     }
 
-    /// A general submission's clear image also goes in hidden, which makes it the expanded
-    /// picture. A mature submission's clear image, which iOS shows only on a long-press,
-    /// waits behind a Show button: Android expands the top notification on its own.
+    /// A mature submission's hidden clear image, which iOS shows only on a long-press, waits
+    /// behind a Show button: Android expands the top notification on its own. A general
+    /// submission's clear image goes in hidden too, which makes it the expanded picture.
     static func attaching(_ attachments: [UNNotificationAttachment], to content: UNNotificationContent) -> UNNotificationContent {
         guard let mutable = content as? UNMutableNotificationContent, let primary = attachments.first else {
             return content
         }
-        let expanded: UNNotificationAttachment?
-        if attachments.count == 1 {
-            expanded = try? UNNotificationAttachment(identifier: "expanded", url: primary.url, options: [UNNotificationAttachmentOptionsThumbnailHiddenKey: true])
-        } else {
-            expanded = try? UNNotificationAttachment(identifier: attachments[1].identifier, url: attachments[1].url, options: [
-                UNNotificationAttachmentOptionsThumbnailHiddenKey: true,
-                UNNotificationAttachmentOptionsRevealActionTitleKey: "Show",
-                UNNotificationAttachmentOptionsConcealActionTitleKey: "Hide",
-            ])
+        var options: [AnyHashable: Any] = [UNNotificationAttachmentOptionsThumbnailHiddenKey: true]
+        let hidden = attachments.dropFirst().first { $0.identifier == "clear" }
+        if hidden != nil {
+            options[UNNotificationAttachmentOptionsRevealActionTitleKey] = "Show"
+            options[UNNotificationAttachmentOptionsConcealActionTitleKey] = "Hide"
         }
-        mutable.attachments = [primary] + (expanded.map { [$0] } ?? [])
+        let source = hidden ?? primary
+        var kept = [primary]
+        if let expanded = try? UNNotificationAttachment(identifier: hidden == nil ? "expanded" : source.identifier, url: source.url, options: options) {
+            kept.append(expanded)
+        }
+        mutable.attachments = kept
         return mutable
     }
 }

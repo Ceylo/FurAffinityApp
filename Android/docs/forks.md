@@ -366,14 +366,16 @@ skip-fuse-ui `5b608cd`:
   `CLEAR_TOP`, which alone recreates it and loses the root view's `@State`. #566's
   new-intent listener then hands the tap to `didReceive`.
 - **`soundSetting` is `.enabled`** rather than unavailable: the channel decides.
-- **A hidden image can wait for a button** (`9edd402`, skip-fuse-ui `bd03c7e`). Android
+- **A hidden image can wait for a button** (`9edd402` + `db2c826`, skip-fuse-ui `bd03c7e`). Android
   expands the top notification unasked, so a `ThumbnailHiddenKey` image shows without
   iOS's long-press. `UNNotificationAttachmentOptionsRevealActionTitleKey` (and
   `ConcealActionTitleKey` to hide it again), Android-only keys, keep the picture out
   until `NotificationActionReceiver`, declared in SkipUI's own manifest, posts the
   notification again with it. `add` copies the attachments into a store of its own, as
   iOS moves them, so the button still finds the file; copies of notifications no longer
-  showing are pruned on the next `add`.
+  showing are pruned by a later `add`, at most every 10 minutes. The keys, rather than
+  a `UNNotificationCategory` whose action the app answers in `didReceive`, let the
+  receiver re-post without starting the app's Swift side.
 
 ## Why skip-foundation is forked
 
