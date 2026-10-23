@@ -209,8 +209,8 @@ inline view at each `<img>`'s U+FFFC. The text never waits for an image: each is
 from its `width`/`height`, else a fallback (50×50 avatar, 19×19 smilie), then from its
 own size once `FAImage` loads it, capped at 50×50 for avatars and the text width for all.
 Accepted losses, none exercised by FA's corpus: `<ol>` numbering, `<blockquote>` indent,
-`<code>` monospace, px font sizes, `<sub>` size, exact heading sizes. GIF avatars stay on
-their first frame. Its padding is 3 dp vertical and **8 dp horizontal**, matching iOS,
+`<code>` monospace, px font sizes, `<sub>` size, exact heading sizes. GIFs animate under
+"Animate avatars", as on iOS. Its padding is 3 dp vertical and **8 dp horizontal**, matching iOS,
 whose `UITextView` adds `lineFragmentPadding = 5` to the 3 pt inset.
 
 Link taps never reach `openURL`: Compose hands them to `onLinkTap`, which pushes anything

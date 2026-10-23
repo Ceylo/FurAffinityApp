@@ -55,9 +55,6 @@ struct AvatarView: View {
 
     var body: some View {
         ZStack {
-            // On Android both arms are the same static view — `FAAnimatedImage` is
-            // `FAImage` there — so the toggle has no effect until an animated decode
-            // path exists.
             if animateAvatars {
                 configure(FAAnimatedImage(avatarUrl))
             } else {
