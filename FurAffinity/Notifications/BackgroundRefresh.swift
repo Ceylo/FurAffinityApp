@@ -158,10 +158,7 @@ enum BackgroundRefreshManager {
             submissions = try await session.submissionPreviews(from: nil)
             notes = try await session.notePreviews(from: .inbox)
             previews = try await session.notificationPreviews()
-            if Defaults[.challengeNotificationPosted] {
-                Defaults[.challengeNotificationPosted] = false
-                UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [challengeFailureNotificationIdentifier])
-            }
+            endChallengeOutage()
         } catch is CloudflareChallengeRequired {
             logger.warning("CF challenge not resolved in background; posting notification")
             // Leave the pending queue intact so a previously-stranded remainder isn't lost.
@@ -312,6 +309,15 @@ enum BackgroundRefreshManager {
         content.title = "CloudFlare check required"
         content.body = "FurAffinity needs human verification. Open the app to resume notifications."
         return content
+    }
+
+    /// Called on a successful background fetch and while the user is in the app, which
+    /// both show the clearance works: removes the challenge notification and lets the next
+    /// failure post one again.
+    static func endChallengeOutage() {
+        guard Defaults[.challengeNotificationPosted] else { return }
+        Defaults[.challengeNotificationPosted] = false
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [challengeFailureNotificationIdentifier])
     }
 
     private static func postChallengeFailureNotification(soundEnabled: Bool) async {

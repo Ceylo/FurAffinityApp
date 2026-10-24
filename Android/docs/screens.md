@@ -327,8 +327,8 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   fall back on, a challenge throws `CloudflareChallengeRequired`, and the run posts the
   "CloudFlare check required" notification with the queue left intact, as on iOS. Building
   the session fetches its first page, so that is usually where the challenge comes from.
-  It posts once per outage (`challengeNotificationPosted`), not on every 30-minute run, and
-  the next successful run removes it. An activity resuming cancels a run in flight.
+  It posts once per outage (`challengeNotificationPosted`), not on every 30-minute run;
+  the next successful run, or the user back in the app, removes it and ends the outage. An activity resuming cancels a run in flight.
 - **Images.** A submission's thumbnail is the large icon, and a general one's expanded
   notification shows it as a big picture. A mature one is blurred by
   `FANotificationBridge.blur`, a CPU box blur matched to Kingfisher's radius (its

@@ -67,6 +67,8 @@ struct BackgroundRefreshLifecycleModifier: ViewModifier {
         // notifications still queued for posting. The watermark was just advanced to
         // the in-app state, so discarded items won't be rediscovered.
         BackgroundRefreshManager.discardPendingNotificationQueue()
+        // Only shown with a session, which the clearance let through.
+        BackgroundRefreshManager.endChallengeOutage()
     }
 }
 
