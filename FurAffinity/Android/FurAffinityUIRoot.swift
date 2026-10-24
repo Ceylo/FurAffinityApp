@@ -94,7 +94,7 @@ import SwiftUI
         }
     }
 
-    /// From `FABackgroundRefreshWorker`. Stands down while an activity is in the
+    /// From `FABackgroundRefreshJobService`. Stands down while an activity is in the
     /// foreground, where iOS never runs its BGAppRefreshTask: the user is seeing the
     /// content, and `backgroundRefreshLifecycle()` is advancing the watermarks. An
     /// activity resuming mid-run cancels it, as iOS expires its task. `conditions` is
@@ -111,7 +111,7 @@ import SwiftUI
         defer {
             logger.info("Background refresh run ended after \(ContinuousClock.now - start)")
             foreground.endBackgroundWork()
-            // A process the worker started never reaches `onStop`, where they're pruned otherwise.
+            // A process the job started never reaches `onStop`, where they're pruned otherwise.
             Task { await FAImageStore.shared.performingFileIO { pruneMediaCopies() } }
         }
         do {

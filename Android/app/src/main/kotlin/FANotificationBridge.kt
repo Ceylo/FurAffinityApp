@@ -3,21 +3,19 @@
 //  FurAffinity (Android)
 //
 //  What the background refresh needs from the Android framework: scheduling its
-//  WorkManager job, and blurring a mature thumbnail on the CPU. Called from Swift by
+//  JobScheduler job, and blurring a mature thumbnail on the CPU. Called from Swift by
 //  class name through SkipBridge's AnyDynamicObject, like FAMediaBridge — see
 //  BackgroundRefreshManager+Android.swift and ImageBlur+Android.swift.
 //
 
 package fur.affinity.ui
 
+import android.app.job.JobInfo
+import android.app.job.JobScheduler
+import android.content.ComponentName
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
@@ -33,34 +31,36 @@ class FANotificationBridge {
 
     companion object {
         private const val TAG = "FANotificationBridge"
-        private const val WORK_NAME = "fa.background-refresh"
+        /// Far from WorkManager's ids, which count up from 0 on API < 34, where it has no namespace.
+        const val PERIODIC_JOB_ID = 0x46410001
+        private const val ONE_OFF_JOB_ID = 0x46410002
+        /// Tags every request of the worker this job replaced.
+        private const val WORKER_TAG = "fur.affinity.ui.FABackgroundRefreshWorker"
         /// The blur runs on a bitmap this many times smaller (a power of two, for `inSampleSize`).
         private const val DOWNSCALE = 4
-        private val NETWORK_REQUIRED = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 
-        /// UPDATE keeps the running schedule, so calling this on every trip to the
-        /// background doesn't push the next run further out.
+        private val context get() = ProcessInfo.processInfo.androidContext
+        private val scheduler get() = context.getSystemService(JobScheduler::class.java)
+        private fun job(id: Int) = JobInfo.Builder(id, ComponentName(context, FABackgroundRefreshJobService::class.java))
+            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+
+        /// Leaves a matching job alone, since rescheduling it restarts its period: calling
+        /// this on every trip to the background mustn't push the next run further out.
         fun scheduleBackgroundRefresh(intervalMinutes: Long): Boolean = try {
-            val request = PeriodicWorkRequestBuilder<FABackgroundRefreshWorker>(intervalMinutes, TimeUnit.MINUTES)
-                .setConstraints(NETWORK_REQUIRED)
-                .build()
-            WorkManager.getInstance(ProcessInfo.processInfo.androidContext)
-                .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, request)
-            true
+            WorkManager.getInstance(context).cancelAllWorkByTag(WORKER_TAG)
+            val intervalMillis = TimeUnit.MINUTES.toMillis(intervalMinutes)
+            val pending = scheduler.getPendingJob(PERIODIC_JOB_ID)
+            pending != null && pending.intervalMillis == intervalMillis && pending.isPersisted
+                || scheduler.schedule(job(PERIODIC_JOB_ID).setPeriodic(intervalMillis).setPersisted(true).build()) == JobScheduler.RESULT_SUCCESS
         } catch (e: Exception) {
             Log.e(TAG, "scheduleBackgroundRefresh failed: $e")
             false
         }
 
-        /// A one-off run of the same worker, for testing: WorkManager won't force a
-        /// periodic run before its period has elapsed. MainActivity's debug extras. Same
-        /// constraint as the periodic job, so it runs under the same conditions.
+        /// A one-off run of the same job, for testing: MainActivity's debug extras. Same
+        /// network requirement as the periodic job, so it runs under the same conditions.
         fun runBackgroundRefresh(delaySeconds: Long) {
-            val request = OneTimeWorkRequestBuilder<FABackgroundRefreshWorker>()
-                .setConstraints(NETWORK_REQUIRED)
-                .setInitialDelay(delaySeconds, TimeUnit.SECONDS)
-                .build()
-            WorkManager.getInstance(ProcessInfo.processInfo.androidContext).enqueue(request)
+            scheduler.schedule(job(ONE_OFF_JOB_ID).setMinimumLatency(TimeUnit.SECONDS.toMillis(delaySeconds)).build())
         }
 
         /// Writes a JPEG of the image at `inputPath` blurred about as Kingfisher's

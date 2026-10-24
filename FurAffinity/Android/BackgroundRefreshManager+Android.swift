@@ -2,8 +2,8 @@
 //  BackgroundRefreshManager+Android.swift
 //  FurAffinityUI (Android)
 //
-//  Android's hooks for the shared background refresh: a periodic WorkManager job
-//  (FABackgroundRefreshWorker.kt) runs it on a session built from the cookie jar
+//  Android's hooks for the shared background refresh: a periodic JobScheduler job
+//  (FABackgroundRefreshJobService.kt) runs it on a session built from the cookie jar
 //  alone, and a notification without a thumbnail shows the author's avatar, where
 //  iOS draws it through a communication notification.
 //

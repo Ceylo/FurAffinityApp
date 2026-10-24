@@ -17,6 +17,9 @@
          (API 33+). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Keeps the background refresh's job scheduled across reboots (setPersisted). -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <!-- allowBackup is off deliberately: there are no backup rules, so the WebView's
          cookie jar — the FA auth cookies and cf_clearance — would otherwise be eligible
          for Google cloud backup, and restoring it onto another device would hand over a
@@ -45,6 +48,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- The background refresh. See FABackgroundRefreshJobService.kt. -->
+        <service
+            android:name=".FABackgroundRefreshJobService"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <!-- Shared files live in the app cache, which no other app may read directly;
              FAMediaBridge stages them here and shares a content:// URI. -->
