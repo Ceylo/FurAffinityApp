@@ -72,6 +72,26 @@ extension Collection where Element: Identifiable, Element.ID == Int {
     }
 }
 
+/// Admits one background refresh at a time: overlapping runs would both read the
+/// watermarks before either saves them, and post the same items twice.
+final class BackgroundRefreshRunGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var isRunning = false
+
+    /// `false` if a run is already in progress.
+    func tryEnter() -> Bool {
+        lock.withLock {
+            guard !isRunning else { return false }
+            isRunning = true
+            return true
+        }
+    }
+
+    func leave() {
+        lock.withLock { isRunning = false }
+    }
+}
+
 // Fetches FA notifications and posts a local notification per new item, honoring
 // the user's toggles in Settings. Each platform schedules it and supplies the hooks
 // in its own extension: `makeBackgroundSession`, `enrich(_:for:)` and
@@ -108,7 +128,15 @@ enum BackgroundRefreshManager {
     }
 
     // MARK: Fetch & Notify
+    private static let runGate = BackgroundRefreshRunGate()
+
     static func performFetchAndNotify() async throws {
+        guard runGate.tryEnter() else {
+            logger.info("Skipping background refresh: a run is already in progress")
+            return
+        }
+        defer { runGate.leave() }
+
         let settings = await UNUserNotificationCenter.current().notificationSettings()
         guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
             logger.info(
@@ -270,6 +298,11 @@ enum BackgroundRefreshManager {
 
     /// Identifier for the CloudFlare-challenge failure local notification.
     static let challengeFailureNotificationIdentifier = "fa.background.cf-challenge"
+
+    /// Identifier a record is posted under, so posting the same item again replaces it.
+    static func notificationIdentifier(for record: PendingNotificationRecord) -> String {
+        "fa.notification.\(record.dedupKey)"
+    }
 
     /// Builds the content for the CloudFlare-challenge failure notification.
     /// Pure (no `UNUserNotificationCenter`), so tests can read it; sound
@@ -462,6 +495,7 @@ enum BackgroundRefreshManager {
     /// task-group boundary: `UNNotificationContent` isn't `Sendable`, but it's immutable
     /// once built, so passing it across is safe.
     private struct PreparedNotification: @unchecked Sendable {
+        let identifier: String
         let content: UNNotificationContent
     }
 
@@ -478,14 +512,14 @@ enum BackgroundRefreshManager {
         if Task.isCancelled {
             return nil
         }
-        return PreparedNotification(content: content)
+        return PreparedNotification(identifier: notificationIdentifier(for: record), content: content)
     }
 
     /// Posts a prepared notification; `true` if scheduled, `false` on failure. Each post
     /// stamps a fresh fire date, so serial in-order delivery keeps the list ordered.
     private static func deliver(_ prepared: PreparedNotification) async -> Bool {
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(identifier: "fa.background.refresh-\(UUID())", content: prepared.content, trigger: trigger)
+        let request = UNNotificationRequest(identifier: prepared.identifier, content: prepared.content, trigger: trigger)
         do {
             try await UNUserNotificationCenter.current().add(request)
             return true

@@ -538,6 +538,24 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(Defaults[.pendingNotificationQueue].isEmpty)
     }
 
+    // MARK: - Overlapping runs
+
+    @Test func runGate_refusesASecondRunUntilTheFirstLeaves() {
+        let gate = BackgroundRefreshRunGate()
+        #expect(gate.tryEnter())
+        #expect(!gate.tryEnter())
+        gate.leave()
+        #expect(gate.tryEnter())
+    }
+
+    @Test func notificationIdentifier_isDerivedFromTheDedupKey() {
+        #expect(BackgroundRefreshManager.notificationIdentifier(for: record("submission-42")) == "fa.notification.submission-42")
+        #expect(
+            BackgroundRefreshManager.notificationIdentifier(for: record("note-1", body: "first"))
+                == BackgroundRefreshManager.notificationIdentifier(for: record("note-1", body: "second"))
+        )
+    }
+
     // MARK: - CloudFlare challenge failure notification
 
     @Test func challengeFailureNotificationContent() {
