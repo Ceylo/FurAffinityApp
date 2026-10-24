@@ -16,7 +16,6 @@ import android.content.ComponentName
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
-import androidx.work.WorkManager
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
@@ -34,8 +33,6 @@ class FANotificationBridge {
         /// Far from WorkManager's ids, which count up from 0 on API < 34, where it has no namespace.
         const val PERIODIC_JOB_ID = 0x46410001
         private const val ONE_OFF_JOB_ID = 0x46410002
-        /// Tags every request of the worker this job replaced.
-        private const val WORKER_TAG = "fur.affinity.ui.FABackgroundRefreshWorker"
         /// The blur runs on a bitmap this many times smaller (a power of two, for `inSampleSize`).
         private const val DOWNSCALE = 4
 
@@ -47,7 +44,6 @@ class FANotificationBridge {
         /// Leaves a matching job alone, since rescheduling it restarts its period: calling
         /// this on every trip to the background mustn't push the next run further out.
         fun scheduleBackgroundRefresh(intervalMinutes: Long): Boolean = try {
-            WorkManager.getInstance(context).cancelAllWorkByTag(WORKER_TAG)
             val intervalMillis = TimeUnit.MINUTES.toMillis(intervalMinutes)
             val pending = scheduler.getPendingJob(PERIODIC_JOB_ID)
             pending != null && pending.intervalMillis == intervalMillis && pending.isPersisted

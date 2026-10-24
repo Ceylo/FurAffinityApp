@@ -23,6 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 class FABackgroundRefreshJobService : JobService() {
@@ -40,8 +41,13 @@ class FABackgroundRefreshJobService : JobService() {
 
     /// The system took the job back (constraint lost, time limit): retry it later.
     override fun onStopJob(params: JobParameters): Boolean {
-        runs[params.jobId]?.cancel()
+        runs.remove(params.jobId)?.cancel()
         return true
+    }
+
+    override fun onDestroy() {
+        scope.cancel()
+        super.onDestroy()
     }
 
     // What Android throttles the job by, so a tester's log shows why runs are sparse.

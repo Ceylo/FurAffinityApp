@@ -99,12 +99,17 @@ import SwiftUI
     /// content, and `backgroundRefreshLifecycle()` is advancing the watermarks. An
     /// activity resuming mid-run cancels it, as iOS expires its task. `conditions` is
     /// logged with each run.
-    /* SKIP @bridge */public func performBackgroundRefresh(_ conditions: String) async -> Bool {
-        guard let refresh = foreground.startBackgroundWork({
-            Task { try await BackgroundRefreshManager.performFetchAndNotify() }
-        }) else {
+    /* SKIP @bridge */public func performBackgroundRefresh(_ conditions: String) async {
+        let refresh: Task<Void, any Error>
+        switch foreground.startBackgroundWork({ Task { try await BackgroundRefreshManager.performFetchAndNotify() } }) {
+        case .started(let work):
+            refresh = work
+        case .inForeground:
             logger.info("Skipping background refresh: the app is in the foreground (\(conditions))")
-            return true
+            return
+        case .alreadyRunning:
+            logger.info("Skipping background refresh: a run is already in progress (\(conditions))")
+            return
         }
         logger.info("Background refresh run started (\(conditions))")
         let start = ContinuousClock.now
@@ -116,10 +121,8 @@ import SwiftUI
         }
         do {
             try await refresh.value
-            return !refresh.isCancelled
         } catch {
             logger.error("Background refresh failed: \(error)")
-            return false
         }
     }
 
@@ -187,13 +190,21 @@ private final class ForegroundState: @unchecked Sendable {
         lock.withLock { isInForeground = false }
     }
 
-    /// Starts and records the work `start` returns, unless an activity is in the foreground.
-    func startBackgroundWork(_ start: () -> Task<Void, any Error>) -> Task<Void, any Error>? {
+    enum Start {
+        case started(Task<Void, any Error>)
+        case inForeground
+        case alreadyRunning
+    }
+
+    /// Starts and records the work `start` returns, unless an activity is in the foreground
+    /// or earlier work is still running, which `enter()` must remain able to cancel.
+    func startBackgroundWork(_ start: () -> Task<Void, any Error>) -> Start {
         lock.withLock {
-            guard !isInForeground else { return nil }
+            if isInForeground { return .inForeground }
+            if backgroundWork != nil { return .alreadyRunning }
             let work = start()
             backgroundWork = work
-            return work
+            return .started(work)
         }
     }
 

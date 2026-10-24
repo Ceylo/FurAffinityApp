@@ -314,7 +314,7 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   one-shot, for the same reason. Not WorkManager: it runs due work directly in a live
   process, outside any job, and Android blocks a backgrounded app's network there
   (`APP_BACKGROUND`), so every fetch failed DNS; a job JobScheduler dispatches has network
-  while it runs. Scheduling cancels the old WorkManager work. The job stands
+  while it runs. The job stands
   down while an activity is resumed, where iOS never runs its task. Android decides how
   often it really runs (Doze, the app's standby bucket), so each run logs a
   `Background refresh run started (standby bucket: …, charging: …, device idle: …)` line
