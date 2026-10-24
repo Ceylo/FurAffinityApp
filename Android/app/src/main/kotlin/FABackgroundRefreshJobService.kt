@@ -19,6 +19,8 @@ import android.app.job.JobService
 import android.app.usage.UsageStatsManager
 import android.os.BatteryManager
 import android.os.PowerManager
+import android.util.Log
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -27,14 +29,25 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 class FABackgroundRefreshJobService : JobService() {
+    companion object {
+        private const val TAG = "FABackgroundRefresh"
+    }
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     // By job id: the periodic job and a debug one-off can run in one instance. Main thread only.
     private val runs = mutableMapOf<Int, Job>()
 
     override fun onStartJob(params: JobParameters): Boolean {
         runs[params.jobId] = scope.launch {
-            FurAffinityUIAppDelegate.shared.performBackgroundRefresh(deviceConditions(params))
-            jobFinished(params, false)
+            try {
+                FurAffinityUIAppDelegate.shared.performBackgroundRefresh(deviceConditions(params))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Background refresh threw: $e")
+            } finally {
+                jobFinished(params, false)
+            }
         }
         return true
     }
@@ -42,6 +55,8 @@ class FABackgroundRefreshJobService : JobService() {
     /// The system took the job back (constraint lost, time limit): retry it later.
     override fun onStopJob(params: JobParameters): Boolean {
         runs.remove(params.jobId)?.cancel()
+        // The coroutine's cancellation doesn't reach the Swift task it awaits.
+        FurAffinityUIAppDelegate.shared.cancelBackgroundRefresh()
         return true
     }
 

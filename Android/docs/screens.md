@@ -366,7 +366,9 @@ adb shell am start -S -n <pkg>/fur.affinity.ui.MainActivity --ei faBackgroundRef
 
 For a cold process, `kill <pid>` as root first; `am force-stop` would cancel the jobs. The
 watermarks are the `latest*NotificationID` ints in `shared_prefs/defaults.xml`; lower them
-only while the process is dead, since a live one writes its own back.
+only while the process is dead, since a live one writes its own back. On the emulator,
+JobScheduler once left a due job `READY` but undispatched while the process was dead;
+`cmd jobscheduler run -f <pkg> 1178664962` (`ONE_OFF_JOB_ID`) starts the one-off.
 
 ## Notes
 

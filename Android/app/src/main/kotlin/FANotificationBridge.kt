@@ -56,7 +56,8 @@ class FANotificationBridge {
         /// A one-off run of the same job, for testing: MainActivity's debug extras. Same
         /// network requirement as the periodic job, so it runs under the same conditions.
         fun runBackgroundRefresh(delaySeconds: Long) {
-            scheduler.schedule(job(ONE_OFF_JOB_ID).setMinimumLatency(TimeUnit.SECONDS.toMillis(delaySeconds)).build())
+            val result = scheduler.schedule(job(ONE_OFF_JOB_ID).setMinimumLatency(TimeUnit.SECONDS.toMillis(delaySeconds)).build())
+            if (result != JobScheduler.RESULT_SUCCESS) Log.e(TAG, "runBackgroundRefresh: scheduling failed")
         }
 
         /// Writes a JPEG of the image at `inputPath` blurred about as Kingfisher's

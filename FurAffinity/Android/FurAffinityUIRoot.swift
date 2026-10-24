@@ -126,6 +126,12 @@ import SwiftUI
         }
     }
 
+    /// From `FABackgroundRefreshJobService.onStopJob`: the system took the job back.
+    /* SKIP @bridge */public func cancelBackgroundRefresh() {
+        logger.info("Background refresh stopped by the system")
+        foreground.cancelBackgroundWork()
+    }
+
     /// Lets the script's opt-out control flip the setting without the UI.
     /* SKIP @bridge */public func setCrashReportingEnabled(_ enabled: Bool) {
         Defaults[.crashReportingEnabled] = enabled
@@ -179,11 +185,12 @@ private final class ForegroundState: @unchecked Sendable {
     private var backgroundWork: Task<Void, any Error>?
 
     func enter() {
-        let work = lock.withLock {
-            isInForeground = true
-            return backgroundWork
-        }
-        work?.cancel()
+        lock.withLock { isInForeground = true }
+        cancelBackgroundWork()
+    }
+
+    func cancelBackgroundWork() {
+        lock.withLock { backgroundWork }?.cancel()
     }
 
     func leave() {
