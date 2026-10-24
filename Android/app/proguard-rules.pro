@@ -8,3 +8,4 @@
 -keep class * implements skip.bridge.** { *; }
 -keep class **._ModuleBundleAccessor_* { *; }
 -keep class fur.affinity.ui.** { *; }
+-keep class kingfisher.KFAnimatedImageModifier { <init>(...); }
