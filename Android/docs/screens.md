@@ -307,16 +307,20 @@ SkipUI emulates ([forks.md § Local notifications](forks.md#local-notifications)
 platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
 `attaching(_:to:)`; Android's are in `Android/BackgroundRefreshManager+Android.swift`.
 
-- **Scheduling.** `FABackgroundRefreshWorker` is a periodic WorkManager job (30 min,
-  network required), enqueued with `UPDATE` by `backgroundRefreshLifecycle()` each time
-  the app goes to the background. Periodic rather than iOS's self-rechaining one-shot:
-  replacing the work from inside the running worker would cancel it. The worker stands
+- **Scheduling.** `FABackgroundRefreshJobService` is a periodic JobScheduler job (30 min,
+  network required, persisted across reboots), scheduled by `backgroundRefreshLifecycle()`
+  each time the app goes to the background, unless an identical one is already pending,
+  since rescheduling restarts the period. Periodic rather than iOS's self-rechaining
+  one-shot, for the same reason. Not WorkManager: it runs due work directly in a live
+  process, outside any job, and Android blocks a backgrounded app's network there
+  (`APP_BACKGROUND`), so every fetch failed DNS; a job JobScheduler dispatches has network
+  while it runs. Scheduling cancels the old WorkManager work. The job stands
   down while an activity is resumed, where iOS never runs its task. Android decides how
   often it really runs (Doze, the app's standby bucket), so each run logs a
   `Background refresh run started (standby bucket: …, charging: …, device idle: …)` line
   and an `ended after` one, or a `Skipping` one while the app is in the foreground: a
   tester's exported log shows the actual frequency.
-- **A session without a WebView.** WorkManager may start the process cold, with no
+- **A session without a WebView.** JobScheduler may start the process cold, with no
   `FAWebSessionView` mounted, so `FAWebSession.makeBackgroundSession` reads the jar
   through `CookieManager` (`cookieJarHeaderProvider`, HttpOnly cookies included) and
   replays the configured WebView User-Agent the clearance is bound to. With no WebView to
@@ -346,23 +350,23 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
 - **The icon** is `res/drawable/ic_notification.xml`, Material's paw as a placeholder:
   the status bar draws it from its alpha alone.
 
-To force a run, use the debug launch extra, a one-off run of the same worker, with the
-same network constraint (so it waits while the device is offline). WorkManager
-won't force a periodic run before its period has elapsed ("being executed before
-schedule"), even through `cmd jobscheduler run -f`:
+To force a run, from the background (the job stands down in the foreground), run the
+periodic job itself; its id is `PERIODIC_JOB_ID` in `FANotificationBridge.kt`:
+
+```
+adb shell cmd jobscheduler run -f <pkg> 1178664961
+```
+
+Or schedule a one-off run of the same job, with the same network requirement, from a
+debug launch extra, then go Home before it fires:
 
 ```
 adb shell am start -S -n <pkg>/fur.affinity.ui.MainActivity --ei faBackgroundRefreshIn 180
 ```
 
-Go Home before it fires, since the worker stands down in the foreground. For a cold process,
-also `kill <pid>` as root. `am force-stop` would cancel the job. The watermarks are the
-`latest*NotificationID` ints in `shared_prefs/defaults.xml`; lower them only while the
-process is dead, since a live one writes its own back.
-
-On the emulator, JobScheduler left the due one-off `READY` but undispatched while the
-process was dead. `cmd jobscheduler run -f -n androidx.work.systemjobscheduler <pkg> <id>`
-(the id from `dumpsys jobscheduler`) starts it; a one-off has no period to refuse it.
+For a cold process, `kill <pid>` as root first; `am force-stop` would cancel the jobs. The
+watermarks are the `latest*NotificationID` ints in `shared_prefs/defaults.xml`; lower them
+only while the process is dead, since a live one writes its own back.
 
 ## Notes
 

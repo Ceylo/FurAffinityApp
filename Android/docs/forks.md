@@ -349,7 +349,7 @@ since #583's `List` rewrite conflicts with the fork's) and delivers taps to
 skip-fuse-ui `5b608cd`:
 
 - **No activity required.** Settings, `add` and removals took
-  `UIApplication.shared.androidActivity`, so a WorkManager process posted nothing and
+  `UIApplication.shared.androidActivity`, so a background job's process posted nothing and
   read `.notDetermined`. They use the application context; authorization is
   `areNotificationsEnabled()`.
 - **Images where iOS draws them.** An image attachment became the small icon, which

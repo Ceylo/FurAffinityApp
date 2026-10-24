@@ -118,7 +118,7 @@ Use `FAImage`/`FAAnimatedImage` (not raw Kingfisher views) — they apply projec
 
 ## Background Refresh
 
-`Notifications/BackgroundRefresh.swift` is the shared core of `BackgroundRefreshManager`: fetch, watermarks, pending queue, posting. Each platform schedules it and supplies its hooks: `iOS/BackgroundRefreshManager.swift` (BGAppRefreshTask, Intents) and `Android/BackgroundRefreshManager+Android.swift` (WorkManager, a WebView-less session). `BackgroundRefreshLifecycleModifier` wires it into the SwiftUI scene lifecycle. Taps go through each platform's `NotificationCenterDelegate` to the shared `NotificationCoordinator`.
+`Notifications/BackgroundRefresh.swift` is the shared core of `BackgroundRefreshManager`: fetch, watermarks, pending queue, posting. Each platform schedules it and supplies its hooks: `iOS/BackgroundRefreshManager.swift` (BGAppRefreshTask, Intents) and `Android/BackgroundRefreshManager+Android.swift` (JobScheduler, a WebView-less session). `BackgroundRefreshLifecycleModifier` wires it into the SwiftUI scene lifecycle. Taps go through each platform's `NotificationCenterDelegate` to the shared `NotificationCoordinator`.
 
 ## Tests
 
