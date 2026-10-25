@@ -456,6 +456,24 @@ struct BackgroundRefreshNotificationBuilderTests {
         #expect(order == ["note-1", "note-2", "note-3", "note-4", "note-5"])
     }
 
+    @Test func flush_cancelledRun_deliversNothingAlreadyPrepared() async {
+        let outcome = await Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            var touched = 0
+            let outcome = await BackgroundRefreshManager.flushInOrder(
+                queue(3),
+                maxConcurrent: 6,
+                prepare: { $0 },
+                deliver: { _ in touched += 1; return true },
+                persist: { _ in touched += 1 }
+            )
+            return (outcome, touched)
+        }.value
+
+        #expect(outcome.0 == .init(postedCount: 0, cancelled: true))
+        #expect(outcome.1 == 0)
+    }
+
     @Test func flush_allCancelled_postsNothingAndLeavesQueueIntact() async {
         let initial = queue(3)
         var persisted = initial

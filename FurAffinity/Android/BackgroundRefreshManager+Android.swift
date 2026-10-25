@@ -26,16 +26,16 @@ extension BackgroundRefreshManager {
     static func schedule() {
         #if canImport(Android)
         let minutes: Int64 = 30
-        do {
-            let bridge = try AnyDynamicObject(className: "fur.affinity.ui.FANotificationBridge")
-            let ok: Bool? = try bridge.scheduleBackgroundRefresh(minutes)
-            if ok == true {
+        Task {
+            let scheduled = await callBridgeOffPool("FANotificationBridge", fallback: false) { bridge in
+                let ok: Bool? = try bridge.scheduleBackgroundRefresh(minutes)
+                return ok == true
+            }
+            if scheduled {
                 logger.info("Scheduled background refresh (every \(minutes) min)")
             } else {
                 logger.error("Failed scheduling background refresh")
             }
-        } catch {
-            logger.error("Could not reach FANotificationBridge: \(error)")
         }
         #endif
     }

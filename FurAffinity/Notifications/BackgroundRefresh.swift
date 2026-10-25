@@ -199,6 +199,11 @@ enum BackgroundRefreshManager {
         // fetched and persist the (deduped) queue *before* the slow media+post phase.
         // The queue is now the source of truth for what still needs posting, so a run
         // expired mid-flush resumes the remainder instead of redoing or losing it.
+        // A run cancelled because the app came back has had its queue discarded already.
+        guard !Task.isCancelled else {
+            logger.info("Background refresh cancelled before queueing \(records.count) notifications")
+            return
+        }
         Defaults[.pendingNotificationQueue] = enqueue(records, into: Defaults[.pendingNotificationQueue])
         latestNotificationIDs.merge(LatestNotificationIDs(submissions: submissions, notes: notes, previews: previews))
         latestNotificationIDs.save()
@@ -453,7 +458,7 @@ enum BackgroundRefreshManager {
                 // Deliver the now-contiguous prefix in queue order.
                 while let payload = ready[nextDeliver] {
                     ready.removeValue(forKey: nextDeliver)
-                    if let prepared = payload {
+                    if let prepared = payload, !Task.isCancelled {
                         if await deliver(prepared) {
                             postedCount += 1
                         }
@@ -461,7 +466,7 @@ enum BackgroundRefreshManager {
                         remaining.removeAll { $0.dedupKey == queue[nextDeliver].dedupKey }
                         persist(remaining)
                     } else {
-                        // Cancelled mid-preparation: keep queued, mark the run cancelled.
+                        // Cancelled: keep queued, mark the run cancelled.
                         cancelled = true
                     }
                     nextDeliver += 1
