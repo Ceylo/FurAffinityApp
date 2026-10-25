@@ -128,6 +128,11 @@ import SwiftUI
         }
     }
 
+    /// From `FABackgroundRefreshJobService`, once a scheduled run is over.
+    /* SKIP @bridge */public func scheduleBackgroundRefresh() {
+        BackgroundRefreshManager.schedule()
+    }
+
     /// From `FABackgroundRefreshJobService.onStopJob`: the system took the job back.
     /* SKIP @bridge */public func cancelBackgroundRefresh() {
         logger.info("Background refresh stopped by the system")
