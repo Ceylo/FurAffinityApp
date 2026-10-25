@@ -150,6 +150,7 @@
 		87CCD2F22FC3441600768FDB /* BackgroundRefreshManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87CCD2F12FC3441600768FDB /* BackgroundRefreshManager.swift */; };
 		87CCD2F62FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87CCD2F52FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift */; };
 		87CCD2F92FC49A2000768FDB /* BackgroundRefreshNotificationBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87CCD2F72FC4991600768FDB /* BackgroundRefreshNotificationBuilderTests.swift */; };
+		7C234A3BE0E01B01BF1E5128 /* BackgroundRefreshBudgetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D260D1DAAA5CABCD91BB7289 /* BackgroundRefreshBudgetTests.swift */; };
 		87CF0CA200000000000F0C02 /* CommentFocusTargetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87CF0CA100000000000F0C01 /* CommentFocusTargetTests.swift */; };
 		87D252062C906AB700E07AE1 /* withAsync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D252052C906AB700E07AE1 /* withAsync.swift */; };
 		87D64FBD2C87181600AB6F44 /* WatchlistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D64FBC2C87181600AB6F44 /* WatchlistView.swift */; };
@@ -192,6 +193,7 @@
 		A1F3C0DF5D1E7E0000C0FFEE /* StagedDeletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3C0DE5D1E7E0000C0FFEE /* StagedDeletion.swift */; };
 		A1F3C0E15D1E7E0000C0FFEE /* StagedDeletionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3C0E05D1E7E0000C0FFEE /* StagedDeletionTests.swift */; };
 		A5C8D8E39F388B8044875B83 /* PendingNotificationRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = E47802CF8DFEA36285E68BE4 /* PendingNotificationRecord.swift */; };
+		649742C15FF321D0256897BA /* BackgroundRefreshBudget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3613610A785D35107A432745 /* BackgroundRefreshBudget.swift */; };
 		CA19BAC695A56D83147D59BC /* BackgroundRefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E9A40409D52322946C2DDC0 /* BackgroundRefresh.swift */; };
 		AA033C746B0A65D536D8E296 /* CrashReportingConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A264CEDCBC3A6A5E7A2CA5AC /* CrashReportingConfigurationTests.swift */; };
 		B6F6089270D2553003E41E74 /* NotificationContent.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 12CC924CA9E594B2F3D1049C /* NotificationContent.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -381,6 +383,7 @@
 		87CCD2F12FC3441600768FDB /* BackgroundRefreshManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshManager.swift; sourceTree = "<group>"; };
 		87CCD2F52FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshLifecycleModifier.swift; sourceTree = "<group>"; };
 		87CCD2F72FC4991600768FDB /* BackgroundRefreshNotificationBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshNotificationBuilderTests.swift; sourceTree = "<group>"; };
+		D260D1DAAA5CABCD91BB7289 /* BackgroundRefreshBudgetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshBudgetTests.swift; sourceTree = "<group>"; };
 		87CF0CA100000000000F0C01 /* CommentFocusTargetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentFocusTargetTests.swift; sourceTree = "<group>"; };
 		87D252052C906AB700E07AE1 /* withAsync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = withAsync.swift; sourceTree = "<group>"; };
 		87D64FBC2C87181600AB6F44 /* WatchlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistView.swift; sourceTree = "<group>"; };
@@ -433,6 +436,7 @@
 		DE0FE3ECD383602E8F75046C /* InAppLinkConversion.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InAppLinkConversion.swift; sourceTree = "<group>"; };
 		DF3D71C0280E404172EB9D4B /* CrashReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReporting.swift; sourceTree = "<group>"; };
 		E47802CF8DFEA36285E68BE4 /* PendingNotificationRecord.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PendingNotificationRecord.swift; sourceTree = "<group>"; };
+		3613610A785D35107A432745 /* BackgroundRefreshBudget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshBudget.swift; sourceTree = "<group>"; };
 		8E9A40409D52322946C2DDC0 /* BackgroundRefresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefresh.swift; sourceTree = "<group>"; };
 		E5CA5822AB552824069FAB13 /* ImageCacheControl.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ImageCacheControl.swift; sourceTree = "<group>"; };
 		E6731320A5B4D6196E99F0F9 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
@@ -581,6 +585,7 @@
 				87C443592C73C59900200991 /* ShoutNotificationItemView.swift */,
 				877C8A9C2A0043D000B2F02B /* NotificationsActionView.swift */,
 				E47802CF8DFEA36285E68BE4 /* PendingNotificationRecord.swift */,
+				3613610A785D35107A432745 /* BackgroundRefreshBudget.swift */,
 				87CCD2F52FC362CB00768FDB /* BackgroundRefreshLifecycleModifier.swift */,
 				8E9A40409D52322946C2DDC0 /* BackgroundRefresh.swift */,
 				24EA1B59AE1F6A51D2D71E4C /* NotificationsProtocols.swift */,
@@ -737,6 +742,7 @@
 				A264CEDCBC3A6A5E7A2CA5AC /* CrashReportingConfigurationTests.swift */,
 				87CF0CA100000000000F0C01 /* CommentFocusTargetTests.swift */,
 				87CCD2F72FC4991600768FDB /* BackgroundRefreshNotificationBuilderTests.swift */,
+				D260D1DAAA5CABCD91BB7289 /* BackgroundRefreshBudgetTests.swift */,
 				87FACE0300000000000DEECF /* NotificationCoordinatorTests.swift */,
 				87FACE0500000000000DEECF /* LoggedInViewTabTests.swift */,
 				87FACE0700000000000DEECF /* NavigationStreamTests.swift */,
@@ -1216,6 +1222,7 @@
 				D17E358F6EBAEE2AB484011F /* UsernameField.swift in Sources */,
 				69C72E0CA41C86B6DF5E1726 /* SubmissionPreviewRow.swift in Sources */,
 				A5C8D8E39F388B8044875B83 /* PendingNotificationRecord.swift in Sources */,
+				649742C15FF321D0256897BA /* BackgroundRefreshBudget.swift in Sources */,
 				CA19BAC695A56D83147D59BC /* BackgroundRefresh.swift in Sources */,
 				3A6366CC81F99000EEA67C28 /* NotificationsProtocols.swift in Sources */,
 				D1B7779E7CB722ADBFB21575 /* GeometryProxy+FASize.swift in Sources */,
@@ -1234,6 +1241,7 @@
 			files = (
 				AA033C746B0A65D536D8E296 /* CrashReportingConfigurationTests.swift in Sources */,
 				87CCD2F92FC49A2000768FDB /* BackgroundRefreshNotificationBuilderTests.swift in Sources */,
+				7C234A3BE0E01B01BF1E5128 /* BackgroundRefreshBudgetTests.swift in Sources */,
 				87FACE0400000000000DEECF /* NotificationCoordinatorTests.swift in Sources */,
 				87FACE0600000000000DEECF /* LoggedInViewTabTests.swift in Sources */,
 				87FACE0800000000000DEECF /* NavigationStreamTests.swift in Sources */,
