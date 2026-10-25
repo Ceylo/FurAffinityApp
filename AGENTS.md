@@ -110,7 +110,7 @@ Prefer `RemoteView` (no preview state, default toolbar item) or `PreviewableRemo
 
 ## Images
 
-Use `FAImage`/`FAAnimatedImage` (not raw Kingfisher views) — they apply project downloader, cache policy, and logging. Use `prefetchThumbnails`/`prefetchAvatars` for list views. Both return `KFImage` on Android too; what differs there is the downloader (`FAOkHttpDownloader`, so images ride the page path's OkHttp connection pool) and the absence of an animated path, so `FAAnimatedImage` is the same static view. See `Android/docs/images.md`.
+Use `FAImage`/`FAAnimatedImage` (not raw Kingfisher views) — they apply project downloader, cache policy, and logging. Use `prefetchThumbnails`/`prefetchAvatars` for list views. They return `KFImage`/`KFAnimatedImage` on Android too; what differs there is the downloader (`FAOkHttpDownloader`, so images ride the page path's OkHttp connection pool) and how a GIF plays: the decoded image keeps its bytes and a Kotlin `AnimatedImageDrawable` draws them. See `Android/docs/images.md`.
 
 ## Cloudflare Challenge
 

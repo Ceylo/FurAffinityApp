@@ -76,10 +76,9 @@ extension KingfisherOptionsInfo {
         ]
 
         #if FA_SKIP_MODULE
-        // Skip's Android UIImage has no animated-image metadata, so
-        // DefaultCacheSerializer cannot re-encode a downloaded GIF: its GIF
-        // representation is always nil. Preserve the original bytes instead so
-        // avatar GIFs use the same Kingfisher disk cache as JPEG/PNG images.
+        // Store the downloaded bytes: DefaultCacheSerializer would otherwise
+        // re-encode the decoded Android Bitmap, a compress pass per image that
+        // also recompresses every JPEG.
         var serializer = DefaultCacheSerializer()
         serializer.preferCacheOriginalData = true
         options.append(.cacheSerializer(serializer))
@@ -324,6 +323,14 @@ func seedImageCache(_ data: Data, for url: URL) throws {
     try ImageCache.default.diskStorage.store(value: data, forKey: url.cacheKey)
 }
 
+/// The GIF bytes Kingfisher's decode of `data` keeps, which is what `KFAnimatedImage`
+/// plays. For tests, like `seedImageCache`.
+func animatedImageData(decoding data: Data) -> Data? {
+    KingfisherWrapper<KFCrossPlatformImage>
+        .image(data: data, options: ImageCreatingOptions())?
+        .kf.gifRepresentation()
+}
+
 @MainActor
 func FAImage(_ url: URL?) -> KFImage {
     KFImage(url)
@@ -333,24 +340,24 @@ func FAImage(_ url: URL?) -> KFImage {
         .defaultConfiguration()
 }
 
-#if FA_SKIP_MODULE
-/// The same static view. `KFAnimatedImage` renders through `AnimatedImageView`, which
-/// is UIKit-backed and not built for the Skip module — and Android's decode seam has no
-/// animated path either, so a GIF shows its first frame.
-@MainActor
-func FAAnimatedImage(_ url: URL?) -> KFImage {
-    FAImage(url)
+// KFAnimatedImage may display with an incorrect aspect ratio
+// on the initial display, so we don't use it unless needed.
+func canAnimate(_ url: URL?) -> Bool {
+    url?.pathExtension.lowercased() == "gif"
 }
-#else
+
 @MainActor
 func FAAnimatedImage(_ url: URL?) -> KFAnimatedImage {
     KFAnimatedImage(url)
         .defaultConfiguration()
+        // Android has no `AnimatedImageView` to configure; its frames are decoded on the
+        // RenderThread as they are drawn.
+        #if !FA_SKIP_MODULE
         .configure { view in
             view.framePreloadCount = .max
         }
+        #endif
 }
-#endif
 
 // MARK: - Prefetching
 

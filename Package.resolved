@@ -1,5 +1,5 @@
 {
-  "originHash" : "a7ae12ab5c7fb5607bcbd6ac76443ae001f8a46d02d73a80e88e093357874420",
+  "originHash" : "a9e5cf8b52f18c4bdb291f161db4a4781a6719507d6f6bcf6ea02125bc5674a0",
   "pins" : [
     {
       "identity" : "cache",
@@ -25,7 +25,7 @@
       "location" : "https://github.com/Ceylo/Kingfisher.git",
       "state" : {
         "branch" : "android",
-        "revision" : "5b57fa216b4da3cc9d8a0da258c542826f12f4aa"
+        "revision" : "ad062ce0cbc001348718844b9dcab149fb257b67"
       }
     },
     {

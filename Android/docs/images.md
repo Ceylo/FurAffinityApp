@@ -144,6 +144,27 @@ protocol is pinned to h1 in `FAHttpClient.shared()`; re-measuring h2 means editi
 one `.protocols(…)` line. Run-to-run spread is bimodal (0% to 99% on one host in one
 session), so judge a change A-B-A and on each arm's *worst* run, not its median.
 
+## Animated images
+
+`FAAnimatedImage` is `KFAnimatedImage` on both platforms. iOS animates through
+Kingfisher's UIKit `AnimatedImageView`; the fork's Android port splits the same way:
+
+- **The image keeps the bytes.** A GIF with a second frame decodes to
+  `KFAnimatedDataImage`, a `UIImage` subclass holding the first frame as its Bitmap plus
+  the encoded GIF, which iOS keeps as an associated object. A single-frame GIF, as most
+  avatars are, decodes to a plain image. There is no frame array; the memory cache
+  charges the bytes twice, for the JVM copy a playing view holds.
+- **The view plays them.** `KFAnimatedImage` draws the first frame out of the binder's
+  `ImageHolder`, as `KFImage` does, so a cached GIF is not a blank frame. A Kotlin
+  `Modifier.Node` on that node (`Sources/Skip/KFAnimatedImageModifier.kt`, reached
+  through `AnyDynamicObject` and SkipUI's `composeModifier`) decodes an
+  `AnimatedImageDrawable` off the main thread and then draws it instead of the first
+  frame. The drawable renders its frames on the RenderThread; a frame invalidates the
+  draw only, never the composition. The bytes cross JNI to decode the first frame and
+  once more, per image, when a view first plays them.
+- It stretches to its frame, as `AnimatedImageView` does, so a frame whose ratio is not
+  the image's distorts it on both platforms.
+
 ## Measured outcomes
 
 - **Before/after the pipeline work** (cold, disk cache wiped): first visible thumbnail
@@ -153,3 +174,10 @@ session), so judge a change A-B-A and on each arm's *worst* run, not its median.
   3–5 per shipping arm; first `t.` 200 at a median 542 ms. The transport was unchanged,
   so the claim is only that it costs nothing. Its review fixes (memory cap, decode
   coalescing) landed within drift.
+- **Animated GIFs** (2026-10-23, A-B-A, profile builds, 3 runs per arm: 10 swipes on the
+  Followed feed, 6 through a submission's comments): every median inside the two
+  baseline arms' spread — feed janky 10.2% against 11.9/3.0%, PSS 216 against 217/218 MB;
+  comments janky 5.7% against 5.0/6.4%, PSS 234 against 232/226 MB; worst run 12.4% against
+  15.7%. An emulator's frame times show patterns, not a phone's budget
+  ([profiling.md](profiling.md)). Counted from per-draw logging, a cached animated avatar
+  or GIF smiley drew no blank frame on mount, in 5 of 5 visits to each screen.

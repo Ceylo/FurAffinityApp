@@ -15,12 +15,6 @@ import SwiftUI
 import FAKit
 import Kingfisher
 
-// KFAnimatedImage may display with an incorrect aspect ratio
-// on the initial display, so we don't use it unless needed. On Android
-// `FAAnimatedImage` is the same static view, so this only ever costs a branch.
-private func canAnimate(_ url: URL?) -> Bool {
-    url?.pathExtension.lowercased() == "gif"
-}
 
 struct SubmissionMainImage: View {
     var widthOnHeightRatio: Float
@@ -147,6 +141,15 @@ struct SubmissionMainImage: View {
         canPresentViewer = true
     }
 
+    @ViewBuilder
+    private var viewerImage: some View {
+        if canAnimate(fullResolutionMediaUrl) {
+            FAAnimatedImage(fullResolutionMediaUrl)
+        } else {
+            FAImage(fullResolutionMediaUrl)
+        }
+    }
+
 #if FA_SKIP_MODULE
 
     /// No close button: `Zoomable` dismisses on a downward pull as iOS's sheet does, and
@@ -154,7 +157,7 @@ struct SubmissionMainImage: View {
     private var zoomableViewer: some View {
         configuredViewer(
             Zoomable {
-                FAImage(fullResolutionMediaUrl)
+                viewerImage
             }
             .contentAspectRatio(Double(widthOnHeightRatio))
         )
@@ -165,17 +168,11 @@ struct SubmissionMainImage: View {
     private var zoomableViewer: some View {
         configuredViewer(
             Zoomable {
-                Group {
-                    if canAnimate(fullResolutionMediaUrl) {
-                        FAAnimatedImage(fullResolutionMediaUrl)
-                    } else {
-                        FAImage(fullResolutionMediaUrl)
-                    }
-                }
-                .frame(
-                    width: fullResolutionImage!.size.width,
-                    height: fullResolutionImage!.size.height
-                )
+                viewerImage
+                    .frame(
+                        width: fullResolutionImage!.size.width,
+                        height: fullResolutionImage!.size.height
+                    )
             }
         )
     }

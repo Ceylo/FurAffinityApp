@@ -5,7 +5,7 @@
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
 | `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; `.glass`/`.glassProminent` drawn as bordered and `buttonBorderShape`; `glassEffect` drawn as the M3 floating surface; tab re-tap popping to root, then scrolling to top; a `List` under the status bar when the navigation bar is hidden; a `List` that restores its scroll position by the first visible keyed row and its offset; a plain `List`'s section header pinned below the status bar; no `List` row for an `EmptyView`; a `NavigationLink` in a `List` row drawn untinted; a tab badge's count in `onError`; `Color.material(bridgedRole:)`; a bridged `.task(id:)` that is really cancelled; `.updatesFrequently` as a polite live region; a sheet that calls its content only while presented and keeps the last one while it animates away; a `ScrollViewReader` proxy that resolves its scroll action when used; a stack insertion that keeps its enter transition when the stack recomposes before it has played; a principal toolbar item in the title's place, and a flexible toolbar spacer that only separates top-bar groups; a `Picker` listed inline in a `Menu`; a filled image cropped by its frame's alignment; a primary action kept at the toolbar's trailing edge; menu dividers drawn only between items; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider); [local notifications posted as iOS posts them](#local-notifications), communication ones as conversations |
 | `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, `ButtonBorderShape`, `sheet`/`fullScreenCover` content passed as a builder, a `JavaBackedView` holding a global JNI reference, `glassEffect` bridged to SkipUI's surface, `GlassEffectContainer` bridged as a `Group`, an `AccessibilityTraits()` that doesn't recurse (upstream #132), `Color.material(_:)` for Material color roles SwiftUI has none for, plus `glassEffectUnion`/`glassEffectID`/`AnyTransition.animation`/`.glass`/`.glassProminent` un-`unavailable`d and `controlSize`/`contentShape` as pass-throughs; `#Preview` / `@Previewable` stubs (skiptools/skip#439) and `@Entry`; notification attachment options, categories and actions, `interruptionLevel` and `soundSetting`; the Intents types of a communication notification |
-| `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, and a rendered image that comes out of an `ImageHolder` rather than out of the view value |
+| `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, a rendered image that comes out of an `ImageHolder` rather than out of the view value, and `KFAnimatedImage` |
 | `Ceylo/skip-foundation` | Android `UserDefaults` storing arrays and dictionaries; `JSONSerialization` keeping characters outside the BMP ([below](#why-skip-foundation-is-forked)) |
 | `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
 | `Ceylo/skip-bridge`, `Ceylo/skip-model`, `Ceylo/skip-android-bridge`, `Ceylo/skip-fuse` | dependency identity only, like skip-web: each names the forks above it, so the graph has one `skip-foundation` |
@@ -174,7 +174,8 @@ funnels through five entry points in `Sources/Image/Image.swift`, and SkipSwiftU
 Bitmap-backed `UIImage` answers all of them. A shim of `ImageIO` or `CoreGraphics` would
 re-run [module-name poisoning](build-and-run.md#module-name-poisoning), and
 `UIImage(cgImage:)` is unavailable anyway. What does not cross: per-image metadata (no
-ObjC runtime) and animation, so a GIF decodes to its first frame. Guards are `#if
+ObjC runtime), except a GIF's bytes, which a `UIImage` subclass carries for
+`KFAnimatedImage` (see [images.md § Animated images](images.md#animated-images)). Guards are `#if
 os(Android)`, never `canImport`, for the same poisoning reason.
 
 The public `DownloadTask` initializer a custom downloader needs, and a way for it to feed
@@ -197,7 +198,7 @@ guards, the port needed:
   rewrites stored properties, so no `didSet`), and the opacity and zero-frame gates,
   composition-phase reads themselves, go except during a load transition.
 - **A cache hit is delivered in the frame it is asked for.** With
-  `preferCacheOriginalData` (Skip's `UIImage` can't re-encode a GIF),
+  `preferCacheOriginalData` (so a Bitmap is never re-encoded for the disk cache),
   `deliverTargetCacheHit` re-runs the processor through two queue hops, which always
   cost a frame. On Android the default processor returns its input unchanged, so with it
   that round trip is skipped. Opening a submission on a warm cache: 5 blank frames in 5
