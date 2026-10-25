@@ -25,7 +25,7 @@ extension BackgroundRefreshManager {
     /// Every 30 minutes, the earliest iOS asks for.
     static func schedule() {
         #if canImport(Android)
-        let minutes: Int64 = 30
+        let minutes = Int64(BackgroundRefreshBudget.minimumRunInterval / 60)
         Task {
             let scheduled = await callBridgeOffPool("FANotificationBridge", fallback: false) { bridge in
                 let ok: Bool? = try bridge.scheduleBackgroundRefresh(minutes)

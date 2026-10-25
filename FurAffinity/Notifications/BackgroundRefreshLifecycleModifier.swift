@@ -5,7 +5,6 @@
 //  Created by Ceylo on 24/05/2026.
 //
 
-import Defaults
 import SwiftUI
 
 struct BackgroundRefreshLifecycleModifier: ViewModifier {
@@ -18,29 +17,25 @@ struct BackgroundRefreshLifecycleModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .onFirstAppear {
-                recordOpen()
+                BackgroundRefreshManager.recordAppOpen()
                 Task { @MainActor in
                     await updateLatestFetchedNotificationIDsAfterAuthorization()
                 }
             }
             .onChange(of: scenePhase) { _, newPhase in
                 if newPhase == .active {
-                    recordOpen()
+                    BackgroundRefreshManager.recordAppOpen()
                     Task { @MainActor in
                         await updateLatestFetchedNotificationIDsAfterAuthorization()
                     }
                 } else if newPhase == .background {
-                    Defaults[.backgroundRefreshBudget].recordForegroundEnd(at: Date())
+                    BackgroundRefreshManager.recordForegroundEnd()
                     Task { @MainActor in
                         await updateLatestFetchedNotificationIDsAfterAuthorization()
                         BackgroundRefreshManager.schedule()
                     }
                 }
             }
-    }
-
-    private func recordOpen() {
-        Defaults[.backgroundRefreshBudget].profile.recordOpen(at: Date(), calendar: .current)
     }
 
     @MainActor

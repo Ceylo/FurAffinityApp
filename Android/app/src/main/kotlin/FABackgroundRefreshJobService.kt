@@ -42,7 +42,7 @@ class FABackgroundRefreshJobService : JobService() {
             try {
                 FurAffinityUIAppDelegate.shared.performBackgroundRefresh(
                     deviceConditions(params),
-                    params.jobId == FANotificationBridge.PERIODIC_JOB_ID,
+                    params.isPeriodic,
                 )
             } catch (e: CancellationException) {
                 throw e
@@ -63,6 +63,8 @@ class FABackgroundRefreshJobService : JobService() {
         return true
     }
 
+    private val JobParameters.isPeriodic get() = jobId == FANotificationBridge.PERIODIC_JOB_ID
+
     override fun onDestroy() {
         scope.cancel()
         super.onDestroy()
@@ -80,7 +82,7 @@ class FABackgroundRefreshJobService : JobService() {
         }
         val charging = getSystemService(BatteryManager::class.java)?.isCharging
         val idle = getSystemService(PowerManager::class.java)?.isDeviceIdleMode
-        val job = if (params.jobId == FANotificationBridge.PERIODIC_JOB_ID) "periodic" else "one-off"
+        val job = if (params.isPeriodic) "periodic" else "one-off"
         return "standby bucket: $bucket, charging: $charging, device idle: $idle, job: $job"
     }
 }

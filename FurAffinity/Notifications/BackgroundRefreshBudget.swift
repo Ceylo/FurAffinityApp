@@ -67,19 +67,18 @@ struct BackgroundRefreshSlots {
     }
 
     func latestSlot(atOrBefore date: Date, calendar: Calendar) -> Date {
-        if let slot = slots(onDayOf: date, calendar: calendar).last(where: { $0 <= date }) {
-            return slot
-        }
-        let previousDay = calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: date))!
-        return slots(onDayOf: previousDay, calendar: calendar).last!
+        slots(around: date, calendar: calendar).last { $0 <= date }!
     }
 
     func nextSlot(after date: Date, calendar: Calendar) -> Date {
-        if let slot = slots(onDayOf: date, calendar: calendar).first(where: { $0 > date }) {
-            return slot
+        slots(around: date, calendar: calendar).first { $0 > date }!
+    }
+
+    private func slots(around date: Date, calendar: Calendar) -> [Date] {
+        let dayStart = calendar.startOfDay(for: date)
+        return [-1, 0, 1].flatMap { offset in
+            slots(onDayOf: calendar.date(byAdding: .day, value: offset, to: dayStart)!, calendar: calendar)
         }
-        let nextDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: date))!
-        return slots(onDayOf: nextDay, calendar: calendar).first!
     }
 
     private static func normalized(_ values: [Double]) -> [Double] {
@@ -138,12 +137,18 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
         fetchDates.removeAll { $0 <= date - Self.window }
     }
 
-    mutating func recordForegroundEnd(at date: Date) {
-        lastForegroundEnd = date
-    }
-
     func nextRunDate(after now: Date, calendar: Calendar) -> Date {
         let nextSlot = BackgroundRefreshSlots(profile: profile).nextSlot(after: now, calendar: calendar)
         return max(nextSlot, now + Self.minimumRunInterval)
+    }
+}
+
+extension BackgroundRefreshManager {
+    static func recordAppOpen() {
+        Defaults[.backgroundRefreshBudget].profile.recordOpen(at: Date(), calendar: .current)
+    }
+
+    static func recordForegroundEnd() {
+        Defaults[.backgroundRefreshBudget].lastForegroundEnd = Date()
     }
 }

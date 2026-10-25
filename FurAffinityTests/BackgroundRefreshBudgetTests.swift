@@ -145,7 +145,7 @@ struct BackgroundRefreshBudgetTests {
     // MARK: - Consumption
     @Test func dayWalk_fetchesOncePerSlot() {
         var budget = BackgroundRefreshBudget()
-        budget.recordForegroundEnd(at: day)
+        budget.lastForegroundEnd = day
         let slots = slots()
         let fetches = walk(&budget, from: day, to: date(2026, 6, 11), calendar: { _ in calendar })
         #expect(fetches.count == 10)
@@ -169,7 +169,7 @@ struct BackgroundRefreshBudgetTests {
         let slots = slots()
         var budget = BackgroundRefreshBudget()
         budget.recordFetch(at: slots[2])
-        budget.recordForegroundEnd(at: slots[3] + 10 * 60)
+        budget.lastForegroundEnd = slots[3] + 10 * 60
         #expect(budget.decision(now: slots[3] + 15 * 60, calendar: calendar) == .skip(nextSlot: slots[4]))
         #expect(budget.decision(now: slots[4], calendar: calendar) == .fetch)
     }
@@ -178,7 +178,7 @@ struct BackgroundRefreshBudgetTests {
         let losAngeles = Self.calendar("America/Los_Angeles")
         let switchDate = date(2026, 6, 11, 12)
         var budget = BackgroundRefreshBudget()
-        budget.recordForegroundEnd(at: day)
+        budget.lastForegroundEnd = day
         let fetches = walk(&budget, from: day, to: date(2026, 6, 13), calendar: { $0 < switchDate ? calendar : losAngeles })
         #expect(maxFetchesInAnyDay(fetches) == 10)
     }
@@ -186,7 +186,7 @@ struct BackgroundRefreshBudgetTests {
     @Test func profileShift_neverExceedsTenFetchesPerDay() {
         let shiftDate = date(2026, 6, 10, 14)
         var budget = BackgroundRefreshBudget(profile: morningProfile)
-        budget.recordForegroundEnd(at: day)
+        budget.lastForegroundEnd = day
         let fetches = walk(&budget, from: day, to: date(2026, 6, 12), calendar: { _ in calendar }) { now, budget in
             if now == shiftDate {
                 budget.profile = eveningProfile
@@ -248,7 +248,7 @@ struct BackgroundRefreshBudgetTests {
         budget.profile.recordOpen(at: date(2026, 6, 10, 9, 17), calendar: calendar)
         budget.profile.recordOpen(at: date(2026, 6, 10, 21, 3), calendar: calendar)
         budget.recordFetch(at: date(2026, 6, 10, 12, 41))
-        budget.recordForegroundEnd(at: date(2026, 6, 10, 21, 30))
+        budget.lastForegroundEnd = date(2026, 6, 10, 21, 30)
         let decoded = try JSONDecoder().decode(BackgroundRefreshBudget.self, from: JSONEncoder().encode(budget))
         #expect(decoded == budget)
     }

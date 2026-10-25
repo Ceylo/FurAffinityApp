@@ -138,15 +138,6 @@ enum BackgroundRefreshManager {
         }
         defer { runGate.leave() }
 
-        let settings = await UNUserNotificationCenter.current().notificationSettings()
-        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
-            logger.info(
-                "Skipping background refresh because authorization status is \(settings.authorizationStatus.rawValue)"
-            )
-            return
-        }
-        let soundEnabled = settings.soundSetting == .enabled
-
         if respectingBudget {
             var budget = Defaults[.backgroundRefreshBudget]
             let now = Date()
@@ -157,6 +148,15 @@ enum BackgroundRefreshManager {
             budget.recordFetch(at: now)
             Defaults[.backgroundRefreshBudget] = budget
         }
+
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
+            logger.info(
+                "Skipping background refresh because authorization status is \(settings.authorizationStatus.rawValue)"
+            )
+            return
+        }
+        let soundEnabled = settings.soundSetting == .enabled
 
         let submissions: [FASubmissionPreview]
         let notes: [FANotePreview]
