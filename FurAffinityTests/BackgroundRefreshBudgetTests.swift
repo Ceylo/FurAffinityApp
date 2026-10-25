@@ -131,14 +131,18 @@ struct BackgroundRefreshBudgetTests {
 
     @Test func randomProfiles_keepSlotsThirtyMinutesApart() {
         var generator = SplitMix64(state: 42)
-        let nextDay = date(2026, 6, 11)
+        let days = [day, date(2026, 3, 29), date(2026, 10, 25)]
         for _ in 0..<200 {
             var profile = ActivityProfile()
             profile.opens = (0..<24).map { _ in
                 Bool.random(using: &generator) ? 0 : Double.random(in: 0..<100, using: &generator)
             }
-            let slots = slots(profile) + [slots(profile, on: nextDay)[0]]
-            #expect(gaps(slots).allSatisfy { $0 >= minimumGap }, "\(profile.opens)")
+            for day in days {
+                let nextDay = calendar.date(byAdding: .day, value: 1, to: day)!
+                let shortestDay = min(nextDay.timeIntervalSince(day), 24 * 3600)
+                let slots = slots(profile, on: day) + [slots(profile, on: nextDay)[0]]
+                #expect(gaps(slots).allSatisfy { $0 >= minimumGap * shortestDay / (24 * 3600) }, "\(day) \(profile.opens)")
+            }
         }
     }
 
@@ -193,6 +197,14 @@ struct BackgroundRefreshBudgetTests {
             }
         }
         #expect(maxFetchesInAnyDay(fetches) == 10)
+    }
+
+    @Test func datesInTheFuture_doNotBlockFetches() {
+        let slots = slots()
+        var budget = BackgroundRefreshBudget()
+        budget.recordFetch(at: date(2027, 6, 10))
+        budget.lastForegroundEnd = date(2027, 6, 10)
+        #expect(budget.decision(now: slots[3], calendar: calendar) == .fetch)
     }
 
     @Test func recordFetch_dropsDatesOlderThanADay() {

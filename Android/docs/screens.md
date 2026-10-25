@@ -358,14 +358,16 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   the status bar draws it from its alpha alone.
 
 To force a run, from the background (the job stands down in the foreground), run the
-periodic job itself; its id is `PERIODIC_JOB_ID` in `FANotificationBridge.kt`:
+periodic job itself; its id is `PERIODIC_JOB_ID` in `FANotificationBridge.kt`. It only
+fetches once a budget slot has passed, and otherwise logs `Skipping background refresh:
+budget`:
 
 ```
 adb shell cmd jobscheduler run -f <pkg> 1178664961
 ```
 
-Or schedule a one-off run of the same job, with the same network requirement, from a
-debug launch extra, then go Home before it fires:
+Or schedule a one-off run, which ignores the budget, with the same network requirement,
+from a debug launch extra, then go Home before it fires:
 
 ```
 adb shell am start -S -n <pkg>/fur.affinity.ui.MainActivity --ei faBackgroundRefreshIn 180

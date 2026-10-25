@@ -22,7 +22,6 @@ import SkipBridge
 #endif
 
 extension BackgroundRefreshManager {
-    /// Every 30 minutes, the earliest iOS asks for.
     static func schedule() {
         #if canImport(Android)
         let minutes = Int64(BackgroundRefreshBudget.minimumRunInterval / 60)

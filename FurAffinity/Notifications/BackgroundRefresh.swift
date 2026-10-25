@@ -138,15 +138,9 @@ enum BackgroundRefreshManager {
         }
         defer { runGate.leave() }
 
-        if respectingBudget {
-            var budget = Defaults[.backgroundRefreshBudget]
-            let now = Date()
-            if case .skip(let nextSlot) = budget.decision(now: now, calendar: .current) {
-                logger.info("Skipping background refresh: budget (next slot at \(nextSlot))")
-                return
-            }
-            budget.recordFetch(at: now)
-            Defaults[.backgroundRefreshBudget] = budget
+        if respectingBudget, let nextSlot = await claimBudgetedFetch() {
+            logger.info("Skipping background refresh: budget (next slot at \(nextSlot))")
+            return
         }
 
         let settings = await UNUserNotificationCenter.current().notificationSettings()

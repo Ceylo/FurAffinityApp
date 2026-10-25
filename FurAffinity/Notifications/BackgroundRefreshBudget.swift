@@ -30,7 +30,7 @@ struct ActivityProfile: Codable, Equatable {
 struct BackgroundRefreshSlots {
     static let perDay = 10
     static let learnedShare = 0.8
-    /// Caps an hour at 2 slots, so slots stay at least 30 min apart.
+    /// Caps an hour at 2 slots, so slots stay at least 30 min apart (a little less on a 23-hour day).
     static let maxHourWeight = 2 / Double(perDay)
     static let prior: [Double] = (0..<24).map { $0 < 8 ? 0.1 : 1 }
 
@@ -50,6 +50,7 @@ struct BackgroundRefreshSlots {
 
     func slots(onDayOf date: Date, calendar: Calendar) -> [Date] {
         let dayStart = calendar.startOfDay(for: date)
+        let dayLength = calendar.date(byAdding: .day, value: 1, to: dayStart)!.timeIntervalSince(dayStart)
         var slots: [Date] = []
         var cumulative = 0.0
         var hour = 0
@@ -60,10 +61,9 @@ struct BackgroundRefreshSlots {
                 hour += 1
             }
             let fraction = min(max((target - cumulative) / hourWeights[hour], 0), 1)
-            let hourStart = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: dayStart) ?? dayStart
-            slots.append(hourStart.addingTimeInterval(fraction * 3600))
+            slots.append(dayStart.addingTimeInterval((Double(hour) + fraction) / 24 * dayLength))
         }
-        return slots.sorted()
+        return slots
     }
 
     func latestSlot(atOrBefore date: Date, calendar: Calendar) -> Date {
@@ -123,7 +123,7 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
 
     func decision(now: Date, calendar: Calendar) -> Decision {
         let slots = BackgroundRefreshSlots(profile: profile)
-        let lastSeen = [fetchDates.max(), lastForegroundEnd].compactMap { $0 }.max()
+        let lastSeen = (fetchDates + [lastForegroundEnd].compactMap { $0 }).filter { $0 <= now }.max()
         let slotPassed = lastSeen.map { slots.latestSlot(atOrBefore: now, calendar: calendar) > $0 } ?? true
         let recentFetches = fetchDates.filter { $0 > now - Self.window && $0 <= now }.count
         guard slotPassed && recentFetches < BackgroundRefreshSlots.perDay else {
@@ -144,11 +144,25 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
 }
 
 extension BackgroundRefreshManager {
+    @MainActor
     static func recordAppOpen() {
         Defaults[.backgroundRefreshBudget].profile.recordOpen(at: Date(), calendar: .current)
     }
 
+    @MainActor
     static func recordForegroundEnd() {
         Defaults[.backgroundRefreshBudget].lastForegroundEnd = Date()
+    }
+
+    @MainActor
+    static func claimBudgetedFetch() -> Date? {
+        var budget = Defaults[.backgroundRefreshBudget]
+        let now = Date()
+        if case .skip(let nextSlot) = budget.decision(now: now, calendar: .current) {
+            return nextSlot
+        }
+        budget.recordFetch(at: now)
+        Defaults[.backgroundRefreshBudget] = budget
+        return nil
     }
 }
