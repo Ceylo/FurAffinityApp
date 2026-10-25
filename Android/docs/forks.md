@@ -265,9 +265,9 @@ skip-fuse-ui:
   - `<hr>`, dropped without a line break: the normaliser hoists each rule to the root,
     and `HTMLView` draws a `Divider()` between the pieces.
   - `<img>`, dropped but **leaving a U+FFFC**, where `RichText.splicingInlineContent`
-    splices inline content, iterating UTF-16 units as Compose counts offsets. It also
-    re-pushes the `LinkAnnotation` over the placeholder: FA writes a mention as one
-    anchor around the avatar and the name, and the avatar was dead.
+    marks each as inline content in place, iterating UTF-16 units as Compose counts
+    offsets. Slicing the string around them instead made each cut `ParagraphStyle`
+    piece its own paragraph: a centred row of avatars came out one per line.
 
   A tapped link goes to `onLinkTap` through a `LinkInteractionListener`, never to
   Compose's `UriHandler`, which would open the browser first. Parsing is `remember`ed on

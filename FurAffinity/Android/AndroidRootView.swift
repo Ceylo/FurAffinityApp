@@ -125,7 +125,7 @@ struct AndroidRootView: View {
                             }
                     }
                     .tabItem {
-                        Label("Submissions", systemImage: "rectangle.grid.2x2")
+                        tabLabel("Submissions", systemImage: "rectangle.grid.2x2")
                     }
                     .tag(Tab.submissions)
 
@@ -137,7 +137,7 @@ struct AndroidRootView: View {
                     }
                     .badge(model.displayedUnreadNoteCount)
                     .tabItem {
-                        Label("Notes", systemImage: "message")
+                        tabLabel("Notes", systemImage: "message")
                     }
                     .tag(Tab.notes)
 
@@ -149,7 +149,7 @@ struct AndroidRootView: View {
                     }
                     .badge(model.displayedNotificationCount)
                     .tabItem {
-                        Label("Notifications", systemImage: "bell")
+                        tabLabel("Notifications", systemImage: "bell")
                     }
                     .tag(Tab.notifications)
 
@@ -160,7 +160,7 @@ struct AndroidRootView: View {
                             }
                     }
                     .tabItem {
-                        Label("Profile", systemImage: "person.crop.circle")
+                        tabLabel("Profile", systemImage: "person.crop.circle")
                     }
                     .tag(Tab.userpage)
 
@@ -170,7 +170,7 @@ struct AndroidRootView: View {
                         // Same "an update is available" dot as LoggedInView's.
                         .badge(model.appInfo.isUpToDate == false ? " " : nil)
                         .tabItem {
-                            Label("Settings", systemImage: "slider.horizontal.3")
+                            tabLabel("Settings", systemImage: "slider.horizontal.3")
                         }
                         .tag(Tab.settings)
                 }
@@ -276,6 +276,17 @@ struct AndroidRootView: View {
         Task { @MainActor in
             await FAWebSession.shared.refreshedCookieHeader()
             CloudflareChallengeCoordinator.shared.markResolved()
+        }
+    }
+
+    private func tabLabel(_ title: LocalizedStringKey, systemImage: String) -> some View {
+        Label {
+            Text(title)
+                .font(.caption2.weight(.medium))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        } icon: {
+            Image(systemName: systemImage)
         }
     }
 
