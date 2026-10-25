@@ -4,8 +4,7 @@
 //
 //  Android's hooks for the shared background refresh: a periodic JobScheduler job
 //  (FABackgroundRefreshJobService.kt) runs it on a session built from the cookie jar
-//  alone, and a notification without a thumbnail shows the author's avatar, where
-//  iOS draws it through a communication notification.
+//  alone.
 //
 //  Unguarded on purpose — an Android substitution file must be, see
 //  Android/docs/shared-sources.md § Rules for shared sources. The JNI inside is `canImport(Android)`-guarded and no-ops on Darwin.
@@ -13,7 +12,6 @@
 
 import Foundation
 import FAKit
-import Kingfisher
 #if os(Android)
 import SwiftUI
 #else
@@ -61,7 +59,7 @@ extension BackgroundRefreshManager {
         UNUserNotificationCenter.current().setNotificationCategories([
             UNNotificationCategory(
                 identifier: hiddenSubmissionCategoryIdentifier,
-                actions: [UNNotificationAction(identifier: showActionIdentifier, title: "Show", options: [.authenticationRequired])],
+                actions: [UNNotificationAction(identifier: showActionIdentifier, title: "Show", options: [])],
                 intentIdentifiers: [],
                 options: []
             ),
@@ -74,29 +72,18 @@ extension BackgroundRefreshManager {
         ])
     }
 
-    /// Attaches the author's avatar, which becomes the large icon, unless a submission
-    /// thumbnail will take that place, whose URL is kept for Show.
+    /// Keeps a submission's thumbnail URL for Show.
     static func enrich(_ content: UNMutableNotificationContent, for record: PendingNotificationRecord) async -> UNNotificationContent {
         if let thumbnailURLString = record.thumbnailURLString {
             content.userInfo[thumbnailURLKey] = thumbnailURLString
-            return content
         }
-        guard let url = FAURLs.avatarUrl(for: record.author) else {
-            return content
-        }
-        do {
-            let file = try await KingfisherManager.shared.retrieveFAImageFile(with: url)
-            content.attachments = [try UNNotificationAttachment(identifier: "avatar", url: file, options: nil)]
-        } catch {
-            logger.error("Failed to attach the avatar of \(record.author) at \(url): \(error)")
-        }
-        return content
+        return await communicationContent(content, author: record.author)
     }
 
     /// A general submission's clear image goes in hidden too, which makes it the expanded
     /// picture. A mature one keeps only its blurred image, and gets the Show button.
     static func attaching(_ attachments: [UNNotificationAttachment], to content: UNNotificationContent) -> UNNotificationContent {
-        guard let mutable = content as? UNMutableNotificationContent, let primary = attachments.first else {
+        guard let mutable = content.mutableCopy() as? UNMutableNotificationContent, let primary = attachments.first else {
             return content
         }
         if attachments.dropFirst().contains(where: { $0.identifier == "clear" }) {
@@ -126,19 +113,17 @@ extension BackgroundRefreshManager {
         default: return
         }
         let request = response.notification.request
-        let content = UNMutableNotificationContent()
-        content.title = request.content.title
-        content.body = request.content.body
-        content.userInfo = request.content.userInfo
-        content.interruptionLevel = .passive
-        content.categoryIdentifier = hiddenSubmissionCategoryIdentifier
+        guard let base = request.content.mutableCopy() as? UNMutableNotificationContent else {
+            return
+        }
+        base.interruptionLevel = .passive
+        base.categoryIdentifier = revealing ? revealedSubmissionCategoryIdentifier : hiddenSubmissionCategoryIdentifier
+        base.attachments = []
+        var content: UNNotificationContent = base
         // Downloaded when the notification was built, so this reads Kingfisher's cache.
         if let urlString = request.content.userInfo[thumbnailURLKey] as? String, let url = URL(string: urlString),
            let attachments = await submissionAttachment(thumbnailURL: url, needsBlur: !revealing) {
-            _ = attaching(attachments, to: content)
-            if revealing {
-                content.categoryIdentifier = revealedSubmissionCategoryIdentifier
-            }
+            content = attaching(attachments, to: base)
         } else {
             logger.error("No thumbnail to \(revealing ? "show" : "hide") for \(request.identifier)")
             if revealing {

@@ -12,6 +12,7 @@ import Kingfisher
 #if os(Android)
 import SwiftUI
 #else
+import Intents
 import UserNotifications
 #endif
 
@@ -475,6 +476,81 @@ enum BackgroundRefreshManager {
     /// the same time, so discarded items won't be rediscovered.
     static func discardPendingNotificationQueue() {
         Defaults[.pendingNotificationQueue] = []
+    }
+
+    /// Fetches the author's avatar (ensuring it is cached via Kingfisher) and wraps
+    /// it as an `INImage` for use as a communication-notification sender image.
+    /// Returns `nil` when the author has no avatar URL or the download/cache fails.
+    private static func avatarImage(for author: String) async -> INImage? {
+        guard let url = FAURLs.avatarUrl(for: author) else {
+            return nil
+        }
+        let file: URL
+        do {
+            file = try await KingfisherManager.shared.retrieveFAImageFile(with: url)
+        } catch {
+            logger.error("Failed to get avatar file for \(author) at \(url): \(error)")
+            return nil
+        }
+        return INImage(url: file)
+    }
+
+    /// Enriches a pending notification into a Communication Notification whose leading
+    /// icon is the author's avatar, by donating an `INSendMessageIntent` and applying
+    /// it to the content. Falls back to the original text-only content when the avatar
+    /// can't be fetched or the enrichment fails (e.g. the Communication Notifications
+    /// entitlement is missing, which makes `updating(from:)` throw).
+    static func communicationContent(_ content: UNMutableNotificationContent, author: String) async -> UNNotificationContent {
+        guard let avatar = await avatarImage(for: author) else {
+            return content
+        }
+
+        let sender = INPerson(
+            personHandle: INPersonHandle(value: author, type: .unknown),
+            nameComponents: nil,
+            displayName: content.title,
+            image: avatar,
+            contactIdentifier: nil,
+            customIdentifier: author,
+            isMe: false,
+            suggestionType: .none
+        )
+        let me = INPerson(
+            personHandle: INPersonHandle(value: "me", type: .unknown),
+            nameComponents: nil,
+            displayName: nil,
+            image: nil,
+            contactIdentifier: nil,
+            customIdentifier: nil,
+            isMe: true,
+            suggestionType: .none
+        )
+        let intent = INSendMessageIntent(
+            recipients: [me],
+            outgoingMessageType: .outgoingMessageText,
+            content: content.body,
+            speakableGroupName: nil,
+            conversationIdentifier: try? FAURLs.userpageUrl(for: author).absoluteString,
+            serviceName: nil,
+            sender: sender,
+            attachments: nil
+        )
+        intent.setImage(avatar, forParameterNamed: \INSendMessageIntent.sender)
+
+        let interaction = INInteraction(intent: intent, response: nil)
+        interaction.direction = .incoming
+        do {
+            try await interaction.donate()
+        } catch {
+            logger.error("Failed to donate message intent: \(error)")
+        }
+
+        do {
+            return try content.updating(from: intent)
+        } catch {
+            logger.error("Failed to enrich notification with avatar intent: \(error)")
+            return content
+        }
     }
 
     /// Builds the base mutable content for a record (title / emoji-prefixed body /

@@ -329,8 +329,12 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   the session fetches its first page, so that is usually where the challenge comes from.
   It posts once per outage (`challengeNotificationPosted`), not on every 30-minute run;
   the next successful run, or the user back in the app, removes it and ends the outage. An activity resuming cancels a run in flight.
-- **Images.** A submission's thumbnail is the large icon, and a general one's expanded
-  notification shows it as a big picture. A mature one is blurred by
+- **Conversations.** `enrich` calls the shared `communicationContent`, as iOS does, so
+  every notification is a conversation with its author, drawn with their avatar. The
+  author's shortcut, in the launcher icon's long-press menu, opens their user page.
+- **Images.** A submission's thumbnail is a message of its own, since an image message
+  shows no text. SystemUI draws it at most 136dp tall (`messaging_image_max_height`). A
+  mature one is blurred by
   `FANotificationBridge.blur`, a CPU box blur matched to Kingfisher's radius (its
   Accelerate blur is compiled out here). Its clear image, which iOS's content extension
   draws on a long-press, waits behind a **Show** button instead: Android expands the top
@@ -338,12 +342,13 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   of the `fa.submission.hidden` category, registered in `onInit`; the delegate answers it
   (`BackgroundRefreshManager.handleAction`) by adding the request again, `.passive`, with
   the clear thumbnail from Kingfisher's cache, so nothing is downloaded twice, in the
-  `fa.submission.revealed` category, whose **Hide** blurs it again. Show asks for an
-  unlock on the lock screen, and before Android 12, which can't, does nothing there.
-  Notes, comments and journals attach the author's avatar as the large icon instead of
-  iOS's communication notification.
+  `fa.submission.revealed` category, whose **Hide** blurs it again. Show asks for no
+  unlock: whether the lock screen shows notification content is the user's setting, and
+  an unlock-requiring action makes SystemUI close the shade even on an unlocked phone.
+  When the lock screen hides content, SystemUI draws the notification without its
+  buttons, so Show is not offered there.
 - **Taps** reach `NotificationCenterDelegate`, then `NotificationCoordinator`, which
-  `AndroidRootView` drains once there is a session, as it does `faOpenURL`. SkipUI holds a
+  `AndroidRootView` drains once there is a session, as it does a shortcut and `faOpenURL`. SkipUI holds a
   tap that cold-launched the app until the delegate is set in `onInit`. `MainActivity` is
   `singleTop`: a group's summary row opens the plain launcher intent, which otherwise
   stacked a fresh activity on a task a notification had started.

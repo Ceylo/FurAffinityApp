@@ -235,7 +235,11 @@ struct AndroidRootView: View {
             userpagePath = []
             selectedTab = .submissions
         }
-        // A notification tap or `faOpenURL`, held until there is a session to open it in.
+        // A conversation's launcher shortcut.
+        .onOpenURL { url in
+            notificationCoordinator.setPendingDeepLink(fromURLString: url.absoluteString)
+        }
+        // A notification tap, a shortcut or `faOpenURL`, held until there is a session to open it in.
         .task(id: "\(model.session != nil) \(notificationCoordinator.pendingDeepLink != nil)") {
             guard model.session != nil, let target = notificationCoordinator.pendingDeepLink else { return }
             notificationCoordinator.pendingDeepLink = nil
