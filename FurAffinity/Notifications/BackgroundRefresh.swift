@@ -478,28 +478,19 @@ enum BackgroundRefreshManager {
         Defaults[.pendingNotificationQueue] = []
     }
 
-    /// Fetches the author's avatar (ensuring it is cached via Kingfisher) and wraps
-    /// it as an `INImage` for use as a communication-notification sender image.
-    /// Returns `nil` when the author has no avatar URL or the download/cache fails.
     private static func avatarImage(for author: String) async -> INImage? {
         guard let url = FAURLs.avatarUrl(for: author) else {
             return nil
         }
-        let file: URL
         do {
-            file = try await KingfisherManager.shared.retrieveFAImageFile(with: url)
+            return INImage(url: try await KingfisherManager.shared.retrieveFAImageFile(with: url))
         } catch {
             logger.error("Failed to get avatar file for \(author) at \(url): \(error)")
             return nil
         }
-        return INImage(url: file)
     }
 
-    /// Enriches a pending notification into a Communication Notification whose leading
-    /// icon is the author's avatar, by donating an `INSendMessageIntent` and applying
-    /// it to the content. Falls back to the original text-only content when the avatar
-    /// can't be fetched or the enrichment fails (e.g. the Communication Notifications
-    /// entitlement is missing, which makes `updating(from:)` throw).
+    /// `content` itself when that fails, as on iOS without the Communication Notifications entitlement.
     static func communicationContent(_ content: UNMutableNotificationContent, author: String) async -> UNNotificationContent {
         guard let avatar = await avatarImage(for: author) else {
             return content

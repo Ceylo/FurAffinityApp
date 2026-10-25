@@ -383,7 +383,7 @@ skip-fuse-ui `5b608cd`:
 - **Attachments outlive their files** for a request posted later: `add` copies them into
   a store of its own, as iOS moves them. A later `add` prunes, at most every 10 minutes,
   the copies of notifications neither showing nor queued for a day.
-- **Communication notifications as conversations** (`aa6ac8c`, skip-fuse-ui `cbf4494`).
+- **Communication notifications as conversations** (`aa6ac8c` + `d4a7788`, skip-fuse-ui `cbf4494` + `d2fbd5d`).
   `INPerson`, `INImage`, `INSendMessageIntent` and `INInteraction` as Apple declares them,
   plus `UNNotificationContent.updating(from:)` and `mutableCopy()`. A donated message
   intent is a long-lived shortcut, and content updated from it a `MessagingStyle`
