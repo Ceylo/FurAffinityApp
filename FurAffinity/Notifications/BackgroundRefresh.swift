@@ -131,7 +131,7 @@ enum BackgroundRefreshManager {
     // MARK: Fetch & Notify
     private static let runGate = BackgroundRefreshRunGate()
 
-    static func performFetchAndNotify() async throws {
+    static func performFetchAndNotify(respectingBudget: Bool = true) async throws {
         guard runGate.tryEnter() else {
             logger.info("Skipping background refresh: a run is already in progress")
             return
@@ -146,6 +146,17 @@ enum BackgroundRefreshManager {
             return
         }
         let soundEnabled = settings.soundSetting == .enabled
+
+        if respectingBudget {
+            var budget = Defaults[.backgroundRefreshBudget]
+            let now = Date()
+            if case .skip(let nextSlot) = budget.decision(now: now, calendar: .current) {
+                logger.info("Skipping background refresh: budget (next slot at \(nextSlot))")
+                return
+            }
+            budget.recordFetch(at: now)
+            Defaults[.backgroundRefreshBudget] = budget
+        }
 
         let submissions: [FASubmissionPreview]
         let notes: [FANotePreview]
