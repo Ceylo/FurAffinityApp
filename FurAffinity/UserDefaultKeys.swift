@@ -43,6 +43,7 @@ extension Defaults.Keys {
     /// The CloudFlare-challenge notification was posted and no run has fetched since, so
     /// later challenged runs don't alert again.
     static let challengeNotificationPosted = Key<Bool>("challengeNotificationPosted", default: false)
+    static let backgroundRefreshBudget = Key<BackgroundRefreshBudget>("backgroundRefreshBudget", default: .init())
     
     static let notifications = [
         notifySubmissions,

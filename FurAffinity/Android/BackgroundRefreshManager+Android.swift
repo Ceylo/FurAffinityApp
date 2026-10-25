@@ -2,7 +2,7 @@
 //  BackgroundRefreshManager+Android.swift
 //  FurAffinityUI (Android)
 //
-//  Android's hooks for the shared background refresh: a periodic JobScheduler job
+//  Android's hooks for the shared background refresh: a JobScheduler job
 //  (FABackgroundRefreshJobService.kt) runs it on a session built from the cookie jar
 //  alone.
 //
@@ -10,6 +10,7 @@
 //  Android/docs/shared-sources.md § Rules for shared sources. The JNI inside is `canImport(Android)`-guarded and no-ops on Darwin.
 //
 
+import Defaults
 import Foundation
 import FAKit
 #if os(Android)
@@ -22,17 +23,17 @@ import SkipBridge
 #endif
 
 extension BackgroundRefreshManager {
-    /// Every 30 minutes, the earliest iOS asks for.
     static func schedule() {
         #if canImport(Android)
-        let minutes: Int64 = 30
+        let now = Date()
+        let delay = Int64(Defaults[.backgroundRefreshBudget].nextRunDate(after: now, calendar: .current).timeIntervalSince(now).rounded(.up))
         Task {
             let scheduled = await callBridgeOffPool("FANotificationBridge", fallback: false) { bridge in
-                let ok: Bool? = try bridge.scheduleBackgroundRefresh(minutes)
+                let ok: Bool? = try bridge.scheduleBackgroundRefresh(delay)
                 return ok == true
             }
             if scheduled {
-                logger.info("Scheduled background refresh (every \(minutes) min)")
+                logger.info("Scheduled background refresh (earliest in \(delay)s)")
             } else {
                 logger.error("Failed scheduling background refresh")
             }

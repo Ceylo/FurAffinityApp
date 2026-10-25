@@ -307,11 +307,12 @@ SkipUI emulates ([forks.md § Local notifications](forks.md#local-notifications)
 platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
 `attaching(_:to:)`; Android's are in `Android/BackgroundRefreshManager+Android.swift`.
 
-- **Scheduling.** `FABackgroundRefreshJobService` is a periodic JobScheduler job (30 min,
-  network required, persisted across reboots), scheduled by `backgroundRefreshLifecycle()`
-  each time the app goes to the background, unless an identical one is already pending,
-  since rescheduling restarts the period. Periodic rather than iOS's self-rechaining
-  one-shot, for the same reason. Not WorkManager: it runs due work directly in a live
+- **Scheduling.** `FABackgroundRefreshJobService` is a one-off JobScheduler job (network
+  required, persisted across reboots) set for the shared `BackgroundRefreshBudget`'s next
+  slot, so it runs about 10 times a day, in the hours the user opens the app. As on iOS,
+  `backgroundRefreshLifecycle()` schedules it each time the app goes to the background,
+  and each run schedules the next once it is over: scheduling a job's id stops a run of
+  it. Not WorkManager: it runs due work directly in a live
   process, outside any job, and Android blocks a backgrounded app's network there
   (`APP_BACKGROUND`), so every fetch failed DNS; a job JobScheduler dispatches has network
   while it runs. The job stands
@@ -327,7 +328,7 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   fall back on, a challenge throws `CloudflareChallengeRequired`, and the run posts the
   "CloudFlare check required" notification with the queue left intact, as on iOS. Building
   the session fetches its first page, so that is usually where the challenge comes from.
-  It posts once per outage (`challengeNotificationPosted`), not on every 30-minute run;
+  It posts once per outage (`challengeNotificationPosted`), not on every run;
   the next successful run, or the user back in the app, removes it and ends the outage. An activity resuming cancels a run in flight.
 - **Conversations.** `enrich` calls the shared `communicationContent`, as iOS does, so
   every notification is a conversation with its author, drawn with their avatar. The
@@ -356,14 +357,16 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   the status bar draws it from its alpha alone.
 
 To force a run, from the background (the job stands down in the foreground), run the
-periodic job itself; its id is `PERIODIC_JOB_ID` in `FANotificationBridge.kt`:
+scheduled job itself; its id is `SCHEDULED_JOB_ID` in `FANotificationBridge.kt`. It only
+fetches once a budget slot has passed, and otherwise logs `Skipping background refresh:
+budget`:
 
 ```
 adb shell cmd jobscheduler run -f <pkg> 1178664961
 ```
 
-Or schedule a one-off run of the same job, with the same network requirement, from a
-debug launch extra, then go Home before it fires:
+Or schedule a debug run, which ignores the budget, with the same network requirement,
+from a debug launch extra, then go Home before it fires:
 
 ```
 adb shell am start -S -n <pkg>/fur.affinity.ui.MainActivity --ei faBackgroundRefreshIn 180
@@ -373,7 +376,7 @@ For a cold process, `kill <pid>` as root first; `am force-stop` would cancel the
 watermarks are the `latest*NotificationID` ints in `shared_prefs/defaults.xml`; lower them
 only while the process is dead, since a live one writes its own back. On the emulator,
 JobScheduler once left a due job `READY` but undispatched while the process was dead;
-`cmd jobscheduler run -f <pkg> 1178664962` (`ONE_OFF_JOB_ID`) starts the one-off.
+`cmd jobscheduler run -f <pkg> 1178664962` (`DEBUG_JOB_ID`) starts the debug run.
 
 ## Notes
 

@@ -13,20 +13,28 @@ struct BackgroundRefreshLifecycleModifier: ViewModifier {
     @Environment(\.scenePhase) var scenePhase
     @State var didRequestNotificationAuthorization = false
     @State var notificationAuthorizationTask: Task<Void, Never>?
+    @State var wentToBackground = false
 
     func body(content: Content) -> some View {
         content
             .onFirstAppear {
+                BackgroundRefreshManager.recordAppOpen()
                 Task { @MainActor in
                     await updateLatestFetchedNotificationIDsAfterAuthorization()
                 }
             }
             .onChange(of: scenePhase) { _, newPhase in
                 if newPhase == .active {
+                    if wentToBackground {
+                        wentToBackground = false
+                        BackgroundRefreshManager.recordAppOpen()
+                    }
                     Task { @MainActor in
                         await updateLatestFetchedNotificationIDsAfterAuthorization()
                     }
                 } else if newPhase == .background {
+                    wentToBackground = true
+                    BackgroundRefreshManager.recordForegroundEnd()
                     Task { @MainActor in
                         await updateLatestFetchedNotificationIDsAfterAuthorization()
                         BackgroundRefreshManager.schedule()

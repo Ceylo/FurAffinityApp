@@ -2,10 +2,9 @@
 //  FABackgroundRefreshJobService.kt
 //  FurAffinity (Android)
 //
-//  Android's BGAppRefreshTask: a periodic JobScheduler job running the shared
-//  `BackgroundRefreshManager.performFetchAndNotify()`. Periodic rather than iOS's
-//  self-rechaining one-shot, since rescheduling restarts the period. FANotificationBridge
-//  schedules it.
+//  Android's BGAppRefreshTask: a JobScheduler job running the shared
+//  `BackgroundRefreshManager.performFetchAndNotify()`. Like iOS's, each run schedules the
+//  next at the budget's next slot. FANotificationBridge schedules it.
 //
 //  JobScheduler rather than WorkManager: WorkManager runs due work directly in a live
 //  process, outside any job, where Android blocks a backgrounded app's network. A job
@@ -34,13 +33,16 @@ class FABackgroundRefreshJobService : JobService() {
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    // By job id: the periodic job and a debug one-off can run in one instance. Main thread only.
+    // By job id: the scheduled job and a debug one can run in one instance. Main thread only.
     private val runs = mutableMapOf<Int, Job>()
 
     override fun onStartJob(params: JobParameters): Boolean {
-        runs[params.jobId] = scope.launch {
+        val run = scope.launch {
             try {
-                FurAffinityUIAppDelegate.shared.performBackgroundRefresh(deviceConditions(params))
+                FurAffinityUIAppDelegate.shared.performBackgroundRefresh(
+                    deviceConditions(params),
+                    params.isScheduled,
+                )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -49,16 +51,27 @@ class FABackgroundRefreshJobService : JobService() {
                 jobFinished(params, false)
             }
         }
+        // Once the run is over, so the onStopJob that scheduling the same id can cause
+        // cancels nothing; and not after a stop, which the system retries instead.
+        if (params.isScheduled) run.invokeOnCompletion { cause ->
+            if (cause == null) FurAffinityUIAppDelegate.shared.scheduleBackgroundRefresh()
+        }
+        runs[params.jobId] = run
         return true
     }
 
     /// The system took the job back (constraint lost, time limit): retry it later.
     override fun onStopJob(params: JobParameters): Boolean {
-        runs.remove(params.jobId)?.cancel()
-        // The coroutine's cancellation doesn't reach the Swift task it awaits.
-        FurAffinityUIAppDelegate.shared.cancelBackgroundRefresh()
+        val run = runs.remove(params.jobId)
+        if (run?.isActive == true) {
+            run.cancel()
+            // The coroutine's cancellation doesn't reach the Swift task it awaits.
+            FurAffinityUIAppDelegate.shared.cancelBackgroundRefresh()
+        }
         return true
     }
+
+    private val JobParameters.isScheduled get() = jobId == FANotificationBridge.SCHEDULED_JOB_ID
 
     override fun onDestroy() {
         scope.cancel()
@@ -77,7 +90,7 @@ class FABackgroundRefreshJobService : JobService() {
         }
         val charging = getSystemService(BatteryManager::class.java)?.isCharging
         val idle = getSystemService(PowerManager::class.java)?.isDeviceIdleMode
-        val job = if (params.jobId == FANotificationBridge.PERIODIC_JOB_ID) "periodic" else "one-off"
+        val job = if (params.isScheduled) "scheduled" else "debug"
         return "standby bucket: $bucket, charging: $charging, device idle: $idle, job: $job"
     }
 }

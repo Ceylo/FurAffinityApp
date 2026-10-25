@@ -24,15 +24,15 @@ import skip.foundation.ProcessInfo
 
 class FANotificationBridge {
     // Boolean, not Unit: AnyDynamicObject can't resolve the void overload.
-    fun scheduleBackgroundRefresh(intervalMinutes: Long): Boolean = Companion.scheduleBackgroundRefresh(intervalMinutes)
+    fun scheduleBackgroundRefresh(delaySeconds: Long): Boolean = Companion.scheduleBackgroundRefresh(delaySeconds)
 
     fun blur(inputPath: String, outputPath: String, radius: Double): Boolean = Companion.blur(inputPath, outputPath, radius)
 
     companion object {
         private const val TAG = "FANotificationBridge"
         /// Far from WorkManager's ids, which count up from 0 on API < 34, where it has no namespace.
-        const val PERIODIC_JOB_ID = 0x46410001
-        private const val ONE_OFF_JOB_ID = 0x46410002
+        const val SCHEDULED_JOB_ID = 0x46410001
+        private const val DEBUG_JOB_ID = 0x46410002
         /// The blur runs on a bitmap this many times smaller (a power of two, for `inSampleSize`).
         private const val DOWNSCALE = 4
 
@@ -41,22 +41,19 @@ class FANotificationBridge {
         private fun job(id: Int) = JobInfo.Builder(id, ComponentName(context, FABackgroundRefreshJobService::class.java))
             .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
 
-        /// Leaves a matching job alone, since rescheduling it restarts its period: calling
-        /// this on every trip to the background mustn't push the next run further out.
-        fun scheduleBackgroundRefresh(intervalMinutes: Long): Boolean = try {
-            val intervalMillis = TimeUnit.MINUTES.toMillis(intervalMinutes)
-            val pending = scheduler.getPendingJob(PERIODIC_JOB_ID)
-            pending != null && pending.intervalMillis == intervalMillis && pending.isPersisted
-                || scheduler.schedule(job(PERIODIC_JOB_ID).setPeriodic(intervalMillis).setPersisted(true).build()) == JobScheduler.RESULT_SUCCESS
+        /// Replaces the pending run, and stops a running one: call it after `jobFinished`.
+        fun scheduleBackgroundRefresh(delaySeconds: Long): Boolean = try {
+            val latency = TimeUnit.SECONDS.toMillis(delaySeconds)
+            scheduler.schedule(job(SCHEDULED_JOB_ID).setMinimumLatency(latency).setPersisted(true).build()) == JobScheduler.RESULT_SUCCESS
         } catch (e: Exception) {
             Log.e(TAG, "scheduleBackgroundRefresh failed: $e")
             false
         }
 
-        /// A one-off run of the same job, for testing: MainActivity's debug extras. Same
-        /// network requirement as the periodic job, so it runs under the same conditions.
+        /// An extra run, for testing: MainActivity's debug extras. Same network requirement
+        /// as the scheduled job, so it runs under the same conditions.
         fun runBackgroundRefresh(delaySeconds: Long) {
-            val result = scheduler.schedule(job(ONE_OFF_JOB_ID).setMinimumLatency(TimeUnit.SECONDS.toMillis(delaySeconds)).build())
+            val result = scheduler.schedule(job(DEBUG_JOB_ID).setMinimumLatency(TimeUnit.SECONDS.toMillis(delaySeconds)).build())
             if (result != JobScheduler.RESULT_SUCCESS) Log.e(TAG, "runBackgroundRefresh: scheduling failed")
         }
 

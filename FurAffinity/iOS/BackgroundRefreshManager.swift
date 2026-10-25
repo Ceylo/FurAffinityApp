@@ -8,6 +8,7 @@
 #if !FA_SKIP_MODULE
 
 import BackgroundTasks
+import Defaults
 import FAKit
 import UserNotifications
 
@@ -94,12 +95,14 @@ extension BackgroundRefreshManager {
         }
     }
 
-    static func schedule(earliestBeginAfter seconds: TimeInterval = 30 * 60) {
+    static func schedule() {
         let request = BGAppRefreshTaskRequest(identifier: taskIdentifier)
-        request.earliestBeginDate = Date(timeIntervalSinceNow: seconds)
+        let now = Date()
+        let earliest = Defaults[.backgroundRefreshBudget].nextRunDate(after: now, calendar: .current)
+        request.earliestBeginDate = earliest
         do {
             try BGTaskScheduler.shared.submit(request)
-            logger.info("Scheduled background refresh (earliest in \(Int(seconds))s)")
+            logger.info("Scheduled background refresh (earliest in \(Int(earliest.timeIntervalSince(now)))s)")
         } catch {
             logger.error("Failed scheduling background refresh: \(error)")
         }
