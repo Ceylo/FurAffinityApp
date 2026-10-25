@@ -40,7 +40,10 @@ class FABackgroundRefreshJobService : JobService() {
     override fun onStartJob(params: JobParameters): Boolean {
         runs[params.jobId] = scope.launch {
             try {
-                FurAffinityUIAppDelegate.shared.performBackgroundRefresh(deviceConditions(params))
+                FurAffinityUIAppDelegate.shared.performBackgroundRefresh(
+                    deviceConditions(params),
+                    params.jobId == FANotificationBridge.PERIODIC_JOB_ID,
+                )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

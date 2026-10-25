@@ -320,6 +320,8 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   `Background refresh run started (standby bucket: …, charging: …, device idle: …)` line
   and an `ended after` one, or a `Skipping` one while the app is in the foreground: a
   tester's exported log shows the actual frequency.
+- **Budget.** The active standby bucket runs the job about 48 times a day, so the shared
+  `BackgroundRefreshBudget` lets 10 of them fetch, in the hours the user opens the app.
 - **A session without a WebView.** JobScheduler may start the process cold, with no
   `FAWebSessionView` mounted, so `FAWebSession.makeBackgroundSession` reads the jar
   through `CookieManager` (`cookieJarHeaderProvider`, HttpOnly cookies included) and

@@ -99,9 +99,11 @@ import SwiftUI
     /// content, and `backgroundRefreshLifecycle()` is advancing the watermarks. An
     /// activity resuming mid-run cancels it, as iOS expires its task. `conditions` is
     /// logged with each run.
-    /* SKIP @bridge */public func performBackgroundRefresh(_ conditions: String) async {
+    /* SKIP @bridge */public func performBackgroundRefresh(_ conditions: String, respectingBudget: Bool) async {
         let refresh: Task<Void, any Error>
-        switch foreground.startBackgroundWork({ Task { try await BackgroundRefreshManager.performFetchAndNotify() } }) {
+        switch foreground.startBackgroundWork({
+            Task { try await BackgroundRefreshManager.performFetchAndNotify(respectingBudget: respectingBudget) }
+        }) {
         case .started(let work):
             refresh = work
         case .inForeground:
