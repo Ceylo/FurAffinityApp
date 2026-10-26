@@ -19,13 +19,18 @@
 
 package fur.affinity.ui
 
+import android.util.Log
+import android.webkit.CookieManager
 import java.net.InetSocketAddress
 import java.net.Proxy
 import okhttp3.Call
 import okhttp3.Connection
+import okhttp3.Cookie
 import okhttp3.EventListener
+import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.Response
 import org.json.JSONObject
 
 /// The FA credentials one call should carry, attached as an OkHttp request tag.
@@ -33,8 +38,10 @@ import org.json.JSONObject
 /// Images pass none and fall back to the pushed pair, which is byte for byte what
 /// they always sent. The page path passes one, because Swift has already computed
 /// that request's cookie header — merged by name, guarded against a stale clearance,
-/// read from the live jar — and **Kotlin never derives a cookie**.
-data class FACredentials(val userAgent: String, val cookie: String)
+/// read from the live jar.
+data class FACredentials(val userAgent: String, val cookie: String) {
+    val responseCookies = mutableMapOf<String, Cookie>()
+}
 
 object FAHttpClient {
     /// Matches FAImageStore's gate and URLSession's per-host default.
@@ -108,6 +115,40 @@ object FAHttpClient {
         this.cookie = cookie
         return true
     }
+
+    // MARK: Response cookies
+    //
+    // FA keeps state in cookies: the notes `folder=` is set on the switchbox 302, and
+    // later /msg/pms/ requests read it back from the jar. Not an OkHttp `CookieJar`:
+    // one would feed images too, and bypass Swift's stale-clearance guard.
+
+    private fun keepResponseCookies(creds: FACredentials, url: HttpUrl, response: Response) {
+        val cookies = Cookie.parseAll(url, response.headers)
+            .filter { !isCloudflareCookie(it.name) }
+        if (cookies.isEmpty()) return
+        cookies.associateByTo(creds.responseCookies) { it.name }
+        try {
+            val manager = CookieManager.getInstance()
+            val urlString = url.toString()
+            cookies.forEach { manager.setCookie(urlString, it.toString()) }
+        } catch (e: Exception) {
+            Log.e("FAHttpClient", "Keeping response cookies failed: $e")
+        }
+    }
+
+    private fun cookieHeader(creds: FACredentials, url: HttpUrl): String {
+        val set = creds.responseCookies.values.filter { it.matches(url) }
+        if (set.isEmpty()) return creds.cookie
+        val names = set.map { it.name }.toSet()
+        val now = System.currentTimeMillis()
+        val kept = creds.cookie.split(";").map { it.trim() }
+            .filter { '=' in it && it.substringBefore("=") !in names }
+        val added = set.filter { it.expiresAt > now }.map { "${it.name}=${it.value}" }
+        return (kept + added).joinToString("; ")
+    }
+
+    private fun isCloudflareCookie(name: String) =
+        name.startsWith("cf_") || name.startsWith("__cf") || name == "_cfuvid"
 
     // Mirrors FAURLs.isFAHost. `HttpUrl` has already lowercased the host.
     fun isFAHost(host: String) =
@@ -183,8 +224,8 @@ object FAHttpClient {
                 // set omits it for the same reason.
                 .addNetworkInterceptor { chain ->
                     val hop = chain.request()
-                    val creds = chain.call().request().tag(FACredentials::class.java)
-                        ?: FACredentials(userAgent, cookie)
+                    val pageCreds = chain.call().request().tag(FACredentials::class.java)
+                    val creds = pageCreds ?: FACredentials(userAgent, cookie)
                     // Image URLs reaching this client are attacker-authored:
                     // FAHTMLNormalizer takes <img src> verbatim out of a user's
                     // description. An `endsWith` gate on the bare name also matches
@@ -192,10 +233,13 @@ object FAHttpClient {
                     // viewer's FA auth cookies and Cloudflare clearance. Third-party
                     // images still load — just unauthenticated.
                     if (hop.isHttps && isFAHost(hop.url.host)) {
-                        chain.proceed(hop.newBuilder().apply {
+                        val cookieLine = cookieHeader(creds, hop.url)
+                        val response = chain.proceed(hop.newBuilder().apply {
                             if (creds.userAgent.isNotEmpty()) header("User-Agent", creds.userAgent)
-                            if (creds.cookie.isNotEmpty()) header("Cookie", creds.cookie)
+                            if (cookieLine.isNotEmpty()) header("Cookie", cookieLine)
                         }.build())
+                        pageCreds?.let { keepResponseCookies(it, hop.url, response) }
+                        response
                     } else {
                         // A redirect off FA must not carry them, per hop — strictly
                         // stronger than scoping the initial request alone.
