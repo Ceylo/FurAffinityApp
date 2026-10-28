@@ -22,8 +22,10 @@ struct UserView: View {
     var banner: some View {
         GeometryReader { geometry in
             FAImage(user.bannerUrl)
+                // Not pulsing: Kingfisher keeps the placeholder if loading fails.
                 .placeholder {
-                    LoadingPlaceholder(cornerRadius: 0)
+                    Rectangle()
+                        .fill(Color.primary.opacity(0.12))
                 }
                 .fade(duration: 0.25)
                 .aspectRatio(contentMode: .fill)
