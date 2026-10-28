@@ -13,6 +13,7 @@ struct TitleAuthorHeader: View {
     var displayName: String
     var title: String
     var datetime: DatetimePair?
+    var datetimePlaceholder = false
     
     var userFATarget: FATarget? {
         guard let userUrl = try? FAURLs.userpageUrl(for: username) else {
@@ -61,6 +62,13 @@ struct TitleAuthorHeader: View {
                     if let datetime {
                         DateTimeButton(datetime: datetime.datetime,
                                        naturalDatetime: datetime.naturalDatetime)
+                    }
+                }
+                // An overlay, so the placeholder can't change the row's height.
+                .overlay(alignment: .trailing) {
+                    if datetime == nil && datetimePlaceholder {
+                        LoadingPlaceholder()
+                            .frame(width: 70, height: 12)
                     }
                 }
             }

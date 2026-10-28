@@ -20,7 +20,8 @@ struct SubmissionPreviewView: View {
             username: submission.author,
             displayName: submission.displayAuthor,
             title: submission.title,
-            datetime: nil
+            datetime: nil,
+            datetimePlaceholder: true
         )
         .padding(.horizontal, 10)
     }
@@ -38,14 +39,31 @@ struct SubmissionPreviewView: View {
         .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
     }
     
+    // Stand-ins for SubmissionControlsView and the description HTMLView.
+    var controlsPlaceholder: some View {
+        LoadingPlaceholder(cornerRadius: 22)
+            .frame(width: 240, height: 44)
+            .frame(maxWidth: .infinity)
+            .frame(height: 55)
+    }
+    
+    var descriptionPlaceholder: some View {
+        // HTMLView insets its text by 8.
+        TextLinesPlaceholder(lineCount: 4)
+            .padding(.horizontal, 8)
+    }
+    
     var body: some View {
         List {
             Group {
                 header
                 mainImage
+                controlsPlaceholder
+                descriptionPlaceholder
             }
             .listRowSeparator(.hidden)
             .listRowInsets(.init(top: 5, leading: 0, bottom: 5, trailing: 0))
+            .listRowBackground(Color.clear)
         }
         .listStyle(.plain)
         .navigationTitle(submission.title)

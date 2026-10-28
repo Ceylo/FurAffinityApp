@@ -176,6 +176,7 @@
 		87F1A0022F0B000100A1B2C3 /* View+floatingGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F1A0012F0B000100A1B2C3 /* View+floatingGlass.swift */; };
 		87F5EE8F29C5D9DD00649C5B /* DateTimeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */; };
 		87F8FA342761347200CDD985 /* TitleAuthorHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA332761347200CDD985 /* TitleAuthorHeader.swift */; };
+		A1B2C3D4E5F6071829304151 /* LoadingPlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6071829304150 /* LoadingPlaceholder.swift */; };
 		87F8FA3627613DD900CDD985 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F8FA3527613DD900CDD985 /* Extensions.swift */; };
 		87F960CB2801EFF3000B30A3 /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F960CA2801EFF3000B30A3 /* AvatarView.swift */; };
 		87FA100A271F5E570021A051 /* FALogging in Frameworks */ = {isa = PBXBuildFile; productRef = 87FA100B271F5E570021A051 /* FALogging */; };
@@ -408,6 +409,7 @@
 		87F1A0012F0B000100A1B2C3 /* View+floatingGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+floatingGlass.swift"; sourceTree = "<group>"; };
 		87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateTimeButton.swift; sourceTree = "<group>"; };
 		87F8FA332761347200CDD985 /* TitleAuthorHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TitleAuthorHeader.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6071829304150 /* LoadingPlaceholder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingPlaceholder.swift; sourceTree = "<group>"; };
 		87F8FA3527613DD900CDD985 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		87F960CA2801EFF3000B30A3 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
 		87FA55E100000000000A55E1 /* AssetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AssetBundle.swift; sourceTree = "<group>"; };
@@ -782,6 +784,7 @@
 				8733DDFE28FAD58D00CD8BCF /* SwapView.swift */,
 				87F5EE8E29C5D9DD00649C5B /* DateTimeButton.swift */,
 				87F8FA332761347200CDD985 /* TitleAuthorHeader.swift */,
+				A1B2C3D4E5F6071829304150 /* LoadingPlaceholder.swift */,
 				870BCA202E3FBC6100E5FC0B /* AuthorHeader.swift */,
 				87D64FCC2C88B00100AB6F44 /* FALink.swift */,
 				87B093392AED6CEA008DFDE7 /* TitleHeader.swift */,
@@ -1114,6 +1117,7 @@
 				87C4435C2C73F29600200991 /* AlignedLabel.swift in Sources */,
 				87D64FC72C88790E00AB6F44 /* UserPreviewView.swift in Sources */,
 				87F8FA342761347200CDD985 /* TitleAuthorHeader.swift in Sources */,
+				A1B2C3D4E5F6071829304151 /* LoadingPlaceholder.swift in Sources */,
 				87B0933E2AED7C47008DFDE7 /* URL.swift in Sources */,
 				8725335F274A70BB007FEF3B /* Model.swift in Sources */,
 				8719C1782DE9C25F0090C6E7 /* NoteEditor.swift in Sources */,

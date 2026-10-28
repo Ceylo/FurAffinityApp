@@ -20,8 +20,7 @@ struct UserPreviewView: View {
     private let bannerHeight = 100.0
     
     var banner: some View {
-        Rectangle()
-            .foregroundStyle(.clear)
+        LoadingPlaceholder(cornerRadius: 0)
             .frame(height: bannerHeight)
     }
     
@@ -41,6 +40,10 @@ struct UserPreviewView: View {
                     
                     UserProfileControlView(username: preview.username)
                         .padding(.vertical, 5)
+                    
+                    // UserView's description HTMLView padding, plus its 8 text inset.
+                    TextLinesPlaceholder(lineCount: 5)
+                        .padding(.horizontal, 23)
                 }
                 .padding(.top, 5)
             }
