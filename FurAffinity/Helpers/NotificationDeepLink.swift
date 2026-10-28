@@ -53,15 +53,33 @@ final class NotificationCoordinator {
         userInfo[NotificationDeepLink.urlKey] as? String
     }
 
+    /// Decodes the submission preview from a notification's `userInfo`, or nil when
+    /// absent (non-submission, or posted by an older version) or undecodable.
+    nonisolated static func submissionPreview(fromUserInfo userInfo: [AnyHashable: Any]) -> FASubmissionPreview? {
+        guard let json = userInfo[NotificationDeepLink.submissionPreviewKey] as? String else {
+            return nil
+        }
+        do {
+            return try JSONDecoder().decode(FASubmissionPreview.self, from: Data(json.utf8))
+        } catch {
+            logger.error("Failed to decode submission preview: \(error)")
+            return nil
+        }
+    }
+
     /// Parses an FA URL string into a navigable target. No-op (leaves
     /// `pendingDeepLink` unchanged at nil) for missing/unmappable URLs.
-    func setPendingDeepLink(fromURLString urlString: String?) {
+    /// `submissionPreview` is attached when the URL is a submission.
+    func setPendingDeepLink(fromURLString urlString: String?, submissionPreview: FASubmissionPreview? = nil) {
         guard let urlString else {
             return
         }
-        guard let target = URL(string: urlString).flatMap(FATarget.init(with:)) else {
+        guard var target = URL(string: urlString).flatMap(FATarget.init(with:)) else {
             logger.error("Deep link is not an in-app target: \(urlString)")
             return
+        }
+        if case let .submission(url, nil) = target, let submissionPreview {
+            target = .submission(url: url, previewData: submissionPreview)
         }
         pendingDeepLink = target
     }
