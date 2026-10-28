@@ -51,6 +51,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -163,13 +164,12 @@ def reclaim(kb, would, did, out, action):
     return True
 
 
-def remove_tree(label, paths, out, kb=None):
-    """Remove file trees, reporting their size, measured unless given."""
-    kb = size_kb(*paths) if kb is None else kb
-
-    def remove():
-        # Like rm -rf: past an entry that won't go (a .DS_Store Finder respawns
-        # mid-delete), on to the rest.
+def rm_rf(paths):
+    """Like rm -rf, retried: Finder writes a .DS_Store into a folder it shows
+    while it is emptied. The paths it could not remove."""
+    for attempt in range(3):
+        if attempt:
+            time.sleep(1)
         errors = []
 
         def record(_, failed_path, exc_info):
@@ -186,6 +186,17 @@ def remove_tree(label, paths, out, kb=None):
                     pass
                 except OSError:
                     errors.append(path)
+        if not errors:
+            break
+    return errors
+
+
+def remove_tree(label, paths, out, kb=None):
+    """Remove file trees, reporting their size, measured unless given."""
+    kb = size_kb(*paths) if kb is None else kb
+
+    def remove():
+        errors = rm_rf(paths)
         if errors:
             fail(f"could not remove all of {label} ({len(errors)} left, first {errors[0]})")
         return not errors
@@ -480,11 +491,15 @@ def remove_worktree(w, out):
     def remove():
         global caller_removed
         flush(out)
-        if git_main("worktree", "remove", w.path, show_errors=True).returncode:
+        p = git_main("worktree", "remove", w.path)
+        worktree_blocks.cache_clear()
+        # A .DS_Store Finder rewrites fails git partway, after it unregistered
+        # the worktree: the rest is ours to remove.
+        if p.returncode and (w.path in worktree_paths() or rm_rf([w.path])):
+            print(p.stderr.rstrip(), file=sys.stderr)
             print(f"  could not remove worktree {w.path}, so left everything else in place",
                   file=sys.stderr)
             return False
-        worktree_blocks.cache_clear()
         caller_removed = caller_removed or under(CALLER_DIR, w.path)
         return True
 
