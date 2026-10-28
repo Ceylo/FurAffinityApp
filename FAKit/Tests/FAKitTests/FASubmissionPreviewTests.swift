@@ -5,7 +5,7 @@
 
 import Testing
 import Foundation
-@testable import FAKit
+import FAKit
 
 struct FASubmissionPreviewTests {
     @Test func codableRoundTrip() throws {

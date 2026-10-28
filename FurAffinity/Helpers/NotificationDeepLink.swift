@@ -22,7 +22,12 @@ enum NotificationDeepLink {
     static let submissionPreviewKey = "fa.deeplink.submissionPreview"
 
     static func encode(_ preview: FASubmissionPreview) -> String? {
-        (try? JSONEncoder().encode(preview)).map { String(decoding: $0, as: UTF8.self) }
+        do {
+            return String(decoding: try JSONEncoder().encode(preview), as: UTF8.self)
+        } catch {
+            logger.error("Failed to encode submission preview: \(error)")
+            return nil
+        }
     }
 
     /// Decodes the submission preview from a notification's `userInfo`, or nil when
@@ -73,7 +78,7 @@ final class NotificationCoordinator {
             logger.error("Deep link is not an in-app target: \(urlString)")
             return
         }
-        if case let .submission(url, nil) = target, let submissionPreview {
+        if case let .submission(url, _) = target, let submissionPreview {
             target = .submission(url: url, previewData: submissionPreview)
         }
         pendingDeepLink = target

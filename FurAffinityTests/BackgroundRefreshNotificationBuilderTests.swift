@@ -223,7 +223,38 @@ struct BackgroundRefreshNotificationBuilderTests {
         ])
         #expect(records.map(\.needsBlur) == [false, false, false])
         // The tapped notification shows this preview before the submission page loads.
-        #expect(records.map(\.submissionPreview) == submissions)
+        #expect(records.map(preview(of:)) == submissions)
+    }
+
+    private func preview(of record: PendingNotificationRecord) -> FASubmissionPreview? {
+        record.submissionPreviewJSON.flatMap {
+            NotificationDeepLink.submissionPreview(fromUserInfo: [NotificationDeepLink.submissionPreviewKey: $0])
+        }
+    }
+
+    @Test func unencodablePreview_stillYieldsTheRecord() throws {
+        // A thumbnail with data-height="0" gives an infinite ratio, which JSON can't encode.
+        let submission = FASubmissionPreview(
+            sid: 1,
+            url: URL(string: "https://www.furaffinity.net/view/1001/")!,
+            thumbnailUrl: URL(string: "https://t.furaffinity.net/1001@200-1637084699.jpg")!,
+            thumbnailWidthOnHeightRatio: .infinity,
+            title: "S1",
+            author: "alice",
+            displayAuthor: "Alice",
+            rating: .general
+        )
+        let records = BackgroundRefreshManager.buildRecords(
+            submissions: [submission],
+            notes: [],
+            submissionComments: [],
+            journalComments: [],
+            shouts: [],
+            journals: []
+        )
+        #expect(records.map(\.dedupKey) == ["submission-1"])
+        #expect(records.map(\.submissionPreviewJSON) == [nil])
+        #expect(throws: Never.self) { try JSONEncoder().encode(records) }
     }
 
     @Test func nonSubmissionRecordsCarryNoPreview() throws {
@@ -235,7 +266,7 @@ struct BackgroundRefreshNotificationBuilderTests {
             shouts: [],
             journals: []
         )
-        #expect(records.map(\.submissionPreview) == [nil])
+        #expect(records.map(\.submissionPreviewJSON) == [nil])
     }
 
     @Test func recordPersistedWithoutPreview_stillDecodes() throws {
@@ -245,7 +276,7 @@ struct BackgroundRefreshNotificationBuilderTests {
         """
         let record = try JSONDecoder().decode(PendingNotificationRecord.self, from: Data(json.utf8))
         #expect(record.dedupKey == "submission-1")
-        #expect(record.submissionPreview == nil)
+        #expect(record.submissionPreviewJSON == nil)
     }
 
     @Test func recordsAreOrderedOldestToNewestWithinEachCategory() throws {
