@@ -23,8 +23,7 @@ struct UserView: View {
         GeometryReader { geometry in
             FAImage(user.bannerUrl)
                 .placeholder {
-                    Rectangle()
-                        .foregroundColor(.white.opacity(0.1))
+                    LoadingPlaceholder(cornerRadius: 0)
                 }
                 .fade(duration: 0.25)
                 .aspectRatio(contentMode: .fill)

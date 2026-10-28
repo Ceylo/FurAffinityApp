@@ -44,7 +44,7 @@ struct SubmissionPreviewView: View {
         LoadingPlaceholder(cornerRadius: 22)
             .frame(width: 240, height: 44)
             .frame(maxWidth: .infinity)
-            .frame(height: 55)
+            .frame(height: submissionControlsHeight)
     }
     
     var descriptionPlaceholder: some View {

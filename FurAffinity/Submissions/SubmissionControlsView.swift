@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-private let buttonsSize: CGFloat = 55
+let submissionControlsHeight: CGFloat = 55
 
 extension Color {
     static let buttonTint: Color = {
@@ -34,7 +34,7 @@ struct ReplyButton: View {
                 AlignedLabel(value: repliesCount, systemImage: "bubble", imageYOffset: -1, materialImageYOffset: 2.67)
                     .tint(Color.buttonTint)
             }
-            .frame(height: buttonsSize-4)
+            .frame(height: submissionControlsHeight-4)
         } else {
             Menu {
                 Text("Comment posting has been disabled")
@@ -43,7 +43,7 @@ struct ReplyButton: View {
                 AlignedLabel(value: repliesCount, systemImage: "exclamationmark.bubble", imageYOffset: -1, materialImageYOffset: 2.67)
                     .tint(.orange)
             }
-            .frame(height: buttonsSize-3)
+            .frame(height: submissionControlsHeight-3)
         }
     }
 }
@@ -96,7 +96,7 @@ struct SubmissionControlsView: View {
                     )
                     .tint(Color.buttonTint)
                 }
-                .frame(height: buttonsSize-4)
+                .frame(height: submissionControlsHeight-4)
                 .sensoryFeedback(.impact, trigger: isFavorite, condition: {
                     $1 == true
                 })
@@ -110,7 +110,7 @@ struct SubmissionControlsView: View {
                         }
                     }
                 }
-                .frame(height: buttonsSize)
+                .frame(height: submissionControlsHeight)
                 .disabled(mediaFileUrl == nil)
                 .sensoryFeedback(.impact, trigger: saveHandler.state, condition: {
                     $1 == .succeeded
@@ -138,7 +138,7 @@ struct SubmissionControlsView: View {
                     .symbolOpticalOffset(y: 2)
                     .foregroundStyle(Color.buttonTint)
             }
-            .frame(height: buttonsSize)
+            .frame(height: submissionControlsHeight)
             .applying {
                 if #available(iOS 26, *), !isAndroidBuild {
                     $0.offset(y: -3)

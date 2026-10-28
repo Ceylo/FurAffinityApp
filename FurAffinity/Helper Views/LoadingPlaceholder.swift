@@ -21,10 +21,10 @@ struct LoadingPlaceholder: View {
             // A faint tint of the text color reads in both light and dark mode.
             .fill(Color.primary.opacity(0.12))
             .opacity(pulsing ? 0.5 : 1)
-            // Keyed on a Bool, not withAnimation, which animates the whole frame on Android.
             .animation(pulse, value: pulsing)
             .task {
                 #if os(Android)
+                // Not withAnimation, which animates the whole frame on Android.
                 pulsing = !reduceMotion
                 #else
                 // In a List row, iOS ignores the implicit animation for this change.
