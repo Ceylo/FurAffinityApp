@@ -31,7 +31,7 @@ final class NotificationCenterDelegate: NSObject, UNUserNotificationCenterDelega
         // Extract the Sendable values off-actor; do NOT block on a main-actor hop here.
         let userInfo = response.notification.request.content.userInfo
         let urlString = NotificationCoordinator.deepLinkURLString(fromUserInfo: userInfo)
-        let submissionPreview = NotificationCoordinator.submissionPreview(fromUserInfo: userInfo)
+        let submissionPreview = NotificationDeepLink.submissionPreview(fromUserInfo: userInfo)
         if let urlString {
             Task { @MainActor in
                 NotificationCoordinator.shared.setPendingDeepLink(fromURLString: urlString, submissionPreview: submissionPreview)

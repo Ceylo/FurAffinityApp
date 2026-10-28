@@ -262,8 +262,7 @@ enum BackgroundRefreshManager {
     }
 
     private static func submissionRecord(_ submission: FASubmissionPreview) -> PendingNotificationRecord {
-        // Resolve the same 400px thumbnail the attachment builder consumes, now so it
-        // can be persisted and downloaded later without the FAKit type.
+        // Resolve the same 400px thumbnail the attachment builder consumes.
         let thumbnailURL = submission.dynamicThumbnail.bestThumbnailUrl(for: CGSize(width: 400, height: 400))
         return record(
             emoji: nil,

@@ -19,7 +19,7 @@ final class NotificationCenterDelegate: NSObject, UNUserNotificationCenterDelega
         }
         let userInfo = response.notification.request.content.userInfo
         let urlString = NotificationCoordinator.deepLinkURLString(fromUserInfo: userInfo)
-        let submissionPreview = NotificationCoordinator.submissionPreview(fromUserInfo: userInfo)
+        let submissionPreview = NotificationDeepLink.submissionPreview(fromUserInfo: userInfo)
         await NotificationCoordinator.shared.setPendingDeepLink(fromURLString: urlString, submissionPreview: submissionPreview)
     }
 }

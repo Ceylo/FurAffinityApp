@@ -133,13 +133,13 @@ struct NotificationCoordinatorTests {
     @Test func submissionPreview_roundTripsThroughUserInfo() throws {
         let json = try #require(NotificationDeepLink.encode(preview))
         let userInfo: [AnyHashable: Any] = [NotificationDeepLink.submissionPreviewKey: json]
-        #expect(NotificationCoordinator.submissionPreview(fromUserInfo: userInfo) == preview)
+        #expect(NotificationDeepLink.submissionPreview(fromUserInfo: userInfo) == preview)
     }
 
     @Test func submissionPreview_missingOrGarbage_returnsNil() {
-        #expect(NotificationCoordinator.submissionPreview(fromUserInfo: [:]) == nil)
+        #expect(NotificationDeepLink.submissionPreview(fromUserInfo: [:]) == nil)
         let userInfo: [AnyHashable: Any] = [NotificationDeepLink.submissionPreviewKey: "{not json"]
-        #expect(NotificationCoordinator.submissionPreview(fromUserInfo: userInfo) == nil)
+        #expect(NotificationDeepLink.submissionPreview(fromUserInfo: userInfo) == nil)
     }
 
     @Test func submissionURL_withPreview_carriesIt() {

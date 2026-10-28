@@ -11,10 +11,10 @@ import SwiftUI
 
 /// Contract for the deep-link payload carried by local notifications.
 ///
-/// Only the FA URL is stored: `FATarget(with:)` is the single interpreter of
-/// that URL, so routing (including which tab to open) is derived from the URL
-/// itself. This keeps notifications posted by older app versions routable and
-/// avoids any need for a payload version field.
+/// Routing comes from the FA URL alone: `FATarget(with:)` is its single interpreter,
+/// down to which tab to open. This keeps notifications posted by older app versions routable and
+/// avoids any need for a payload version field. A submission's preview rides along
+/// only to show it sooner.
 enum NotificationDeepLink {
     static let urlKey = "fa.deeplink.url"
     /// A submission's `FASubmissionPreview` as a JSON string, so the tapped submission
@@ -22,10 +22,19 @@ enum NotificationDeepLink {
     static let submissionPreviewKey = "fa.deeplink.submissionPreview"
 
     static func encode(_ preview: FASubmissionPreview) -> String? {
+        (try? JSONEncoder().encode(preview)).map { String(decoding: $0, as: UTF8.self) }
+    }
+
+    /// Decodes the submission preview from a notification's `userInfo`, or nil when
+    /// absent (non-submission, or posted by an older version) or undecodable.
+    static func submissionPreview(fromUserInfo userInfo: [AnyHashable: Any]) -> FASubmissionPreview? {
+        guard let json = userInfo[submissionPreviewKey] as? String else {
+            return nil
+        }
         do {
-            return String(decoding: try JSONEncoder().encode(preview), as: UTF8.self)
+            return try JSONDecoder().decode(FASubmissionPreview.self, from: Data(json.utf8))
         } catch {
-            logger.error("Failed to encode submission preview: \(error)")
+            logger.error("Failed to decode submission preview: \(error)")
             return nil
         }
     }
@@ -51,20 +60,6 @@ final class NotificationCoordinator {
     /// `UNNotificationResponse`.
     nonisolated static func deepLinkURLString(fromUserInfo userInfo: [AnyHashable: Any]) -> String? {
         userInfo[NotificationDeepLink.urlKey] as? String
-    }
-
-    /// Decodes the submission preview from a notification's `userInfo`, or nil when
-    /// absent (non-submission, or posted by an older version) or undecodable.
-    nonisolated static func submissionPreview(fromUserInfo userInfo: [AnyHashable: Any]) -> FASubmissionPreview? {
-        guard let json = userInfo[NotificationDeepLink.submissionPreviewKey] as? String else {
-            return nil
-        }
-        do {
-            return try JSONDecoder().decode(FASubmissionPreview.self, from: Data(json.utf8))
-        } catch {
-            logger.error("Failed to decode submission preview: \(error)")
-            return nil
-        }
     }
 
     /// Parses an FA URL string into a navigable target. No-op (leaves
