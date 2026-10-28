@@ -222,6 +222,30 @@ struct BackgroundRefreshNotificationBuilderTests {
             "https://t.furaffinity.net/1003@400-1637084699.jpg",
         ])
         #expect(records.map(\.needsBlur) == [false, false, false])
+        // The tapped notification shows this preview before the submission page loads.
+        #expect(records.map(\.submissionPreview) == submissions)
+    }
+
+    @Test func nonSubmissionRecordsCarryNoPreview() throws {
+        let records = BackgroundRefreshManager.buildRecords(
+            submissions: [],
+            notes: [makeNote(id: 1)],
+            submissionComments: [],
+            journalComments: [],
+            shouts: [],
+            journals: []
+        )
+        #expect(records.map(\.submissionPreview) == [nil])
+    }
+
+    @Test func recordPersistedWithoutPreview_stillDecodes() throws {
+        let json = """
+        {"dedupKey":"submission-1","title":"T","body":"b","author":"a",
+         "url":"https://www.furaffinity.net/view/1001/","needsBlur":false}
+        """
+        let record = try JSONDecoder().decode(PendingNotificationRecord.self, from: Data(json.utf8))
+        #expect(record.dedupKey == "submission-1")
+        #expect(record.submissionPreview == nil)
     }
 
     @Test func recordsAreOrderedOldestToNewestWithinEachCategory() throws {

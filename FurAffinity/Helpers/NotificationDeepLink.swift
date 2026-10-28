@@ -5,6 +5,7 @@
 //  Created by Ceylo on 02/06/2026.
 //
 
+import FAKit
 import Foundation
 import SwiftUI
 
@@ -16,6 +17,18 @@ import SwiftUI
 /// avoids any need for a payload version field.
 enum NotificationDeepLink {
     static let urlKey = "fa.deeplink.url"
+    /// A submission's `FASubmissionPreview` as a JSON string, so the tapped submission
+    /// shows its preview before the page loads. A string survives Android's `userInfo`.
+    static let submissionPreviewKey = "fa.deeplink.submissionPreview"
+
+    static func encode(_ preview: FASubmissionPreview) -> String? {
+        do {
+            return String(decoding: try JSONEncoder().encode(preview), as: UTF8.self)
+        } catch {
+            logger.error("Failed to encode submission preview: \(error)")
+            return nil
+        }
+    }
 }
 
 /// Exposes the deep-link target of the latest notification tap.
