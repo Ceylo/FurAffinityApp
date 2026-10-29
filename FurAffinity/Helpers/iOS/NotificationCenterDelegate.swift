@@ -28,11 +28,13 @@ final class NotificationCenterDelegate: NSObject, UNUserNotificationCenterDelega
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping @Sendable () -> Void
     ) {
-        // Extract the Sendable String off-actor; do NOT block on a main-actor hop here.
-        let urlString = NotificationCoordinator.deepLinkURLString(fromUserInfo: response.notification.request.content.userInfo)
+        // Extract the Sendable values off-actor; do NOT block on a main-actor hop here.
+        let userInfo = response.notification.request.content.userInfo
+        let urlString = NotificationCoordinator.deepLinkURLString(fromUserInfo: userInfo)
+        let submissionPreview = NotificationDeepLink.submissionPreview(fromUserInfo: userInfo)
         if let urlString {
             Task { @MainActor in
-                NotificationCoordinator.shared.setPendingDeepLink(fromURLString: urlString)
+                NotificationCoordinator.shared.setPendingDeepLink(fromURLString: urlString, submissionPreview: submissionPreview)
             }
         }
         // Signal completion right away so the system finishes foregrounding the app.

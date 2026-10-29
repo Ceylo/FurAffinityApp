@@ -222,6 +222,59 @@ struct BackgroundRefreshNotificationBuilderTests {
             "https://t.furaffinity.net/1003@400-1637084699.jpg",
         ])
         #expect(records.map(\.needsBlur) == [false, false, false])
+        #expect(records.map(preview(of:)) == submissions)
+    }
+
+    private func preview(of record: PendingNotificationRecord) -> FASubmissionPreview? {
+        record.submissionPreviewJSON.flatMap {
+            NotificationDeepLink.submissionPreview(fromUserInfo: [NotificationDeepLink.submissionPreviewKey: $0])
+        }
+    }
+
+    @Test func unencodablePreview_stillYieldsTheRecord() throws {
+        let submission = FASubmissionPreview(
+            sid: 1,
+            url: URL(string: "https://www.furaffinity.net/view/1001/")!,
+            thumbnailUrl: URL(string: "https://t.furaffinity.net/1001@200-1637084699.jpg")!,
+            thumbnailWidthOnHeightRatio: .infinity,
+            title: "S1",
+            author: "alice",
+            displayAuthor: "Alice",
+            rating: .general
+        )
+        let records = BackgroundRefreshManager.buildRecords(
+            submissions: [submission],
+            notes: [],
+            submissionComments: [],
+            journalComments: [],
+            shouts: [],
+            journals: []
+        )
+        #expect(records.map(\.dedupKey) == ["submission-1"])
+        #expect(records.map(\.submissionPreviewJSON) == [nil])
+        #expect(throws: Never.self) { try JSONEncoder().encode(records) }
+    }
+
+    @Test func nonSubmissionRecordsCarryNoPreview() throws {
+        let records = BackgroundRefreshManager.buildRecords(
+            submissions: [],
+            notes: [makeNote(id: 1)],
+            submissionComments: [],
+            journalComments: [],
+            shouts: [],
+            journals: []
+        )
+        #expect(records.map(\.submissionPreviewJSON) == [nil])
+    }
+
+    @Test func recordPersistedWithoutPreview_stillDecodes() throws {
+        let json = """
+        {"dedupKey":"submission-1","title":"T","body":"b","author":"a",
+         "url":"https://www.furaffinity.net/view/1001/","needsBlur":false}
+        """
+        let record = try JSONDecoder().decode(PendingNotificationRecord.self, from: Data(json.utf8))
+        #expect(record.dedupKey == "submission-1")
+        #expect(record.submissionPreviewJSON == nil)
     }
 
     @Test func recordsAreOrderedOldestToNewestWithinEachCategory() throws {

@@ -262,8 +262,7 @@ enum BackgroundRefreshManager {
     }
 
     private static func submissionRecord(_ submission: FASubmissionPreview) -> PendingNotificationRecord {
-        // Resolve the same 400px thumbnail the attachment builder consumes, now so it
-        // can be persisted and downloaded later without the FAKit type.
+        // Resolve the same 400px thumbnail the attachment builder consumes.
         let thumbnailURL = submission.dynamicThumbnail.bestThumbnailUrl(for: CGSize(width: 400, height: 400))
         return record(
             emoji: nil,
@@ -273,11 +272,12 @@ enum BackgroundRefreshManager {
             author: submission.author,
             url: submission.url,
             thumbnailURLString: thumbnailURL.absoluteString,
-            needsBlur: submission.rating != .general
+            needsBlur: submission.rating != .general,
+            submissionPreviewJSON: NotificationDeepLink.encode(submission)
         )
     }
 
-    private static func record(emoji: String?, dedupKey: String, displayAuthor: String, body: String, author: String, url: URL, thumbnailURLString: String? = nil, needsBlur: Bool = false) -> PendingNotificationRecord {
+    private static func record(emoji: String?, dedupKey: String, displayAuthor: String, body: String, author: String, url: URL, thumbnailURLString: String? = nil, needsBlur: Bool = false, submissionPreviewJSON: String? = nil) -> PendingNotificationRecord {
         // Prepend a type emoji when present: communication enrichment drops `title`, so
         // the emoji is what conveys the notification type (note/journal/…) in the
         // message line. Submissions pass `nil` since their thumbnail carries that meaning.
@@ -291,7 +291,8 @@ enum BackgroundRefreshManager {
             author: author,
             url: url.absoluteString,
             thumbnailURLString: thumbnailURLString,
-            needsBlur: needsBlur
+            needsBlur: needsBlur,
+            submissionPreviewJSON: submissionPreviewJSON
         )
     }
 
@@ -562,6 +563,9 @@ enum BackgroundRefreshManager {
         content.body = record.body
         // Carry the FA URL so a tap can deep-link to the related content.
         content.userInfo = [NotificationDeepLink.urlKey: record.url]
+        if let json = record.submissionPreviewJSON {
+            content.userInfo[NotificationDeepLink.submissionPreviewKey] = json
+        }
         // Set sound on the mutable content before enrichment so it carries into the
         // immutable content returned by updating(from:).
         if soundEnabled {

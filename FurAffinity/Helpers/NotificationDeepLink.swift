@@ -5,17 +5,42 @@
 //  Created by Ceylo on 02/06/2026.
 //
 
+import FAKit
 import Foundation
 import SwiftUI
 
 /// Contract for the deep-link payload carried by local notifications.
 ///
-/// Only the FA URL is stored: `FATarget(with:)` is the single interpreter of
-/// that URL, so routing (including which tab to open) is derived from the URL
-/// itself. This keeps notifications posted by older app versions routable and
-/// avoids any need for a payload version field.
+/// Routing comes from the FA URL alone: `FATarget(with:)` is its single interpreter,
+/// down to which tab to open. This keeps notifications posted by older app versions routable and
+/// avoids any need for a payload version field. A submission's preview rides along
+/// only to show it sooner.
 enum NotificationDeepLink {
     static let urlKey = "fa.deeplink.url"
+    /// A submission's `FASubmissionPreview` as a JSON string, so the tapped submission
+    /// shows its preview before the page loads. A string survives Android's `userInfo`.
+    static let submissionPreviewKey = "fa.deeplink.submissionPreview"
+
+    static func encode(_ preview: FASubmissionPreview) -> String? {
+        do {
+            return String(decoding: try JSONEncoder().encode(preview), as: UTF8.self)
+        } catch {
+            logger.error("Failed to encode submission preview: \(error)")
+            return nil
+        }
+    }
+
+    static func submissionPreview(fromUserInfo userInfo: [AnyHashable: Any]) -> FASubmissionPreview? {
+        guard let json = userInfo[submissionPreviewKey] as? String else {
+            return nil
+        }
+        do {
+            return try JSONDecoder().decode(FASubmissionPreview.self, from: Data(json.utf8))
+        } catch {
+            logger.error("Failed to decode submission preview: \(error)")
+            return nil
+        }
+    }
 }
 
 /// Exposes the deep-link target of the latest notification tap.
@@ -42,13 +67,16 @@ final class NotificationCoordinator {
 
     /// Parses an FA URL string into a navigable target. No-op (leaves
     /// `pendingDeepLink` unchanged at nil) for missing/unmappable URLs.
-    func setPendingDeepLink(fromURLString urlString: String?) {
+    func setPendingDeepLink(fromURLString urlString: String?, submissionPreview: FASubmissionPreview? = nil) {
         guard let urlString else {
             return
         }
-        guard let target = URL(string: urlString).flatMap(FATarget.init(with:)) else {
+        guard var target = URL(string: urlString).flatMap(FATarget.init(with:)) else {
             logger.error("Deep link is not an in-app target: \(urlString)")
             return
+        }
+        if case let .submission(url, _) = target, let submissionPreview {
+            target = .submission(url: url, previewData: submissionPreview)
         }
         pendingDeepLink = target
     }

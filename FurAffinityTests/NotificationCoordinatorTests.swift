@@ -116,4 +116,48 @@ struct NotificationCoordinatorTests {
         let userInfo: [AnyHashable: Any] = [NotificationDeepLink.urlKey: 42]
         #expect(NotificationCoordinator.deepLinkURLString(fromUserInfo: userInfo) == nil)
     }
+
+    // MARK: - Submission preview
+
+    private let preview = FASubmissionPreview(
+        sid: 1234,
+        url: URL(string: "https://www.furaffinity.net/view/1234/")!,
+        thumbnailUrl: URL(string: "https://t.furaffinity.net/1234@200-1637084699.jpg")!,
+        thumbnailWidthOnHeightRatio: 1.0,
+        title: "Title",
+        author: "author",
+        displayAuthor: "Author",
+        rating: .general
+    )
+
+    @Test func submissionPreview_roundTripsThroughUserInfo() throws {
+        let json = try #require(NotificationDeepLink.encode(preview))
+        let userInfo: [AnyHashable: Any] = [NotificationDeepLink.submissionPreviewKey: json]
+        #expect(NotificationDeepLink.submissionPreview(fromUserInfo: userInfo) == preview)
+    }
+
+    @Test func submissionPreview_missingOrGarbage_returnsNil() {
+        #expect(NotificationDeepLink.submissionPreview(fromUserInfo: [:]) == nil)
+        let userInfo: [AnyHashable: Any] = [NotificationDeepLink.submissionPreviewKey: "{not json"]
+        #expect(NotificationDeepLink.submissionPreview(fromUserInfo: userInfo) == nil)
+    }
+
+    @Test func submissionURL_withPreview_carriesIt() {
+        let coordinator = NotificationCoordinator()
+        coordinator.setPendingDeepLink(fromURLString: preview.url.absoluteString, submissionPreview: preview)
+        guard case let .submission(_, previewData) = coordinator.pendingDeepLink else {
+            Issue.record("Expected .submission")
+            return
+        }
+        #expect(previewData == preview)
+    }
+
+    @Test func nonSubmissionURL_ignoresPreview() {
+        let coordinator = NotificationCoordinator()
+        coordinator.setPendingDeepLink(fromURLString: "https://www.furaffinity.net/journal/77/", submissionPreview: preview)
+        guard case .journal = coordinator.pendingDeepLink else {
+            Issue.record("Expected .journal")
+            return
+        }
+    }
 }
