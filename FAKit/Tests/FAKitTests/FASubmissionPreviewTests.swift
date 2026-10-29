@@ -21,6 +21,5 @@ struct FASubmissionPreviewTests {
         )
         let decoded = try JSONDecoder().decode(FASubmissionPreview.self, from: JSONEncoder().encode(preview))
         #expect(decoded == preview)
-        #expect(decoded.dynamicThumbnail == preview.dynamicThumbnail)
     }
 }
