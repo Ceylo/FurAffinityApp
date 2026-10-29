@@ -30,8 +30,6 @@ enum NotificationDeepLink {
         }
     }
 
-    /// Decodes the submission preview from a notification's `userInfo`, or nil when
-    /// absent (non-submission, or posted by an older version) or undecodable.
     static func submissionPreview(fromUserInfo userInfo: [AnyHashable: Any]) -> FASubmissionPreview? {
         guard let json = userInfo[submissionPreviewKey] as? String else {
             return nil
@@ -69,7 +67,6 @@ final class NotificationCoordinator {
 
     /// Parses an FA URL string into a navigable target. No-op (leaves
     /// `pendingDeepLink` unchanged at nil) for missing/unmappable URLs.
-    /// `submissionPreview` is attached when the URL is a submission.
     func setPendingDeepLink(fromURLString urlString: String?, submissionPreview: FASubmissionPreview? = nil) {
         guard let urlString else {
             return

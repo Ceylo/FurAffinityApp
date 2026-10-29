@@ -222,7 +222,6 @@ struct BackgroundRefreshNotificationBuilderTests {
             "https://t.furaffinity.net/1003@400-1637084699.jpg",
         ])
         #expect(records.map(\.needsBlur) == [false, false, false])
-        // The tapped notification shows this preview before the submission page loads.
         #expect(records.map(preview(of:)) == submissions)
     }
 
@@ -233,7 +232,6 @@ struct BackgroundRefreshNotificationBuilderTests {
     }
 
     @Test func unencodablePreview_stillYieldsTheRecord() throws {
-        // A thumbnail with data-height="0" gives an infinite ratio, which JSON can't encode.
         let submission = FASubmissionPreview(
             sid: 1,
             url: URL(string: "https://www.furaffinity.net/view/1001/")!,

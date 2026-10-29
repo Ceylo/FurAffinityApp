@@ -31,8 +31,5 @@ struct PendingNotificationRecord: Codable, Defaults.Serializable, Equatable {
     let thumbnailURLString: String?
     /// Whether the thumbnail attachment must be blurred (rating != .general).
     let needsBlur: Bool
-    /// The submission's preview as `userInfo` carries it (submissions only). Kept as
-    /// JSON so a preview that fails to encode or decode costs the preview, never the
-    /// record; optional so a queue persisted before it existed still decodes.
     var submissionPreviewJSON: String? = nil
 }
