@@ -13,6 +13,7 @@ struct TitleAuthorHeader: View {
     var displayName: String
     var title: String
     var datetime: DatetimePair?
+    var datetimePlaceholder = false
     
     var userFATarget: FATarget? {
         guard let userUrl = try? FAURLs.userpageUrl(for: username) else {
@@ -40,6 +41,10 @@ struct TitleAuthorHeader: View {
     var secondaryText: String {
         "by " + displayName
     }
+
+    var showsDatetimePlaceholder: Bool {
+        datetime == nil && datetimePlaceholder
+    }
     
     var body: some View {
         HStack(alignment: .top) {
@@ -57,10 +62,18 @@ struct TitleAuthorHeader: View {
                     Text(secondaryText)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
+                        .padding(.trailing, showsDatetimePlaceholder ? 78 : 0)
                     Spacer()
                     if let datetime {
                         DateTimeButton(datetime: datetime.datetime,
                                        naturalDatetime: datetime.naturalDatetime)
+                    }
+                }
+                // An overlay, so the placeholder can't change the row's height.
+                .overlay(alignment: .trailing) {
+                    if showsDatetimePlaceholder {
+                        LoadingPlaceholder()
+                            .frame(width: 70, height: 12)
                     }
                 }
             }
