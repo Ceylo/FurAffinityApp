@@ -62,7 +62,6 @@ struct TitleAuthorHeader: View {
                     Text(secondaryText)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                        // Keeps a long name clear of the overlaid placeholder.
                         .padding(.trailing, showsDatetimePlaceholder ? 78 : 0)
                     Spacer()
                     if let datetime {

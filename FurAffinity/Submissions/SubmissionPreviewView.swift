@@ -39,16 +39,13 @@ struct SubmissionPreviewView: View {
         .aspectRatio(CGFloat(submission.thumbnailWidthOnHeightRatio), contentMode: .fit)
     }
     
-    // Stand-ins for SubmissionControlsView and the description HTMLView.
     var controlsPlaceholder: some View {
         LoadingPlaceholder(cornerRadius: 22)
             .frame(width: 240, height: 44)
-            .frame(maxWidth: .infinity)
-            .frame(height: submissionControlsHeight)
+            .frame(maxWidth: .infinity, minHeight: submissionControlsHeight)
     }
     
     var descriptionPlaceholder: some View {
-        // HTMLView insets its text by 8.
         TextLinesPlaceholder(lineCount: 4)
             .padding(.horizontal, 8)
     }

@@ -41,7 +41,6 @@ struct UserPreviewView: View {
                     UserProfileControlView(username: preview.username)
                         .padding(.vertical, 5)
                     
-                    // UserView's description HTMLView padding, plus its 8 text inset.
                     TextLinesPlaceholder(lineCount: 5)
                         .padding(.horizontal, 23)
                 }

@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-/// A pulsing shape standing in for content that is still loading.
 struct LoadingPlaceholder: View {
     var cornerRadius: CGFloat = 6
     // Not private: skipstone bridges only the state it can see.
@@ -18,7 +17,6 @@ struct LoadingPlaceholder: View {
 
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius)
-            // A faint tint of the text color reads in both light and dark mode.
             .fill(Color.primary.opacity(0.12))
             .opacity(pulsing ? 0.5 : 1)
             .animation(pulse, value: pulsing)
@@ -36,7 +34,6 @@ struct LoadingPlaceholder: View {
     }
 }
 
-/// Placeholder bars shaped like a paragraph of body text.
 struct TextLinesPlaceholder: View {
     var lineCount: Int
 
