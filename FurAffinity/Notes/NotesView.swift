@@ -82,7 +82,7 @@ struct NotesView: View {
             } label: {
                 Image(systemName: "line.3.horizontal.decrease.circle")
                     .symbolVariant(showUnreadNotesOnly ? .fill : .none)
-                    .foregroundStyle(showUnreadNotesOnly ? Color.accentColor : .buttonTint)
+                    .foregroundStyle(showUnreadNotesOnly ? Color.accentColor : .primary)
             }
         }
 
@@ -94,9 +94,7 @@ struct NotesView: View {
             }
         }
         
-        if #available(iOS 26, *) {
-            ToolbarSpacer()
-        }
+        ToolbarSpacer()
         
         ToolbarItem {
             Button {

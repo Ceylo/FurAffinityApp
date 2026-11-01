@@ -42,26 +42,14 @@ struct CloudflareResolutionOverlay: View {
         }
     }
 
-    @ViewBuilder
     private var pill: some View {
         Button {
             CloudflareChallengeCoordinator.shared.markInteractionRequired()
         } label: {
-            if #available(iOS 26, *) {
-                pillContent
-                    .floatingGlass()
-            } else {
-                materialPill
-            }
+            pillContent
+                .floatingGlass()
         }
         .buttonStyle(.plain)
-    }
-
-    private var materialPill: some View {
-        pillContent
-            .background(.thinMaterial)
-            .cornerRadius(16)
-            .shadow(color: .black.opacity(0.33), radius: Self.shadowRadius, x: 0, y: 0)
     }
 
     private var pillContent: some View {

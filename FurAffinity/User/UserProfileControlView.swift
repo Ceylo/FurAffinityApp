@@ -13,43 +13,26 @@ struct UserProfileControlView: View {
     @Environment(\.navigationStream) var navigationStream
     
     var body: some View {
-        if #available(iOS 26, *) {
-            ScrollView(.horizontal) {
-                HStack {
-                    ForEach(UserProfileControl.allCases) { control in
-                        // Not FALink: it applies .buttonStyle(.borderless) in its
-                        // own body, which would override the .glass style below.
-                        Button {
-                            navigationStream.send(control.target(for: username))
-                        } label: {
-                            Text(control.title)
-                                .font(.headline)
-                                .padding(5)
-                        }
-                        .buttonStyle(.glass)
+        ScrollView(.horizontal) {
+            HStack {
+                ForEach(UserProfileControl.allCases) { control in
+                    // Not FALink: it applies .buttonStyle(.borderless) in its
+                    // own body, which would override the .glass style below.
+                    Button {
+                        navigationStream.send(control.target(for: username))
+                    } label: {
+                        Text(control.title)
+                            .font(.headline)
+                            .padding(5)
                     }
-                }
-                .padding(5)
-            }
-            #if !FA_SKIP_MODULE
-            .scrollClipDisabled()
-            #endif
-        } else {
-            ScrollView(.horizontal) {
-                HStack(spacing: 0) {
-                    ForEach(UserProfileControl.allCases) { control in
-                        Button {
-                            navigationStream.send(control.target(for: username))
-                        } label: {
-                            Text(control.title)
-                                .font(.headline)
-                                .padding(15)
-                        }
-                    }
+                    .buttonStyle(.glass)
                 }
             }
-            .background(.regularMaterial)
+            .padding(5)
         }
+        #if !FA_SKIP_MODULE
+        .scrollClipDisabled()
+        #endif
     }
 }
 

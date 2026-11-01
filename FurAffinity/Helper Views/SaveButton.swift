@@ -28,7 +28,7 @@ struct SaveButton: View {
         } label: {
             Image(systemName: state.saveButtonImageName)
                 .resizable()
-                .tint(Color.buttonTint)
+                .tint(.primary)
                 .aspectRatio(contentMode: .fit)
                 .padding()
                 .transition(.opacity.animation(.default))

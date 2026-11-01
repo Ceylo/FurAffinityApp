@@ -75,13 +75,7 @@ struct SubmissionTextContent: View {
                 }
             }
             .controlSize(.large)
-            .applying {
-                if #available(iOS 26, *) {
-                    $0.buttonStyle(.glassProminent)
-                } else {
-                    $0.buttonStyle(.borderedProminent)
-                }
-            }
+            .buttonStyle(.glassProminent)
             .disabled(isDownloading)
             .padding(.horizontal, 10)
         }

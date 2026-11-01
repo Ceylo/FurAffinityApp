@@ -296,8 +296,8 @@ skip-fuse-ui:
   gives a Fuse module no access to its subviews. `Helper Views/Android/FlowLayout+Android.swift`
   keeps the iOS call signature.
 - **`AnyTransition.animation`**, **`glassEffectUnion`** and **`glassEffectID`** are
-  pass-throughs rather than unavailable: `#available(iOS 26, *)` is true off-Apple, so
-  shared code takes its Liquid Glass branch on Android.
+  pass-throughs rather than unavailable: shared code calls the Liquid Glass APIs
+  unconditionally.
 - **SF Symbol mappings** for the symbols this app uses; unmapped names render as a
   warning triangle. Most are upstream (skip-ui #525, mapped by the symbol's shape);
   `text.badge.star` → Info stays fork-only, and the tab icons `rectangle.grid.2x2` →

@@ -73,12 +73,8 @@ struct NotificationsActionView: View {
                 try await nuker.nukeAllJournalNotifications()
             }
             .applying { control in
-                if #available(iOS 26, *) {
-                    GlassEffectContainer {
-                        control.floatingGlass()
-                    }
-                } else {
-                    control
+                GlassEffectContainer {
+                    control.floatingGlass()
                 }
             }
         }

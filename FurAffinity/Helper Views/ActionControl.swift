@@ -23,31 +23,19 @@ struct ActionControl: View {
     }
 
     var body: some View {
-        if #available(iOS 26, *) {
-            if _opaque {
-                Image(systemName: systemImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .tint(.primary)
-                    .frame(width: size, height: size)
-                    .padding(10)
-                    .offset(y: 1)
-            } else {
-                Image(systemName: systemImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: size, height: size)
-            }
+        if _opaque {
+            Image(systemName: systemImage)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .tint(.primary)
+                .frame(width: size, height: size)
+                .padding(10)
+                .offset(y: 1)
         } else {
             Image(systemName: systemImage)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: size, height: size)
-                .foregroundColor(.accentColor)
-                .padding(5)
-                .background(.thinMaterial)
-                .clipShape(Circle())
-                .padding(5)
         }
     }
 }
@@ -59,16 +47,12 @@ struct ActionControl: View {
         // of the same style — the two glass capsules should match in size.
         Color.clear
             .overlay(alignment: .topTrailing) {
-                Button {} label: {
-                    ActionControl(systemImage: "heart")
-                        .opaque()
-                }
-                .applying { control in
-                    if #available(iOS 26, *) {
-                        GlassEffectContainer { control.floatingGlass() }
-                    } else {
-                        control
+                GlassEffectContainer {
+                    Button {} label: {
+                        ActionControl(systemImage: "heart")
+                            .opaque()
                     }
+                    .floatingGlass()
                 }
                 .padding(.trailing, 16)
             }

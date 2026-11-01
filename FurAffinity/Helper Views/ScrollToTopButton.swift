@@ -22,14 +22,7 @@ struct ScrollToTopButton: View {
                 .opaque()
         }
         .accessibilityLabel("Scroll to top")
-        .applying {
-            if #available(iOS 26, *) {
-                $0.floatingGlass()
-            } else {
-                // Below iOS 26, `ActionControl` draws its own material circle.
-                $0.shadow(color: .black.opacity(0.33), radius: NotificationOverlay.shadowRadius)
-            }
-        }
+        .floatingGlass()
         // Room for the shadow, as in `NotificationOverlay`.
         .padding(NotificationOverlay.shadowRadius)
         // State-driven: `.opacity`/`.offset` animate from a scoped animation on both

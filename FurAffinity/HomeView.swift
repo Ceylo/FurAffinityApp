@@ -8,6 +8,7 @@
 import SwiftUI
 import FAKit
 
+#if FA_SKIP_MODULE
 // Not private: skipstone can't bridge a private @State/@Environment.
 struct HomeViewButtonContents: View {
     var text: String
@@ -41,6 +42,7 @@ struct HomeViewButtonContents: View {
         }
     }
 }
+#endif
 
 struct HomeView: View {
     // Not private: skipstone can't bridge a private @State/@Environment.
@@ -74,8 +76,9 @@ struct HomeView: View {
         try await task.value
     }
     
+#if FA_SKIP_MODULE
     @ViewBuilder
-    var legacyButtons: some View {
+    var androidButtons: some View {
         Button {
             showLoginView = true
         } label: {
@@ -86,9 +89,7 @@ struct HomeView: View {
             HomeViewButtonContents(text: "Register")
         }
     }
-
-#if !FA_SKIP_MODULE
-    @available(iOS 26, *)
+#else
     @ViewBuilder
     var glassButtons: some View {
         Button("Login with furaffinity.net  ") {
@@ -117,18 +118,12 @@ struct HomeView: View {
                         AppIcon()
                         
                         VStack(spacing: 30) {
-                            // `#available(iOS 26, *)` is vacuously true off-Apple, so
-                            // Skip would take the Liquid Glass branch, whose styles
-                            // Compose draws as plain bordered buttons; the legacy
-                            // ones are styled on purpose.
+                            // Compose draws the glass styles as plain bordered
+                            // buttons, so Android styles its own.
 #if FA_SKIP_MODULE
-                            legacyButtons
+                            androidButtons
 #else
-                            if #available(iOS 26, *) {
-                                glassButtons
-                            } else {
-                                legacyButtons
-                            }
+                            glassButtons
 #endif
                         }
                         .padding(.horizontal)

@@ -36,14 +36,7 @@ struct AudioPlayerControls: View {
                     .padding(.trailing, controller.isPlaying ? 3 : 0)
                     .padding(.vertical, 8)
             }
-            .applying {
-                if #available(iOS 26, *) {
-                    $0.buttonStyle(.glassProminent)
-                } else {
-                    $0.buttonStyle(.borderedProminent)
-                        .clipShape(Circle())
-                }
-            }
+            .buttonStyle(.glassProminent)
 
             VStack {
                 AudioScrubber(
