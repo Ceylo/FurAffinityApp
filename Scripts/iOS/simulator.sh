@@ -42,6 +42,8 @@ done
 
 # --- find or create the device ----------------------------------------------
 
+command -v jq >/dev/null || die "jq is missing"
+
 device_udid() {
     xcrun simctl list devices available -j \
         | jq -r --arg name "$NAME" '[.devices[][] | select(.name == $name)][0].udid // empty'

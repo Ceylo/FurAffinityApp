@@ -8,7 +8,7 @@
 import SwiftUI
 import FAKit
 
-#if FA_SKIP_MODULE
+// Android-only, but unguarded: skipstone doesn't bridge a view inside `#if FA_SKIP_MODULE`.
 // Not private: skipstone can't bridge a private @State/@Environment.
 struct HomeViewButtonContents: View {
     var text: String
@@ -42,7 +42,6 @@ struct HomeViewButtonContents: View {
         }
     }
 }
-#endif
 
 struct HomeView: View {
     // Not private: skipstone can't bridge a private @State/@Environment.
@@ -76,7 +75,6 @@ struct HomeView: View {
         try await task.value
     }
     
-#if FA_SKIP_MODULE
     @ViewBuilder
     var androidButtons: some View {
         Button {
@@ -89,7 +87,8 @@ struct HomeView: View {
             HomeViewButtonContents(text: "Register")
         }
     }
-#else
+
+#if !FA_SKIP_MODULE
     @ViewBuilder
     var glassButtons: some View {
         Button("Login with furaffinity.net  ") {
