@@ -135,10 +135,6 @@ directory>`, an `iPhone 17 / iOS 26.5` created on first use (`--help` for anothe
 device type, `--shutdown` to stop one). Each worktree gets its own so branches
 don't overwrite each other's app container; shut down the ones you aren't using.
 
-Destination-by-id also retires the `OS=26.5` pinning trap: a bare
-`name=iPhone 17` resolves to `OS:latest`, the locally-installed iOS 27.0 beta
-runtime, which has only an "iPhone 17 **Pro**" and so matches nothing.
-
 On Android, with the emulator running (`Scripts/Android/start-emulator.sh`):
 
 ```
