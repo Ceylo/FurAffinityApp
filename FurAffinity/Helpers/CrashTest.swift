@@ -26,6 +26,10 @@ enum CrashTestCase: String, CaseIterable {
 }
 
 enum CrashTest {
+    static var isArmed: Bool {
+        UserDefaults.standard.string(forKey: "FACrashTest") != nil
+    }
+
     /// Writes the crash-reporting setting from outside the UI, for the checker's
     /// opt-out control. A launch argument can't do it: `-crashReportingEnabled NO`
     /// lands in the argument domain as the *string* "NO", which `Defaults` ignores.

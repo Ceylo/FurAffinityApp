@@ -63,7 +63,7 @@ jobs:
       - uses: mxcl/xcodebuild@v3
         with:
           action: none
-          xcode: ~27.0
+          xcode: ~27.2
       - name: Trust package plugins and macros
         run: Scripts/iOS/trust-swiftpm-extensions.sh
       - name: Build App

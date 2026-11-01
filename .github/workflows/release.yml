@@ -68,7 +68,7 @@ jobs:
       - uses: mxcl/xcodebuild@v3
         with:
           action: none
-          xcode: ~27.0
+          xcode: ~27.2
       - name: Install sentry-cli
         run: |
           # The archive's "Upload dSYMs" target needs it, and fails

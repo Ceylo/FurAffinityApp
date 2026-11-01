@@ -303,5 +303,5 @@ The cases live in `FurAffinity/Helpers/CrashTest.swift` and
 main-thread hang, there because non-fatal events take a path crashes do not — it
 is how the `culture` context was found.
 
-Last full run: iOS 2026-09-19, Android 2026-09-20, every case passing, each with
-the right `commit` tag.
+Last full run: iOS 2026-11-01 (Xcode 27.2), Android 2026-09-20, every case passing,
+each with the right `commit` tag.
