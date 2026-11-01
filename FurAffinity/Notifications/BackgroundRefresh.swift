@@ -114,6 +114,8 @@ enum BackgroundRefreshManager {
 
     // MARK: Notification Authorization
     static func requestNotificationAuthorizationIfNeeded() async {
+        // The prompt keeps the app inactive, and Sentry reports no hang then.
+        guard !CrashTest.isArmed else { return }
         let center = UNUserNotificationCenter.current()
         let settings = await center.notificationSettings()
         guard settings.authorizationStatus == .notDetermined else {
