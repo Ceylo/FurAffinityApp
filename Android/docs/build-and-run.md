@@ -370,7 +370,7 @@ as `key.suite`.
 
 The Swift toolchain and the Swift Android SDK (installed together by `skip android sdk
 install --version X`) must be at least as new as the Swift in the selected Xcode: host
-code builds against its macOS SDK. Xcode 27 needs Swift **6.4**; a 6.3 toolchain fails
+code builds against its macOS SDK. Xcode 27.2 needs Swift **6.4.2**; a 6.3 toolchain fails
 with `unknown argument: '-target-arch-variant'` or a swift-frontend segfault. Keep only
 one `*_android` SDK installed (`swift sdk list`), or `skip android test` finds the
 triple ambiguous.
