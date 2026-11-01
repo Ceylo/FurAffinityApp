@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "FAKit",
-    platforms: [.iOS(.v18), .macOS(.v14)],
+    platforms: [.iOS("26.5"), .macOS(.v14)],
     products: [
         // One product for both targets, so FAPages, SwiftSoup and OrderedCollections get
         // one image — see Android/docs/shared-sources.md § One module, one image.

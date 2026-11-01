@@ -51,8 +51,8 @@ The app displays furaffinity.net login webpage to let you enter account details.
 As of May 2022, Fur Affinity staff allows the use of the application as long as it does not make excessive requests to furaffinity.net. This goes against apps that download the full gallery of a user for instance, but not against this app which, from furaffinity.net's point of view, behaves very similarly to a usual web browsing experience.
 
 ## Technologies and requirements
-This project is fully written in Swift and is based on SwiftUI, Swift Concurrency and other APIs introduced in iOS 18.
-As such iOS 18.0 or later is required to run the latest version of the app. If you're still on iOS 17, the latest compatible version is 1.17.
+This project is fully written in Swift and is based on SwiftUI, Swift Concurrency and other APIs introduced in iOS 26.
+As such iOS 26.5 or later is required to run the latest version of the app. If you're still on iOS 18, the latest compatible version is 1.19.
 
 The Android app is built from the same source with [Skip](https://skip.dev); Android 9.0 or later on a 64-bit ARM device is required.
 
