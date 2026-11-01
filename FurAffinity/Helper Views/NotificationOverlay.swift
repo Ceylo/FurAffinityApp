@@ -51,7 +51,6 @@ struct NotificationOverlay: View {
         ZStack {
             if let itemCount {
                 badge(itemCount)
-                    // Before the transition's opacity.
                     .padding(Self.shadowRadius)
                     // Constant, so a new count updates the text in place.
                     .id("badge")

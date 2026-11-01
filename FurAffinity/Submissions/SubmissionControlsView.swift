@@ -126,7 +126,7 @@ struct SubmissionControlsView: View {
                     .aspectRatio(contentMode: .fit)
                     .padding()
                     .symbolOpticalOffset(y: 2)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Color.primary)
             }
             .frame(height: submissionControlsHeight)
             .applying {

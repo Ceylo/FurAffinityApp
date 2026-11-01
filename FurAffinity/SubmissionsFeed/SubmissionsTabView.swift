@@ -102,7 +102,6 @@ struct SubmissionsTabView: View {
         }
     }
 
-    @ViewBuilder
     private var floatingControls: some View {
         GlassEffectContainer {
             HStack(spacing: 10) {
