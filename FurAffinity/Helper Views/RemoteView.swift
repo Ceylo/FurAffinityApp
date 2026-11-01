@@ -84,15 +84,7 @@ struct PreviewableRemoteView<Data: Sendable & Equatable, ContentsView: View, Pre
     var loadingViewWithBackground: some View {
         loadingView
             .padding(20)
-            .applying {
-                if #available(iOS 26, *) {
-                    $0.floatingGlass(in: RoundedRectangle(cornerRadius: 10))
-                } else {
-                    $0
-                        .background(.thinMaterial)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                }
-            }
+            .floatingGlass(in: RoundedRectangle(cornerRadius: 10))
     }
     
     var body: some View {

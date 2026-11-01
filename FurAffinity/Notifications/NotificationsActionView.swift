@@ -22,64 +22,58 @@ struct NotificationsActionView: View {
     
     var body: some View {
         if hasSubmissionComments || hasJournalComments || hasShouts || hasJournals {
-            Menu {
-                if hasSubmissionComments {
-                    Button(role: .destructive) {
-                        showNukeSubmissionCommentsAlert = true
-                    } label: {
-                        Label("Nuke All Submission Comments", systemImage: "trash")
+            GlassEffectContainer {
+                Menu {
+                    if hasSubmissionComments {
+                        Button(role: .destructive) {
+                            showNukeSubmissionCommentsAlert = true
+                        } label: {
+                            Label("Nuke All Submission Comments", systemImage: "trash")
+                        }
                     }
-                }
                 
-                if hasJournalComments {
-                    Button(role: .destructive) {
-                        showNukeJournalCommentsAlert = true
-                    } label: {
-                        Label("Nuke All Journal Comments", systemImage: "trash")
+                    if hasJournalComments {
+                        Button(role: .destructive) {
+                            showNukeJournalCommentsAlert = true
+                        } label: {
+                            Label("Nuke All Journal Comments", systemImage: "trash")
+                        }
                     }
-                }
                 
-                if hasShouts {
-                    Button(role: .destructive) {
-                        showNukeShoutsAlert = true
-                    } label: {
-                        Label("Nuke All Shouts", systemImage: "trash")
+                    if hasShouts {
+                        Button(role: .destructive) {
+                            showNukeShoutsAlert = true
+                        } label: {
+                            Label("Nuke All Shouts", systemImage: "trash")
+                        }
                     }
-                }
                 
-                if hasJournals {
-                    Button(role: .destructive) {
-                        showNukeJournalsAlert = true
-                    } label: {
-                        Label("Nuke All Journals", systemImage: "trash")
+                    if hasJournals {
+                        Button(role: .destructive) {
+                            showNukeJournalsAlert = true
+                        } label: {
+                            Label("Nuke All Journals", systemImage: "trash")
+                        }
                     }
+                } label: {
+                    ActionControl()
+                        .opaque()
                 }
-            } label: {
-                ActionControl()
-                    .opaque()
-            }
-            .nukeAlert("Submission Comments", "submission comment notifications",
-                       show: $showNukeSubmissionCommentsAlert) {
-                try await nuker.nukeAllSubmissionCommentNotifications()
-            }
-            .nukeAlert("Journal Comments", "journal comment notifications",
-                       show: $showNukeJournalCommentsAlert) {
-                try await nuker.nukeAllJournalCommentNotifications()
-            }
-            .nukeAlert("Shouts", "shout notifications", show: $showNukeShoutsAlert) {
-                try await nuker.nukeAllShoutNotifications()
-            }
-            .nukeAlert("Journals", "journal notifications", show: $showNukeJournalsAlert) {
-                try await nuker.nukeAllJournalNotifications()
-            }
-            .applying { control in
-                if #available(iOS 26, *) {
-                    GlassEffectContainer {
-                        control.floatingGlass()
-                    }
-                } else {
-                    control
+                .nukeAlert("Submission Comments", "submission comment notifications",
+                           show: $showNukeSubmissionCommentsAlert) {
+                    try await nuker.nukeAllSubmissionCommentNotifications()
                 }
+                .nukeAlert("Journal Comments", "journal comment notifications",
+                           show: $showNukeJournalCommentsAlert) {
+                    try await nuker.nukeAllJournalCommentNotifications()
+                }
+                .nukeAlert("Shouts", "shout notifications", show: $showNukeShoutsAlert) {
+                    try await nuker.nukeAllShoutNotifications()
+                }
+                .nukeAlert("Journals", "journal notifications", show: $showNukeJournalsAlert) {
+                    try await nuker.nukeAllJournalNotifications()
+                }
+                .floatingGlass()
             }
         }
     }

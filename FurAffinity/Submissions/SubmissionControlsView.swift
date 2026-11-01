@@ -9,16 +9,6 @@ import SwiftUI
 
 let submissionControlsHeight: CGFloat = 55
 
-extension Color {
-    static let buttonTint: Color = {
-        if #available(iOS 26, *) {
-            Color.primary
-        } else {
-            Color.accentColor
-        }
-    }()
-}
-
 struct ReplyButton: View {
     var repliesCount: Int
     var acceptsNewReplies: Bool
@@ -32,7 +22,7 @@ struct ReplyButton: View {
                 // Material's bubble sits its body above the box's centre to make room for
                 // the tail; this puts the body level with the count's digits.
                 AlignedLabel(value: repliesCount, systemImage: "bubble", imageYOffset: -1, materialImageYOffset: 2.67)
-                    .tint(Color.buttonTint)
+                    .tint(.primary)
             }
             .frame(height: submissionControlsHeight-4)
         } else {
@@ -94,7 +84,7 @@ struct SubmissionControlsView: View {
                         // Top of the heart level with the digits' top, as on iOS.
                         materialImageYOffset: 1.9
                     )
-                    .tint(Color.buttonTint)
+                    .tint(.primary)
                 }
                 .frame(height: submissionControlsHeight-4)
                 .sensoryFeedback(.impact, trigger: isFavorite, condition: {
@@ -123,7 +113,7 @@ struct SubmissionControlsView: View {
                 )
             }
             .applying {
-                if #available(iOS 26, *), !isAndroidBuild {
+                if !isAndroidBuild {
                     $0.offset(y: -3)
                         .padding(-5)
                         .floatingGlass(.regular.interactive())
@@ -136,11 +126,11 @@ struct SubmissionControlsView: View {
                     .aspectRatio(contentMode: .fit)
                     .padding()
                     .symbolOpticalOffset(y: 2)
-                    .foregroundStyle(Color.buttonTint)
+                    .foregroundStyle(Color.primary)
             }
             .frame(height: submissionControlsHeight)
             .applying {
-                if #available(iOS 26, *), !isAndroidBuild {
+                if !isAndroidBuild {
                     $0.offset(y: -3)
                         .padding(-5)
                         .floatingGlass(.regular.interactive())
@@ -197,13 +187,6 @@ struct SubmissionControlsView: View {
         Rectangle()
             .fill(.clear)
             .border(.secondary)
-            .applying {
-                if #available(iOS 26, *) {
-                    $0
-                } else {
-                    $0.offset(y: 3)
-                }
-            }
             .frame(height: 18)
     }
 }

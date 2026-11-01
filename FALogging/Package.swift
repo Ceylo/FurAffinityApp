@@ -17,7 +17,7 @@ import PackageDescription
 
 let package = Package(
     name: "FALogging",
-    platforms: [.iOS(.v18), .macOS(.v14)],
+    platforms: [.iOS("26.5"), .macOS(.v14)],
     products: [
         // OSCompat (empty off Android) rides along so it has one image — see
         // Android/docs/shared-sources.md § One module, one image.

@@ -35,29 +35,13 @@ struct NotificationOverlay: View {
         }
     }
     
-    @ViewBuilder
     func badge(_ count: Int) -> some View {
-        if #available(iOS 26, *) {
-            Text(text(count: count))
-                .font(.callout)
-                .foregroundColor(Color.primary)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .floatingGlass()
-        } else {
-            materialBadge(count)
-        }
-    }
-
-    func materialBadge(_ count: Int) -> some View {
         Text(text(count: count))
             .font(.callout)
             .foregroundColor(Color.primary)
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            .background(.thinMaterial)
-            .cornerRadius(16)
-            .shadow(color: .black.opacity(0.33), radius: Self.shadowRadius, x: 0, y: 0)
+            .floatingGlass()
     }
     
     var body: some View {
@@ -67,8 +51,6 @@ struct NotificationOverlay: View {
         ZStack {
             if let itemCount {
                 badge(itemCount)
-                    // Before the transition's opacity, and here rather than in
-                    // `materialBadge`, so both badge branches get the same geometry.
                     .padding(Self.shadowRadius)
                     // Constant, so a new count updates the text in place.
                     .id("badge")

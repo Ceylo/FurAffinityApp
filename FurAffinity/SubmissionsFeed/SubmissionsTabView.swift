@@ -102,29 +102,19 @@ struct SubmissionsTabView: View {
         }
     }
 
-    @ViewBuilder
     private var floatingControls: some View {
-        if #available(iOS 26, *) {
-            GlassEffectContainer {
-                HStack(spacing: 10) {
-                    #if !FA_SKIP_MODULE
-                    modeSwitch
-                        .floatingGlass()
-                    #endif
-                    contextAction
-                        .floatingGlass()
-                }
-                #if !FA_SKIP_MODULE
-                .glassEffectUnion(id: "floatingControls", namespace: namespace)
-                #endif
-            }
-        } else {
-            HStack(spacing: 8) {
+        GlassEffectContainer {
+            HStack(spacing: 10) {
                 #if !FA_SKIP_MODULE
                 modeSwitch
+                    .floatingGlass()
                 #endif
                 contextAction
+                    .floatingGlass()
             }
+            #if !FA_SKIP_MODULE
+            .glassEffectUnion(id: "floatingControls", namespace: namespace)
+            #endif
         }
     }
 

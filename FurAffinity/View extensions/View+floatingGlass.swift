@@ -9,12 +9,10 @@ extension View {
     /// `glassEffect` for a control floating over content. Android draws glass as an
     /// opaque M3 surface whose dark shadow is lost on dark content, so in dark mode it
     /// also casts a light one.
-    @available(iOS 26, *)
     func floatingGlass(_ glass: Glass = .regular) -> some View {
         glassEffect(glass).darkModeGlow()
     }
 
-    @available(iOS 26, *)
     func floatingGlass(_ glass: Glass = .regular, in shape: some Shape) -> some View {
         glassEffect(glass, in: shape).darkModeGlow()
     }

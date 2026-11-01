@@ -45,13 +45,7 @@ struct CommentEditor: View {
                         actionInProgress = nil
                     }
                 }
-                .applying {
-                    if #available(iOS 26, *) {
-                        $0.buttonStyle(.glass)
-                    } else {
-                        $0.buttonStyle(.bordered)
-                    }
-                }
+                .buttonStyle(.glass)
                 .disabled(actionInProgress != nil)
                 
                 if actionInProgress == .cancel {
@@ -66,13 +60,7 @@ struct CommentEditor: View {
                         actionInProgress = nil
                     }
                 }
-                .applying {
-                    if #available(iOS 26, *) {
-                        $0.buttonStyle(.glassProminent)
-                    } else {
-                        $0.buttonStyle(.borderedProminent)
-                    }
-                }
+                .buttonStyle(.glassProminent)
                 .disabled(!reply.isValidForSubmission || actionInProgress != nil)
                 
                 if actionInProgress == .submit {
