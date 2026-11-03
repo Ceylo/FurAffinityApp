@@ -75,6 +75,27 @@ skip_env() {
     sed -nE "s@^[[:space:]]*$1[[:space:]]*=[[:space:]]*([^[:space:]]+).*@\1@p" "$ROOT/Skip.env" | head -1
 }
 
+# The distribution stash overrides the app id, so read it rather than
+# assuming the placeholder com.example.id1234.
+APP_ID="$(skip_env ANDROID_APPLICATION_ID)"
+[[ -n "$APP_ID" ]] || APP_ID="$(skip_env PRODUCT_BUNDLE_IDENTIFIER)"
+[[ -n "$APP_ID" ]] || die "no app id in $ROOT/Skip.env"
+
+# The debug build carries a per-worktree suffix (Android/app/build.gradle.kts);
+# a release or distribution install does not.
+WORKTREE="$(basename "$ROOT")"
+SUFFIXED="$APP_ID.${WORKTREE//[^A-Za-z0-9_]/_}"
+
+# Skip.env only names the id of the *current* tree: a release APK built with the
+# distribution stash (ceylo.FurAffinity) is installed under an id it no longer holds.
+MAIN_ACTIVITY="$(skip_env ANDROID_PACKAGE_NAME).MainActivity"
+OWN_IDS=("$SUFFIXED" "$APP_ID")
+while IFS= read -r id; do
+    [[ "$id" == "$APP_ID."* || "$id" == "$APP_ID" ]] || OWN_IDS+=("$id")
+done < <("$ADB" shell cmd package query-activities --components \
+            -a android.intent.action.MAIN -c android.intent.category.LAUNCHER 2>/dev/null \
+         | tr -d '\r' | awk -F/ -v main="$MAIN_ACTIVITY" '$2 == main { print $1 }')
+
 # --- partial coloring -------------------------------------------------------
 
 # logcat's own -v color paints the whole line, message included. This repaints
@@ -154,28 +175,16 @@ logcat() {
 # --- everything from the app process ----------------------------------------
 
 if (( ALL )); then
-    # The distribution stash overrides the app id, so read it rather than
-    # assuming the placeholder com.example.id1234.
-    APP_ID="$(skip_env ANDROID_APPLICATION_ID)"
-    [[ -n "$APP_ID" ]] || APP_ID="$(skip_env PRODUCT_BUNDLE_IDENTIFIER)"
-    [[ -n "$APP_ID" ]] || die "no app id in $ROOT/Skip.env"
-
     app_pid() {
-        "$ADB" shell pidof "$1" 2>/dev/null | tr -d '\r' | awk '{print $1}'
+        { "$ADB" shell pidof "$1" 2>/dev/null || true; } | tr -d '\r' | awk '{print $1}'
     }
 
-    # The debug build carries a per-worktree suffix (Android/app/build.gradle.kts);
-    # a release or distribution install does not, so fall back to the bare id.
-    WORKTREE="$(basename "$ROOT")"
-    SUFFIXED="$APP_ID.${WORKTREE//[^A-Za-z0-9_]/_}"
-
-    PID="$(app_pid "$SUFFIXED")"
-    if [[ -n "$PID" ]]; then
-        APP_ID="$SUFFIXED"
-    else
-        PID="$(app_pid "$APP_ID")"
-    fi
-    [[ -n "$PID" ]] || die "neither $SUFFIXED nor $APP_ID is running — launch it with \`Scripts/Android/run.sh\`"
+    PID=""
+    for id in "${OWN_IDS[@]}"; do
+        PID="$(app_pid "$id")"
+        [[ -n "$PID" ]] && break
+    done
+    [[ -n "$PID" ]] || die "none of ${OWN_IDS[*]} is running — launch it with \`Scripts/Android/run.sh\`"
 
     logcat "${ARGS[@]}" --pid="$PID" "${EXTRA_TAGS[@]}"
     exit
@@ -184,17 +193,11 @@ fi
 # --- our tags only ----------------------------------------------------------
 
 # PersistentLogger tags as "<subsystem>/<category>", and every module's subsystem
-# is the installed applicationId (FALogSubsystem, installed at startup). A debug
-# build carries a per-worktree suffix and a release install does not, so match both.
-APP_ID="$(skip_env ANDROID_APPLICATION_ID)"
-[[ -n "$APP_ID" ]] || APP_ID="$(skip_env PRODUCT_BUNDLE_IDENTIFIER)"
-[[ -n "$APP_ID" ]] || die "no app id in $ROOT/Skip.env"
-
+# is the installed applicationId (FALogSubsystem, installed at startup).
 # "FurAffinity" is FALogSubsystem.fallback, what a process that installs no override
 # logs under — the `skip android test` runner, whose output is worth seeing here too.
-WORKTREE="$(basename "$ROOT")"
 TAGS=()
-for id in "$APP_ID.${WORKTREE//[^A-Za-z0-9_]/_}" "$APP_ID" FurAffinity; do
+for id in "${OWN_IDS[@]}" FurAffinity; do
     TAGS+=("$id/FA" "$id/FAKit" "$id/FAPages")
 done
 
@@ -220,7 +223,7 @@ done < <(grep -hoE 'val TAG[^=]*=[[:space:]]*"[^"]+"' \
 # `-v uid`. Every FA app id but ours is foreign; a bare id (a release or
 # distribution install) is ours.
 FOREIGN_UIDS="$("$ADB" shell pm list packages -U 2>/dev/null | tr -d '\r' | awk \
-    -v ours="$APP_ID.${WORKTREE//[^A-Za-z0-9_]/_}" -v bare="$APP_ID" '
+    -v ours="$SUFFIXED" -v bare="$APP_ID" '
         {
             sub(/^package:/, "", $1)
             sub(/^uid:/, "", $2)
