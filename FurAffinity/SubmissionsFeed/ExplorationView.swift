@@ -5,18 +5,17 @@
 //  Created by Ceylo on 21/06/2026.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
-import Collections
+import OrderedCollections
 
 /// The "Explore" mode of the Submissions tab: displays furaffinity.net search
 /// results, reusing the watched-feed card layout. The query (free text, tags,
 /// and filters) is edited in the Filters sheet; this screen only renders the
 /// current results and loads the initial page.
 struct ExplorationView: View {
-    @Environment(Model.self) private var model
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(Model.self) var model
 
     private var loadMoreRow: some View {
         HStack {
@@ -139,5 +138,3 @@ struct ExplorationView: View {
         .environment($0.errorStorage)
     }
 }
-
-#endif

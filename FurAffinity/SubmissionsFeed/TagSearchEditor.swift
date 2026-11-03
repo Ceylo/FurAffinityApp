@@ -5,8 +5,6 @@
 //  Created by Ceylo on 02/07/2026.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import OrderedCollections
 
@@ -22,9 +20,10 @@ import OrderedCollections
 struct TagSearchEditor: View {
     @Binding var tags: OrderedSet<String>
 
-    @State private var isAddingTag = false
-    @State private var newTagText = ""
-    @FocusState private var addFieldFocused: Bool
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var isAddingTag = false
+    @State var newTagText = ""
+    @FocusState var addFieldFocused: Bool
 
     /// `id` is the base tag (label without `!`) so toggling include/exclude keeps
     /// the same identity and recolors in place instead of collapsing.
@@ -217,5 +216,3 @@ struct TagSearchEditor: View {
         }
     }
 }
-
-#endif
