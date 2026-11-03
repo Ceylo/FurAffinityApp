@@ -51,7 +51,7 @@ struct ExplorationView: View {
             .listStyle(.plain)
             .scrollDismissesKeyboard(.immediately)
             .refreshable { await model.refreshSearch() }
-            .prefetchingPreviews(model.searchResults, availableWidth: geometry.size.width)
+            .prefetchingPreviews(model.searchResults, availableWidth: geometry.faSize.width)
         }
     }
 
