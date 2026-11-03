@@ -20,6 +20,9 @@
     <!-- Keeps the background refresh's job scheduled across reboots (setPersisted). -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
     <!-- allowBackup is off deliberately: there are no backup rules, so the WebView's
          cookie jar — the FA auth cookies and cf_clearance — would otherwise be eligible
          for Google cloud backup, and restoring it onto another device would hand over a
@@ -54,6 +57,17 @@
             android:name=".FABackgroundRefreshJobService"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <!-- Exported, as Media3 requires: the system UI and media buttons bind to
+             the session through it. -->
+        <service
+            android:name=".FAAudioPlaybackService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+            </intent-filter>
+        </service>
 
         <!-- Shared files live in the app cache, which no other app may read directly;
              FAMediaBridge stages them here and shares a content:// URI. -->
