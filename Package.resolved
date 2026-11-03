@@ -1,5 +1,5 @@
 {
-  "originHash" : "a9e5cf8b52f18c4bdb291f161db4a4781a6719507d6f6bcf6ea02125bc5674a0",
+  "originHash" : "ab82703657610e53ddbf9df423699ad04941a9968fce7d6e88fcccbb9bc50a7a",
   "pins" : [
     {
       "identity" : "cache",
@@ -106,7 +106,7 @@
       "location" : "https://github.com/Ceylo/skip-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "c491a7ef49b0ae3ec178e0799dec10788a26c786"
+        "revision" : "fb34c9b8eaabd3d715e3443d1940bc45660b8759"
       }
     },
     {
