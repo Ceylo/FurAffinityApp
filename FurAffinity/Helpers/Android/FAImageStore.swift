@@ -112,17 +112,14 @@ actor FAImageStore {
     /// the fetch and the decode use, since `Task.detached` would block the
     /// cooperative pool. `.low`: every caller is housekeeping.
     func performingFileIO(_ work: @escaping @Sendable () -> Void) async {
-        await gated(.low, for: nil, work)
+        await gated(.low, work)
     }
 
     func promote(_ url: URL) {
         promoted.insert(url)
-        let (moved, kept) = lowPriorityWaiters.reduce(into: ([Waiter](), [Waiter]())) {
-            if $1.url == url { $0.0.append($1) } else { $0.1.append($1) }
-        }
-        guard !moved.isEmpty else { return }
-        lowPriorityWaiters = kept
-        highPriorityWaiters += moved
+        guard lowPriorityWaiters.contains(where: { $0.url == url }) else { return }
+        highPriorityWaiters += lowPriorityWaiters.filter { $0.url == url }
+        lowPriorityWaiters.removeAll { $0.url == url }
     }
 
     func forgetPromotion(_ url: URL) {
@@ -284,7 +281,7 @@ actor FAImageStore {
     /// operations are outstanding. Suspends rather than blocking while waiting.
     private func gated<T: Sendable>(
         _ priority: FAImagePriority,
-        for url: URL?,
+        for url: URL? = nil,
         _ work: @escaping @Sendable () -> T
     ) async -> T {
         await acquire(priority, for: url)
@@ -307,12 +304,11 @@ actor FAImageStore {
             active += 1
             return
         }
-        let isHigh = priority == .high || url.map(promoted.contains) == true
+        let priority = url.map(promoted.contains) == true ? .high : priority
         await withCheckedContinuation { continuation in
-            if isHigh {
-                highPriorityWaiters.append((url, continuation))
-            } else {
-                lowPriorityWaiters.append((url, continuation))
+            switch priority {
+            case .high: highPriorityWaiters.append((url, continuation))
+            case .low: lowPriorityWaiters.append((url, continuation))
             }
         }
     }
