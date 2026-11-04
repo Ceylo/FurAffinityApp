@@ -44,7 +44,6 @@ struct StoryParagraphsTests {
         #expect(paragraphs[2].runs.isEmpty)
     }
 
-    #if !os(Android)
     @Test
     func docx_paragraphsKeepTextAndTraits() throws {
         let paragraphs = try #require(StoryDocument.paragraphs(
@@ -57,6 +56,7 @@ struct StoryParagraphsTests {
         #expect(paragraphs.flatMap(\.runs).contains { $0.font.bold || $0.font.italic })
     }
 
+    #if !os(Android)
     @Test
     func pdf_paragraphsKeepCenteringImagesAndIndents() throws {
         let lima = try #require(StoryDocument.paragraphs(

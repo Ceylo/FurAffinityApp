@@ -46,11 +46,7 @@ public enum StoryDocument {
         case "pdf":
             return pdfPages?(data).flatMap { PDFReflow.text(from: $0, bodyPointSize: bodyPointSize) }
         case "docx":
-            #if os(Android)
-            return nil
-            #else
             return DocxTextParser.text(from: data)
-            #endif
         case "rtf":
             #if os(Android)
             return nil
