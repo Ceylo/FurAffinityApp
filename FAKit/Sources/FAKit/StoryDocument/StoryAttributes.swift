@@ -76,12 +76,20 @@ extension StoryParagraph {
     }
 }
 
-extension Array where Element == StoryParagraph {
-    public var dominantFontSize: CGFloat? {
+extension Sequence where Element == StoryRun {
+    var dominantFontSize: CGFloat? {
         var lengthBySize: [CGFloat: Int] = [:]
-        for run in lazy.flatMap(\.runs) {
+        for run in self {
             lengthBySize[run.font.size, default: 0] += run.text.utf16.count
         }
         return lengthBySize.max { $0.value < $1.value }?.key
     }
+}
+
+extension StoryParagraph {
+    public var dominantFontSize: CGFloat? { runs.dominantFontSize }
+}
+
+extension Array where Element == StoryParagraph {
+    public var dominantFontSize: CGFloat? { lazy.flatMap(\.runs).dominantFontSize }
 }

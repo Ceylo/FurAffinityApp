@@ -16,7 +16,9 @@ extension StoryDocument {
         if (filename as NSString).pathExtension.lowercased() == "rtf" {
             return systemRTFText(from: data).map { AttributedString($0) }
         }
-        return neutralText(from: data, filename: filename, pdfPages: defaultPDFPages)
+        let pdfPages = (filename as NSString).pathExtension.lowercased() == "pdf"
+            ? PDFKitPageSource.pages(from: data) : nil
+        return neutralText(from: data, filename: filename, pdfPages: pdfPages)
             .map { AttributedString(uiKitText($0)) }
     }
 

@@ -23,6 +23,7 @@ import com.tom_roush.pdfbox.cos.COSBase
 import com.tom_roush.pdfbox.cos.COSName
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
+import com.tom_roush.pdfbox.pdmodel.font.PDFont
 import com.tom_roush.pdfbox.pdmodel.graphics.form.PDFormXObject
 import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject
 import com.tom_roush.pdfbox.rendering.PDFRenderer
@@ -40,6 +41,8 @@ class FAPDFTextBridge {
     companion object {
         private const val TAG = "FAPDFTextBridge"
         private const val IMAGE_SCALE = 2f
+        private val BOLD_NAME = Regex("Bold|Black|Heavy|Semibold|Demi", RegexOption.IGNORE_CASE)
+        private val ITALIC_NAME = Regex("Italic|Oblique", RegexOption.IGNORE_CASE)
         private val LIGATURES = mapOf(
             '\uFB00' to "ff", '\uFB01' to "fi", '\uFB02' to "fl", '\uFB03' to "ffi",
             '\uFB04' to "ffl", '\uFB05' to "st", '\uFB06' to "st",
@@ -73,6 +76,7 @@ class FAPDFTextBridge {
         /// Rendered from the page, so masks and encodings don't matter.
         private fun images(page: PDPage, index: Int, renderer: PDFRenderer, imageDir: String): JSONArray {
             val result = JSONArray()
+            if (page.resources?.xObjectNames?.none() != false) return result
             val box = page.cropBox
             val rects = ImageLocator().also { it.processPage(page) }.rects
                 .filter { it[2] > 1 && it[3] > 1 }
@@ -104,7 +108,7 @@ class FAPDFTextBridge {
         private var boxes = JSONArray()
         private var pageHeight = 0f
         private var runLength = 0
-        private var runFont: List<Any>? = null
+        private var runFont: Font? = null
 
         override fun startPage(page: PDPage) {
             text.setLength(0)
@@ -134,8 +138,9 @@ class FAPDFTextBridge {
                 val height = if (size > 0) size else position.heightDir
                 val minY = pageHeight - position.yDirAdj - height * 0.2f
                 val width = position.widthDirAdj / unicode.length
+                val font = font(position)
                 for ((i, char) in unicode.withIndex()) {
-                    append(char, font(position), position.xDirAdj + width * i, minY, width, height)
+                    append(char, font, position.xDirAdj + width * i, minY, width, height)
                 }
             }
         }
@@ -150,11 +155,11 @@ class FAPDFTextBridge {
         override fun writeLineSeparator() = appendSeparator('\n')
 
         private fun appendSeparator(char: Char) {
-            append(char, runFont ?: listOf(12.0, false, false), 0f, 0f, 0f, 0f)
+            append(char, runFont ?: Font(12f, false, false), 0f, 0f, 0f, 0f)
         }
 
         /// The PDF's own spaces and PdfBox's separators overlap; keep one.
-        private fun append(char: Char, font: List<Any>, x: Float, y: Float, width: Float, height: Float) {
+        private fun append(char: Char, font: Font, x: Float, y: Float, width: Float, height: Float) {
             val last = text.lastOrNull()
             if (char == ' ' && (last == null || last == ' ' || last == '\n')) return
             if (char == '\n' && last == ' ') {
@@ -168,26 +173,42 @@ class FAPDFTextBridge {
             }
             text.append(char)
             runLength += 1
-            boxes.put(x.toDouble()).put(y.toDouble()).put(width.toDouble()).put(height.toDouble())
+            boxes.put(rounded(x)).put(rounded(y)).put(rounded(width)).put(rounded(height))
         }
 
         private fun flushRun() {
             val font = runFont ?: return
-            if (runLength > 0) runs.put(JSONArray().put(runLength).put(font[0]).put(font[1]).put(font[2]))
+            if (runLength > 0) {
+                runs.put(
+                    JSONObject().put("length", runLength).put("size", rounded(font.size))
+                        .put("bold", font.bold).put("italic", font.italic)
+                )
+            }
             runLength = 0
         }
 
-        private fun font(position: TextPosition): List<Any> {
-            val font = position.font
-            val name = font?.name.orEmpty()
-            val descriptor = font?.fontDescriptor
-            val bold = (descriptor?.isForceBold ?: false) || (descriptor?.fontWeight ?: 0f) >= 600f ||
-                Regex("Bold|Black|Heavy|Semibold|Demi", RegexOption.IGNORE_CASE).containsMatchIn(name)
-            val italic = (descriptor?.isItalic ?: false) ||
-                Regex("Italic|Oblique", RegexOption.IGNORE_CASE).containsMatchIn(name)
-            return listOf(position.fontSizeInPt.toDouble(), bold, italic)
+        /// Keeps the JSON short: a Float's Double expansion has ~17 digits.
+        private fun rounded(value: Float): Double = Math.round(value * 100) / 100.0
+
+        private val traits = HashMap<PDFont, Pair<Boolean, Boolean>>()
+
+        private fun font(position: TextPosition): Font {
+            val (bold, italic) = position.font?.let { font ->
+                traits.getOrPut(font) {
+                    val name = font.name.orEmpty()
+                    val descriptor = font.fontDescriptor
+                    Pair(
+                        (descriptor?.isForceBold ?: false) || (descriptor?.fontWeight ?: 0f) >= 600f ||
+                            BOLD_NAME.containsMatchIn(name),
+                        (descriptor?.isItalic ?: false) || ITALIC_NAME.containsMatchIn(name)
+                    )
+                }
+            } ?: Pair(false, false)
+            return Font(position.fontSizeInPt, bold, italic)
         }
     }
+
+    private data class Font(val size: Float, val bold: Boolean, val italic: Boolean)
 
     private class ImageLocator : PDFStreamEngine() {
         val rects = mutableListOf<List<Float>>()

@@ -57,31 +57,27 @@ struct StoryParagraphsTests {
     }
 
     #if !os(Android)
+    private func paragraphs(ofPDF name: String) -> [StoryParagraph]? {
+        let data = testData(name)
+        return StoryDocument.paragraphs(from: data, filename: name, pdfPages: PDFKitPageSource.pages(from: data))
+    }
+
     @Test
     func pdf_paragraphsKeepCenteringImagesAndIndents() throws {
-        let lima = try #require(StoryDocument.paragraphs(
-            from: testData("1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"),
-            filename: "story.pdf"
-        ))
+        let lima = try #require(paragraphs(ofPDF: "1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"))
         let title = try #require(lima.first { $0.text == "LIMA NOX - BOXES" })
         #expect(title.centered)
         #expect(lima.contains { $0.image != nil })
 
-        let typhin = try #require(StoryDocument.paragraphs(
-            from: testData("1642368831.typhin_princess_tells_her_story.pdf"),
-            filename: "story.pdf"
-        ))
+        let typhin = try #require(paragraphs(ofPDF: "1642368831.typhin_princess_tells_her_story.pdf"))
         #expect(typhin.contains { $0.text.hasPrefix("\tThe wizard Elimaio") })
     }
 
     @Test
     func pdf_dominantSizeIsTheBody() throws {
-        let paragraphs = try #require(StoryDocument.paragraphs(
-            from: testData("1781832277.vixyyfox_3000_-redfurythings.pdf"),
-            filename: "story.pdf"
-        ))
-        let body = try #require(paragraphs.dominantFontSize)
-        #expect(paragraphs.flatMap(\.runs).contains { $0.font.size > body })
+        let story = try #require(paragraphs(ofPDF: "1781832277.vixyyfox_3000_-redfurythings.pdf"))
+        let body = try #require(story.dominantFontSize)
+        #expect(story.flatMap(\.runs).contains { $0.font.size > body })
     }
     #endif
 }

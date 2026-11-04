@@ -16,6 +16,8 @@ struct StoryReaderView: View {
         var paragraphs: [StoryParagraph]?
         /// The downloaded document on disk.
         var documentUrl: URL
+        var scale: CGFloat = 1
+        var images: [Int: UIImage] = [:]
 
         var id: String { documentUrl.absoluteString }
 
@@ -24,9 +26,20 @@ struct StoryReaderView: View {
             let pdfPages = documentUrl.pathExtension.lowercased() == "pdf"
                 ? await PDFTextBridge.pages(fileUrl: documentUrl) : nil
             let paragraphs = await Task.detached {
-                StoryDocument.paragraphs(from: data, filename: filename, pdfPages: { _ in pdfPages })
+                StoryDocument.paragraphs(from: data, filename: filename, pdfPages: pdfPages)
             }.value
-            return Content(paragraphs: paragraphs, documentUrl: documentUrl)
+            var content = Content(paragraphs: paragraphs, documentUrl: documentUrl)
+            if let paragraphs {
+                content.scale = StoryParagraphView.bodySize / (paragraphs.dominantFontSize ?? StoryParagraphView.bodySize)
+                content.images = await MainActor.run {
+                    var images: [Int: UIImage] = [:]
+                    for (index, paragraph) in paragraphs.enumerated() {
+                        if let png = paragraph.image { images[index] = UIImage(data: png) }
+                    }
+                    return images
+                }
+            }
+            return content
         }
     }
 
@@ -37,13 +50,16 @@ struct StoryReaderView: View {
         NavigationStack {
             Group {
                 if let paragraphs = content.paragraphs {
-                    let scale = StoryParagraphView.bodySize / (paragraphs.dominantFontSize ?? StoryParagraphView.bodySize)
                     ScrollView {
                         // Spacing and line spacing follow the iOS reader's 0.7× and 0.35× of
                         // a 17 pt body.
                         LazyVStack(alignment: .leading, spacing: 12) {
                             ForEach(paragraphs.indices, id: \.self) { index in
-                                StoryParagraphView(paragraph: paragraphs[index], scale: scale)
+                                StoryParagraphView(
+                                    paragraph: paragraphs[index],
+                                    image: content.images[index],
+                                    scale: content.scale
+                                )
                             }
                         }
                         .padding(12)
@@ -82,13 +98,14 @@ struct StoryReaderView: View {
 }
 
 struct StoryParagraphView: View {
-    static let bodySize: CGFloat = 17
+    nonisolated static let bodySize: CGFloat = 17
 
     var paragraph: StoryParagraph
+    var image: UIImage?
     var scale: CGFloat
 
     var body: some View {
-        if let png = paragraph.image, let image = UIImage(data: png) {
+        if let image {
             Image(uiImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
@@ -104,10 +121,7 @@ struct StoryParagraphView: View {
     }
 
     private var size: CGFloat {
-        var lengthBySize: [CGFloat: Int] = [:]
-        for run in paragraph.runs { lengthBySize[run.font.size, default: 0] += run.text.count }
-        let size = lengthBySize.max { $0.value < $1.value }?.key ?? Self.bodySize / scale
-        return size * scale
+        (paragraph.dominantFontSize ?? Self.bodySize / scale) * scale
     }
 
     private var runs: [StoryRun] {

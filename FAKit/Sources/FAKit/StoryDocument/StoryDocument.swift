@@ -7,8 +7,6 @@
 
 import Foundation
 
-public typealias PDFPageSource = @Sendable (Data) -> [PDFPageText]?
-
 /// Extracts readable rich text from a downloaded story-submission document so it can be
 /// rendered as native, reflowing text while keeping bold/italic, relative font sizes and
 /// paragraph structure. Returns `nil` for formats we can't read.
@@ -22,29 +20,23 @@ public enum StoryDocument {
     /// matters as a common baseline across formats.
     static let bodyPointSize: CGFloat = 17
 
-    #if os(Android)
-    public static let defaultPDFPages: PDFPageSource? = nil
-    #else
-    public static let defaultPDFPages: PDFPageSource? = PDFKitPageSource.pages
-    #endif
-
     public static func paragraphs(
         from data: Data,
         filename: String,
-        pdfPages: PDFPageSource? = defaultPDFPages
+        pdfPages: [PDFPageText]? = nil
     ) -> [StoryParagraph]? {
         neutralText(from: data, filename: filename, pdfPages: pdfPages).map {
             StoryParagraph.paragraphs(from: $0, bodyPointSize: bodyPointSize)
         }
     }
 
-    static func neutralText(from data: Data, filename: String, pdfPages: PDFPageSource?) -> NSAttributedString? {
+    static func neutralText(from data: Data, filename: String, pdfPages: [PDFPageText]?) -> NSAttributedString? {
         if let text = StoryText.text(from: data, filename: filename) {
             return NSAttributedString(string: text, attributes: [.storyFont: StoryFont(size: bodyPointSize)])
         }
         switch (filename as NSString).pathExtension.lowercased() {
         case "pdf":
-            return pdfPages?(data).flatMap { PDFReflow.text(from: $0, bodyPointSize: bodyPointSize) }
+            return pdfPages.flatMap { PDFReflow.text(from: $0, bodyPointSize: bodyPointSize) }
         case "docx":
             return DocxTextParser.text(from: data)
         case "rtf":

@@ -152,9 +152,7 @@ struct RTFTextParser {
             pendingSkip -= 1
             return
         }
-        if byte < 0x80 {
-            emit(String(UnicodeScalar(byte)))
-        } else if codepage == 1252, (0x80...0x9F).contains(byte) {
+        if codepage == 1252, (0x80...0x9F).contains(byte) {
             emit(String(UnicodeScalar(Self.cp1252[Int(byte) - 0x80])!))
         } else {
             // Latin-1 matches cp1252 from 0xA0 up; other codepages are rare on FA.

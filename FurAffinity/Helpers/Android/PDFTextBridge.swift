@@ -26,7 +26,7 @@ enum PDFTextBridge {
             var width: Double
             var height: Double
             var text: String
-            var runs: [[Run]]
+            var runs: [Run]
             var boxes: [Double]
             var images: [Image]
         }
@@ -34,28 +34,11 @@ enum PDFTextBridge {
         var pages: [Page]
     }
 
-    private enum Run: Decodable {
-        case number(Double)
-        case flag(Bool)
-
-        init(from decoder: Decoder) throws {
-            let container = try decoder.singleValueContainer()
-            if let flag = try? container.decode(Bool.self) {
-                self = .flag(flag)
-            } else {
-                self = .number(try container.decode(Double.self))
-            }
-        }
-
-        var number: Double {
-            if case .number(let value) = self { return value }
-            return 0
-        }
-
-        var flag: Bool {
-            if case .flag(let value) = self { return value }
-            return false
-        }
+    private struct Run: Decodable {
+        var length: Int
+        var size: Double
+        var bold: Bool
+        var italic: Bool
     }
 
     static func pages(fileUrl: URL) async -> [PDFPageText]? {
@@ -80,10 +63,8 @@ enum PDFTextBridge {
     }
 
     private static func pageText(_ page: Document.Page) -> PDFPageText {
-        let runs = page.runs.compactMap { run -> (length: Int, font: StoryFont)? in
-            guard run.count == 4 else { return nil }
-            let font = StoryFont(size: CGFloat(run[1].number), bold: run[2].flag, italic: run[3].flag)
-            return (Int(run[0].number), font)
+        let runs = page.runs.map { run in
+            (length: run.length, font: StoryFont(size: CGFloat(run.size), bold: run.bold, italic: run.italic))
         }
         let bounds = stride(from: 0, to: page.boxes.count - 3, by: 4).map { i in
             Foundation.CGRect(x: page.boxes[i], y: page.boxes[i + 1], width: page.boxes[i + 2], height: page.boxes[i + 3])
