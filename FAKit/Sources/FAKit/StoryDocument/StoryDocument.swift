@@ -49,7 +49,7 @@ public enum StoryDocument {
             return DocxTextParser.text(from: data)
         case "rtf":
             #if os(Android)
-            return nil
+            return RTFTextParser.text(from: data)
             #else
             return systemRTFText(from: data).map(neutralized)
             #endif
