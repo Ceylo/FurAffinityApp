@@ -75,7 +75,7 @@ needs to know:
 - `FAKit/iOS/FALoginView.swift`: login web view + cookie cache.
 - `FAPages/FAURLs.swift`: canonical FA URLs + parsing helpers.
 - `FAPages/FASearchPage.swift` + `FASearchQuery.swift`: search results parser and typed query (keywords, tag include/exclude, author `@lower` scope, rating/type/gender, date range, sort). `FAUsername.swift`: shared username validator.
-- `FAKit/StoryDocument/iOS/`: extracts reflowing rich text from downloaded story documents — `StoryDocument` (entry point, dispatches by extension: txt/md/rtf/pdf/docx), `PDFReflow`, `DocxTextParser`. Runs carry only font size + traits (no color) so the reader stays correct in light/dark. Bundled Roboto fonts live in `FAKit/Resources/Fonts/`.
+- `FAKit/StoryDocument/`: extracts reflowing rich text from downloaded story documents, shared by both platforms — `StoryDocument` (entry point, dispatches by extension: txt/md/rtf/pdf/docx; `paragraphs(from:)` for Android), `PDFReflow` (over `PDFPageText` pages from `iOS/PDFKitPageSource` or Android's PdfBox bridge), `DocxTextParser`, `RTFTextParser` (Android; iOS keeps the system importer). Runs carry neutral `StoryFont` size + traits (no color) so the reader stays correct in light/dark; `iOS/StoryDocument+UIKit` maps them to UIKit. Bundled Roboto fonts live in `FAKit/Resources/Fonts/`.
 
 `FAPages` parsers: immutable parsed fields, SwiftSoup init, log failures, throw on missing required HTML.
 
@@ -151,7 +151,8 @@ the same script. Which files stay iOS-only, and why: `Android/docs/build-and-run
 ## Dependencies
 
 App: AmplitudeSwift, Defaults, Kingfisher, SwiftUI-Introspect, Version, swift-algorithms. (Wrapping layouts use the in-house `Helper Views/iOS/FlowLayout.swift` — WrappingHStack was dropped.)
-FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, Cache, SwiftGraph, swift-collections, ZIPFoundation (DOCX unzip for `StoryDocument`).
+FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, Cache, SwiftGraph, swift-collections, ZIPFoundation (iOS DOCX unzip for `StoryDocument`).
+Android app: PdfBox-Android (story PDFs, `FAPDFTextBridge.kt`).
 
 ## Working Notes
 

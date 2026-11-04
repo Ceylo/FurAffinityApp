@@ -173,18 +173,18 @@ until the user first adjusts it, since the sheet first reports a height ~129 px 
 
 A story's cover, download and Save/Share come from the shared `SubmissionTextContent`.
 Only the reader is forked: `StoryReaderView` builds its `Content` through
-`StoryReaderView.Content.load(data:filename:documentUrl:)` on both platforms. The
-Android reader shows txt and md from FAKit's `StoryText`, one `Text` per line in a
-`LazyVStack` so Compose never measures a whole novel at once; other formats get "Open in
-another app" (`FAMediaBridge.open`).
+`StoryReaderView.Content.load(data:filename:documentUrl:)` on both platforms. Both read
+all five formats with FAKit's shared `StoryDocument`; on Android, pdf pages come from
+PdfBox-Android (`FAPDFTextBridge.kt`), and docx and rtf from FAKit's `ZipEntryReader` and
+`RTFTextParser`.
 
 Music has an Android `SubmissionAudioContent` with the iOS signature: the cover, and
 "Play in another app", which downloads the mp3 and hands it over; Save/Share light up
 once downloaded. It downloads only when asked, unlike iOS: the page transport can't
 cancel an exchange and holds a permit for the whole transfer.
 
-Not ported, each an Apple-only stack: in-app playback and lock-screen controls,
-pdf/rtf/docx reflow, the QuickLook "Original" view and the reader's landscape gate.
+Not ported, each an Apple-only stack: in-app playback and lock-screen controls, the
+QuickLook "Original" view and the reader's landscape gate (Android rotates everywhere).
 
 A download still challenged after the repair fails instead of taking the WebView
 fallback, which reads back a page and so never returns a file.

@@ -64,8 +64,9 @@ let package = Package(
                 "SwiftSoup",
                 "SwiftGraph",
                 .product(name: "OrderedCollections", package: "swift-collections"),
-                // Apple-only: Cache backs the CSS/image inliners, ZIPFoundation the
-                // DOCX reader — both out of scope on Android.
+                // Apple-only: Cache backs the CSS/image inliners, out of scope on Android.
+                // ZIPFoundation backs the iOS DOCX reader; it can't cross-build for
+                // Android, which reads DOCX with ZipEntryReader.
                 .product(name: "Cache", package: "Cache", condition: .when(platforms: [.iOS, .macOS])),
                 .product(name: "ZIPFoundation", package: "ZIPFoundation", condition: .when(platforms: [.iOS, .macOS])),
                 // Unconditional on purpose: SKIP_BRIDGE is unset in the pass that runs
