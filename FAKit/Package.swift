@@ -18,7 +18,6 @@ let package = Package(
         .package(url: "https://github.com/hyperoslo/Cache.git", from: "7.4.0"),
         .package(url: "https://github.com/davecom/SwiftGraph.git", from: "3.1.0"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.3"),
-        .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19"),
         // Its own package, not a target here: a target dependency would be linked
         // statically into every product, duplicating FALogging's globals — see
         // Android/docs/shared-sources.md § One module, one image.
@@ -65,10 +64,7 @@ let package = Package(
                 "SwiftGraph",
                 .product(name: "OrderedCollections", package: "swift-collections"),
                 // Apple-only: Cache backs the CSS/image inliners, out of scope on Android.
-                // ZIPFoundation backs the iOS DOCX reader; it can't cross-build for
-                // Android, which reads DOCX with ZipEntryReader.
                 .product(name: "Cache", package: "Cache", condition: .when(platforms: [.iOS, .macOS])),
-                .product(name: "ZIPFoundation", package: "ZIPFoundation", condition: .when(platforms: [.iOS, .macOS])),
                 // Unconditional on purpose: SKIP_BRIDGE is unset in the pass that runs
                 // plugins, so gating either edge makes skipstone emit a stub
                 // build.gradle.kts and Gradle dies on "Unresolved reference 'android'".

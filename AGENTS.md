@@ -151,7 +151,7 @@ the same script. Which files stay iOS-only, and why: `Android/docs/build-and-run
 ## Dependencies
 
 App: AmplitudeSwift, Defaults, Kingfisher, SwiftUI-Introspect, Version, swift-algorithms. (Wrapping layouts use the in-house `Helper Views/iOS/FlowLayout.swift` — WrappingHStack was dropped.)
-FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, Cache, SwiftGraph, swift-collections, ZIPFoundation (iOS DOCX unzip for `StoryDocument`).
+FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, Cache, SwiftGraph, swift-collections.
 Android app: PdfBox-Android (story PDFs, `FAPDFTextBridge.kt`).
 
 ## Working Notes

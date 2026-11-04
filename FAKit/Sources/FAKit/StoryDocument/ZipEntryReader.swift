@@ -1,15 +1,9 @@
 //
 //  ZipEntryReader.swift
-//  FAKit (Android)
+//  FAKit
 //
 //  Created by Ceylo on 04/11/2026.
 //
-//  ZIPFoundation can't be used here: its manifest picks its zlib target with
-//  `canImport(Compression)`, which the macOS host answers, so an Android cross-build
-//  lacks the `CZlib` module its sources import.
-//
-
-#if os(Android)
 
 import Foundation
 import zlib
@@ -84,5 +78,3 @@ enum ZipEntryReader {
         return Data(output)
     }
 }
-
-#endif

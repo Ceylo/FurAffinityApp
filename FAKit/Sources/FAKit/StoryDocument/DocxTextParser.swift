@@ -6,10 +6,8 @@
 //
 
 import Foundation
-#if os(Android)
+#if canImport(FoundationXML)
 import FoundationXML
-#else
-import ZIPFoundation
 #endif
 
 /// Builds an attributed string from a Word `document.xml`: text inside `<w:t>`,
@@ -18,7 +16,7 @@ import ZIPFoundation
 /// single newline; the reader supplies paragraph spacing.
 final class DocxTextParser: NSObject, XMLParserDelegate {
     static func text(from data: Data) -> NSAttributedString? {
-        guard let xml = documentXML(in: data) else { return nil }
+        guard let xml = ZipEntryReader.data(of: "word/document.xml", in: data) else { return nil }
 
         let parser = XMLParser(data: xml)
         let delegate = DocxTextParser()
@@ -27,19 +25,6 @@ final class DocxTextParser: NSObject, XMLParserDelegate {
 
         let result = PDFReflow.trimmed(delegate.result)
         return result.length > 0 ? result : nil
-    }
-
-    private static func documentXML(in data: Data) -> Data? {
-        #if os(Android)
-        return ZipEntryReader.data(of: "word/document.xml", in: data)
-        #else
-        guard let archive = try? Archive(data: data, accessMode: .read, pathEncoding: nil),
-            let entry = archive["word/document.xml"]
-        else { return nil }
-        var xml = Data()
-        guard (try? archive.extract(entry) { xml.append($0) }) != nil else { return nil }
-        return xml
-        #endif
     }
 
     private(set) var result = NSMutableAttributedString(string: "")
