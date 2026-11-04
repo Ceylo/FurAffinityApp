@@ -43,6 +43,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `3dcb579` Notes SF Symbol mappings | skip-ui | no | same shape as #525; both forms of the filter symbol map to `FilterList` |
 | `4479648` principal toolbar item in the title slot; flexible top-bar spacer as a fixed gap | skip-ui | no | **two PRs**, one fix each; Robolectric `ToolbarItemsTests`, mutation-checked |
 | `c8bff3d` `Picker` listed inline in a `Menu` | skip-ui | no | no Robolectric test yet: add one before sending |
+| `3924610` sheet spans a phone held in landscape | skip-ui | no | iPhone parity: Material caps a sheet at 640 dp; lifted on a compact vertical size class. No Robolectric test yet |
 | `001f4ec` tab re-tap pops to root, then scrolls to top | skip-ui | no | Material and iOS parity; adds internal `Navigator.navigateToRoot()` |
 | `ca5fad0` `List` under the status bar with the nav bar hidden | skip-ui | no | bug fix plus its two `List` follow-ons (`scrollTo` offset, late header) |
 | `91826c2` `List` restores its scroll position by row key | skip-ui | no | Robolectric `testListRestoresFirstVisibleRowByKey`, mutation-checked. Upstream, argue it from rows inserted above while away, since the late header is `ca5fad0`'s; `LazyVStack` and the grids keep the index-only restore |
