@@ -18,9 +18,9 @@ the whole tree, so every source it must not build carries `#if !FA_SKIP_MODULE`.
 far: login (shared `HomeView` + autologin), the Followed feed, the submission screen
 (images, stories, music, comments, Save/Share, "Send a Note"), Notifications (with the
 journal screen and swipe-to-delete behind an Undo snackbar), Notes, the user page with
-its gallery, favorites, journal list and watchlists, the Profile tab, Settings, and
-local notifications from a background refresh (`screens.md` § Local notifications). Not
-ported: Explore. `Android/README.md` indexes the topic docs under
+its gallery, favorites, journal list and watchlists, the Profile tab, Settings, Explore
+(search, its filters sheet and tag editor), and local notifications from a background
+refresh (`screens.md` § Local notifications). `Android/README.md` indexes the topic docs under
 `Android/docs/`; read the relevant one before touching Android code. What every session
 needs to know:
 

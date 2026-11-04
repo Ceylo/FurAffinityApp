@@ -304,7 +304,9 @@ skip-fuse-ui:
   GridView and `slider.horizontal.3` → Tune came later, as did the Notes tab's (`tray`,
   `archivebox`, `square.and.pencil`, `message.badge.fill`, and the filter, whose plain and
   `.fill` forms map to FilterList's outlined and filled icons, one and the same glyph:
-  Material has no circled filter), and `folder` → Folder for the gallery's folders menu.
+  Material has no circled filter), `folder` → Folder for the gallery's folders menu, and
+  the Submissions tab's `person.2.fill` → People (Followed mode) and tag chips' `tag` →
+  Sell, `minus.circle` → RemoveCircleOutline and `xmark.circle.fill` → Cancel.
 - **A top bar's principal item and spacers.** A `.principal` item was appended to the
   leading items, so the navigation title still drew beside it; it now takes the title
   slot. A flexible `ToolbarSpacer` took a flexible width in the top bar's actions row,
