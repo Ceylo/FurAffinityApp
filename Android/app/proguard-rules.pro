@@ -9,3 +9,6 @@
 -keep class **._ModuleBundleAccessor_* { *; }
 -keep class fur.affinity.ui.** { *; }
 -keep class kingfisher.KFAnimatedImageModifier { <init>(...); }
+# PdfBox's optional JPEG 2000 decoder (FAPDFTextBridge.kt); JPX images then fail to decode.
+-dontwarn com.gemalto.jp2.JP2Decoder
+-dontwarn com.gemalto.jp2.JP2Encoder

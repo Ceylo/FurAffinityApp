@@ -21,6 +21,22 @@ public struct PDFPageText: @unchecked Sendable {
         self.mediaBox = mediaBox
         self.images = images
     }
+
+    public init(
+        text: String,
+        runs: [(length: Int, font: StoryFont)],
+        characterBounds: [CGRect],
+        mediaBox: CGRect,
+        images: [(top: CGFloat, png: Data)]
+    ) {
+        let attributed = NSMutableAttributedString(string: text)
+        var location = 0
+        for run in runs where location + run.length <= attributed.length {
+            attributed.addAttribute(.storyFont, value: run.font, range: NSRange(location: location, length: run.length))
+            location += run.length
+        }
+        self.init(text: attributed, characterBounds: characterBounds, mediaBox: mediaBox, images: images)
+    }
 }
 
 enum PDFReflow {

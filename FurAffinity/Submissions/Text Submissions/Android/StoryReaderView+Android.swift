@@ -22,8 +22,11 @@ struct StoryReaderView: View {
 
         static func load(data: Data, documentUrl: URL) async -> Content {
             let filename = documentUrl.lastPathComponent
+            let pdfPages = documentUrl.pathExtension.lowercased() == "pdf"
+                ? await PDFTextBridge.pages(fileUrl: documentUrl) : nil
             let paragraphs = await Task.detached {
-                StoryText.paragraphs(from: data, filename: filename)
+                StoryDocument.paragraphs(from: data, filename: filename, pdfPages: { _ in pdfPages })?
+                    .map(\.text)
             }.value
             return Content(paragraphs: paragraphs, documentUrl: documentUrl)
         }

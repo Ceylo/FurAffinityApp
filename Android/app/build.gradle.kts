@@ -29,6 +29,8 @@ dependencies {
     implementation("io.sentry:sentry-android-ndk:8.59.0")
     // FAAnalyticsBridge.kt: the Android side of iOS's AmplitudeSwift.
     implementation("com.amplitude:analytics-android:1.33.0")
+    // FAPDFTextBridge.kt: story PDFs for the shared reflow.
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
 }
 
 // Symbol and mapping uploads happen only when SENTRY_AUTH_TOKEN is set (release and
