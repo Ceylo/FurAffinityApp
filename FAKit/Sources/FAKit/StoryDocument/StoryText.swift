@@ -13,7 +13,9 @@ enum StoryText {
     static func text(from data: Data, filename: String) -> String? {
         switch (filename as NSString).pathExtension.lowercased() {
         case "txt", "text", "md":
-            return String(data: data, encoding: .utf8)?.replacingOccurrences(of: "\r\n", with: "\n")
+            return String(data: data, encoding: .utf8).map {
+                $0.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline).joined(separator: "\n")
+            }
         default:
             return nil
         }

@@ -19,6 +19,29 @@ struct StoryParagraphsTests {
     }
 
     @Test
+    func dominantFontSize_ignoresZeroSizes() {
+        let paragraph = StoryParagraph(
+            runs: [StoryRun(text: "long invisible run", font: StoryFont(size: 0)), StoryRun(text: "body", font: StoryFont(size: 12))],
+            centered: false,
+            image: nil
+        )
+        #expect([paragraph].dominantFontSize == 12)
+    }
+
+    @Test
+    func pdfPageText_runsPastTheTextAreClamped() {
+        let page = PDFPageText(
+            text: "abc",
+            runs: [(length: 2, font: StoryFont(size: 20)), (length: 5, font: StoryFont(size: 10))],
+            characterBounds: [],
+            mediaBox: .zero,
+            images: []
+        )
+        #expect(page.text.attribute(.storyFont, at: 1, effectiveRange: nil) as? StoryFont == StoryFont(size: 20))
+        #expect(page.text.attribute(.storyFont, at: 2, effectiveRange: nil) as? StoryFont == StoryFont(size: 10))
+    }
+
+    @Test
     func unsupportedFormat_returnsNil() {
         #expect(StoryDocument.paragraphs(from: Data("anything".utf8), filename: "story.bin") == nil)
     }

@@ -17,7 +17,7 @@ struct StoryReaderView: View {
         /// The downloaded document on disk.
         var documentUrl: URL
         var scale: CGFloat = 1
-        var images: [Int: UIImage] = [:]
+        let images = DecodedImages()
 
         var id: String { documentUrl.absoluteString }
 
@@ -29,15 +29,8 @@ struct StoryReaderView: View {
                 StoryDocument.paragraphs(from: data, filename: filename, pdfPages: pdfPages)
             }.value
             var content = Content(paragraphs: paragraphs, documentUrl: documentUrl)
-            if let paragraphs {
-                content.scale = StoryParagraphView.bodySize / (paragraphs.dominantFontSize ?? StoryParagraphView.bodySize)
-                content.images = await MainActor.run {
-                    var images: [Int: UIImage] = [:]
-                    for (index, paragraph) in paragraphs.enumerated() {
-                        if let png = paragraph.image { images[index] = UIImage(data: png) }
-                    }
-                    return images
-                }
+            if let size = paragraphs?.dominantFontSize {
+                content.scale = StoryParagraphView.bodySize / size
             }
             return content
         }
@@ -57,7 +50,7 @@ struct StoryReaderView: View {
                             ForEach(paragraphs.indices, id: \.self) { index in
                                 StoryParagraphView(
                                     paragraph: paragraphs[index],
-                                    image: content.images[index],
+                                    image: paragraphs[index].image.flatMap { content.images.image(at: index, png: $0) },
                                     scale: content.scale
                                 )
                             }
@@ -121,7 +114,7 @@ struct StoryParagraphView: View {
     }
 
     private var size: CGFloat {
-        (paragraph.dominantFontSize ?? Self.bodySize / scale) * scale
+        paragraph.dominantFontSize.map { $0 * scale } ?? Self.bodySize
     }
 
     private var runs: [StoryRun] {
@@ -148,6 +141,8 @@ struct StoryParagraphView: View {
                 .replacingOccurrences(of: "&", with: "&amp;")
                 .replacingOccurrences(of: "<", with: "&lt;")
                 .replacingOccurrences(of: ">", with: "&gt;")
+                // HTML collapses runs of spaces; plain paragraphs keep them.
+                .replacingOccurrences(of: "  ", with: " &nbsp;")
             if run.font.italic { html = "<i>\(html)</i>" }
             if run.font.bold { html = "<b>\(html)</b>" }
             return html
@@ -155,5 +150,19 @@ struct StoryParagraphView: View {
         #else
         return Text(verbatim: runs.map(\.text).joined())
         #endif
+    }
+}
+
+/// Image paragraphs decode on first display, once: each decode is a JNI round trip, and a
+/// comic can hold dozens.
+final class DecodedImages: @unchecked Sendable {
+    private var images: [Int: UIImage] = [:]
+
+    @MainActor
+    func image(at index: Int, png: Data) -> UIImage? {
+        if let image = images[index] { return image }
+        let image = UIImage(data: png)
+        images[index] = image
+        return image
     }
 }

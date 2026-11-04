@@ -79,7 +79,7 @@ extension StoryParagraph {
 extension Sequence where Element == StoryRun {
     var dominantFontSize: CGFloat? {
         var lengthBySize: [CGFloat: Int] = [:]
-        for run in self {
+        for run in self where run.font.size > 0 {
             lengthBySize[run.font.size, default: 0] += run.text.utf16.count
         }
         return lengthBySize.max { $0.value < $1.value }?.key

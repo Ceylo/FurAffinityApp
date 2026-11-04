@@ -56,7 +56,7 @@ enum ZipEntryReader {
             let compressed = bytes[start..<(start + compressedSize)]
             switch method {
             case 0: return Data(compressed)
-            case 8: return inflate(Array(compressed), size: size)
+            case 8: return size <= 64 << 20 ? inflate(Array(compressed), size: size) : nil
             default: return nil
             }
         }

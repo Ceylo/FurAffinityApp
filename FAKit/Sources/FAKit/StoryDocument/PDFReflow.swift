@@ -31,8 +31,10 @@ public struct PDFPageText: @unchecked Sendable {
     ) {
         let attributed = NSMutableAttributedString(string: text)
         var location = 0
-        for run in runs where location + run.length <= attributed.length {
-            attributed.addAttribute(.storyFont, value: run.font, range: NSRange(location: location, length: run.length))
+        for run in runs {
+            let length = min(run.length, attributed.length - location)
+            guard length > 0 else { break }
+            attributed.addAttribute(.storyFont, value: run.font, range: NSRange(location: location, length: length))
             location += run.length
         }
         self.init(text: attributed, characterBounds: characterBounds, mediaBox: mediaBox, images: images)

@@ -30,6 +30,7 @@ struct RTFTextParser {
     private static let skippedDestinations: Set<String> = [
         "fonttbl", "colortbl", "stylesheet", "info", "pict", "header", "headerl", "headerr",
         "headerf", "footer", "footerl", "footerr", "footerf", "listtable", "listoverridetable",
+        "fldinst", "xe", "tc",
     ]
 
     private let bytes: [UInt8]

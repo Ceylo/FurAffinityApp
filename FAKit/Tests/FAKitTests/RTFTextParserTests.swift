@@ -40,9 +40,10 @@ struct RTFTextParserTests {
     @Test
     func skipsDestinations() throws {
         let paragraphs = try paragraphs(
-            #"{\rtf1{\*\generator Writer;}{\info{\title Hidden}}{\stylesheet{\s0 Normal;}}Shown}"#
+            #"{\rtf1{\*\generator Writer;}{\info{\title Hidden}}{\stylesheet{\s0 Normal;}}Shown "#
+                + #"{\field{\fldinst HYPERLINK "https://example.com"}{\fldrslt link}}}"#
         )
-        #expect(paragraphs.map(\.text) == ["Shown"])
+        #expect(paragraphs.map(\.text) == ["Shown link"])
     }
 
     @Test

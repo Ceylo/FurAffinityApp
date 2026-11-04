@@ -12,7 +12,6 @@ import android.graphics.Bitmap
 import android.util.Log
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.contentstream.PDFStreamEngine
-import com.tom_roush.pdfbox.contentstream.operator.DrawObject
 import com.tom_roush.pdfbox.contentstream.operator.Operator
 import com.tom_roush.pdfbox.contentstream.operator.state.Concatenate
 import com.tom_roush.pdfbox.contentstream.operator.state.Restore
@@ -41,8 +40,10 @@ class FAPDFTextBridge {
     companion object {
         private const val TAG = "FAPDFTextBridge"
         private const val IMAGE_SCALE = 2f
-        private val BOLD_NAME = Regex("Bold|Black|Heavy|Semibold|Demi", RegexOption.IGNORE_CASE)
-        private val ITALIC_NAME = Regex("Italic|Oblique", RegexOption.IGNORE_CASE)
+        // Case-sensitive: "Academica" isn't "Demi".
+        private val BOLD_NAME = Regex("Bold|BOLD|Black|Heavy|Semibold|Demi")
+        private val ITALIC_NAME = Regex("Italic|ITALIC|Oblique")
+        private const val MAX_RENDER_PIXELS = 4096f
         private val LIGATURES = mapOf(
             '\uFB00' to "ff", '\uFB01' to "fi", '\uFB02' to "fl", '\uFB03' to "ffi",
             '\uFB04' to "ffl", '\uFB05' to "st", '\uFB06' to "st",
@@ -61,9 +62,8 @@ class FAPDFTextBridge {
                 val renderer = PDFRenderer(document)
                 File(imageDir).mkdirs()
                 val pages = JSONArray()
-                for ((index, page) in stripper.pages.withIndex()) {
-                    val pdPage = document.getPage(index)
-                    page.put("images", images(pdPage, index, renderer, imageDir))
+                for ((index, page) in stripper.pages) {
+                    page.put("images", images(document.getPage(index), index, renderer, imageDir))
                     pages.put(page)
                 }
                 JSONObject().put("pages", pages).toString()
@@ -81,28 +81,38 @@ class FAPDFTextBridge {
             val rects = ImageLocator().also { it.processPage(page) }.rects
                 .filter { it[2] > 1 && it[3] > 1 }
             if (rects.isEmpty()) return result
-            val bitmap = renderer.renderImage(index, IMAGE_SCALE)
-            for ((n, rect) in rects.withIndex()) {
-                val (x, y, width, height) = rect
-                val left = ((x - box.lowerLeftX) * IMAGE_SCALE).toInt().coerceIn(0, bitmap.width - 1)
-                val top = ((box.upperRightY - (y + height)) * IMAGE_SCALE).toInt().coerceIn(0, bitmap.height - 1)
-                val w = (width * IMAGE_SCALE).toInt().coerceAtMost(bitmap.width - left)
-                val h = (height * IMAGE_SCALE).toInt().coerceAtMost(bitmap.height - top)
-                if (w <= 0 || h <= 0) continue
-                val file = File(imageDir, "page$index-$n.png")
-                file.outputStream().use {
-                    Bitmap.createBitmap(bitmap, left, top, w, h).compress(Bitmap.CompressFormat.PNG, 100, it)
-                }
-                result.put(JSONObject().put("top", (y + height - box.lowerLeftY).toDouble()).put("path", file.path))
+            val scale = minOf(IMAGE_SCALE, MAX_RENDER_PIXELS / maxOf(box.width, box.height))
+            val bitmap = try {
+                renderer.renderImage(index, scale)
+            } catch (e: OutOfMemoryError) {
+                Log.e(TAG, "page $index too large to render its images", e)
+                return result
             }
-            bitmap.recycle()
+            try {
+                for ((n, rect) in rects.withIndex()) {
+                    val (x, y, width, height) = rect
+                    val left = ((x - box.lowerLeftX) * scale).toInt().coerceIn(0, bitmap.width - 1)
+                    val top = ((box.upperRightY - (y + height)) * scale).toInt().coerceIn(0, bitmap.height - 1)
+                    val w = (width * scale).toInt().coerceAtMost(bitmap.width - left)
+                    val h = (height * scale).toInt().coerceAtMost(bitmap.height - top)
+                    if (w <= 0 || h <= 0) continue
+                    val file = File(imageDir, "page$index-$n.png")
+                    file.outputStream().use {
+                        Bitmap.createBitmap(bitmap, left, top, w, h).compress(Bitmap.CompressFormat.PNG, 100, it)
+                    }
+                    result.put(JSONObject().put("top", (y + height - box.lowerLeftY).toDouble()).put("path", file.path))
+                }
+            } finally {
+                bitmap.recycle()
+            }
             return result
         }
     }
 
     /// Boxes are in PDF space: origin bottom-left, y up.
     private class PageStripper : PDFTextStripper() {
-        val pages = mutableListOf<JSONObject>()
+        /// Keyed by page index: blank pages get no startPage/endPage.
+        val pages = mutableListOf<Pair<Int, JSONObject>>()
         private val text = StringBuilder()
         private var runs = JSONArray()
         private var boxes = JSONArray()
@@ -122,7 +132,7 @@ class FAPDFTextBridge {
         override fun endPage(page: PDPage) {
             flushRun()
             pages.add(
-                JSONObject()
+                currentPageNo - 1 to JSONObject()
                     .put("width", page.cropBox.width.toDouble())
                     .put("height", page.cropBox.height.toDouble())
                     .put("text", text.toString())
@@ -215,7 +225,6 @@ class FAPDFTextBridge {
 
         init {
             addOperator(Concatenate())
-            addOperator(DrawObject())
             addOperator(SetGraphicsStateParameters())
             addOperator(Save())
             addOperator(Restore())
@@ -227,8 +236,14 @@ class FAPDFTextBridge {
                 val name = operands.firstOrNull() as? COSName ?: return
                 when (val xObject = resources.getXObject(name)) {
                     is PDImageXObject -> {
+                        // The unit square through the CTM, so flipped or rotated draws crop right.
                         val ctm = graphicsState.currentTransformationMatrix
-                        rects.add(listOf(ctm.translateX, ctm.translateY, ctm.scalingFactorX, ctm.scalingFactorY))
+                        val corners = listOf(0f to 0f, 1f to 0f, 0f to 1f, 1f to 1f).map { (x, y) ->
+                            ctm.transformPoint(x, y)
+                        }
+                        val minX = corners.minOf { it.x }
+                        val minY = corners.minOf { it.y }
+                        rects.add(listOf(minX, minY, corners.maxOf { it.x } - minX, corners.maxOf { it.y } - minY))
                     }
                     is PDFormXObject -> showForm(xObject)
                 }
