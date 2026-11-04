@@ -52,8 +52,11 @@ actor FAImageStore {
     private let queue = DispatchQueue(label: "FAImageStore", attributes: .concurrent)
 
     private var active = 0
-    private var highPriorityWaiters = [CheckedContinuation<Void, Never>]()
-    private var lowPriorityWaiters = [CheckedContinuation<Void, Never>]()
+    private typealias Waiter = (url: URL?, continuation: CheckedContinuation<Void, Never>)
+    private var highPriorityWaiters = [Waiter]()
+    private var lowPriorityWaiters = [Waiter]()
+
+    private var promoted = Set<URL>()
 
     private let fetches = InFlightCoalescer<URL, Data?>()
 
@@ -99,16 +102,31 @@ actor FAImageStore {
     /// downloader has no queue of its own to put it on.
     func decoding<T: Sendable>(
         _ priority: FAImagePriority,
+        for url: URL,
         _ work: @escaping @Sendable () -> T
     ) async -> T {
-        await gated(priority, work)
+        await gated(priority, for: url, work)
     }
 
     /// Runs blocking file I/O on the store's queue, under a permit — the same seam
     /// the fetch and the decode use, since `Task.detached` would block the
     /// cooperative pool. `.low`: every caller is housekeeping.
     func performingFileIO(_ work: @escaping @Sendable () -> Void) async {
-        await gated(.low, work)
+        await gated(.low, for: nil, work)
+    }
+
+    func promote(_ url: URL) {
+        promoted.insert(url)
+        let (moved, kept) = lowPriorityWaiters.reduce(into: ([Waiter](), [Waiter]())) {
+            if $1.url == url { $0.0.append($1) } else { $0.1.append($1) }
+        }
+        guard !moved.isEmpty else { return }
+        lowPriorityWaiters = kept
+        highPriorityWaiters += moved
+    }
+
+    func forgetPromotion(_ url: URL) {
+        promoted.remove(url)
     }
 
     /// Forgets the remembered 404s, alongside a Settings cache clear.
@@ -151,7 +169,7 @@ actor FAImageStore {
     /// on the MainActor and pushes the new credentials through `imageCredentialsSink`
     /// → `ImageFetchBridge.configure`, a non-blocking volatile write.
     private func fetchHoldingPermit(_ url: URL, priority: FAImagePriority) async -> Data? {
-        await acquire(priority)
+        await acquire(priority, for: url)
         defer { release() }
 
         // A fetch starting during an unresolved challenge is certain to be challenged
@@ -266,9 +284,10 @@ actor FAImageStore {
     /// operations are outstanding. Suspends rather than blocking while waiting.
     private func gated<T: Sendable>(
         _ priority: FAImagePriority,
+        for url: URL?,
         _ work: @escaping @Sendable () -> T
     ) async -> T {
-        await acquire(priority)
+        await acquire(priority, for: url)
         defer { release() }
         return await onQueue(work)
     }
@@ -283,15 +302,17 @@ actor FAImageStore {
         }
     }
 
-    private func acquire(_ priority: FAImagePriority) async {
+    private func acquire(_ priority: FAImagePriority, for url: URL?) async {
         if active < concurrencyLimit {
             active += 1
             return
         }
+        let isHigh = priority == .high || url.map(promoted.contains) == true
         await withCheckedContinuation { continuation in
-            switch priority {
-            case .high: highPriorityWaiters.append(continuation)
-            case .low: lowPriorityWaiters.append(continuation)
+            if isHigh {
+                highPriorityWaiters.append((url, continuation))
+            } else {
+                lowPriorityWaiters.append((url, continuation))
             }
         }
     }
@@ -300,9 +321,9 @@ actor FAImageStore {
     /// visible row jumps the queue of prefetches instead of joining its tail.
     private func release() {
         if !highPriorityWaiters.isEmpty {
-            highPriorityWaiters.removeFirst().resume()
+            highPriorityWaiters.removeFirst().continuation.resume()
         } else if !lowPriorityWaiters.isEmpty {
-            lowPriorityWaiters.removeFirst().resume()
+            lowPriorityWaiters.removeFirst().continuation.resume()
         } else {
             active -= 1
         }

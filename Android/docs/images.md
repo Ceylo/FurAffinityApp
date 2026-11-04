@@ -67,6 +67,11 @@ a challenge on the one the app has is *repairable* rather than a lost draw. See
 - **A challenge is reported, not retried into.** `FAImageFetchBridge` hands
   `cf-mitigated: challenge` back to Swift once its five attempts are spent. `FAImageStore`
   parks on `awaitResolution()` and retries once on the repaired pool.
+- **A visible load promotes the prefetch it joins** (`FAImageStore.promote`). The
+  prefetcher probes the cache synchronously, while `KFImage` first waits on an async disk
+  lookup, so the row usually joins a prefetch already queued low. Without promotion, on
+  a cold Favorites page, row 0's avatar was the 43rd GET, 31 s after the page arrived.
+  With it, the avatar was the 8th GET, 1.2 s after.
 - **Park inside the permit.** Freeing the permit across the wait let ~80 URLs resume in
   lockstep: 75% 403, 25 images lost per run. Holding it caps parked fetches at six and
   leaves the rest off the network in the gate's FIFO. The park is capped at 20 s, and
