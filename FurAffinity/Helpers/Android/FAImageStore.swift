@@ -56,7 +56,7 @@ actor FAImageStore {
     private var highPriorityWaiters = [Waiter]()
     private var lowPriorityWaiters = [Waiter]()
 
-    private var promoted = Set<URL>()
+    private var promoted = [URL: Int]()
 
     private let fetches = InFlightCoalescer<URL, Data?>()
 
@@ -116,15 +116,18 @@ actor FAImageStore {
     }
 
     func promote(_ url: URL) {
-        promoted.insert(url)
+        promoted[url, default: 0] += 1
         guard lowPriorityWaiters.contains(where: { $0.url == url }) else { return }
         highPriorityWaiters += lowPriorityWaiters.filter { $0.url == url }
         lowPriorityWaiters.removeAll { $0.url == url }
     }
 
     func forgetPromotion(_ url: URL) {
-        promoted.remove(url)
+        promoted[url, default: 1] -= 1
+        if promoted[url] == 0 { promoted[url] = nil }
     }
+
+    var queuedCount: Int { highPriorityWaiters.count + lowPriorityWaiters.count }
 
     /// Forgets the remembered 404s, alongside a Settings cache clear.
     func forgetNotFound() {
@@ -136,7 +139,7 @@ actor FAImageStore {
     private func fetchWithRepair(_ url: URL, priority: FAImagePriority) async -> Data? {
         let epochBefore = lastFailureEpoch
         var fetched = await fetchHoldingPermit(url, priority: priority)
-        if fetched == nil, priority == .high, notFound[url] == nil {
+        if fetched == nil, priority == .high || promoted[url] != nil, notFound[url] == nil {
             // Coalescing means a visible row may have been sharing a *prefetch's*
             // exhausted attempts, so it used to get an unconditional second try. It
             // now gets one only when the pool has actually been repaired underneath
@@ -304,7 +307,7 @@ actor FAImageStore {
             active += 1
             return
         }
-        let priority = url.map(promoted.contains) == true ? .high : priority
+        let priority = url.flatMap { promoted[$0] } != nil ? .high : priority
         await withCheckedContinuation { continuation in
             switch priority {
             case .high: highPriorityWaiters.append((url, continuation))
