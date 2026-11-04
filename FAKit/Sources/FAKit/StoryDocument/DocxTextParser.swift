@@ -1,6 +1,6 @@
 //
 //  DocxTextParser.swift
-//  FurAffinity
+//  FAKit
 //
 //  Created by Ceylo on 27/06/2026.
 //
@@ -8,7 +8,6 @@
 #if !os(Android)
 
 import Foundation
-import UIKit
 import ZIPFoundation
 
 /// Builds an attributed string from a Word `document.xml`: text inside `<w:t>`,
@@ -37,7 +36,7 @@ final class DocxTextParser: NSObject, XMLParserDelegate {
         return result.length > 0 ? result : nil
     }
 
-    private(set) var result = NSMutableAttributedString()
+    private(set) var result = NSMutableAttributedString(string: "")
 
     /// Typical Word default body size (half-points are halved into points).
     private let defaultSize: CGFloat = 12
@@ -60,8 +59,8 @@ final class DocxTextParser: NSObject, XMLParserDelegate {
     }
 
     private func append(_ string: String) {
-        let font = UIFont.font(ofSize: size, bold: bold, italic: italic)
-        result.append(NSAttributedString(string: string, attributes: [.font: font]))
+        let font = StoryFont(size: size, bold: bold, italic: italic)
+        result.append(NSAttributedString(string: string, attributes: [.storyFont: font]))
     }
 
     func parser(
