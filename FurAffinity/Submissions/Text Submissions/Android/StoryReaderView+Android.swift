@@ -36,6 +36,9 @@ struct StoryReaderView: View {
         }
     }
 
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(\.dismiss) var dismiss
+
     var title: String
     var content: Content
 
@@ -72,6 +75,9 @@ struct StoryReaderView: View {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Close", systemImage: "xmark") { dismiss() }
+                }
                 if content.paragraphs != nil {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button(action: openInAnotherApp) {

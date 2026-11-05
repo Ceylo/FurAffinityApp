@@ -40,6 +40,10 @@ needs to know:
   `JSONSerialization`), `Kingfisher`, which builds for Android, so `FAImage` is a real
   `KFImage` on both platforms, and five for dependency identity only: `skip-web`,
   `skip-bridge`, `skip-model`, `skip-android-bridge`, `skip-fuse` — `forks.md`.
+- **Never go against Material Design on Android.** iOS parity stops at Material's spec:
+  before patching a fork for parity, check the patch keeps to Material 3; if it wouldn't,
+  use the Material pattern in the app instead (a reader that must fill a landscape phone
+  is a `.fullScreenCover`, not a sheet past Material's 640 dp cap).
 - **Pages and images share one `OkHttpClient`** on Android (`FAHttpClient.kt`), because
   Cloudflare judges a connection and a challenge is repaired by evicting it — `images.md`,
   `cloudflare-and-login.md`. HTTP/2 is measured and off.

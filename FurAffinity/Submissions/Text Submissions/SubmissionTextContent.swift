@@ -79,9 +79,15 @@ struct SubmissionTextContent: View {
             .disabled(isDownloading)
             .padding(.horizontal, 10)
         }
+        #if os(Android)
+        .fullScreenCover(item: $readerContent) { content in
+            StoryReaderView(title: title, content: content)
+        }
+        #else
         .sheet(item: $readerContent) { content in
             StoryReaderView(title: title, content: content)
         }
+        #endif
     }
 
     private func readStory() {
