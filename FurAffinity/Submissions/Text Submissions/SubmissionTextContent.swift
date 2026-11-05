@@ -27,6 +27,12 @@ struct SubmissionTextContent: View {
     /// Extracted once, reused so re-opening doesn't re-download or re-parse.
     @State var loadedContent: StoryReaderView.Content?
 
+    #if os(Android)
+    private static let glyphSize: CGFloat = 18 // Material 3's button icon
+    #else
+    private static let glyphSize: CGFloat = 17
+    #endif
+
     private var coverUrl: URL {
         textContent.renderedPreviewUrl
     }
@@ -68,9 +74,12 @@ struct SubmissionTextContent: View {
                                 .controlSize(.small)
                         } else {
                             Image(systemName: "book")
+                                #if os(Android)
+                                .resizable()
+                                #endif
                         }
                     }
-                    .frame(width: 17, height: 17)
+                    .frame(width: Self.glyphSize, height: Self.glyphSize)
                     Text(isDownloading ? "Downloading…" : "Read story")
                 }
             }

@@ -105,9 +105,10 @@ struct SubmissionAudioContent: View {
                                 .controlSize(.small)
                         } else {
                             Image(systemName: "play.fill")
+                                .resizable()
                         }
                     }
-                    .frame(width: 17, height: 17)
+                    .frame(width: 18, height: 18) // Material 3's button icon
                     Text(isDownloading ? "Downloading…" : "Play in another app")
                 }
             }
