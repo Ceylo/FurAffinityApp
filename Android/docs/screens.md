@@ -176,15 +176,18 @@ Only the reader is forked: `StoryReaderView` builds its `Content` through
 `StoryReaderView.Content.load(data:filename:documentUrl:)` on both platforms. Both read
 all five formats with FAKit's shared `StoryDocument`; on Android, pdf pages come from
 PdfBox-Android (`FAPDFTextBridge.kt`), and docx and rtf from FAKit's `ZipEntryReader` and
-`RTFTextParser`.
+`RTFTextParser`. The reader is a `fullScreenCover`, Material's full-screen dialog, since a
+sheet stops at 640 dp; "Open with…" sits in its overflow menu and shows the system
+chooser. As on an iPhone, a phone stays portrait except in the reader
+(`FAOrientationBridge.kt`); a tablet rotates freely.
 
 Music has an Android `SubmissionAudioContent` with the iOS signature: the cover, and
 "Play in another app", which downloads the mp3 and hands it over; Save/Share light up
 once downloaded. It downloads only when asked, unlike iOS: the page transport can't
 cancel an exchange and holds a permit for the whole transfer.
 
-Not ported, each an Apple-only stack: in-app playback and lock-screen controls, the
-QuickLook "Original" view and the reader's landscape gate (Android rotates everywhere).
+Not ported, each an Apple-only stack: in-app playback and lock-screen controls, and the
+QuickLook "Original" view.
 
 A download still challenged after the repair fails instead of taking the WebView
 fallback, which reads back a page and so never returns a file.

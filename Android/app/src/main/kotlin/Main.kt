@@ -55,6 +55,7 @@ open class MainActivity: AppCompatActivity {
         super.onCreate(savedInstanceState)
         logger.info("starting activity")
         UIApplication.launch(this)
+        FAOrientationBridge.apply(this)
         enableEdgeToEdge()
 
         setContent {

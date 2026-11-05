@@ -64,7 +64,7 @@ needs to know:
 
 **App:**
 - `iOS/FurAffinityApp.swift`: entry point, Amplitude init, `@UIApplicationDelegateAdaptor`.
-- `iOS/AppDelegate.swift`: `OrientationGate`/`DeviceOrientationControl` — app is portrait everywhere except the landscape-capable story reader (iPhone only; iPad rotates freely).
+- `iOS/AppDelegate.swift`: `OrientationGate`/`DeviceOrientationControl` — app is portrait everywhere except the landscape-capable story reader (iPhone only; iPad rotates freely). Android: `FAOrientationBridge.kt`, phones only.
 - `Model.swift`: `@Observable @MainActor` — session, feeds, search results/query, notes, notifications, autorefresh, error storage.
 - `Helpers/FATarget.swift`: FA URL → navigation target.
 - `Helpers/iOS/InAppNavigation.swift` · `Helpers/Android/InAppNavigation+Android.swift`: `FATarget` → destination view.

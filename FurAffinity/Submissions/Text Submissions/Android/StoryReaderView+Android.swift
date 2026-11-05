@@ -65,13 +65,15 @@ struct StoryReaderView: View {
                         Text("This story's format can't be shown in the app.")
                             .multilineTextAlignment(.center)
                             .foregroundStyle(.secondary)
-                        Button("Open in another app", action: openInAnotherApp)
+                        Button("Open with…", action: openInAnotherApp)
                             .buttonStyle(.borderedProminent)
                     }
                     .padding()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
+            .onAppear { OrientationBridge.allowLandscape(true) }
+            .onDisappear { OrientationBridge.allowLandscape(false) }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -80,10 +82,10 @@ struct StoryReaderView: View {
                 }
                 if content.paragraphs != nil {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button(action: openInAnotherApp) {
-                            // SkipUI maps no symbol to "arrow.up.forward.app"; this is its
-                            // Material counterpart.
-                            Label("Open in Another App", systemImage: "Icons.Outlined.ExitToApp")
+                        Menu {
+                            Button("Open with…", action: openInAnotherApp)
+                        } label: {
+                            ActionControl()
                         }
                     }
                 }
