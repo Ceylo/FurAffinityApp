@@ -36,7 +36,7 @@ extension StoryDocument {
         return attributed.length > 0 ? attributed : nil
     }
 
-    static func neutralized(_ text: NSAttributedString) -> NSAttributedString {
+    static func neutralized(_ text: NSAttributedString) -> NSMutableAttributedString {
         let result = NSMutableAttributedString(string: text.string)
         text.enumerateAttributes(in: NSRange(location: 0, length: text.length)) { attributes, range, _ in
             var neutral: [NSAttributedString.Key: Any] = [:]
@@ -51,9 +51,6 @@ extension StoryDocument {
             }
             if (attributes[.paragraphStyle] as? NSParagraphStyle)?.alignment == .center {
                 neutral[.storyCentered] = true
-            }
-            if let png = (attributes[.attachment] as? NSTextAttachment)?.image?.pngData() {
-                neutral[.storyImage] = png
             }
             result.setAttributes(neutral, range: range)
         }

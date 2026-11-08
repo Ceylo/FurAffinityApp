@@ -90,7 +90,7 @@ struct StoryParagraphsTests {
         let lima = try #require(paragraphs(ofPDF: "1751926678.amber-calliope_lima_nox_ch0-1__2_.pdf"))
         let title = try #require(lima.first { $0.text == "LIMA NOX - BOXES" })
         #expect(title.centered)
-        #expect(lima.contains { $0.image != nil })
+        #expect(lima.filter { $0.image != nil }.count == 3)
 
         let typhin = try #require(paragraphs(ofPDF: "1642368831.typhin_princess_tells_her_story.pdf"))
         #expect(typhin.contains { $0.text.hasPrefix("\tThe wizard Elimaio") })

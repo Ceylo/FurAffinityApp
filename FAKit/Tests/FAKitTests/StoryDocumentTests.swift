@@ -196,7 +196,7 @@ struct StoryDocumentTests {
         ns.enumerateAttribute(.attachment, in: NSRange(location: 0, length: ns.length)) { value, _, _ in
             if let attachment = value as? NSTextAttachment, attachment.image != nil { images += 1 }
         }
-        #expect(images >= 1, "expected inline images, found \(images)")
+        #expect(images == 3, "expected the 3 embedded images once each, found \(images)")
     }
 
     @Test
