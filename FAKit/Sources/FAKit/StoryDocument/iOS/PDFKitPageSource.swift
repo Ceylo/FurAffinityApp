@@ -21,17 +21,16 @@ enum PDFKitPageSource {
     }
 
     private static func pageText(_ page: PDFPage) -> PDFPageText {
-        let text = StoryDocument.neutralized(page.attributedString ?? NSAttributedString())
-        let count = min(text.length, page.numberOfCharacters)
+        let raw = NSMutableAttributedString(attributedString: page.attributedString ?? NSAttributedString())
+        let count = min(raw.length, page.numberOfCharacters)
         var bounds = (0..<count).map { page.characterBounds(at: $0) }
         // PDFKit marks each image with U+FFFC since iOS 27.
-        let string = text.string as NSString
-        for i in (0..<count).reversed() where string.character(at: i) == 0xFFFC {
-            text.deleteCharacters(in: NSRange(location: i, length: 1))
+        for i in (0..<count).reversed() where raw.mutableString.character(at: i) == 0xFFFC {
+            raw.deleteCharacters(in: NSRange(location: i, length: 1))
             bounds.remove(at: i)
         }
         return PDFPageText(
-            text: text,
+            text: StoryDocument.neutralized(raw),
             characterBounds: bounds,
             mediaBox: page.bounds(for: .mediaBox),
             images: imagePlacements(on: page).compactMap { rect in

@@ -36,7 +36,7 @@ extension StoryDocument {
         return attributed.length > 0 ? attributed : nil
     }
 
-    static func neutralized(_ text: NSAttributedString) -> NSMutableAttributedString {
+    static func neutralized(_ text: NSAttributedString) -> NSAttributedString {
         let result = NSMutableAttributedString(string: text.string)
         text.enumerateAttributes(in: NSRange(location: 0, length: text.length)) { attributes, range, _ in
             var neutral: [NSAttributedString.Key: Any] = [:]
