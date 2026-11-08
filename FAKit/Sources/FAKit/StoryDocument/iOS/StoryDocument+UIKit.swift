@@ -52,6 +52,9 @@ extension StoryDocument {
             if (attributes[.paragraphStyle] as? NSParagraphStyle)?.alignment == .center {
                 neutral[.storyCentered] = true
             }
+            if let png = (attributes[.attachment] as? NSTextAttachment)?.image?.pngData() {
+                neutral[.storyImage] = png
+            }
             result.setAttributes(neutral, range: range)
         }
         return result
