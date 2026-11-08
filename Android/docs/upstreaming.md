@@ -43,6 +43,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `3dcb579` Notes SF Symbol mappings | skip-ui | no | same shape as #525; both forms of the filter symbol map to `FilterList` |
 | `4479648` principal toolbar item in the title slot; flexible top-bar spacer as a fixed gap | skip-ui | no | **two PRs**, one fix each; Robolectric `ToolbarItemsTests`, mutation-checked |
 | `9399636` a button's symbol takes the button's content color | skip-ui | no | fixes upstream #293; no Robolectric test yet: add one before sending |
+| `a1b8842` + `4f1cee3` finite `maxWidth` frame clamped to its parent | skip-ui | no | upstream PR #510 (not ours; fixes #339), cherry-picked; drop it from the fork when #510 merges |
 | `c8bff3d` `Picker` listed inline in a `Menu` | skip-ui | no | no Robolectric test yet: add one before sending |
 | `001f4ec` tab re-tap pops to root, then scrolls to top | skip-ui | no | Material and iOS parity; adds internal `Navigator.navigateToRoot()` |
 | `ca5fad0` `List` under the status bar with the nav bar hidden | skip-ui | no | bug fix plus its two `List` follow-ons (`scrollTo` offset, late header) |
