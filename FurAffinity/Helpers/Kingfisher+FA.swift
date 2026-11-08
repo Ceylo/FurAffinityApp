@@ -508,6 +508,20 @@ actor DownloadDelegate: ImageDownloaderDelegate {
             downloaderCookieStorage.setCookie(cf_clearance)
         }
     }
+
+    // FA serves a missing story thumbnail as a 404 whose body is its placeholder image,
+    // which browsers show.
+    nonisolated func isValidStatusCode(_ code: Int, for downloader: ImageDownloader) -> Bool {
+        (200..<400).contains(code) || code == 404
+    }
+
+    nonisolated func imageDownloader(
+        _ downloader: ImageDownloader,
+        didReceive response: URLResponse
+    ) async -> URLSession.ResponseDisposition {
+        guard (response as? HTTPURLResponse)?.statusCode == 404 else { return .allow }
+        return response.mimeType?.hasPrefix("image/") == true ? .allow : .cancel
+    }
 #endif
 
     nonisolated func imageDownloader(
