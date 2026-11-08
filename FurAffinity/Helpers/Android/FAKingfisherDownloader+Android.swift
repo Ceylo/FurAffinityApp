@@ -108,13 +108,16 @@ final class FAOkHttpDownloader: ImageDownloader, @unchecked Sendable {
         // launch). The processor is in the key because what is shared is the
         // *processed* image.
         let key = "\(url.absoluteString)|\(options.processor.identifier)"
+        if priority == .high {
+            await FAImageStore.shared.promote(url)
+        }
         let loaded = await loads.run(key, priority: priority.taskPriority) {
             if let recent = recentLoads.value(for: key) {
                 if let image = recent.image
                     ?? ImageCache.default.retrieveImageInMemoryCache(forKey: url.cacheKey, options: options) {
                     return .image(image, recent.data, nil)
                 }
-                let image = await FAImageStore.shared.decoding(priority) {
+                let image = await FAImageStore.shared.decoding(priority, for: url) {
                     options.processor.process(item: .data(recent.data), options: options)
                 }
                 return image.map { .image($0, recent.data, nil) } ?? .undecodable(recent.data)
@@ -124,12 +127,15 @@ final class FAOkHttpDownloader: ImageDownloader, @unchecked Sendable {
             }
             // Through the gate, not straight here: the processor decodes, and a
             // decode is another blocking JNI call on a thread Swift concurrency owns.
-            let image = await FAImageStore.shared.decoding(priority) {
+            let image = await FAImageStore.shared.decoding(priority, for: url) {
                 options.processor.process(item: .data(data), options: options)
             }
             guard let image else { return .undecodable(data) }
             // Recorded before the coalescer entry clears, so there is no gap between the two.
             return recentLoads.hold(image, data, for: key)
+        }
+        if priority == .high {
+            await FAImageStore.shared.forgetPromotion(url)
         }
 
         switch loaded {
