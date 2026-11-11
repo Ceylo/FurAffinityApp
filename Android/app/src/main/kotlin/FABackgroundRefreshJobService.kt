@@ -16,7 +16,10 @@ package fur.affinity.ui
 import android.app.job.JobParameters
 import android.app.job.JobService
 import android.app.usage.UsageStatsManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.BatteryManager
+import android.os.Build
 import android.os.PowerManager
 import android.util.Log
 import kotlin.coroutines.cancellation.CancellationException
@@ -66,7 +69,8 @@ class FABackgroundRefreshJobService : JobService() {
         if (run?.isActive == true) {
             run.cancel()
             // The coroutine's cancellation doesn't reach the Swift task it awaits.
-            FurAffinityUIAppDelegate.shared.cancelBackgroundRefresh()
+            val reason = if (Build.VERSION.SDK_INT >= 31) stopReason(params.stopReason) else "unknown"
+            FurAffinityUIAppDelegate.shared.cancelBackgroundRefresh(reason)
         }
         return true
     }
@@ -80,17 +84,40 @@ class FABackgroundRefreshJobService : JobService() {
 
     // What Android throttles the job by, so a tester's log shows why runs are sparse.
     private fun deviceConditions(params: JobParameters): String {
-        val bucket = when (val raw = getSystemService(UsageStatsManager::class.java)?.appStandbyBucket) {
-            UsageStatsManager.STANDBY_BUCKET_ACTIVE -> "active"
-            UsageStatsManager.STANDBY_BUCKET_WORKING_SET -> "working set"
-            UsageStatsManager.STANDBY_BUCKET_FREQUENT -> "frequent"
-            UsageStatsManager.STANDBY_BUCKET_RARE -> "rare"
-            UsageStatsManager.STANDBY_BUCKET_RESTRICTED -> "restricted"
-            else -> "$raw"
-        }
+        val bucket = FANotificationBridge.bucket(getSystemService(UsageStatsManager::class.java)?.appStandbyBucket)
         val charging = getSystemService(BatteryManager::class.java)?.isCharging
         val idle = getSystemService(PowerManager::class.java)?.isDeviceIdleMode
         val job = if (params.isScheduled) "scheduled" else "debug"
-        return "standby bucket: $bucket, charging: $charging, device idle: $idle, job: $job"
+        val history = if (params.isScheduled) ", ${FANotificationBridge.schedulingDiagnostics()}" else ""
+        return "standby bucket: $bucket, charging: $charging, device idle: $idle, ${network()}, job: $job$history"
+    }
+
+    private fun network(): String = try {
+        val connectivity = getSystemService(ConnectivityManager::class.java)
+        val capabilities = connectivity.getNetworkCapabilities(connectivity.activeNetwork)
+        val type = when {
+            capabilities == null -> "none"
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "wifi"
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "cellular"
+            else -> "other"
+        }
+        "network: $type, validated: ${capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true}"
+    } catch (e: Exception) {
+        "network: <$e>"
+    }
+
+    private fun stopReason(reason: Int): String = when (reason) {
+        JobParameters.STOP_REASON_CANCELLED_BY_APP -> "cancelled by app"
+        JobParameters.STOP_REASON_PREEMPT -> "preempt"
+        JobParameters.STOP_REASON_TIMEOUT -> "timeout"
+        JobParameters.STOP_REASON_DEVICE_STATE -> "device state"
+        JobParameters.STOP_REASON_CONSTRAINT_CONNECTIVITY -> "connectivity"
+        JobParameters.STOP_REASON_BACKGROUND_RESTRICTION -> "background restriction"
+        JobParameters.STOP_REASON_QUOTA -> "quota"
+        JobParameters.STOP_REASON_APP_STANDBY -> "app standby"
+        JobParameters.STOP_REASON_USER -> "user"
+        JobParameters.STOP_REASON_SYSTEM_PROCESSING -> "system processing"
+        JobParameters.STOP_REASON_TIMEOUT_ABANDONED -> "timeout abandoned"
+        else -> "$reason"
     }
 }

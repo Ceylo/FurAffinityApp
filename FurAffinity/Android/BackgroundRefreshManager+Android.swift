@@ -28,6 +28,11 @@ extension BackgroundRefreshManager {
         let now = Date()
         let delay = Int64(Defaults[.backgroundRefreshBudget].nextRunDate(after: now, calendar: .current).timeIntervalSince(now).rounded(.up))
         Task {
+            let diagnostics = await callBridgeOffPool("FANotificationBridge", fallback: "unavailable") { bridge in
+                let text: String? = try bridge.schedulingDiagnostics()
+                return text ?? "unavailable"
+            }
+            logger.info("Background refresh scheduling: \(diagnostics)")
             let scheduled = await callBridgeOffPool("FANotificationBridge", fallback: false) { bridge in
                 let ok: Bool? = try bridge.scheduleBackgroundRefresh(delay)
                 return ok == true
