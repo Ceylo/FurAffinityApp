@@ -359,6 +359,20 @@ func FAAnimatedImage(_ url: URL?) -> KFAnimatedImage {
         #endif
 }
 
+extension DynamicThumbnail {
+    /// `bestThumbnailUrl(for:)`, unless only another size is cached (the @400 a
+    /// notification fetched).
+    func cachedOrBestThumbnailUrl(for size: Foundation.CGSize) -> URL {
+        let best = bestThumbnailUrl(for: size)
+        let isCached = { (url: URL) in ImageCache.default.isCached(forKey: url.cacheKey) }
+        return isCached(best) ? best : allThumbnailUrls.first(where: isCached) ?? best
+    }
+
+    func cachedOrBestThumbnailUrl(for geometry: GeometryProxy) -> URL {
+        cachedOrBestThumbnailUrl(for: geometry.faSize)
+    }
+}
+
 // MARK: - Prefetching
 
 @MainActor

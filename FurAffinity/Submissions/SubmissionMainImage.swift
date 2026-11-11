@@ -73,7 +73,7 @@ struct SubmissionMainImage: View {
     /// What shows until the full-resolution media arrives, under the progress bar.
     @ViewBuilder
     private func thumbnailPlaceholder(geometry: GeometryProxy) -> some View {
-        if let thumbnailUrl = thumbnailImage?.bestThumbnailUrl(for: geometry) {
+        if let thumbnailUrl = thumbnailImage?.cachedOrBestThumbnailUrl(for: geometry) {
             FAImage(thumbnailUrl)
                 .aspectRatio(contentMode: .fit)
         }
