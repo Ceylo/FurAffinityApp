@@ -2,6 +2,14 @@
 
 ## Emulator
 
+**The default device is a Windows PC's x86_64 emulator**, when `FA_REMOTE_EMULATOR_HOST`
+names it and it comes up: `test.sh`, `run.sh`, `install-apk.sh`, `logs.sh` and
+`debug.sh` connect to it, start it if needed, and fall back to this host with a
+one-line reason when they can't. `--local` forces this host, `--remote` the PC. Its
+window is on the PC's desktop, driven with the PC's mouse and keyboard. Setup, wiring
+and timings: [remote-emulator.md](remote-emulator.md). The rest of this section is
+this host's emulator, which `test.sh --release` needs.
+
 Nothing in the Skip toolchain boots an AVD for you, and `adb` reports a booting
 emulator as **offline** just as it does a missing one. Boot one first and wait for it:
 
@@ -170,7 +178,10 @@ compile fails, so the build-slots plugin fails on the error lines in its output
 `os(Android)` guard; `skip android build` and `skip android test` never compile it,
 so their being green does not mean the app builds. See [shared
 sources](shared-sources.md#why-everything-unported-is-guarded). `run.sh` then runs
-`check-shared-globals.sh` and holds the emulator lock while it installs.
+`check-shared-globals.sh` and holds the emulator lock while it installs. It compiles
+the Swift for the device's ABI only (`SKIP_EXPORT_ARCHS`): x86_64 on the PC, arm64 here.
+The APK still packs the other ABIs' libraries from whatever the slot last built, so
+only the device's are current: hand testers `build-release-apk.sh`'s APK, never this one.
 
 **A build can fail for reasons that are not your change**, with `missing required
 module 'AndroidNDK'`/`'CJNI'` or `no such module 'OSLog'` in an unrelated dependency.
@@ -196,7 +207,8 @@ committed — see [forks.md](forks.md) for refreshing a fork's pin.
 
 ### The shared emulator
 
-There is one AVD for every worktree. Anything that drives it from a second worktree
+There is one AVD for every worktree on each host, and each has its own lock: this
+host's `/tmp/fa-emulator.lock`, the PC's `/tmp/fa-emulator-remote.lock`. Anything that drives it from a second worktree
 goes through the lock:
 
 ```
@@ -328,10 +340,13 @@ url.absoluteString`. `Data` shows as `slice`; use `p data.count`.
 ## Test
 
 ```
-Scripts/Android/test.sh
+Scripts/Android/test.sh             # the PC's x86_64 emulator, or this host's
+Scripts/Android/test.sh --release   # this host's arm64 emulator, before a release
 ```
 
-It runs both Android test packages on the running emulator, under [the emulator
+It runs both Android test packages on [the PC's emulator](remote-emulator.md) by
+default (this host's with `--local`, or when the PC is unavailable), for the device's
+ABI, under [the emulator
 lock](#the-shared-emulator), and fails if either reports fewer cases than its floor in
 the script, so a run that silently finds no tests cannot pass:
 
@@ -365,6 +380,28 @@ A native test is an `adb shell` process, not an app: it has no `context.cacheDir
 the script sets `XDG_CACHE_HOME`. And `UserDefaults` in a test file is SkipAndroidBridge's
 JNI-backed store (through `@testable import`); reach the Foundation one `Defaults` uses
 as `key.suite`.
+
+### Architecture coverage
+
+Day to day the tests run on **x86_64**, as CI's do (API 34). That misses what only
+arm64 shows, so a release first runs `test.sh --release` here ([releasing.md](releasing.md#before-a-release)):
+
+- **Memory ordering.** ARM's is weak, x86's strong, so a data race in an `@unchecked
+  Sendable` type or a hand-rolled lock can pass every x86_64 run.
+- **Per-arch builds**: the compiler, the Swift SDK and the NDK libraries are separate
+  binaries per arch, each with its own bugs.
+- **Floating point**: arm64 fuses multiply-adds (FMA), so the low bits of a result can
+  differ.
+
+Page size is the image, not the arch: the Mac and PC images are 16 KB, CI's API 34 is
+4 KB. And translated arm64 on the PC (`--arch aarch64` works there, via
+`ndk_translation`) runs on x86 memory ordering, so it is no substitute for arm64.
+
+| `test.sh` on | Wall |
+|---|---|
+| Mac, arm64 | ~39 s |
+| PC, x86_64 | ~51 s |
+| PC, arm64 translated | ~83 s |
 
 ### Toolchain vs. Xcode
 
