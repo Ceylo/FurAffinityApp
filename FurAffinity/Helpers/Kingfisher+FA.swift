@@ -111,9 +111,13 @@ extension KFImageProtocol {
                 return serializer
             }())
             #endif
+            // iOS logs failures in `DownloadDelegate`, where a view's own `onFailure`
+            // can't replace the log.
+            #if FA_SKIP_MODULE
             .onFailure { error in
                 logger.error("\(error)")
             }
+            #endif
     }
 }
 
@@ -140,12 +144,7 @@ struct CloudflareChallengeRetryStrategy: RetryStrategy {
               response.value(forHTTPHeaderField: "cf-mitigated") == "challenge"
         else { return false }
         logger.info("[IMG] Cloudflare challenge on \(response.url?.absoluteString ?? "?"); retrying once resolved")
-        do {
-            try await awaitResolution()
-            return true
-        } catch {
-            return false
-        }
+        return (try? await awaitResolution()) != nil
     }
 }
 #endif
@@ -405,7 +404,7 @@ extension DynamicThumbnail {
     func cachedOrBestThumbnailUrl(for size: Foundation.CGSize) -> URL {
         let best = bestThumbnailUrl(for: size)
         let isCached = { (url: URL) in ImageCache.default.isCached(forKey: url.cacheKey) }
-        return isCached(best) ? best : allThumbnailUrls.first(where: isCached) ?? best
+        return isCached(best) ? best : allThumbnailUrls.lazy.filter { $0 != best }.first(where: isCached) ?? best
     }
 
     func cachedOrBestThumbnailUrl(for geometry: GeometryProxy) -> URL {
@@ -597,5 +596,10 @@ actor DownloadDelegate: ImageDownloaderDelegate {
         Task {
             await setDownloadStartDate(nil, for: url)
         }
+#if !os(Android)
+        if let error {
+            logger.error("[IMG] Failed \(url): \(error)")
+        }
+#endif
     }
 }

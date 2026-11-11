@@ -18,7 +18,7 @@ struct CachedOrBestThumbnailTests {
     }
 
     private func url(_ thumbnail: DynamicThumbnail, size: Int) -> URL {
-        thumbnail.allThumbnailUrls.first { $0.absoluteString.contains("@\(size)-") }!
+        thumbnail.bestThumbnailUrl(for: CGSize(width: size, height: size))
     }
 
     @Test

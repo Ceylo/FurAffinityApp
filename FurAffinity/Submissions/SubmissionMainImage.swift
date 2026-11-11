@@ -72,8 +72,8 @@ struct SubmissionMainImage: View {
 
     /// What shows until the full-resolution media arrives, under the progress bar.
     @ViewBuilder
-    private func thumbnailPlaceholder(geometry: GeometryProxy) -> some View {
-        if let thumbnailUrl = thumbnailImage?.cachedOrBestThumbnailUrl(for: geometry) {
+    private func thumbnailPlaceholder(url: URL?) -> some View {
+        if let thumbnailUrl = url {
             FAImage(thumbnailUrl)
                 .aspectRatio(contentMode: .fit)
         }
@@ -90,10 +90,11 @@ struct SubmissionMainImage: View {
     }
 
     private func configure(_ image: some KFImageProtocol, geometry: GeometryProxy) -> some KFImageProtocol {
-        image
+        let thumbnailUrl = thumbnailImage?.cachedOrBestThumbnailUrl(for: geometry)
+        return image
             .placeholder { progress in
                 ZStack {
-                    thumbnailPlaceholder(geometry: geometry)
+                    thumbnailPlaceholder(url: thumbnailUrl)
 
                     if displayProgress {
                         LinearProgress(progress: Float(progress.fractionCompleted))
@@ -101,7 +102,6 @@ struct SubmissionMainImage: View {
                 }
             }
             .onFailure { error in
-                logger.error("\(error)")
                 errorMessage = error.localizedDescription
             }
             .waitForCache()
