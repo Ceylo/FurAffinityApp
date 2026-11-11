@@ -318,9 +318,12 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   while it runs. The job stands
   down while an activity is resumed, where iOS never runs its task. Android decides how
   often it really runs (Doze, the app's standby bucket), so each run logs a
-  `Background refresh run started (standby bucket: …, charging: …, device idle: …)` line
-  and an `ended after` one, or a `Skipping` one while the app is in the foreground: a
-  tester's exported log shows the actual frequency.
+  `Background refresh run started (standby bucket: …, charging: …, device idle: …, network: …)`
+  line and an `ended after` one, or a `Skipping` one while the app is in the foreground: a
+  tester's exported log shows the actual frequency. Why a run is late, the
+  `FABackgroundRefreshDiagnostics` dump says: a scheduled run carries it on that line, and
+  each reschedule logs it first as `Background refresh scheduling: …`, since scheduling
+  replaces the pending job and its reason history. A stop by the system logs its reason.
 - **A session without a WebView.** JobScheduler may start the process cold, with no
   `FAWebSessionView` mounted, so `FAWebSession.makeBackgroundSession` reads the jar
   through `CookieManager` (`cookieJarHeaderProvider`, HttpOnly cookies included) and

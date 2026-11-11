@@ -26,7 +26,13 @@ object FABackgroundRefreshDiagnostics {
     private val context get() = ProcessInfo.processInfo.androidContext
     private const val JOB_ID = FANotificationBridge.SCHEDULED_JOB_ID
 
-    fun dump(): String {
+    fun dump(): String = try {
+        unsafeDump()
+    } catch (e: Exception) {
+        "diagnostics: <$e>"
+    }
+
+    private fun unsafeDump(): String {
         val now = System.currentTimeMillis()
         val prefs = context.getSharedPreferences("fa.background-refresh.diagnostics", Context.MODE_PRIVATE)
         val since = prefs.getLong("lastDump", now - TimeUnit.DAYS.toMillis(1))
@@ -106,7 +112,11 @@ object FABackgroundRefreshDiagnostics {
 
     private fun time(millis: Long) = Instant.ofEpochMilli(millis).truncatedTo(ChronoUnit.SECONDS).toString()
 
-    private fun constantName(type: Class<*>, prefix: String, value: Int): String = type.fields
-        .firstOrNull { it.name.startsWith(prefix) && Modifier.isStatic(it.modifiers) && it.type == Int::class.javaPrimitiveType && it.getInt(null) == value }
-        ?.name?.removePrefix(prefix)?.lowercase() ?: "$value"
+    private fun constantName(type: Class<*>, prefix: String, value: Int): String = try {
+        type.fields
+            .firstOrNull { it.name.startsWith(prefix) && Modifier.isStatic(it.modifiers) && it.type == Int::class.javaPrimitiveType && it.getInt(null) == value }
+            ?.name?.removePrefix(prefix)?.lowercase()
+    } catch (e: Exception) {
+        null
+    } ?: "$value"
 }
