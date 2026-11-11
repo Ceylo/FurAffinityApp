@@ -10,22 +10,13 @@
 
 package fur.affinity.ui
 
-import android.app.ActivityManager
-import android.app.ApplicationExitInfo
 import android.app.job.JobInfo
 import android.app.job.JobScheduler
-import android.app.usage.UsageEvents
-import android.app.usage.UsageStatsManager
 import android.content.ComponentName
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.Build
-import android.os.PowerManager
 import android.util.Log
 import java.io.FileOutputStream
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -37,7 +28,7 @@ class FANotificationBridge {
 
     fun blur(inputPath: String, outputPath: String, radius: Double): Boolean = Companion.blur(inputPath, outputPath, radius)
 
-    fun schedulingDiagnostics(): String = Companion.schedulingDiagnostics()
+    fun schedulingDiagnostics(): String = FABackgroundRefreshDiagnostics.dump()
 
     companion object {
         private const val TAG = "FANotificationBridge"
@@ -66,106 +57,6 @@ class FANotificationBridge {
         fun runBackgroundRefresh(delaySeconds: Long) {
             val result = scheduler.schedule(job(DEBUG_JOB_ID).setMinimumLatency(TimeUnit.SECONDS.toMillis(delaySeconds)).build())
             if (result != JobScheduler.RESULT_SUCCESS) Log.e(TAG, "runBackgroundRefresh: scheduling failed")
-        }
-
-        fun schedulingDiagnostics(): String {
-            val now = System.currentTimeMillis()
-            val prefs = context.getSharedPreferences("fa.background-refresh.diagnostics", Context.MODE_PRIVATE)
-            val since = prefs.getLong("lastDump", now - TimeUnit.DAYS.toMillis(1))
-            prefs.edit().putLong("lastDump", now).apply()
-            val parts = listOf(
-                probe("pending") { pendingState() },
-                probe("reason history") { reasonHistory(since) },
-                probe("bucket changes") { bucketChanges(since, now) },
-                probe("exits") { exits(since) },
-                probe("background restricted") { "${context.getSystemService(ActivityManager::class.java).isBackgroundRestricted}" },
-                probe("battery optimization exempt") {
-                    "${context.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(context.packageName)}"
-                },
-            )
-            return parts.joinToString(", ")
-        }
-
-        private fun probe(name: String, body: () -> String): String = try {
-            "$name: ${body()}"
-        } catch (e: Exception) {
-            "$name: <$e>"
-        }
-
-        private fun pendingState(): String {
-            if (scheduler.getPendingJob(SCHEDULED_JOB_ID) == null) return "none"
-            return when {
-                Build.VERSION.SDK_INT >= 36 -> scheduler.getPendingJobReasons(SCHEDULED_JOB_ID).joinToString("+") { pendingReason(it) }
-                Build.VERSION.SDK_INT >= 34 -> pendingReason(scheduler.getPendingJobReason(SCHEDULED_JOB_ID))
-                else -> "yes"
-            }
-        }
-
-        private fun reasonHistory(since: Long): String {
-            if (Build.VERSION.SDK_INT < 36) return "n/a"
-            // A finished job's history goes with it.
-            if (scheduler.getPendingJob(SCHEDULED_JOB_ID) == null) return "none"
-            return scheduler.getPendingJobReasonsHistory(SCHEDULED_JOB_ID)
-                .filter { it.timestampMillis >= since }
-                .joinToString(" ", "[", "]") { "${time(it.timestampMillis)} ${it.pendingJobReasons.joinToString("+") { r -> pendingReason(r) }}" }
-        }
-
-        private fun bucketChanges(since: Long, now: Long): String {
-            val events = context.getSystemService(UsageStatsManager::class.java).queryEventsForSelf(since, now)
-            val changes = mutableListOf<String>()
-            val event = UsageEvents.Event()
-            while (events.getNextEvent(event)) {
-                if (event.eventType == UsageEvents.Event.STANDBY_BUCKET_CHANGED) {
-                    changes += "${time(event.timeStamp)} ${bucket(event.appStandbyBucket)}"
-                }
-            }
-            return changes.joinToString(" ", "[", "]")
-        }
-
-        private fun exits(since: Long): String {
-            if (Build.VERSION.SDK_INT < 30) return "n/a"
-            return context.getSystemService(ActivityManager::class.java)
-                .getHistoricalProcessExitReasons(context.packageName, 0, 5)
-                .filter { it.timestamp >= since }
-                .joinToString(" ", "[", "]") { "${time(it.timestamp)} ${exitReason(it.reason)} (${it.description})" }
-        }
-
-        private fun time(millis: Long) = Instant.ofEpochMilli(millis).truncatedTo(ChronoUnit.SECONDS).toString()
-
-        fun bucket(raw: Int?): String = when (raw) {
-            UsageStatsManager.STANDBY_BUCKET_ACTIVE -> "active"
-            UsageStatsManager.STANDBY_BUCKET_WORKING_SET -> "working set"
-            UsageStatsManager.STANDBY_BUCKET_FREQUENT -> "frequent"
-            UsageStatsManager.STANDBY_BUCKET_RARE -> "rare"
-            UsageStatsManager.STANDBY_BUCKET_RESTRICTED -> "restricted"
-            else -> "$raw"
-        }
-
-        private fun pendingReason(reason: Int): String = when (reason) {
-            JobScheduler.PENDING_JOB_REASON_EXECUTING -> "executing"
-            JobScheduler.PENDING_JOB_REASON_UNDEFINED -> "undefined"
-            JobScheduler.PENDING_JOB_REASON_APP -> "app"
-            JobScheduler.PENDING_JOB_REASON_APP_STANDBY -> "app standby"
-            JobScheduler.PENDING_JOB_REASON_BACKGROUND_RESTRICTION -> "background restriction"
-            JobScheduler.PENDING_JOB_REASON_CONSTRAINT_CONNECTIVITY -> "connectivity"
-            JobScheduler.PENDING_JOB_REASON_CONSTRAINT_MINIMUM_LATENCY -> "minimum latency"
-            JobScheduler.PENDING_JOB_REASON_DEVICE_STATE -> "device state"
-            JobScheduler.PENDING_JOB_REASON_JOB_SCHEDULER_OPTIMIZATION -> "scheduler optimization"
-            JobScheduler.PENDING_JOB_REASON_QUOTA -> "quota"
-            JobScheduler.PENDING_JOB_REASON_USER -> "user"
-            else -> "$reason"
-        }
-
-        private fun exitReason(reason: Int): String = when (reason) {
-            ApplicationExitInfo.REASON_LOW_MEMORY -> "low memory"
-            ApplicationExitInfo.REASON_USER_REQUESTED -> "user requested"
-            ApplicationExitInfo.REASON_USER_STOPPED -> "user stopped"
-            ApplicationExitInfo.REASON_OTHER -> "other"
-            ApplicationExitInfo.REASON_SIGNALED -> "signaled"
-            ApplicationExitInfo.REASON_FREEZER -> "freezer"
-            ApplicationExitInfo.REASON_CRASH -> "crash"
-            ApplicationExitInfo.REASON_ANR -> "anr"
-            else -> "$reason"
         }
 
         /// Writes a JPEG of the image at `inputPath` blurred about as Kingfisher's
