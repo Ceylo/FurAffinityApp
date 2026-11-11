@@ -30,7 +30,7 @@ struct SubmissionPreviewView: View {
         GeometryReader { geometry in
             SubmissionMainImage(
                 widthOnHeightRatio: submission.thumbnailWidthOnHeightRatio,
-                fullResolutionMediaUrl: submission.dynamicThumbnail.bestThumbnailUrl(for: geometry),
+                fullResolutionMediaUrl: submission.dynamicThumbnail.cachedOrBestThumbnailUrl(for: geometry),
                 displayProgress: false,
                 allowZoomableSheet: false,
                 fullResolutionMediaFileUrl: .constant(nil)

@@ -97,6 +97,9 @@ extension KFImageProtocol {
             .requestModifier(FAUserAgentRequestModifier())
             .diskCacheExpiration(.days((7...14).randomElement()!))
             .diskCacheAccessExtending(.none)
+            #if !FA_SKIP_MODULE
+            .retry(CloudflareChallengeRetryStrategy())
+            #endif
             #if FA_SKIP_MODULE
             .serialize(by: {
                 var serializer = DefaultCacheSerializer()
@@ -109,6 +112,35 @@ extension KFImageProtocol {
             }
     }
 }
+
+#if !FA_SKIP_MODULE
+/// For `KFImage` only: an HTML inline or a background notification attachment should
+/// fail fast rather than wait on the sheet. Android parks in `FAImageStore` instead.
+struct CloudflareChallengeRetryStrategy: RetryStrategy {
+    var awaitResolution: @Sendable @MainActor () async throws -> Void = {
+        try await CloudflareChallengeCoordinator.shared.awaitResolution()
+    }
+
+    func retry(context: RetryContext, retryHandler: @escaping @Sendable (RetryDecision) -> Void) {
+        guard case .responseError(reason: .invalidHTTPStatusCode(let response)) = context.error
+        else { return retryHandler(.stop) }
+        let retriedCount = context.retriedCount
+        Task {
+            let retry = await shouldRetry(retriedCount: retriedCount, response: response)
+            retryHandler(retry ? .retry(userInfo: nil) : .stop)
+        }
+    }
+
+    @MainActor
+    func shouldRetry(retriedCount: Int, response: HTTPURLResponse) async -> Bool {
+        guard retriedCount == 0,
+              response.value(forHTTPHeaderField: "cf-mitigated") == "challenge"
+        else { return false }
+        logger.info("[IMG] Cloudflare challenge on \(response.url?.absoluteString ?? "?"); retrying once resolved")
+        return (try? await awaitResolution()) != nil
+    }
+}
+#endif
 
 struct FAUserAgentRequestModifier: AsyncImageDownloadRequestModifier {
     var onDownloadTaskStarted: (@Sendable (DownloadTask?) -> Void)? { nil }
@@ -357,6 +389,20 @@ func FAAnimatedImage(_ url: URL?) -> KFAnimatedImage {
             view.framePreloadCount = .max
         }
         #endif
+}
+
+extension DynamicThumbnail {
+    /// `bestThumbnailUrl(for:)`, unless only another size is cached (the @400 a
+    /// notification fetched).
+    func cachedOrBestThumbnailUrl(for size: Foundation.CGSize) -> URL {
+        let best = bestThumbnailUrl(for: size)
+        let isCached = { (url: URL) in ImageCache.default.isCached(forKey: url.cacheKey) }
+        return isCached(best) ? best : allThumbnailUrls.first(where: isCached) ?? best
+    }
+
+    func cachedOrBestThumbnailUrl(for geometry: GeometryProxy) -> URL {
+        cachedOrBestThumbnailUrl(for: geometry.faSize)
+    }
 }
 
 // MARK: - Prefetching
