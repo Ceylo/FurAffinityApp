@@ -101,6 +101,7 @@ struct SubmissionMainImage: View {
                 }
             }
             .onFailure { error in
+                logger.error("\(error)")
                 errorMessage = error.localizedDescription
             }
             .waitForCache()

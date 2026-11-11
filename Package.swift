@@ -90,6 +90,7 @@ let package = Package(
             path: "FurAffinityTests",
             exclude: [
                 "AnimatedImageDecodeTests.swift",
+                "CloudflareChallengeRetryStrategyTests.swift",
                 "LoggedInViewTabTests.swift",
                 "MockFASession.swift",
                 "ModelTests.swift",

@@ -75,6 +75,10 @@ extension KingfisherOptionsInfo {
             .diskCacheAccessExtendingExpiration(.none),
         ]
 
+        #if !FA_SKIP_MODULE
+        options.append(.retryStrategy(CloudflareChallengeRetryStrategy()))
+        #endif
+
         #if FA_SKIP_MODULE
         // Store the downloaded bytes: DefaultCacheSerializer would otherwise
         // re-encode the decoded Android Bitmap, a compress pass per image that
@@ -97,6 +101,9 @@ extension KFImageProtocol {
             .requestModifier(FAUserAgentRequestModifier())
             .diskCacheExpiration(.days((7...14).randomElement()!))
             .diskCacheAccessExtending(.none)
+            #if !FA_SKIP_MODULE
+            .retry(CloudflareChallengeRetryStrategy())
+            #endif
             #if FA_SKIP_MODULE
             .serialize(by: {
                 var serializer = DefaultCacheSerializer()
@@ -109,6 +116,39 @@ extension KFImageProtocol {
             }
     }
 }
+
+#if !FA_SKIP_MODULE
+/// Android parks in `FAImageStore` instead.
+struct CloudflareChallengeRetryStrategy: RetryStrategy {
+    var awaitResolution: @Sendable @MainActor () async throws -> Void = {
+        try await CloudflareChallengeCoordinator.shared.awaitResolution()
+    }
+
+    func retry(context: RetryContext, retryHandler: @escaping @Sendable (RetryDecision) -> Void) {
+        guard case .responseError(reason: .invalidHTTPStatusCode(let response)) = context.error
+        else { return retryHandler(.stop) }
+        let retriedCount = context.retriedCount
+        Task {
+            let retry = await shouldRetry(retriedCount: retriedCount, response: response)
+            retryHandler(retry ? .retry(userInfo: nil) : .stop)
+        }
+    }
+
+    @MainActor
+    func shouldRetry(retriedCount: Int, response: HTTPURLResponse) async -> Bool {
+        guard retriedCount == 0,
+              response.value(forHTTPHeaderField: "cf-mitigated") == "challenge"
+        else { return false }
+        logger.info("[IMG] Cloudflare challenge on \(response.url?.absoluteString ?? "?"); retrying once resolved")
+        do {
+            try await awaitResolution()
+            return true
+        } catch {
+            return false
+        }
+    }
+}
+#endif
 
 struct FAUserAgentRequestModifier: AsyncImageDownloadRequestModifier {
     var onDownloadTaskStarted: (@Sendable (DownloadTask?) -> Void)? { nil }

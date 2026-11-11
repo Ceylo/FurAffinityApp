@@ -348,6 +348,7 @@ Left out of the root package:
 | `LoggedInViewTabTests` | the UIKit tab bar; Android has `AndroidRootView.Tab` |
 | `ModelTests` (+ `MockFASession`) | `Model.init` observes `Defaults`, a Kotlin SharedPreferences listener on Android: it needs a JVM, which a native test executable lacks |
 | `AnimatedImageDecodeTests` | decoding builds a Bitmap-backed `UIImage`, which needs a JVM too |
+| `CloudflareChallengeRetryStrategyTests` | the strategy is iOS-only; Android images park in `FAImageStore` |
 | `SettingsMigrationTests.legacyUnmigrated…` | no pre-versioning Android install exists |
 
 `skip android test --apk` would supply the JVM, but its harness crashes on **any**
