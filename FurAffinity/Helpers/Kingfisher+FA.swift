@@ -75,10 +75,6 @@ extension KingfisherOptionsInfo {
             .diskCacheAccessExtendingExpiration(.none),
         ]
 
-        #if !FA_SKIP_MODULE
-        options.append(.retryStrategy(CloudflareChallengeRetryStrategy()))
-        #endif
-
         #if FA_SKIP_MODULE
         // Store the downloaded bytes: DefaultCacheSerializer would otherwise
         // re-encode the decoded Android Bitmap, a compress pass per image that
@@ -111,18 +107,15 @@ extension KFImageProtocol {
                 return serializer
             }())
             #endif
-            // iOS logs failures in `DownloadDelegate`, where a view's own `onFailure`
-            // can't replace the log.
-            #if FA_SKIP_MODULE
             .onFailure { error in
                 logger.error("\(error)")
             }
-            #endif
     }
 }
 
 #if !FA_SKIP_MODULE
-/// Android parks in `FAImageStore` instead.
+/// For `KFImage` only: an HTML inline or a background notification attachment should
+/// fail fast rather than wait on the sheet. Android parks in `FAImageStore` instead.
 struct CloudflareChallengeRetryStrategy: RetryStrategy {
     var awaitResolution: @Sendable @MainActor () async throws -> Void = {
         try await CloudflareChallengeCoordinator.shared.awaitResolution()
@@ -404,7 +397,7 @@ extension DynamicThumbnail {
     func cachedOrBestThumbnailUrl(for size: Foundation.CGSize) -> URL {
         let best = bestThumbnailUrl(for: size)
         let isCached = { (url: URL) in ImageCache.default.isCached(forKey: url.cacheKey) }
-        return isCached(best) ? best : allThumbnailUrls.lazy.filter { $0 != best }.first(where: isCached) ?? best
+        return isCached(best) ? best : allThumbnailUrls.first(where: isCached) ?? best
     }
 
     func cachedOrBestThumbnailUrl(for geometry: GeometryProxy) -> URL {
@@ -596,10 +589,5 @@ actor DownloadDelegate: ImageDownloaderDelegate {
         Task {
             await setDownloadStartDate(nil, for: url)
         }
-#if !os(Android)
-        if let error {
-            logger.error("[IMG] Failed \(url): \(error)")
-        }
-#endif
     }
 }

@@ -101,7 +101,9 @@ struct SubmissionMainImage: View {
                     }
                 }
             }
+            // Replaces `defaultConfiguration()`'s handler, log included.
             .onFailure { error in
+                logger.error("\(error)")
                 errorMessage = error.localizedDescription
             }
             .waitForCache()
