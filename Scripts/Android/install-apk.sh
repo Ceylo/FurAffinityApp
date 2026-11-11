@@ -6,8 +6,12 @@
 # and wiping it costs the FA login *and* the Cloudflare clearance, which on the
 # emulator can take a human tap to get back. `-d` allows a downgrade.
 #
-# Usage: Scripts/Android/install-apk.sh [--start] [--timeout SECONDS] <app.apk>
+# Usage: Scripts/Android/install-apk.sh [--local|--remote] [--start] [--timeout SECONDS]
+#                                       <app.apk>
 #
+#   --local     this host's emulator; by default the remote PC's when it is
+#               available (Scripts/Android/android-target.sh)
+#   --remote    the remote PC's emulator, or fail
 #   --start     launch the APK's launcher activity once it is installed
 #   --timeout   how long to wait for the emulator lock, default 1800s
 #
@@ -24,12 +28,15 @@ die() { echo "error: $*" >&2; exit 1; }
 
 APK=""
 START=0
+TARGET=auto
 LOCK_ARGS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,19p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,23p' "$0" | cut -c3-; exit 0 ;;
         --start)      START=1 ;;
+        --local)      TARGET=local ;;
+        --remote)     TARGET=remote ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;
         --)           shift; break ;;
@@ -59,6 +66,10 @@ AAPT2="$(ls -d "$SDK"/build-tools/*/aapt2 2>/dev/null | sort -V | tail -1)"
 
 # --- require a booted device ------------------------------------------------
 
+# shellcheck source=Scripts/Android/android-target.sh
+source "$(dirname "${BASH_SOURCE[0]}")/android-target.sh"
+select_android_target "$TARGET"
+
 [[ "$(adb_state)" == device ]] \
     || die "no device — run Scripts/Android/start-emulator.sh (or set ANDROID_SERIAL)"
 
@@ -74,7 +85,15 @@ if [[ -n "$AAPT2" ]]; then
     APP_ID="$(sed -nE "s/^package: name='([^']+)'.*/\1/p" <<< "$badging")"
     ACTIVITY="$(sed -nE "s/^launchable-activity: name='([^']+)'.*/\1/p" <<< "$badging" | head -1)"
     version="$(sed -nE "s/.*versionName='([^']*)'.*/\1/p" <<< "$badging" | head -1)"
-elif (( START )); then
+fi
+
+if [[ -n "$ANDROID_TARGET_ABI" ]] && unzip -l "$APK" 'lib/*' 2>/dev/null | grep -q ' lib/' \
+    && ! unzip -l "$APK" "lib/$ANDROID_TARGET_ABI/*" >/dev/null 2>&1; then
+    die "$(basename "$APK") has no $ANDROID_TARGET_ABI libraries for this device —" \
+        "a release APK is arm64-v8a only; use --local with an arm64 emulator or phone"
+fi
+
+if [[ -z "$AAPT2" ]] && (( START )); then
     die "--start needs aapt2 to read the app id — install Android SDK build-tools"
 fi
 

@@ -6,8 +6,12 @@
 # app sandbox, and writes .vscode/ so F5 (Swift (Android)) attaches to it.
 # See Android/docs/build-and-run.md § Attaching a Swift debugger.
 #
-# Usage: Scripts/Android/debug.sh [--no-build] [--restart] [--timeout SECONDS]
+# Usage: Scripts/Android/debug.sh [--local|--remote] [--no-build] [--restart]
+#                                 [--timeout SECONDS]
 #
+#   --local     this host's emulator; by default the remote PC's when it is
+#               available (Scripts/Android/android-target.sh)
+#   --remote    the remote PC's emulator, or fail
 #   --no-build  skip the build and install, just (re)start lldb-server against
 #               whatever is installed — only sound if that build had symbols
 #   --restart   force-stop the app and start it again before attaching
@@ -25,13 +29,16 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 BUILD=1
 RESTART=0
+TARGET=auto
 LOCK_ARGS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,18p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,22p' "$0" | cut -c3-; exit 0 ;;
         --no-build)   BUILD=0 ;;
         --restart)    RESTART=1 ;;
+        --local)      TARGET=local ;;
+        --remote)     TARGET=remote ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;
         --)           shift; break ;;
@@ -54,6 +61,10 @@ source "$(dirname "${BASH_SOURCE[0]}")/java-home.sh"
 
 # --- require a booted device ------------------------------------------------
 
+# shellcheck source=Scripts/Android/android-target.sh
+source "$(dirname "${BASH_SOURCE[0]}")/android-target.sh"
+select_android_target "$TARGET"
+
 [[ "$(adb_state)" == device ]] \
     || die "no device — run Scripts/Android/start-emulator.sh (or set ANDROID_SERIAL)"
 
@@ -64,6 +75,13 @@ source "$(dirname "${BASH_SOURCE[0]}")/java-home.sh"
 # one set up here into launch.json.
 SERIAL="${ANDROID_SERIAL:-$("$ADB" get-serialno | tr -d '\r')}"
 export ANDROID_SERIAL="$SERIAL"
+if [[ "$SERIAL" == "$("$(dirname "${BASH_SOURCE[0]}")/remote-emulator.sh" serial)" ]]; then
+    TARGET_FLAG="--remote"
+    TASK_ENV="FA_REMOTE_EMULATOR_HOST=$FA_REMOTE_EMULATOR_HOST "
+else
+    TARGET_FLAG="--local"
+    TASK_ENV=""
+fi
 
 ABI="$("$ADB" shell getprop ro.product.cpu.abi | tr -d '\r')"
 
@@ -295,7 +313,7 @@ write_if_changed "$ROOT/.vscode/tasks.json" <<EOF
         {
             "label": "Android debug setup",
             "type": "shell",
-            "command": "\${workspaceFolder}/Scripts/Android/debug.sh --no-build",
+            "command": "$TASK_ENV\${workspaceFolder}/Scripts/Android/debug.sh $TARGET_FLAG --no-build",
             "presentation": {
                 "panel": "dedicated",
                 "reveal": "silent",
@@ -306,7 +324,7 @@ write_if_changed "$ROOT/.vscode/tasks.json" <<EOF
         {
             "label": "Android logs",
             "type": "shell",
-            "command": "echo '— log stream ready —'; exec \${workspaceFolder}/Scripts/Android/logs.sh -c",
+            "command": "echo '— log stream ready —'; exec $TASK_ENV\${workspaceFolder}/Scripts/Android/logs.sh $TARGET_FLAG -c",
             "isBackground": true,
             "presentation": {
                 "panel": "dedicated",

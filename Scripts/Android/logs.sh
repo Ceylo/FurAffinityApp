@@ -10,8 +10,12 @@
 # Lines from a *sibling worktree's* app are then dropped by uid, because the tag
 # alone cannot tell them apart: see "sibling worktrees" below.
 #
-# Usage: Scripts/Android/logs.sh [-a] [-c] [-d] [--color=MODE] [extra-tag…]
+# Usage: Scripts/Android/logs.sh [--local|--remote] [-a] [-c] [-d] [--color=MODE]
+#                                [extra-tag…]
 #
+#   --local     this host's emulator; by default the remote PC's when it is
+#               available (Scripts/Android/android-target.sh)
+#   --remote    the remote PC's emulator, or fail
 #   -a, --all       every line from the app process instead (WebView included);
 #                   needs the app running, and stops when it restarts
 #   -c, --clear     clear the log buffer before streaming
@@ -36,11 +40,14 @@ COLOR=auto
 FOREIGN_UIDS=""
 ARGS=(-v time)
 EXTRA_TAGS=()
+TARGET=auto
 
 while (( $# )); do
     case "$1" in
-        -h|--help)   sed -n '3,25p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)   sed -n '3,29p' "$0" | cut -c3-; exit 0 ;;
         -a|--all)    ALL=1 ;;
+        --local)     TARGET=local ;;
+        --remote)    TARGET=remote ;;
         -c|--clear)  CLEAR=1 ;;
         -d|--dump)   ARGS+=(-d) ;;
         --color=*)   COLOR="${1#*=}" ;;
@@ -66,6 +73,10 @@ ADB="$SDK/platform-tools/adb"
 # shellcheck source=Scripts/Android/adb-state.sh
 source "$(dirname "${BASH_SOURCE[0]}")/adb-state.sh"
 [[ -x "$ADB" ]] || die "$ADB is missing — run \`skip android sdk install\`"
+
+# shellcheck source=Scripts/Android/android-target.sh
+source "$(dirname "${BASH_SOURCE[0]}")/android-target.sh"
+select_android_target "$TARGET"
 
 [[ "$(adb_state)" == device ]] \
     || die "no device — run Scripts/Android/start-emulator.sh (or set ANDROID_SERIAL)"

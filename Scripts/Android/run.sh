@@ -7,11 +7,16 @@
 # id carries a worktree suffix (see Android/app/build.gradle.kts). This does
 # both against the right id, and holds the shared-emulator lock while it does.
 #
-# Usage: Scripts/Android/run.sh [--profile] [--timeout SECONDS] [gradle args…]
+# Usage: Scripts/Android/run.sh [--local|--remote] [--profile] [--timeout SECONDS]
+#                               [gradle args…]
 #
+#   --local     this host's emulator; by default the remote PC's when it is
+#               available (Scripts/Android/android-target.sh)
+#   --remote    the remote PC's emulator, or fail
 #   --profile   install the `profile` build type instead: release code, profileable,
 #               under the debug app's id so it keeps its login. Record it with
-#               Scripts/Android/profile.sh; see Android/docs/profiling.md
+#               Scripts/Android/profile.sh; see Android/docs/profiling.md.
+#               On this host unless --remote: profile.sh never uses the PC
 #   --timeout   how long to wait for the emulator lock, default 1800s
 #
 # `./gradlew :app:installDebug` rather than `skip android build` is deliberate:
@@ -30,12 +35,15 @@ die() { echo "error: $*" >&2; exit 1; }
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 VARIANT=debug
+TARGET=auto
 LOCK_ARGS=()
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,24p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,31p' "$0" | cut -c3-; exit 0 ;;
         --profile)    VARIANT=profile ;;
+        --local)      TARGET=local ;;
+        --remote)     TARGET=remote ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;
         --)           shift; break ;;
@@ -57,6 +65,11 @@ export ANDROID_HOME="$SDK"
 source "$(dirname "${BASH_SOURCE[0]}")/java-home.sh"
 
 # --- require a booted device ------------------------------------------------
+
+# shellcheck source=Scripts/Android/android-target.sh
+source "$(dirname "${BASH_SOURCE[0]}")/android-target.sh"
+[[ $VARIANT == profile && $TARGET == auto ]] && TARGET=local
+select_android_target "$TARGET"
 
 [[ "$(adb_state)" == device ]] \
     || die "no device — run Scripts/Android/start-emulator.sh (or set ANDROID_SERIAL)"
@@ -97,13 +110,19 @@ if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
         "${BASH_SOURCE[0]}" $([[ $VARIANT == profile ]] && echo --profile) -- "$@"
 fi
 
+case "$ANDROID_TARGET_ABI" in
+    x86_64)     ARCH=x86_64 ;;
+    arm64-v8a)  ARCH=aarch64 ;;
+    *)          die "no Swift build for the device's ABI (${ANDROID_TARGET_ABI:-unknown})" ;;
+esac
+
 TASK=":app:install$(tr '[:lower:]' '[:upper:]' <<< "${VARIANT:0:1}")${VARIANT:1}"
-( cd "$ROOT/Android" && ./gradlew "$TASK" "$@" )
+( cd "$ROOT/Android" && SKIP_EXPORT_ARCHS="$ARCH" ./gradlew "$TASK" "$@" )
 
 # Gradle prints its own errors and still says BUILD SUCCESSFUL, so this gate
 # gets its own exit status: a relapse to one module per consumer is invisible
 # at runtime (see the script's header).
-"$(dirname "${BASH_SOURCE[0]}")/check-shared-globals.sh" "$VARIANT" \
+ABI="$ANDROID_TARGET_ABI" "$(dirname "${BASH_SOURCE[0]}")/check-shared-globals.sh" "$VARIANT" \
     || die "shared globals are duplicated — the app above was installed anyway"
 
 # Compile the Kotlin ahead of time, so a profile measures the app rather than ART's
