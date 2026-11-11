@@ -81,7 +81,7 @@ if (( RELEASE )) && [[ "$ANDROID_TARGET_ABI" != arm64-v8a ]]; then
     die "--release needs an arm64-v8a device on this host, not ${ANDROID_TARGET_ABI:-none} — run Scripts/Android/start-emulator.sh"
 fi
 [[ -n "$ANDROID_TARGET_ARCH" ]] \
-    || die "the tests don't build for the device's ABI (${ANDROID_TARGET_ABI:-unknown})"
+    || die "the tests don't build for the device's ABI (${ANDROID_TARGET_ABI:-none: is $ANDROID_SERIAL connected?})"
 
 if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
     export FA_EMULATOR_LOCK_HELD=1

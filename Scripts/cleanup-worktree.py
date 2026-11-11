@@ -240,6 +240,7 @@ def under(path, root):
 SKIP_ENV_ID = re.compile(r"^\s*(?:ANDROID_APPLICATION_ID|PRODUCT_BUNDLE_IDENTIFIER)\s*=\s*(\S+)", re.M)
 
 
+@functools.cache
 def app_prefixes():
     """Every app-id prefix a debug build may have used: each live checkout's
     Skip.env, the bases', and the distribution stash's."""
@@ -257,21 +258,31 @@ def app_prefixes():
     return sorted({m[1] for text in texts for m in SKIP_ENV_ID.finditer(text)})
 
 
+REMOTE_SERIAL = "127.0.0.1:15555"
+REMOTE_LOCK = "/tmp/fa-emulator-remote.lock"
+
+
 class Emulator:
-    def __init__(self):
-        self.prefixes = app_prefixes()
+    def __init__(self, serial):
+        self.serial = serial
+        self.adb = [ADB, "-s", serial]
+        self.env = {**os.environ, "FA_EMULATOR_LOCK": REMOTE_LOCK} if serial == REMOTE_SERIAL else None
         self.packages = []
-        self.up = os.access(ADB, os.X_OK) and adb_state() == "device" \
-            and run(ADB, "shell", "getprop", "sys.boot_completed").stdout.strip() == "1"
+        self.up = run(*self.adb, "shell", "getprop", "sys.boot_completed").stdout.strip() == "1"
         if self.up:
-            out = run(ADB, "shell", "pm", "list", "packages").stdout
+            out = run(*self.adb, "shell", "pm", "list", "packages").stdout
             self.packages = [line.strip()[len("package:"):] for line in out.splitlines()
                              if line.startswith("package:")]
 
 
 @functools.cache
-def emulator():
-    return Emulator()
+def emulators():
+    if not os.access(ADB, os.X_OK) or adb_state() == "":
+        return []
+    listing = run(ADB, "devices").stdout.splitlines()[1:]
+    serials = [f[0] for f in (line.split() for line in listing)
+               if len(f) > 1 and f[1] == "device" and (f[0].startswith("emulator-") or f[0] == REMOTE_SERIAL)]
+    return [emu for emu in map(Emulator, serials) if emu.up]
 
 
 def adb_state():
@@ -280,10 +291,10 @@ def adb_state():
     return run("bash", "-c", 'ADB="$1"; source "$2"; adb_state', "_", ADB, ADB_STATE).stdout.strip()
 
 
-def app_size(app_id):
+def app_size(emu, app_id):
     """An installed app's APK plus data, and that for display. Its data is only
     readable through run-as, so a debug build's."""
-    out = run(ADB, "shell", f"""d=$(pm path '{app_id}' | sed -n '1s/^package://p');
+    out = run(*emu.adb, "shell", f"""d=$(pm path '{app_id}' | sed -n '1s/^package://p');
         du -sk "${{d%/*}}" 2>/dev/null | cut -f1 | tr '\\n' ' ';
         run-as '{app_id}' du -sk . 2>/dev/null | cut -f1""").stdout.replace("\r", "").split()
     apk, data = (int(x) if x.isdigit() else 0 for x in (out + ["", ""])[:2])
@@ -291,35 +302,36 @@ def app_size(app_id):
     return kb, human(kb) if len(out) > 1 else f"{human(kb)} APK, data unreadable"
 
 
-def uninstall_app(app_id, out):
-    kb, size = app_size(app_id)
+def uninstall_app(emu, app_id, out):
+    kb, size = app_size(emu, app_id)
 
     def uninstall():
         lock = [lock_script] if lock_script else []
         if not lock:
             warn(f"no {LOCK_SCRIPT} — uninstalling without the emulator lock")
-        if run(*lock, ADB, "uninstall", app_id, show_errors=True).returncode:
-            fail(f"could not uninstall {app_id}")
+        if run(*lock, *emu.adb, "uninstall", app_id, show_errors=True, env=emu.env).returncode:
+            fail(f"could not uninstall {app_id} from {emu.serial}")
             return False
         return True
 
-    reclaim(kb, f"would uninstall {app_id} ({size})", f"uninstalled {app_id} ({size})", out, uninstall)
+    reclaim(kb, f"would uninstall {app_id} from {emu.serial} ({size})",
+            f"uninstalled {app_id} from {emu.serial} ({size})", out, uninstall)
 
 
 def clean_emulator_app(suffix, out):
     """The app and, if on-device tests ran, its instrumentation APK."""
-    emu = emulator()
-    if not emu.up:
-        for prefix in emu.prefixes:
-            warn("no booted emulator (or several, without ANDROID_SERIAL)"
-                 f" — later: adb uninstall {prefix}.{suffix}")
+    prefixes = app_prefixes()
+    if not emulators():
+        for prefix in prefixes:
+            warn(f"no booted emulator — later: adb uninstall {prefix}.{suffix}")
         return
     found = False
-    for prefix in emu.prefixes:
-        for app_id in (f"{prefix}.{suffix}", f"{prefix}.{suffix}.test"):
-            if app_id in emu.packages:
-                uninstall_app(app_id, out)
-                found = True
+    for emu in emulators():
+        for prefix in prefixes:
+            for app_id in (f"{prefix}.{suffix}", f"{prefix}.{suffix}.test"):
+                if app_id in emu.packages:
+                    uninstall_app(emu, app_id, out)
+                    found = True
     if not found:
         out.append("  no emulator app")
 
@@ -549,7 +561,8 @@ def clean_worktree(wt):
 
     # The worktree goes first, so a removal git refuses leaves everything else
     # in place; the Skip.env prefixes are read while it is still there.
-    emulator()
+    app_prefixes()
+    emulators()
     out = []
     if not remove_worktree(w, out):
         return False
@@ -599,7 +612,7 @@ class Orphans:
         """Record an item the sweep left alone, sized, and charge it to the live
         checkout its owner path lies in, if any."""
         if app:
-            kb, size = app_size(app)
+            kb, size = app_size(*app)
         else:
             kb = size_kb(path)
             size = human(kb)
@@ -637,24 +650,23 @@ class Orphans:
 
         out = ["Emulator apps"]
         found = False
-        emu = emulator()
-        if not emu.up:
-            warn("no booted emulator (or several, without ANDROID_SERIAL) — its apps are not swept")
-        for app_id in emu.packages:
-            prefix = next((p for p in emu.prefixes if app_id == p or app_id.startswith(f"{p}.")), None)
+        if not emulators():
+            warn("no booted emulator — no emulator apps are swept")
+        for emu, app_id in ((emu, app_id) for emu in emulators() for app_id in emu.packages):
+            prefix = next((p for p in app_prefixes() if app_id == p or app_id.startswith(f"{p}.")), None)
             if prefix is None:
                 continue
             suffix = app_id[len(prefix) + 1:]
             if not suffix:
-                self.keep(EMULATOR_COL, "", app_id, "the unsuffixed (release or distribution) build", app=app_id)
+                self.keep(EMULATOR_COL, "", app_id, "the unsuffixed (release or distribution) build", app=(emu, app_id))
             elif suffix == "test":
-                self.keep(EMULATOR_COL, "", app_id, "the unsuffixed build's test APK", app=app_id)
+                self.keep(EMULATOR_COL, "", app_id, "the unsuffixed build's test APK", app=(emu, app_id))
             elif not re.fullmatch(r"[A-Za-z0-9_]+(\.test)?", suffix):
-                self.keep(EMULATOR_COL, "", app_id, "not a worktree's app id", app=app_id)
+                self.keep(EMULATOR_COL, "", app_id, "not a worktree's app id", app=(emu, app_id))
             elif wt := by_suffix.get(suffix.removesuffix(".test")):
-                self.keep(EMULATOR_COL, wt, app_id, self.user_of(wt), app=app_id)
+                self.keep(EMULATOR_COL, wt, app_id, self.user_of(wt), app=(emu, app_id))
             else:
-                uninstall_app(app_id, out)
+                uninstall_app(emu, app_id, out)
                 found = True
         self.end_section(out, found)
         sections += out

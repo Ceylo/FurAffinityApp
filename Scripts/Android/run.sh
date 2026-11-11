@@ -110,7 +110,7 @@ if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
 fi
 
 [[ -n "$ANDROID_TARGET_ARCH" ]] \
-    || die "no Swift build for the device's ABI (${ANDROID_TARGET_ABI:-unknown})"
+    || die "no Swift build for the device's ABI (${ANDROID_TARGET_ABI:-none: is $ANDROID_SERIAL connected?})"
 
 TASK=":app:install$(tr '[:lower:]' '[:upper:]' <<< "${VARIANT:0:1}")${VARIANT:1}"
 ( cd "$ROOT/Android" && SKIP_EXPORT_ARCHS="$ANDROID_TARGET_ARCH" ./gradlew "$TASK" "$@" )

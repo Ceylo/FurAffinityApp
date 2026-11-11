@@ -151,7 +151,7 @@ else
     ACTIVITY="$APP_ID/$(skip_env ANDROID_PACKAGE_NAME).MainActivity"
     RELEASE="$APP_ID@$(skip_env MARKETING_VERSION)"
 
-    # This host's arm64 emulator, never the PC's.
+    # This host's emulator, never the PC's.
     # shellcheck source=Scripts/Android/android-target.sh
     source "$ROOT/Scripts/Android/android-target.sh"
     select_android_target local

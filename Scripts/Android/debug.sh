@@ -75,7 +75,10 @@ select_android_target "$TARGET"
 SERIAL="${ANDROID_SERIAL:-$("$ADB" get-serialno | tr -d '\r')}"
 export ANDROID_SERIAL="$SERIAL"
 TARGET_FLAG="--$ANDROID_TARGET_MODE"
-[[ "$ANDROID_TARGET_MODE" == remote ]] && TASK_ENV="FA_REMOTE_EMULATOR_HOST=$FA_REMOTE_EMULATOR_HOST " || TASK_ENV=""
+TASK_ENV=""
+if [[ "$ANDROID_TARGET_MODE" == remote ]]; then
+    TASK_ENV="FA_REMOTE_EMULATOR_HOST=$FA_REMOTE_EMULATOR_HOST ${FA_REMOTE_EMULATOR_WAKE_MAC:+FA_REMOTE_EMULATOR_WAKE_MAC=$FA_REMOTE_EMULATOR_WAKE_MAC }"
+fi
 
 ABI="$ANDROID_TARGET_ABI"
 
@@ -165,11 +168,12 @@ if (( BUILD )); then
     # lldb-server ignores an APK's last entry (llvm/llvm-project#173966), which
     # assembleDebug makes a .so; installing with testOnly re-packs it so a
     # manifest entry lands last.
+    export SKIP_EXPORT_ARCHS="$ANDROID_TARGET_ARCH"
     ( cd "$ROOT/Android" && ./gradlew :app:assembleDebug -PfaDebugSymbols )
     ( cd "$ROOT/Android" && ./gradlew :app:installDebug -PfaDebugSymbols \
         -Pandroid.injected.testOnly=true )
 
-    "$(dirname "${BASH_SOURCE[0]}")/check-shared-globals.sh" debug \
+    ABI="$ABI" "$(dirname "${BASH_SOURCE[0]}")/check-shared-globals.sh" debug \
         || die "shared globals are duplicated — the app above was installed anyway"
 fi
 

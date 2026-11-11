@@ -51,13 +51,14 @@ tunnel() {
 }
 
 connect() {
+    [[ "$("$ADB" -s "$SERIAL" get-state 2>&1)" == *offline* ]] && "$ADB" disconnect "$SERIAL" >/dev/null 2>&1
     "$ADB" connect "$SERIAL" >/dev/null 2>&1 || return 1
     [[ "$("$ADB" -s "$SERIAL" get-state 2>/dev/null | tr -d '\r')" == device ]]
 }
 
 wake() {
     [[ -n "$FA_REMOTE_EMULATOR_WAKE_MAC" ]] || return 1
-    python3 - "$FA_REMOTE_EMULATOR_WAKE_MAC" <<'EOF'
+    python3 - "$FA_REMOTE_EMULATOR_WAKE_MAC" <<'EOF' || return 1
 import socket, sys
 mac = bytes.fromhex(sys.argv[1].replace(":", "").replace("-", ""))
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -95,6 +96,10 @@ up() {
 
 down() {
     [[ -n "$HOST" ]] || die "FA_REMOTE_EMULATOR_HOST is not set"
+    if [[ "$FA_EMULATOR_LOCK" != /tmp/fa-emulator-remote.lock ]]; then
+        FA_EMULATOR_LOCK=/tmp/fa-emulator-remote.lock exec \
+            "$(dirname "${BASH_SOURCE[0]}")/with-emulator-lock.sh" "${BASH_SOURCE[0]}" down
+    fi
     pc "$PC_ADB" emu kill >/dev/null || true
     "$ADB" disconnect "$SERIAL" >/dev/null 2>&1 || true
     ssh "${SSH_OPTS[@]}" -S "$SOCK" -O exit "$HOST" 2>/dev/null || true

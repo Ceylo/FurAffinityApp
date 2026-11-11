@@ -23,7 +23,7 @@ select_android_target() {
     serial="$("$remote" serial)"
 
     if [[ "$mode" == auto ]]; then
-        if [[ -n "$CI" || -n "$ANDROID_SERIAL" || -z "$FA_REMOTE_EMULATOR_HOST" ]]; then
+        if [[ -n "$CI" || ( -n "$ANDROID_SERIAL" && "$ANDROID_SERIAL" != "$serial" ) || -z "$FA_REMOTE_EMULATOR_HOST" ]]; then
             mode=local
         elif reason="$("$remote" up 2>&1)"; then
             mode=remote
@@ -54,6 +54,6 @@ select_android_target() {
     if [[ "$mode" == remote ]]; then
         echo "Android device: $FA_REMOTE_EMULATOR_HOST ($ANDROID_TARGET_ABI)" >&2
     else
-        echo "Android device: this host${ANDROID_TARGET_ABI:+ ($ANDROID_TARGET_ABI)}" >&2
+        echo "Android device: this host, $ANDROID_SERIAL${ANDROID_TARGET_ABI:+ ($ANDROID_TARGET_ABI)}" >&2
     fi
 }

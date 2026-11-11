@@ -19,7 +19,9 @@
 # Scripts/check-crash-reporting.sh. Wrapping one fails at once instead of
 # deadlocking on its own caller's lock.
 #
-# Environment: FA_EMULATOR_LOCK (the lock file, default /tmp/fa-emulator.lock);
+# Environment: FA_EMULATOR_LOCK (the lock file, default /tmp/fa-emulator.lock;
+# Scripts/Android/android-target.sh sets /tmp/fa-emulator-remote.lock for the
+# remote PC's emulator, so a run there and one here hold different locks);
 # FA_EMULATOR_LOCK_OWNER (set by this script to the holder's pid, for the
 # wrapped command's subtree).
 
