@@ -46,8 +46,7 @@ while (( $# )); do
     case "$1" in
         -h|--help)   sed -n '3,29p' "$0" | cut -c3-; exit 0 ;;
         -a|--all)    ALL=1 ;;
-        --local)     TARGET=local ;;
-        --remote)    TARGET=remote ;;
+        --local|--remote)  TARGET="${1#--}" ;;
         -c|--clear)  CLEAR=1 ;;
         -d|--dump)   ARGS+=(-d) ;;
         --color=*)   COLOR="${1#*=}" ;;

@@ -33,7 +33,7 @@ SOCK="/tmp/fa-remote-adb-$HOST.sock"
 PC_ADB='"%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe"'
 
 SSH_OPTS=(-o BatchMode=yes -o ConnectTimeout=5 -o LogLevel=ERROR)
-pc() { ssh "${SSH_OPTS[@]}" "$HOST" "$@" 2>/dev/null; }
+pc() { ssh "${SSH_OPTS[@]}" -o ControlPath="$SOCK" "$HOST" "$@" 2>/dev/null; }
 
 booted() {
     [[ "$("$ADB" -s "$SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == 1 ]]
@@ -43,7 +43,7 @@ tunnel() {
     local i
     for (( i = 0; i < 3; i++ )); do
         ssh "${SSH_OPTS[@]}" -S "$SOCK" -O check "$HOST" 2>/dev/null && return 0
-        ssh "${SSH_OPTS[@]}" -f -N -M -S "$SOCK" -o ControlPersist=30m \
+        ssh "${SSH_OPTS[@]}" -f -N -M -S "$SOCK" -o ControlPersist=30m -o ServerAliveInterval=10 \
             -o ExitOnForwardFailure=yes -L "$PORT:127.0.0.1:5555" "$HOST" 2>/dev/null && return 0
         sleep 1
     done
@@ -74,13 +74,16 @@ EOF
 up() {
     [[ -n "$HOST" ]] || die "FA_REMOTE_EMULATOR_HOST is not set"
     [[ -x "$ADB" ]] || die "$ADB is missing"
+    if ssh "${SSH_OPTS[@]}" -S "$SOCK" -O check "$HOST" 2>/dev/null && connect && booted; then
+        return 0
+    fi
     if ! pc exit; then
         wake || die "$HOST is unreachable"
     fi
     tunnel || die "no ssh tunnel to $HOST"
-    connect && booted && return 0
-
-    if ! connect; then
+    if connect; then
+        booted && return 0
+    else
         pc schtasks /run /tn FAEmulator >/dev/null || die "could not start FAEmulator on $HOST"
     fi
     local deadline=$(( SECONDS + 180 ))

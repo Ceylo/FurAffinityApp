@@ -55,8 +55,7 @@ while (( $# )); do
         -h|--help)    sed -n '3,38p' "$0" | cut -c3-; exit 0 ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;
-        --local)      TARGET=local ;;
-        --remote)     TARGET=remote ;;
+        --local|--remote)  TARGET="${1#--}" ;;
         --release)    TARGET=local; RELEASE=1 ;;
         --log-dir)    LOG_DIR="$2"; shift ;;
         --log-dir=*)  LOG_DIR="${1#*=}" ;;
@@ -75,18 +74,14 @@ fi
 mkdir -p "$LOG_DIR"
 LOG_DIR="$(cd "$LOG_DIR" && pwd)"
 
-ADB="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}/platform-tools/adb"
 # shellcheck source=Scripts/Android/android-target.sh
 source "$ROOT/Scripts/Android/android-target.sh"
 select_android_target "$TARGET"
 if (( RELEASE )) && [[ "$ANDROID_TARGET_ABI" != arm64-v8a ]]; then
     die "--release needs an arm64-v8a device on this host, not ${ANDROID_TARGET_ABI:-none} — run Scripts/Android/start-emulator.sh"
 fi
-case "$ANDROID_TARGET_ABI" in
-    x86_64)     ARCH=x86_64 ;;
-    arm64-v8a)  ARCH=aarch64 ;;
-    *)          die "no device, or one whose ABI (${ANDROID_TARGET_ABI:-unknown}) the tests don't build for — run Scripts/Android/start-emulator.sh" ;;
-esac
+[[ -n "$ANDROID_TARGET_ARCH" ]] \
+    || die "the tests don't build for the device's ABI (${ANDROID_TARGET_ABI:-unknown})"
 
 if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
     export FA_EMULATOR_LOCK_HELD=1
@@ -104,7 +99,7 @@ run() {
     local status=0
     # Native: under swiftbuild, `skip android test` runs only the first test target's
     # runner it finds, and FAKit has three.
-    ( cd "$dir" && skip android test --testing-library testing --build-system native --arch "$ARCH" "$@" ) 2>&1 | tee "$log" || status=$?
+    ( cd "$dir" && skip android test --testing-library testing --build-system native --arch "$ANDROID_TARGET_ARCH" "$@" ) 2>&1 | tee "$log" || status=$?
 
     # The summary line, stripped of colour and the spinner's carriage returns.
     local summary

@@ -9,17 +9,16 @@
 #   local   this host's emulator or device
 #   remote  the PC's emulator, or fail
 #
-# Exports ANDROID_SERIAL, ANDROID_TARGET_ABI (the device's ABI, empty without
-# one) and, for the PC, FA_EMULATOR_LOCK, so the PC and this host each have
-# their own lock.
-#
-# Expects $ADB.
+# Exports ANDROID_SERIAL, ANDROID_TARGET_MODE (local or remote),
+# ANDROID_TARGET_ABI and ANDROID_TARGET_ARCH (the device's ABI, and its Swift
+# name, empty when the tests and app don't build for it) and, for the PC,
+# FA_EMULATOR_LOCK, so the PC and this host each have their own lock.
 
 select_android_target() {
     [[ -z "$FA_EMULATOR_LOCK_HELD" ]] || return 0
 
-    local mode="$1" here="" reason serial
-    local remote
+    local mode="$1" here="" reason serial remote
+    local adb="${ADB:-${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}/platform-tools/adb}"
     remote="$(dirname "${BASH_SOURCE[0]}")/remote-emulator.sh"
     serial="$("$remote" serial)"
 
@@ -40,14 +39,18 @@ select_android_target() {
         export ANDROID_SERIAL="$serial"
         export FA_EMULATOR_LOCK=/tmp/fa-emulator-remote.lock
     elif [[ -z "$ANDROID_SERIAL" || "$ANDROID_SERIAL" == "$serial" ]]; then
-        # Without a local device, a serial that fails the device check rather
-        # than letting adb pick the PC.
-        here="$("$ADB" devices 2>/dev/null | awk -v r="$serial" 'NR > 1 && $2 == "device" && $1 != r {print $1; exit}')"
-        export ANDROID_SERIAL="${here:-emulator-5554}"
+        here="$("$adb" devices 2>/dev/null | awk -v r="$serial" 'NR > 1 && $2 == "device" && $1 != r {print $1; exit}')"
+        [[ -n "$here" ]] || { echo "error: no device on this host — run Scripts/Android/start-emulator.sh" >&2; exit 1; }
+        export ANDROID_SERIAL="$here"
     fi
 
-    export ANDROID_TARGET_ABI
-    ANDROID_TARGET_ABI="$("$ADB" shell getprop ro.product.cpu.abi 2>/dev/null | tr -d '\r' || true)"
+    export ANDROID_TARGET_MODE="$mode" ANDROID_TARGET_ABI ANDROID_TARGET_ARCH
+    ANDROID_TARGET_ABI="$("$adb" shell getprop ro.product.cpu.abi 2>/dev/null | tr -d '\r' || true)"
+    case "$ANDROID_TARGET_ABI" in
+        x86_64)     ANDROID_TARGET_ARCH=x86_64 ;;
+        arm64-v8a)  ANDROID_TARGET_ARCH=aarch64 ;;
+        *)          ANDROID_TARGET_ARCH= ;;
+    esac
     if [[ "$mode" == remote ]]; then
         echo "Android device: $FA_REMOTE_EMULATOR_HOST ($ANDROID_TARGET_ABI)" >&2
     else

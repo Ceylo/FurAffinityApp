@@ -37,8 +37,7 @@ while (( $# )); do
         -h|--help)    sed -n '3,22p' "$0" | cut -c3-; exit 0 ;;
         --no-build)   BUILD=0 ;;
         --restart)    RESTART=1 ;;
-        --local)      TARGET=local ;;
-        --remote)     TARGET=remote ;;
+        --local|--remote)  TARGET="${1#--}" ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;
         --)           shift; break ;;
@@ -75,15 +74,10 @@ select_android_target "$TARGET"
 # one set up here into launch.json.
 SERIAL="${ANDROID_SERIAL:-$("$ADB" get-serialno | tr -d '\r')}"
 export ANDROID_SERIAL="$SERIAL"
-if [[ "$SERIAL" == "$("$(dirname "${BASH_SOURCE[0]}")/remote-emulator.sh" serial)" ]]; then
-    TARGET_FLAG="--remote"
-    TASK_ENV="FA_REMOTE_EMULATOR_HOST=$FA_REMOTE_EMULATOR_HOST "
-else
-    TARGET_FLAG="--local"
-    TASK_ENV=""
-fi
+TARGET_FLAG="--$ANDROID_TARGET_MODE"
+[[ "$ANDROID_TARGET_MODE" == remote ]] && TASK_ENV="FA_REMOTE_EMULATOR_HOST=$FA_REMOTE_EMULATOR_HOST " || TASK_ENV=""
 
-ABI="$("$ADB" shell getprop ro.product.cpu.abi | tr -d '\r')"
+ABI="$ANDROID_TARGET_ABI"
 
 # --- what to debug ----------------------------------------------------------
 
@@ -324,7 +318,7 @@ write_if_changed "$ROOT/.vscode/tasks.json" <<EOF
         {
             "label": "Android logs",
             "type": "shell",
-            "command": "echo '— log stream ready —'; exec $TASK_ENV\${workspaceFolder}/Scripts/Android/logs.sh $TARGET_FLAG -c",
+            "command": "echo '— log stream ready —'; $TASK_ENV exec \${workspaceFolder}/Scripts/Android/logs.sh $TARGET_FLAG -c",
             "isBackground": true,
             "presentation": {
                 "panel": "dedicated",

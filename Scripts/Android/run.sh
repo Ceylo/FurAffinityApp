@@ -42,8 +42,7 @@ while (( $# )); do
     case "$1" in
         -h|--help)    sed -n '3,31p' "$0" | cut -c3-; exit 0 ;;
         --profile)    VARIANT=profile ;;
-        --local)      TARGET=local ;;
-        --remote)     TARGET=remote ;;
+        --local|--remote)  TARGET="${1#--}" ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;
         --)           shift; break ;;
@@ -110,14 +109,11 @@ if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
         "${BASH_SOURCE[0]}" $([[ $VARIANT == profile ]] && echo --profile) -- "$@"
 fi
 
-case "$ANDROID_TARGET_ABI" in
-    x86_64)     ARCH=x86_64 ;;
-    arm64-v8a)  ARCH=aarch64 ;;
-    *)          die "no Swift build for the device's ABI (${ANDROID_TARGET_ABI:-unknown})" ;;
-esac
+[[ -n "$ANDROID_TARGET_ARCH" ]] \
+    || die "no Swift build for the device's ABI (${ANDROID_TARGET_ABI:-unknown})"
 
 TASK=":app:install$(tr '[:lower:]' '[:upper:]' <<< "${VARIANT:0:1}")${VARIANT:1}"
-( cd "$ROOT/Android" && SKIP_EXPORT_ARCHS="$ARCH" ./gradlew "$TASK" "$@" )
+( cd "$ROOT/Android" && SKIP_EXPORT_ARCHS="$ANDROID_TARGET_ARCH" ./gradlew "$TASK" "$@" )
 
 # Gradle prints its own errors and still says BUILD SUCCESSFUL, so this gate
 # gets its own exit status: a relapse to one module per consumer is invisible

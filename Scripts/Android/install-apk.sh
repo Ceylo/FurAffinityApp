@@ -35,8 +35,7 @@ while (( $# )); do
     case "$1" in
         -h|--help)    sed -n '3,23p' "$0" | cut -c3-; exit 0 ;;
         --start)      START=1 ;;
-        --local)      TARGET=local ;;
-        --remote)     TARGET=remote ;;
+        --local|--remote)  TARGET="${1#--}" ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;
         --)           shift; break ;;
