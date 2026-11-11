@@ -208,7 +208,8 @@ FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, 
   `info.plist`, only a path hash) and XcodeBuildMCP workspace.
   `Scripts/cleanup-worktree.py <name>` removes a merged worktree with all of them
   and its branch; `--orphans` sweeps what worktrees removed without it left, and
-  reports what it kept, why, and each branch's storage.
+  reports what it kept, why, and each branch's storage; it also sweeps the fork
+  worktrees in `SkipForks/wt` beside the main checkout.
 - **A bridged view's `@State`/`@Environment` must not be `private`.** skipstone
   generates the bridge from the property list it can see, so a private one is
   silently left out and the view never recomposes. Call sites carry a one-line
