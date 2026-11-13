@@ -364,6 +364,7 @@ Left out of the root package:
 | `ModelTests` (+ `MockFASession`) | `Model.init` observes `Defaults`, a Kotlin SharedPreferences listener on Android: it needs a JVM, which a native test executable lacks |
 | `AnimatedImageDecodeTests` | decoding builds a Bitmap-backed `UIImage`, which needs a JVM too |
 | `ImageDownloadStatusTests` | Kingfisher's `URLSession` delegate; Android fetches images in `FAImageFetchBridge.kt` |
+| `CloudflareChallengeRetryStrategyTests` | the strategy is iOS-only; Android images park in `FAImageStore` |
 | `SettingsMigrationTests.legacyUnmigrated…` | no pre-versioning Android install exists |
 
 `skip android test --apk` would supply the JVM, but its harness crashes on **any**

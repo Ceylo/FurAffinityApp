@@ -364,6 +364,10 @@ skip-fuse-ui `5b608cd`:
   a Skip library can't ship the `res/xml` paths file a `FileProvider` needs. Every post but
   an active replacement sets only-alert-once, which also keeps SystemUI from counting a
   passive update as an unread message.
+- **`threadIdentifier` stacks notifications** (`109697d`). It is the Android group key, and
+  each thread gets a summary. Android sheds updates to one notification beyond 5 a second
+  (`Shedding` in logcat), so after a fast batch the summary may keep an earlier item's
+  text; AOSP's collapsed row previews the children instead and never shows it.
 
 ## Why skip-foundation is forked
 

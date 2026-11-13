@@ -135,9 +135,14 @@ xcodebuild test -scheme FurAffinity -destination "id=$(Scripts/iOS/simulator.sh 
 ```
 
 `Scripts/iOS/simulator.sh` manages this worktree's *own* device — `FA <worktree
-directory>`, an `iPhone 17 / iOS 26.5` created on first use (`--help` for another
-device type, `--shutdown` to stop one). Each worktree gets its own so branches
-don't overwrite each other's app container; shut down the ones you aren't using.
+directory>`, an `iPhone 17 / iOS 27.2` created on first use (`--help` for another
+device type, `--shutdown` to stop one); a device on an older runtime is replaced.
+Each worktree gets its own so branches don't overwrite each other's app container;
+shut down the ones you aren't using.
+
+Verify UI changes in the running app yourself: `IOS_MANUAL_TESTING.md` covers taps
+and screenshots through Xcode's device-interaction tools, login seeding, deep links,
+notification taps, and arranging cache or cookie state.
 
 On Android:
 
