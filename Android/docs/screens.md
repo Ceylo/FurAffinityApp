@@ -331,6 +331,9 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
 - **Conversations.** `enrich` calls the shared `communicationContent`, as iOS does, so
   every notification is a conversation with its author, drawn with their avatar. The
   author's shortcut, in the launcher icon's long-press menu, opens their user page.
+- **Stacking.** `enrich` puts every feed notification in one `fa.notifications` thread, not
+  one per author, so one swipe clears them all. Android pulls out an author the user marks as
+  Priority.
 - **Images.** A submission's thumbnail is a message of its own, since an image message
   shows no text. SystemUI draws it at most 136dp tall (`messaging_image_max_height`). A
   mature one is blurred by
