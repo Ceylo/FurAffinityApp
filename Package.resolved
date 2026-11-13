@@ -61,7 +61,7 @@
       "location" : "https://github.com/Ceylo/skip-foundation.git",
       "state" : {
         "branch" : "android",
-        "revision" : "6953840b11ea8d9b2b6c11e544365219be8fffad"
+        "revision" : "5e5bdbd303d2ffb9e617d8f6e39f62ee2d76848b"
       }
     },
     {
@@ -79,7 +79,7 @@
       "location" : "https://github.com/Ceylo/skip-fuse-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "d2fbd5d0e01c49dbb12f3ba3951ad64007fc4504"
+        "revision" : "d5d68df3066458ec7f2efbafce061ca5ed707fc9"
       }
     },
     {
@@ -106,7 +106,7 @@
       "location" : "https://github.com/Ceylo/skip-ui.git",
       "state" : {
         "branch" : "android",
-        "revision" : "4f1cee365bbed0d68a4deca53052ac9e29858e6c"
+        "revision" : "c859e1748df9ac18abea1d7309b18ebb18c2f4cd"
       }
     },
     {
@@ -188,6 +188,15 @@
       "state" : {
         "revision" : "3043fcd2a50375db76d89ff206a612471833d1c2",
         "version" : "2.2.1"
+      }
+    },
+    {
+      "identity" : "zipfoundation",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/weichsel/ZIPFoundation.git",
+      "state" : {
+        "revision" : "22787ffb59de99e5dc1fbfe80b19c97a904ad48d",
+        "version" : "0.9.20"
       }
     }
   ],

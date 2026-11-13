@@ -18,9 +18,9 @@ the whole tree, so every source it must not build carries `#if !FA_SKIP_MODULE`.
 far: login (shared `HomeView` + autologin), the Followed feed, the submission screen
 (images, stories, music, comments, Save/Share, "Send a Note"), Notifications (with the
 journal screen and swipe-to-delete behind an Undo snackbar), Notes, the user page with
-its gallery, favorites, journal list and watchlists, the Profile tab, Settings, and
-local notifications from a background refresh (`screens.md` § Local notifications). Not
-ported: Explore. `Android/README.md` indexes the topic docs under
+its gallery, favorites, journal list and watchlists, the Profile tab, Settings, Explore
+(search, its filters sheet and tag editor), and local notifications from a background
+refresh (`screens.md` § Local notifications). `Android/README.md` indexes the topic docs under
 `Android/docs/`; read the relevant one before touching Android code. What every session
 needs to know:
 
@@ -139,11 +139,16 @@ directory>`, an `iPhone 17 / iOS 26.5` created on first use (`--help` for anothe
 device type, `--shutdown` to stop one). Each worktree gets its own so branches
 don't overwrite each other's app container; shut down the ones you aren't using.
 
-On Android, with the emulator running (`Scripts/Android/start-emulator.sh`):
+On Android:
 
 ```
 Scripts/Android/test.sh
 ```
+
+It runs on the PC's x86_64 emulator when `FA_REMOTE_EMULATOR_HOST` is set and it comes
+up, else on this host's (`Scripts/Android/start-emulator.sh`); `--local` forces this
+host. Before a release, `--release` runs it on this Mac's arm64 emulator, since x86_64
+misses ARM-only bugs — `Android/docs/remote-emulator.md`.
 
 It runs FAKit's package and the root package's `FurAffinityUITests` — the
 `FurAffinityTests` files that build for Android, picking their `@testable import` on
@@ -186,7 +191,8 @@ Android app: PdfBox-Android (story PDFs, `FAPDFTextBridge.kt`).
   files; the directory still carries the meaning.
 - Only remote-loading wrappers that own `@Environment(Model.self)` (e.g. `RemoteSubmissionView`) may depend on `Model`. Leaf/content views must receive what they need via inputs or injected closures — never reach into `Model`.
 - **Several worktrees at once.** iOS gets a simulator device per worktree
-  (`Scripts/iOS/simulator.sh`, above); Android keeps sharing the one emulator, and
+  (`Scripts/iOS/simulator.sh`, above); Android shares one emulator per host (the PC's
+  by default, `--local` for this one, each with its own lock), and
   instead gives each worktree its own **debug** app — `applicationIdSuffix` and
   launcher label derived from the worktree directory name in
   `Android/app/build.gradle.kts`. Run it with `Scripts/Android/run.sh`
@@ -213,7 +219,8 @@ Android app: PdfBox-Android (story PDFs, `FAPDFTextBridge.kt`).
   `info.plist`, only a path hash) and XcodeBuildMCP workspace.
   `Scripts/cleanup-worktree.py <name>` removes a merged worktree with all of them
   and its branch; `--orphans` sweeps what worktrees removed without it left, and
-  reports what it kept, why, and each branch's storage.
+  reports what it kept, why, and each branch's storage; it also sweeps the fork
+  worktrees in `SkipForks/wt` beside the main checkout.
 - **A bridged view's `@State`/`@Environment` must not be `private`.** skipstone
   generates the bridge from the property list it can see, so a private one is
   silently left out and the view never recomposes. Call sites carry a one-line

@@ -35,7 +35,6 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `23ac3bd` menu body text + visible divider | skip-ui | no | **split into two PRs** — the text/icon size and the `outlineVariant` divider are separate fixes |
 | `ad375fb` `.subheadline` → `bodyMedium` | skip-ui | no | drafted as #551 (topic `fix/subheadline-body-token`) with `testSubheadlineIsRegularWeight`. Measured on the Text playground: ink per px of width 8.9 → 7.2 (`.body` 7.8, `.headline` 9.7). Side effect review found: `bodyMedium`'s letter spacing is 0.25sp vs 0.1sp, so text can rewrap |
 | `eaa6abe` resume animation across disposal | skip-ui | no | the recycling-boundary fix; largest single non-text patch |
-| `4b30753` `ScrollView` fills its scrolled axis | skip-ui | no | sent as #541 (topic `fix/scrollview-fills-scrolled-axis`), **vertical half only**: review dropped the `fillMaxWidth()` before `horizontalScroll`, which the vertical pull never needed and which only took horizontal drags from parent gestures. Adds a Robolectric pull-below-short-content test. Large title, measured: a drag on short content already collapsed it; the patch only extends where the drag can start. `ScrollView { LazyVStack }` has the same gap, unfixed — a likely follow-up |
 | `f4776db` `glassEffect` / `AnyTransition.animation` pass-throughs | skip-fuse-ui | no | fuse-ui only; `glassEffect`'s half is superseded by `9b8671b` + `6c66c8d` |
 | `ef2f9e3` `GlassEffectContainer` pass-through | skip-fuse-ui | no | send with `f4776db`: same argument, same file. Drew nothing until `e0600ec` bridged it as a `Group` — squash the two |
 | `9b8671b` + `6c66c8d` `glassEffect` draws the M3 floating surface; `glassEffectUnion`/`glassEffectID` pass-throughs | skip-ui + skip-fuse-ui | yes | a design call (opaque `surfaceContainer` + 3 dp shadow, not a blur) — argue it from M3's floating toolbar/FAB |
@@ -48,16 +47,10 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `001f4ec` tab re-tap pops to root, then scrolls to top | skip-ui | no | Material and iOS parity; adds internal `Navigator.navigateToRoot()` |
 | `ca5fad0` `List` under the status bar with the nav bar hidden | skip-ui | no | bug fix plus its two `List` follow-ons (`scrollTo` offset, late header) |
 | `91826c2` `List` restores its scroll position by row key | skip-ui | no | Robolectric `testListRestoresFirstVisibleRowByKey`, mutation-checked. Upstream, argue it from rows inserted above while away, since the late header is `ca5fad0`'s; `LazyVStack` and the grids keep the index-only restore |
-| `1335ebf` bridged `.task(id:)` is really cancelled | skip-ui | no | sent as #540 (topic `fix/bridged-task-cancellation`, with `22ff079` squashed in). **Upstream differs from the fork**: review found `1335ebf` could run `onCancel` twice (handler and re-check both fire) from an unsynchronised captured var; the PR awaits a completion `Job` under `withTaskCancellationHandler`, registered after the action, and captures the effect's own `bridgedAction` instead of `rememberUpdatedState`. Take #540's version back into the fork. Regression from #420 |
 | `88ac81d` `.updatesFrequently` → polite live region | skip-ui | no | sent as #539 (topic `fix/updates-frequently-live-region`). Not VoiceOver's meaning — Apple's trait lets the client *poll*, TalkBack reads every change (a 1 Hz `Text` queued 8 times in 8 s); the PR puts that trade-off first, and keeping the mapping is Ceylo's call. Pitfall, measured: a region that stays mounted while it **animates** out is read again (3–4×); without the animation it isn't, so apply it only while shown, as M3's `SnackbarHost` does. The trait doesn't reach a container's children |
 | `d1905bc` `AccessibilityTraits()` recursion | skip-fuse-ui | no | already upstream as PR #132 (not ours), cherry-picked; drop it from the fork when #132 merges |
 | `d9ad308` + `15a34f4` `#Preview` / `@Previewable` stubs | skip-fuse-ui | no | fixes skiptools/skip#439 (no maintainer reply since 2025-06). Squash the two; topic branch `feature/preview-macro` is cut from 1.18.2 and names upstream skip-ui. Expect pushback on the from-source swift-syntax build |
-| `60671f0` → `1d56dc9` + `f0e4d6c` runs encoder | skip-ui + skip-fuse-ui | yes | **collides**, see below. `60671f0`/`79dc36f` are the superseded markdown cut — do not send them |
-| `59f7693` + `de02184` inline content + its link | skip-ui + `737dcfa` | yes | **collides** |
-| `193e97c` doc-comment correction on `Text(_:inlineViews:)` | skip-fuse-ui | no | squash into whichever inline-views PR goes; not a PR of its own |
-| `bf0c6ad` + `28717f9` HTML via `fromHtml` | skip-ui + `30a2abd` | yes | **collides** with #436 on link handling |
-| `cad81a8` `Text + Text` | skip-ui + `967a19a` | yes | **collides** head-on with #453/#118 |
-| `9eb2c87` `@_disfavoredOverload` on `Text(AttributedString)` | skip-fuse-ui | no | belongs with whichever attributed-text PR lands; the trap is worth writing up either way |
+| `bf0c6ad` + `28717f9` HTML via `fromHtml`, with `59f7693` + `de02184` inline views | skip-ui + `30a2abd` | yes | **collides** with #436 on link handling. The only text patch left: #584/#164 render `AttributedString`, #118 `Text + Text` |
 | `5a21355` `GeometryReader` composes on the measure pass | skip-ui | no | fidelity fix (no blank first frame). Before sending, check whether it causes the intrinsic-measurement crash under a scroll: `BoxWithConstraints` is a `SubcomposeLayout` and the old `Box` was not. Now rebased onto #500's `GeometryReaderState` in fork merge `0a6d781` |
 | `23154a0` `ImageHolder`, read in the draw phase | skip-ui + `c59b1a7` | yes | new API; its only caller today is the Kingfisher fork (`07f72deb`), so argue it from Coil's `AsyncImagePainter`, not from Kingfisher |
 | `524153a` `.id` resets state positionally | skip-ui | no | no API change; fixes a regression in upstream `4ed8380`/#330. Swapping in a fresh `ComposeStateSaver` strands every `Key` a descendant already saved, and a bridged `@State` then force-unwraps the nil. Argue it as Compose correctness: positional scoping is the documented reset mechanism, and `rememberSaveable`'s own `key` parameter is deprecated precisely for bypassing it. Sent as #550 (draft) |
@@ -66,7 +59,7 @@ Per patch. "Paired" means the change touches API surface and so needs a matching
 | `908239e` `folder` mapping | skip-ui | no | Robolectric `testFolderSymbolMapsToMaterialIcon`; same shape as #548 |
 | `bb96c29` primary action trailing-most | skip-ui | no | Robolectric `ToolbarItemsTests.primaryActionStaysTrailingMost`, fails without the patch |
 | `69b4cb8` menu dividers only between items | skip-ui | no | Robolectric `MenuDividerTests.onlyDividersBetweenItemsAreDrawn`, fails without the patch (100 px vs 97) |
-| `dc39400` + `168d90d` + `5b608cd` local notifications as iOS posts them | skip-ui + skip-fuse-ui | yes | **split into four PRs**: application context, attachments as large icon / big picture (with the options init), immediate post with `setWhen`, `SINGLE_TOP`. Robolectric `NotificationRequestTests` covers the post and the icons. `fb1c589` is #555 cherry-picked; drop it at the next sync |
+| `dc39400` + `168d90d` + `5b608cd` local notifications as iOS posts them | skip-ui + skip-fuse-ui | yes | **split into four PRs**: application context, attachments as large icon / big picture (with the options init), immediate post with `setWhen`, `SINGLE_TOP`. Robolectric `NotificationRequestTests` covers the post and the icons |
 | `9edd402`…`a616f6e` + `bd03c7e`…`18ad2d9` notification categories and actions, `interruptionLevel`, attachment store | skip-ui + skip-fuse-ui | yes | squash: the reveal keys of `9edd402`–`cca0169` are gone. Two PRs: the attachment store (iOS semantics, needed by any delayed request), then categories/actions with `interruptionLevel`. Robolectric `testCategoryActionsBecomeButtons`, `testButtonHandsItsResponseToTheDelegate` (presses the real button), `testCategoriesAreSaved`, `testPassiveInterruptionLevelPostsSilently`, `testForegroundButtonIntentIsItsActionsResponse`, `testTapResponseCarriesTheRequestsContent`, `testCustomDismissActionReportsTheDismissal`, `testAttachmentCopyOutlivesTheOriginal` |
 | `aa6ac8c` + `d4a7788` + `c491a7e` + `cbf4494` + `d2fbd5d` communication notifications as conversations | skip-ui + skip-fuse-ui | yes | squash. Apple's Intents types plus `updating(from:)`/`mutableCopy()`; after the categories PR, since it builds on the attachment store. No Robolectric test yet: it needs one posting a message intent and checking the `MessagingStyle` messages and the pushed shortcut |
 | `844f754` + `36c9bef` + `96a940d` `UserDefaults` arrays and dictionaries | skip-foundation | no | squash the three. Robolectric `test_setValue_Array` / `test_setValue_Dictionary`. Cut from 1.4.6 |
@@ -303,12 +296,12 @@ in the body so it is not read as a failure.
 
 ### Known collisions
 
-Re-check these before sending anything from the text stack (states as of 2026-10-11).
+Re-check these before sending the HTML patch (states as of 2026-11-11).
 
 | PR | Overlaps |
 |---|---|
-| skip-ui [#453](https://github.com/skiptools/skip-ui/pull/453) (merged 2026-10-03) + skip-fuse-ui [#118](https://github.com/skiptools/skip-fuse-ui/pull/118) (open) | `cad81a8` / `967a19a` — an independent `Text + Text` run model. Since the 2026-10-19 fork merge `_Text` carries both (`runs` rendered first); ours goes once #118 lands and the app's `+` can use #453's runs |
-| skip-ui [#434](https://github.com/skiptools/skip-ui/pull/434) (draft) | `1d56dc9` / `f0e4d6c` — real `AttributedString` rendering, depends on skip-foundation #122 |
+| skip-fuse-ui [#118](https://github.com/skiptools/skip-fuse-ui/pull/118) (open) | none now: the fork carries it cherry-picked for the app's `Text + Text`; drop it when it merges |
+| skip-ui [#434](https://github.com/skiptools/skip-ui/pull/434) (draft) | none of ours: real `AttributedString` rendering and `+`, both now upstream through #584/#164 and #453 |
 | skip-ui [#436](https://github.com/skiptools/skip-ui/pull/436) (open) | `bf0c6ad` — rewrites `Text` link handling onto `LinkInteractionListener`, which our HTML path also relies on |
 
 ## Kingfisher
@@ -389,27 +382,23 @@ result. Read the state with
 
 ## Opened PRs
 
-State is one of draft / opened / merged / rejected / closed, as of 2026-10-21; refresh it with
+State is one of draft / opened / merged / rejected / closed, as of 2026-11-11; refresh it with
 `gh pr view <n> -R <repo> --json state,isDraft`.
 
 | PR | Patch | State |
 |---|---|---|
 | skipapp-showcase [#122](https://github.com/skiptools/skipapp-showcase/pull/122) | playground for skip-ui #524 | opened |
 | skipapp-showcase [#123](https://github.com/skiptools/skipapp-showcase/pull/123) | playground rows for skip-ui #525 | opened |
-| skip-fuse-ui [#151](https://github.com/skiptools/skip-fuse-ui/pull/151) | private `@State`/`@Environment` bridging, runtime half (write-up on branch `android-skip-private`) | opened; merges before skipstone #282 |
-| skipstone [#282](https://github.com/skiptools/skipstone/pull/282) | private `@State`/`@Environment` bridging, generator half | opened |
 | skip-ui [#539](https://github.com/skiptools/skip-ui/pull/539) | `88ac81d` | opened |
-| skip-ui [#540](https://github.com/skiptools/skip-ui/pull/540) | `1335ebf` + `22ff079`, reworked in review | opened |
-| skip-ui [#541](https://github.com/skiptools/skip-ui/pull/541) | `4b30753`, vertical half | opened |
 | skip-ui [#548](https://github.com/skiptools/skip-ui/pull/548) | `f54f6e8`; rows added to showcase #123 | draft |
 | skip-ui [#549](https://github.com/skiptools/skip-ui/pull/549) | `5110e81`, re-cut without `insets` | draft |
 | skipapp-showcase [#139](https://github.com/skiptools/skipapp-showcase/pull/139) | Row Modifiers page for skip-ui #549 | draft |
 | skip-ui [#550](https://github.com/skiptools/skip-ui/pull/550) | `524153a`, reworked in review | draft |
 | skip-ui [#551](https://github.com/skiptools/skip-ui/pull/551) | `ad375fb` | draft |
-| skip-ffi [#14](https://github.com/skiptools/skip-ffi/pull/14) | CI: `SKIP_DYNAMIC_LIBRARIES` gate ([CI instabilities](#ci-instabilities)) | closed: Showcase went green without it |
 | actions [#23](https://github.com/skiptools/actions/issues/23) (issue) | the plan every Intel-exit PR links to | opened |
-| actions [#22](https://github.com/skiptools/actions/pull/22) | CI: emulator guard reads `runner.arch` ([Leaving Intel macOS](#leaving-intel-macos-runners)) | merged 2026-10-21, in `v1` |
-| skip-ffi [#15](https://github.com/skiptools/skip-ffi/pull/15) | CI: `macos-26` + Ubuntu; actions #22 now in `@v1` | opened |
+| skip-ffi [#15](https://github.com/skiptools/skip-ffi/pull/15) | CI: `macos-26` + Ubuntu | opened |
+| skip [#757](https://github.com/skiptools/skip/pull/757) | private `@State`/`@Environment` bridging by name, generator half | opened |
+| skip-fuse-ui [#165](https://github.com/skiptools/skip-fuse-ui/pull/165) | the same, runtime half | opened |
 
 ## CI instabilities
 
@@ -437,15 +426,18 @@ tests run. Findings (2026-10-04), each from a fork run:
 - **No emulator on arm macOS runners.** `HVF error: HV_UNSUPPORTED` on `macos-15` and
   `macos-26`, API 28 and 34; `emulator -accel-check` says HVF is fine regardless. Emulator work
   goes to `ubuntu-24.04` (KVM).
-- **`skip-framework.yml`'s arm guard never worked**: `env.RUNNER_ARCH` is always empty in an
-  `if:` (the `env` context excludes runner variables). actions #22.
+- **Software acceleration may bring the emulator back to arm macOS.** marcprux ran it on
+  `macos-26` with hardware acceleration off, at API 28 (API 35 took over an hour):
+  [actions #23](https://github.com/skiptools/actions/issues/23#issuecomment-6685760871).
+  Not yet rolled into `actions/`; it would make the Ubuntu hand-off below optional.
 - **Intel queues dominate.** skiptools shares one org macOS concurrency pool: Intel jobs waited
   10–56 min (skip-ffi) and up to 7.9 h (skipstone) to start. Fork runs don't share that pool,
   so their few-second arm queues predict nothing.
-- **skip-ui / skip-fuse-ui can't move yet.** The musl skip binary segfaulted transpiling SkipUI
-  (128 KiB thread stacks; fixed by our skipstone #290, merged 2026-10-11, and their Android build then takes 32 s /
-  57 s on Linux against 91 s / 180 s on Intel). Their host `swift test` still fails on Linux:
-  `no such module 'CoreGraphics'` (skip-ui), duplicate static Skip products (skip-fuse-ui).
+- **skip-ui has moved** ([#591](https://github.com/skiptools/skip-ui/pull/591), piercifani):
+  everything but the emulator on `macos-26`, the emulator tests on `ubuntu-24.04` through
+  actions #25's `emulator-host-build: transpile`, since its host `swift test` doesn't build on
+  Linux (`no such module 'CoreGraphics'`). 81 min → 16–19 min. skip-fuse-ui hasn't: its host
+  build on Linux fails on duplicate static Skip products.
 - **Fuse doesn't build on Linux** (skipstone `android-ci`): duplicate static products, then a
   skip-android-bridge compile error with `SKIP_DYNAMIC_LIBRARIES=1`. Hence the `macos-26-intel` leg skipstone #300 kept (it folded our #289 in).
 - Coverage was checked per PR with `~/Development/SkipUpstream/ci-ledger.py OWNER/REPO RUN…`,

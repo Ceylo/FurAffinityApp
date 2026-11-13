@@ -10,9 +10,7 @@ So is the tab around it: `AndroidRootView`'s first tab mounts `SubmissionsTabVie
 `LoggedInView` does. It hides the navigation bar and floats the "…" control
 (`SubmissionsFeedActionView`) over the top-trailing corner on the glass surface — on
 Android an opaque M3 `surfaceContainer` under a 3 dp shadow ([forks.md § The feed-gaps
-patches](forks.md#the-feed-gaps-patches)). Only Explore is left out: `ExplorationView`,
-the mode switch and the filters sheet are fenced `#if !FA_SKIP_MODULE`, as is
-`@Namespace`, which SkipSwiftUI marks unavailable. Every floating control goes through
+patches](forks.md#the-feed-gaps-patches)). Every floating control goes through
 `floatingGlass` (`View+floatingGlass.swift`), which on Android in dark mode adds a 1 pt
 white shadow, since the surface's dark shadow vanishes over dark artwork.
 

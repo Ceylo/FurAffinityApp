@@ -9,6 +9,7 @@ still built by `FurAffinity.xcodeproj` and none of its files move.
 | Doc | Covers |
 |---|---|
 | [docs/build-and-run.md](docs/build-and-run.md) | emulator, build, run, debug, test, CI, the build-environment traps, and the [build slots](docs/build-and-run.md#build-slots) the Swift side builds in, shared by every worktree |
+| [docs/remote-emulator.md](docs/remote-emulator.md) | the PC's x86_64 emulator, the default device for tests and manual runs: how it is picked, wired and set up |
 | [docs/shared-sources.md](docs/shared-sources.md) | guarding, and every rule for writing a file both platforms compile |
 | [docs/assets-and-resources.md](docs/assets-and-resources.md) | shared asset-catalog entries, generated launcher/app art |
 | [docs/forks.md](docs/forks.md) | the forked dependencies and every patch in them |

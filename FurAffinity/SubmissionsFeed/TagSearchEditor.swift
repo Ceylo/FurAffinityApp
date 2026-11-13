@@ -5,8 +5,6 @@
 //  Created by Ceylo on 02/07/2026.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import OrderedCollections
 
@@ -22,9 +20,10 @@ import OrderedCollections
 struct TagSearchEditor: View {
     @Binding var tags: OrderedSet<String>
 
-    @State private var isAddingTag = false
-    @State private var newTagText = ""
-    @FocusState private var addFieldFocused: Bool
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var isAddingTag = false
+    @State var newTagText = ""
+    @FocusState var addFieldFocused: Bool
 
     /// `id` is the base tag (label without `!`) so toggling include/exclude keeps
     /// the same identity and recolors in place instead of collapsing.
@@ -82,13 +81,13 @@ struct TagSearchEditor: View {
 
     /// Turns whitespace-separated input into individual chips as the user types.
     /// The trailing partial word stays in the field; a trailing space commits it too.
-    /// `withAnimation` is explicit because a text-input transaction otherwise
+    /// The animation is explicit because a text-input transaction otherwise
     /// suppresses the chips' implicit insertion animation.
     private func tokenizeIfNeeded(_ text: String) {
         guard text.contains(where: \.isWhitespace) else { return }
         var tokens = text.split(whereSeparator: \.isWhitespace).map(String.init)
         let remainder = (text.last?.isWhitespace ?? false) ? "" : (tokens.popLast() ?? "")
-        withAnimation(.default.speed(2)) {
+        animate(.default.speed(2)) {
             for token in tokens { addToken(token) }
         }
         newTagText = remainder
@@ -96,7 +95,7 @@ struct TagSearchEditor: View {
 
     /// Commits whatever is left in the field into chips and clears it.
     private func commitRemainder() {
-        withAnimation(.default.speed(2)) {
+        animate(.default.speed(2)) {
             for token in newTagText.split(whereSeparator: \.isWhitespace).map(String.init) {
                 addToken(token)
             }
@@ -108,6 +107,14 @@ struct TagSearchEditor: View {
         commitRemainder()
         // Keep the field open for quick multi-tag entry.
         addFieldFocused = true
+    }
+
+    private func animate(_ animation: Animation = .default, _ body: () -> Void) {
+        #if os(Android)
+        body()
+        #else
+        withAnimation(animation, body)
+        #endif
     }
 
     // MARK: - Views
@@ -141,7 +148,7 @@ struct TagSearchEditor: View {
 
     private var addControl: some View {
         Button {
-            withAnimation { isAddingTag = true }
+            animate { isAddingTag = true }
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: "plus")
@@ -195,7 +202,7 @@ struct TagSearchEditor: View {
                         // Blur commits the remainder and collapses back to the button.
                         if !focused {
                             commitRemainder()
-                            withAnimation { isAddingTag = false }
+                            animate { isAddingTag = false }
                         }
                     }
             }
@@ -217,5 +224,3 @@ struct TagSearchEditor: View {
         }
     }
 }
-
-#endif
