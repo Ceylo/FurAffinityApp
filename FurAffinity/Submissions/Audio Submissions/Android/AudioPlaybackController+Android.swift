@@ -32,7 +32,6 @@ final class AudioPlaybackController {
     private(set) var currentTime: Double = 0
     private(set) var duration: Double = 0
 
-    @ObservationIgnored private var isPrepared = false
     @ObservationIgnored private var isDownloading = false
     @ObservationIgnored private var isSeeking = false
     @ObservationIgnored private var seekToken = 0
@@ -68,8 +67,7 @@ final class AudioPlaybackController {
     }
 
     func prepare() async {
-        guard !isPrepared, let bridge else { return }
-        isPrepared = true
+        guard let bridge else { return }
         var artworkPath = ""
         do {
             artworkPath = try await KingfisherManager.shared
@@ -103,12 +101,7 @@ final class AudioPlaybackController {
             if result.ok == true {
                 self.documentFileUrl = fileUrl
             } else if let message = result.error {
-                storeError(
-                    AudioBridgeError(errorDescription: message),
-                    in: self.errorStorage,
-                    action: "Audio Download",
-                    webBrowserURL: downloadUrl
-                )
+                self.store(message, action: "Audio Download", url: downloadUrl)
             }
         }
     }
@@ -138,21 +131,29 @@ final class AudioPlaybackController {
 
     private func poll() {
         guard let snapshot = bridge?.snapshot() else { return }
-        isPlaying = snapshot.isPlaying
-        if !isSeeking {
-            currentTime = Double(snapshot.positionMs) / 1000
+        if isPlaying != snapshot.isPlaying {
+            isPlaying = snapshot.isPlaying
         }
-        if snapshot.durationMs >= 0 {
-            duration = Double(snapshot.durationMs) / 1000
+        let position = Double(snapshot.positionMs) / 1000
+        if !isSeeking, currentTime != position {
+            currentTime = position
+        }
+        let total = Double(snapshot.durationMs) / 1000
+        if snapshot.durationMs >= 0, duration != total {
+            duration = total
         }
         if let message = snapshot.error {
-            storeError(
-                AudioBridgeError(errorDescription: message),
-                in: errorStorage,
-                action: "Audio Playback",
-                webBrowserURL: streamUrl
-            )
+            store(message, action: "Audio Playback", url: streamUrl)
         }
+    }
+
+    private func store(_ message: String, action: String, url: URL) {
+        storeError(
+            RichLocalizedError(relatedAction: action, webBrowserURL: url, errorDescription: message),
+            in: errorStorage,
+            action: action,
+            webBrowserURL: url
+        )
     }
 }
 
@@ -174,10 +175,6 @@ extension AudioPlaybackController {
     }
 }
 #endif
-
-private struct AudioBridgeError: LocalizedError {
-    var errorDescription: String?
-}
 
 private final class AudioBridge: @unchecked Sendable {
     struct Snapshot: Decodable {

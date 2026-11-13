@@ -14,6 +14,7 @@
 package fur.affinity.ui
 
 import android.content.ComponentName
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -25,7 +26,6 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import java.io.File
-import java.io.IOException
 import java.util.UUID
 import okhttp3.Call
 import okhttp3.Request
@@ -56,9 +56,7 @@ class FAAudioBridge {
                 .setTitle(title)
                 .setArtist(artist)
                 .apply {
-                    artworkBytes(artworkPath)?.let {
-                        setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
-                    }
+                    if (artworkPath.isNotEmpty()) setArtworkUri(Uri.fromFile(File(artworkPath)))
                 }
                 .build()
             item = MediaItem.Builder()
@@ -96,12 +94,9 @@ class FAAudioBridge {
 
     fun snapshot(): String {
         if (Looper.myLooper() == Looper.getMainLooper()) refresh() else main.post { refresh() }
-        val json = JSONObject(cached.toString())
-        error?.let {
-            json.put("error", it)
-            error = null
-        }
-        return json.toString()
+        val pending = error ?: return cached.toString()
+        error = null
+        return JSONObject(cached.toString()).put("error", pending).toString()
     }
 
     fun release(): Boolean {
@@ -131,7 +126,6 @@ class FAAudioBridge {
                 state != Player.STATE_ENDED && state != Player.STATE_IDLE)
             .put("positionMs", lastPositionMs)
             .put("durationMs", if (duration == C.TIME_UNSET) -1 else duration)
-            .put("ended", ours && state == Player.STATE_ENDED)
     }
 
     private fun isOurs(player: Player) = player.currentMediaItem?.mediaId == mediaId
@@ -180,16 +174,6 @@ class FAAudioBridge {
         if (Looper.myLooper() == Looper.getMainLooper()) action() else main.post(action)
     }
 
-    private fun artworkBytes(path: String): ByteArray? {
-        if (path.isEmpty()) return null
-        return try {
-            File(path).readBytes()
-        } catch (e: IOException) {
-            Log.e(TAG, "could not read the artwork at $path", e)
-            null
-        }
-    }
-
     // MARK: Download
 
     @Volatile private var download: Call? = null
@@ -216,11 +200,7 @@ class FAAudioBridge {
             }
             return json.put("ok", true).toString()
         } catch (e: Exception) {
-            return if (call.isCanceled()) {
-                json.put("cancelled", true).toString()
-            } else {
-                json.put("error", e.toString()).toString()
-            }
+            return if (call.isCanceled()) json.toString() else json.put("error", e.toString()).toString()
         } finally {
             part.delete()
             download = null
