@@ -10,14 +10,12 @@
 # Usage: Scripts/Android/remote-emulator.sh up|down|serial
 #
 #   up      exit 0 once the device is booted and connected, else non-zero with
-#           a one-line reason on stderr. Wakes the PC first when it is asleep
-#           and FA_REMOTE_EMULATOR_WAKE_MAC is set, and starts the emulator
-#           through the PC's FAEmulator task when it isn't running
+#           a one-line reason on stderr. Starts the emulator through the
+#           PC's FAEmulator task when it isn't running
 #   down    stop the PC's emulator, disconnect it and close the tunnel
 #   serial  print the device's serial
 #
-# Environment: FA_REMOTE_EMULATOR_HOST, FA_REMOTE_EMULATOR_WAKE_MAC (the PC's
-# MAC address, for a magic packet), ANDROID_HOME / ANDROID_SDK_ROOT.
+# Environment: FA_REMOTE_EMULATOR_HOST, ANDROID_HOME / ANDROID_SDK_ROOT.
 
 set -eo pipefail
 
@@ -56,31 +54,13 @@ connect() {
     [[ "$("$ADB" -s "$SERIAL" get-state 2>/dev/null | tr -d '\r')" == device ]]
 }
 
-wake() {
-    [[ -n "$FA_REMOTE_EMULATOR_WAKE_MAC" ]] || return 1
-    python3 - "$FA_REMOTE_EMULATOR_WAKE_MAC" <<'EOF' || return 1
-import socket, sys
-mac = bytes.fromhex(sys.argv[1].replace(":", "").replace("-", ""))
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-s.sendto(b"\xff" * 6 + mac * 16, ("255.255.255.255", 9))
-EOF
-    local deadline=$(( SECONDS + 60 ))
-    until pc exit; do
-        (( SECONDS < deadline )) || return 1
-        sleep 2
-    done
-}
-
 up() {
     [[ -n "$HOST" ]] || die "FA_REMOTE_EMULATOR_HOST is not set"
     [[ -x "$ADB" ]] || die "$ADB is missing"
     if ssh "${SSH_OPTS[@]}" -S "$SOCK" -O check "$HOST" 2>/dev/null && connect && booted; then
         return 0
     fi
-    if ! pc exit; then
-        wake || die "$HOST is unreachable"
-    fi
+    pc exit || die "$HOST is unreachable"
     tunnel || die "no ssh tunnel to $HOST"
     if connect; then
         booted && return 0

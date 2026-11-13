@@ -30,7 +30,7 @@ Each worktree's debug app needs its own FA login on the PC too, as on any emulat
 
 ## The PC, as set up
 
-Windows, Intel, S3 sleep only. Everything under the user account; the SDK is
+Windows with an Intel CPU. Everything under the user account; the SDK is
 `%LOCALAPPDATA%\Android\Sdk`.
 
 - **JDK 17** and the **cmdline-tools**. This `sdkmanager` wants `a/b/c` package paths,
@@ -41,7 +41,10 @@ Windows, Intel, S3 sleep only. Everything under the user account; the SDK is
 - **AEHD** for acceleration. Its `silent_install.bat` silently does nothing over SSH;
   install it by copying `aehd.sys` to `C:\Windows\System32\drivers` and
   `sc create aehd type= kernel binPath= …\aehd.sys start= auto`, `sc start aehd`.
-- AVD **`fa-x86`**, `hw.cpu.ncore=8` (the guest sees 6).
+- AVD **`fa-x86`** with `hw.keyboard=yes`, without
+  which the PC's key presses never reach Android. The window sends clicks as stylus
+  touches, which open Gboard's handwriting bar instead of the keyboard:
+  `adb shell settings put secure stylus_handwriting_enabled 0`.
 - The emulator starts from a scheduled task, **`FAEmulator`**, run as the user with
   `/it` (interactive only): that puts it in session 1, the desktop, with the host GPU
   and its window on screen. An SSH login is session 0, which has no GPU, and whatever
@@ -61,10 +64,8 @@ Windows, Intel, S3 sleep only. Everything under the user account; the SDK is
   and outlives it: the next run's `> same.log` then fails, the task reports result 1,
   and no emulator starts.
 - No monitor is needed, for tests or the host GPU.
-- **Sleep**: the power plan sleeps after 3 h idle on AC. The Wi-Fi adapter is armed for
-  wake (`powercfg /deviceenablewake "Broadcom 802.11ac Network Adapter #2"`;
-  `powercfg /devicequery wake_armed` lists it), and `FA_REMOTE_EMULATOR_WAKE_MAC` set to
-  its MAC lets `up` wake it.
+- **Sleep**: the emulator survives it, and `up` reconnects in under a second after a
+  wake. The scripts never wake the PC: while it sleeps they fall back to this Mac.
 
 ## Speed
 
