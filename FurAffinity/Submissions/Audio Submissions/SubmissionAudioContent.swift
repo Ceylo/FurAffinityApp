@@ -5,8 +5,6 @@
 //  Created by Ceylo on 21/06/2026.
 //
 
-#if !FA_SKIP_MODULE
-
 import FAKit
 import SwiftUI
 
@@ -16,7 +14,9 @@ import SwiftUI
 /// controller exposes its file URL (for Save/Share); playback does not wait on that
 /// download.
 struct SubmissionAudioContent: View {
-    @Environment(ErrorStorage.self) private var errorStorage
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(ErrorStorage.self) var errorStorage
+    @Environment(\.isPresented) var isPresented
 
     var audioContent: FASubmission.AudioContent
     var title: String
@@ -40,6 +40,12 @@ struct SubmissionAudioContent: View {
                 .padding(.horizontal, 10)
         }
         .task { await prepareController() }
+        #if os(Android)
+        // iOS stops on pop through deinit; Skip frees @State only once GC runs
+        .onChange(of: isPresented) { _, presented in
+            if !presented { controller?.tearDown() }
+        }
+        #endif
     }
 
     @ViewBuilder
@@ -93,5 +99,3 @@ struct SubmissionAudioContent: View {
         .environment(errorStorage)
     }
 }
-
-#endif
