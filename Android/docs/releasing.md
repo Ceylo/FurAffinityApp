@@ -58,6 +58,16 @@ Check what a build actually got signed with:
 apksigner verify --print-certs <apk>      # must NOT say CN=Android Debug
 ```
 
+## Before a release
+
+Day-to-day tests run on x86_64 (the PC's emulator, and CI), which misses ARM-only bugs
+([build-and-run.md § Architecture coverage](build-and-run.md#architecture-coverage)).
+So before tagging:
+
+1. `Scripts/Android/start-emulator.sh`, then `Scripts/Android/test.sh --release`: the
+   tests on this Mac's arm64 emulator. It fails rather than fall back to the PC.
+2. The release APK (`build-release-apk.sh`, arm64-v8a only) on a real arm64 phone.
+
 ## The published APK
 
 The APK on a GitHub release comes from the tag, like the IPA: `release.yml`'s
@@ -156,8 +166,8 @@ What to tell a tester:
 
 - **Android 9 or newer** (minSdk 28), **arm64 only** — a 32-bit-ARM phone will refuse
   to install it. 18+, and it needs a furaffinity.net account.
-- Not ported yet: Explore/search. Music plays in another app rather than
-  in-app, and a story opens in-app only as txt or md.
+- Music plays in another app rather than in-app, and a story opens in-app only as
+  txt or md.
 - First launch shows Cloudflare's "Verify you are human" and needs a real tap.
 - Crashes and ANRs report themselves to Sentry, symbolicated down to the source
   line (see [crash-reporting.md](crash-reporting.md)); the toggle for that is

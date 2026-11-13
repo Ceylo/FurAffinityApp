@@ -4,8 +4,15 @@
 # package (FAPages, FAKit, FALogging) and the root package's FurAffinityUITests,
 # which are the FurAffinityTests files that build for Android.
 #
-# Usage: Scripts/Android/test.sh [--timeout SECONDS] [--log-dir DIR] [--base DIR]
+# Usage: Scripts/Android/test.sh [--local|--remote|--release] [--timeout SECONDS]
+#                                [--log-dir DIR] [--base DIR]
 #
+#   --local     this host's emulator; by default the remote PC's when it is
+#               available (Scripts/Android/android-target.sh)
+#   --remote    the remote PC's emulator, or fail
+#   --release   this host's emulator, which must be arm64-v8a: the run before a
+#               release, since the PC's x86_64 misses ARM-only bugs
+#               (Android/docs/build-and-run.md § Architecture coverage)
 #   --timeout   how long to wait for the emulator lock, default 1800s
 #   --log-dir   where the two runs' logs go, default a temporary directory
 #   --base DIR  internal, for faAndroidTest: run from DIR, a copy of the worktree
@@ -32,7 +39,7 @@
 set -eo pipefail
 
 FAKIT_MIN_TESTS=211
-UI_MIN_TESTS=131
+UI_MIN_TESTS=134
 
 die() { echo "error: $*" >&2; exit 1; }
 
@@ -40,12 +47,16 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 LOCK_ARGS=()
 LOG_DIR=""
 BASE=""
+TARGET=auto
+RELEASE=0
 
 while (( $# )); do
     case "$1" in
-        -h|--help)    sed -n '3,30p' "$0" | cut -c3-; exit 0 ;;
+        -h|--help)    sed -n '3,38p' "$0" | cut -c3-; exit 0 ;;
         --timeout)    LOCK_ARGS+=(--timeout "$2"); shift ;;
         --timeout=*)  LOCK_ARGS+=("$1") ;;
+        --local|--remote)  TARGET="${1#--}" ;;
+        --release)    TARGET=local; RELEASE=1 ;;
         --log-dir)    LOG_DIR="$2"; shift ;;
         --log-dir=*)  LOG_DIR="${1#*=}" ;;
         --base)       BASE="$2"; shift ;;
@@ -63,6 +74,15 @@ fi
 mkdir -p "$LOG_DIR"
 LOG_DIR="$(cd "$LOG_DIR" && pwd)"
 
+# shellcheck source=Scripts/Android/android-target.sh
+source "$ROOT/Scripts/Android/android-target.sh"
+select_android_target "$TARGET"
+if (( RELEASE )) && [[ "$ANDROID_TARGET_ABI" != arm64-v8a ]]; then
+    die "--release needs an arm64-v8a device on this host, not ${ANDROID_TARGET_ABI:-none} — run Scripts/Android/start-emulator.sh"
+fi
+[[ -n "$ANDROID_TARGET_ARCH" ]] \
+    || die "the tests don't build for the device's ABI (${ANDROID_TARGET_ABI:-none: is $ANDROID_SERIAL connected?})"
+
 if [[ -z "$FA_EMULATOR_LOCK_HELD" ]]; then
     export FA_EMULATOR_LOCK_HELD=1
     exec "$(dirname "${BASH_SOURCE[0]}")/with-emulator-lock.sh" "${LOCK_ARGS[@]}" \
@@ -79,7 +99,7 @@ run() {
     local status=0
     # Native: under swiftbuild, `skip android test` runs only the first test target's
     # runner it finds, and FAKit has three.
-    ( cd "$dir" && skip android test --testing-library testing --build-system native "$@" ) 2>&1 | tee "$log" || status=$?
+    ( cd "$dir" && skip android test --testing-library testing --build-system native --arch "$ANDROID_TARGET_ARCH" "$@" ) 2>&1 | tee "$log" || status=$?
 
     # The summary line, stripped of colour and the spinner's carriage returns.
     local summary

@@ -3,8 +3,8 @@
 | Fork | Why |
 |---|---|
 | `Ceylo/Defaults` | Android port; `Defaults.defaultSuite` (see [Defaults](shared-sources.md#defaults)) |
-| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; a `ScrollView` that fills its scrolled axis; `Text(bridgedHTML:…)`; `Text(bridgedRichText:bridgedInlineViews:)`; `Text(bridgedSegments:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; `.glass`/`.glassProminent` drawn as bordered and `buttonBorderShape`; `glassEffect` drawn as the M3 floating surface; tab re-tap popping to root, then scrolling to top; a `List` under the status bar when the navigation bar is hidden; a `List` that restores its scroll position by the first visible keyed row and its offset; a plain `List`'s section header pinned below the status bar; no `List` row for an `EmptyView`; a `NavigationLink` in a `List` row drawn untinted; a tab badge's count in `onError`; `Color.material(bridgedRole:)`; a bridged `.task(id:)` that is really cancelled; `.updatesFrequently` as a polite live region; a sheet that calls its content only while presented and keeps the last one while it animates away; a `ScrollViewReader` proxy that resolves its scroll action when used; a stack insertion that keeps its enter transition when the stack recomposes before it has played; a principal toolbar item in the title's place, and a flexible toolbar spacer that only separates top-bar groups; a `Picker` listed inline in a `Menu`; a filled image cropped by its frame's alignment; a primary action kept at the toolbar's trailing edge; menu dividers drawn only between items; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider); [local notifications posted as iOS posts them](#local-notifications), communication ones as conversations |
-| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text(AttributedString)` / `Text(_:inlineViews:)` (disfavoured, so literals still localize), `Text.+`, `FlowRow`, `Image(holder:)`, `ButtonBorderShape`, `sheet`/`fullScreenCover` content passed as a builder, a `JavaBackedView` holding a global JNI reference, `glassEffect` bridged to SkipUI's surface, `GlassEffectContainer` bridged as a `Group`, an `AccessibilityTraits()` that doesn't recurse (upstream #132), `Color.material(_:)` for Material color roles SwiftUI has none for, plus `glassEffectUnion`/`glassEffectID`/`AnyTransition.animation`/`.glass`/`.glassProminent` un-`unavailable`d and `controlSize`/`contentShape` as pass-throughs; `#Preview` / `@Previewable` stubs (skiptools/skip#439) and `@Entry`; notification attachment options, categories and actions, `interruptionLevel` and `soundSetting`; the Intents types of a communication notification |
+| `Ceylo/skip-ui` | `listRowInsets` (and innermost-wins `listRow*` precedence); resuming an in-flight animation across composition disposal; `Text(bridgedHTML:…)`; `FlowRow`; a `GeometryReader` composed on the measure pass that still answers intrinsic queries; a draw-phase `ImageHolder`; springs that are springs; `.id` state reset scoped positionally rather than by swapping the state saver; geometry that reports a view's laid-out frame rather than its clipped one; SF Symbol mappings; `.glass`/`.glassProminent` drawn as bordered and `buttonBorderShape`; `glassEffect` drawn as the M3 floating surface; tab re-tap popping to root, then scrolling to top; a `List` under the status bar when the navigation bar is hidden; a `List` that restores its scroll position by the first visible keyed row and its offset; a plain `List`'s section header pinned below the status bar; no `List` row for an `EmptyView`; a `NavigationLink` in a `List` row drawn untinted; a tab badge's count in `onError`; `Color.material(bridgedRole:)`; `.updatesFrequently` as a polite live region; a sheet that calls its content only while presented and keeps the last one while it animates away; a `ScrollViewReader` proxy that resolves its scroll action when used; a stack insertion that keeps its enter transition when the stack recomposes before it has played; a principal toolbar item in the title's place, and a flexible toolbar spacer that only separates top-bar groups; a `Picker` listed inline in a `Menu`; a filled image cropped by its frame's alignment; a primary action kept at the toolbar's trailing edge; menu dividers drawn only between items; iOS-parity text layout (HTML line height, `.subheadline` weight, menu text/icon size, menu divider); [local notifications posted as iOS posts them](#local-notifications), communication ones as conversations |
+| `Ceylo/skip-fuse-ui` | the Fuse side of each: `listRowInsets`, `Text(html:…)`, `Text.+` (upstream #118), `FlowRow`, `Image(holder:)`, `ButtonBorderShape`, `sheet`/`fullScreenCover` content passed as a builder, a `JavaBackedView` holding a global JNI reference, `glassEffect` bridged to SkipUI's surface, `GlassEffectContainer` bridged as a `Group`, an `AccessibilityTraits()` that doesn't recurse (upstream #132), `Color.material(_:)` for Material color roles SwiftUI has none for, plus `glassEffectUnion`/`glassEffectID`/`AnyTransition.animation`/`.glass`/`.glassProminent` un-`unavailable`d and `controlSize`/`contentShape` as pass-throughs; `#Preview` / `@Previewable` stubs (skiptools/skip#439) and `@Entry`; notification attachment options, categories and actions, `interruptionLevel` and `soundSetting`; the Intents types of a communication notification |
 | `Ceylo/Kingfisher` | Android port: platform guards, a decode seam onto SkipSwiftUI's `UIImage`, a bridgeable SwiftUI layer, a rendered image that comes out of an `ImageHolder` rather than out of the view value, and `KFAnimatedImage` |
 | `Ceylo/skip-foundation` | Android `UserDefaults` storing arrays and dictionaries; `JSONSerialization` keeping characters outside the BMP ([below](#why-skip-foundation-is-forked)) |
 | `Ceylo/skip-web` | dependency identity only: it must name `Ceylo/skip-ui` and `Ceylo/skip-fuse-ui`, no source changes |
@@ -65,15 +65,6 @@ Each patch, what it changes and why:
   half-played animation came back as its end state. The patch keeps a saveable record of
   the animation, its start, target and start time, and resumes the spec with a
   `StartOffset`. The deep-linked comment's highlight pulse needed it.
-- **`ScrollView` fills its scrolled axis.** `.refreshable` is a nested-scroll
-  connection, so the pull only worked over the content's own bounds: on the empty
-  feed, over the text and nowhere else. The patch fills the scrolled axis before
-  `verticalScroll`, as `RenderList` already does.
-- **`@_disfavoredOverload` on `Text(AttributedString)`**, our own addition, a caution
-  for every `Text` overload: `AttributedString` is `ExpressibleByStringLiteral`, so a
-  bare `Text("…")` preferred it over `LocalizedStringKey`, and implicit markdown and
-  localization stopped working app-wide. The fingerprint: only *bare* literals break.
-  Any new `Text` initializer taking a literal-expressible parameter needs the attribute.
 - **`GeometryReader` composes on the measure pass.** It used to render content only
   after a placement callback's recomposition, so every reader drew nothing on its first
   frame (`SubmissionMainImage` waited 616–689 ms). It now composes in a
@@ -232,16 +223,8 @@ skip-ui:
   only an index, so a list composed again after the rows above it changed lands on
   another row — as after every push or tab switch, through the late header. `RenderList`
   also saves the first visible row's key and re-applies it in the first measure pass.
-- **A bridged `.task(id:)` is cancelled** when its id changes or the view leaves.
-  SkipLib's `Task.cancel()` never cancelled the coroutine the bridge waited on.
-  **This changes behaviour app-wide**: every `.task` on Android is now cancelled on
-  disappear, as on iOS. Found through the Undo snackbar, whose undone batch's timer
-  committed the next batch.
 - **`.updatesFrequently` is a polite live region**, which is what Material's snackbar
   sets; SkipUI declared the trait and dropped it.
-- **A shadow's copy of its content is out of the accessibility tree** — upstream since
-  #538; TalkBack had read the snackbar as "Submission deleted. Submission deleted.
-  Unlabelled. Undo".
 
 skip-fuse-ui:
 
@@ -269,29 +252,15 @@ skip-fuse-ui:
     offsets. Slicing the string around them instead made each cut `ParagraphStyle`
     piece its own paragraph: a centred row of avatars came out one per line.
 
+  `inlineViews` fill those placeholders, aligned `PlaceholderVerticalAlign.Center`, not
+  `TextCenter`.
+
   A tapped link goes to `onLinkTap` through a `LinkInteractionListener`, never to
   Compose's `UriHandler`, which would open the browser first. Parsing is `remember`ed on
   the markup and the link colour.
-- **`Text.+`** is unavailable upstream. Each `Text` modifier now also records into a
-  `TextRunStyle`, additively, so a concatenation becomes one `AnnotatedString` with a
-  `SpanStyle` per segment. Colours are read through a `RichTextColorStyle` protocol
-  rather than casts. Anything that cannot cross as a `SpanStyle` (`tracking`,
-  `font(.custom)`, a gradient `foregroundStyle`, …) is a `preconditionFailure` naming the
-  modifier: silent dropping is this port's recurring failure mode.
-- **`Text(AttributedString)`** is unavailable upstream. Runs cross as records, one per
-  run (RS-separated, fields US-separated), into
-  `SkipUI.Text(bridgedRichText:bridgedInlineViews:)`, bypassing `LocalizedStringKey`
-  since the content is user data. The encoder reads `\.font`, `\.foregroundColor`,
-  `\.underlineStyle`, `\.strikethroughStyle` and `\.baselineOffset`, declared by
-  SkipSwiftUI **only where SwiftUI's own is absent** (on Darwin it makes the scope
-  ambiguous). Colours cross as decimal ARGB or a `primary`/`secondary`/`accent` token,
-  since SkipLib's `Int64(_:)` takes no radix. Separators are spelled with four hex
-  digits (`\u{001E}`), because the transpiler turns `\u{1E}` into an invalid Kotlin
-  escape.
-  - **`Text(_:inlineViews:)`** splices views at the object-replacement characters.
-    `TextInlineView` carries an explicit size, since Compose reserves the space before
-    composing the view. Use `PlaceholderVerticalAlign.Center`, not `TextCenter`, and drop
-    the style's fixed `lineHeight`, or a 50 pt avatar spills onto the next line.
+- **`Text.+`** is skip-fuse-ui #118, cherry-picked while it is open upstream: the
+  operands cross as SkipUI `TextRun`s into `Text(bridgedRuns:…)`, from skip-ui #453.
+  `Text(AttributedString)` is upstream's own (#584/#164).
 - **`FlowRow`** replaces SwiftUI's `Layout`, which can't be emulated: an opaque `Content`
   gives a Fuse module no access to its subviews. `Helper Views/Android/FlowLayout+Android.swift`
   keeps the iOS call signature.
@@ -304,7 +273,9 @@ skip-fuse-ui:
   GridView and `slider.horizontal.3` → Tune came later, as did the Notes tab's (`tray`,
   `archivebox`, `square.and.pencil`, `message.badge.fill`, and the filter, whose plain and
   `.fill` forms map to FilterList's outlined and filled icons, one and the same glyph:
-  Material has no circled filter), and `folder` → Folder for the gallery's folders menu.
+  Material has no circled filter), `folder` → Folder for the gallery's folders menu, and
+  the Submissions tab's `person.2.fill` → People (Followed mode) and tag chips' `tag` →
+  Sell, `minus.circle` → RemoveCircleOutline and `xmark.circle.fill` → Cancel.
 - **A top bar's principal item and spacers.** A `.principal` item was appended to the
   leading items, so the navigation title still drew beside it; it now takes the title
   slot. A flexible `ToolbarSpacer` took a flexible width in the top bar's actions row,
@@ -317,8 +288,7 @@ skip-fuse-ui:
 - **Text layout parity with iOS**, each measured off screenshots:
   - Material's typography **fixes a line height** (`bodyLarge` 24sp on a 16sp face),
     where SwiftUI uses font metrics, so HTML ran 24 dp per line against iOS's ~17.9 pt.
-    The HTML branch clears `lineHeight` (18.7 dp); `richText`, `segments` and markdown
-    keep M3's.
+    The HTML branch clears `lineHeight` (18.7 dp); runs and markdown keep M3's.
   - **`.subheadline` maps to `bodyMedium`**, not `titleSmall` (Medium 500): same metrics,
     regular weight, as iOS's subheadline is.
   - **Menu items use `bodyLarge`**, set in `RenderDropdownMenuItems`, where Material
@@ -344,8 +314,7 @@ skip-fuse-ui:
 
 ## Local notifications
 
-Upstream already posts without a delegate (#555, cherry-picked ahead of a full sync,
-since #583's `List` rewrite conflicts with the fork's) and delivers taps to
+Upstream already posts without a delegate (#555) and delivers taps to
 `didReceive` (#566). What the background refresh still needed, in `dc39400` and
 skip-fuse-ui `5b608cd`:
 

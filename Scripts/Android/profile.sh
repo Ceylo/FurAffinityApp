@@ -110,6 +110,11 @@ fi
 
 # --- require a booted device ------------------------------------------------
 
+# Never the PC's emulator: its timings would measure the PC.
+# shellcheck source=Scripts/Android/android-target.sh
+source "$(dirname "${BASH_SOURCE[0]}")/android-target.sh"
+select_android_target local
+
 [[ "$(adb_state)" == device ]] \
     || die "no device — run Scripts/Android/start-emulator.sh (or set ANDROID_SERIAL)"
 

@@ -5,8 +5,6 @@
 //  Created by Ceylo on 21/06/2026.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 import FAKit
 
@@ -14,9 +12,10 @@ import FAKit
 /// (which also persists the criteria). Gender filtering is intentionally absent
 /// in v1 — its URL param encoding still needs verifying against a real search.
 struct SearchFiltersView: View {
-    @Environment(Model.self) private var model
-    @Environment(\.dismiss) private var dismiss
-    @State private var query: FASearchQuery
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @Environment(Model.self) var model
+    @Environment(\.dismiss) var dismiss
+    @State var query: FASearchQuery
 
     init(query: FASearchQuery) {
         _query = State(initialValue: query)
@@ -179,5 +178,3 @@ extension FASearchQuery.DateRange {
             .environment($0.errorStorage)
     }
 }
-
-#endif
