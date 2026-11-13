@@ -135,11 +135,16 @@ directory>`, an `iPhone 17 / iOS 26.5` created on first use (`--help` for anothe
 device type, `--shutdown` to stop one). Each worktree gets its own so branches
 don't overwrite each other's app container; shut down the ones you aren't using.
 
-On Android, with the emulator running (`Scripts/Android/start-emulator.sh`):
+On Android:
 
 ```
 Scripts/Android/test.sh
 ```
+
+It runs on the PC's x86_64 emulator when `FA_REMOTE_EMULATOR_HOST` is set and it comes
+up, else on this host's (`Scripts/Android/start-emulator.sh`); `--local` forces this
+host. Before a release, `--release` runs it on this Mac's arm64 emulator, since x86_64
+misses ARM-only bugs — `Android/docs/remote-emulator.md`.
 
 It runs FAKit's package and the root package's `FurAffinityUITests` — the
 `FurAffinityTests` files that build for Android, picking their `@testable import` on
@@ -181,7 +186,8 @@ FAKit: FALogging (the sibling package, which also vends `OSCompat`), SwiftSoup, 
   files; the directory still carries the meaning.
 - Only remote-loading wrappers that own `@Environment(Model.self)` (e.g. `RemoteSubmissionView`) may depend on `Model`. Leaf/content views must receive what they need via inputs or injected closures — never reach into `Model`.
 - **Several worktrees at once.** iOS gets a simulator device per worktree
-  (`Scripts/iOS/simulator.sh`, above); Android keeps sharing the one emulator, and
+  (`Scripts/iOS/simulator.sh`, above); Android shares one emulator per host (the PC's
+  by default, `--local` for this one, each with its own lock), and
   instead gives each worktree its own **debug** app — `applicationIdSuffix` and
   launcher label derived from the worktree directory name in
   `Android/app/build.gradle.kts`. Run it with `Scripts/Android/run.sh`

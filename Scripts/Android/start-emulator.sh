@@ -145,7 +145,7 @@ while true; do
     # A device stuck `offline` past the halfway mark means adb lost the
     # connection rather than a slow boot; restarting the server clears it.
     if (( kicked == 0 && SECONDS > deadline - TIMEOUT / 2 )) \
-        && "$ADB" devices 2>/dev/null | grep -q 'offline'; then
+        && "$ADB" devices 2>/dev/null | grep -q '^emulator-.*offline'; then
         echo "device is offline — restarting the adb server"
         "$ADB" kill-server >/dev/null 2>&1 || true
         kicked=1
