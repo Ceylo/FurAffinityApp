@@ -67,6 +67,20 @@ Windows with an Intel CPU. Everything under the user account; the SDK is
 - **Sleep**: the emulator survives it, and `up` reconnects in under a second after a
   wake. The scripts never wake the PC: while it sleeps they fall back to this Mac.
 
+## Seeing it from the Mac
+
+[Apollo](https://github.com/ClassicOldSong/Apollo) on the PC streams its desktop to
+[Moonlight](https://moonlight-stream.org) on the Mac (`brew install --cask moonlight`),
+with the emulator window on it. scrcpy is no alternative: the emulator has only software
+video encoders, and at 1080×2400 it is barely usable.
+
+- Installed over SSH, Apollo finds no display ("Failed to initialize video capture",
+  error 503) until the PC reboots.
+- On macOS 27.2, Moonlight turns on Game Mode, which makes other apps' audio crackle and
+  can leave Music playing noise after a stream
+  ([moonlight-qt#2099](https://github.com/moonlight-stream/moonlight-qt/issues/2099)).
+  Turn it off for Moonlight: Command-Esc, then Settings, then Game Mode.
+
 ## Speed
 
 Measured 2026-11-11, `test.sh` wall time:
