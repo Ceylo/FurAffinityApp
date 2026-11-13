@@ -57,7 +57,7 @@ Windows with an Intel CPU. Everything under the user account; the SDK is
   rem adb spawned by the emulator inherits this log handle and outlives it, so each run gets its own file.
   set LOG=%USERPROFILE%\fa-emulator-logs\%RANDOM%%RANDOM%.log
   mkdir "%USERPROFILE%\fa-emulator-logs" 2>nul
-  "%LOCALAPPDATA%\Android\Sdk\emulator\emulator.exe" -avd fa-x86 -no-audio -no-boot-anim -gpu host -memory 4096 %* > "%LOG%" 2>&1
+  "%LOCALAPPDATA%\Android\Sdk\emulator\emulator.exe" -avd fa-x86 -no-boot-anim -gpu host -memory 4096 %* > "%LOG%" 2>&1
   ```
 
   One log per run because the adb server the emulator spawns inherits its stdout handle
