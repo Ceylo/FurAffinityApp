@@ -34,7 +34,8 @@ Troubleshooting:
 
 - **`offline` with the emulator window up**: `adb kill-server`. The script does this
   once by itself if a device is still offline halfway through its timeout.
-- **`emulator -list-avds` is empty**: `Scripts/skip android sdk install` creates the AVD.
+- **`emulator -list-avds` is empty**: `Scripts/Android/skip android sdk install` creates
+  the AVD.
 - **AVD hangs on boot**: `adb emu kill`, then relaunch with `-no-snapshot-load`.
 
 ### Guest RAM
@@ -50,7 +51,7 @@ back, so a long-running emulator settles around 10 GB of host memory: restart it
 
 ```
 Scripts/Android/run.sh                 # Gradle build, install, start (see Run)
-Scripts/skip android build             # transpile + compile via SwiftPM, no Darwin bridge
+Scripts/Android/skip android build     # transpile + compile via SwiftPM, no Darwin bridge
 Scripts/Android/build-release-apk.sh   # release APK, see releasing.md
 ```
 
@@ -188,9 +189,9 @@ module 'AndroidNDK'`/`'CJNI'` or `no such module 'OSLog'` in an unrelated depend
 See [Module-name poisoning](#module-name-poisoning) and [Wiping the build
 state](#wiping-the-build-state); don't bisect your sources against one such failure.
 
-**The skip CLI is the one the manifests pin (`Scripts/skip`), never Homebrew's.** A CLI
-that differs from the `exact:` pin fails the build *inside a dependency*
-(`AndroidUserDefaults` … "must use a 'required' initializer").
+**The skip CLI is the one the manifests pin (`Scripts/Android/skip`), never
+Homebrew's.** A CLI that differs from the `exact:` pin fails the build *inside a
+dependency* (`AndroidUserDefaults` … "must use a 'required' initializer").
 
 **Upgrading Skip** moves several things in one commit: the `exact:` pin in
 `Package.swift`, `FAKit/Package.swift` and `Ceylo/Kingfisher`, and the upstream merges
@@ -425,7 +426,7 @@ finds, and FAKit has three.
 `build.yml`'s `Build Android App` job runs beside the iOS one, with no secrets:
 
 1. `Scripts/Android/ci-setup.sh`: swiftly, the skip CLI at the `exact:` pin
-   (`Scripts/skip-cli.sh`), and the Swift Android SDK. Not
+   (`Scripts/Android/skip-cli.sh`), and the Swift Android SDK. Not
    `skiptools/actions/setup-skip`, whose `brew install skip` compiled from source on the
    Intel runner for 20 of its 27 minutes. The toolchain and the SDK (8 GB) are
    downloaded each run: too big to cache usefully.

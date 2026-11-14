@@ -11,7 +11,7 @@
 #
 #   - swiftly, from swift.org's package — `skip android sdk install` uses it for
 #     the host toolchain the Swift Android SDK must match;
-#   - the skip CLI at the manifests' pin (Scripts/skip-cli.sh);
+#   - the skip CLI at the manifests' pin (Scripts/Android/skip-cli.sh);
 #   - the Swift Android SDK, SWIFT_ANDROID_SDK_VERSION (default 6.4.2,
 #     the Swift of Xcode 27.2; see Android/docs/build-and-run.md § Toolchain vs. Xcode).
 #
@@ -46,7 +46,7 @@ fi
 swiftly --version
 
 step "skip"
-SKIP="$("$ROOT/Scripts/skip-cli.sh")"
+SKIP="$("$ROOT/Scripts/Android/skip-cli.sh")"
 export PATH="$(dirname "$SKIP"):$PATH"
 dirname "$SKIP" >> "$GITHUB_PATH"
 echo "SKIP_COMMAND_OVERRIDE=$SKIP" >> "$GITHUB_ENV"

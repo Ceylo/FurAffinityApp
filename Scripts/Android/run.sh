@@ -57,7 +57,7 @@ SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 ADB="$SDK/platform-tools/adb"
 # shellcheck source=Scripts/Android/adb-state.sh
 source "$(dirname "${BASH_SOURCE[0]}")/adb-state.sh"
-[[ -x "$ADB" ]] || die "$ADB is missing — run \`Scripts/skip android sdk install\`"
+[[ -x "$ADB" ]] || die "$ADB is missing — run \`Scripts/Android/skip android sdk install\`"
 export ANDROID_HOME="$SDK"
 
 # shellcheck source=Scripts/Android/gradle-env.sh

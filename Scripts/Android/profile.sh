@@ -77,11 +77,11 @@ SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 ADB="$SDK/platform-tools/adb"
 # shellcheck source=Scripts/Android/adb-state.sh
 source "$(dirname "${BASH_SOURCE[0]}")/adb-state.sh"
-[[ -x "$ADB" ]] || die "$ADB is missing — run \`Scripts/skip android sdk install\`"
+[[ -x "$ADB" ]] || die "$ADB is missing — run \`Scripts/Android/skip android sdk install\`"
 export ANDROID_HOME="$SDK"
 
 NDK="$(ls -d "$SDK"/ndk/* 2>/dev/null | sort -V | tail -1)"
-[[ -n "$NDK" ]] || die "no NDK in $SDK/ndk — install one with \`Scripts/skip android sdk install\`"
+[[ -n "$NDK" ]] || die "no NDK in $SDK/ndk — install one with \`Scripts/Android/skip android sdk install\`"
 
 if [[ "$COMMAND" == cpu ]]; then
     [[ -f "$NDK/simpleperf/app_profiler.py" ]] || die "no simpleperf scripts under $NDK"

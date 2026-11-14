@@ -140,14 +140,19 @@ private fun leaseSlot(settings: Settings, pool: SlotPool, worktree: File, buildE
 /** Prebuilds the Swift package at [base] and includes its transpiled Gradle builds. */
 private fun includeSkip(settings: Settings, worktree: File, base: File, builtProducts: String?) = with(settings) {
     checkSkipEnv(worktree, base)
-    val skip = runCommand("$worktree/Scripts/skip-cli.sh").lines().first()
+    val skip = runCommand("$worktree/Scripts/Android/skip-cli.sh").lines().first()
     val override = System.getenv("SKIP_COMMAND_OVERRIDE")
     if (override != skip) {
-        val used = override?.takeIf { File(it).exists() } ?: "skip"
-        if (skipVersion(used) != skipVersion(skip)) {
+        // As the transpiled build.gradle.kts picks the skip for `skip android build`.
+        val products = System.getenv("__XCODE_BUILT_PRODUCTS_DIR_PATHS") ?: System.getenv("BUILT_PRODUCTS_DIR")
+        val xcodeSkip = "$products/../${System.getenv("CONFIGURATION") ?: "Debug"}/skip"
+        val used = listOfNotNull(override, xcodeSkip).firstOrNull { File(it).exists() } ?: "skip"
+        val usedVersion = skipVersion(used)
+        if (usedVersion != skipVersion(skip)) {
             throw GradleException(
-                "The native Swift build would run `$used`, not the skip the manifests pin ($skip). Build " +
-                    "through Scripts/Android/run.sh, or export SKIP_COMMAND_OVERRIDE=\$(Scripts/skip-cli.sh) first."
+                "The native Swift build would run `$used` (${usedVersion ?: "not found"}), not the skip the manifests " +
+                    "pin ($skip). Build through Scripts/Android/run.sh, or export " +
+                    "SKIP_COMMAND_OVERRIDE=\$(Scripts/Android/skip-cli.sh) first."
             )
         }
     }
@@ -232,8 +237,8 @@ internal fun skipEnvHash(worktree: File) =
 internal fun hexDigest(algorithm: String, bytes: ByteArray) =
     MessageDigest.getInstance(algorithm).digest(bytes).joinToString("") { "%02x".format(it) }
 
-/** SHA-256 of the `class SkipSettingsPlugin` block this plugin was last reviewed against (Skip 1.9.12). */
-private const val SKIP_SETTINGS_PLUGIN_SHA256 = "60f3bb29932700466582e0b5d167d2374264e42458061b1a4681164a69cafc75"
+/** SHA-256 of the `class SkipSettingsPlugin` block this plugin was last reviewed against (Skip 1.9.20). */
+private const val SKIP_SETTINGS_PLUGIN_SHA256 = "594d47eec7c99956fae50d72bf364063c2ab522a900bcec86358422654c43e3d"
 
 /** This plugin stands in for SkipSettingsPlugin, so a Skip release that changes it needs a look. */
 private fun warnOnSkipSettingsDrift(skipGradle: File) {
@@ -260,10 +265,20 @@ private fun findSkipstone(base: File, module: String, builtProducts: String?): F
     } else {
         base.resolve(".build/plugins/outputs")
     }
-    val candidates = outputs.listFiles().orEmpty().flatMap {
-        listOf(it.resolve("$module/skipstone"), it.resolve("$module/destination/skipstone"))
+    var skipstone = outputs.listFiles().orEmpty()
+        .flatMap { listOf(it.resolve("$module/skipstone"), it.resolve("$module/destination/skipstone")) }
+        .firstOrNull { it.isDirectory }
+    if (skipstone != null && builtProducts != null) {
+        val variant = System.getenv("CONFIGURATION")?.let { it + System.getenv("EFFECTIVE_PLATFORM_NAME").orEmpty() }
+            ?: File(builtProducts).name
+        val scoped = skipstone.resolve("xcode-$variant")
+        if (scoped.isDirectory) {
+            skipstone = scoped
+        } else if (skipstone.listFiles().orEmpty().any { it.isDirectory && it.name.startsWith("xcode-") }) {
+            throw GradleException("No Skip output for Xcode build variant $variant in $skipstone. Build this destination first.")
+        }
     }
-    return candidates.firstOrNull { it.resolve("settings.gradle.kts").isFile }
+    return skipstone?.takeIf { it.resolve("settings.gradle.kts").isFile }
         ?: throw GradleException(
             "No transpiled $module found under $outputs (looked for */$module/[destination/]skipstone/settings.gradle.kts). " +
                 "The skipstone plugin output layout may have changed, or the transpile failed; see the log above."

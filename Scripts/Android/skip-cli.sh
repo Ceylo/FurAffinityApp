@@ -2,18 +2,18 @@
 #
 # Print the path of the skip CLI at the version Package.swift pins, fetching it once.
 #
-# Usage: Scripts/skip-cli.sh
+# Usage: Scripts/Android/skip-cli.sh
 #
 # Each version lives in ~/Library/Caches/FurAffinity/skip/<version>/ (FA_SKIP_CACHE
 # overrides the parent), downloaded from the same release zip SwiftPM's binaryTarget
 # names and checked against that target's checksum. Branches pinning different
-# versions thus coexist, and Homebrew's skip is never used. Scripts/skip runs it.
+# versions thus coexist, and Homebrew's skip is never used. Scripts/Android/skip runs it.
 
 set -eo pipefail
 
 die() { echo "error: $*" >&2; exit 1; }
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 skip_pin() { sed -nE 's@.*skiptools/skip\.git", exact: "([0-9.]+)".*@\1@p' "$1" | head -1; }
 VERSION="$(skip_pin "$ROOT/Package.swift")"
@@ -45,7 +45,8 @@ if [[ ! -x "$BIN" ]]; then
     unzip -q "$TMP/skip.zip" -d "$TMP/out"
     [[ -x "$TMP/out/skip.artifactbundle/macos/skip" ]] || die "the skip $VERSION zip has no macos/skip"
     xattr -cr "$TMP/out"
-    mv "$TMP/out" "$DEST" 2>/dev/null || [[ -x "$BIN" ]] || die "could not install into $DEST"
+    [[ -e "$DEST" ]] || mv "$TMP/out" "$DEST" 2>/dev/null || true
+    [[ -x "$BIN" ]] || die "could not install into $DEST"
 fi
 
 echo "$BIN"

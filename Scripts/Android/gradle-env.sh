@@ -10,5 +10,5 @@ if [[ -z "$JAVA_HOME" ]] && ! java -version >/dev/null 2>&1; then
     export JAVA_HOME="$JBR"
 fi
 
-SKIP_COMMAND_OVERRIDE="$("$(dirname "${BASH_SOURCE[0]}")/../skip-cli.sh")" || die "no pinned skip CLI"
+SKIP_COMMAND_OVERRIDE="$("$(dirname "${BASH_SOURCE[0]}")/skip-cli.sh")" || die "no pinned skip CLI"
 export SKIP_COMMAND_OVERRIDE

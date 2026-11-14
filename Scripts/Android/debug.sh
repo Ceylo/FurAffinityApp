@@ -52,7 +52,7 @@ SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 ADB="$SDK/platform-tools/adb"
 # shellcheck source=Scripts/Android/adb-state.sh
 source "$(dirname "${BASH_SOURCE[0]}")/adb-state.sh"
-[[ -x "$ADB" ]] || die "$ADB is missing — run \`Scripts/skip android sdk install\`"
+[[ -x "$ADB" ]] || die "$ADB is missing — run \`Scripts/Android/skip android sdk install\`"
 export ANDROID_HOME="$SDK"
 
 # shellcheck source=Scripts/Android/gradle-env.sh
@@ -116,7 +116,7 @@ done
 
 # Device side: the NDK's lldb-server for the device's ABI.
 NDK="$(ls -d "$SDK"/ndk/* 2>/dev/null | sort -V | tail -1)"
-[[ -n "$NDK" ]] || die "no NDK in $SDK/ndk — install one with \`Scripts/skip android sdk install\`"
+[[ -n "$NDK" ]] || die "no NDK in $SDK/ndk — install one with \`Scripts/Android/skip android sdk install\`"
 
 # NDK and Swift SDK arch names differ; the Swift SDK has no 32-bit x86.
 case "$ABI" in

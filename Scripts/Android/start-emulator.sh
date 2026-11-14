@@ -33,12 +33,12 @@ esac
 # --- locate the SDK ---------------------------------------------------------
 
 SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
-[[ -d "$SDK" ]] || die "no Android SDK at $SDK — set ANDROID_HOME or run \`Scripts/skip android sdk install\`"
+[[ -d "$SDK" ]] || die "no Android SDK at $SDK — set ANDROID_HOME or run \`Scripts/Android/skip android sdk install\`"
 
 ADB="$SDK/platform-tools/adb"
 EMULATOR="$SDK/emulator/emulator"
-[[ -x "$ADB" ]] || die "$ADB is missing — run \`Scripts/skip android sdk install\`"
-[[ -x "$EMULATOR" ]] || die "$EMULATOR is missing — run \`Scripts/skip android sdk install\`"
+[[ -x "$ADB" ]] || die "$ADB is missing — run \`Scripts/Android/skip android sdk install\`"
+[[ -x "$EMULATOR" ]] || die "$EMULATOR is missing — run \`Scripts/Android/skip android sdk install\`"
 
 # Serial of the first emulator that is both online and done booting, if any.
 booted_serial() {
@@ -73,7 +73,7 @@ if [[ -z "$AVD" ]]; then
     done < <("$EMULATOR" -list-avds 2>/dev/null)
 
     case ${#avds[@]} in
-        0) die "no AVDs installed — run \`Scripts/skip android sdk install\`" ;;
+        0) die "no AVDs installed — run \`Scripts/Android/skip android sdk install\`" ;;
         1) AVD="${avds[0]}" ;;
         *) die "several AVDs installed, name one: ${avds[*]}" ;;
     esac
