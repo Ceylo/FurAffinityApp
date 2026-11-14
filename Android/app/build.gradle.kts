@@ -28,7 +28,7 @@ dependencies {
     implementation("io.sentry:sentry-android-core:8.64.0")
     implementation("io.sentry:sentry-android-ndk:8.64.0")
     // FAAnalyticsBridge.kt: the Android side of iOS's AmplitudeSwift.
-    implementation("com.amplitude:analytics-android:1.33.0")
+    implementation("com.amplitude:analytics-android:1.37.1")
 }
 
 // Symbol and mapping uploads happen only when SENTRY_AUTH_TOKEN is set (release and
