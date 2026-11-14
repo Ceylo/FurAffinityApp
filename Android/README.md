@@ -55,8 +55,8 @@ for why it must be that flag and not `os(Android)`.
 ## Prerequisites
 
 ```
-skip checkup                        # verifies toolchain (Xcode, Android SDK, Gradle, JDK)
-skip android sdk install            # if the Android SDK/NDK is missing
+Scripts/skip checkup                # verifies toolchain (Xcode, Android SDK, Gradle, JDK)
+Scripts/skip android sdk install    # if the Android SDK/NDK is missing
 Scripts/Android/generate-assets.sh  # derived art (see docs/assets-and-resources.md)
 ```
 

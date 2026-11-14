@@ -34,7 +34,7 @@ Troubleshooting:
 
 - **`offline` with the emulator window up**: `adb kill-server`. The script does this
   once by itself if a device is still offline halfway through its timeout.
-- **`emulator -list-avds` is empty**: `skip android sdk install` creates the AVD.
+- **`emulator -list-avds` is empty**: `Scripts/skip android sdk install` creates the AVD.
 - **AVD hangs on boot**: `adb emu kill`, then relaunch with `-no-snapshot-load`.
 
 ### Guest RAM
@@ -50,7 +50,7 @@ back, so a long-running emulator settles around 10 GB of host memory: restart it
 
 ```
 Scripts/Android/run.sh                 # Gradle build, install, start (see Run)
-skip android build                     # transpile + compile via SwiftPM, no Darwin bridge
+Scripts/skip android build             # transpile + compile via SwiftPM, no Darwin bridge
 Scripts/Android/build-release-apk.sh   # release APK, see releasing.md
 ```
 
@@ -188,22 +188,22 @@ module 'AndroidNDK'`/`'CJNI'` or `no such module 'OSLog'` in an unrelated depend
 See [Module-name poisoning](#module-name-poisoning) and [Wiping the build
 state](#wiping-the-build-state); don't bisect your sources against one such failure.
 
-A related trap with the same signature: a `from:` pin on `skip` drifts past the
-installed CLI and the build fails *inside a dependency* (`AndroidUserDefaults` …
-"must use a 'required' initializer"). The pin is `exact:` for that reason; keep it
-equal to `skip version`.
+**The skip CLI is the one the manifests pin (`Scripts/skip`), never Homebrew's.** A CLI
+that differs from the `exact:` pin fails the build *inside a dependency*
+(`AndroidUserDefaults` … "must use a 'required' initializer").
 
-**Upgrading Skip** moves several things in one commit: `brew upgrade skip`
-(machine-wide), the `exact:` pin in `Package.swift`, `FAKit/Package.swift` and
-`Ceylo/Kingfisher`, and the upstream merges into the skip-ui / skip-fuse-ui / skip-web
-forks, all naming `github.com/skiptools/*` (see [forks.md § One location per
-identity](forks.md#one-location-per-identity)). Then `swift package update`, re-resolve
-the Xcode project's `Package.resolved`, and build from a clean `.build`. Diff the
-generated `SkipBridgeGenerated/*_Bridge.swift` against the previous build: a skipstone
-codegen change shows up there first. If the build warns that Skip's
-`SkipSettingsPlugin` changed, port the change to `Android/build-slots` and record the
-hash it prints in `SKIP_SETTINGS_PLUGIN_SHA256`. The root `Package.resolved` is
-committed — see [forks.md](forks.md) for refreshing a fork's pin.
+**Upgrading Skip** moves several things in one commit: the `exact:` pin in
+`Package.swift`, `FAKit/Package.swift` and `Ceylo/Kingfisher`, and the upstream merges
+into the skip-ui / skip-fuse-ui / skip-web forks, all naming `github.com/skiptools/*`
+(see [forks.md § One location per identity](forks.md#one-location-per-identity)). Then
+`swift package update`, re-resolve the Xcode project's `Package.resolved`, put the new
+skip revision **first** in `~/Library/org.swift.swiftpm/security/plugins.json` (Xcode
+honours only the first entry), and build from a clean `.build`. Diff the generated
+`SkipBridgeGenerated/*_Bridge.swift` against the previous build: a skipstone codegen
+change shows up there first. If the build warns that Skip's `SkipSettingsPlugin`
+changed, port the change to `Android/build-slots` and record the hash it prints in
+`SKIP_SETTINGS_PLUGIN_SHA256`. The root `Package.resolved` is committed — see
+[forks.md](forks.md) for refreshing a fork's pin.
 
 ### The shared emulator
 
