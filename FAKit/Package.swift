@@ -28,7 +28,7 @@ let package = Package(
         // skip-web is forked for its dependency locations alone. One location per
         // package identity: the forks name Ceylo/skip-ui between them, so this
         // manifest must not re-declare it.
-        .package(url: "https://github.com/skiptools/skip.git", exact: "1.9.12"),
+        .package(url: "https://github.com/skiptools/skip.git", exact: "1.9.20"),
         .package(url: "https://github.com/Ceylo/skip-fuse-ui.git", branch: "android"),
         .package(url: "https://github.com/Ceylo/skip-web.git", branch: "android"),
     ],
