@@ -328,7 +328,9 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   run that never reached furaffinity.net (DNS, no route, cancelled first) is refunded and
   retried after 5 min. One that did stays counted, so FA never sees more than 12 fetches a
   day: its retry draws on a +25% allowance, and is admitted at once after an interruption,
-  5 min after a network failure, and 30 min after an FA error. The app schedules no retry
+  5 min after a network failure, and 30 min after an FA error. Each failure like the last
+  doubles its delay, until it would pass the average gap between slots (2.4 h): the slots
+  then take over, and a completed run starts over. The app schedules no retry
   sooner than 5 min; the immediate one is the system's own retry of a run it stopped, which
   waits for that run to unwind rather than skip it as already running. Opening the app
   drops an owed retry.

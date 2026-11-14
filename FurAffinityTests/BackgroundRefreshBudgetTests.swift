@@ -300,10 +300,33 @@ struct BackgroundRefreshBudgetTests {
         #expect(budget.retry == nil)
     }
 
+    func retryDelays(_ outcomes: [BackgroundRefreshBudget.Outcome]) -> [TimeInterval?] {
+        var budget = BackgroundRefreshBudget()
+        let now = day
+        return outcomes.map { outcome in
+            budget.settle(outcome, claimedAt: now, now: now)
+            return budget.retry.map { $0.notBefore.timeIntervalSince(now) }
+        }
+    }
+
+    @Test func repeatedFailures_doubleTheDelayUpToTheSlotGap() {
+        #expect(retryDelays(Array(repeating: .faError, count: 4)) == [1800, 3600, 7200, nil])
+        #expect(retryDelays(Array(repeating: .unreachedFA, count: 6)) == [300, 600, 1200, 2400, 4800, nil])
+    }
+
+    @Test func anotherOutcome_restartsTheBackoff() {
+        #expect(retryDelays([.faError, .faError, .unreachedFA, .faError]) == [1800, 3600, 300, 1800])
+        #expect(retryDelays([.faError, .faError, .completed, .faError]) == [1800, 3600, nil, 1800])
+    }
+
+    @Test func interruptions_retryAtOnceEveryTime() {
+        #expect(retryDelays([.interrupted, .interrupted, .interrupted]) == [0, 0, 0])
+    }
+
     @Test func budgetStoredBeforeRetries_stillDecodes() throws {
         let json = #"{"profile":{"opens":\#(Array(repeating: 0, count: 24))},"fetchDates":[]}"#
         let budget = try JSONDecoder().decode(BackgroundRefreshBudget.self, from: Data(json.utf8))
-        #expect(budget.retry == nil)
+        #expect(budget.retry == nil && budget.failures == nil)
     }
 
     // MARK: - Next run date

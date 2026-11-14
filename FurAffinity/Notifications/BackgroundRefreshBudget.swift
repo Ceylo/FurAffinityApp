@@ -114,15 +114,23 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
     /// The +25% that retries of runs which reached furaffinity.net may add to `perDay`.
     static let retryAllowance = BackgroundRefreshSlots.perDay / 4
     static let quickRetryDelay: TimeInterval = 5 * 60
+    /// The average gap between slots: a later retry would be no sooner than the next slot.
+    static let maxRetryDelay = window / Double(BackgroundRefreshSlots.perDay)
 
     var profile = ActivityProfile()
     var fetchDates: [Date] = []
     var lastForegroundEnd: Date?
     var retry: Retry?
+    var failures: Failures?
 
     struct Retry: Codable, Equatable {
         var notBefore: Date
         var isPaid: Bool
+    }
+
+    struct Failures: Codable, Equatable {
+        var outcome: Outcome
+        var count: Int
     }
 
     enum Decision: Equatable {
@@ -130,7 +138,7 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
         case skip(nextSlot: Date)
     }
 
-    enum Outcome: Equatable {
+    enum Outcome: String, Codable, Equatable {
         case completed
         case unreachedFA
         /// Stopped after reaching furaffinity.net: the app came back, or the system took the job.
@@ -165,11 +173,15 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
 
     mutating func settle(_ outcome: Outcome, claimedAt: Date, now: Date) {
         func owe(after delay: TimeInterval, isPaid: Bool = true) {
-            retry = Retry(notBefore: now + delay, isPaid: isPaid)
+            let count = failures.flatMap { $0.outcome == outcome ? $0.count + 1 : nil } ?? 1
+            failures = Failures(outcome: outcome, count: count)
+            let backedOff = delay * pow(2, Double(count - 1))
+            retry = backedOff <= Self.maxRetryDelay ? Retry(notBefore: now + backedOff, isPaid: isPaid) : nil
         }
         switch outcome {
         case .completed:
             retry = nil
+            failures = nil
         case .unreachedFA:
             fetchDates.removeAll { $0 == claimedAt }
             owe(after: Self.quickRetryDelay, isPaid: false)
