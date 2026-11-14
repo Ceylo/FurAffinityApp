@@ -47,6 +47,17 @@ extension BackgroundRefreshManager {
         try await FAWebSession.makeBackgroundSession(source: .submissionsFeed(from: nil))
     }
 
+    static func isUnreachable(_ error: any Error) -> Bool {
+        switch error as? FANativeTransportError {
+        case .bridgeUnavailable:
+            true
+        case .transportFailed(let message):
+            ["UnknownHostException", "NoRouteToHostException", "ENETUNREACH", "Network is unreachable"].contains { message.contains($0) }
+        case .unreadableResult, nil:
+            false
+        }
+    }
+
     /// A mature submission's notification starts blurred, in this category; its Show
     /// button re-adds it revealed, in the other, whose Hide button blurs it again. iOS shows
     /// the clear image on a long-press instead, but Android expands the top notification on

@@ -140,11 +140,6 @@ enum BackgroundRefreshManager {
         }
         defer { runGate.leave() }
 
-        if respectingBudget, case .denied(let nextSlot) = await claimBudgetedFetch() {
-            logger.info("Skipping background refresh: budget (next slot at \(nextSlot))")
-            return
-        }
-
         let settings = await UNUserNotificationCenter.current().notificationSettings()
         guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
             logger.info(
@@ -152,8 +147,43 @@ enum BackgroundRefreshManager {
             )
             return
         }
-        let soundEnabled = settings.soundSetting == .enabled
 
+        var claimedAt: Date?
+        if respectingBudget {
+            switch await claimBudgetedFetch() {
+            case .denied(let nextSlot):
+                logger.info("Skipping background refresh: budget (next slot at \(nextSlot))")
+                return
+            case .granted(let date):
+                claimedAt = date
+            }
+        }
+
+        var sessionBuilt = false
+        do {
+            let outcome = try await fetchAndNotify(soundEnabled: settings.soundSetting == .enabled, sessionBuilt: &sessionBuilt)
+            await settle(outcome, claimedAt: claimedAt)
+        } catch {
+            let outcome: BackgroundRefreshBudget.Outcome = switch (isUnreachable(error), sessionBuilt) {
+            case (true, false): .unreachedFA
+            case (true, true): .unreachableAfterFA
+            case (false, _): Task.isCancelled ? .interrupted : .faError
+            }
+            await settle(outcome, claimedAt: claimedAt)
+            throw error
+        }
+    }
+
+    private static func settle(_ outcome: BackgroundRefreshBudget.Outcome, claimedAt: Date?) async {
+        guard let claimedAt else { return }
+        logger.info("Background refresh outcome: \(outcome)")
+        await settleBudgetedFetch(outcome, claimedAt: claimedAt)
+    }
+
+    private static func fetchAndNotify(soundEnabled: Bool, sessionBuilt: inout Bool) async throws -> BackgroundRefreshBudget.Outcome {
+        guard !Task.isCancelled else {
+            return .unreachedFA
+        }
         let submissions: [FASubmissionPreview]
         let notes: [FANotePreview]
         let previews: FANotificationPreviews
@@ -161,8 +191,9 @@ enum BackgroundRefreshManager {
             // Building the session fetches its first page, which can be challenged too.
             guard let session = try await makeBackgroundSession() else {
                 logger.info("No valid FA session for background refresh (user likely logged out)")
-                return
+                return .completed
             }
+            sessionBuilt = true
             submissions = try await session.submissionPreviews(from: nil)
             notes = try await session.notePreviews(from: .inbox)
             previews = try await session.notificationPreviews()
@@ -171,7 +202,7 @@ enum BackgroundRefreshManager {
             logger.warning("CF challenge not resolved in background; posting notification")
             // Leave the pending queue intact so a previously-stranded remainder isn't lost.
             await postChallengeFailureNotification(soundEnabled: soundEnabled)
-            return
+            return .completed
         }
 
         var latestNotificationIDs = LatestNotificationIDs.load()
@@ -209,13 +240,13 @@ enum BackgroundRefreshManager {
         // A run cancelled because the app came back has had its queue discarded already.
         guard !Task.isCancelled else {
             logger.info("Background refresh cancelled before queueing \(records.count) notifications")
-            return
+            return .interrupted
         }
         Defaults[.pendingNotificationQueue] = enqueue(records, into: Defaults[.pendingNotificationQueue])
         latestNotificationIDs.merge(LatestNotificationIDs(submissions: submissions, notes: notes, previews: previews))
         latestNotificationIDs.save()
 
-        await flushQueue(soundEnabled: soundEnabled)
+        return await flushQueue(soundEnabled: soundEnabled) ? .interrupted : .completed
     }
 
     static func applyPreferences(
@@ -618,7 +649,7 @@ enum BackgroundRefreshManager {
         }
     }
 
-    private static func flushQueue(soundEnabled: Bool) async {
+    private static func flushQueue(soundEnabled: Bool) async -> Bool {
         let outcome = await flushInOrder(
             Defaults[.pendingNotificationQueue],
             maxConcurrent: maxConcurrentPreparations,
@@ -629,5 +660,6 @@ enum BackgroundRefreshManager {
         if outcome.postedCount > 0 {
             logger.info("Scheduled \(outcome.postedCount) local notification(s) for background refresh")
         }
+        return outcome.cancelled
     }
 }

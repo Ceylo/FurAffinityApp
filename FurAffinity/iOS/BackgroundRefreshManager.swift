@@ -34,6 +34,9 @@ private final class BackgroundRefreshTaskRunner: @unchecked Sendable {
                 logger.error("Background refresh failed: \(error)")
                 success = false
             }
+            if !success {
+                BackgroundRefreshManager.schedule()
+            }
             complete(success: success)
         }
     }
@@ -125,6 +128,11 @@ extension BackgroundRefreshManager {
     // The feed fetched first is the latest one, so the session's own page serves it.
     static func makeBackgroundSession() async throws -> OnlineFASession? {
         try await FALoginView.makeSession(source: .submissionsFeed(from: nil))
+    }
+
+    static func isUnreachable(_ error: any Error) -> Bool {
+        let codes: [URLError.Code] = [.cannotFindHost, .dnsLookupFailed, .notConnectedToInternet, .dataNotAllowed]
+        return (error as? URLError).map { codes.contains($0.code) } ?? false
     }
 
     static func enrich(_ content: UNMutableNotificationContent, for record: PendingNotificationRecord) async -> UNNotificationContent {
