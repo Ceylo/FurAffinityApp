@@ -16,7 +16,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.5"),
         .package(url: "https://github.com/hyperoslo/Cache.git", from: "7.4.0"),
-        .package(url: "https://github.com/davecom/SwiftGraph.git", from: "3.1.0"),
+        .package(url: "https://github.com/davecom/SwiftGraph.git", from: "4.0.0"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.3"),
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19"),
         // Its own package, not a target here: a target dependency would be linked
