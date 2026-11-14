@@ -237,7 +237,7 @@ struct BackgroundRefreshBudgetTests {
         let budget = settled(.interrupted, at: now)
         #expect(budget.fetchDates == [slots()[2]])
         #expect(budget.decision(now: now + 1, calendar: calendar) == .fetch)
-        #expect(budget.nextRunDate(after: now, calendar: calendar) == now)
+        #expect(budget.nextRunDate(after: now, calendar: calendar) == now + 5 * 60)
     }
 
     @Test func faError_waitsThirtyMinutes() {

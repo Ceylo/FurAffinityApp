@@ -318,7 +318,7 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   while it runs. The job stands
   down while an activity is resumed, where iOS never runs its task. Android decides how
   often it really runs (Doze, the app's standby bucket), so each run logs a
-  `Background refresh run started (standby bucket: …, charging: …, network: …, power save: …, idle: …)`
+  `Background refresh run started (standby bucket: …, charging: …, network: …, job: …, …, power save: …, idle: …)`
   line and an `ended after` one, or a `Skipping` one while the app is in the foreground: a
   tester's exported log shows the actual frequency. Why a run is late, the
   `FABackgroundRefreshDiagnostics` dump says: a scheduled run carries it on that line, and
@@ -327,10 +327,11 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
 - **Retries.** Each run that claimed a budget slot logs `Background refresh outcome: …`. A
   run that never reached furaffinity.net (DNS, no route, cancelled first) is refunded and
   retried after 5 min. One that did stays counted, so FA never sees more than 12 fetches a
-  day: its retry draws on a +25% allowance, and comes at once after an interruption (the
-  system's stop, the app opened), 5 min after a network failure, and 30 min after an FA
-  error. Opening the app drops an owed retry. The system retries a run it stopped, and that
-  retry waits for the stopped run to unwind rather than skip it as already running.
+  day: its retry draws on a +25% allowance, and is admitted at once after an interruption,
+  5 min after a network failure, and 30 min after an FA error. The app schedules no retry
+  sooner than 5 min; the immediate one is the system's own retry of a run it stopped, which
+  waits for that run to unwind rather than skip it as already running. Opening the app
+  drops an owed retry.
 - **A session without a WebView.** JobScheduler may start the process cold, with no
   `FAWebSessionView` mounted, so `FAWebSession.makeBackgroundSession` reads the jar
   through `CookieManager` (`cookieJarHeaderProvider`, HttpOnly cookies included) and

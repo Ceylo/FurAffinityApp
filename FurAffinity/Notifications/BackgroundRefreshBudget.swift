@@ -184,7 +184,7 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
 
     func nextRunDate(after now: Date, calendar: Calendar) -> Date {
         if let retry = usableRetry(at: now) {
-            return max(retry.notBefore, now)
+            return max(retry.notBefore, now + Self.quickRetryDelay)
         }
         let nextSlot = BackgroundRefreshSlots(profile: profile).nextSlot(after: now, calendar: calendar)
         return max(nextSlot, now + Self.minimumRunInterval)
@@ -207,6 +207,7 @@ extension BackgroundRefreshManager {
     @MainActor
     static func recordAppOpen() {
         Defaults[.backgroundRefreshBudget].profile.recordOpen(at: Date(), calendar: .current)
+        Defaults[.backgroundRefreshBudget].retry = nil
     }
 
     @MainActor

@@ -140,14 +140,9 @@ enum BackgroundRefreshManager {
         }
         defer { runGate.leave() }
 
-        let settings = await UNUserNotificationCenter.current().notificationSettings()
-        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
-            logger.info(
-                "Skipping background refresh because authorization status is \(settings.authorizationStatus.rawValue)"
-            )
+        guard !Task.isCancelled else {
             return
         }
-
         var claimedAt: Date?
         if respectingBudget {
             switch await claimBudgetedFetch() {
@@ -157,6 +152,15 @@ enum BackgroundRefreshManager {
             case .granted(let date):
                 claimedAt = date
             }
+        }
+
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
+            logger.info(
+                "Skipping background refresh because authorization status is \(settings.authorizationStatus.rawValue)"
+            )
+            await settleBudgetedFetch(.completed, claimedAt: claimedAt)
+            return
         }
 
         var sessionBuilt = false
