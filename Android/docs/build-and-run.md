@@ -425,7 +425,7 @@ finds, and FAKit has three.
 `build.yml`'s `Build Android App` job runs beside the iOS one, with no secrets:
 
 1. `Scripts/Android/ci-setup.sh`: swiftly, the skip CLI at the `exact:` pin
-   (`check-skip-version.sh --install`), and the Swift Android SDK. Not
+   (`Scripts/skip-cli.sh`), and the Swift Android SDK. Not
    `skiptools/actions/setup-skip`, whose `brew install skip` compiled from source on the
    Intel runner for 20 of its 27 minutes. The toolchain and the SDK (8 GB) are
    downloaded each run: too big to cache usefully.

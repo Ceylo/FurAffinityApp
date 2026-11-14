@@ -66,8 +66,6 @@ cd "$ROOT"
 
 # --- toolchain --------------------------------------------------------------
 
-command -v skip >/dev/null || die "\`skip\` is not on PATH"
-
 SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 [[ -d "$SDK" ]] || die "no Android SDK at $SDK — set ANDROID_HOME"
 export ANDROID_HOME="$SDK"

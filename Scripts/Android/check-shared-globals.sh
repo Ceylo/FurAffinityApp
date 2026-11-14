@@ -55,7 +55,7 @@ esac
 
 SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 NDK="$(ls -d "$SDK"/ndk/* 2>/dev/null | sort -V | tail -1 || true)"
-[[ -n "$NDK" ]] || die "no NDK in $SDK/ndk — install one with \`skip android sdk install\`"
+[[ -n "$NDK" ]] || die "no NDK in $SDK/ndk — install one with \`Scripts/skip android sdk install\`"
 
 # A symlink in the toolchain, so no -type f here.
 READELF="$(ls "$NDK"/toolchains/llvm/prebuilt/*/bin/llvm-readelf 2>/dev/null | head -1 || true)"

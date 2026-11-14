@@ -140,12 +140,17 @@ private fun leaseSlot(settings: Settings, pool: SlotPool, worktree: File, buildE
 /** Prebuilds the Swift package at [base] and includes its transpiled Gradle builds. */
 private fun includeSkip(settings: Settings, worktree: File, base: File, builtProducts: String?) = with(settings) {
     checkSkipEnv(worktree, base)
+    val skip = runCommand("$worktree/Scripts/skip-cli.sh").lines().last { it.endsWith("/macos/skip") }
+    if (System.getenv("SKIP_COMMAND_OVERRIDE") != skip) {
+        logger.warn("fa.build-slots: SKIP_COMMAND_OVERRIDE is not $skip, so the native Swift build uses PATH's skip. " +
+            "Build through Scripts/Android/run.sh, or export SKIP_COMMAND_OVERRIDE=\$(Scripts/skip-cli.sh).")
+    }
     // SwiftPM keys its manifest cache on the environment, PWD included: run from the
     // base, not the caller's directory, or every worktree switch recompiles ~30 manifests (~11 s).
     val pluginRef = File.createTempFile("skip-plugin-path", ".tmp")
     val skipGradle = try {
         val output = runCommand(
-            "/usr/bin/env", "skip", "plugin", "--prebuild", "--package-path", base.path,
+            skip, "plugin", "--prebuild", "--package-path", base.path,
             "--plugin-ref", pluginRef.path, workingDir = base,
         )
         // The prebuild's host `swift build` (the Darwin bridge pass) can fail while skip
