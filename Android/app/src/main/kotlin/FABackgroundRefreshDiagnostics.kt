@@ -46,6 +46,7 @@ object FABackgroundRefreshDiagnostics {
             probe("battery optimization exempt") {
                 "${context.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(context.packageName)}"
             },
+            power(),
         ).joinToString(", ")
     }
 
@@ -59,6 +60,17 @@ object FABackgroundRefreshDiagnostics {
             else -> "other"
         }
         "$type, validated: ${capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true}"
+    }
+
+    fun power(): String = probe("power save") {
+        val power = context.getSystemService(PowerManager::class.java)
+        val idle = when {
+            power.isDeviceIdleMode -> "deep"
+            Build.VERSION.SDK_INT < 33 -> "unknown"
+            power.isDeviceLightIdleMode -> "light"
+            else -> "none"
+        }
+        "${power.isPowerSaveMode}, idle: $idle"
     }
 
     fun bucket(raw: Int?): String = raw?.let { constantName(UsageStatsManager::class.java, "STANDBY_BUCKET_", it) } ?: "null"

@@ -318,7 +318,7 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   while it runs. The job stands
   down while an activity is resumed, where iOS never runs its task. Android decides how
   often it really runs (Doze, the app's standby bucket), so each run logs a
-  `Background refresh run started (standby bucket: …, charging: …, device idle: …, network: …)`
+  `Background refresh run started (standby bucket: …, charging: …, network: …, power save: …, idle: …)`
   line and an `ended after` one, or a `Skipping` one while the app is in the foreground: a
   tester's exported log shows the actual frequency. Why a run is late, the
   `FABackgroundRefreshDiagnostics` dump says: a scheduled run carries it on that line, and

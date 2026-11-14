@@ -17,7 +17,6 @@ import android.app.job.JobParameters
 import android.app.job.JobService
 import android.app.usage.UsageStatsManager
 import android.os.BatteryManager
-import android.os.PowerManager
 import android.util.Log
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -82,9 +81,8 @@ class FABackgroundRefreshJobService : JobService() {
     private fun deviceConditions(params: JobParameters): String {
         val bucket = FABackgroundRefreshDiagnostics.bucket(getSystemService(UsageStatsManager::class.java)?.appStandbyBucket)
         val charging = getSystemService(BatteryManager::class.java)?.isCharging
-        val idle = getSystemService(PowerManager::class.java)?.isDeviceIdleMode
         val job = if (params.isScheduled) "scheduled" else "debug"
-        val history = if (params.isScheduled) ", ${FABackgroundRefreshDiagnostics.dump()}" else ""
-        return "standby bucket: $bucket, charging: $charging, device idle: $idle, ${FABackgroundRefreshDiagnostics.network()}, job: $job$history"
+        val tail = if (params.isScheduled) FABackgroundRefreshDiagnostics.dump() else FABackgroundRefreshDiagnostics.power()
+        return "standby bucket: $bucket, charging: $charging, ${FABackgroundRefreshDiagnostics.network()}, job: $job, $tail"
     }
 }
