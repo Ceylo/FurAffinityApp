@@ -324,6 +324,13 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   `FABackgroundRefreshDiagnostics` dump says: a scheduled run carries it on that line, and
   each reschedule logs it first as `Background refresh scheduling: …`, since scheduling
   replaces the pending job and its reason history. A stop by the system logs its reason.
+- **Retries.** Each run that claimed a budget slot logs `Background refresh outcome: …`. A
+  run that never reached furaffinity.net (DNS, no route, cancelled first) is refunded and
+  retried after 5 min. One that did stays counted, so FA never sees more than 12 fetches a
+  day: its retry draws on a +25% allowance, and comes at once after an interruption (the
+  system's stop, the app opened), 5 min after a network failure, and 30 min after an FA
+  error. Opening the app drops an owed retry. The system retries a run it stopped, and that
+  retry waits for the stopped run to unwind rather than skip it as already running.
 - **A session without a WebView.** JobScheduler may start the process cold, with no
   `FAWebSessionView` mounted, so `FAWebSession.makeBackgroundSession` reads the jar
   through `CookieManager` (`cookieJarHeaderProvider`, HttpOnly cookies included) and

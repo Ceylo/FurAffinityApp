@@ -101,23 +101,30 @@ import SwiftUI
     /// logged with each run.
     /* SKIP @bridge */public func performBackgroundRefresh(_ conditions: String, respectingBudget: Bool) async {
         let refresh: Task<Void, any Error>
-        switch foreground.startBackgroundWork({
-            Task { try await BackgroundRefreshManager.performFetchAndNotify(respectingBudget: respectingBudget) }
-        }) {
-        case .started(let work):
-            refresh = work
-        case .inForeground:
-            logger.info("Skipping background refresh: the app is in the foreground (\(conditions))")
-            return
-        case .alreadyRunning:
-            logger.info("Skipping background refresh: a run is already in progress (\(conditions))")
-            return
+        while true {
+            switch foreground.startBackgroundWork({
+                Task { try await BackgroundRefreshManager.performFetchAndNotify(respectingBudget: respectingBudget) }
+            }) {
+            case .started(let work):
+                refresh = work
+            case .inForeground:
+                logger.info("Skipping background refresh: the app is in the foreground (\(conditions))")
+                return
+            case .stopping(let work):
+                _ = await work.result
+                foreground.endBackgroundWork(work)
+                continue
+            case .alreadyRunning:
+                logger.info("Skipping background refresh: a run is already in progress (\(conditions))")
+                return
+            }
+            break
         }
         logger.info("Background refresh run started (\(conditions))")
         let start = ContinuousClock.now
         defer {
             logger.info("Background refresh run ended after \(ContinuousClock.now - start)")
-            foreground.endBackgroundWork()
+            foreground.endBackgroundWork(refresh)
             // A process the job started never reaches `onStop`, where they're pruned otherwise.
             Task { await FAImageStore.shared.performingFileIO { pruneMediaCopies() } }
         }
@@ -207,6 +214,7 @@ private final class ForegroundState: @unchecked Sendable {
     enum Start {
         case started(Task<Void, any Error>)
         case inForeground
+        case stopping(Task<Void, any Error>)
         case alreadyRunning
     }
 
@@ -215,14 +223,18 @@ private final class ForegroundState: @unchecked Sendable {
     func startBackgroundWork(_ start: () -> Task<Void, any Error>) -> Start {
         lock.withLock {
             if isInForeground { return .inForeground }
-            if backgroundWork != nil { return .alreadyRunning }
+            if let backgroundWork {
+                return backgroundWork.isCancelled ? .stopping(backgroundWork) : .alreadyRunning
+            }
             let work = start()
             backgroundWork = work
             return .started(work)
         }
     }
 
-    func endBackgroundWork() {
-        lock.withLock { backgroundWork = nil }
+    func endBackgroundWork(_ work: Task<Void, any Error>) {
+        lock.withLock {
+            if backgroundWork == work { backgroundWork = nil }
+        }
     }
 }
