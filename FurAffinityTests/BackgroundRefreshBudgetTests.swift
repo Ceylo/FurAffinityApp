@@ -215,6 +215,97 @@ struct BackgroundRefreshBudgetTests {
         #expect(budget.fetchDates == [day + 12 * 3600, day + 24 * 3600])
     }
 
+    // MARK: - Retries
+    func settled(_ outcome: BackgroundRefreshBudget.Outcome, at now: Date) -> BackgroundRefreshBudget {
+        var budget = BackgroundRefreshBudget()
+        budget.recordFetch(at: slots()[2])
+        budget.settle(outcome, claimedAt: slots()[2], now: now)
+        return budget
+    }
+
+    @Test func unreachedFA_refundsTheFetchAndRetriesAfterFiveMinutes() {
+        let now = slots()[2] + 60
+        let budget = settled(.unreachedFA, at: now)
+        #expect(budget.fetchDates.isEmpty)
+        #expect(budget.decision(now: now + 30, calendar: calendar) == .skip(nextSlot: now + 5 * 60))
+        #expect(budget.decision(now: now + 5 * 60, calendar: calendar) == .fetch)
+        #expect(budget.nextRunDate(after: now, calendar: calendar) == now + 5 * 60)
+    }
+
+    @Test func interrupted_retriesAtOnceButStaysCounted() {
+        let now = slots()[2] + 60
+        let budget = settled(.interrupted, at: now)
+        #expect(budget.fetchDates == [slots()[2]])
+        #expect(budget.decision(now: now + 1, calendar: calendar) == .fetch)
+        #expect(budget.nextRunDate(after: now, calendar: calendar) == now)
+    }
+
+    @Test func faError_waitsThirtyMinutes() {
+        let now = slots()[2] + 60
+        let budget = settled(.faError, at: now)
+        #expect(budget.decision(now: now + 29 * 60, calendar: calendar) == .skip(nextSlot: now + 30 * 60))
+        #expect(budget.decision(now: now + 30 * 60, calendar: calendar) == .fetch)
+    }
+
+    @Test func unreachableAfterFA_waitsFiveMinutes() {
+        let now = slots()[2] + 60
+        let budget = settled(.unreachableAfterFA, at: now)
+        #expect(budget.decision(now: now + 5 * 60, calendar: calendar) == .fetch)
+    }
+
+    @Test func completed_owesNoRetry() {
+        let now = slots()[2] + 60
+        #expect(settled(.completed, at: now).decision(now: now + 60, calendar: calendar) == .skip(nextSlot: slots()[3]))
+    }
+
+    @Test func paidRetries_useTheTwentyFivePercentAllowance() {
+        var budget = BackgroundRefreshBudget()
+        var now = day
+        for _ in 0..<10 {
+            budget.recordFetch(at: now)
+            now += 60
+        }
+        var admitted = 0
+        for _ in 0..<5 {
+            budget.settle(.interrupted, claimedAt: now, now: now)
+            guard budget.decision(now: now, calendar: calendar) == .fetch else { break }
+            budget.recordFetch(at: now)
+            admitted += 1
+            now += 60
+        }
+        #expect(admitted == 2)
+    }
+
+    @Test func freeRetry_stopsAtTheDailyCap() {
+        var budget = BackgroundRefreshBudget()
+        for minute in 0..<10 {
+            budget.recordFetch(at: day + Double(minute) * 60)
+        }
+        let now = day + 3600
+        budget.settle(.unreachedFA, claimedAt: day + 3600, now: now)
+        #expect(budget.decision(now: now + 5 * 60, calendar: calendar) != .fetch)
+    }
+
+    @Test func foreground_dropsTheRetry() {
+        let now = slots()[2] + 60
+        var budget = settled(.interrupted, at: now)
+        budget.lastForegroundEnd = now + 10 * 60
+        #expect(budget.decision(now: now + 11 * 60, calendar: calendar) == .skip(nextSlot: slots()[3]))
+    }
+
+    @Test func admittedRetry_isConsumed() {
+        let now = slots()[2] + 60
+        var budget = settled(.interrupted, at: now)
+        budget.recordFetch(at: now + 60)
+        #expect(budget.retry == nil)
+    }
+
+    @Test func budgetStoredBeforeRetries_stillDecodes() throws {
+        let json = #"{"profile":{"opens":\#(Array(repeating: 0, count: 24))},"fetchDates":[]}"#
+        let budget = try JSONDecoder().decode(BackgroundRefreshBudget.self, from: Data(json.utf8))
+        #expect(budget.retry == nil)
+    }
+
     // MARK: - Next run date
     @Test func nextRunDate_isAtLeastThirtyMinutesAway() {
         let now = slots()[3] - 5 * 60

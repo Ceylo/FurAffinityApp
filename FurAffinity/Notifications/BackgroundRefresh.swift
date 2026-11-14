@@ -140,7 +140,7 @@ enum BackgroundRefreshManager {
         }
         defer { runGate.leave() }
 
-        if respectingBudget, let nextSlot = await claimBudgetedFetch() {
+        if respectingBudget, case .denied(let nextSlot) = await claimBudgetedFetch() {
             logger.info("Skipping background refresh: budget (next slot at \(nextSlot))")
             return
         }
