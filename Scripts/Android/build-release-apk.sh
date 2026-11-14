@@ -70,8 +70,8 @@ SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 [[ -d "$SDK" ]] || die "no Android SDK at $SDK — set ANDROID_HOME"
 export ANDROID_HOME="$SDK"
 
-# shellcheck source=Scripts/Android/java-home.sh
-source "$(dirname "${BASH_SOURCE[0]}")/java-home.sh"
+# shellcheck source=Scripts/Android/gradle-env.sh
+source "$(dirname "${BASH_SOURCE[0]}")/gradle-env.sh"
 
 # Without the NDK, AGP's stripReleaseDebugSymbols silently copies the .so files
 # through and the APK comes out ~2.5x too big.

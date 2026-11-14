@@ -66,8 +66,8 @@ while (( $# )); do
     shift
 done
 
-SKIP="$("$ROOT/Scripts/skip-cli.sh")" || die "no pinned skip CLI"
-export SKIP_COMMAND_OVERRIDE="$SKIP"
+# shellcheck source=Scripts/Android/gradle-env.sh
+source "$ROOT/Scripts/Android/gradle-env.sh"
 if [[ -n "$BASE" ]]; then
     BASE="$(cd "$BASE" 2>/dev/null && pwd -P)" || die "--base: no such directory"
 fi
@@ -100,7 +100,7 @@ run() {
     local status=0
     # Native: under swiftbuild, `skip android test` runs only the first test target's
     # runner it finds, and FAKit has three.
-    ( cd "$dir" && "$SKIP" android test --testing-library testing --build-system native --arch "$ANDROID_TARGET_ARCH" "$@" ) 2>&1 | tee "$log" || status=$?
+    ( cd "$dir" && "$SKIP_COMMAND_OVERRIDE" android test --testing-library testing --build-system native --arch "$ANDROID_TARGET_ARCH" "$@" ) 2>&1 | tee "$log" || status=$?
 
     # The summary line, stripped of colour and the spinner's carriage returns.
     local summary
@@ -119,8 +119,6 @@ run() {
 if [[ -z "$BASE" ]]; then
     # As BuildSlotsPlugin's slotsEnabled(); faAndroidTest leases a slot and calls back with --base.
     if [[ "$FA_ANDROID_SLOTS" != 0 && -z "$CI" ]]; then
-        # shellcheck source=Scripts/Android/java-home.sh
-        source "$ROOT/Scripts/Android/java-home.sh"
         exec "$ROOT/Android/gradlew" -p "$ROOT/Android" faAndroidTest -PfaTestLogDir="$LOG_DIR"
     fi
     # `skip android test` never runs Gradle, which is what normally generates the

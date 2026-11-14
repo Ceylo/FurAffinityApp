@@ -140,10 +140,16 @@ private fun leaseSlot(settings: Settings, pool: SlotPool, worktree: File, buildE
 /** Prebuilds the Swift package at [base] and includes its transpiled Gradle builds. */
 private fun includeSkip(settings: Settings, worktree: File, base: File, builtProducts: String?) = with(settings) {
     checkSkipEnv(worktree, base)
-    val skip = runCommand("$worktree/Scripts/skip-cli.sh").lines().last { it.endsWith("/macos/skip") }
-    if (System.getenv("SKIP_COMMAND_OVERRIDE") != skip) {
-        logger.warn("fa.build-slots: SKIP_COMMAND_OVERRIDE is not $skip, so the native Swift build uses PATH's skip. " +
-            "Build through Scripts/Android/run.sh, or export SKIP_COMMAND_OVERRIDE=\$(Scripts/skip-cli.sh).")
+    val skip = runCommand("$worktree/Scripts/skip-cli.sh").lines().first()
+    val override = System.getenv("SKIP_COMMAND_OVERRIDE")
+    if (override != skip) {
+        val used = override?.takeIf { File(it).exists() } ?: "skip"
+        if (skipVersion(used) != skipVersion(skip)) {
+            throw GradleException(
+                "The native Swift build would run `$used`, not the skip the manifests pin ($skip). Build " +
+                    "through Scripts/Android/run.sh, or export SKIP_COMMAND_OVERRIDE=\$(Scripts/skip-cli.sh) first."
+            )
+        }
     }
     // SwiftPM keys its manifest cache on the environment, PWD included: run from the
     // base, not the caller's directory, or every worktree switch recompiles ~30 manifests (~11 s).
@@ -294,6 +300,14 @@ private fun Settings.runCommand(vararg command: String, workingDir: File? = null
     val status = result.result.get().exitValue
     if (status != 0) throw GradleException("`${command.joinToString(" ")}` exited with $status.")
     return stdout + stderr
+}
+
+private fun Settings.skipVersion(command: String): String? {
+    val result = providers.exec {
+        commandLine("sh", "-c", "\"\$0\" version", command)
+        isIgnoreExitValue = true
+    }
+    return Regex("""Skip version (\S+)""").find(result.standardOutput.asText.get())?.groupValues?.get(1)
 }
 
 // Skip.env is xcconfig syntax; Properties reads its `//` comment lines as a "//" key.
