@@ -53,6 +53,7 @@ extension BackgroundRefreshManager {
     private static let revealedSubmissionCategoryIdentifier = "fa.submission.revealed"
     private static let showActionIdentifier = "fa.show"
     private static let hideActionIdentifier = "fa.hide"
+    private static let notificationThreadIdentifier = "fa.notifications"
     /// The submission thumbnail Show reveals, fetched again from Kingfisher's cache.
     private static let thumbnailURLKey = "fa.thumbnail.url"
 
@@ -78,6 +79,7 @@ extension BackgroundRefreshManager {
         if let thumbnailURLString = record.thumbnailURLString {
             content.userInfo[thumbnailURLKey] = thumbnailURLString
         }
+        content.threadIdentifier = notificationThreadIdentifier
         return await communicationContent(content, author: record.author)
     }
 

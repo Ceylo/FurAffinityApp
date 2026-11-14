@@ -61,4 +61,12 @@ struct DynamicThumbnailTests {
         let thumbnail = DynamicThumbnail(thumbnailUrl: url)
         #expect(thumbnail.bestThumbnailUrl(for: CGSize(width: 320, height: 320)) == expected)
     }
+
+    @Test
+    func allThumbnailUrlsLargestFirst() throws {
+        let thumbnail = DynamicThumbnail(thumbnailUrl: try URL(string: Self.baseUrl).unwrap())
+        #expect(thumbnail.allThumbnailUrls.map(\.absoluteString) == [600, 400, 320, 300, 200].map {
+            "https://t.fa/123@\($0)-123.jpg"
+        })
+    }
 }

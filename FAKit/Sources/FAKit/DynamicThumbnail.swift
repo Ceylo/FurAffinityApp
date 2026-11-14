@@ -53,6 +53,10 @@ public struct DynamicThumbnail: Hashable, Sendable {
         return bestThumbnailUrl(for: UInt(size.maxDimension))
     }
 
+    public var allThumbnailUrls: [URL] {
+        ThumbnailSize.allCases.reversed().map(thumbnailUrl(at:))
+    }
+
     #if !os(Android)
     public func bestThumbnailUrl(for geometry: GeometryProxy) -> URL {
         bestThumbnailUrl(for: geometry.size)
