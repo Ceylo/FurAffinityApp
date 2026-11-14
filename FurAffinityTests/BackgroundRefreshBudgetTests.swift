@@ -289,7 +289,7 @@ struct BackgroundRefreshBudgetTests {
     @Test func foreground_dropsTheRetry() {
         let now = slots()[2] + 60
         var budget = settled(.interrupted, at: now)
-        budget.lastForegroundEnd = now + 10 * 60
+        budget.recordForegroundEnd(at: now + 10 * 60)
         #expect(budget.decision(now: now + 11 * 60, calendar: calendar) == .skip(nextSlot: slots()[3]))
     }
 

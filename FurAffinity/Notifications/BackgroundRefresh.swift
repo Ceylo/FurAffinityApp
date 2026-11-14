@@ -162,22 +162,16 @@ enum BackgroundRefreshManager {
         var sessionBuilt = false
         do {
             let outcome = try await fetchAndNotify(soundEnabled: settings.soundSetting == .enabled, sessionBuilt: &sessionBuilt)
-            await settle(outcome, claimedAt: claimedAt)
+            await settleBudgetedFetch(outcome, claimedAt: claimedAt)
         } catch {
             let outcome: BackgroundRefreshBudget.Outcome = switch (isUnreachable(error), sessionBuilt) {
             case (true, false): .unreachedFA
             case (true, true): .unreachableAfterFA
-            case (false, _): Task.isCancelled ? .interrupted : .faError
+            case (false, _): Task.isCancelled || isCancellationError(error) ? .interrupted : .faError
             }
-            await settle(outcome, claimedAt: claimedAt)
+            await settleBudgetedFetch(outcome, claimedAt: claimedAt)
             throw error
         }
-    }
-
-    private static func settle(_ outcome: BackgroundRefreshBudget.Outcome, claimedAt: Date?) async {
-        guard let claimedAt else { return }
-        logger.info("Background refresh outcome: \(outcome)")
-        await settleBudgetedFetch(outcome, claimedAt: claimedAt)
     }
 
     private static func fetchAndNotify(soundEnabled: Bool, sessionBuilt: inout Bool) async throws -> BackgroundRefreshBudget.Outcome {
@@ -246,7 +240,7 @@ enum BackgroundRefreshManager {
         latestNotificationIDs.merge(LatestNotificationIDs(submissions: submissions, notes: notes, previews: previews))
         latestNotificationIDs.save()
 
-        return await flushQueue(soundEnabled: soundEnabled) ? .interrupted : .completed
+        return await flushQueue(soundEnabled: soundEnabled)
     }
 
     static func applyPreferences(
@@ -649,7 +643,7 @@ enum BackgroundRefreshManager {
         }
     }
 
-    private static func flushQueue(soundEnabled: Bool) async -> Bool {
+    private static func flushQueue(soundEnabled: Bool) async -> BackgroundRefreshBudget.Outcome {
         let outcome = await flushInOrder(
             Defaults[.pendingNotificationQueue],
             maxConcurrent: maxConcurrentPreparations,
@@ -660,6 +654,6 @@ enum BackgroundRefreshManager {
         if outcome.postedCount > 0 {
             logger.info("Scheduled \(outcome.postedCount) local notification(s) for background refresh")
         }
-        return outcome.cancelled
+        return outcome.cancelled ? .interrupted : .completed
     }
 }

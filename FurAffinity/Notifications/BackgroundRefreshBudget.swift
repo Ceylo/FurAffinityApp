@@ -122,7 +122,6 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
 
     struct Retry: Codable, Equatable {
         var notBefore: Date
-        var owedAt: Date
         var isPaid: Bool
     }
 
@@ -159,9 +158,14 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
         retry = nil
     }
 
+    mutating func recordForegroundEnd(at date: Date) {
+        lastForegroundEnd = date
+        retry = nil
+    }
+
     mutating func settle(_ outcome: Outcome, claimedAt: Date, now: Date) {
         func owe(after delay: TimeInterval, isPaid: Bool = true) {
-            retry = Retry(notBefore: now + delay, owedAt: now, isPaid: isPaid)
+            retry = Retry(notBefore: now + delay, isPaid: isPaid)
         }
         switch outcome {
         case .completed:
@@ -187,7 +191,7 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
     }
 
     private func usableRetry(at now: Date) -> Retry? {
-        guard let retry, lastForegroundEnd.map({ $0 <= retry.owedAt }) ?? true else {
+        guard let retry else {
             return nil
         }
         let cap = BackgroundRefreshSlots.perDay + (retry.isPaid ? Self.retryAllowance : 0)
@@ -207,7 +211,7 @@ extension BackgroundRefreshManager {
 
     @MainActor
     static func recordForegroundEnd() {
-        Defaults[.backgroundRefreshBudget].lastForegroundEnd = Date()
+        Defaults[.backgroundRefreshBudget].recordForegroundEnd(at: Date())
     }
 
     enum BudgetClaim: Equatable {
@@ -228,7 +232,9 @@ extension BackgroundRefreshManager {
     }
 
     @MainActor
-    static func settleBudgetedFetch(_ outcome: BackgroundRefreshBudget.Outcome, claimedAt: Date) {
+    static func settleBudgetedFetch(_ outcome: BackgroundRefreshBudget.Outcome, claimedAt: Date?) {
+        guard let claimedAt else { return }
+        logger.info("Background refresh outcome: \(outcome)")
         Defaults[.backgroundRefreshBudget].settle(outcome, claimedAt: claimedAt, now: Date())
     }
 }

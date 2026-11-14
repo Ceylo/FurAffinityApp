@@ -34,9 +34,7 @@ private final class BackgroundRefreshTaskRunner: @unchecked Sendable {
                 logger.error("Background refresh failed: \(error)")
                 success = false
             }
-            if !success {
-                BackgroundRefreshManager.schedule()
-            }
+            BackgroundRefreshManager.schedule()
             complete(success: success)
         }
     }
