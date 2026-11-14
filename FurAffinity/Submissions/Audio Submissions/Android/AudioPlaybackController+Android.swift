@@ -67,7 +67,13 @@ final class AudioPlaybackController {
     }
 
     func prepare() async {
-        guard let bridge else { return }
+        guard pollTask == nil, let bridge else { return }
+        pollTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard self?.poll() != nil else { return }
+                try? await Task.sleep(for: .milliseconds(250))
+            }
+        }
         var artworkPath = ""
         do {
             artworkPath = try await KingfisherManager.shared
@@ -76,12 +82,6 @@ final class AudioPlaybackController {
             logger.error("Now Playing artwork load failed for \(self.coverImageUrl): \(error)")
         }
         bridge.prepare(url: streamUrl, title: title, artist: author, artworkPath: artworkPath)
-        pollTask = Task { [weak self] in
-            while !Task.isCancelled {
-                guard self?.poll() != nil else { return }
-                try? await Task.sleep(for: .milliseconds(250))
-            }
-        }
     }
 
     func startFileDownload() {

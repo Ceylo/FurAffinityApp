@@ -43,9 +43,11 @@ class FAAudioBridge {
     private var item: MediaItem? = null
     private val pending = mutableListOf<(MediaController) -> Unit>()
     private var released = false
+    private var connecting = false
     private var lastPositionMs = 0L
 
     @Volatile private var cached = JSONObject()
+        .put("isPlaying", false).put("positionMs", 0).put("durationMs", -1)
     @Volatile private var error: String? = null
 
     // Booleans, not Unit: AnyDynamicObject can't resolve the void overload.
@@ -64,15 +66,19 @@ class FAAudioBridge {
                 .setUri(url)
                 .setMediaMetadata(metadata)
                 .build()
-            connect()
-            withController { load(it, startMs = 0) }
+            withController { if (!isOurs(it) && !it.isPlaying) load(it, lastPositionMs) }
         }
         return true
     }
 
     fun play(): Boolean {
         withController { player ->
-            if (!isOurs(player)) load(player, lastPositionMs)
+            if (item == null) return@withController
+            if (!isOurs(player)) {
+                load(player, lastPositionMs)
+            } else if (player.playbackState == Player.STATE_IDLE) {
+                player.prepare()
+            }
             if (player.playbackState == Player.STATE_ENDED) player.seekTo(0)
             player.play()
         }
@@ -137,16 +143,19 @@ class FAAudioBridge {
     }
 
     private fun connect() {
-        if (controller != null || released) return
+        if (controller != null || connecting || released) return
+        connecting = true
         val context = context()
         val token = SessionToken(context, ComponentName(context, FAAudioPlaybackService::class.java))
         val future = MediaController.Builder(context, token).buildAsync()
         future.addListener({
+            connecting = false
             val connected = try {
                 future.get()
             } catch (e: Exception) {
                 Log.e(TAG, "could not connect to the playback service", e)
                 error = "Could not start the player: ${e.message}"
+                pending.clear()
                 return@addListener
             }
             if (released) {
@@ -167,7 +176,10 @@ class FAAudioBridge {
 
     private fun withController(action: (MediaController) -> Unit) = onMain {
         if (released) return@onMain
-        controller?.let(action) ?: pending.add(action)
+        controller?.let(action) ?: run {
+            pending.add(action)
+            connect()
+        }
     }
 
     private fun onMain(action: () -> Unit) {
@@ -183,7 +195,7 @@ class FAAudioBridge {
     fun download(url: String, destPath: String): String {
         val json = JSONObject()
         val dest = File(destPath)
-        val part = File("$destPath.part")
+        val part = File("$destPath.$mediaId.part")
         val call = FAHttpClient.shared().newCall(Request.Builder().url(url).build())
         download = call
         if (downloadCancelled) call.cancel()
