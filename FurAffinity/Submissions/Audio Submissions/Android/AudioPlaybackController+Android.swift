@@ -129,6 +129,12 @@ final class AudioPlaybackController {
         }
     }
 
+    #if canImport(Android)
+    func playButtonComposer() -> AnyDynamicObject? {
+        bridge?.playButton(isPlaying: isPlaying)
+    }
+    #endif
+
     private func poll() {
         guard let snapshot = bridge?.snapshot() else { return }
         if isPlaying != snapshot.isPlaying {
@@ -221,6 +227,12 @@ private final class AudioBridge: @unchecked Sendable {
         let _: Bool? = try? object.pause()
         #endif
     }
+
+    #if canImport(Android)
+    func playButton(isPlaying: Bool) -> AnyDynamicObject? {
+        try? object.playButton(isPlaying)
+    }
+    #endif
 
     func seek(toMs ms: Int64) {
         #if canImport(Android)

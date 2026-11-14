@@ -176,7 +176,8 @@ Android reader shows txt and md from FAKit's `StoryText`, one `Text` per line in
 `LazyVStack` so Compose never measures a whole novel at once; other formats get "Open in
 another app" (`FAMediaBridge.open`).
 
-Music shares the iOS views; only `AudioPlaybackController` is forked, with the iOS API.
+Music shares the iOS views; only `AudioPlaybackController` is forked, with the iOS API,
+and the play button, a Compose `FAPlayButton` shaped like the system media player's.
 The mp3 for Save/Share downloads on its own cancellable OkHttp call rather than the page
 transport, which can't cancel an exchange and holds a permit for the whole transfer.
 Leaving the submission stops playback through `isPresented`, which a screen pushed on top

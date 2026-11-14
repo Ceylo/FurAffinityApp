@@ -90,6 +90,8 @@ class FAAudioBridge {
         return true
     }
 
+    fun playButton(isPlaying: Boolean): FAPlayButton = FAPlayButton(this, isPlaying)
+
     fun seekTo(ms: Long): Boolean {
         withController { player ->
             lastPositionMs = ms

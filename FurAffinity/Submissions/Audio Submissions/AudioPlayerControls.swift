@@ -20,6 +20,11 @@ struct AudioPlayerControls: View {
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 20) {
+            #if os(Android)
+            if let composer = controller.playButtonComposer() {
+                ComposeView { composer }
+            }
+            #else
             Button {
                 if controller.isPlaying {
                     controller.pause()
@@ -36,6 +41,7 @@ struct AudioPlayerControls: View {
                     .padding(.vertical, 8)
             }
             .buttonStyle(.glassProminent)
+            #endif
 
             VStack {
                 AudioScrubber(
