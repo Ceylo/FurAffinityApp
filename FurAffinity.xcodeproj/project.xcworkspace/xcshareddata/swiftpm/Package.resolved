@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/amplitude/Amplitude-Swift",
       "state" : {
-        "revision" : "1707b47e26f0f5856316299efa4404597e676a03",
-        "version" : "1.19.2"
+        "revision" : "06a4d53ec3c8f07cefd1744ce829398f1b91ce46",
+        "version" : "1.20.0"
       }
     },
     {
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/amplitude/AmplitudeCore-Swift.git",
       "state" : {
-        "revision" : "78083c4fbd276735821025aec8601f06ace01bd1",
-        "version" : "1.5.4"
+        "revision" : "0d978cebcc9fa59831b0484c46f491d405f393b2",
+        "version" : "1.6.1"
       }
     },
     {
@@ -60,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/getsentry/sentry-cocoa",
       "state" : {
-        "revision" : "b539e098293067be54fa5cf1f11d9e16cdbba94a",
-        "version" : "9.30.0"
+        "revision" : "aa91bcf6bd6f383dbc49f38bf785d1d775c4f751",
+        "version" : "9.34.0"
       }
     },
     {
@@ -186,8 +186,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-collections.git",
       "state" : {
-        "revision" : "98ef3c98609a1e31b7e157b5b619579001a789d6",
-        "version" : "1.7.1"
+        "revision" : "88754449ab766a739610b660e117762115fabc9c",
+        "version" : "1.7.6"
       }
     },
     {
@@ -222,8 +222,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/scinfu/SwiftSoup.git",
       "state" : {
-        "revision" : "18b80329749eca5ea29fc50211dca5c7eff5bfec",
-        "version" : "2.13.9"
+        "revision" : "8397a860c6955924b584c50c5265c6aac0970015",
+        "version" : "2.14.4"
       }
     },
     {
@@ -231,8 +231,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/siteline/SwiftUI-Introspect.git",
       "state" : {
-        "revision" : "821a3d468fcf603cc4aa66ddb8542e91bd80b6c2",
-        "version" : "26.1.0"
+        "revision" : "453fe2e2ee3cc90885a68cb61bc5067637e7ad98",
+        "version" : "26.2.0"
       }
     },
     {
