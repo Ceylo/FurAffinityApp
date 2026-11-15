@@ -5,22 +5,49 @@
 //  Created by Ceylo on 27/06/2026.
 //
 
-#if !os(Android)
-
 import Foundation
-import PDFKit
+
+// Unchecked: `text` is an immutable `NSAttributedString`.
+public struct PDFPageText: @unchecked Sendable {
+    public var text: NSAttributedString
+    /// PDF space: origin bottom-left, y up.
+    public var characterBounds: [CGRect]
+    public var mediaBox: CGRect
+    public var images: [(top: CGFloat, png: Data)]
+
+    public init(text: NSAttributedString, characterBounds: [CGRect], mediaBox: CGRect, images: [(top: CGFloat, png: Data)]) {
+        self.text = text
+        self.characterBounds = characterBounds
+        self.mediaBox = mediaBox
+        self.images = images
+    }
+
+    public init(
+        text: String,
+        runs: [(length: Int, font: StoryFont)],
+        characterBounds: [CGRect],
+        mediaBox: CGRect,
+        images: [(top: CGFloat, png: Data)]
+    ) {
+        let attributed = NSMutableAttributedString(string: text)
+        var location = 0
+        for run in runs {
+            let length = min(run.length, attributed.length - location)
+            guard length > 0 else { break }
+            attributed.addAttribute(.storyFont, value: run.font, range: NSRange(location: location, length: length))
+            location += run.length
+        }
+        self.init(text: attributed, characterBounds: characterBounds, mediaBox: mediaBox, images: images)
+    }
+}
 
 enum PDFReflow {
-    static func text(from data: Data, bodyPointSize: CGFloat) -> NSAttributedString? {
-        registerBundledFonts()
-        guard let document = PDFDocument(data: data) else { return nil }
+    static func text(from pages: [PDFPageText], bodyPointSize: CGFloat) -> NSAttributedString? {
+        let indentParagraphs = documentUsesFirstLineIndent(pages, bodyPointSize: bodyPointSize)
 
-        let indentParagraphs = PDFReflow.documentUsesFirstLineIndent(document, bodyPointSize: bodyPointSize)
-
-        let result = NSMutableAttributedString()
-        for index in 0..<document.pageCount {
-            guard let page = document.page(at: index) else { continue }
-            PDFReflow.appendReflowed(
+        let result = NSMutableAttributedString(string: "")
+        for page in pages {
+            appendReflowed(
                 page: page,
                 to: result,
                 indentParagraphs: indentParagraphs,
@@ -28,30 +55,9 @@ enum PDFReflow {
             )
         }
 
-        result.removeAttribute(.foregroundColor, range: NSRange(location: 0, length: result.length))
         let trimmedResult = trimmed(result)
         return trimmedResult.length > 0 ? trimmedResult : nil
     }
-
-    /// Registers the bundled Roboto faces with the process once. iOS doesn't ship
-    /// Roboto, so PDFKit otherwise substitutes it with Helvetica and drops the
-    /// embedded bold/italic faces — making Roboto-based comic PDFs (e.g. LIMA) lose
-    /// their emphasis. With the faces registered, PDFKit matches them by PostScript
-    /// name and the run traits survive into the reflow.
-    private static let bundledFontsRegistered: Void = {
-        guard let urls = Bundle.module.urls(forResourcesWithExtension: "ttf", subdirectory: nil) else { return }
-        for url in urls {
-            var error: Unmanaged<CFError>?
-            // Already-registered is fine (the static runs once, but be defensive).
-            if !CTFontManagerRegisterFontsForURL(url as CFURL, .process, &error),
-                let error = error?.takeRetainedValue()
-            {
-                logger.error("Failed to register bundled font \(url.lastPathComponent): \(error)")
-            }
-        }
-    }()
-
-    private static func registerBundledFonts() { _ = bundledFontsRegistered }
 
     /// Reconstructs paragraphs from a PDF page: PDFKit already breaks the text into
     /// visual lines (a `\n` per line, which is what shows orphaned words on screen).
@@ -64,7 +70,7 @@ enum PDFReflow {
     /// fonts (size + traits) are preserved. When the document indents the first line of
     /// each paragraph, restore that indent as a leading tab.
     private static func appendReflowed(
-        page: PDFPage,
+        page: PDFPageText,
         to result: NSMutableAttributedString,
         indentParagraphs: Bool,
         bodyPointSize: CGFloat
@@ -72,11 +78,11 @@ enum PDFReflow {
         let (attributed, lines) = visualLines(of: page)
 
         // Embedded illustrations, kept in reading order by their top edge (PDF y-up).
-        let images = embeddedImages(on: page).sorted { $0.top > $1.top }
+        let images = page.images.sorted { $0.top > $1.top }
         var nextImage = 0
         func emitImages(above top: CGFloat) {
             while nextImage < images.count, images[nextImage].top >= top {
-                appendImage(images[nextImage].image, to: result)
+                appendImage(images[nextImage].png, to: result)
                 nextImage += 1
             }
         }
@@ -219,9 +225,7 @@ enum PDFReflow {
             // separator, which belongs to the previous paragraph.
             if centered, emitted.length > 0 {
                 let range = NSRange(location: result.length - emitted.length, length: emitted.length)
-                let style = NSMutableParagraphStyle()
-                style.alignment = .center
-                result.addAttribute(.paragraphStyle, value: style, range: range)
+                result.addAttribute(.storyCentered, value: true, range: range)
             }
         }
 
@@ -269,12 +273,11 @@ enum PDFReflow {
         var pageMidX: CGFloat
     }
 
-    /// PDFKit's per-character text for a page, split into visual lines (it emits a `\n`
-    /// per line) with each line's on-page geometry.
-    private static func visualLines(of page: PDFPage) -> (attributed: NSAttributedString, lines: [PDFLine]) {
-        let attributed = page.attributedString ?? NSAttributedString()
+    /// The page's per-character text, split into visual lines with each line's on-page geometry.
+    private static func visualLines(of page: PDFPageText) -> (attributed: NSAttributedString, lines: [PDFLine]) {
+        let attributed = page.text
         let string = attributed.string as NSString
-        let count = min(string.length, page.numberOfCharacters)
+        let count = min(string.length, page.characterBounds.count)
         var lines: [PDFLine] = []
         guard count > 0 else { return (attributed, lines) }
 
@@ -295,7 +298,7 @@ enum PDFReflow {
                     let isSpace =
                         Unicode.Scalar(string.character(at: i))
                         .map { CharacterSet.whitespacesAndNewlines.contains($0) } ?? false
-                    let bounds = page.characterBounds(at: i)
+                    let bounds = page.characterBounds[i]
                     let valid = bounds.width > 0 && bounds.height > 0
                     if valid {
                         hasBounds = true
@@ -346,7 +349,7 @@ enum PDFReflow {
         return (attributed, lines)
     }
 
-    private static func metrics(for lines: [PDFLine], page: PDFPage, bodyPointSize: CGFloat) -> PageMetrics {
+    private static func metrics(for lines: [PDFLine], page: PDFPageText, bodyPointSize: CGFloat) -> PageMetrics {
         let bounded = lines.filter(\.hasBounds)
         let medianHeight = median(bounded.map(\.height)) ?? bodyPointSize
         return PageMetrics(
@@ -355,7 +358,7 @@ enum PDFReflow {
             leftMargin: bounded.map(\.minX).min() ?? 0,
             spaceWidth: medianHeight * 0.25,
             indentThreshold: max(medianHeight, 12),
-            pageMidX: page.bounds(for: .mediaBox).midX
+            pageMidX: page.mediaBox.midX
         )
     }
 
@@ -364,11 +367,10 @@ enum PDFReflow {
     /// so we vote: a likely paragraph-start line counts as indented when its left edge
     /// sits a clear step right of the body's left margin. Block-style documents reliably
     /// score zero indented starts; indent-style documents score enough to win.
-    private static func documentUsesFirstLineIndent(_ document: PDFDocument, bodyPointSize: CGFloat) -> Bool {
+    private static func documentUsesFirstLineIndent(_ pages: [PDFPageText], bodyPointSize: CGFloat) -> Bool {
         var indented = 0
         var total = 0
-        for index in 0..<document.pageCount {
-            guard let page = document.page(at: index) else { continue }
+        for page in pages {
             let (attributed, lines) = visualLines(of: page)
             guard lines.count > 1 else { continue }
             let m = metrics(for: lines, page: page, bodyPointSize: bodyPointSize)
@@ -397,139 +399,12 @@ enum PDFReflow {
         return indented >= 2 && indented * 3 >= total
     }
 
-    /// Appends `image` as its own centered paragraph via a self-sizing text attachment
-    /// that fits the line width at layout time.
-    private static func appendImage(_ image: UIImage, to result: NSMutableAttributedString) {
+    private static func appendImage(_ png: Data, to result: NSMutableAttributedString) {
         if result.length > 0 {
             result.append(NSAttributedString(string: "\n"))
         }
-        let attachment = FittingImageTextAttachment()
-        attachment.image = image
-        let start = result.length
-        result.append(NSAttributedString(attachment: attachment))
-        let style = NSMutableParagraphStyle()
-        style.alignment = .center
-        result.addAttribute(
-            .paragraphStyle,
-            value: style,
-            range: NSRange(location: start, length: result.length - start)
-        )
+        result.append(NSAttributedString(string: "\u{FFFC}", attributes: [.storyImage: png, .storyCentered: true]))
         result.append(NSAttributedString(string: "\n"))
-    }
-
-    /// Extracts each embedded raster image on the page as a rendered `UIImage` paired
-    /// with the top edge of its on-page rectangle (PDF y-up), for interleaving with text.
-    private static func embeddedImages(on page: PDFPage) -> [(top: CGFloat, image: UIImage)] {
-        imagePlacements(on: page).compactMap { rect in
-            renderImage(from: page, rect: rect).map { (rect.maxY, $0) }
-        }
-    }
-
-    /// The on-page rectangles (PDF coordinates) where image XObjects are drawn, found by
-    /// scanning the page content stream (`cm` updates the CTM, `Do` draws a unit square
-    /// transformed by it). Returns an empty list when the page draws no images.
-    private static func imagePlacements(on page: PDFPage) -> [CGRect] {
-        guard let cgPage = page.pageRef else { return [] }
-        let imageNames = imageXObjectNames(of: cgPage)
-        guard !imageNames.isEmpty else { return [] }
-
-        let scanner = PDFImageScanner(imageNames: imageNames)
-        guard let table = CGPDFOperatorTableCreate() else { return [] }
-        defer { CGPDFOperatorTableRelease(table) }
-
-        CGPDFOperatorTableSetCallback(table, "q") { _, info in
-            let s = Unmanaged<PDFImageScanner>.fromOpaque(info!).takeUnretainedValue()
-            s.stack.append(s.ctm)
-        }
-        CGPDFOperatorTableSetCallback(table, "Q") { _, info in
-            let s = Unmanaged<PDFImageScanner>.fromOpaque(info!).takeUnretainedValue()
-            if let last = s.stack.popLast() { s.ctm = last }
-        }
-        CGPDFOperatorTableSetCallback(table, "cm") { scanner, info in
-            let s = Unmanaged<PDFImageScanner>.fromOpaque(info!).takeUnretainedValue()
-            var values = [CGFloat](repeating: 0, count: 6)
-            for i in (0..<6).reversed() {
-                var number: CGPDFReal = 0
-                guard CGPDFScannerPopNumber(scanner, &number) else { return }
-                values[i] = CGFloat(number)
-            }
-            let matrix = CGAffineTransform(
-                a: values[0],
-                b: values[1],
-                c: values[2],
-                d: values[3],
-                tx: values[4],
-                ty: values[5]
-            )
-            s.ctm = matrix.concatenating(s.ctm)
-        }
-        CGPDFOperatorTableSetCallback(table, "Do") { scanner, info in
-            let s = Unmanaged<PDFImageScanner>.fromOpaque(info!).takeUnretainedValue()
-            var name: UnsafePointer<Int8>?
-            guard CGPDFScannerPopName(scanner, &name), let name,
-                s.imageNames.contains(String(cString: name))
-            else { return }
-            s.placements.append(CGRect(x: 0, y: 0, width: 1, height: 1).applying(s.ctm))
-        }
-
-        let stream = CGPDFContentStreamCreateWithPage(cgPage)
-        let cgScanner = CGPDFScannerCreate(stream, table, Unmanaged.passUnretained(scanner).toOpaque())
-        CGPDFScannerScan(cgScanner)
-        CGPDFScannerRelease(cgScanner)
-        CGPDFContentStreamRelease(stream)
-        return scanner.placements
-    }
-
-    /// Names of the page's XObjects whose subtype is `Image`.
-    private static func imageXObjectNames(of page: CGPDFPage) -> Set<String> {
-        guard let dictionary = page.dictionary else { return [] }
-        var resources: CGPDFDictionaryRef?
-        guard CGPDFDictionaryGetDictionary(dictionary, "Resources", &resources), let resources else { return [] }
-        var xobjects: CGPDFDictionaryRef?
-        guard CGPDFDictionaryGetDictionary(resources, "XObject", &xobjects), let xobjects else { return [] }
-
-        final class Collector { var names = Set<String>() }
-        let collector = Collector()
-        CGPDFDictionaryApplyFunction(
-            xobjects,
-            { key, value, info in
-                let collector = Unmanaged<Collector>.fromOpaque(info!).takeUnretainedValue()
-                var stream: CGPDFStreamRef?
-                guard CGPDFObjectGetValue(value, .stream, &stream), let stream,
-                    let streamDict = CGPDFStreamGetDictionary(stream)
-                else { return }
-                var subtype: UnsafePointer<Int8>?
-                if CGPDFDictionaryGetName(streamDict, "Subtype", &subtype), let subtype,
-                    String(cString: subtype) == "Image"
-                {
-                    collector.names.insert(String(cString: key))
-                }
-            },
-            Unmanaged.passUnretained(collector).toOpaque()
-        )
-        return collector.names
-    }
-
-    /// Renders the given page rectangle (PDF coordinates) to a `UIImage` at `scale`× — a
-    /// robust way to capture an embedded image regardless of its encoding or masks.
-    private static func renderImage(from page: PDFPage, rect: CGRect, scale: CGFloat = 2) -> UIImage? {
-        let width = Int((rect.width * scale).rounded())
-        let height = Int((rect.height * scale).rounded())
-        guard width > 0, height > 0,
-            let context = CGContext(
-                data: nil,
-                width: width,
-                height: height,
-                bitsPerComponent: 8,
-                bytesPerRow: 0,
-                space: CGColorSpaceCreateDeviceRGB(),
-                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-            )
-        else { return nil }
-        context.scaleBy(x: scale, y: scale)
-        context.translateBy(x: -rect.minX, y: -rect.minY)
-        page.draw(with: .mediaBox, to: context)
-        return context.makeImage().map { UIImage(cgImage: $0) }
     }
 
     /// The first non-whitespace Unicode scalar of an attributed string, if any.
@@ -768,16 +643,3 @@ enum PDFReflow {
         return attributed.attributedSubstring(from: NSRange(location: start, length: end - start))
     }
 }
-
-/// Mutable state threaded through the content-stream scan that locates image draws:
-/// the current transform, the graphics-state stack, and the collected image rectangles.
-private final class PDFImageScanner {
-    let imageNames: Set<String>
-    var ctm = CGAffineTransform.identity
-    var stack: [CGAffineTransform] = []
-    var placements: [CGRect] = []
-
-    init(imageNames: Set<String>) { self.imageNames = imageNames }
-}
-
-#endif

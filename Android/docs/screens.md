@@ -171,10 +171,13 @@ until the user first adjusts it, since the sheet first reports a height ~129 px 
 
 A story's cover, download and Save/Share come from the shared `SubmissionTextContent`.
 Only the reader is forked: `StoryReaderView` builds its `Content` through
-`StoryReaderView.Content.load(data:filename:documentUrl:)` on both platforms. The
-Android reader shows txt and md from FAKit's `StoryText`, one `Text` per line in a
-`LazyVStack` so Compose never measures a whole novel at once; other formats get "Open in
-another app" (`FAMediaBridge.open`).
+`StoryReaderView.Content.load(data:filename:documentUrl:)` on both platforms. Both read
+all five formats with FAKit's shared `StoryDocument`; on Android, pdf pages come from
+PdfBox-Android (`FAPDFTextBridge.kt`), and docx and rtf from FAKit's `ZipEntryReader` and
+`RTFTextParser`. The reader is a `fullScreenCover`, Material's full-screen dialog, since a
+sheet stops at 640 dp; "Open with…" sits in its overflow menu and shows the system
+chooser. As on an iPhone, a phone stays portrait except in the reader
+(`FAOrientationBridge.kt`); a tablet rotates freely.
 
 Music shares the iOS views; only `AudioPlaybackController` is forked, with the iOS API,
 and the play button, a Compose `FAPlayButton` shaped like the system media player's.
@@ -183,8 +186,7 @@ transport, which can't cancel an exchange and holds a permit for the whole trans
 Leaving the submission stops playback through `isPresented`, which a screen pushed on top
 leaves true, so music keeps playing under the comments or the user page, as on iOS.
 
-Not ported, each an Apple-only stack: pdf/rtf/docx reflow, the QuickLook "Original"
-view and the reader's landscape gate.
+Not ported, an Apple-only stack: the QuickLook "Original" view.
 
 A download still challenged after the repair fails instead of taking the WebView
 fallback, which reads back a page and so never returns a file.

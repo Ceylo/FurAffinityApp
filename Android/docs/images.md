@@ -94,6 +94,9 @@ a challenge on the one the app has is *repairable* rather than a lost draw. See
 - **Retry only what a fresh connection could answer differently** (`worthRedrawing`).
   FA answers **404** for a user without a custom avatar, which used to cost five requests
   and ~4 s of a permit each. 403, 408, 429 and non-HTTP failures keep their retries.
+- **A 404 whose body is an image is shown** (`isPlaceholder`, and `DownloadDelegate` on
+  iOS): FA answers a story without a thumbnail of its own, e.g. /view/45521233/, with
+  its generic placeholder that way, and browsers display it.
 - **The width passed to `prefetchingPreviews` must be the width the row renders at.**
   `bestThumbnailUrl(for:)` snaps to buckets, so a few dp change the URL and void every
   prefetch. This is what the `listRowInsets` fork is for.

@@ -91,6 +91,7 @@ let package = Package(
             exclude: [
                 "AnimatedImageDecodeTests.swift",
                 "CloudflareChallengeRetryStrategyTests.swift",
+                "ImageDownloadStatusTests.swift",
                 "LoggedInViewTabTests.swift",
                 "MockFASession.swift",
                 "ModelTests.swift",

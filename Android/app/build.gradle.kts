@@ -34,6 +34,8 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.11.1")
     implementation("androidx.media3:media3-session:1.11.1")
     implementation("androidx.media3:media3-datasource-okhttp:1.11.1")
+    // FAPDFTextBridge.kt: story PDFs for the shared reflow.
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
 }
 
 // Symbol and mapping uploads happen only when SENTRY_AUTH_TOKEN is set (release and

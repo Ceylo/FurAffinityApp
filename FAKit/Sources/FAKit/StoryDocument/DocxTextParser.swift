@@ -1,15 +1,14 @@
 //
 //  DocxTextParser.swift
-//  FurAffinity
+//  FAKit
 //
 //  Created by Ceylo on 27/06/2026.
 //
 
-#if !os(Android)
-
 import Foundation
-import UIKit
-import ZIPFoundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 
 /// Builds an attributed string from a Word `document.xml`: text inside `<w:t>`,
 /// run traits from `<w:b>` / `<w:i>` / `<w:sz>`, paragraph breaks on `</w:p>`,
@@ -17,16 +16,7 @@ import ZIPFoundation
 /// single newline; the reader supplies paragraph spacing.
 final class DocxTextParser: NSObject, XMLParserDelegate {
     static func text(from data: Data) -> NSAttributedString? {
-        guard let archive = try? Archive(data: data, accessMode: .read, pathEncoding: nil),
-            let entry = archive["word/document.xml"]
-        else {
-            return nil
-        }
-
-        var xml = Data()
-        guard (try? archive.extract(entry) { xml.append($0) }) != nil else {
-            return nil
-        }
+        guard let xml = ZipEntryReader.data(of: "word/document.xml", in: data) else { return nil }
 
         let parser = XMLParser(data: xml)
         let delegate = DocxTextParser()
@@ -37,7 +27,7 @@ final class DocxTextParser: NSObject, XMLParserDelegate {
         return result.length > 0 ? result : nil
     }
 
-    private(set) var result = NSMutableAttributedString()
+    private(set) var result = NSMutableAttributedString(string: "")
 
     /// Typical Word default body size (half-points are halved into points).
     private let defaultSize: CGFloat = 12
@@ -60,8 +50,8 @@ final class DocxTextParser: NSObject, XMLParserDelegate {
     }
 
     private func append(_ string: String) {
-        let font = UIFont.font(ofSize: size, bold: bold, italic: italic)
-        result.append(NSAttributedString(string: string, attributes: [.font: font]))
+        let font = StoryFont(size: size, bold: bold, italic: italic)
+        result.append(NSAttributedString(string: string, attributes: [.storyFont: font]))
     }
 
     func parser(
@@ -104,5 +94,3 @@ final class DocxTextParser: NSObject, XMLParserDelegate {
         if stack.last == elementName { stack.removeLast() }
     }
 }
-
-#endif

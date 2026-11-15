@@ -13,14 +13,20 @@ struct StoryTextTests {
     @Test
     func txt_splitsIntoLinesKeepingBlankOnes() throws {
         let data = Data("Chapter 1\n\nIt was dark.\r\nThen light.\n".utf8)
-        let paragraphs = try #require(StoryText.paragraphs(from: data, filename: "story.txt"))
-        #expect(paragraphs == ["Chapter 1", "", "It was dark.", "Then light.", ""])
+        let paragraphs = try #require(StoryDocument.paragraphs(from: data, filename: "story.txt"))
+        #expect(paragraphs.map(\.text) == ["Chapter 1", "", "It was dark.", "Then light.", ""])
+    }
+
+    @Test
+    func txt_splitsOnEveryLineBreakKind() throws {
+        let data = Data("Mac\rUnicode\u{2028}Done".utf8)
+        #expect(StoryDocument.paragraphs(from: data, filename: "story.txt")?.map(\.text) == ["Mac", "Unicode", "Done"])
     }
 
     @Test
     func md_isReadAsPlainText() throws {
         let data = Data("# Title\n*emphasis*".utf8)
-        #expect(StoryText.paragraphs(from: data, filename: "STORY.MD") == ["# Title", "*emphasis*"])
+        #expect(StoryDocument.paragraphs(from: data, filename: "STORY.MD")?.map(\.text) == ["# Title", "*emphasis*"])
     }
 
     @Test

@@ -33,6 +33,7 @@ package fur.affinity.ui
 
 import java.io.File
 import okhttp3.Request
+import okhttp3.Response
 import okio.Buffer
 import okio.BufferedSource
 import okio.buffer
@@ -71,6 +72,11 @@ class FAImageFetchBridge {
         /// loop exists, 408 and 429 say so by definition.
         private fun worthRedrawing(code: Int) =
             code !in 400..499 || code == 403 || code == 408 || code == 429
+
+        /// FA serves a missing story thumbnail as a 404 whose body is its placeholder
+        /// image, which browsers show.
+        private fun isPlaceholder(response: Response) =
+            response.code == 404 && response.body.contentType()?.type == "image"
 
         /// Where a fetch's bytes land on their way to Swift. Not a cache: each file is
         /// read once and unlinked, and a sweep on first use clears anything a crash
@@ -135,7 +141,7 @@ class FAImageFetchBridge {
                 val failure = try {
                     FAHttpClient.shared().newCall(request).execute().use { response ->
                         proto = response.protocol.toString()
-                        if (!response.isSuccessful) {
+                        if (!response.isSuccessful && !isPlaceholder(response)) {
                             // Name Cloudflare's verdict: `cf-mitigated=challenge` is a
                             // bot-score challenge, its absence on a 403 a WAF/hotlink
                             // block. Kept as one string so the JSON contract and
