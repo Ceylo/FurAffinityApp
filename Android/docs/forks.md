@@ -382,8 +382,8 @@ covered by Robolectric tests that fail without the patch:
 
 The fork is cut from the tag the app had pinned (1.4.6), not from `main`. Its own `swift
 test` resolves the newest Skip (1.9.16 when this was written), whose transpiler accepts
-`Data(string.utf8)` and `String(data:encoding:)` inside `UserDefaults`, where the app's
-pinned 1.9.12 does not: check a fork patch against the app's Skip, not only the fork's
+`Data(string.utf8)` and `String(data:encoding:)` inside `UserDefaults`, where 1.9.12, the
+app's pin then, did not: check a fork patch against the app's Skip, not only the fork's
 tests. After changing a skip-foundation file, `Scripts/Android/clean.sh` before building
 the app. Kotlin's incremental compile regenerates only that file and resolves it against
 stale state ("Unresolved reference 'utf8Data'" for an extension the module still declares).

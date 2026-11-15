@@ -13,4 +13,4 @@ settings:
           contents:
             - block: 'create("libs")'
               contents:
-                - 'version("android-gradle-plugin", "9.4.1")'
+                - 'version("android-gradle-plugin", "9.5.1")'

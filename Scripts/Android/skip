@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+# Run the skip CLI at the version Package.swift pins:
+# `Scripts/Android/skip android sdk install`.
+# See Scripts/Android/skip-cli.sh.
+
+set -eo pipefail
+CLI="$("$(dirname "${BASH_SOURCE[0]}")/skip-cli.sh")"
+export SKIP_COMMAND_OVERRIDE="$CLI"
+exec "$CLI" "$@"

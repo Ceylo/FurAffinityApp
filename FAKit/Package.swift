@@ -16,7 +16,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.5"),
         .package(url: "https://github.com/hyperoslo/Cache.git", from: "7.4.0"),
-        .package(url: "https://github.com/davecom/SwiftGraph.git", from: "3.1.0"),
+        .package(url: "https://github.com/davecom/SwiftGraph.git", from: "4.0.0"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.3"),
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19"),
         // Its own package, not a target here: a target dependency would be linked
@@ -28,7 +28,7 @@ let package = Package(
         // skip-web is forked for its dependency locations alone. One location per
         // package identity: the forks name Ceylo/skip-ui between them, so this
         // manifest must not re-declare it.
-        .package(url: "https://github.com/skiptools/skip.git", exact: "1.9.12"),
+        .package(url: "https://github.com/skiptools/skip.git", exact: "1.9.20"),
         .package(url: "https://github.com/Ceylo/skip-fuse-ui.git", branch: "android"),
         .package(url: "https://github.com/Ceylo/skip-web.git", branch: "android"),
     ],

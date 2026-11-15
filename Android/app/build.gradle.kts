@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.android.application)
     id("skip-build-plugin")
-    id("io.sentry.android.gradle") version "6.23.0"
+    id("io.sentry.android.gradle") version "6.27.0"
 }
 
 skip {
@@ -25,10 +25,10 @@ dependencies {
     implementation("com.squareup.okio:okio:3.16.4")
     // Explicit rather than the plugin's autoInstallation, which would also add its
     // OkHttp/Compose/Fragment integrations. See docs/crash-reporting.md.
-    implementation("io.sentry:sentry-android-core:8.59.0")
-    implementation("io.sentry:sentry-android-ndk:8.59.0")
+    implementation("io.sentry:sentry-android-core:8.64.0")
+    implementation("io.sentry:sentry-android-ndk:8.64.0")
     // FAAnalyticsBridge.kt: the Android side of iOS's AmplitudeSwift.
-    implementation("com.amplitude:analytics-android:1.33.0")
+    implementation("com.amplitude:analytics-android:1.37.1")
 }
 
 // Symbol and mapping uploads happen only when SENTRY_AUTH_TOKEN is set (release and

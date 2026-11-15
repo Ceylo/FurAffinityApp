@@ -27,6 +27,8 @@ needs to know:
 - **FAKit carries the skipstone plugin too**, so it owns the Android web layer
   (`FAKit/Sources/FAKit/Android/`); its basenames share the uniqueness rule below. The
   iOS app pays 37 MB Release instead of 27 for it.
+- **Skip CLI**: `Scripts/Android/skip <args>`, the version the manifests pin, never
+  Homebrew's `skip` — `build-and-run.md` § Run.
 - **Logging**: `#if canImport(os) import os #else import OSCompat`. `OSCompat` (in the
   sibling `FALogging/` package) must **not** be named `os`, and FAKit gates SwiftUI on
   `#if !os(Android)`, never `canImport` — `build-and-run.md` § Module-name poisoning.
