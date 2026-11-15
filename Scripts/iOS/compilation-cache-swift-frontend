@@ -46,16 +46,21 @@ if [[ " $* " == *" -no-cache-compile-job "* ]]; then
             s="$out$s"
         done
         args[i]="$s"
-        # The source list is a file whose lines carry the placeholders too.
-        if (( i == 0 )) || [[ "$s" == *.swift || ${args[i-1]} != -filelist ]]; then continue; fi
-        mkdir -p "$scratch/filelists"
-        list="$scratch/filelists/$$.$i"
+        if (( i == 0 )) || [[ "$s" == *.swift ]]; then continue; fi
+        case "${args[i-1]}" in
+            -filelist) dir=filelists ext=txt re='s/^\Q$p\E(?=\/|$)/$r/' ;;
+            # Xcode 27's thunk overlay names the source by placeholder: unmapped, the plain source compiles.
+            -vfsoverlay) dir=vfs ext=json re='s/"\Q$p\E(?=[\/"])/"$r/g' ;;
+            *) continue ;;
+        esac
+        mkdir -p "$scratch/$dir"
+        list="$scratch/$dir/$$.$i"
         cp "$s" "$list" || continue
         for (( j = 0; j < ${#pairs[@]}; j += 2 )); do
             ph="${pairs[j]}" r="${pairs[j+1]}"
-            perl -i -pe 'BEGIN { ($p, $r) = splice @ARGV, 0, 2 } s/^\Q$p\E(?=\/|$)/$r/' "$ph" "$r" "$list"
+            perl -i -pe 'BEGIN { ($p, $r) = splice @ARGV, 0, 2 } '"$re" "$ph" "$r" "$list"
         done
-        stable="$scratch/filelists/$(md5 -q "$list").txt"   # named by content: no pile-up
+        stable="$scratch/$dir/$(md5 -q "$list").$ext"   # named by content: no pile-up
         mv -f "$list" "$stable" && args[i]="$stable"
     done
     # Cached .pcm files name their headers by placeholder too: remap those on disk.

@@ -85,9 +85,11 @@ appends `-no-cache-compile-job`, so the frontend opens its inputs from disk, whe
 `/^src` does not exist. The shim sees that flag and maps every placeholder back to
 its real path (from the job's own `-cache-replay-prefix-map` pairs) instead of
 mapping the job further. The preview build is therefore uncached, and the shared
-cache is untouched. Three other inputs carry placeholders as well: the `-filelist`
+cache is untouched. Other inputs carry placeholders as well: the `-filelist`
 file, which the shim rewrites into a copy; and the cached `.pcm`s' header paths,
-which it serves through a `directory-remap` `-vfsoverlay`. The canvas also runs this
+which it serves through a `directory-remap` `-vfsoverlay`. Since Xcode 27,
+Xcode's own overlays name the source they swap for the thunk by placeholder too, so
+the shim rewrites copies of them; otherwise the plain source compiles. The canvas also runs this
 compile with `HOME` unset, so the shim derives the home directory from its own path.
 
 That overlay must come **before** Xcode's own, which swaps the source for the
