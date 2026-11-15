@@ -38,3 +38,4 @@ Android/app/keystore.properties
 
 # sentry-cli auth for a local archive; see Android/docs/crash-reporting.md.
 .sentryclirc
+__pycache__/
