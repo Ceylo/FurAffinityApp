@@ -176,13 +176,15 @@ Android reader shows txt and md from FAKit's `StoryText`, one `Text` per line in
 `LazyVStack` so Compose never measures a whole novel at once; other formats get "Open in
 another app" (`FAMediaBridge.open`).
 
-Music has an Android `SubmissionAudioContent` with the iOS signature: the cover, and
-"Play in another app", which downloads the mp3 and hands it over; Save/Share light up
-once downloaded. It downloads only when asked, unlike iOS: the page transport can't
-cancel an exchange and holds a permit for the whole transfer.
+Music shares the iOS views; only `AudioPlaybackController` is forked, with the iOS API,
+and the play button, a Compose `FAPlayButton` shaped like the system media player's.
+The mp3 for Save/Share downloads on its own cancellable OkHttp call rather than the page
+transport, which can't cancel an exchange and holds a permit for the whole transfer.
+Leaving the submission stops playback through `isPresented`, which a screen pushed on top
+leaves true, so music keeps playing under the comments or the user page, as on iOS.
 
-Not ported, each an Apple-only stack: in-app playback and lock-screen controls,
-pdf/rtf/docx reflow, the QuickLook "Original" view and the reader's landscape gate.
+Not ported, each an Apple-only stack: pdf/rtf/docx reflow, the QuickLook "Original"
+view and the reader's landscape gate.
 
 A download still challenged after the repair fails instead of taking the WebView
 fallback, which reads back a page and so never returns a file.
@@ -191,7 +193,7 @@ fallback, which reads back a page and so never returns a file.
 
 Each keeps the iOS name and signature so shared callers compile unchanged: `HTMLView`,
 `Zoomable`, `FlowLayout`, `MediaSaveHandler`, `fadingSheet`
-(`View+pullableScreenCover.swift`), `StoryReaderView`, `SubmissionAudioContent`, and the
+(`View+pullableScreenCover.swift`), `StoryReaderView`, `AudioPlaybackController`, and the
 no-ops in `SubmissionShims.swift`.
 
 `HTMLView` does real work: `FAKit` normalises FA's markup (`FAHTMLNormalizer`) and

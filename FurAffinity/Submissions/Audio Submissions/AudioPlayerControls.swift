@@ -5,8 +5,6 @@
 //  Created by Ceylo on 23/06/2026.
 //
 
-#if !FA_SKIP_MODULE
-
 import SwiftUI
 
 /// Always-visible transport controls for an audio submission. `VideoPlayer` /
@@ -16,11 +14,15 @@ import SwiftUI
 struct AudioPlayerControls: View {
     var controller: AudioPlaybackController
 
-    @State private var isScrubbing = false
-    @State private var scrubValue = 0.0
+    // Not private: skipstone can't bridge a private @State/@Environment.
+    @State var isScrubbing = false
+    @State var scrubValue = 0.0
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 20) {
+            #if os(Android)
+            ComposeView { controller.playButtonComposer() }
+            #else
             Button {
                 if controller.isPlaying {
                     controller.pause()
@@ -37,6 +39,7 @@ struct AudioPlayerControls: View {
                     .padding(.vertical, 8)
             }
             .buttonStyle(.glassProminent)
+            #endif
 
             VStack {
                 AudioScrubber(
@@ -51,7 +54,9 @@ struct AudioPlayerControls: View {
                     Text(timeLabel(controller.duration))
                 }
                 .font(.caption)
+                #if !os(Android)  // Unavailable in SkipUI; Roboto's digits are tabular anyway.
                 .monospacedDigit()
+                #endif
                 .foregroundStyle(.secondary)
             }
         }
@@ -69,6 +74,4 @@ struct AudioPlayerControls: View {
 #Preview {
     AudioPlayerControls(controller: .preview(currentTime: 70, duration: 100))
 }
-#endif
-
 #endif

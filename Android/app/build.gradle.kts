@@ -29,6 +29,11 @@ dependencies {
     implementation("io.sentry:sentry-android-ndk:8.64.0")
     // FAAnalyticsBridge.kt: the Android side of iOS's AmplitudeSwift.
     implementation("com.amplitude:analytics-android:1.37.1")
+    // FAAudioPlaybackService/FAAudioBridge: music playback, the counterpart of iOS's
+    // AVPlayer + MPNowPlayingInfoCenter. The OkHttp data source streams on FAHttpClient.
+    implementation("androidx.media3:media3-exoplayer:1.11.1")
+    implementation("androidx.media3:media3-session:1.11.1")
+    implementation("androidx.media3:media3-datasource-okhttp:1.11.1")
 }
 
 // Symbol and mapping uploads happen only when SENTRY_AUTH_TOKEN is set (release and
