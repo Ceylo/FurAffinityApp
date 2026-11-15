@@ -62,12 +62,12 @@ final class AudioPlaybackController {
 
     nonisolated func tearDown() {
         pollTask?.cancel()
-        bridge?.cancelDownload()
-        bridge?.release()
+        bridge.cancelDownload()
+        bridge.release()
     }
 
     func prepare() async {
-        guard pollTask == nil, let bridge else { return }
+        guard pollTask == nil else { return }
         pollTask = Task { [weak self] in
             while !Task.isCancelled {
                 guard self?.poll() != nil else { return }
@@ -90,11 +90,10 @@ final class AudioPlaybackController {
             documentFileUrl = fileUrl
             return
         }
-        guard let bridge else { return }
         isDownloading = true
         let downloadUrl = downloadUrl
         let fileUrl = fileUrl
-        Task { [weak self] in
+        Task { [weak self, bridge] in
             let result = await bridge.download(downloadUrl, to: fileUrl)
             guard let self else { return }
             self.isDownloading = false
@@ -108,12 +107,12 @@ final class AudioPlaybackController {
 
     func play() {
         isPlaying = true
-        bridge?.play()
+        bridge.play()
     }
 
     func pause() {
         isPlaying = false
-        bridge?.pause()
+        bridge.pause()
     }
 
     func seek(to seconds: Double) {
@@ -121,7 +120,7 @@ final class AudioPlaybackController {
         isSeeking = true
         seekToken += 1
         let token = seekToken
-        bridge?.seek(toMs: Int64(seconds * 1000))
+        bridge.seek(toMs: Int64(seconds * 1000))
         Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(300))
             guard let self, token == self.seekToken else { return }
@@ -130,13 +129,13 @@ final class AudioPlaybackController {
     }
 
     #if canImport(Android)
-    func playButtonComposer() -> AnyDynamicObject? {
-        bridge?.playButton(isPlaying: isPlaying)
+    func playButtonComposer() -> AnyDynamicObject {
+        bridge.playButton(isPlaying: isPlaying)
     }
     #endif
 
     private func poll() {
-        guard let snapshot = bridge?.snapshot() else { return }
+        guard let snapshot = bridge.snapshot() else { return }
         if isPlaying != snapshot.isPlaying {
             isPlaying = snapshot.isPlaying
         }
@@ -198,16 +197,11 @@ private final class AudioBridge: @unchecked Sendable {
     #if canImport(Android)
     private let object: AnyDynamicObject
 
-    init?() {
-        do {
-            object = try AnyDynamicObject(className: "fur.affinity.ui.FAAudioBridge")
-        } catch {
-            logger.error("AudioBridge: could not create FAAudioBridge: \(error)")
-            return nil
-        }
+    init() {
+        object = try! AnyDynamicObject(className: "fur.affinity.ui.FAAudioBridge")
     }
     #else
-    init?() { nil }
+    init() {}
     #endif
 
     func prepare(url: URL, title: String, artist: String, artworkPath: String) {
@@ -229,8 +223,9 @@ private final class AudioBridge: @unchecked Sendable {
     }
 
     #if canImport(Android)
-    func playButton(isPlaying: Bool) -> AnyDynamicObject? {
-        try? object.playButton(isPlaying)
+    func playButton(isPlaying: Bool) -> AnyDynamicObject {
+        let button: AnyDynamicObject? = try! object.playButton(isPlaying)
+        return button!
     }
     #endif
 

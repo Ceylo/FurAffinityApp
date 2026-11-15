@@ -21,9 +21,7 @@ struct AudioPlayerControls: View {
     var body: some View {
         HStack(alignment: .bottom, spacing: 20) {
             #if os(Android)
-            if let composer = controller.playButtonComposer() {
-                ComposeView { composer }
-            }
+            ComposeView { controller.playButtonComposer() }
             #else
             Button {
                 if controller.isPlaying {
