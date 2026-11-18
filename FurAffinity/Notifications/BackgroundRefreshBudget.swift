@@ -125,7 +125,6 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
 
     struct Retry: Codable, Equatable {
         var notBefore: Date
-        var isPaid: Bool
     }
 
     struct Failures: Codable, Equatable {
@@ -166,17 +165,22 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
         retry = nil
     }
 
+    mutating func recordOpen(at date: Date, calendar: Calendar) {
+        profile.recordOpen(at: date, calendar: calendar)
+        retry = nil
+    }
+
     mutating func recordForegroundEnd(at date: Date) {
         lastForegroundEnd = date
         retry = nil
     }
 
     mutating func settle(_ outcome: Outcome, claimedAt: Date, now: Date) {
-        func owe(after delay: TimeInterval, isPaid: Bool = true) {
+        func owe(after delay: TimeInterval) {
             let count = failures.flatMap { $0.outcome == outcome ? $0.count + 1 : nil } ?? 1
             failures = Failures(outcome: outcome, count: count)
             let backedOff = delay * pow(2, Double(count - 1))
-            retry = backedOff <= Self.maxRetryDelay ? Retry(notBefore: now + backedOff, isPaid: isPaid) : nil
+            retry = backedOff <= Self.maxRetryDelay ? Retry(notBefore: now + backedOff) : nil
         }
         switch outcome {
         case .completed:
@@ -184,7 +188,7 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
             failures = nil
         case .unreachedFA:
             fetchDates.removeAll { $0 == claimedAt }
-            owe(after: Self.quickRetryDelay, isPaid: false)
+            owe(after: Self.quickRetryDelay)
         case .interrupted:
             owe(after: 0)
         case .unreachableAfterFA:
@@ -206,7 +210,8 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
         guard let retry else {
             return nil
         }
-        let cap = BackgroundRefreshSlots.perDay + (retry.isPaid ? Self.retryAllowance : 0)
+        let isPaid = failures?.outcome != .unreachedFA
+        let cap = BackgroundRefreshSlots.perDay + (isPaid ? Self.retryAllowance : 0)
         return recentFetches(at: now) < cap ? retry : nil
     }
 
@@ -218,8 +223,7 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
 extension BackgroundRefreshManager {
     @MainActor
     static func recordAppOpen() {
-        Defaults[.backgroundRefreshBudget].profile.recordOpen(at: Date(), calendar: .current)
-        Defaults[.backgroundRefreshBudget].retry = nil
+        Defaults[.backgroundRefreshBudget].recordOpen(at: Date(), calendar: .current)
     }
 
     @MainActor

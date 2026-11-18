@@ -111,7 +111,6 @@ extension BackgroundRefreshManager {
 
     // MARK: Task handling
     private static func handle(_ task: BGAppRefreshTask) {
-        // Always reschedule for the next time
         schedule()
 
         let runner = BackgroundRefreshTaskRunner(task: task)

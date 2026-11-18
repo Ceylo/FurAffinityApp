@@ -65,9 +65,6 @@ func cookieJarHeader(for url: URL) async -> String? {
 
 func persistCookies() async {
     #if canImport(Android)
-    _ = await callBridgeOffPool("FACookieBridge", fallback: false) { bridge in
-        let ok: Bool? = try bridge.flush()
-        return ok == true
-    }
+    _ = await callBridgeOffPool("FACookieBridge", fallback: nil) { bridge -> Bool? in try bridge.flush() }
     #endif
 }
