@@ -137,8 +137,8 @@ import SwiftUI
     }
 
     /// From `FABackgroundRefreshJobService.onStopJob`: the system took the job back.
-    /* SKIP @bridge */public func cancelBackgroundRefresh(_ reason: String) {
-        logger.info("Background refresh stopped by the system (\(reason))")
+    /* SKIP @bridge */public func cancelBackgroundRefresh() {
+        logger.info("Background refresh stopped by the system")
         foreground.cancelBackgroundWork()
     }
 

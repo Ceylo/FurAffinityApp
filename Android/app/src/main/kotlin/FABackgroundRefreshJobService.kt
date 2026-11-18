@@ -17,6 +17,7 @@ import android.app.job.JobParameters
 import android.app.job.JobService
 import android.app.usage.UsageStatsManager
 import android.os.BatteryManager
+import android.os.PowerManager
 import android.util.Log
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -65,7 +66,7 @@ class FABackgroundRefreshJobService : JobService() {
         if (run?.isActive == true) {
             run.cancel()
             // The coroutine's cancellation doesn't reach the Swift task it awaits.
-            FurAffinityUIAppDelegate.shared.cancelBackgroundRefresh(FABackgroundRefreshDiagnostics.stopReason(params))
+            FurAffinityUIAppDelegate.shared.cancelBackgroundRefresh()
         }
         return true
     }
@@ -79,10 +80,17 @@ class FABackgroundRefreshJobService : JobService() {
 
     // What Android throttles the job by, so a tester's log shows why runs are sparse.
     private fun deviceConditions(params: JobParameters): String {
-        val bucket = FABackgroundRefreshDiagnostics.bucket(getSystemService(UsageStatsManager::class.java)?.appStandbyBucket)
+        val bucket = when (val raw = getSystemService(UsageStatsManager::class.java)?.appStandbyBucket) {
+            UsageStatsManager.STANDBY_BUCKET_ACTIVE -> "active"
+            UsageStatsManager.STANDBY_BUCKET_WORKING_SET -> "working set"
+            UsageStatsManager.STANDBY_BUCKET_FREQUENT -> "frequent"
+            UsageStatsManager.STANDBY_BUCKET_RARE -> "rare"
+            UsageStatsManager.STANDBY_BUCKET_RESTRICTED -> "restricted"
+            else -> "$raw"
+        }
         val charging = getSystemService(BatteryManager::class.java)?.isCharging
+        val idle = getSystemService(PowerManager::class.java)?.isDeviceIdleMode
         val job = if (params.isScheduled) "scheduled" else "debug"
-        val tail = if (params.isScheduled) FABackgroundRefreshDiagnostics.dump() else FABackgroundRefreshDiagnostics.power()
-        return "standby bucket: $bucket, charging: $charging, ${FABackgroundRefreshDiagnostics.network()}, job: $job, $tail"
+        return "standby bucket: $bucket, charging: $charging, device idle: $idle, job: $job"
     }
 }

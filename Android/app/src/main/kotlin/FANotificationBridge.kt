@@ -28,8 +28,6 @@ class FANotificationBridge {
 
     fun blur(inputPath: String, outputPath: String, radius: Double): Boolean = Companion.blur(inputPath, outputPath, radius)
 
-    fun schedulingDiagnostics(): String = FABackgroundRefreshDiagnostics.dump()
-
     companion object {
         private const val TAG = "FANotificationBridge"
         /// Far from WorkManager's ids, which count up from 0 on API < 34, where it has no namespace.
