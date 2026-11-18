@@ -50,7 +50,7 @@ extension BackgroundRefreshManager {
         case .bridgeUnavailable:
             true
         case .transportFailed(let message):
-            ["UnknownHostException", "NoRouteToHostException", "ENETUNREACH", "Network is unreachable"].contains { message.contains($0) }
+            ["UnknownHostException", "NoRouteToHostException", "ConnectException", "ENETUNREACH", "Network is unreachable"].contains { message.contains($0) }
         case .unreadableResult, nil:
             false
         }

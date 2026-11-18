@@ -111,7 +111,6 @@ struct BackgroundRefreshSlots {
 struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
     static let window: TimeInterval = 24 * 3600
     static let minimumRunInterval: TimeInterval = 30 * 60
-    /// The +25% that retries of runs which reached furaffinity.net may add to `perDay`.
     static let retryAllowance = BackgroundRefreshSlots.perDay / 4
     static let quickRetryDelay: TimeInterval = 5 * 60
     /// The average gap between slots: a later retry would be no sooner than the next slot.
@@ -168,11 +167,13 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
     mutating func recordOpen(at date: Date, calendar: Calendar) {
         profile.recordOpen(at: date, calendar: calendar)
         retry = nil
+        failures = nil
     }
 
     mutating func recordForegroundEnd(at date: Date) {
         lastForegroundEnd = date
         retry = nil
+        failures = nil
     }
 
     mutating func settle(_ outcome: Outcome, claimedAt: Date, now: Date) {

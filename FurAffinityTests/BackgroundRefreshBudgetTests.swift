@@ -258,7 +258,7 @@ struct BackgroundRefreshBudgetTests {
         #expect(settled(.completed, at: now).decision(now: now + 60, calendar: calendar) == .skip(nextSlot: slots()[3]))
     }
 
-    @Test func paidRetries_useTheTwentyFivePercentAllowance() {
+    @Test func paidRetries_useTheTwoFetchAllowance() {
         var budget = BackgroundRefreshBudget()
         var now = day
         for _ in 0..<10 {
@@ -291,6 +291,15 @@ struct BackgroundRefreshBudgetTests {
         var budget = settled(.interrupted, at: now)
         budget.recordForegroundEnd(at: now + 10 * 60)
         #expect(budget.decision(now: now + 11 * 60, calendar: calendar) == .skip(nextSlot: slots()[3]))
+    }
+
+    @Test func foreground_restartsTheBackoff() {
+        var budget = BackgroundRefreshBudget()
+        budget.settle(.faError, claimedAt: day, now: day)
+        budget.settle(.faError, claimedAt: day, now: day)
+        budget.recordForegroundEnd(at: day + 60)
+        budget.settle(.faError, claimedAt: day + 120, now: day + 120)
+        #expect(budget.retry?.notBefore == day + 120 + 1800)
     }
 
     @Test func admittedRetry_isConsumed() {

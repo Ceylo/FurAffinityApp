@@ -128,7 +128,7 @@ extension BackgroundRefreshManager {
     }
 
     static func isUnreachable(_ error: any Error) -> Bool {
-        let codes: [URLError.Code] = [.cannotFindHost, .dnsLookupFailed, .notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff, .callIsActive]
+        let codes: [URLError.Code] = [.cannotFindHost, .cannotConnectToHost, .dnsLookupFailed, .notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff, .callIsActive]
         return (error as? URLError).map { codes.contains($0.code) } ?? false
     }
 
