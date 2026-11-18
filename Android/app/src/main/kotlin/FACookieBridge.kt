@@ -28,6 +28,11 @@ class FACookieBridge {
     // The background refresh's session, in a process that may have no WebView.
     fun cookieHeader(url: String): String = CookieManager.getInstance().getCookie(url) ?: ""
 
+    fun flush(): Boolean {
+        CookieManager.getInstance().flush()
+        return true
+    }
+
     companion object {
         private const val TAG = "FACookieBridge"
         private const val REMOVAL_TIMEOUT_SECONDS = 5L
