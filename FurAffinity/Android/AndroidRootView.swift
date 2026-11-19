@@ -276,6 +276,7 @@ struct AndroidRootView: View {
         Task { @MainActor in
             await FAWebSession.shared.refreshedCookieHeader()
             CloudflareChallengeCoordinator.shared.markResolved()
+            await persistCookies()
         }
     }
 

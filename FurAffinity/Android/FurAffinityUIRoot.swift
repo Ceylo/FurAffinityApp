@@ -101,8 +101,11 @@ import SwiftUI
     /// logged with each run.
     /* SKIP @bridge */public func performBackgroundRefresh(_ conditions: String, respectingBudget: Bool) async {
         let refresh: Task<Void, any Error>
-        switch foreground.startBackgroundWork({
-            Task { try await BackgroundRefreshManager.performFetchAndNotify(respectingBudget: respectingBudget) }
+        switch foreground.startBackgroundWork({ stopped in
+            Task {
+                _ = await stopped?.result
+                try await BackgroundRefreshManager.performFetchAndNotify(respectingBudget: respectingBudget)
+            }
         }) {
         case .started(let work):
             refresh = work
@@ -117,7 +120,7 @@ import SwiftUI
         let start = ContinuousClock.now
         defer {
             logger.info("Background refresh run ended after \(ContinuousClock.now - start)")
-            foreground.endBackgroundWork()
+            foreground.endBackgroundWork(refresh)
             // A process the job started never reaches `onStop`, where they're pruned otherwise.
             Task { await FAImageStore.shared.performingFileIO { pruneMediaCopies() } }
         }
@@ -212,17 +215,19 @@ private final class ForegroundState: @unchecked Sendable {
 
     /// Starts and records the work `start` returns, unless an activity is in the foreground
     /// or earlier work is still running, which `enter()` must remain able to cancel.
-    func startBackgroundWork(_ start: () -> Task<Void, any Error>) -> Start {
+    func startBackgroundWork(_ start: (_ stopped: Task<Void, any Error>?) -> Task<Void, any Error>) -> Start {
         lock.withLock {
             if isInForeground { return .inForeground }
-            if backgroundWork != nil { return .alreadyRunning }
-            let work = start()
+            if let backgroundWork, !backgroundWork.isCancelled { return .alreadyRunning }
+            let work = start(backgroundWork)
             backgroundWork = work
             return .started(work)
         }
     }
 
-    func endBackgroundWork() {
-        lock.withLock { backgroundWork = nil }
+    func endBackgroundWork(_ work: Task<Void, any Error>) {
+        lock.withLock {
+            if backgroundWork == work { backgroundWork = nil }
+        }
     }
 }

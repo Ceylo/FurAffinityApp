@@ -321,6 +321,16 @@ platform supplies `schedule`, `makeBackgroundSession`, `enrich(_:for:)` and
   `Background refresh run started (standby bucket: …, charging: …, device idle: …)` line
   and an `ended after` one, or a `Skipping` one while the app is in the foreground: a
   tester's exported log shows the actual frequency.
+- **Retries.** Each run that claimed a budget slot logs `Background refresh outcome: …`. A
+  run that never reached furaffinity.net (DNS, no route, cancelled first) is refunded and
+  retried after 5 min. One that did stays counted, so FA never sees more than 12 fetches a
+  day: its retry draws on an allowance of 2 more, and is admitted at once after an interruption,
+  5 min after a network failure, and 30 min after an FA error. Each failure like the last
+  doubles its delay, until it would pass the average gap between slots (2.4 h): the slots
+  then take over, and a completed run starts over. The app schedules no retry
+  sooner than 5 min; the immediate one is the system's own retry of a run it stopped, which
+  waits for that run to unwind rather than skip it as already running. Opening the app
+  drops an owed retry and its backoff.
 - **A session without a WebView.** JobScheduler may start the process cold, with no
   `FAWebSessionView` mounted, so `FAWebSession.makeBackgroundSession` reads the jar
   through `CookieManager` (`cookieJarHeaderProvider`, HttpOnly cookies included) and

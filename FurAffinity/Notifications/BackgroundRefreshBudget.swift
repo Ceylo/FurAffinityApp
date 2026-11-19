@@ -111,22 +111,48 @@ struct BackgroundRefreshSlots {
 struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
     static let window: TimeInterval = 24 * 3600
     static let minimumRunInterval: TimeInterval = 30 * 60
+    static let retryAllowance = BackgroundRefreshSlots.perDay / 4
+    static let quickRetryDelay: TimeInterval = 5 * 60
+    /// The average gap between slots: a later retry would be no sooner than the next slot.
+    static let maxRetryDelay = window / Double(BackgroundRefreshSlots.perDay)
 
     var profile = ActivityProfile()
     var fetchDates: [Date] = []
     var lastForegroundEnd: Date?
+    var retry: Retry?
+    var failures: Failures?
+
+    struct Retry: Codable, Equatable {
+        var notBefore: Date
+    }
+
+    struct Failures: Codable, Equatable {
+        var outcome: Outcome
+        var count: Int
+    }
 
     enum Decision: Equatable {
         case fetch
         case skip(nextSlot: Date)
     }
 
+    enum Outcome: String, Codable, Equatable {
+        case completed
+        case unreachedFA
+        /// Stopped after reaching furaffinity.net: the app came back, or the system took the job.
+        case interrupted
+        case unreachableAfterFA
+        case faError
+    }
+
     func decision(now: Date, calendar: Calendar) -> Decision {
+        if let retry = usableRetry(at: now) {
+            return now >= retry.notBefore ? .fetch : .skip(nextSlot: retry.notBefore)
+        }
         let slots = BackgroundRefreshSlots(profile: profile)
         let lastSeen = (fetchDates + [lastForegroundEnd].compactMap { $0 }).filter { $0 <= now }.max()
         let slotPassed = lastSeen.map { slots.latestSlot(atOrBefore: now, calendar: calendar) > $0 } ?? true
-        let recentFetches = fetchDates.filter { $0 > now - Self.window && $0 <= now }.count
-        guard slotPassed && recentFetches < BackgroundRefreshSlots.perDay else {
+        guard slotPassed && recentFetches(at: now) < BackgroundRefreshSlots.perDay else {
             return .skip(nextSlot: slots.nextSlot(after: now, calendar: calendar))
         }
         return .fetch
@@ -135,34 +161,98 @@ struct BackgroundRefreshBudget: Codable, Equatable, Defaults.Serializable {
     mutating func recordFetch(at date: Date) {
         fetchDates.append(date)
         fetchDates.removeAll { $0 <= date - Self.window }
+        retry = nil
+    }
+
+    mutating func recordOpen(at date: Date, calendar: Calendar) {
+        profile.recordOpen(at: date, calendar: calendar)
+        retry = nil
+        failures = nil
+    }
+
+    mutating func recordForegroundEnd(at date: Date) {
+        lastForegroundEnd = date
+        retry = nil
+        failures = nil
+    }
+
+    mutating func settle(_ outcome: Outcome, claimedAt: Date, now: Date) {
+        func owe(after delay: TimeInterval) {
+            let count = failures.flatMap { $0.outcome == outcome ? $0.count + 1 : nil } ?? 1
+            failures = Failures(outcome: outcome, count: count)
+            let backedOff = delay * pow(2, Double(count - 1))
+            retry = backedOff <= Self.maxRetryDelay ? Retry(notBefore: now + backedOff) : nil
+        }
+        switch outcome {
+        case .completed:
+            retry = nil
+            failures = nil
+        case .unreachedFA:
+            fetchDates.removeAll { $0 == claimedAt }
+            owe(after: Self.quickRetryDelay)
+        case .interrupted:
+            owe(after: 0)
+        case .unreachableAfterFA:
+            owe(after: Self.quickRetryDelay)
+        case .faError:
+            owe(after: Self.minimumRunInterval)
+        }
     }
 
     func nextRunDate(after now: Date, calendar: Calendar) -> Date {
+        if let retry = usableRetry(at: now) {
+            return max(retry.notBefore, now + Self.quickRetryDelay)
+        }
         let nextSlot = BackgroundRefreshSlots(profile: profile).nextSlot(after: now, calendar: calendar)
         return max(nextSlot, now + Self.minimumRunInterval)
+    }
+
+    private func usableRetry(at now: Date) -> Retry? {
+        guard let retry else {
+            return nil
+        }
+        let isPaid = failures?.outcome != .unreachedFA
+        let cap = BackgroundRefreshSlots.perDay + (isPaid ? Self.retryAllowance : 0)
+        return recentFetches(at: now) < cap ? retry : nil
+    }
+
+    private func recentFetches(at now: Date) -> Int {
+        fetchDates.filter { $0 > now - Self.window && $0 <= now }.count
     }
 }
 
 extension BackgroundRefreshManager {
     @MainActor
     static func recordAppOpen() {
-        Defaults[.backgroundRefreshBudget].profile.recordOpen(at: Date(), calendar: .current)
+        Defaults[.backgroundRefreshBudget].recordOpen(at: Date(), calendar: .current)
     }
 
     @MainActor
     static func recordForegroundEnd() {
-        Defaults[.backgroundRefreshBudget].lastForegroundEnd = Date()
+        Defaults[.backgroundRefreshBudget].recordForegroundEnd(at: Date())
+    }
+
+    enum BudgetClaim: Equatable {
+        case granted(at: Date)
+        case denied(nextSlot: Date)
     }
 
     @MainActor
-    static func claimBudgetedFetch() -> Date? {
+    static func claimBudgetedFetch() -> BudgetClaim {
         var budget = Defaults[.backgroundRefreshBudget]
         let now = Date()
         if case .skip(let nextSlot) = budget.decision(now: now, calendar: .current) {
-            return nextSlot
+            return .denied(nextSlot: nextSlot)
         }
         budget.recordFetch(at: now)
         Defaults[.backgroundRefreshBudget] = budget
-        return nil
+        return .granted(at: now)
+    }
+
+    @MainActor
+    static func settleBudgetedFetch(_ outcome: BackgroundRefreshBudget.Outcome, claimedAt: Date?) {
+        guard let claimedAt else { return }
+        logger.info("Background refresh outcome: \(outcome)")
+        Defaults[.backgroundRefreshBudget].settle(outcome, claimedAt: claimedAt, now: Date())
     }
 }
